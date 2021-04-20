@@ -16,60 +16,73 @@
 
 -->
 <div class="user-applications-container">
-    <div class="user-applications-content" fxFlex="70">
-      <div fxLayout="row" *ngIf="!isEmpty">
-        <div fxFlex>You have interacted with <b>{{appConsents.length}}</b> application(s) to access to your account.</div>
-        <div>
-          <button *ngIf="canRevokeAllAccess() && canRevoke" style="height: 40px;" mat-stroked-button color="warn" (click)="revokeAll($event)">Revoke all</button>
-        </div>
+  <div class="user-applications-content" fxFlex="70">
+    <div fxLayout="row" *ngIf="!isEmpty">
+      <div fxFlex>
+        You have interacted with <b>{{ appConsents.length }}</b> application(s) to access to your account.
       </div>
-      <ngx-datatable *ngIf="!isEmpty" class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='appConsents'
-                     [sorts]="[{prop: 'enabled', dir: 'desc'}]"
-                     [rowClass]="rowClass">
-        <ngx-datatable-column>
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-icon [ngStyle]="{'color': canRevokeAccessForClient(row.clientId) ? 'green' : 'orange'}"  matTooltip="{{canRevokeAccessForClient(row.clientId) ? 'Application approved' : 'Application denied'}}">
-              {{canRevokeAccessForClient(row.clientId) ? 'done' : 'not_interested'}}
-            </mat-icon>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Application" [flexGrow]="2">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.clientEntity.name}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Last interaction" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.updatedAt | humanDate}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <div fxLayout="row" class="gv-table-cell-actions">
-              <a mat-icon-button [routerLink]="[row.clientEntity.id]" [queryParams]="{clientId: row.clientId}"><mat-icon matTooltip="More info">more_horiz</mat-icon></a>
-              <button *ngIf="canRevokeAccessForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)"><mat-icon style="color: #f44336;" matTooltip="Revoke application">highlight_off</mat-icon></button>
-            </div>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
+      <div>
+        <button *ngIf="canRevokeAllAccess() && canRevoke" style="height: 40px" mat-stroked-button color="warn" (click)="revokeAll($event)">
+          Revoke all
+        </button>
+      </div>
+    </div>
+    <ngx-datatable
+      *ngIf="!isEmpty"
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="appConsents"
+      [sorts]="[{ prop: 'enabled', dir: 'desc' }]"
+      [rowClass]="rowClass"
+    >
+      <ngx-datatable-column>
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <mat-icon
+            [ngStyle]="{ color: canRevokeAccessForClient(row.clientId) ? 'green' : 'orange' }"
+            matTooltip="{{ canRevokeAccessForClient(row.clientId) ? 'Application approved' : 'Application denied' }}"
+          >
+            {{ canRevokeAccessForClient(row.clientId) ? 'done' : 'not_interested' }}
+          </mat-icon>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Application" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.clientEntity.name }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Last interaction" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{ row.updatedAt | humanDate }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <a mat-icon-button [routerLink]="[row.clientEntity.id]" [queryParams]="{ clientId: row.clientId }"
+              ><mat-icon matTooltip="More info">more_horiz</mat-icon></a
+            >
+            <button *ngIf="canRevokeAccessForClient(row.clientId) && canRevoke" mat-icon-button (click)="revoke($event, row)">
+              <mat-icon style="color: #f44336" matTooltip="Revoke application">highlight_off</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
 
-      <app-emptystate *ngIf="isEmpty"
-                      [message]="'No authorized applications'"
-                      [subMessage]="'You have no applications authorized to access your account.'"
-                      [icon]="'apps'"></app-emptystate>
+    <app-emptystate
+      *ngIf="isEmpty"
+      [message]="'No authorized applications'"
+      [subMessage]="'You have no applications authorized to access your account.'"
+      [icon]="'apps'"
+    ></app-emptystate>
+  </div>
+  <div class="gv-page-description" fxFlex>
+    <h3>Authorized applications</h3>
+    <div class="gv-page-description-content">
+      <p>Applications act on behalf the user to access data based on the permissions the user grant them.</p>
     </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>Authorized applications</h3>
-      <div class="gv-page-description-content">
-        <p>
-          Applications act on behalf the user to access data based on the permissions the user grant them.
-        </p>
-      </div>
-    </div>
+  </div>
 </div>
-

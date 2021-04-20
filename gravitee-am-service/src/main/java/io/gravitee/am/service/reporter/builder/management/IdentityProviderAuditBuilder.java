@@ -38,8 +38,14 @@ public class IdentityProviderAuditBuilder extends ManagementAuditBuilder<Identit
         referenceType(identityProvider.getReferenceType());
         referenceId(identityProvider.getReferenceId());
 
-        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(),
-                identityProvider.getReferenceType(), identityProvider.getReferenceId());
+        setTarget(
+            identityProvider.getId(),
+            EntityType.IDENTITY_PROVIDER,
+            null,
+            identityProvider.getName(),
+            identityProvider.getReferenceType(),
+            identityProvider.getReferenceId()
+        );
         return this;
     }
 }

@@ -55,21 +55,55 @@ public class UriBuilder {
 
     // Regex patterns that matches URIs. See RFC 3986, appendix B
     private static final Pattern URI_PATTERN = Pattern.compile(
-            "^(" + SCHEME_REGEX + ")?" + "(//(" + USERINFO_REGEX + "@)?" + HOST_REGEX + "(:" + PORT_REGEX +
-                    ")?" + ")?" + PATH_REGEX + "(\\?" + QUERY_REGEX + ")?" + "(#" + LAST_REGEX + ")?");
+        "^(" +
+        SCHEME_REGEX +
+        ")?" +
+        "(//(" +
+        USERINFO_REGEX +
+        "@)?" +
+        HOST_REGEX +
+        "(:" +
+        PORT_REGEX +
+        ")?" +
+        ")?" +
+        PATH_REGEX +
+        "(\\?" +
+        QUERY_REGEX +
+        ")?" +
+        "(#" +
+        LAST_REGEX +
+        ")?"
+    );
 
     private static final Pattern HTTP_URL_PATTERN = Pattern.compile(
-            "^" + HTTP_REGEX + "(//(" + USERINFO_REGEX + "@)?" + HOST_REGEX + "(:" + PORT_REGEX +
-                    ")?" + ")?" + PATH_REGEX + "(\\?" + QUERY_REGEX + ")?" + "(#" + LAST_REGEX + ")?");
+        "^" +
+        HTTP_REGEX +
+        "(//(" +
+        USERINFO_REGEX +
+        "@)?" +
+        HOST_REGEX +
+        "(:" +
+        PORT_REGEX +
+        ")?" +
+        ")?" +
+        PATH_REGEX +
+        "(\\?" +
+        QUERY_REGEX +
+        ")?" +
+        "(#" +
+        LAST_REGEX +
+        ")?"
+    );
 
-    private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_REGEX.replace(":",""));
+    private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_REGEX.replace(":", ""));
 
     private static final String LOCALHOST_HOST_REGEX = "^localhost$";
     private static final String LOCALHOST_IPV4_REGEX = "^127(?:\\.[0-9]+){0,2}\\.[0-9]+$";
     private static final String LOCALHOST_IPV6_REGEX = "^(?:0*\\:)*?:?0*1$";
 
     private static final Pattern LOCALHOST_PATTERN = Pattern.compile(
-            LOCALHOST_HOST_REGEX +"|"+ LOCALHOST_IPV4_REGEX +"|"+ LOCALHOST_IPV6_REGEX);
+        LOCALHOST_HOST_REGEX + "|" + LOCALHOST_IPV4_REGEX + "|" + LOCALHOST_IPV6_REGEX
+    );
 
     private String scheme;
     private String host;
@@ -104,8 +138,7 @@ public class UriBuilder {
             builder.query(query);
             builder.fragment(fragment);
             return builder;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("[" + uri + "] is not a valid URI");
         }
     }
@@ -130,8 +163,7 @@ public class UriBuilder {
             builder.query(matcher.group(10));
             builder.fragment(matcher.group(12));
             return builder;
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("[" + httpUrl + "] is not a valid HTTP URL");
         }
     }

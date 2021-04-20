@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { UserService } from "../services/user.service";
-import { OrganizationService } from "../services/organization.service";
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { UserService } from '../services/user.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class UserResolver implements Resolve<any> {
+  constructor(private userService: UserService, private organizationService: OrganizationService) {}
 
-  constructor(private userService: UserService,
-              private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const userId = route.paramMap.get('userId');
     if (state.url.startsWith('/settings')) {
       return this.organizationService.user(userId);
@@ -33,5 +31,4 @@ export class UserResolver implements Resolve<any> {
     const domainId = route.parent.parent.paramMap.get('domainId');
     return this.userService.get(domainId, userId);
   }
-
 }

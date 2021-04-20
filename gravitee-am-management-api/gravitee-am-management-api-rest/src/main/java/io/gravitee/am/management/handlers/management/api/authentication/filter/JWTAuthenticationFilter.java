@@ -24,6 +24,15 @@ import io.gravitee.common.http.HttpHeaders;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.io.IOException;
+import java.security.Key;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,28 +49,23 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.security.Key;
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFilter implements InitializingBean {
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String jwtSecret;
+
     @Value("${jwt.cookie-path:/}")
     private String jwtCookiePath;
+
     @Value("${jwt.cookie-name:Auth-Graviteeio-AM}")
     private String authCookieName;
+
     @Value("${jwt.cookie-secure:false}")
     private boolean jwtCookieSecure;
+
     @Value("${jwt.cookie-domain:}")
     private String jwtCookieDomain;
+
     private Key key;
 
     @Autowired
@@ -89,9 +93,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             if (request.getCookies() == null) {
                 optionalStringToken = Optional.empty();
             } else {
-                optionalStringToken = Arrays.stream(request.getCookies())
-                        .filter(cookie -> authCookieName.equals(cookie.getName()))
-                        .findAny();
+                optionalStringToken =
+                    Arrays.stream(request.getCookies()).filter(cookie -> authCookieName.equals(cookie.getName())).findAny();
             }
 
             if (!optionalStringToken.isPresent() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
@@ -125,7 +128,12 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     @Override
-    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+    protected void successfulAuthentication(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        FilterChain chain,
+        Authentication authResult
+    ) throws IOException, ServletException {
         super.successfulAuthentication(request, response, chain, authResult);
 
         // As this is a REST authentication, after success we need to continue the request normally
@@ -153,12 +161,10 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private static class NoopAuthenticationManager implements AuthenticationManager {
 
         @Override
-        public Authentication authenticate(Authentication authentication)
-                throws AuthenticationException {
+        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
             // We only use JWT library to authenticate the user, authentication manager is not required
             throw new UnsupportedOperationException("No authentication should be done with this AuthenticationManager");
         }
-
     }
 
     private class JWTAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
@@ -172,7 +178,8 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private class JWTAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
         @Override
-        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+        public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+            throws IOException, ServletException {
             http401UnauthorizedEntryPoint.commence(request, response, exception);
         }
     }

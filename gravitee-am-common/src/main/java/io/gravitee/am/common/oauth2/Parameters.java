@@ -27,7 +27,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface Parameters {
-
     /**
      * The client identifier issued to the client during the registration process.
      */
@@ -54,7 +53,7 @@ public interface Parameters {
     /**
      * The authorization and token endpoints allow the client to specify the scope of the access request using the "scope" request parameter.
      */
-   String SCOPE = "scope";
+    String SCOPE = "scope";
     /**
      * An opaque value used by the client to maintain state between the request and callback.
      * The parameter SHOULD be used for preventing cross-site request forgery.
@@ -126,7 +125,29 @@ public interface Parameters {
      */
     String VTR = "vtr";
 
-    Collection<String> values = Arrays.asList(CLIENT_ID, CLIENT_SECRET, RESPONSE_TYPE, RESPONSE_MODE, REDIRECT_URI, SCOPE, STATE, CODE, GRANT_TYPE, USERNAME, PASSWORD,
-                REFRESH_TOKEN, ASSERTION, CLIENT_ASSERTION, CLIENT_ASSERTION_TYPE, CODE_VERIFIER, CODE_CHALLENGE, CODE_CHALLENGE_METHOD,
-                CLAIM_TOKEN, PCT, RPT, TICKET, VTR);
+    Collection<String> values = Arrays.asList(
+        CLIENT_ID,
+        CLIENT_SECRET,
+        RESPONSE_TYPE,
+        RESPONSE_MODE,
+        REDIRECT_URI,
+        SCOPE,
+        STATE,
+        CODE,
+        GRANT_TYPE,
+        USERNAME,
+        PASSWORD,
+        REFRESH_TOKEN,
+        ASSERTION,
+        CLIENT_ASSERTION,
+        CLIENT_ASSERTION_TYPE,
+        CODE_VERIFIER,
+        CODE_CHALLENGE,
+        CODE_CHALLENGE_METHOD,
+        CLAIM_TOKEN,
+        PCT,
+        RPT,
+        TICKET,
+        VTR
+    );
 }

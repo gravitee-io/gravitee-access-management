@@ -23,6 +23,7 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public class AccessTokenCriteria {
+
     private final String clientId;
     private final String subject;
     private final Set<String> scopes;
@@ -58,6 +59,7 @@ public class AccessTokenCriteria {
     }
 
     public static class Builder {
+
         private String clientId;
         private String subject;
         private Set<String> scopes;

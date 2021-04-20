@@ -21,7 +21,6 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery;
  * @author GraviteeSource Team
  */
 public interface OpenIDDiscoveryService {
-
     OpenIDProviderMetadata getConfiguration(String basePath);
 
     String getIssuer(String basePath);

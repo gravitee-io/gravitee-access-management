@@ -27,7 +27,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface Parameters {
-
     /**
      * String value used to associate a Client session with an ID Token, and to mitigate replay attacks.
      */
@@ -85,6 +84,19 @@ public interface Parameters {
      */
     String RESPONSE = "response";
 
-    Collection<String> values = Arrays.asList(NONCE, DISPLAY, PROMPT, MAX_AGE, UI_LOCALES, CLAIMS_LOCALES, ID_TOKEN_HINT, LOGIN_HINT, ACR_VALUES, CLAIMS,
-                REGISTRATION, REQUEST, REQUEST_URI);
+    Collection<String> values = Arrays.asList(
+        NONCE,
+        DISPLAY,
+        PROMPT,
+        MAX_AGE,
+        UI_LOCALES,
+        CLAIMS_LOCALES,
+        ID_TOKEN_HINT,
+        LOGIN_HINT,
+        ACR_VALUES,
+        CLAIMS,
+        REGISTRATION,
+        REQUEST,
+        REQUEST_URI
+    );
 }

@@ -20,10 +20,30 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import {
-  MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatDialogModule, MatExpansionModule,
-  MatGridListModule, MatIconModule, MatListModule, MatNativeDateModule, MatProgressBarModule, MatProgressSpinnerModule,
-  MatRadioModule, MatRippleModule, MatSelectModule, MatSliderModule, MatSnackBarModule, MatSortModule, MatTableModule,
-  MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule
+  MatButtonModule,
+  MatButtonToggleModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatDialogModule,
+  MatExpansionModule,
+  MatGridListModule,
+  MatIconModule,
+  MatListModule,
+  MatNativeDateModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatRippleModule,
+  MatSelectModule,
+  MatSliderModule,
+  MatSnackBarModule,
+  MatSortModule,
+  MatTableModule,
+  MatTabsModule,
+  MatToolbarModule,
+  MatTooltipModule,
+  MatStepperModule,
+  MatBadgeModule,
 } from '@angular/material';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatChipsModule } from '@angular/material/chips';
@@ -75,7 +95,7 @@ import { LogoutComponent } from './logout/logout.component';
 import { LogoutCallbackComponent } from './logout/callback/callback.component';
 import { DomainsResolver } from './resolvers/domains.resolver';
 import { DomainResolver } from './resolvers/domain.resolver';
-import {DomainEntrypointResolver} from "./resolvers/domain-entrypoint.resolver";
+import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver';
 import { DomainDashboardComponent } from './domain/dashboard/dashboard.component';
 import { DomainSettingsComponent } from './domain/settings/settings.component';
 import { DomainSettingsGeneralComponent } from './domain/settings/general/general.component';
@@ -83,7 +103,7 @@ import { DomainSettingsOpenidClientRegistrationComponent } from './domain/settin
 import { ClientRegistrationSettingsComponent } from './domain/settings/openid/client-registration/settings/settings.component';
 import { ClientRegistrationDefaultScopeComponent } from './domain/settings/openid/client-registration/default-scope/default-scope.component';
 import { ClientRegistrationAllowedScopeComponent } from './domain/settings/openid/client-registration/allowed-scope/allowed-scope.component';
-import { ClientRegistrationTemplatesComponent} from './domain/settings/openid/client-registration/templates/templates.component';
+import { ClientRegistrationTemplatesComponent } from './domain/settings/openid/client-registration/templates/templates.component';
 import { DomainSettingsRolesComponent } from './domain/settings/roles/roles.component';
 import { DomainSettingsScopesComponent } from './domain/settings/scopes/scopes.component';
 import { DomainSettingsCertificatesComponent, CertitificatePublicKeyDialog } from './domain/settings/certificates/certificates.component';
@@ -96,10 +116,7 @@ import { DomainSettingsEmailsComponent } from './domain/settings/emails/emails.c
 import { DomainSettingsEmailComponent } from './domain/settings/emails/email/email.component';
 import { DomainSettingsAccountComponent } from './domain/settings/account/account.component';
 import { DomainSettingsPoliciesComponent, PoliciesInfoDialog } from './domain/settings/policies/policies.component';
-import {
-  DomainMembershipsDialog,
-  DomainSettingsMembershipsComponent
-} from './domain/settings/memberships/memberships.component';
+import { DomainMembershipsDialog, DomainSettingsMembershipsComponent } from './domain/settings/memberships/memberships.component';
 import { DomainSettingsFactorsComponent } from './domain/settings/factors/factors.component';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
@@ -108,16 +125,16 @@ import { CreateMapperComponent, ProviderMappersComponent } from './domain/settin
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
 import { CertificateCreationComponent } from './domain/settings/certificates/creation/certificate-creation.component';
 import { CertificateComponent } from './domain/settings/certificates/certificate/certificate.component';
-import { CertificatesResolver } from "./resolvers/certificates.resolver";
-import { CertificateService } from "./services/certificate.service";
-import { CertificateCreationStep1Component } from "./domain/settings/certificates/creation/steps/step1/step1.component";
-import { CertificateCreationStep2Component } from "app/domain/settings/certificates/creation/steps/step2/step2.component";
-import { CertificateFormComponent } from "./domain/settings/certificates/certificate/form/form.component";
-import { CertificateResolver } from "./resolvers/certificate.resolver";
-import { ClipboardModule } from "ngx-clipboard";
-import { RoleService } from "./services/role.service";
-import { RolesResolver } from "./resolvers/roles.resolver";
-import { RoleResolver } from "./resolvers/role.resolver";
+import { CertificatesResolver } from './resolvers/certificates.resolver';
+import { CertificateService } from './services/certificate.service';
+import { CertificateCreationStep1Component } from './domain/settings/certificates/creation/steps/step1/step1.component';
+import { CertificateCreationStep2Component } from 'app/domain/settings/certificates/creation/steps/step2/step2.component';
+import { CertificateFormComponent } from './domain/settings/certificates/certificate/form/form.component';
+import { CertificateResolver } from './resolvers/certificate.resolver';
+import { ClipboardModule } from 'ngx-clipboard';
+import { RoleService } from './services/role.service';
+import { RolesResolver } from './resolvers/roles.resolver';
+import { RoleResolver } from './resolvers/role.resolver';
 import { RoleCreationComponent } from './domain/settings/roles/creation/role-creation.component';
 import { RoleComponent } from './domain/settings/roles/role/role.component';
 import { ScopeService } from './services/scope.service';
@@ -126,8 +143,8 @@ import { ScopeResolver } from './resolvers/scope.resolver';
 import { ScopeCreationComponent } from './domain/settings/scopes/creation/scope-creation.component';
 import { ScopeComponent } from './domain/settings/scopes/scope/scope.component';
 import { SnackbarComponent } from './components/snackbar/snackbar.component';
-import { NavbarComponent} from './components/navbar/navbar.component';
-import { DashboardService} from './services/dashboard.service';
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { DashboardService } from './services/dashboard.service';
 import { SettingsComponent } from './settings/settings.component';
 import { HumanDatePipe } from './pipes/human-date.pipe';
 import { MapToIterablePipe } from './pipes/map-to-iterable.pipe';
@@ -140,8 +157,8 @@ import { UserProfileComponent } from './domain/settings/users/user/profile/profi
 import { UserApplicationsComponent } from './domain/settings/users/user/applications/applications.component';
 import { UserApplicationComponent } from './domain/settings/users/user/applications/application/application.component';
 import { AddUserRolesComponent, UserRolesComponent } from './domain/settings/users/user/roles/roles.component';
-import { UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
-import { UserService} from './services/user.service';
+import { UserFactorsComponent } from './domain/settings/users/user/factors/factors.component';
+import { UserService } from './services/user.service';
 import { UsersResolver } from './resolvers/users.resolver';
 import { UserResolver } from './resolvers/user.resolver';
 import { UserRolesResolver } from './resolvers/user-roles.resolver';
@@ -170,8 +187,8 @@ import { GroupService } from './services/group.service';
 import { GroupsResolver } from './resolvers/groups.resolver';
 import { GroupResolver } from './resolvers/group.resolver';
 import { GroupMembersResolver } from './resolvers/group-members.resolver';
-import { AddGroupRolesComponent, GroupRolesComponent} from './domain/settings/groups/group/roles/roles.component';
-import { GroupRolesResolver} from './resolvers/group-roles.resolver';
+import { AddGroupRolesComponent, GroupRolesComponent } from './domain/settings/groups/group/roles/roles.component';
+import { GroupRolesResolver } from './resolvers/group-roles.resolver';
 import { ScimComponent } from './domain/settings/scim/scim.component';
 import { EmailsComponent } from './domain/components/emails/emails.component';
 import { EmailComponent, EmailInfoDialog } from './domain/components/emails/email/email.component';
@@ -207,7 +224,7 @@ import { HttpRequestInterceptor } from './interceptors/http-request.interceptor'
 import { PolicyFormComponent } from './domain/settings/policies/policy/form/form.component';
 import { PolicyService } from './services/policy.service';
 import { PoliciesResolver } from './resolvers/policies.resolver';
-import { ScopeSelectionComponent} from './domain/components/scope-selection/scope-selection.component';
+import { ScopeSelectionComponent } from './domain/components/scope-selection/scope-selection.component';
 import { RoleSelectionComponent } from './domain/components/role-selection/role-selection.component';
 import { ApplicationsComponent } from './domain/applications/applications.component';
 import { ApplicationService } from './services/application.service';
@@ -228,13 +245,17 @@ import { ApplicationEmailsComponent } from './domain/applications/application/de
 import { ApplicationEmailComponent } from './domain/applications/application/design/emails/email/email.component';
 import { ApplicationAdvancedComponent } from './domain/applications/application/advanced/advanced.component';
 import { ApplicationAccountSettingsComponent } from './domain/applications/application/advanced/account/account.component';
-import { ApplicationOAuth2Component, ClaimsInfoDialog, CreateClaimComponent } from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {
+  ApplicationOAuth2Component,
+  ClaimsInfoDialog,
+  CreateClaimComponent,
+} from './domain/applications/application/advanced/oauth2/oauth2.component';
 import { ApplicationScopeComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scope.component';
 import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
   ApplicationMembershipsComponent,
-  ApplicationMembershipsDialog
+  ApplicationMembershipsDialog,
 } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ManagementRolesComponent } from './settings/management/roles/roles.component';
@@ -256,7 +277,7 @@ import { WidgetChartGaugeComponent } from './components/widget/chart-gauge/widge
 import { WidgetDataTableComponent } from './components/widget/data-table/widget-data-table.component';
 import { WidgetCountComponent } from './components/widget/count/widget-count.component';
 import { LoaderComponent } from './components/loader/loader.component';
-import { FactorsResolver} from './resolvers/factors.resolver';
+import { FactorsResolver } from './resolvers/factors.resolver';
 import { FactorService } from './services/factor.service';
 import { FactorComponent } from './domain/settings/factors/factor/factor.component';
 import { FactorCreationComponent } from './domain/settings/factors/creation/factor-creation.component';
@@ -431,7 +452,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
     DomainMembershipsDialog,
     ApplicationMembershipsDialog,
     UserAvatarComponent,
-    NotFoundComponent
+    NotFoundComponent,
   ],
   imports: [
     BrowserModule,
@@ -440,14 +461,45 @@ import { NotFoundComponent } from './not-found/not-found.component';
     ReactiveFormsModule,
     HttpClientModule,
     AppRoutingModule,
-    MatAutocompleteModule, MatButtonModule, MatButtonToggleModule, MatCardModule, MatCheckboxModule, MatChipsModule, MatDatepickerModule, MatDialogModule, MatExpansionModule, MatGridListModule, MatIconModule, MatInputModule, MatListModule, MatMenuModule, MatNativeDateModule, MatPaginatorModule, MatProgressBarModule, MatProgressSpinnerModule, MatRadioModule, MatRippleModule, MatSelectModule, MatSidenavModule, MatSliderModule, MatSlideToggleModule, MatSnackBarModule, MatSortModule, MatTableModule, MatTabsModule, MatToolbarModule, MatTooltipModule, MatStepperModule, MatBadgeModule,
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatButtonToggleModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatChipsModule,
+    MatDatepickerModule,
+    MatDialogModule,
+    MatExpansionModule,
+    MatGridListModule,
+    MatIconModule,
+    MatInputModule,
+    MatListModule,
+    MatMenuModule,
+    MatNativeDateModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    MatProgressSpinnerModule,
+    MatRadioModule,
+    MatRippleModule,
+    MatSelectModule,
+    MatSidenavModule,
+    MatSliderModule,
+    MatSlideToggleModule,
+    MatSnackBarModule,
+    MatSortModule,
+    MatTableModule,
+    MatTabsModule,
+    MatToolbarModule,
+    MatTooltipModule,
+    MatStepperModule,
+    MatBadgeModule,
     DragDropModule,
     FlexLayoutModule,
     NgxDatatableModule,
     MaterialDesignFrameworkModule,
     CodemirrorModule,
     ClipboardModule,
-    HighchartsChartModule
+    HighchartsChartModule,
   ],
   providers: [
     BreadcrumbService,
@@ -522,8 +574,8 @@ import { NotFoundComponent } from './not-found/not-found.component';
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
-      multi: true
-    }
+      multi: true,
+    },
   ],
   entryComponents: [
     ConfirmComponent,
@@ -542,8 +594,8 @@ import { NotFoundComponent } from './not-found/not-found.component';
     AddUserRolesComponent,
     AddGroupRolesComponent,
     DomainMembershipsDialog,
-    ApplicationMembershipsDialog
+    ApplicationMembershipsDialog,
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

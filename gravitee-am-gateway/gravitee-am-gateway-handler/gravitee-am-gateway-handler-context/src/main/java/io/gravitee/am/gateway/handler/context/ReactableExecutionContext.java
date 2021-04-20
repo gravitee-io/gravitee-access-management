@@ -22,12 +22,11 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.MutableExecutionContext;
-import org.springframework.context.ApplicationContext;
-
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -35,9 +34,9 @@ import java.util.Map;
  */
 public class ReactableExecutionContext implements MutableExecutionContext {
 
-    private final static String TEMPLATE_ATTRIBUTE_REQUEST = "request";
-    private final static String TEMPLATE_ATTRIBUTE_RESPONSE = "response";
-    private final static String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
+    private static final String TEMPLATE_ATTRIBUTE_REQUEST = "request";
+    private static final String TEMPLATE_ATTRIBUTE_RESPONSE = "response";
+    private static final String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
 
     private final ApplicationContext applicationContext;
 
@@ -110,7 +109,6 @@ public class ReactableExecutionContext implements MutableExecutionContext {
     public TemplateEngine getTemplateEngine() {
         if (templateEngine == null) {
             templateEngine = TemplateEngine.templateEngine();
-
 
             TemplateContext templateContext = templateEngine.getTemplateContext();
             templateContext.setVariable(TEMPLATE_ATTRIBUTE_REQUEST, new EvaluableRequest(request()));

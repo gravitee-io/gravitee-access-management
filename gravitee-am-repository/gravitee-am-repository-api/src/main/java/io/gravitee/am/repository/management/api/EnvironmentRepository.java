@@ -26,7 +26,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface EnvironmentRepository extends CrudRepository<Environment, String> {
-
     Maybe<Environment> findById(String id, String organizationId);
 
     Single<Long> count();

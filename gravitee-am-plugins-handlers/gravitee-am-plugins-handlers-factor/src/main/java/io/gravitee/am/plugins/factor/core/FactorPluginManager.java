@@ -17,7 +17,6 @@ package io.gravitee.am.plugins.factor.core;
 
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.plugin.core.api.Plugin;
-
 import java.io.IOException;
 import java.util.Collection;
 
@@ -26,7 +25,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface FactorPluginManager {
-
     void register(FactorDefinition factorDefinition);
 
     Collection<Plugin> getAll();
@@ -36,5 +34,4 @@ public interface FactorPluginManager {
     FactorProvider create(String type, String configuration);
 
     String getSchema(String factorId) throws IOException;
-
 }

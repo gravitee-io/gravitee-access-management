@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -33,8 +36,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -43,9 +44,7 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,83 +63,106 @@ public class RoleResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a role",
-            notes = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
-                    "or DOMAIN_ROLE[READ] permission on the specified environment " +
-                    "or DOMAIN_ROLE[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a role",
+        notes = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
+        "or DOMAIN_ROLE[READ] permission on the specified environment " +
+        "or DOMAIN_ROLE[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Role successfully fetched", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("role") String role,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("role") String role,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> roleService.findById(role))
-                        .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
-                        .map(role1 -> {
-                            if (role1.getReferenceType() == ReferenceType.DOMAIN
-                                    && !role1.getReferenceId().equalsIgnoreCase(domain)) {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMap(irrelevant -> roleService.findById(role))
+                    .switchIfEmpty(Maybe.error(new RoleNotFoundException(role)))
+                    .map(
+                        role1 -> {
+                            if (role1.getReferenceType() == ReferenceType.DOMAIN && !role1.getReferenceId().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Role does not belong to domain");
                             }
                             return Response.ok(convert(role1)).build();
-                        }))
-                .subscribe(response::resume, response::resume);
+                        }
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a role",
-            notes = "User must have the DOMAIN_ROLE[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_ROLE[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_ROLE[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Update a role",
+        notes = "User must have the DOMAIN_ROLE[UPDATE] permission on the specified domain " +
+        "or DOMAIN_ROLE[UPDATE] permission on the specified environment " +
+        "or DOMAIN_ROLE[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Role successfully updated", response = RoleEntity.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("role") String role,
-            @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("role") String role,
+        @ApiParam(name = "role", required = true) @Valid @NotNull UpdateRole updateRole,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> roleService.update(domain, role, convert(updateRole), authenticatedUser))
-                        .map(this::convert))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(irrelevant -> roleService.update(domain, role, convert(updateRole), authenticatedUser))
+                    .map(this::convert)
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a role",
-            notes = "User must have the DOMAIN_ROLE[DELETE] permission on the specified domain " +
-                    "or DOMAIN_ROLE[DELETE] permission on the specified environment " +
-                    "or DOMAIN_ROLE[DELETE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Delete a role",
+        notes = "User must have the DOMAIN_ROLE[DELETE] permission on the specified domain " +
+        "or DOMAIN_ROLE[DELETE] permission on the specified environment " +
+        "or DOMAIN_ROLE[DELETE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 204, message = "Role successfully deleted"),
             @ApiResponse(code = 400, message = "Role is bind to existing users"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void delete(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("role") String role,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("role") String role,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.DELETE)
-                .andThen(roleService.delete(ReferenceType.DOMAIN, domain, role, authenticatedUser))
-                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+            .andThen(roleService.delete(ReferenceType.DOMAIN, domain, role, authenticatedUser))
+            .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
     /**
@@ -154,7 +176,6 @@ public class RoleResource extends AbstractResource {
      * This will be removed when we deal with this issue: https://github.com/gravitee-io/issues/issues/3323
      */
     private UpdateRole convert(UpdateRole updateDomainRole) {
-
         UpdateRole updateRole = new UpdateRole();
         updateRole.setDescription(updateDomainRole.getDescription());
         updateRole.setName(updateDomainRole.getName());
@@ -167,7 +188,6 @@ public class RoleResource extends AbstractResource {
      * Special converter that just fill permissions from Role.oauthScope attribute for compatibility with v2.
      */
     private RoleEntity convert(Role role) {
-
         RoleEntity roleEntity = new RoleEntity(role);
         roleEntity.setPermissions(role.getOauthScopes());
 

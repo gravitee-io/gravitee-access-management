@@ -18,13 +18,12 @@ package io.gravitee.am.identityprovider.ldap.authentication;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.ldap.authentication.encoding.PasswordEncoder;
+import java.util.Arrays;
 import org.ldaptive.*;
 import org.ldaptive.auth.AuthenticationCriteria;
 import org.ldaptive.auth.AuthenticationHandlerResponse;
 import org.ldaptive.auth.PooledCompareAuthenticationHandler;
 import org.ldaptive.pool.PooledConnectionFactory;
-
-import java.util.Arrays;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,7 +41,12 @@ public class CompareAuthenticationHandler extends PooledCompareAuthenticationHan
         super(cf);
     }
 
-    public CompareAuthenticationHandler(PooledConnectionFactory connectionFactory, PasswordEncoder passwordEncoder, BinaryToTextEncoder binaryToTextEncoder, LdapIdentityProviderConfiguration configuration) {
+    public CompareAuthenticationHandler(
+        PooledConnectionFactory connectionFactory,
+        PasswordEncoder passwordEncoder,
+        BinaryToTextEncoder binaryToTextEncoder,
+        LdapIdentityProviderConfiguration configuration
+    ) {
         this(connectionFactory);
         this.passwordEncoder = passwordEncoder;
         this.binaryToTextEncoder = binaryToTextEncoder;
@@ -50,14 +54,13 @@ public class CompareAuthenticationHandler extends PooledCompareAuthenticationHan
     }
 
     @Override
-    protected AuthenticationHandlerResponse authenticateInternal(
-            final Connection c,
-            final AuthenticationCriteria criteria)
-            throws LdapException
-    {
+    protected AuthenticationHandlerResponse authenticateInternal(final Connection c, final AuthenticationCriteria criteria)
+        throws LdapException {
         final byte[] hash = passwordEncoder.digestCredential(criteria.getCredential());
         String encodedHash = binaryToTextEncoder.encode(hash);
-        String encodedHashValue = configuration.isHashEncodedByThirdParty() ? encodedHash : String.format("{%s}%s", passwordEncoder.getPasswordSchemeLabel(), encodedHash);
+        String encodedHashValue = configuration.isHashEncodedByThirdParty()
+            ? encodedHash
+            : String.format("{%s}%s", passwordEncoder.getPasswordSchemeLabel(), encodedHash);
 
         final LdapAttribute la = new LdapAttribute(getPasswordAttribute(), encodedHashValue.getBytes());
         final CompareOperation compare = new CompareOperation(c);
@@ -65,26 +68,26 @@ public class CompareAuthenticationHandler extends PooledCompareAuthenticationHan
         request.setControls(processRequestControls(criteria));
 
         final Response<Boolean> compareResponse = compare.execute(request);
-        return
-                new AuthenticationHandlerResponse(
-                        compareResponse.getResult(),
-                        compareResponse.getResultCode(),
-                        c,
-                        compareResponse.getMessage(),
-                        compareResponse.getControls(),
-                        compareResponse.getMessageId());
+        return new AuthenticationHandlerResponse(
+            compareResponse.getResult(),
+            compareResponse.getResultCode(),
+            c,
+            compareResponse.getMessage(),
+            compareResponse.getControls(),
+            compareResponse.getMessageId()
+        );
     }
 
     @Override
     public String toString() {
-        return
-                String.format(
-                        "[%s@%d::factory=%s, passwordAttribute=%s, passwordScheme=%s, controls=%s]",
-                        getClass().getName(),
-                        hashCode(),
-                        getConnectionFactory(),
-                        getPasswordAttribute(),
-                        passwordEncoder.getPasswordSchemeLabel(),
-                        Arrays.toString(getAuthenticationControls()));
+        return String.format(
+            "[%s@%d::factory=%s, passwordAttribute=%s, passwordScheme=%s, controls=%s]",
+            getClass().getName(),
+            hashCode(),
+            getConnectionFactory(),
+            getPasswordAttribute(),
+            passwordEncoder.getPasswordSchemeLabel(),
+            Arrays.toString(getAuthenticationControls())
+        );
     }
 }

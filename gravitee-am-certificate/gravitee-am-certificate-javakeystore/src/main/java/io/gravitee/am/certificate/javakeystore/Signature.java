@@ -24,7 +24,6 @@ import sun.security.x509.AlgorithmId;
  * @author GraviteeSource Team
  */
 public enum Signature {
-
     SHA512withRSA("SHA-512", AlgorithmId.sha512WithRSAEncryption_oid, JWSAlgorithm.RS512),
     SHA384withRSA("SHA-384", AlgorithmId.sha384WithRSAEncryption_oid, JWSAlgorithm.RS384),
     SHA256withRSA("SHA-256", AlgorithmId.sha256WithRSAEncryption_oid, JWSAlgorithm.RS256),
@@ -34,7 +33,6 @@ public enum Signature {
     private String digestOID;
     private ObjectIdentifier algorithmId;
     private JWSAlgorithm jwsAlgorithm;
-
 
     Signature(String digestOID, ObjectIdentifier algorithmId, JWSAlgorithm jwsAlgorithm) {
         this.digestOID = digestOID;

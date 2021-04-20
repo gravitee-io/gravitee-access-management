@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.certificate;
 
+import static org.junit.Assert.assertEquals;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
@@ -24,13 +26,10 @@ import io.gravitee.am.model.jose.JWK;
 import io.jsonwebtoken.security.Keys;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.security.Key;
 import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -58,8 +57,9 @@ public class CertificateProviderManagerTest {
         jwt.setSub("sub");
 
         assertEquals(
-                "non matching jwt with none algorithm",
-                "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.", certificateProvider.getJwtBuilder().sign(jwt)
+            "non matching jwt with none algorithm",
+            "eyJhbGciOiJub25lIn0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.",
+            certificateProvider.getJwtBuilder().sign(jwt)
         );
     }
 
@@ -79,9 +79,9 @@ public class CertificateProviderManagerTest {
         jwt.setSub("sub");
 
         assertEquals(
-                "non matching jwt with default certificateProvider",
-                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.ih3-kQgeGAQrL2H8pZMy979gVP0HWOH7p8-_7Ar0Lbs",
-                certificateProvider.getJwtBuilder().sign(jwt)
+            "non matching jwt with default certificateProvider",
+            "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.ih3-kQgeGAQrL2H8pZMy979gVP0HWOH7p8-_7Ar0Lbs",
+            certificateProvider.getJwtBuilder().sign(jwt)
         );
     }
 
@@ -90,7 +90,6 @@ public class CertificateProviderManagerTest {
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
                 throw new UnsupportedOperationException("No key for \"none\" algorithm");
@@ -128,7 +127,6 @@ public class CertificateProviderManagerTest {
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
-
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
                 return Single.just(certificateKey);
@@ -146,14 +144,12 @@ public class CertificateProviderManagerTest {
 
             @Override
             public String signatureAlgorithm() {
-                int keySize = certificateKey.getValue().toString().getBytes().length*8;
-                if(keySize>=512) {
+                int keySize = certificateKey.getValue().toString().getBytes().length * 8;
+                if (keySize >= 512) {
                     return "HS512";
-                }
-                else if(keySize>=384) {
+                } else if (keySize >= 384) {
                     return "HS384";
-                }
-                else if(keySize>=256) {
+                } else if (keySize >= 256) {
                     return "HS256";
                 }
                 return null;

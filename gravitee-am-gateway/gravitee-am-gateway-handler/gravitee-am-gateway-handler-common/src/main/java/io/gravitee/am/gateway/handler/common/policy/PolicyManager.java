@@ -19,7 +19,6 @@ import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.common.service.Service;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -27,6 +26,5 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface PolicyManager extends Service {
-
     Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint);
 }

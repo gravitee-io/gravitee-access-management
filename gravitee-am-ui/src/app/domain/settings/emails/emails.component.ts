@@ -14,41 +14,41 @@
  * limitations under the License.
  */
 import { Component } from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-domain-emails',
   templateUrl: './emails.component.html',
-  styleUrls: ['./emails.component.scss']
+  styleUrls: ['./emails.component.scss'],
 })
 export class DomainSettingsEmailsComponent {
   domain: any;
   emails: any[];
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = this.route.snapshot.data.domain;
     this.emails = this.getEmails();
   }
 
   getEmails() {
     return [
       {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon' : 'how_to_reg',
-        'enabled': true
+        name: 'Registration confirmation',
+        description: 'Registration email to confirm user account',
+        template: 'REGISTRATION_CONFIRMATION',
+        icon: 'how_to_reg',
+        enabled: true,
       },
       {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new one',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': this.allowResetPassword()
-      }
-    ]
+        name: 'Reset password',
+        description: 'Reset password email to ask for a new one',
+        template: 'RESET_PASSWORD',
+        icon: 'lock_open',
+        enabled: this.allowResetPassword(),
+      },
+    ];
   }
 
   allowResetPassword() {

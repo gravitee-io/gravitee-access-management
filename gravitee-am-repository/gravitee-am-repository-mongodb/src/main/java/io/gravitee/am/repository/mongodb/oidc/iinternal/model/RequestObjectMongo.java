@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.oidc.iinternal.model;
 
+import java.util.Date;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-
-import java.util.Date;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

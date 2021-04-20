@@ -51,10 +51,10 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
     public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
-                .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize())
-                .setSsl(isTLS());
+            .setUserAgent(DEFAULT_USER_AGENT)
+            .setConnectTimeout(configuration.getConnectTimeout())
+            .setMaxPoolSize(configuration.getMaxPoolSize())
+            .setSsl(isTLS());
 
         return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }
@@ -66,9 +66,15 @@ public class OAuth2GenericAuthenticationProviderConfiguration {
      * @return <code>true</code> if all urls are secured, <code>false</code> else.
      */
     private boolean isTLS() {
-        return configuration.getAccessTokenUri() != null && configuration.getAccessTokenUri().startsWith(HTTPS)
-                && configuration.getUserAuthorizationUri() != null && configuration.getUserAuthorizationUri().startsWith(HTTPS)
-                && configuration.getUserProfileUri() != null && configuration.getUserProfileUri().startsWith(HTTPS)
-                && configuration.getWellKnownUri() != null && configuration.getWellKnownUri().startsWith(HTTPS);
+        return (
+            configuration.getAccessTokenUri() != null &&
+            configuration.getAccessTokenUri().startsWith(HTTPS) &&
+            configuration.getUserAuthorizationUri() != null &&
+            configuration.getUserAuthorizationUri().startsWith(HTTPS) &&
+            configuration.getUserProfileUri() != null &&
+            configuration.getUserProfileUri().startsWith(HTTPS) &&
+            configuration.getWellKnownUri() != null &&
+            configuration.getWellKnownUri().startsWith(HTTPS)
+        );
     }
 }

@@ -20,7 +20,6 @@ package io.gravitee.am.service.authentication.crypto.password;
  * @author GraviteeSource Team
  */
 public interface PasswordValidator {
-
     int PASSWORD_MAX_LENGTH = 72;
 
     boolean validate(final String password);

@@ -23,6 +23,5 @@ import io.gravitee.am.identityprovider.api.common.Request;
  * @author GraviteeSource Team
  */
 public interface SocialAuthenticationProvider extends AuthenticationProvider {
-
     Request signInUrl(String redirectUri);
 }

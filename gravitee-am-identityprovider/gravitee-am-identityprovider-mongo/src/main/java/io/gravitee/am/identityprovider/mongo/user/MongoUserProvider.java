@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -31,23 +33,20 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.mongodb.client.model.Filters.eq;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import({MongoAuthenticationProviderConfiguration.class})
+@Import({ MongoAuthenticationProviderConfiguration.class })
 public class MongoUserProvider implements UserProvider, InitializingBean {
 
     private static final String FIELD_ID = "_id";
@@ -90,8 +89,9 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
         final String username = user.getUsername().toLowerCase();
 
         return findByUsername(username)
-                .isEmpty()
-                .flatMap(isEmpty -> {
+            .isEmpty()
+            .flatMap(
+                isEmpty -> {
                     if (!isEmpty) {
                         return Single.error(new UserAlreadyExistsException(user.getUsername()));
                     } else {
@@ -111,21 +111,27 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                         // set date fields
                         document.put(FIELD_CREATED_AT, new Date());
                         document.put(FIELD_UPDATED_AT, document.get(FIELD_CREATED_AT));
-                        return Single.fromPublisher(usersCollection.insertOne(document)).flatMap(success -> findById(document.getString(FIELD_ID)).toSingle());
+                        return Single
+                            .fromPublisher(usersCollection.insertOne(document))
+                            .flatMap(success -> findById(document.getString(FIELD_ID)).toSingle());
                     }
-                });
+                }
+            );
     }
 
     @Override
     public Single<User> update(String id, User updateUser) {
         return findById(id)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapSingle(oldUser -> {
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
+            .flatMapSingle(
+                oldUser -> {
                     Document document = new Document();
                     // set username (keep the original value)
                     document.put(configuration.getUsernameField(), oldUser.getUsername());
                     // set password
-                    String password = (updateUser.getCredentials() == null) ? oldUser.getCredentials() : passwordEncoder.encode(updateUser.getCredentials());
+                    String password = (updateUser.getCredentials() == null)
+                        ? oldUser.getCredentials()
+                        : passwordEncoder.encode(updateUser.getCredentials());
                     document.put(configuration.getPasswordField(), password);
                     // set additional information
                     if (updateUser.getAdditionalInformation() != null) {
@@ -134,21 +140,25 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                     // set date fields
                     document.put(FIELD_CREATED_AT, oldUser.getCreatedAt());
                     document.put(FIELD_UPDATED_AT, new Date());
-                    return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, oldUser.getId()), document)).flatMap(updateResult -> findById(oldUser.getId()).toSingle());
-                });
+                    return Single
+                        .fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, oldUser.getId()), document))
+                        .flatMap(updateResult -> findById(oldUser.getId()).toSingle());
+                }
+            );
     }
 
     @Override
     public Completable delete(String id) {
         return findById(id)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapCompletable(idpUser -> Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))));
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
+            .flatMapCompletable(idpUser -> Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))));
     }
 
     @Override
     public void afterPropertiesSet() {
         // init users collection
-        usersCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
+        usersCollection =
+            this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         // create index on username field
         Observable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1))).subscribe();
     }
@@ -178,7 +188,7 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+","");
+        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+", "");
         return rawString;
     }
 }

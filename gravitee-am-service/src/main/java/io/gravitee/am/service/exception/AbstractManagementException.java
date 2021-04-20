@@ -24,8 +24,7 @@ public abstract class AbstractManagementException extends RuntimeException {
     /**
      * Constructor.
      */
-    public AbstractManagementException() {
-    }
+    public AbstractManagementException() {}
 
     /**
      * Constructor.

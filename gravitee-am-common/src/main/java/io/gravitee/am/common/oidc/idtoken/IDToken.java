@@ -16,7 +16,6 @@
 package io.gravitee.am.common.oidc.idtoken;
 
 import io.gravitee.am.common.jwt.JWT;
-
 import java.util.Map;
 
 /**

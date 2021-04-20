@@ -25,7 +25,6 @@ public class FormAlreadyExistsException extends AbstractManagementException {
 
     private final String template;
 
-
     public FormAlreadyExistsException(String template) {
         this.template = template;
     }

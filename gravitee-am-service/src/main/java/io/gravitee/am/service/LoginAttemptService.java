@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface LoginAttemptService {
-
     Completable loginSucceeded(LoginAttemptCriteria criteria);
 
     Completable loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings);
@@ -36,6 +35,4 @@ public interface LoginAttemptService {
     Maybe<LoginAttempt> checkAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings);
 
     Maybe<LoginAttempt> findById(String id);
-
-
 }

@@ -35,7 +35,9 @@ public class PasswordValidatorTest {
 
     @Test
     public void testPassword_min_8_characters_at_least_one_letter_one_number_one_special_character() {
-        PasswordValidator passwordValidator = new RegexPasswordValidator("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$");
+        PasswordValidator passwordValidator = new RegexPasswordValidator(
+            "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$"
+        );
 
         Assert.assertFalse(passwordValidator.validate("test"));
         Assert.assertFalse(passwordValidator.validate("password"));
@@ -45,7 +47,9 @@ public class PasswordValidatorTest {
 
     @Test
     public void testPassword_min_8_characters_at_least_one_uppercase_letter_one_lowercase_letter_one_number_one_special_character() {
-        PasswordValidator passwordValidator = new RegexPasswordValidator("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+        PasswordValidator passwordValidator = new RegexPasswordValidator(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$"
+        );
 
         Assert.assertFalse(passwordValidator.validate("test"));
         Assert.assertFalse(passwordValidator.validate("password"));
@@ -56,7 +60,9 @@ public class PasswordValidatorTest {
 
     @Test
     public void testPassword_min_8_characters_max_10_characters_at_least_one_uppercase_letter_one_lowercase_letter_one_number_one_special_character() {
-        PasswordValidator passwordValidator = new RegexPasswordValidator("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,10}$");
+        PasswordValidator passwordValidator = new RegexPasswordValidator(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,10}$"
+        );
 
         Assert.assertFalse(passwordValidator.validate("test"));
         Assert.assertFalse(passwordValidator.validate("password"));

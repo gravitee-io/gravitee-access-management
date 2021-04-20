@@ -15,21 +15,20 @@
  */
 package io.gravitee.am.service.model;
 
+import static org.junit.Assert.*;
+
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
-import org.junit.Test;
-
-import javax.swing.text.html.Option;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
+import javax.swing.text.html.Option;
+import org.junit.Test;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -39,7 +38,6 @@ public class PatchApplicationTest {
 
     @Test
     public void getRequiredPermissions() {
-
         PatchApplication patchApplication = new PatchApplication();
         assertEquals(Collections.emptySet(), patchApplication.getRequiredPermissions());
 
@@ -97,7 +95,17 @@ public class PatchApplicationTest {
         patchApplicationSettings.setOauth(Optional.of(new PatchApplicationOAuthSettings()));
         patchApplication.setSettings(Optional.of(patchApplicationSettings));
 
-        assertEquals(new HashSet<>(Arrays.asList(Permission.APPLICATION_SETTINGS, Permission.APPLICATION_OPENID, Permission.APPLICATION_IDENTITY_PROVIDER,
-                Permission.APPLICATION_CERTIFICATE, Permission.APPLICATION_FACTOR)), patchApplication.getRequiredPermissions());
+        assertEquals(
+            new HashSet<>(
+                Arrays.asList(
+                    Permission.APPLICATION_SETTINGS,
+                    Permission.APPLICATION_OPENID,
+                    Permission.APPLICATION_IDENTITY_PROVIDER,
+                    Permission.APPLICATION_CERTIFICATE,
+                    Permission.APPLICATION_FACTOR
+                )
+            ),
+            patchApplication.getRequiredPermissions()
+        );
     }
 }

@@ -36,15 +36,14 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -88,7 +87,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     @Override
     protected void doStop() throws Exception {
-        logger.info("Security domain ["+ domain.getName() + "] handler is now stopping, closing context...");
+        logger.info("Security domain [" + domain.getName() + "] handler is now stopping, closing context...");
 
         stopComponents();
         stopProtocols();
@@ -122,27 +121,31 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     private void startSecurityDomainProtocols() {
         logger.info("Start security domain protocols");
 
-        PROTOCOLS.forEach(protocol -> {
-            try {
-                ProtocolProvider protocolProvider = protocolPluginManager.create(protocol, applicationContext);
-                protocolProvider.start();
-                protocolProviders.add(protocolProvider);
-                logger.info("\t Protocol {} loaded", protocol);
-            } catch (Exception e) {
-                logger.error("\t An error occurs while loading {} protocol", protocol, e);
+        PROTOCOLS.forEach(
+            protocol -> {
+                try {
+                    ProtocolProvider protocolProvider = protocolPluginManager.create(protocol, applicationContext);
+                    protocolProvider.start();
+                    protocolProviders.add(protocolProvider);
+                    logger.info("\t Protocol {} loaded", protocol);
+                } catch (Exception e) {
+                    logger.error("\t An error occurs while loading {} protocol", protocol, e);
+                }
             }
-        });
+        );
     }
 
     private void stopProtocols() {
-        protocolProviders.forEach(protocolProvider -> {
-            try {
-                protocolProvider.stop();
-                logger.info("\t Protocol {} stopped", protocolProvider.path());
-            } catch (Exception e) {
-                logger.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
+        protocolProviders.forEach(
+            protocolProvider -> {
+                try {
+                    protocolProvider.stop();
+                    logger.info("\t Protocol {} stopped", protocolProvider.path());
+                } catch (Exception e) {
+                    logger.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
+                }
             }
-        });
+        );
     }
 
     private void stopComponents() {
@@ -156,14 +159,16 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(UserManager.class);
         components.add(FactorManager.class);
 
-        components.forEach(componentClass -> {
-            LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
-            try {
-                lifecyclecomponent.stop();
-            } catch (Exception e) {
-                logger.error("An error occurs while stopping component {}", componentClass.getSimpleName(), e);
+        components.forEach(
+            componentClass -> {
+                LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
+                try {
+                    lifecyclecomponent.stop();
+                } catch (Exception e) {
+                    logger.error("An error occurs while stopping component {}", componentClass.getSimpleName(), e);
+                }
             }
-        });
+        );
     }
 
     private void sendNotFound(RoutingContext context) {

@@ -58,22 +58,26 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration GET endpoint");
 
         this.getClient(context)
-                .map(DynamicClientRegistrationResponse::fromClient)
-                .map(response -> {
+            .map(DynamicClientRegistrationResponse::fromClient)
+            .map(
+                response -> {
                     //The Authorization Server need not include the registration access_token or client_uri unless they have been updated.
                     response.setRegistrationAccessToken(null);
                     response.setRegistrationClientUri(null);
                     return response;
-                })
-                .subscribe(
-                        result -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(result))
-                        , error -> context.fail(error)
-                );
+                }
+            )
+            .subscribe(
+                result ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setStatusCode(HttpStatusCode.OK_200)
+                        .end(Json.encodePrettily(result)),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -84,20 +88,24 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration PATCH endpoint");
 
         this.getClient(context)
-                .flatMapSingle(Single::just)
-                .flatMap(client -> this.extractRequest(context)
+            .flatMapSingle(Single::just)
+            .flatMap(
+                client ->
+                    this.extractRequest(context)
                         .flatMap(request -> dcrService.patch(client, request, UriBuilderRequest.extractBasePath(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
-                )
-                .subscribe(
-                        client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
-                        , error -> context.fail(error)
-                );
+            )
+            .subscribe(
+                client ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setStatusCode(HttpStatusCode.OK_200)
+                        .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client))),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -108,20 +116,24 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration UPDATE endpoint");
 
         this.getClient(context)
-                .flatMapSingle(Single::just)
-                .flatMap(client -> this.extractRequest(context)
+            .flatMapSingle(Single::just)
+            .flatMap(
+                client ->
+                    this.extractRequest(context)
                         .flatMap(request -> dcrService.update(client, request, UriBuilderRequest.extractBasePath(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
-                )
-                .subscribe(
-                        client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
-                        , error -> context.fail(error)
-                );
+            )
+            .subscribe(
+                client ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setStatusCode(HttpStatusCode.OK_200)
+                        .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client))),
+                error -> context.fail(error)
+            );
     }
 
     /**
@@ -132,12 +144,9 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration DELETE endpoint");
 
         this.getClient(context)
-                .flatMapSingle(dcrService::delete)
-                .map(this.clientSyncService::removeDynamicClientRegistred)
-                .subscribe(
-                        client -> context.response().setStatusCode(HttpStatusCode.NO_CONTENT_204).end()
-                        , error -> context.fail(error)
-                );
+            .flatMapSingle(dcrService::delete)
+            .map(this.clientSyncService::removeDynamicClientRegistred)
+            .subscribe(client -> context.response().setStatusCode(HttpStatusCode.NO_CONTENT_204).end(), error -> context.fail(error));
     }
 
     /**
@@ -148,35 +157,41 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
 
         this.getClient(context)
-                .flatMapSingle(Single::just)
-                .flatMap(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.extractBasePath(context)))
-                .map(clientSyncService::addDynamicClientRegistred)
-                .subscribe(
-                        client -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .setStatusCode(HttpStatusCode.OK_200)
-                                .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client)))
-                        , error -> context.fail(error)
-                );
+            .flatMapSingle(Single::just)
+            .flatMap(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.extractBasePath(context)))
+            .map(clientSyncService::addDynamicClientRegistred)
+            .subscribe(
+                client ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .setStatusCode(HttpStatusCode.OK_200)
+                        .end(Json.encodePrettily(DynamicClientRegistrationResponse.fromClient(client))),
+                error -> context.fail(error)
+            );
     }
 
     private Maybe<Client> getClient(RoutingContext context) {
         String clientId = context.request().getParam("client_id");
 
         return this.clientSyncService.findByClientId(clientId)
-                .switchIfEmpty(Maybe.error(new OAuth2Exception() {
-                    @Override
-                    public int getHttpStatusCode() {
-                        return HttpStatusCode.NOT_FOUND_404;
-                    }
+            .switchIfEmpty(
+                Maybe.error(
+                    new OAuth2Exception() {
+                        @Override
+                        public int getHttpStatusCode() {
+                            return HttpStatusCode.NOT_FOUND_404;
+                        }
 
-                    @Override
-                    public String getMessage() {
-                        return "client not found";
+                        @Override
+                        public String getMessage() {
+                            return "client not found";
+                        }
                     }
-                }))
-                .map(Client::clone);
+                )
+            )
+            .map(Client::clone);
     }
 }

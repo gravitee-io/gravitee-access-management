@@ -24,7 +24,6 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public interface SubjectType {
-
     String PUBLIC = "public";
     String PAIRWISE = "pairwise";
 }

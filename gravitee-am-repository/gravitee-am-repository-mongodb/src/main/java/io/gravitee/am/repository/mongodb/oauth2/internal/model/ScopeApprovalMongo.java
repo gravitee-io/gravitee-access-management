@@ -16,9 +16,8 @@
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.bson.codecs.pojo.annotations.BsonId;
-
 import java.util.Date;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

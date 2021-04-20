@@ -20,7 +20,7 @@ import { OrganizationService } from './organization.service';
 describe('OrganizationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [OrganizationService]
+      providers: [OrganizationService],
     });
   });
 

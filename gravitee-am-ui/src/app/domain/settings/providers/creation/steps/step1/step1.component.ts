@@ -14,33 +14,32 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input } from '@angular/core';
-import { OrganizationService } from "../../../../../../services/organization.service";
+import { OrganizationService } from '../../../../../../services/organization.service';
 
 @Component({
   selector: 'provider-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ProviderCreationStep1Component implements OnInit {
   private identityProviderTypes: any = {
-    'ldap-am-idp' : 'Generic LDAP / AD',
-    'mongo-am-idp' : 'MongoDB',
+    'ldap-am-idp': 'Generic LDAP / AD',
+    'mongo-am-idp': 'MongoDB',
     'inline-am-idp': 'Inline',
     'oauth2-generic-am-idp': 'OpenID Connect',
     'github-am-idp': 'GitHub',
-    'http-am-idp': 'HTTP'
+    'http-am-idp': 'HTTP',
   };
   @Input() provider;
   providers: any[];
   socialProviders: any[];
   selectedProviderTypeId: string;
 
-  constructor(private organizationService: OrganizationService) {
-  }
+  constructor(private organizationService: OrganizationService) {}
 
   ngOnInit() {
-    this.organizationService.identities().subscribe(data => this.providers = data);
-    this.organizationService.socialIdentities().subscribe(data => this.socialProviders = data);
+    this.organizationService.identities().subscribe((data) => (this.providers = data));
+    this.organizationService.socialIdentities().subscribe((data) => (this.socialProviders = data));
   }
 
   selectProviderType(isExternal: boolean) {

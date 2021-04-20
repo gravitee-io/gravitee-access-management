@@ -23,7 +23,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +32,7 @@ import java.util.Map;
  */
 public class UserTokenRequestParseHandler extends UserRequestHandler {
 
-    private static final String TOKEN_PARAM  = "token";
+    private static final String TOKEN_PARAM = "token";
     private static final String ERROR_PARAM = "error";
     private static final String SUCCESS_PARAM = "success";
     private static final String WARNING_PARAM = "warning";
@@ -80,28 +79,33 @@ public class UserTokenRequestParseHandler extends UserRequestHandler {
             return;
         }
 
-        parseToken(token, handler -> {
-            if (handler.failed()) {
-                Map<String, String> params = new HashMap<>();
-                params.put("error", "invalid_token");
-                params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
-                redirectToPage(context, params);
-                return;
-            }
+        parseToken(
+            token,
+            handler -> {
+                if (handler.failed()) {
+                    Map<String, String> params = new HashMap<>();
+                    params.put("error", "invalid_token");
+                    params.computeIfAbsent(Parameters.CLIENT_ID, val -> clientId);
+                    redirectToPage(context, params);
+                    return;
+                }
 
-            // put user and client in context
-            UserToken userToken = handler.result();
-            context.put("user", userToken.getUser());
-            context.put("client", userToken.getClient());
-            context.next();
-        });
+                // put user and client in context
+                UserToken userToken = handler.result();
+                context.put("user", userToken.getUser());
+                context.put("client", userToken.getClient());
+                context.next();
+            }
+        );
     }
 
     private void parseToken(String token, Handler<AsyncResult<UserToken>> handler) {
-        userService.verifyToken(token)
-                .subscribe(
-                        userToken -> handler.handle(Future.succeededFuture(userToken)),
-                        error -> handler.handle(Future.failedFuture(error)),
-                        () -> handler.handle(Future.failedFuture(new InvalidTokenException("The JWT token is invalid"))));
+        userService
+            .verifyToken(token)
+            .subscribe(
+                userToken -> handler.handle(Future.succeededFuture(userToken)),
+                error -> handler.handle(Future.failedFuture(error)),
+                () -> handler.handle(Future.failedFuture(new InvalidTokenException("The JWT token is invalid")))
+            );
     }
 }

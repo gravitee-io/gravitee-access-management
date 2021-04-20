@@ -29,13 +29,8 @@ public class ClientErrorExceptionMapper extends AbstractExceptionMapper<ClientEr
 
     @Override
     public Response toResponse(final ClientErrorException e) {
-
         final Response.Status status = e.getResponse().getStatusInfo().toEnum();
 
-        return Response
-                .status(status)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(convert(e, status.getStatusCode()))
-                .build();
+        return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(convert(e, status.getStatusCode())).build();
     }
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reporter;
@@ -24,14 +26,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -57,7 +56,10 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Single<List<Reporter>> findByDomain(String domain) {
-        return Observable.fromPublisher(reportersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(reportersCollection.find(eq(FIELD_DOMAIN, domain)))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -75,7 +77,9 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     @Override
     public Single<Reporter> update(Reporter item) {
         ReporterMongo reporter = convert(item);
-        return Single.fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter)).flatMap(updateResult -> findById(reporter.getId()).toSingle());
+        return Single
+            .fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter))
+            .flatMap(updateResult -> findById(reporter.getId()).toSingle());
     }
 
     @Override

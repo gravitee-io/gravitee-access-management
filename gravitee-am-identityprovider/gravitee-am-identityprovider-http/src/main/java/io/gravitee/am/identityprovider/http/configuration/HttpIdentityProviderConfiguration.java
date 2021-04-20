@@ -18,7 +18,6 @@ package io.gravitee.am.identityprovider.http.configuration;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpMethod;
-
 import java.util.List;
 
 /**

@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core'
-import {FormControl, NgForm} from "@angular/forms";
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { FormControl, NgForm } from '@angular/forms';
 
 @Component({
   selector: 'application-scope',
-  templateUrl: './application-scope.component.html'
+  templateUrl: './application-scope.component.html',
 })
-
 export class ApplicationScopeComponent {
   scope: any = {};
   selectScopes = new FormControl();

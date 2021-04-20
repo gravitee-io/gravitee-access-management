@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.AuditParam;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
@@ -31,25 +34,21 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.Collections;
+import java.util.stream.Collectors;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"audit"})
+@Api(tags = { "audit" })
 public class AuditsResource extends AbstractResource {
 
     @Context
@@ -60,24 +59,29 @@ public class AuditsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List audit logs for a security domain",
-            notes = "User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. " +
-                    "Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.")
-    @ApiResponses({
+    @ApiOperation(
+        value = "List audit logs for a security domain",
+        notes = "User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. " +
+        "Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status."
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "List audit logs for a security domain", response = Audit.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @BeanParam AuditParam param,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @BeanParam AuditParam param,
+        @Suspended final AsyncResponse response
+    ) {
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
-                .from(param.getFrom())
-                .to(param.getTo())
-                .status(param.getStatus())
-                .user(param.getUser());
+            .from(param.getFrom())
+            .to(param.getTo())
+            .status(param.getStatus())
+            .user(param.getUser());
 
         if (param.getType() != null) {
             queryBuilder.types(Collections.singletonList(param.getType()));
@@ -86,16 +90,38 @@ public class AuditsResource extends AbstractResource {
         User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUDIT, Acl.LIST)
-                .andThen(auditService.search(domain, queryBuilder.build(), param.getPage(), param.getSize())
-                .flatMap(auditPage -> hasPermission(authenticatedUser, ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_AUDIT, Acl.READ)
-                        .map(hasPermission -> {
-                            if (hasPermission) {
-                                return auditPage;
-                            } else {
-                                return new Page<>(auditPage.getData().stream().map(FilterUtils::filterAuditInfos).collect(Collectors.toList()), auditPage.getCurrentPage(), auditPage.getTotalCount());
-                            }
-                        })))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                auditService
+                    .search(domain, queryBuilder.build(), param.getPage(), param.getSize())
+                    .flatMap(
+                        auditPage ->
+                            hasPermission(
+                                authenticatedUser,
+                                ReferenceType.ORGANIZATION,
+                                organizationId,
+                                Permission.ORGANIZATION_AUDIT,
+                                Acl.READ
+                            )
+                                .map(
+                                    hasPermission -> {
+                                        if (hasPermission) {
+                                            return auditPage;
+                                        } else {
+                                            return new Page<>(
+                                                auditPage
+                                                    .getData()
+                                                    .stream()
+                                                    .map(FilterUtils::filterAuditInfos)
+                                                    .collect(Collectors.toList()),
+                                                auditPage.getCurrentPage(),
+                                                auditPage.getTotalCount()
+                                            );
+                                        }
+                                    }
+                                )
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{audit}")

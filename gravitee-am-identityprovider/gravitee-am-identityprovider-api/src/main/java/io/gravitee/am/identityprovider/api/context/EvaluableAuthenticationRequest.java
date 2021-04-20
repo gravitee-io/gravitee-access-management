@@ -71,7 +71,7 @@ public class EvaluableAuthenticationRequest {
         return request.contextPath();
     }
 
-    public String [] getPathInfos() {
+    public String[] getPathInfos() {
         return request.pathInfo().split("/");
     }
 

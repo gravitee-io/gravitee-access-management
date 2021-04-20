@@ -20,11 +20,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,18 +42,21 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         try {
             final HttpServerRequest request = routingContext.request();
-            final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(routingContext.request(), redirectURL, requestParameters, true);
-            routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
-                    .setStatusCode(302)
-                    .end();
+            final Map<String, String> requestParameters = request
+                .params()
+                .entries()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(
+                routingContext.request(),
+                redirectURL,
+                requestParameters,
+                true
+            );
+            routingContext.response().putHeader(HttpHeaders.LOCATION, proxiedRedirectURI).setStatusCode(302).end();
         } catch (Exception e) {
             logger.warn("Failed to decode login redirect url", e);
-            routingContext.response()
-                    .putHeader(HttpHeaders.LOCATION, redirectURL)
-                    .setStatusCode(302)
-                    .end();
+            routingContext.response().putHeader(HttpHeaders.LOCATION, redirectURL).setStatusCode(302).end();
         }
     }
 }

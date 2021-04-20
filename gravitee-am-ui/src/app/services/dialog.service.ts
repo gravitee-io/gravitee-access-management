@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Injectable } from "@angular/core";
-import { MatDialog, MatDialogRef } from "@angular/material/dialog";
-import { Observable } from "rxjs";
-import { ConfirmComponent } from "../components/dialog/confirm/confirm.component";
+import { Injectable } from '@angular/core';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Observable } from 'rxjs';
+import { ConfirmComponent } from '../components/dialog/confirm/confirm.component';
 
 @Injectable()
 export class DialogService {
-
-  constructor(private dialog: MatDialog) { }
+  constructor(private dialog: MatDialog) {}
 
   public confirm(title: string, message: string): Observable<boolean> {
-
     let dialogRef: MatDialogRef<ConfirmComponent>;
     dialogRef = this.dialog.open(ConfirmComponent);
     dialogRef.componentInstance.title = title;
@@ -32,5 +30,4 @@ export class DialogService {
 
     return dialogRef.afterClosed();
   }
-
 }

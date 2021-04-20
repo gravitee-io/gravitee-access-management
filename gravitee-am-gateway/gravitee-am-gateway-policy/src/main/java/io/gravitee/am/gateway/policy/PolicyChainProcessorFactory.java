@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.policy;
 import io.gravitee.am.gateway.core.processor.Processor;
 import io.gravitee.am.gateway.policy.impl.PolicyChain;
 import io.gravitee.gateway.api.ExecutionContext;
-
 import java.util.List;
 
 /**
@@ -30,5 +29,4 @@ public class PolicyChainProcessorFactory {
     public Processor<ExecutionContext> create(List<Policy> policies, final ExecutionContext executionContext) {
         return new PolicyChain(policies, executionContext);
     }
-
 }

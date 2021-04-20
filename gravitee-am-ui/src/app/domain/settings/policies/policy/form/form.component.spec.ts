@@ -23,9 +23,8 @@ describe('PolicyFormComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ PolicyFormComponent ]
-    })
-    .compileComponents();
+      declarations: [PolicyFormComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

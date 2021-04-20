@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.reporter.builder;
 
+import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -30,11 +32,8 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
-
 import java.time.Instant;
 import java.util.Arrays;
-
-import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -146,7 +145,14 @@ public abstract class AuditBuilder<T> {
         return type;
     }
 
-    protected void setActor(String actorId, String actorType, String actorAlternativeId, String actorDisplayName, ReferenceType actorReferenceType, String actorReferenceId) {
+    protected void setActor(
+        String actorId,
+        String actorType,
+        String actorAlternativeId,
+        String actorDisplayName,
+        ReferenceType actorReferenceType,
+        String actorReferenceId
+    ) {
         this.actorId = actorId;
         this.actorType = actorType;
         this.actorAlternativeId = actorAlternativeId;
@@ -155,7 +161,14 @@ public abstract class AuditBuilder<T> {
         this.actorReferenceId = actorReferenceId;
     }
 
-    protected void setTarget(String targetId, String targetType, String targetAlternativeId, String targetDisplayName, ReferenceType targetReferenceType, String targetReferenceId) {
+    protected void setTarget(
+        String targetId,
+        String targetType,
+        String targetAlternativeId,
+        String targetDisplayName,
+        ReferenceType targetReferenceType,
+        String targetReferenceId
+    ) {
         this.targetId = targetId;
         this.targetType = targetType;
         this.targetAlternativeId = targetAlternativeId;
@@ -221,14 +234,24 @@ public abstract class AuditBuilder<T> {
                 if (EventType.USER_CONSENT_CONSENTED.equals(type) || EventType.USER_CONSENT_REVOKED.equals(type)) {
                     oldNode = mapper.createArrayNode();
                     newNode = mapper.createArrayNode();
-                    mapper.convertValue(newValue, ArrayNode.class).forEach(jsonNode -> {
-                        ((ArrayNode) newNode).add(((ObjectNode) jsonNode).remove(Arrays.asList("updatedAt", "createdAt", "expiresAt", "userId", "domain")));
-                    });
+                    mapper
+                        .convertValue(newValue, ArrayNode.class)
+                        .forEach(
+                            jsonNode -> {
+                                ((ArrayNode) newNode).add(
+                                        ((ObjectNode) jsonNode).remove(
+                                                Arrays.asList("updatedAt", "createdAt", "expiresAt", "userId", "domain")
+                                            )
+                                    );
+                            }
+                        );
                 } else {
-                    oldNode = oldValue == null
+                    oldNode =
+                        oldValue == null
                             ? mapper.createObjectNode()
                             : mapper.convertValue(oldValue, ObjectNode.class).remove(Arrays.asList("updatedAt", "createdAt", "lastEvent"));
-                    newNode = newValue == null
+                    newNode =
+                        newValue == null
                             ? mapper.createObjectNode()
                             : mapper.convertValue(newValue, ObjectNode.class).remove(Arrays.asList("updatedAt", "createdAt", "lastEvent"));
                 }

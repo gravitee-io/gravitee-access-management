@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -34,6 +37,10 @@ import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,14 +48,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -290,42 +289,42 @@ public class SyncManagerTest {
 
     @Test
     public void test_deployDomainWithTag() throws Exception {
-        shouldDeployDomainWithTags("test,toto", new String[]{"test"});
+        shouldDeployDomainWithTags("test,toto", new String[] { "test" });
     }
 
     @Test
     public void test_deployDomainWithUpperCasedTag() throws Exception {
-        shouldDeployDomainWithTags("test,toto", new String[]{"Test"});
+        shouldDeployDomainWithTags("test,toto", new String[] { "Test" });
     }
 
     @Test
     public void test_deployDomainWithAccentTag() throws Exception {
-        shouldDeployDomainWithTags("test,toto", new String[]{"tést"});
+        shouldDeployDomainWithTags("test,toto", new String[] { "tést" });
     }
 
     @Test
     public void test_deployDomainWithUpperCasedAndAccentTag() throws Exception {
-        shouldDeployDomainWithTags("test", new String[]{"Tést"});
+        shouldDeployDomainWithTags("test", new String[] { "Tést" });
     }
 
     @Test
     public void test_deployDomainWithTagExclusion() throws Exception {
-        shouldDeployDomainWithTags("test,!toto", new String[]{"test"});
+        shouldDeployDomainWithTags("test,!toto", new String[] { "test" });
     }
 
     @Test
     public void test_deployDomainWithSpaceAfterComma() throws Exception {
-        shouldDeployDomainWithTags("test, !toto", new String[]{"test"});
+        shouldDeployDomainWithTags("test, !toto", new String[] { "test" });
     }
 
     @Test
     public void test_deployDomainWithSpaceBeforeComma() throws Exception {
-        shouldDeployDomainWithTags("test ,!toto", new String[]{"test"});
+        shouldDeployDomainWithTags("test ,!toto", new String[] { "test" });
     }
 
     @Test
     public void test_deployDomainWithSpaceBeforeTag() throws Exception {
-        shouldDeployDomainWithTags(" test,!toto", new String[]{"test"});
+        shouldDeployDomainWithTags(" test,!toto", new String[] { "test" });
     }
 
     public void shouldDeployDomainWithTags(final String tags, final String[] domainTags) throws Exception {

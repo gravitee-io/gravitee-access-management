@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.oauth2;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-
 import java.util.Map;
 
 /**
@@ -24,6 +23,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class OAuth2GenericIdentityProviderRoleMapper implements IdentityProviderRoleMapper {
+
     private Map<String, String[]> roles;
 
     public Map<String, String[]> getRoles() {

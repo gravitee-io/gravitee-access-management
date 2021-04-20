@@ -15,6 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.*;
@@ -24,21 +31,13 @@ import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,7 +55,9 @@ public class DomainsResourceTest extends JerseySpringTest {
         mockDomain2.setId("domain-id-2");
         mockDomain2.setName("domain-name-2");
 
-        doReturn(Flowable.just(mockDomain, mockDomain2)).when(domainService).findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
+        doReturn(Flowable.just(mockDomain, mockDomain2))
+            .when(domainService)
+            .findAllByEnvironment(eq(Organization.DEFAULT), eq(Environment.DEFAULT));
 
         final Response response = target("domains").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

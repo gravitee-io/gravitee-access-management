@@ -38,6 +38,6 @@ public class ClientAlreadyExistsException extends AbstractManagementException {
 
     @Override
     public String getMessage() {
-        return "A client [" + clientId + "] already exists for domain [" + domain+ "]";
+        return "A client [" + clientId + "] already exists for domain [" + domain + "]";
     }
 }

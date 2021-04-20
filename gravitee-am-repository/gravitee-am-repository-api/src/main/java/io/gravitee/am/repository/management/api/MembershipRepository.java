@@ -23,7 +23,6 @@ import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -31,7 +30,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface MembershipRepository extends CrudRepository<Membership, String> {
-
     Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
 
     Single<List<Membership>> findByMember(String memberId, MemberType memberType);

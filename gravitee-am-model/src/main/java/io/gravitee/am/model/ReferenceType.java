@@ -24,5 +24,5 @@ public enum ReferenceType {
     DOMAIN,
     APPLICATION,
     ORGANIZATION,
-    ENVIRONMENT
+    ENVIRONMENT,
 }

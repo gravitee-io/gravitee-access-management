@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +35,10 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { MongoAuthenticationProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(
+    classes = { MongoAuthenticationProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class },
+    loader = AnnotationConfigContextLoader.class
+)
 public class MongoAuthenticationProviderTest {
 
     @Autowired
@@ -43,22 +46,26 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication() {
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "bobspassword";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "bobspassword";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "bob";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "bob";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -69,22 +76,26 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_case_insensitive() {
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "bobspassword";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "bobspassword";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "BOB";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "BOB";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -95,47 +106,54 @@ public class MongoAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "wrongpassword";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "wrongpassword";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "bob";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "bob";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
         testObserver.awaitTerminalEvent();
         testObserver.assertError(BadCredentialsException.class);
     }
 
     @Test
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "bobspassword";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "bobspassword";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "unknownUsername";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "unknownUsername";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertError(UsernameNotFoundException.class);
     }
-
 }

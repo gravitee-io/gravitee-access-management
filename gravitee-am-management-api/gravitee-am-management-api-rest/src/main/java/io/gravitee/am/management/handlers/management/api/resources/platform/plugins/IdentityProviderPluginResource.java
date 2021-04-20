@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -39,7 +38,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Identity Provider"})
+@Api(tags = { "Plugin", "Identity Provider" })
 public class IdentityProviderPluginResource {
 
     @Context
@@ -50,34 +49,30 @@ public class IdentityProviderPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an identity provider",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(
-            @PathParam("identity") String identityProviderId,
-            @Suspended final AsyncResponse response) {
-
-        identityProviderPluginService.findById(identityProviderId)
-                .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
-                .map(identityProviderPlugin -> Response.ok(identityProviderPlugin).build())
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get an identity provider", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("identity") String identityProviderId, @Suspended final AsyncResponse response) {
+        identityProviderPluginService
+            .findById(identityProviderId)
+            .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
+            .map(identityProviderPlugin -> Response.ok(identityProviderPlugin).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an identity provider plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void getSchema(
-            @PathParam("identity") String identityProviderId,
-            @Suspended final AsyncResponse response) {
-
+    @ApiOperation(
+        value = "Get an identity provider plugin's schema",
+        notes = "There is no particular permission needed. User must be authenticated."
+    )
+    public void getSchema(@PathParam("identity") String identityProviderId, @Suspended final AsyncResponse response) {
         // Check that the identity provider exists
-        identityProviderPluginService.findById(identityProviderId)
-                .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
-                .flatMap(irrelevant -> identityProviderPluginService.getSchema(identityProviderId))
-                .switchIfEmpty(Maybe.error(new IdentityProviderPluginSchemaNotFoundException(identityProviderId)))
-                .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
-                .subscribe(response::resume, response::resume
-                );
+        identityProviderPluginService
+            .findById(identityProviderId)
+            .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
+            .flatMap(irrelevant -> identityProviderPluginService.getSchema(identityProviderId))
+            .switchIfEmpty(Maybe.error(new IdentityProviderPluginSchemaNotFoundException(identityProviderId)))
+            .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

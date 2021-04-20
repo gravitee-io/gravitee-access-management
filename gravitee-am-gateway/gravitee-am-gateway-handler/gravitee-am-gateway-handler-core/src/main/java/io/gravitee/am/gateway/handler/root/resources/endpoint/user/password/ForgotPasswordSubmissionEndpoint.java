@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,23 +51,25 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
         Map<String, String> requestParams = new HashMap<>();
         requestParams.put(Parameters.CLIENT_ID, client.getClientId());
 
-        userService.forgotPassword(email, client, getAuthenticatedUser(context))
-                .subscribe(
-                        () -> {
-                            requestParams.put("success", "forgot_password_completed");
-                            redirectToPage(context, requestParams);
-                        },
-                        error -> {
-                            // we don't want to expose potential security leaks such as guessing existing users
-                            // the actual error continue to be stored in the audit logs
-                            if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
-                                requestParams.put("success", "forgot_password_completed");
-                                redirectToPage(context, requestParams);
-                            } else {
-                                requestParams.put("error", "forgot_password_failed");
-                                redirectToPage(context, requestParams, error);
-                            }
-                        });
+        userService
+            .forgotPassword(email, client, getAuthenticatedUser(context))
+            .subscribe(
+                () -> {
+                    requestParams.put("success", "forgot_password_completed");
+                    redirectToPage(context, requestParams);
+                },
+                error -> {
+                    // we don't want to expose potential security leaks such as guessing existing users
+                    // the actual error continue to be stored in the audit logs
+                    if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
+                        requestParams.put("success", "forgot_password_completed");
+                        redirectToPage(context, requestParams);
+                    } else {
+                        requestParams.put("error", "forgot_password_failed");
+                        redirectToPage(context, requestParams, error);
+                    }
+                }
+            );
     }
 
     @Override

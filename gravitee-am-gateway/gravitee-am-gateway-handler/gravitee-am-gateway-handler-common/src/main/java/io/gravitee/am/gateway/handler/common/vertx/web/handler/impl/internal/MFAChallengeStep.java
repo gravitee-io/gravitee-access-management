@@ -28,7 +28,7 @@ public class MFAChallengeStep extends AuthenticationFlowStep {
 
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
-    private static final String STRONG_AUTH_COMPLETED  = "strongAuthCompleted";
+    private static final String STRONG_AUTH_COMPLETED = "strongAuthCompleted";
 
     public MFAChallengeStep(Handler<RoutingContext> wrapper) {
         super(wrapper);

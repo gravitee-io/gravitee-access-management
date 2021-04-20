@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.membership.MemberType;
@@ -31,9 +34,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,7 +68,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldCreate_userMembership() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -88,7 +87,15 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -101,7 +108,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldCreate_primaryOwner() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -123,9 +129,24 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
-        when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(criteria -> criteria.getRoleId().isPresent()))).thenReturn(Flowable.empty());
+        when(
+            membershipRepository.findByCriteria(
+                eq(ReferenceType.DOMAIN),
+                eq(DOMAIN_ID),
+                argThat(criteria -> criteria.getRoleId().isPresent())
+            )
+        )
+            .thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
@@ -137,7 +158,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldCreate_groupMembership() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -157,7 +177,15 @@ public class MembershipServiceTest {
 
         when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
         when(membershipRepository.create(any())).thenReturn(Single.just(new Membership()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -170,7 +198,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_memberNotFound() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -184,9 +211,18 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new UserNotFoundException("user-id")));
+        when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId()))
+            .thenReturn(Single.error(new UserNotFoundException("user-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -199,7 +235,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_primaryOwnerAlreadyAssigned() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -221,8 +256,23 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), argThat(criteria -> criteria.getRoleId().isPresent()))).thenReturn(Flowable.just(new Membership()));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByCriteria(
+                eq(ReferenceType.DOMAIN),
+                eq(DOMAIN_ID),
+                argThat(criteria -> criteria.getRoleId().isPresent())
+            )
+        )
+            .thenReturn(Flowable.just(new Membership()));
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -231,7 +281,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_primaryOwnerCantBeAssignedToGroup() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -253,7 +302,15 @@ public class MembershipServiceTest {
 
         when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(group));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -262,7 +319,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_groupNotFound() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -276,9 +332,18 @@ public class MembershipServiceTest {
         role.setReferenceType(ReferenceType.DOMAIN);
         role.setAssignableType(ReferenceType.DOMAIN);
 
-        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.error(new GroupNotFoundException("group-id")));
+        when(groupService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId()))
+            .thenReturn(Single.error(new GroupNotFoundException("group-id")));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -291,7 +356,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_roleNotFound() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -311,7 +375,15 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.empty());
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -324,7 +396,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_invalidRoleScope() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -345,7 +416,15 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -358,7 +437,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_invalidDomain() {
-
         Membership membership = new Membership();
         membership.setReferenceId(DOMAIN_ID);
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -379,7 +457,15 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -392,7 +478,6 @@ public class MembershipServiceTest {
 
     @Test
     public void shouldNotCreate_invalidOrganization() {
-
         Membership membership = new Membership();
         membership.setReferenceId("master-domain");
         membership.setReferenceType(ReferenceType.DOMAIN);
@@ -413,7 +498,15 @@ public class MembershipServiceTest {
 
         when(userService.findById(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberId())).thenReturn(Single.just(user));
         when(roleService.findById(role.getId())).thenReturn(Maybe.just(role));
-        when(membershipRepository.findByReferenceAndMember(membership.getReferenceType(), membership.getReferenceId(), membership.getMemberType(), membership.getMemberId())).thenReturn(Maybe.empty());
+        when(
+            membershipRepository.findByReferenceAndMember(
+                membership.getReferenceType(),
+                membership.getReferenceId(),
+                membership.getMemberType(),
+                membership.getMemberId()
+            )
+        )
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = membershipService.addOrUpdate(ORGANIZATION_ID, membership).test();
         testObserver.awaitTerminalEvent();
@@ -423,6 +516,4 @@ public class MembershipServiceTest {
 
         verify(membershipRepository, never()).create(any());
     }
-
-
 }

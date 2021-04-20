@@ -20,8 +20,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -53,17 +53,14 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
 
     private String getDisplayName(User user) {
         final String displayName =
-                // display name
-                user.getDisplayName() != null ?
-                        user.getDisplayName() :
-                        // first name + last name
-                        user.getFirstName() != null ?
-                                user.getFirstName() + (user.getLastName() != null ? user.getLastName() : "") :
-                                // OIDC name claim
-                                user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) ?
-                                        (String) user.getAdditionalInformation().get(StandardClaims.NAME) :
-                                        // default to username
-                                        user.getUsername();
+            // display name
+            user.getDisplayName() != null
+                ? user.getDisplayName()
+                : user.getFirstName() != null // first name + last name
+                    ? user.getFirstName() + (user.getLastName() != null ? user.getLastName() : "")
+                    : user.getAdditionalInformation() != null && user.getAdditionalInformation().containsKey(StandardClaims.NAME) // OIDC name claim
+                        ? (String) user.getAdditionalInformation().get(StandardClaims.NAME)
+                        : user.getUsername(); // default to username
 
         return displayName;
     }

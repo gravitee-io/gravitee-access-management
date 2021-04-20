@@ -24,7 +24,7 @@ import javax.ws.rs.ext.Provider;
  * @author GraviteeSource Team
  */
 @Provider
-public class WebApplicationExceptionMapper extends AbstractExceptionMapper<WebApplicationException>  {
+public class WebApplicationExceptionMapper extends AbstractExceptionMapper<WebApplicationException> {
 
     @Override
     public Response toResponse(final WebApplicationException e) {

@@ -26,37 +26,37 @@ import java.util.Set;
  */
 public class OrganizationMongo {
 
-	private String id;
+    private String id;
 
-	private String name;
+    private String name;
 
-	private String description;
+    private String description;
 
-	private List<String> domainRestrictions;
+    private List<String> domainRestrictions;
 
-	private List<String> identities;
+    private List<String> identities;
 
-	private Date createdAt;
+    private Date createdAt;
 
-	private Date updatedAt;
+    private Date updatedAt;
 
-	public String getId() {
-		return id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getDescription() {
+    public String getDescription() {
         return description;
     }
 
@@ -72,50 +72,60 @@ public class OrganizationMongo {
         this.domainRestrictions = domainRestrictions;
     }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public Date getUpdatedAt() {
-		return updatedAt;
-	}
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 
-	public void setUpdatedAt(Date updatedAt) {
-		this.updatedAt = updatedAt;
-	}
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof OrganizationMongo)) return false;
-		OrganizationMongo envMongo = (OrganizationMongo) o;
-		return Objects.equals(id, envMongo.id);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OrganizationMongo)) return false;
+        OrganizationMongo envMongo = (OrganizationMongo) o;
+        return Objects.equals(id, envMongo.id);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
-	@Override
-	public String toString() {
-		return "EnvironmentMongo{" +
-				"id='" + id + '\'' +
-				", name='" + name + '\'' +
-				", description='" + description + '\'' +
-				", domain restrictions='" + domainRestrictions + '\'' +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return (
+            "EnvironmentMongo{" +
+            "id='" +
+            id +
+            '\'' +
+            ", name='" +
+            name +
+            '\'' +
+            ", description='" +
+            description +
+            '\'' +
+            ", domain restrictions='" +
+            domainRestrictions +
+            '\'' +
+            '}'
+        );
+    }
 
-	public List<String> getIdentities() {
-		return identities;
-	}
+    public List<String> getIdentities() {
+        return identities;
+    }
 
-	public void setIdentities(List<String> identities) {
-		this.identities = identities;
-	}
+    public void setIdentities(List<String> identities) {
+        this.identities = identities;
+    }
 }

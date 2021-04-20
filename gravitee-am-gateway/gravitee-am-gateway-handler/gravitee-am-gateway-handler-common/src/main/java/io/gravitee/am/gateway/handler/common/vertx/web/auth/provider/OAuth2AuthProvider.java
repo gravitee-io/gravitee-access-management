@@ -26,7 +26,6 @@ import io.vertx.core.Handler;
  * @author GraviteeSource Team
  */
 public interface OAuth2AuthProvider {
-
     default void decodeToken(String token, Handler<AsyncResult<OAuth2AuthResponse>> handler) {
         decodeToken(token, false, handler);
     }

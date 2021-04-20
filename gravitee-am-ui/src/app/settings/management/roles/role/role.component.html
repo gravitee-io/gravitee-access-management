@@ -17,20 +17,29 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to roles</small></a>
-  <h1>{{role.assignableType}}:{{role.name}}</h1>
+  <h1>{{ role.assignableType }}:{{ role.name }}</h1>
   <div fxLayout="row">
     <div fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
+      <form (keydown.enter)="(false)" (ngSubmit)="update()" #roleForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="role.name" required [readonly]="readonly" [disabled]="role.system || role.defaultRole">
+            <input
+              matInput
+              type="text"
+              placeholder="Name"
+              name="name"
+              [(ngModel)]="role.name"
+              required
+              [readonly]="readonly"
+              [disabled]="role.system || role.defaultRole"
+            />
             <mat-hint>A name for your role.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description" [readonly]="readonly">
+            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="role.description" [readonly]="readonly" />
             <mat-hint>A description for your role.</mat-hint>
           </mat-form-field>
         </div>
@@ -46,8 +55,15 @@
                 <th mat-header-cell *matHeaderCellDef>
                   <mat-form-field>
                     <mat-label>Filter</mat-label>
-                    <input matInput (keyup)="applyFilter(filter.value)" placeholder="Ex. DOMAIN, OPENID, ..." #filter>
-                    <button mat-button *ngIf="filter.value" matSuffix mat-icon-button aria-label="Clear" (click)="filter.value='';applyFilter('')">
+                    <input matInput (keyup)="applyFilter(filter.value)" placeholder="Ex. DOMAIN, OPENID, ..." #filter />
+                    <button
+                      mat-button
+                      *ngIf="filter.value"
+                      matSuffix
+                      mat-icon-button
+                      aria-label="Clear"
+                      (click)="filter.value = ''; applyFilter('')"
+                    >
                       <mat-icon>close</mat-icon>
                     </button>
                   </mat-form-field>
@@ -55,68 +71,135 @@
               </ng-container>
 
               <ng-container matColumnDef="create-check-all">
-                <th mat-header-cell *matHeaderCellDef class="acl"><mat-checkbox [disabled]="readonly" [checked]="hasPermissions('create')" [value]="'create'" (change)="changePermissions($event)"></mat-checkbox></th>
+                <th mat-header-cell *matHeaderCellDef class="acl">
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [checked]="hasPermissions('create')"
+                    [value]="'create'"
+                    (change)="changePermissions($event)"
+                  ></mat-checkbox>
+                </th>
               </ng-container>
 
               <ng-container matColumnDef="read-check-all">
-                <th mat-header-cell *matHeaderCellDef class="acl"><mat-checkbox [disabled]="readonly" [checked]="hasPermissions('read')" [value]="'read'" (change)="changePermissions($event)"></mat-checkbox></th>
+                <th mat-header-cell *matHeaderCellDef class="acl">
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [checked]="hasPermissions('read')"
+                    [value]="'read'"
+                    (change)="changePermissions($event)"
+                  ></mat-checkbox>
+                </th>
               </ng-container>
 
               <ng-container matColumnDef="list-check-all">
-                <th mat-header-cell *matHeaderCellDef class="acl"><mat-checkbox [disabled]="readonly" [checked]="hasPermissions('list')" [value]="'list'" (change)="changePermissions($event)"></mat-checkbox></th>
+                <th mat-header-cell *matHeaderCellDef class="acl">
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [checked]="hasPermissions('list')"
+                    [value]="'list'"
+                    (change)="changePermissions($event)"
+                  ></mat-checkbox>
+                </th>
               </ng-container>
 
               <ng-container matColumnDef="update-check-all">
-                <th mat-header-cell *matHeaderCellDef class="acl"><mat-checkbox [disabled]="readonly" [checked]="hasPermissions('update')" [value]="'update'" (change)="changePermissions($event)"></mat-checkbox></th>
+                <th mat-header-cell *matHeaderCellDef class="acl">
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [checked]="hasPermissions('update')"
+                    [value]="'update'"
+                    (change)="changePermissions($event)"
+                  ></mat-checkbox>
+                </th>
               </ng-container>
 
               <ng-container matColumnDef="delete-check-all">
-                <th mat-header-cell *matHeaderCellDef class="acl"><mat-checkbox [disabled]="readonly" [checked]="hasPermissions('delete')" [value]="'delete'" (change)="changePermissions($event)"></mat-checkbox></th>
+                <th mat-header-cell *matHeaderCellDef class="acl">
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [checked]="hasPermissions('delete')"
+                    [value]="'delete'"
+                    (change)="changePermissions($event)"
+                  ></mat-checkbox>
+                </th>
               </ng-container>
 
               <ng-container matColumnDef="permission">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">&nbsp;</th>
-                <td mat-cell *matCellDef="let permissionAcl">{{permissionAcl.permission | uppercase}}</td>
+                <td mat-cell *matCellDef="let permissionAcl">{{ permissionAcl.permission | uppercase }}</td>
               </ng-container>
 
               <ng-container matColumnDef="create">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">CREATE</th>
                 <td mat-cell *matCellDef="let permissionAcl" class="acl">
-                  <mat-checkbox [disabled]="readonly" [name]="permissionAcl.permission+'_create'" [(ngModel)]="permissionAcl.create" [checked]="permissionAcl.create"></mat-checkbox>
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [name]="permissionAcl.permission + '_create'"
+                    [(ngModel)]="permissionAcl.create"
+                    [checked]="permissionAcl.create"
+                  ></mat-checkbox>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="read">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">READ</th>
                 <td mat-cell *matCellDef="let permissionAcl" class="acl">
-                  <mat-checkbox [disabled]="readonly" [name]="permissionAcl.permission+'_read'" [(ngModel)]="permissionAcl.read" [checked]="permissionAcl.read"></mat-checkbox>
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [name]="permissionAcl.permission + '_read'"
+                    [(ngModel)]="permissionAcl.read"
+                    [checked]="permissionAcl.read"
+                  ></mat-checkbox>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="list">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">LIST</th>
                 <td mat-cell *matCellDef="let permissionAcl" class="acl">
-                  <mat-checkbox [disabled]="readonly" [name]="permissionAcl.permission+'_list'" [(ngModel)]="permissionAcl.list" [checked]="permissionAcl.list"></mat-checkbox>
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [name]="permissionAcl.permission + '_list'"
+                    [(ngModel)]="permissionAcl.list"
+                    [checked]="permissionAcl.list"
+                  ></mat-checkbox>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="update">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">UPDATE</th>
                 <td mat-cell *matCellDef="let permissionAcl" class="acl">
-                  <mat-checkbox [disabled]="readonly" [name]="permissionAcl.permission+'_update'" [(ngModel)]="permissionAcl.update" [checked]="permissionAcl.update"></mat-checkbox>
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [name]="permissionAcl.permission + '_update'"
+                    [(ngModel)]="permissionAcl.update"
+                    [checked]="permissionAcl.update"
+                  ></mat-checkbox>
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="delete">
                 <th mat-header-cell *matHeaderCellDef class="acl-header">DELETE</th>
                 <td mat-cell *matCellDef="let permissionAcl" class="acl">
-                  <mat-checkbox [disabled]="readonly" [name]="permissionAcl.permission+'_delete'" [(ngModel)]="permissionAcl.delete" [checked]="permissionAcl.delete" ></mat-checkbox>
+                  <mat-checkbox
+                    [disabled]="readonly"
+                    [name]="permissionAcl.permission + '_delete'"
+                    [(ngModel)]="permissionAcl.delete"
+                    [checked]="permissionAcl.delete"
+                  ></mat-checkbox>
                 </td>
               </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="['permission', 'create', 'read', 'list', 'update', 'delete']; sticky: true;"></tr>
-              <tr mat-header-row *matHeaderRowDef="['empty', 'create-check-all', 'read-check-all', 'list-check-all', 'update-check-all', 'delete-check-all']; sticky: true" style="background: white;"></tr>
-              <tr mat-row *matRowDef="let row; columns: ['permission', 'create', 'read', 'list', 'update', 'delete'];"></tr>
+              <tr mat-header-row *matHeaderRowDef="['permission', 'create', 'read', 'list', 'update', 'delete']; sticky: true"></tr>
+              <tr
+                mat-header-row
+                *matHeaderRowDef="
+                  ['empty', 'create-check-all', 'read-check-all', 'list-check-all', 'update-check-all', 'delete-check-all'];
+                  sticky: true
+                "
+                style="background: white"
+              ></tr>
+              <tr mat-row *matRowDef="let row; columns: ['permission', 'create', 'read', 'list', 'update', 'delete']"></tr>
             </table>
           </div>
         </div>
@@ -137,9 +220,7 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage role</h3>
       <div class="gv-page-description-content">
-        <p>
-          Configure your role to manage how the users will use the Access Management Admin Portal.
-        </p>
+        <p>Configure your role to manage how the users will use the Access Management Admin Portal.</p>
       </div>
     </div>
   </div>

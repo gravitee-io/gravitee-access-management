@@ -17,21 +17,21 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AppConfig } from '../../config/app.config';
-import {map} from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 
 @Injectable()
 export class OrganizationService {
   private organizationURL = AppConfig.settings.organizationBaseURL;
   private platformURL = AppConfig.settings.baseURL + '/platform';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   identities(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/plugins/identities');
   }
 
   socialIdentities(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/plugins/identities?external=true')
+    return this.http.get<any>(this.organizationURL + '/plugins/identities?external=true');
   }
 
   identitySchema(id): Observable<any> {
@@ -52,10 +52,10 @@ export class OrganizationService {
 
   updateIdentityProvider(id, idp) {
     return this.http.put<any>(this.organizationURL + '/identities/' + id, {
-      'name' : idp.name,
-      'configuration' : idp.configuration,
-      'mappers' : idp.mappers,
-      'roleMapper' : idp.roleMapper
+      name: idp.name,
+      configuration: idp.configuration,
+      mappers: idp.mappers,
+      roleMapper: idp.roleMapper,
     });
   }
 
@@ -84,12 +84,18 @@ export class OrganizationService {
   }
 
   audits(page, size, type?, status?, user?, from?, to?): Observable<any> {
-    return this.http.get(this.organizationURL + '/audits?page=' + page + '&size=' + size +
-      (type ? '&type=' + type : '') +
-      (status ? '&status=' + status : '') +
-      (user ? '&user=' + user : '') +
-      (from ? '&from=' + from : '') +
-      (to ? '&to=' + to : ''));
+    return this.http.get(
+      this.organizationURL +
+        '/audits?page=' +
+        page +
+        '&size=' +
+        size +
+        (type ? '&type=' + type : '') +
+        (status ? '&status=' + status : '') +
+        (user ? '&user=' + user : '') +
+        (from ? '&from=' + from : '') +
+        (to ? '&to=' + to : ''),
+    );
   }
 
   audit(auditId): Observable<any> {
@@ -131,9 +137,9 @@ export class OrganizationService {
 
   updateRole(roleId, role): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/roles/' + roleId, {
-      'name' : role.name,
-      'description' : role.description,
-      'permissions' : role.permissions
+      name: role.name,
+      description: role.description,
+      permissions: role.permissions,
     });
   }
 
@@ -141,30 +147,30 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/roles/' + roleId);
   }
 
-
   members(): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/members')
-      .pipe(map(response => {
+    return this.http.get<any>(this.organizationURL + '/members').pipe(
+      map((response) => {
         const memberships = response.memberships;
         const metadata = response.metadata;
-        const members = memberships.map(m => {
-          m.roleName = (metadata['roles'][m.roleId]) ? metadata['roles'][m.roleId].name : 'Unknown role';
+        const members = memberships.map((m) => {
+          m.roleName = metadata.roles[m.roleId] ? metadata.roles[m.roleId].name : 'Unknown role';
           if (m.memberType === 'user') {
-            m.name = (metadata['users'][m.memberId]) ? metadata['users'][m.memberId].displayName : 'Unknown user';
+            m.name = metadata.users[m.memberId] ? metadata.users[m.memberId].displayName : 'Unknown user';
           } else if (m.memberType === 'group') {
-            m.name = (metadata['groups'][m.memberId]) ? metadata['groups'][m.memberId].displayName : 'Unknown group';
+            m.name = metadata.groups[m.memberId] ? metadata.groups[m.memberId].displayName : 'Unknown group';
           }
           return m;
         });
         return members;
-      }));
+      }),
+    );
   }
 
   addMember(memberId, memberType, role) {
     return this.http.post<any>(this.organizationURL + '/members', {
-      'memberId': memberId,
-      'memberType': memberType,
-      'role': role
+      memberId: memberId,
+      memberType: memberType,
+      role: role,
     });
   }
 
@@ -178,8 +184,8 @@ export class OrganizationService {
 
   updateForm(id, form): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/forms/' + id, {
-      'enabled': form.enabled,
-      'content': form.content
+      enabled: form.enabled,
+      content: form.content,
     });
   }
 
@@ -188,9 +194,9 @@ export class OrganizationService {
   }
 
   groups(page?: number, size?: number): Observable<any> {
-    return this.http.get<any>(this.organizationURL + '/groups' +
-      (page !== undefined ? '?page=' + page : '') +
-      (size !== undefined ? '&size=' + size : ''));
+    return this.http.get<any>(
+      this.organizationURL + '/groups' + (page !== undefined ? '?page=' + page : '') + (size !== undefined ? '&size=' + size : ''),
+    );
   }
 
   group(groupId) {
@@ -203,9 +209,9 @@ export class OrganizationService {
 
   updateGroup(groupId, group): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/groups/' + groupId, {
-      'name' : group.name,
-      'description' : group.description,
-      'members' : group.members
+      name: group.name,
+      description: group.description,
+      members: group.members,
     });
   }
 
@@ -213,7 +219,7 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/groups/' + groupId);
   }
 
-  groupRoles(groupId): Observable<any>  {
+  groupRoles(groupId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/groups/' + groupId + '/roles');
   }
 
@@ -225,15 +231,15 @@ export class OrganizationService {
     return this.http.post<any>(this.organizationURL + '/groups/' + groupId + '/roles', roles);
   }
 
-  groupMembers(groupId): Observable<any>  {
+  groupMembers(groupId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/groups/' + groupId + '/members');
   }
 
-  users(page, size): Observable<any>  {
+  users(page, size): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users?page=' + page + '&size=' + size);
   }
 
-  user(userId): Observable<any>  {
+  user(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId);
   }
 
@@ -241,7 +247,7 @@ export class OrganizationService {
     return this.http.delete<any>(this.organizationURL + '/users/' + userId);
   }
 
-  userRoles(userId): Observable<any>  {
+  userRoles(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId + '/roles');
   }
 
@@ -253,31 +259,31 @@ export class OrganizationService {
     return this.http.post<any>(this.organizationURL + '/users/' + userId + '/roles', roles);
   }
 
-  reporters(): Observable<any>  {
+  reporters(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/reporters');
   }
 
-  reporter(reporterId): Observable<any>  {
+  reporter(reporterId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/reporters/' + reporterId);
   }
 
   updateReporter(reporterId, reporter): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/reporters/' + reporterId, {
-      'name' : reporter.name,
-      'enabled': reporter.enabled,
-      'configuration' : reporter.configuration
+      name: reporter.name,
+      enabled: reporter.enabled,
+      configuration: reporter.configuration,
     });
   }
 
-  settings(): Observable<any>  {
+  settings(): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/settings');
   }
 
-  patchSettings(settings): Observable<any>  {
+  patchSettings(settings): Observable<any> {
     return this.http.patch<any>(this.organizationURL + '/settings', settings);
   }
 
-  forms(template): Observable<any>  {
+  forms(template): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/forms?template=' + template);
   }
 

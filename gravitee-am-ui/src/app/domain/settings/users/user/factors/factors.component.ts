@@ -23,7 +23,7 @@ import { AuthService } from '../../../../../services/auth.service';
 @Component({
   selector: 'app-user-factors',
   templateUrl: './factors.component.html',
-  styleUrls: ['./factors.component.scss']
+  styleUrls: ['./factors.component.scss'],
 })
 export class UserFactorsComponent implements OnInit {
   private domainId: string;
@@ -31,18 +31,19 @@ export class UserFactorsComponent implements OnInit {
   private factors: any[];
   canRevoke: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private userService: UserService,
-              private authService: AuthService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.user = this.route.snapshot.parent.data['user'];
-    this.factors = this.route.snapshot.data['factors'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.user = this.route.snapshot.parent.data.user;
+    this.factors = this.route.snapshot.data.factors;
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
   }
 
@@ -52,20 +53,18 @@ export class UserFactorsComponent implements OnInit {
 
   remove(event, factor) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Remove MFA method', 'Are you sure you want to remove this multi-factor auth ?')
-      .subscribe(res => {
-        if (res) {
-          this.userService.removeFactor(this.domainId, this.user.id, factor.id).subscribe(response => {
-            this.snackbarService.open('Multi-factor authentication method ' + factor.name + ' deleted');
-            this.loadFactors();
-          });
-        }
-      });
+    this.dialogService.confirm('Remove MFA method', 'Are you sure you want to remove this multi-factor auth ?').subscribe((res) => {
+      if (res) {
+        this.userService.removeFactor(this.domainId, this.user.id, factor.id).subscribe((response) => {
+          this.snackbarService.open('Multi-factor authentication method ' + factor.name + ' deleted');
+          this.loadFactors();
+        });
+      }
+    });
   }
 
   loadFactors() {
-    this.userService.factors(this.domainId, this.user.id).subscribe(factors => {
+    this.userService.factors(this.domainId, this.user.id).subscribe((factors) => {
       this.factors = factors;
     });
   }

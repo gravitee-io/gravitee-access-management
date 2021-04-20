@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, EventEmitter, Output} from '@angular/core'
+import { Component, EventEmitter, Output } from '@angular/core';
 
 @Component({
   selector: 'user-claim-component',
-  templateUrl: './user-claim.component.html'
+  templateUrl: './user-claim.component.html',
 })
-
 export class UserClaimComponent {
   private claimId: string = Math.random().toString(36).substring(7);
   claim: any = {};

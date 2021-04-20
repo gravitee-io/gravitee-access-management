@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface JWEService {
-
     /**
      * Encode raw JWT to JWT signed representation using id_token_encrypted_response_alg Client preferences.
      * @param signedJwt Signed JWT to encrypt

@@ -35,7 +35,7 @@
           margin: 0;
         }
         small {
-          color: rgba(0,0,0,.54);
+          color: rgba(0, 0, 0, 0.54);
         }
       }
     }
@@ -45,7 +45,8 @@
 .emails-actions {
   margin-left: -10px;
 
-  button, a {
+  button,
+  a {
     top: -9px;
     color: grey;
   }

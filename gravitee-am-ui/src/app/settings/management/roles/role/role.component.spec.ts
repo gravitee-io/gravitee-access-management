@@ -23,9 +23,8 @@ describe('ManagementRoleComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ManagementRoleComponent ]
-    })
-      .compileComponents();
+      declarations: [ManagementRoleComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

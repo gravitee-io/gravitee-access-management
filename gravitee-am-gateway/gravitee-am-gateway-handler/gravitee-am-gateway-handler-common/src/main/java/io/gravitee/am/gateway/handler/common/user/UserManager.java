@@ -24,6 +24,5 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface UserManager extends Service {
-
     Maybe<User> get(String userId);
 }

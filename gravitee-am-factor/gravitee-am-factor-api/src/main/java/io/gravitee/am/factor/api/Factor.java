@@ -20,7 +20,6 @@ package io.gravitee.am.factor.api;
  * @author GraviteeSource Team
  */
 public interface Factor {
-
     Class<? extends FactorConfiguration> configuration();
 
     Class<? extends FactorProvider> factorProvider();

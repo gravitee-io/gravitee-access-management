@@ -31,14 +31,13 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,57 +53,76 @@ public class ReporterResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a reporter",
-            notes = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[READ] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Get a reporter",
+        notes = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
+        "or DOMAIN_REPORTER[READ] permission on the specified environment " +
+        "or DOMAIN_REPORTER[READ] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "Reporter successfully fetched", response = Reporter.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void get(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("reporter") String reporter,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("reporter") String reporter,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> reporterService.findById(reporter))
-                        .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
-                        .map(reporter1 -> {
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMap(irrelevant -> reporterService.findById(reporter))
+                    .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
+                    .map(
+                        reporter1 -> {
                             if (!reporter1.getDomain().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Reporter does not belong to domain");
                             }
                             return Response.ok(reporter1).build();
-                        }))
-                .subscribe(response::resume, response::resume);
+                        }
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a reporter",
-            notes = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
-                    "or DOMAIN_REPORTER[UPDATE] permission on the specified environment " +
-                    "or DOMAIN_REPORTER[UPDATE] permission on the specified organization")
-    @ApiResponses({
+    @ApiOperation(
+        value = "Update a reporter",
+        notes = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
+        "or DOMAIN_REPORTER[UPDATE] permission on the specified environment " +
+        "or DOMAIN_REPORTER[UPDATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 201, message = "Reporter successfully updated", response = Reporter.class),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void update(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("reporter") String reporter,
-            @ApiParam(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @PathParam("reporter") String reporter,
+        @ApiParam(name = "reporter", required = true) @Valid @NotNull UpdateReporter updateReporter,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser))
+            )
+            .subscribe(response::resume, response::resume);
     }
 }

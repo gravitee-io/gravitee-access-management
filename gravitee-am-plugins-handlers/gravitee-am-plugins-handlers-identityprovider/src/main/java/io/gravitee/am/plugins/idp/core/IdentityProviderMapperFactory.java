@@ -16,7 +16,6 @@
 package io.gravitee.am.plugins.idp.core;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-
 import java.util.Map;
 
 /**
@@ -24,6 +23,5 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderMapperFactory {
-
     <T extends IdentityProviderMapper> T create(Class<T> clazz, Map<String, String> mappers);
 }

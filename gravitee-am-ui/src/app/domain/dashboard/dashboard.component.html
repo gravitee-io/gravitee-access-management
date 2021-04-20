@@ -24,14 +24,12 @@
     <div class="gv-page-description" fxFlex>
       <h3>Activities</h3>
       <div class="gv-page-description-content">
-        <p>
-          Retrieve all activities and usage statistics of the domain.
-        </p>
+        <p>Retrieve all activities and usage statistics of the domain.</p>
       </div>
       <div *hasPermission="['application_create']">
         <a mat-raised-button color="primary" [routerLink]="['/domains', domain.id, 'applications', 'new']">
           <mat-icon>add</mat-icon>
-          <span style="margin-left: 5px;">Create application</span>
+          <span style="margin-left: 5px">Create application</span>
         </a>
       </div>
     </div>

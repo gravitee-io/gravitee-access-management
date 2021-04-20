@@ -23,20 +23,38 @@
           <div fxLayout="row" *ngIf="user.username">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Username</mat-label>
-              <input matInput placeholder="Username" disabled name="username" [value]="user.username" required>
+              <input matInput placeholder="Username" disabled name="username" [value]="user.username" required />
               <mat-hint>The username of the User.</mat-hint>
             </mat-form-field>
           </div>
           <div fxLayout="row">
-            <mat-form-field *ngIf="user.firstName || user.internal" appearance="outline" floatLabel="always" style="margin-right: 20px;">
+            <mat-form-field *ngIf="user.firstName || user.internal" appearance="outline" floatLabel="always" style="margin-right: 20px">
               <mat-label>First name</mat-label>
-              <input matInput type="text" placeholder="First name" [disabled]="!editMode() || !canEdit" #firstName="ngModel" name="firstName" [(ngModel)]="user.firstName" required>
+              <input
+                matInput
+                type="text"
+                placeholder="First name"
+                [disabled]="!editMode() || !canEdit"
+                #firstName="ngModel"
+                name="firstName"
+                [(ngModel)]="user.firstName"
+                required
+              />
               <mat-hint *ngIf="editMode()">The first name of the User.</mat-hint>
               <mat-error *ngIf="firstName.errors?.required">Enter first name</mat-error>
             </mat-form-field>
             <mat-form-field *ngIf="user.lastName || user.internal" appearance="outline" floatLabel="always">
               <mat-label>Last name</mat-label>
-              <input matInput type="text" placeholder="Last name" [disabled]="!editMode() || !canEdit" #lastName="ngModel" name="lastName" [(ngModel)]="user.lastName" required>
+              <input
+                matInput
+                type="text"
+                placeholder="Last name"
+                [disabled]="!editMode() || !canEdit"
+                #lastName="ngModel"
+                name="lastName"
+                [(ngModel)]="user.lastName"
+                required
+              />
               <mat-hint *ngIf="editMode()">The last name of the User.</mat-hint>
               <mat-error *ngIf="lastName.errors?.required">Enter last name</mat-error>
             </mat-form-field>
@@ -44,14 +62,27 @@
           <div fxLayout="row" *ngIf="user.email || user.internal">
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Email</mat-label>
-              <input matInput placeholder="Email" [disabled]="!editMode() || !canEdit" #email="ngModel" name="email" [(ngModel)]="user.email" [email]="user.email !== ''" required>
+              <input
+                matInput
+                placeholder="Email"
+                [disabled]="!editMode() || !canEdit"
+                #email="ngModel"
+                name="email"
+                [(ngModel)]="user.email"
+                [email]="user.email !== ''"
+                required
+              />
               <mat-hint *ngIf="editMode()">Email address for the User.</mat-hint>
               <mat-error *ngIf="email.errors?.required">Enter email</mat-error>
               <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
             </mat-form-field>
           </div>
           <div *ngIf="editMode() && canEdit">
-            <app-select-applications [selectedApp]="user.applicationEntity" (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
+            <app-select-applications
+              [selectedApp]="user.applicationEntity"
+              (onSelectApp)="onAppSelectionChanged($event)"
+              (onRemoveApp)="onAppDeleted($event)"
+            ></app-select-applications>
           </div>
         </div>
         <div class="gv-form-section" *ngIf="!isEmptyObject(user.additionalInformation) || editMode()">
@@ -65,13 +96,22 @@
             <template #dynamic></template>
             <div *ngFor="let keyValuePair of user.additionalInformation | mapToIterable">
               <div *ngIf="keyValuePair.value" fxLayout="row">
-                <mat-form-field style="margin-right: 20px;" fxFlex="40">
-                  <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled>
+                <mat-form-field style="margin-right: 20px" fxFlex="40">
+                  <input matInput type="text" name="claimName" [value]="keyValuePair.key" disabled />
                 </mat-form-field>
                 <mat-form-field>
-                  <input matInput type="text" [name]="'claimValue'+keyValuePair.key" [(ngModel)]="user.additionalInformation[keyValuePair.key]" (change)="formChanged = true;" [disabled]="!editMode()">
+                  <input
+                    matInput
+                    type="text"
+                    [name]="'claimValue' + keyValuePair.key"
+                    [(ngModel)]="user.additionalInformation[keyValuePair.key]"
+                    (change)="formChanged = true"
+                    [disabled]="!editMode()"
+                  />
                 </mat-form-field>
-                <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)"><mat-icon>clear</mat-icon></button>
+                <button mat-icon-button *ngIf="editMode()" (click)="removeExistingClaim(keyValuePair.key, $event)">
+                  <mat-icon>clear</mat-icon>
+                </button>
               </div>
             </div>
           </div>
@@ -83,50 +123,60 @@
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
-            <div fxLayout="column" style="padding: 20px;">
-              <mat-slide-toggle
-                (change)="enableUser($event)"
-                [checked]="isUserEnabled()" [disabled]="organizationContext">
+            <div fxLayout="column" style="padding: 20px">
+              <mat-slide-toggle (change)="enableUser($event)" [checked]="isUserEnabled()" [disabled]="organizationContext">
                 Enable User
               </mat-slide-toggle>
-              <mat-hint style="font-size: 75%;">Enable or disable user to restrict application access.
-                By disabled the user, he will not be able to log to their applications.</mat-hint>
+              <mat-hint style="font-size: 75%"
+                >Enable or disable user to restrict application access. By disabled the user, he will not be able to log to their
+                applications.</mat-hint
+              >
             </div>
             <div fxLayout="column" *ngIf="editMode() && user.preRegistration && !user.registrationCompleted">
               <mat-divider></mat-divider>
-              <div fxLayout="row" style="padding: 20px;">
+              <div fxLayout="row" style="padding: 20px">
                 <div fxLayout="column" fxFlex="75">
-                  <div fxLayout="row" style="color: orange; align-items: center;">
+                  <div fxLayout="row" style="color: orange; align-items: center">
                     <mat-icon>warning</mat-icon>
-                    <h4 style="margin: 0; font-weight: 400;">User does not complete registration</h4>
+                    <h4 style="margin: 0; font-weight: 400">User does not complete registration</h4>
                   </div>
-                  <mat-hint style="font-size: 75%;">An email will be sent to the user asking to complete his account.</mat-hint>
+                  <mat-hint style="font-size: 75%">An email will be sent to the user asking to complete his account.</mat-hint>
                 </div>
                 <button (click)="resendConfirmationRegistration($event)" mat-stroked-button color="accent">SEND CONFIRMATION</button>
               </div>
             </div>
             <div fxLayout="column" *ngIf="accountLocked(user)">
               <mat-divider></mat-divider>
-              <div fxLayout="row" style="padding: 20px;">
+              <div fxLayout="row" style="padding: 20px">
                 <div fxLayout="column" fxFlex="75">
-                  <div fxLayout="row" style="color: red; align-items: center;">
+                  <div fxLayout="row" style="color: red; align-items: center">
                     <mat-icon>blocked</mat-icon>
-                    <h4 style="margin: 0; font-weight: 400;">User account is locked</h4>
+                    <h4 style="margin: 0; font-weight: 400">User account is locked</h4>
                   </div>
-                  <mat-hint style="font-size: 75%;">The account is locked due to to many failed login attempts. Unlock the user to regain access.</mat-hint>
+                  <mat-hint style="font-size: 75%"
+                    >The account is locked due to to many failed login attempts. Unlock the user to regain access.</mat-hint
+                  >
                 </div>
                 <button (click)="unlock($event)" mat-stroked-button color="accent">UNLOCK ACCOUNT</button>
               </div>
             </div>
             <div *ngIf="editMode()" fxLayout="column">
               <mat-divider></mat-divider>
-              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px;">
-                <mat-form-field style="margin: 0px 15px 0px 15px;" fxFlex="70" appearance="outline" floatLabel="always">
+              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px">
+                <mat-form-field style="margin: 0px 15px 0px 15px" fxFlex="70" appearance="outline" floatLabel="always">
                   <mat-label>Password</mat-label>
-                  <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
+                  <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password" />
                   <mat-hint>User's password</mat-hint>
                 </mat-form-field>
-                <button style="min-width: 180px; height:36px; margin-top: 8px;" mat-stroked-button color="accent" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
+                <button
+                  style="min-width: 180px; height: 36px; margin-top: 8px"
+                  mat-stroked-button
+                  color="accent"
+                  [disabled]="!passwordForm.valid || passwordForm.pristine"
+                  type="submit"
+                >
+                  RESET PASSWORD
+                </button>
               </form>
             </div>
           </div>
@@ -152,35 +202,35 @@
           <mat-list-item>
             <mat-icon mat-list-icon>trending_up</mat-icon>
             <h4 matLine>Logins count</h4>
-            <p matLine>{{user.loginsCount}}</p>
+            <p matLine>{{ user.loginsCount }}</p>
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>alarm</mat-icon>
             <h4 matLine>Last login</h4>
             <p matLine>
-              <span *ngIf="!(user.loggedAt)">Never logged in</span>
-              <span *ngIf="(user.loggedAt)">{{user.loggedAt | humanDate}}</span>
+              <span *ngIf="!user.loggedAt">Never logged in</span>
+              <span *ngIf="user.loggedAt">{{ user.loggedAt | humanDate }}</span>
             </p>
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>alarm_on</mat-icon>
             <h4 matLine>Created at</h4>
-            <p matLine>{{user.createdAt | humanDate}}</p>
+            <p matLine>{{ user.createdAt | humanDate }}</p>
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>dock</mat-icon>
             <h4 matLine>Last application</h4>
-            <p matLine>{{displayClientName()}}</p>
+            <p matLine>{{ displayClientName() }}</p>
           </mat-list-item>
           <mat-list-item>
             <mat-icon mat-list-icon>device_hub</mat-icon>
             <h4 matLine>Identity provider</h4>
-            <p matLine>{{user.source}}</p>
+            <p matLine>{{ user.source }}</p>
           </mat-list-item>
           <mat-list-item *ngIf="accountLocked(user)">
             <mat-icon mat-list-icon>blocked</mat-icon>
             <h4 matLine>Account blocked</h4>
-            <p matLine>Until : {{user.accountLockedUntil | date:'medium'}}</p>
+            <p matLine>Until : {{ user.accountLockedUntil | date: 'medium' }}</p>
           </mat-list-item>
         </mat-list>
       </div>

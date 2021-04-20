@@ -19,7 +19,6 @@ import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -27,7 +26,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ScopeRepository extends CrudRepository<Scope, String> {
-
     Single<Set<Scope>> findByDomain(String domain);
 
     Maybe<Scope> findByDomainAndKey(String domain, String key);

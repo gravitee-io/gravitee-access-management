@@ -15,16 +15,16 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
-import java.util.Date;
-import java.util.Map;
-
 import static io.gravitee.am.service.authentication.crypto.password.PasswordValidator.PASSWORD_MAX_LENGTH;
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.UserValidator.*;
+
+import java.util.Date;
+import java.util.Map;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,7 +37,7 @@ public class NewUser {
     @Pattern(regexp = USERNAME_PATTERN, message = "invalid username")
     private String username;
 
-    @Size(max = PASSWORD_MAX_LENGTH, message = "must not be greater than "+ PASSWORD_MAX_LENGTH)
+    @Size(max = PASSWORD_MAX_LENGTH, message = "must not be greater than " + PASSWORD_MAX_LENGTH)
     private String password;
 
     @NotBlank
@@ -47,11 +47,11 @@ public class NewUser {
     @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
     private String firstName;
 
-    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
+    @Size(max = DEFAULT_MAX_LENGTH, message = "must not be greater than " + DEFAULT_MAX_LENGTH)
     @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
-    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
+    @Size(max = DEFAULT_MAX_LENGTH, message = "must not be greater than " + DEFAULT_MAX_LENGTH)
     private String externalId;
 
     private boolean accountNonExpired = true;
@@ -254,22 +254,45 @@ public class NewUser {
 
     @Override
     public String toString() {
-        return "NewUser{" +
-                "username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", accountNonExpired=" + accountNonExpired +
-                ", accountNonLocked=" + accountNonLocked +
-                ", credentialsNonExpired=" + credentialsNonExpired +
-                ", enabled=" + enabled +
-                ", domain='" + domain + '\'' +
-                ", source='" + source + '\'' +
-                ", loginsCount=" + loginsCount +
-                ", loggedAt=" + loggedAt +
-                ", additionalInformation=" + additionalInformation +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+        return (
+            "NewUser{" +
+            "username='" +
+            username +
+            '\'' +
+            ", email='" +
+            email +
+            '\'' +
+            ", firstName='" +
+            firstName +
+            '\'' +
+            ", lastName='" +
+            lastName +
+            '\'' +
+            ", accountNonExpired=" +
+            accountNonExpired +
+            ", accountNonLocked=" +
+            accountNonLocked +
+            ", credentialsNonExpired=" +
+            credentialsNonExpired +
+            ", enabled=" +
+            enabled +
+            ", domain='" +
+            domain +
+            '\'' +
+            ", source='" +
+            source +
+            '\'' +
+            ", loginsCount=" +
+            loginsCount +
+            ", loggedAt=" +
+            loggedAt +
+            ", additionalInformation=" +
+            additionalInformation +
+            ", createdAt=" +
+            createdAt +
+            ", updatedAt=" +
+            updatedAt +
+            '}'
+        );
     }
 }

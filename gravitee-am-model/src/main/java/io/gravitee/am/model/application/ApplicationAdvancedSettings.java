@@ -23,8 +23,7 @@ public class ApplicationAdvancedSettings {
 
     private boolean skipConsent;
 
-    public ApplicationAdvancedSettings() {
-    }
+    public ApplicationAdvancedSettings() {}
 
     public ApplicationAdvancedSettings(ApplicationAdvancedSettings other) {
         this.skipConsent = other.skipConsent;

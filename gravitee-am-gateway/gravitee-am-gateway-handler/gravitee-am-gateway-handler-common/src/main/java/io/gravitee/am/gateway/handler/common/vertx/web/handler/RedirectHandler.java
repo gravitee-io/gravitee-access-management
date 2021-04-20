@@ -24,7 +24,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public interface RedirectHandler {
-
     static Handler<RoutingContext> create(String redirectURL) {
         return new RedirectHandlerImpl(redirectURL);
     }

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { OrganizationService } from "../services/organization.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class SettingsResolver implements Resolve<any> {
+  constructor(private organizationService: OrganizationService) {}
 
-  constructor(private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     return this.organizationService.settings();
   }
-
 }

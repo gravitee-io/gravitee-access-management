@@ -18,7 +18,6 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.service.model.plugin.ReporterPlugin;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -26,7 +25,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface ReporterPluginService {
-
     Single<List<ReporterPlugin>> findAll();
 
     Maybe<ReporterPlugin> findById(String reporterId);

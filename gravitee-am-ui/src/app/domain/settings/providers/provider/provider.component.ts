@@ -13,41 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {BreadcrumbService} from '../../../../services/breadcrumb.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-provider',
   templateUrl: './provider.component.html',
-  styleUrls: ['./provider.component.scss']
+  styleUrls: ['./provider.component.scss'],
 })
 export class ProviderComponent implements OnInit {
   private domainId: string;
   provider: any;
-  navLinks: any = [{'href': 'settings' , 'label': 'Settings'},
-    {'href': 'mappers' , 'label': 'User mappers'},
-    {'href': 'roles' , 'label': 'Role mappers'}];
+  navLinks: any = [
+    { href: 'settings', label: 'Settings' },
+    { href: 'mappers', label: 'User mappers' },
+    { href: 'roles', label: 'Role mappers' },
+  ];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute, private router: Router, private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.provider = this.route.snapshot.data['provider'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.provider = this.route.snapshot.data.provider;
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '$', this.provider.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '/mappers$', 'user mappers');
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/settings/management/providers/' + this.provider.id + '/mappers$',
+        'user mappers',
+      );
       this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/providers/' + this.provider.id + '/roles$', 'role mappers');
     } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '$', this.provider.name);
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/mappers$', 'user mappers');
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/roles$', 'role mappers');
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '$',
+        this.provider.name,
+      );
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/mappers$',
+        'user mappers',
+      );
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/providers/' + this.provider.id + '/roles$',
+        'role mappers',
+      );
     }
   }
 }

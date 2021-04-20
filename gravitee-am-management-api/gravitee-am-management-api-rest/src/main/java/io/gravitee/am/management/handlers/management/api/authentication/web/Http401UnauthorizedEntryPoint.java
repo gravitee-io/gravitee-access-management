@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
+import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.MediaType;
-import java.io.IOException;
-
-import static javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -48,8 +47,7 @@ public class Http401UnauthorizedEntryPoint implements AuthenticationEntryPoint {
     /**
      * Always returns a 401 error code when client does not provide any authentication.
      */
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException e) throws IOException {
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException e) throws IOException {
         logger.debug("Pre-authenticated entry point called. Rejecting access");
 
         final ErrorEntity error = new ErrorEntity();

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.WriteModel;
@@ -27,15 +29,12 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -59,19 +58,12 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
     }
 
     private Maybe<RefreshToken> findById(String id) {
-        return Observable
-                .fromPublisher(refreshTokenCollection.find(eq(FIELD_ID, id)).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(refreshTokenCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
-
 
     @Override
     public Maybe<RefreshToken> findByToken(String token) {
-        return Observable
-                .fromPublisher(refreshTokenCollection.find(eq(FIELD_TOKEN, token)).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(refreshTokenCollection.find(eq(FIELD_TOKEN, token)).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -81,8 +73,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
         }
 
         return Single
-                .fromPublisher(refreshTokenCollection.insertOne(convert(refreshToken)))
-                .flatMap(success -> findById(refreshToken.getId()).toSingle());
+            .fromPublisher(refreshTokenCollection.insertOne(convert(refreshToken)))
+            .flatMap(success -> findById(refreshToken.getId()).toSingle());
     }
 
     @Override

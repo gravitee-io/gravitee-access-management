@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
-import {Router} from '@angular/router';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'gv-widget-data-table',
   templateUrl: './widget-data-table.component.html',
-  styleUrls: ['./widget-data-table.component.scss']
+  styleUrls: ['./widget-data-table.component.scss'],
 })
 export class WidgetDataTableComponent implements OnInit, OnChanges {
   @Input('chart') chart: any;
@@ -35,7 +35,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
   constructor(private router: Router) {}
 
   ngOnInit() {
-    this.columns = _.map(this.chart.columns, column => ({ 'name' : column}));
+    this.columns = _.map(this.chart.columns, (column) => ({ name: column }));
     this.limit = this.chart.paging;
   }
 
@@ -46,15 +46,15 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
       const field = this.chart.request.field;
       const columnName = this.chart.columns[0];
       const columnValue = this.chart.columns[1];
-      this.sorts = [{prop: columnValue, dir: 'desc'}];
-      this.rows = Object.keys(response).map(key => {
+      this.sorts = [{ prop: columnValue, dir: 'desc' }];
+      this.rows = Object.keys(response).map((key) => {
         const obj = {};
         obj[columnName] = this.getColumnName(key, metadata);
         obj[columnValue] = response[key];
-        obj['name'] = obj[columnName];
-        obj['value'] =  obj[columnValue]
-        obj['deleted'] = this.resourceDeleted(key, metadata);
-        obj['link'] = this.getResourceLink(key, metadata, field);
+        obj.name = obj[columnName];
+        obj.value = obj[columnValue];
+        obj.deleted = this.resourceDeleted(key, metadata);
+        obj.link = this.getResourceLink(key, metadata, field);
         return obj;
       });
       setTimeout(() => {
@@ -65,8 +65,7 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
 
   goTo(routerLink) {
     // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-    this.router.navigateByUrl('/dummy', { skipLocationChange: true })
-      .then(() => this.router.navigate(routerLink));
+    this.router.navigateByUrl('/dummy', { skipLocationChange: true }).then(() => this.router.navigate(routerLink));
   }
 
   private getColumnName(key, metadata): string {
@@ -91,4 +90,3 @@ export class WidgetDataTableComponent implements OnInit, OnChanges {
     return metadata[key].deleted;
   }
 }
-

@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {OrganizationService} from "../../../services/organization.service";
-import {DialogService} from "../../../services/dialog.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute} from "@angular/router";
-import {PolicyService} from "../../../services/policy.service";
-import {CdkDragDrop, moveItemInArray} from "@angular/cdk/drag-drop";
-import {NgForm} from "@angular/forms";
-import {MatDialog, MatDialogRef} from "@angular/material";
-import {AuthService} from "../../../services/auth.service";
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { OrganizationService } from '../../../services/organization.service';
+import { DialogService } from '../../../services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { ActivatedRoute } from '@angular/router';
+import { PolicyService } from '../../../services/policy.service';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { NgForm } from '@angular/forms';
+import { MatDialog, MatDialogRef } from '@angular/material';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-domain-policies',
   templateUrl: './policies.component.html',
-  styleUrls: ['./policies.component.scss']
+  styleUrls: ['./policies.component.scss'],
 })
 export class DomainSettingsPoliciesComponent implements OnInit {
   @ViewChild('policyForm') form: NgForm;
@@ -47,7 +47,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     {
       value: 'ROOT',
       stage: 'ROOT',
-      expanded: true
+      expanded: true,
     },
     {
       value: 'PRE_CONSENT',
@@ -57,22 +57,24 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     {
       value: 'POST_CONSENT',
       stage: 'POST_CONSENT',
-      expanded: false
-    }
+      expanded: false,
+    },
   ];
 
-  constructor(private organizationService: OrganizationService,
-              private policyService: PolicyService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              public dialog: MatDialog) {}
+  constructor(
+    private organizationService: OrganizationService,
+    private policyService: PolicyService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    public dialog: MatDialog,
+  ) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.policies = this.route.snapshot.data['policies'] || {};
-    this.organizationService.policies().subscribe(data => this.policyPlugins = data);
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.policies = this.route.snapshot.data.policies || {};
+    this.organizationService.policies().subscribe((data) => (this.policyPlugins = data));
     this.readonly = !this.authService.hasPermissions(['domain_extension_point_update']);
   }
 
@@ -84,7 +86,7 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     this.policy.type = policyId;
     this.policy.enabled = true;
     const policies = this.policies[extensionPoint];
-    this.policy.order = policies && policies.length > 0 ? policies[policies.length -1].order + 1 : 0;
+    this.policy.order = policies && policies.length > 0 ? policies[policies.length - 1].order + 1 : 0;
     this.policyConfiguration = {};
     if (this.form) {
       this.form.reset(this.policy);
@@ -96,14 +98,16 @@ export class DomainSettingsPoliciesComponent implements OnInit {
     event.preventDefault();
     this.selectedPolicyId = null;
     this.isLoading = true;
-    this.policy = Object.assign({}, policy)
+    this.policy = Object.assign({}, policy);
     this.policyConfiguration = JSON.parse(this.policy.configuration);
     this.loadPolicySchema(this.policy, 1500);
   }
 
   enablePolicyUpdate(configurationWrapper) {
     window.setTimeout(() => {
-      this.configurationPristine = this.policy.configuration ?  (this.policy.configuration === JSON.stringify(configurationWrapper.configuration)) : Object.keys(configurationWrapper.configuration).length === 1;
+      this.configurationPristine = this.policy.configuration
+        ? this.policy.configuration === JSON.stringify(configurationWrapper.configuration)
+        : Object.keys(configurationWrapper.configuration).length === 1;
       this.configurationIsValid = configurationWrapper.isValid;
       this.updatePolicyConfiguration = configurationWrapper.configuration;
     });
@@ -112,15 +116,15 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   save() {
     this.policy.configuration = JSON.stringify(this.updatePolicyConfiguration);
     if (this.policy.id) {
-      this.policyService.update(this.domainId, this.policy.id, this.policy).subscribe(data => {
+      this.policyService.update(this.domainId, this.policy.id, this.policy).subscribe((data) => {
         this.reloadPolicies();
         this.policy = data;
         this.policyConfiguration = JSON.parse(this.policy.configuration);
         this.selectedPolicyId = this.policy.id;
         this.snackbarService.open('Policy ' + data.name + ' updated');
-      })
+      });
     } else {
-      this.policyService.create(this.domainId, this.policy).subscribe(data => {
+      this.policyService.create(this.domainId, this.policy).subscribe((data) => {
         this.reloadPolicies();
         this.policy = data;
         this.policyConfiguration = JSON.parse(this.policy.configuration);
@@ -141,33 +145,31 @@ export class DomainSettingsPoliciesComponent implements OnInit {
         policy.order = i;
       });
       this.policyService.updateAll(this.domainId, this.policies[extensionPoint]).subscribe(() => {
-        this.snackbarService.open('Policy\'s order changed');
+        this.snackbarService.open("Policy's order changed");
       });
     }
   }
 
   enablePolicy(event, policy) {
     policy.enabled = event.checked;
-    this.policyService.update(this.domainId, policy.id, policy).subscribe(data => {
+    this.policyService.update(this.domainId, policy.id, policy).subscribe((data) => {
       this.snackbarService.open('Policy ' + data.name + (policy.enabled ? ' enabled' : ' disabled'));
     });
   }
 
   deletePolicy(event, policy) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Policy', 'Are you sure you want to delete the policy ?')
-      .subscribe(res => {
-        if (res) {
-          this.policyService.delete(this.domainId, policy.id).subscribe(() => {
-            if (this.policy && policy.id === this.policy.id) {
-              this.policy = null;
-            }
-            this.reloadPolicies();
-            this.snackbarService.open('Policy deleted');
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Policy', 'Are you sure you want to delete the policy ?').subscribe((res) => {
+      if (res) {
+        this.policyService.delete(this.domainId, policy.id).subscribe(() => {
+          if (this.policy && policy.id === this.policy.id) {
+            this.policy = null;
+          }
+          this.reloadPolicies();
+          this.snackbarService.open('Policy deleted');
+        });
+      }
+    });
   }
 
   clearPolicy() {
@@ -189,13 +191,13 @@ export class DomainSettingsPoliciesComponent implements OnInit {
   }
 
   private reloadPolicies() {
-    this.policyService.findByDomain(this.domainId).subscribe(policies => this.policies = policies);
+    this.policyService.findByDomain(this.domainId).subscribe((policies) => (this.policies = policies));
   }
 
   private loadPolicySchema(policy, delay) {
     let self = this;
-    setTimeout(function() {
-      self.organizationService.policySchema(policy.type).subscribe(data => {
+    setTimeout(function () {
+      self.organizationService.policySchema(policy.type).subscribe((data) => {
         self.policySchema = data;
         if (policy.id) {
           self.selectedPolicyId = policy.id;
@@ -213,4 +215,3 @@ export class DomainSettingsPoliciesComponent implements OnInit {
 export class PoliciesInfoDialog {
   constructor(public dialogRef: MatDialogRef<PoliciesInfoDialog>) {}
 }
-

@@ -20,5 +20,8 @@ package io.gravitee.am.model.application;
  * @author GraviteeSource Team
  */
 public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE
+    WEB,
+    NATIVE,
+    BROWSER,
+    SERVICE,
 }

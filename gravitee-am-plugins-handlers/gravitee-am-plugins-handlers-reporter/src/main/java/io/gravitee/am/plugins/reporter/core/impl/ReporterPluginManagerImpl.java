@@ -23,6 +23,11 @@ import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -30,12 +35,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,7 +44,7 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
 
     private final Logger logger = LoggerFactory.getLogger(ReporterPluginManagerImpl.class);
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
     private final Map<String, Reporter> reporters = new HashMap<>();
     private final Map<Reporter, Plugin> reporterPlugins = new HashMap<>();
 
@@ -57,11 +56,9 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
 
     @Override
     public void register(ReporterDefinition reporterDefinition) {
-        reporters.putIfAbsent(reporterDefinition.getPlugin().id(),
-                reporterDefinition.getReporter());
+        reporters.putIfAbsent(reporterDefinition.getPlugin().id(), reporterDefinition.getReporter());
 
-        reporterPlugins.putIfAbsent(reporterDefinition.getReporter(),
-                reporterDefinition.getPlugin());
+        reporterPlugins.putIfAbsent(reporterDefinition.getReporter(), reporterDefinition.getPlugin());
     }
 
     @Override
@@ -80,8 +77,9 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
         Reporter reporter = reporters.get(reporterId);
         Path policyWorkspace = reporterPlugins.get(reporter).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+        File[] schemas = policyWorkspace
+            .toFile()
+            .listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
         if (schemas.length == 1) {
             File schemaDir = schemas[0];
@@ -103,15 +101,12 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
             Class<? extends ReporterConfiguration> configurationClass = reporter.configuration();
             ReporterConfiguration reporterConfiguration = reporterConfigurationFactory.create(configurationClass, configuration);
 
-            return create0(reporterPlugins.get(reporter),
-                    reporter.auditReporter(),
-                    reporterConfiguration);
+            return create0(reporterPlugins.get(reporter), reporter.auditReporter(), reporterConfiguration);
         } else {
             logger.error("No reporter provider is registered for type {}", type);
             throw new IllegalStateException("No reporter provider is registered for type " + type);
         }
     }
-
 
     private <T> T create0(Plugin plugin, Class<T> auditReporterClass, ReporterConfiguration reporterConfiguration) {
         if (auditReporterClass == null) {
@@ -121,26 +116,28 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
         try {
             T auditReporterObj = createInstance(auditReporterClass);
             final Import annImport = auditReporterClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext reporterApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
+            ApplicationContext reporterApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
+                    }
+
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add reporter configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration)
+                        );
+
+                        return configurableApplicationContext;
+                    }
                 }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add reporter configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration));
-
-                    return configurableApplicationContext;
-                }
-            });
+            );
 
             reporterApplicationContext.getAutowireCapableBeanFactory().autowireBean(auditReporterObj);
 

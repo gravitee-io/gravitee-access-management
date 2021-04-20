@@ -23,12 +23,11 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,45 +44,51 @@ public class PolicyPluginServiceImpl implements PolicyPluginService {
     @Override
     public Single<List<PolicyPlugin>> findAll() {
         LOGGER.debug("List all policy plugins");
-        return Observable.fromIterable(policyPluginManager.getAll())
-                .map(this::convert)
-                .toList();
+        return Observable.fromIterable(policyPluginManager.getAll()).map(this::convert).toList();
     }
 
     @Override
     public Maybe<PolicyPlugin> findById(String policyId) {
         LOGGER.debug("Find policy plugin by ID: {}", policyId);
-        return Maybe.create(emitter -> {
-            try {
-                PolicyPlugin policy = convert(policyPluginManager.get(policyId));
-                if (policy != null) {
-                    emitter.onSuccess(policy);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    PolicyPlugin policy = convert(policyPluginManager.get(policyId));
+                    if (policy != null) {
+                        emitter.onSuccess(policy);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to get policy plugin : {}", policyId, ex);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get policy plugin : " + policyId, ex)
+                    );
                 }
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get policy plugin : {}", policyId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get policy plugin : " + policyId, ex));
             }
-        });
+        );
     }
 
     @Override
     public Maybe<String> getSchema(String policyId) {
         LOGGER.debug("Find policy plugin schema by ID: {}", policyId);
-        return Maybe.create(emitter -> {
-            try {
-                String schema = policyPluginManager.getSchema(policyId);
-                if (schema != null) {
-                    emitter.onSuccess(schema);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    String schema = policyPluginManager.getSchema(policyId);
+                    if (schema != null) {
+                        emitter.onSuccess(schema);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurs while trying to get schema for policy plugin {}", policyId, e);
+                    emitter.onError(
+                        new TechnicalManagementException("An error occurs while trying to get schema for policy plugin " + policyId, e)
+                    );
                 }
-            } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for policy plugin {}", policyId, e);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for policy plugin " + policyId, e));
             }
-        });
+        );
     }
 
     private PolicyPlugin convert(Plugin policyPlugin) {

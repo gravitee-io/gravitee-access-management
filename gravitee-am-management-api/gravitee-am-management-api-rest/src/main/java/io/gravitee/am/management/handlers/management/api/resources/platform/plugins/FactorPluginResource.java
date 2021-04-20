@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Factor"})
+@Api(tags = { "Plugin", "Factor" })
 public class FactorPluginResource {
 
     @Context
@@ -49,31 +48,27 @@ public class FactorPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a factor plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(@PathParam("factor") String authenticatorId,
-                    @Suspended final AsyncResponse response) {
-
-        authenticatorPluginService.findById(authenticatorId)
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(authenticatorId)))
-                .map(policyPlugin -> Response.ok(policyPlugin).build())
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get a factor plugin", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("factor") String authenticatorId, @Suspended final AsyncResponse response) {
+        authenticatorPluginService
+            .findById(authenticatorId)
+            .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(authenticatorId)))
+            .map(policyPlugin -> Response.ok(policyPlugin).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a factor plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void getSchema(@PathParam("factor") String factorId,
-                          @Suspended final AsyncResponse response) {
-
+    @ApiOperation(value = "Get a factor plugin's schema", notes = "There is no particular permission needed. User must be authenticated.")
+    public void getSchema(@PathParam("factor") String factorId, @Suspended final AsyncResponse response) {
         // Check that the authenticator exists
-        authenticatorPluginService.findById(factorId)
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
-                .flatMap(irrelevant -> authenticatorPluginService.getSchema(factorId))
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginSchemaNotFoundException(factorId)))
-                .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
-                .subscribe(response::resume, response::resume);
+        authenticatorPluginService
+            .findById(factorId)
+            .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
+            .flatMap(irrelevant -> authenticatorPluginService.getSchema(factorId))
+            .switchIfEmpty(Maybe.error(new AuthenticatorPluginSchemaNotFoundException(factorId)))
+            .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

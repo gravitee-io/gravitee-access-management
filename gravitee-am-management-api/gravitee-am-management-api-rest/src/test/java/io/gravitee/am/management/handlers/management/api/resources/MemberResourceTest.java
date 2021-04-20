@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import org.junit.Test;
-
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -38,37 +37,27 @@ public class MemberResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldNotDeleteMember_organizationNotFound() {
-
         final String organizationId = "orga-1";
 
         doReturn(Single.error(new OrganizationNotFoundException(organizationId))).when(organizationService).findById(organizationId);
 
-        final Response response = target("/organizations")
-                .path(organizationId)
-                .path("members")
-                .path("membership-1")
-                .request()
-                .delete();
+        final Response response = target("/organizations").path(organizationId).path("members").path("membership-1").request().delete();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test
     public void shouldDeleteMember() {
-
         String membershipId = "membership-1";
         Organization organization = new Organization();
         organization.setId(Organization.DEFAULT);
 
         doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
-        doReturn(Completable.complete()).when(membershipService).delete(eq(membershipId), any(io.gravitee.am.identityprovider.api.User.class));
+        doReturn(Completable.complete())
+            .when(membershipService)
+            .delete(eq(membershipId), any(io.gravitee.am.identityprovider.api.User.class));
 
-        final Response response = target("/organizations")
-                .path(organization.getId())
-                .path("members")
-                .path(membershipId)
-                .request()
-                .delete();
+        final Response response = target("/organizations").path(organization.getId()).path("members").path(membershipId).request().delete();
 
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }

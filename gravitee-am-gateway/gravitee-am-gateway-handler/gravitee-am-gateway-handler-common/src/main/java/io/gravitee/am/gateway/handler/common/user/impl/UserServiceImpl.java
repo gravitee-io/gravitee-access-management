@@ -16,13 +16,12 @@
 package io.gravitee.am.gateway.handler.common.user.impl;
 
 import io.gravitee.am.gateway.handler.common.user.UserService;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

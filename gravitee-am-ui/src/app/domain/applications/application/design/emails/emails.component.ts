@@ -14,43 +14,43 @@
  * limitations under the License.
  */
 import { Component } from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-application-emails',
   templateUrl: './emails.component.html',
-  styleUrls: ['./emails.component.scss']
+  styleUrls: ['./emails.component.scss'],
 })
 export class ApplicationEmailsComponent {
   emails: any[];
   application: any;
   domain: any;
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.application = this.route.snapshot.parent.parent.data['application'];
+    this.domain = this.route.snapshot.data.domain;
+    this.application = this.route.snapshot.parent.parent.data.application;
     this.emails = this.getEmails();
   }
 
   getEmails() {
     return [
       {
-        'name': 'Registration confirmation',
-        'description': 'Registration email to confirm user account',
-        'template': 'REGISTRATION_CONFIRMATION',
-        'icon' : 'how_to_reg',
-        'enabled': this.applicationSettingsValid()
+        name: 'Registration confirmation',
+        description: 'Registration email to confirm user account',
+        template: 'REGISTRATION_CONFIRMATION',
+        icon: 'how_to_reg',
+        enabled: this.applicationSettingsValid(),
       },
       {
-        'name': 'Reset password',
-        'description': 'Reset password email to ask for a new one',
-        'template': 'RESET_PASSWORD',
-        'icon': 'lock_open',
-        'enabled': this.applicationSettingsValid() && this.allowResetPassword()
-      }
-    ]
+        name: 'Reset password',
+        description: 'Reset password email to ask for a new one',
+        template: 'RESET_PASSWORD',
+        icon: 'lock_open',
+        enabled: this.applicationSettingsValid() && this.allowResetPassword(),
+      },
+    ];
   }
 
   applicationSettingsValid() {
@@ -58,7 +58,10 @@ export class ApplicationEmailsComponent {
       return this.application.type !== 'service';
     }
     if (this.application.settings && this.application.settings.oauth && this.application.settings.oauth.grantTypes) {
-      return this.application.settings.oauth.grantTypes.includes('authorization_code') || this.application.settings.oauth.grantTypes.includes("implicit");
+      return (
+        this.application.settings.oauth.grantTypes.includes('authorization_code') ||
+        this.application.settings.oauth.grantTypes.includes('implicit')
+      );
     }
     return false;
   }

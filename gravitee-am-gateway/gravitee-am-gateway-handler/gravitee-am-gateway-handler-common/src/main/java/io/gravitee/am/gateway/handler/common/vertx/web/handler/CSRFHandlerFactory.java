@@ -33,8 +33,7 @@ public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
 
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(SecureRandomString.generate())
-                .setCookiePath("/" + domain.getPath()));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(SecureRandomString.generate()).setCookiePath("/" + domain.getPath()));
     }
 
     @Override

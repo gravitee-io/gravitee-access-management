@@ -22,7 +22,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface EntityManager<T> {
-
     /**
      * Deploy an entity
      * @param entity entity to deploy.
@@ -53,5 +52,4 @@ public interface EntityManager<T> {
      * @return A deployed {@link T}
      */
     T get(String entityId);
-
 }

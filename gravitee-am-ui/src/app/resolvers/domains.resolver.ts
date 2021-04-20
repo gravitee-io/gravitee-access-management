@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { DomainService } from "../services/domain.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { DomainService } from '../services/domain.service';
 
 @Injectable()
 export class DomainsResolver implements Resolve<any> {
+  constructor(private domainService: DomainService) {}
 
-  constructor(private domainService: DomainService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     return this.domainService.list();
   }
-
 }

@@ -17,7 +17,6 @@ package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -148,7 +147,7 @@ public class PatchClientRegistrationSettings {
     }
 
     public ClientRegistrationSettings patch(ClientRegistrationSettings toPatch) {
-        ClientRegistrationSettings result=toPatch!=null?toPatch: ClientRegistrationSettings.defaultSettings();
+        ClientRegistrationSettings result = toPatch != null ? toPatch : ClientRegistrationSettings.defaultSettings();
 
         SetterUtils.safeSet(result::setAllowWildCardRedirectUri, this.getAllowWildCardRedirectUri(), boolean.class);
         SetterUtils.safeSet(result::setAllowHttpSchemeRedirectUri, this.getAllowHttpSchemeRedirectUri(), boolean.class);

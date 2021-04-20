@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from "@angular/router";
-import {DomainService} from "../../../services/domain.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {AuthService} from "../../../services/auth.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { DomainService } from '../../../services/domain.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-domain-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  styleUrls: ['./login.component.scss'],
 })
 export class DomainSettingsLoginComponent implements OnInit {
   domainId: string;
@@ -30,20 +30,22 @@ export class DomainSettingsLoginComponent implements OnInit {
   formChanged = false;
   readonly = false;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) { }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.domain = this.route.snapshot.data.domain;
     this.domain.loginSettings = this.domain.loginSettings || {};
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
   }
 
   save() {
-    this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe(data => {
+    this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('Login configuration updated');
@@ -59,7 +61,6 @@ export class DomainSettingsLoginComponent implements OnInit {
     return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
   }
 
-
   enableForgotPassword(event) {
     this.domain.loginSettings.forgotPasswordEnabled = event.checked;
     this.formChanged = true;
@@ -68,5 +69,4 @@ export class DomainSettingsLoginComponent implements OnInit {
   isForgotPasswordEnabled() {
     return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
   }
-
 }

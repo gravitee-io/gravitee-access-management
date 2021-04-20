@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.management.handlers.management.api;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -22,10 +26,22 @@ import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperReso
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordValidator;
 import io.reactivex.Single;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.List;
+import javax.annotation.Priority;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -40,23 +56,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-
-import javax.annotation.Priority;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -333,7 +332,6 @@ public abstract class JerseySpringTest {
     private JerseyTest _jerseyTest;
 
     public final WebTarget target(final String path) {
-
         if ("domains".equals(path)) {
             return _jerseyTest.target("organizations").path("DEFAULT").path("environments").path("DEFAULT").path(path);
         }
@@ -353,44 +351,48 @@ public abstract class JerseySpringTest {
 
     @Autowired
     public void setApplicationContext(final ApplicationContext context) {
-        _jerseyTest = new JerseyTest() {
-            @Override
-            protected Application configure() {
-                ResourceConfig application = new ManagementApplication();
-                application.register(AuthenticationFilter.class);
-                application.property("contextConfig", context);
+        _jerseyTest =
+            new JerseyTest() {
+                @Override
+                protected Application configure() {
+                    ResourceConfig application = new ManagementApplication();
+                    application.register(AuthenticationFilter.class);
+                    application.property("contextConfig", context);
 
-                return application;
-            }
-        };
+                    return application;
+                }
+            };
     }
 
     @Priority(50)
     public static class AuthenticationFilter implements ContainerRequestFilter {
+
         @Override
         public void filter(final ContainerRequestContext requestContext) throws IOException {
-            requestContext.setSecurityContext(new SecurityContext() {
-                @Override
-                public Principal getUserPrincipal() {
-                    User endUser = new DefaultUser(USER_NAME);
-                    return new UsernamePasswordAuthenticationToken(endUser, null);
-                }
+            requestContext.setSecurityContext(
+                new SecurityContext() {
+                    @Override
+                    public Principal getUserPrincipal() {
+                        User endUser = new DefaultUser(USER_NAME);
+                        return new UsernamePasswordAuthenticationToken(endUser, null);
+                    }
 
-                @Override
-                public boolean isUserInRole(String string) {
-                    return true;
-                }
+                    @Override
+                    public boolean isUserInRole(String string) {
+                        return true;
+                    }
 
-                @Override
-                public boolean isSecure() {
-                    return true;
-                }
+                    @Override
+                    public boolean isSecure() {
+                        return true;
+                    }
 
-                @Override
-                public String getAuthenticationScheme() {
-                    return "BASIC";
+                    @Override
+                    public String getAuthenticationScheme() {
+                        return "BASIC";
+                    }
                 }
-            });
+            );
         }
     }
 
@@ -405,7 +407,6 @@ public abstract class JerseySpringTest {
      * @return the deserialized entity.
      */
     protected <T> T readEntity(Response response, Class<T> clazz) {
-
         try {
             if (clazz == String.class) {
                 return (T) response.readEntity(String.class);
@@ -418,9 +419,11 @@ public abstract class JerseySpringTest {
     }
 
     protected <T> List<T> readListEntity(Response response, Class<T> entityClazz) {
-
         try {
-            return objectMapper.readValue(response.readEntity(String.class), objectMapper.getTypeFactory().constructCollectionType(List.class, entityClazz));
+            return objectMapper.readValue(
+                response.readEntity(String.class),
+                objectMapper.getTypeFactory().constructCollectionType(List.class, entityClazz)
+            );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -437,7 +440,6 @@ public abstract class JerseySpringTest {
      * @return the resulted {@link Response}.
      */
     protected <T> Response put(WebTarget webTarget, T value) {
-
         try {
             return webTarget.request().put(Entity.entity(objectMapper.writeValueAsString(value), MediaType.APPLICATION_JSON_TYPE));
         } catch (IOException e) {
@@ -446,7 +448,6 @@ public abstract class JerseySpringTest {
     }
 
     protected <T> Response post(WebTarget webTarget, T value) {
-
         try {
             return webTarget.request().post(Entity.entity(objectMapper.writeValueAsString(value), MediaType.APPLICATION_JSON_TYPE));
         } catch (IOException e) {

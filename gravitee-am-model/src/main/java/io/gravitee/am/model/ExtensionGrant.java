@@ -45,8 +45,7 @@ public class ExtensionGrant {
 
     private Date updatedAt;
 
-    public ExtensionGrant() {
-    }
+    public ExtensionGrant() {}
 
     public ExtensionGrant(ExtensionGrant other) {
         this.id = other.id;

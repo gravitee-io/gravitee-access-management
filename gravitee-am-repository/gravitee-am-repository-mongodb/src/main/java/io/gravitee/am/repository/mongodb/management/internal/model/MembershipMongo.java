@@ -26,6 +26,7 @@ public class MembershipMongo extends Auditable {
 
     @BsonId
     private String id;
+
     private String domain;
     private String memberId;
     private String memberType;

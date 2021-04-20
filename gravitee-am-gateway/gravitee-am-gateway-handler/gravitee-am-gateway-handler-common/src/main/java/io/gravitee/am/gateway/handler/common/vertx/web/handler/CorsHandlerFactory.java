@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import static java.util.Arrays.asList;
+
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,11 +37,18 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
 
     @Override
     public CorsHandler getObject() {
-        return CorsHandler.newInstance(io.vertx.ext.web.handler.CorsHandler
+        return CorsHandler.newInstance(
+            io.vertx.ext.web.handler.CorsHandler
                 .create(environment.getProperty("http.cors.allow-origin", String.class, "*"))
-                .allowedHeaders(getStringPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"))
+                .allowedHeaders(
+                    getStringPropertiesAsList(
+                        "http.cors.allow-headers",
+                        "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"
+                    )
+                )
                 .allowedMethods(getHttpMethodPropertiesAsList("http.cors.allow-methods", "GET, POST"))
-                .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400)));
+                .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400))
+        );
     }
 
     @Override
@@ -55,7 +61,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         if (property == null) {
             property = defaultValue;
         }
-        return new HashSet<>(asList(property.replaceAll("\\s+","").split(",")));
+        return new HashSet<>(asList(property.replaceAll("\\s+", "").split(",")));
     }
 
     private Set<HttpMethod> getHttpMethodPropertiesAsList(final String propertyKey, final String defaultValue) {
@@ -64,9 +70,9 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
             property = defaultValue;
         }
 
-        return asList(property.replaceAll("\\s+","").split(","))
-                .stream()
-                .map(method -> HttpMethod.valueOf(method))
-                .collect(Collectors.toSet());
+        return asList(property.replaceAll("\\s+", "").split(","))
+            .stream()
+            .map(method -> HttpMethod.valueOf(method))
+            .collect(Collectors.toSet());
     }
 }

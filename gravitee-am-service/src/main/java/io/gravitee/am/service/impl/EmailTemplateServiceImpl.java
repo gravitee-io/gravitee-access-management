@@ -41,14 +41,13 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -73,60 +72,126 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("Find all emails for {} {}", referenceType, referenceId);
-        return emailRepository.findAll(referenceType, referenceId)
-                .onErrorResumeNext(ex -> {
+        return emailRepository
+            .findAll(referenceType, referenceId)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all emails for {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find a all emails for %s %s", referenceType, referenceId), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a all emails for %s %s", referenceType, referenceId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<List<Email>> findAll() {
         LOGGER.debug("Find all emails");
-        return emailRepository.findAll()
-                .onErrorResumeNext(ex -> {
+        return emailRepository
+            .findAll()
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all emails", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find a all emails", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
         LOGGER.debug("Find email by {} {} and client {}", referenceType, referenceId, client);
-        return emailRepository.findByClient(referenceType, referenceId, client)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} and its client {}", referenceType, referenceId, client, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a email using its %s %s and its client %s", referenceType, referenceId, client), ex));
-                });
+        return emailRepository
+            .findByClient(referenceType, referenceId, client)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find a email using its {} {} and its client {}",
+                        referenceType,
+                        referenceId,
+                        client,
+                        ex
+                    );
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a email using its %s %s and its client %s",
+                                referenceType,
+                                referenceId,
+                                client
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
         LOGGER.debug("Find email by {} {} and template {}", referenceType, referenceId, template);
-        return emailRepository.findByTemplate(referenceType, referenceId, template)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} and template {}", referenceType, referenceId, template, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a email using its %s %s and template %s", referenceType, referenceId, template), ex));
-                });
+        return emailRepository
+            .findByTemplate(referenceType, referenceId, template)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find a email using its {} {} and template {}",
+                        referenceType,
+                        referenceId,
+                        template,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a email using its %s %s and template %s",
+                                referenceType,
+                                referenceId,
+                                template
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
-
         return findByTemplate(ReferenceType.DOMAIN, domain, template);
     }
 
     @Override
     public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
         LOGGER.debug("Find email by {} {}, client {} and template {}", referenceType, referenceId, client, template);
-        return emailRepository.findByClientAndTemplate(referenceType, referenceId, client, template)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a email using its {} {} its client {} and template {}", referenceType, referenceId, client, template, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a email using its %s %s its client %s and template %s", referenceType, referenceId, client, template), ex));
-                });
+        return emailRepository
+            .findByClientAndTemplate(referenceType, referenceId, client, template)
+            .onErrorResumeNext(
+                ex -> {
+                    LOGGER.error(
+                        "An error occurs while trying to find a email using its {} {} its client {} and template {}",
+                        referenceType,
+                        referenceId,
+                        client,
+                        template,
+                        ex
+                    );
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format(
+                                "An error occurs while trying to find a email using its %s %s its client %s and template %s",
+                                referenceType,
+                                referenceId,
+                                client,
+                                template
+                            ),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
@@ -137,19 +202,27 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Maybe<Email> findById(String id) {
         LOGGER.debug("Find email by id {}", id);
-        return emailRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return emailRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find a email using its id {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a email using its id %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find a email using its id %s", id),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget) {
         return findByClient(ReferenceType.DOMAIN, domain, clientSource)
-                .flatMapPublisher(Flowable::fromIterable)
-                .flatMapSingle(source -> {
+            .flatMapPublisher(Flowable::fromIterable)
+            .flatMapSingle(
+                source -> {
                     NewEmail email = new NewEmail();
                     email.setEnabled(source.isEnabled());
                     email.setTemplate(Template.parse(source.getTemplate()));
@@ -159,8 +232,9 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     email.setContent(source.getContent());
                     email.setExpiresAfter(source.getExpiresAfter());
                     return this.create(domain, clientTarget, email);
-                })
-                .toList();
+                }
+            )
+            .toList();
     }
 
     @Override
@@ -200,35 +274,63 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     @Override
     public Completable delete(String emailId, User principal) {
         LOGGER.debug("Delete email {}", emailId);
-        return emailRepository.findById(emailId)
-                .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
-                .flatMapCompletable(email -> {
+        return emailRepository
+            .findById(emailId)
+            .switchIfEmpty(Maybe.error(new EmailNotFoundException(emailId)))
+            .flatMapCompletable(
+                email -> {
                     // create event for sync process
-                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.DELETE));
-                    return emailRepository.delete(emailId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).email(email)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_DELETED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                    Event event = new Event(
+                        Type.EMAIL,
+                        new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.DELETE)
+                    );
+                    return emailRepository
+                        .delete(emailId)
+                        .andThen(eventService.create(event))
+                        .toCompletable()
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EmailTemplateAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.EMAIL_TEMPLATE_DELETED)
+                                        .email(email)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EmailTemplateAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.EMAIL_TEMPLATE_DELETED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to delete email: {}", emailId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete email: %s", emailId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to delete email: %s", emailId), ex)
+                    );
+                }
+            );
     }
-
 
     private Single<Email> create0(ReferenceType referenceType, String referenceId, String client, NewEmail newEmail, User principal) {
         String emailId = RandomString.generate();
 
         // check if email is unique
         return checkEmailUniqueness(referenceType, referenceId, client, newEmail.getTemplate().template())
-                .flatMap(irrelevant -> {
+            .flatMap(
+                irrelevant -> {
                     Email email = new Email();
                     email.setId(emailId);
                     email.setReferenceType(referenceType);
@@ -244,28 +346,56 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     email.setCreatedAt(new Date());
                     email.setUpdatedAt(email.getCreatedAt());
                     return emailRepository.create(email);
-                })
-                .flatMap(email -> {
+                }
+            )
+            .flatMap(
+                email -> {
                     // create event for sync process
-                    Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.CREATE));
+                    Event event = new Event(
+                        Type.EMAIL,
+                        new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.CREATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(email));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to create a email", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a email", ex));
-                })
-                .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).email(email)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                email ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(EmailTemplateAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.EMAIL_TEMPLATE_CREATED)
+                            .email(email)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(EmailTemplateAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.EMAIL_TEMPLATE_CREATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     private Single<Email> update0(ReferenceType referenceType, String referenceId, String id, UpdateEmail updateEmail, User principal) {
-        return emailRepository.findById(referenceType, referenceId, id)
-                .switchIfEmpty(Maybe.error(new EmailNotFoundException(id)))
-                .flatMapSingle(oldEmail -> {
+        return emailRepository
+            .findById(referenceType, referenceId, id)
+            .switchIfEmpty(Maybe.error(new EmailNotFoundException(id)))
+            .flatMapSingle(
+                oldEmail -> {
                     Email emailToUpdate = new Email(oldEmail);
                     emailToUpdate.setEnabled(updateEmail.isEnabled());
                     emailToUpdate.setFrom(updateEmail.getFrom());
@@ -275,37 +405,67 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     emailToUpdate.setExpiresAfter(updateEmail.getExpiresAfter());
                     emailToUpdate.setUpdatedAt(new Date());
 
-                    return emailRepository.update(emailToUpdate)
-                            .flatMap(email -> {
+                    return emailRepository
+                        .update(emailToUpdate)
+                        .flatMap(
+                            email -> {
                                 // create event for sync process
-                                Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.UPDATE));
+                                Event event = new Event(
+                                    Type.EMAIL,
+                                    new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.UPDATE)
+                                );
                                 return eventService.create(event).flatMap(__ -> Single.just(email));
-                            })
-                            .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).oldValue(oldEmail).email(email)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .doOnSuccess(
+                            email ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EmailTemplateAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.EMAIL_TEMPLATE_UPDATED)
+                                        .oldValue(oldEmail)
+                                        .email(email)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(EmailTemplateAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.EMAIL_TEMPLATE_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
 
                     LOGGER.error("An error occurs while trying to update a email", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a email", ex));
-                });
+                }
+            );
     }
 
     private Single<Boolean> checkEmailUniqueness(ReferenceType referenceType, String referenceId, String client, String emailTemplate) {
-        Maybe<Email> maybeSource = client == null ?
-                findByTemplate(referenceType, referenceId, emailTemplate) :
-                findByClientAndTemplate(referenceType, referenceId, client, emailTemplate);
+        Maybe<Email> maybeSource = client == null
+            ? findByTemplate(referenceType, referenceId, emailTemplate)
+            : findByClientAndTemplate(referenceType, referenceId, client, emailTemplate);
 
         return maybeSource
-                .isEmpty()
-                .map(isEmpty -> {
+            .isEmpty()
+            .map(
+                isEmpty -> {
                     if (!isEmpty) {
                         throw new EmailAlreadyExistsException(emailTemplate);
                     }
                     return true;
-                });
+                }
+            );
     }
 }

@@ -41,21 +41,23 @@ public class IntrospectionServiceImpl implements IntrospectionService {
 
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest introspectionRequest) {
-        return tokenService.introspect(introspectionRequest.getToken())
-                .flatMap(token -> {
+        return tokenService
+            .introspect(introspectionRequest.getToken())
+            .flatMap(
+                token -> {
                     AccessToken accessToken = (AccessToken) token;
                     if (accessToken.getSubject() != null && !accessToken.getSubject().equals(accessToken.getClientId())) {
                         return userService
-                                .findById(accessToken.getSubject())
-                                .map(user -> convert(accessToken, user))
-                                .defaultIfEmpty(convert(accessToken, null))
-                                .toSingle();
-
+                            .findById(accessToken.getSubject())
+                            .map(user -> convert(accessToken, user))
+                            .defaultIfEmpty(convert(accessToken, null))
+                            .toSingle();
                     } else {
                         return Single.just(convert(accessToken, null));
                     }
-                })
-                .onErrorResumeNext(Single.just(new IntrospectionResponse(false)));
+                }
+            )
+            .onErrorResumeNext(Single.just(new IntrospectionResponse(false)));
     }
 
     private IntrospectionResponse convert(AccessToken accessToken, User user) {

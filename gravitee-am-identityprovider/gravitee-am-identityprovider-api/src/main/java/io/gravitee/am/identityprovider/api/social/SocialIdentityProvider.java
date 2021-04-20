@@ -22,7 +22,6 @@ import io.gravitee.am.identityprovider.api.IdentityProvider;
  * @author GraviteeSource Team
  */
 public interface SocialIdentityProvider extends IdentityProvider {
-
     @Override
     default boolean external() {
         return true;

@@ -20,7 +20,7 @@ import { NavbarService } from './navbar.service';
 describe('NavbarService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [NavbarService]
+      providers: [NavbarService],
     });
   });
 

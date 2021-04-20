@@ -64,7 +64,7 @@ import org.springframework.core.env.Environment;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({WebConfiguration.class, PolicyConfiguration.class, ContextConfiguration.class})
+@Import({ WebConfiguration.class, PolicyConfiguration.class, ContextConfiguration.class })
 public class CommonConfiguration {
 
     @Autowired
@@ -77,11 +77,11 @@ public class CommonConfiguration {
     @Qualifier("oidcWebClient")
     public WebClient webClient() {
         WebClientOptions options = new WebClientOptions()
-                .setConnectTimeout(Integer.valueOf(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)
-                .setMaxPoolSize(Integer.valueOf(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
-                .setTrustAll(Boolean.valueOf(environment.getProperty("oidc.http.client.trustAll", "true")));
+            .setConnectTimeout(Integer.valueOf(environment.getProperty("oidc.http.connectionTimeout", "10")) * 1000)
+            .setMaxPoolSize(Integer.valueOf(environment.getProperty("oidc.http.pool.maxTotalConnection", "200")))
+            .setTrustAll(Boolean.valueOf(environment.getProperty("oidc.http.client.trustAll", "true")));
 
-        return WebClient.create(vertx,options);
+        return WebClient.create(vertx, options);
     }
 
     @Bean
@@ -161,7 +161,14 @@ public class CommonConfiguration {
 
     @Bean
     public UserManager userManager() {
-        UserStore userStore = new InMemoryUserStore(vertx, environment.getProperty("http.cookie.session.timeout", Long.class, io.vertx.reactivex.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT));
+        UserStore userStore = new InMemoryUserStore(
+            vertx,
+            environment.getProperty(
+                "http.cookie.session.timeout",
+                Long.class,
+                io.vertx.reactivex.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT
+            )
+        );
         return new UserManagerImpl(userStore);
     }
 }

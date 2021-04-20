@@ -27,8 +27,8 @@ import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -37,14 +37,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"group"})
+@Api(tags = { "group" })
 public class GroupsResource extends AbstractResource {
 
     private static final int MAX_GROUPS_SIZE_PER_PAGE = 100;
@@ -58,44 +57,69 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List groups of the organization",
-            notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
-                    "Each returned group is filtered and contains only basic information such as id and name.")
-    @ApiResponses({
+    @ApiOperation(
+        value = "List groups of the organization",
+        notes = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
+        "Each returned group is filtered and contains only basic information such as id and name."
+    )
+    @ApiResponses(
+        {
             @ApiResponse(code = 200, message = "List groups of the organization", response = Group.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @QueryParam("page") @DefaultValue("0") int page,
+        @QueryParam("size") @DefaultValue(MAX_GROUPS_SIZE_PER_PAGE_STRING) int size,
+        @Suspended final AsyncResponse response
+    ) {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.LIST)
-                .andThen(groupService.findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
-                        .map(groupPage ->
-                                new Page<>(groupPage.getData().stream().map(this::filterGroupInfos).collect(Collectors.toList()), groupPage.getCurrentPage(), groupPage.getTotalCount())))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                groupService
+                    .findAll(ReferenceType.ORGANIZATION, organizationId, page, Integer.min(size, MAX_GROUPS_SIZE_PER_PAGE))
+                    .map(
+                        groupPage ->
+                            new Page<>(
+                                groupPage.getData().stream().map(this::filterGroupInfos).collect(Collectors.toList()),
+                                groupPage.getCurrentPage(),
+                                groupPage.getTotalCount()
+                            )
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a platform group",
-            notes = "User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Group successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a platform group",
+        notes = "User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Group successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @ApiParam(name = "group", required = true) @Valid @NotNull final NewGroup newGroup,
-            @Suspended final AsyncResponse response) {
+        @PathParam("organizationId") String organizationId,
+        @ApiParam(name = "group", required = true) @Valid @NotNull final NewGroup newGroup,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.CREATE)
-                .andThen(groupService.create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
-                        .map(group -> Response.created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
-                                .entity(group).build()))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                groupService
+                    .create(ReferenceType.ORGANIZATION, organizationId, newGroup, authenticatedUser)
+                    .map(
+                        group ->
+                            Response
+                                .created(URI.create("/organizations/" + organizationId + "/groups/" + group.getId()))
+                                .entity(group)
+                                .build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{group}")

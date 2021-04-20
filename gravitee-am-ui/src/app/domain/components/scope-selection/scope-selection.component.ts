@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {MatPaginator, MatSort, MatTableDataSource} from '@angular/material';
-import {SelectionModel} from '@angular/cdk/collections';
-import {ActivatedRoute} from '@angular/router';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { MatPaginator, MatSort, MatTableDataSource } from '@angular/material';
+import { SelectionModel } from '@angular/cdk/collections';
+import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
 
 export interface Scope {
@@ -30,9 +30,8 @@ export interface Scope {
 @Component({
   selector: 'scope-selection',
   templateUrl: './scope-selection.component.html',
-  styleUrls: ['./scope-selection.component.scss']
+  styleUrls: ['./scope-selection.component.scss'],
 })
-
 export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   @Output() onScopeSelection = new EventEmitter();
   @Input() initialSelectedScopes: string[];
@@ -48,9 +47,17 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    const datasource = _.map(this.route.snapshot.data['scopes'],  scope => <Scope>{
-      id: scope.id, key: scope.key, name: scope.name, description: scope.description, discovery: scope.discovery
-    });
+    const datasource = _.map(
+      this.route.snapshot.data.scopes,
+      (scope) =>
+        <Scope>{
+          id: scope.id,
+          key: scope.key,
+          name: scope.name,
+          description: scope.description,
+          discovery: scope.discovery,
+        },
+    );
     this.scopes = new MatTableDataSource(datasource);
     this.scopes.paginator = this.paginator;
     const initialSelectedValues = _.intersectionWith(this.scopes.data, this.initialSelectedScopes, (scope, key) => scope.key === key);
@@ -97,9 +104,7 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
 
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle() {
-    this.isAllSelected() ?
-      this.selection.clear() :
-      this.scopes.data.forEach(row => this.selection.select(row));
+    this.isAllSelected() ? this.selection.clear() : this.scopes.data.forEach((row) => this.selection.select(row));
     this.onScopeSelection.emit(this.selection.selected);
   }
 

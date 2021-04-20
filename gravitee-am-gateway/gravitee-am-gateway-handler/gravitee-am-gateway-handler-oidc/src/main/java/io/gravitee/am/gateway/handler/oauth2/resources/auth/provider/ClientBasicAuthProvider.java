@@ -24,7 +24,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-
 import java.util.Base64;
 
 /**
@@ -45,8 +44,10 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
         if (client != null && ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(client.getTokenEndpointAuthMethod())) {
             return true;
         }
-        if ((client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty()))
-                && getBasicAuthorization(request) != null) {
+        if (
+            (client != null && (client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())) &&
+            getBasicAuthorization(request) != null
+        ) {
             return true;
         }
         return false;
@@ -56,7 +57,11 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
     public void handle(Client client, HttpServerRequest request, Handler<AsyncResult<Client>> handler) {
         final String authorization = getBasicAuthorization(request);
         if (authorization == null) {
-            handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", authenticationHeader())));
+            handler.handle(
+                Future.failedFuture(
+                    new InvalidClientException("Invalid client: missing or unsupported authentication method", authenticationHeader())
+                )
+            );
             return;
         }
         try {
@@ -69,12 +74,18 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
             String clientId = decoded.substring(0, colonIdx);
             String clientSecret = decoded.substring(colonIdx + 1);
             if (!client.getClientId().equals(clientId) || !client.getClientSecret().equals(clientSecret)) {
-                handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader())));
+                handler.handle(
+                    Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE, authenticationHeader()))
+                );
                 return;
             }
             handler.handle(Future.succeededFuture(client));
         } catch (RuntimeException e) {
-            handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported authentication method", e, authenticationHeader())));
+            handler.handle(
+                Future.failedFuture(
+                    new InvalidClientException("Invalid client: missing or unsupported authentication method", e, authenticationHeader())
+                )
+            );
             return;
         }
     }
@@ -86,7 +97,7 @@ public class ClientBasicAuthProvider implements ClientAuthProvider {
         }
         int idx = authorization.indexOf(' ');
         if (idx <= 0) {
-           return null;
+            return null;
         }
         if (!TYPE.equalsIgnoreCase(authorization.substring(0, idx))) {
             return null;

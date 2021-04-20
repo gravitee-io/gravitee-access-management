@@ -15,7 +15,7 @@
 
   mat-drawer-container {
     height: 100%;
-    border: 1px solid #E0E0E0;
+    border: 1px solid #e0e0e0;
 
     mat-drawer {
       padding: 20px;
@@ -31,7 +31,7 @@
 
         mat-expansion-panel {
           box-shadow: none;
-          border: 1px solid #E0E0E0;
+          border: 1px solid #e0e0e0;
 
           .no-policies {
             text-align: center;
@@ -86,16 +86,14 @@
   background: white;
   font-size: 14px;
   &.active {
-    background: #E8F0FE;
+    background: #e8f0fe;
   }
 }
 
 .cdk-drag-preview {
   box-sizing: border-box;
   border-radius: 4px;
-  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
-  0 8px 10px 1px rgba(0, 0, 0, 0.14),
-  0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
 }
 
 .cdk-drag-placeholder {
@@ -137,7 +135,7 @@
 }
 
 :host /deep/ .mat-slide-toggle.mat-checked .mat-slide-toggle-thumb-container {
-  transform: translate3d(18px,0,0) !important;
+  transform: translate3d(18px, 0, 0) !important;
 }
 
 :host /deep/ .mat-slide-toggle-thumb-container {

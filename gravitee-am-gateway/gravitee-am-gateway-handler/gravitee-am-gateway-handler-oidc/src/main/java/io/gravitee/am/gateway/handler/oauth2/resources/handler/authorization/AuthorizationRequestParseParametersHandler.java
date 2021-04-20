@@ -27,7 +27,6 @@ import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,8 +40,9 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseParametersHandler extends AbstractAuthorizationRequestParametersHandler
-        implements Handler<RoutingContext> {
+public class AuthorizationRequestParseParametersHandler
+    extends AbstractAuthorizationRequestParametersHandler
+    implements Handler<RoutingContext> {
 
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
 
@@ -107,8 +107,10 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         if (codeChallengeMethod != null) {
             // https://tools.ietf.org/html/rfc7636#section-4.2
             // It must be plain or S256
-            if (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
-                    !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod)) {
+            if (
+                !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
+                !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod)
+            ) {
                 throw new InvalidRequestException("Invalid parameter: code_challenge_method");
             }
         } else {

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnDestroy, OnInit} from '@angular/core';
-import {NavigationEnd, Router} from '@angular/router';
-import {BreadcrumbService} from '../../services/breadcrumb.service';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { BreadcrumbService } from '../../services/breadcrumb.service';
 
 @Component({
   selector: 'gv-breadcrumb',
   templateUrl: './breadcrumb.component.html',
-  styleUrls: ['./breadcrumb.component.scss']
+  styleUrls: ['./breadcrumb.component.scss'],
 })
 export class BreadcrumbComponent implements OnInit, OnChanges, OnDestroy {
   @Input() prefix: string = '';
@@ -30,14 +30,11 @@ export class BreadcrumbComponent implements OnInit, OnChanges, OnDestroy {
   private breadcrumbEventSubscription: any;
   private navigateUrl;
 
-  constructor(
-    private router: Router,
-    private breadcrumbService: BreadcrumbService,
-  ) {
+  constructor(private router: Router, private breadcrumbService: BreadcrumbService) {
     this.urls = [];
 
     // Subscribe to breadcrumb service events to be notified of route regex changes and trigger a breadcrumb regeneration.
-    this.breadcrumbEventSubscription = breadcrumbService.events.subscribe(e => {
+    this.breadcrumbEventSubscription = breadcrumbService.events.subscribe((e) => {
       if (this.navigateUrl) {
         this.regenerateBreadcrumb(this.navigateUrl);
       }
@@ -55,8 +52,7 @@ export class BreadcrumbComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   private regenerateBreadcrumb(url) {
     this.urls.length = 0;
@@ -64,7 +60,7 @@ export class BreadcrumbComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   buildUrl(url): any {
-    return {displayUrl: this.friendlyName(url), navigateTo: url};
+    return { displayUrl: this.friendlyName(url), navigateTo: url };
   }
 
   ngOnChanges(changes: any): void {
@@ -78,12 +74,12 @@ export class BreadcrumbComponent implements OnInit, OnChanges, OnDestroy {
 
   generateBreadcrumbTrail(url: string): void {
     if (!this.breadcrumbService.isRouteHidden(url)) {
-      //Add url to beginning of array (since the url is being recursively broken down from full url to its parent)
+      // Add url to beginning of array (since the url is being recursively broken down from full url to its parent)
       this.urls.unshift(this.buildUrl(url));
     }
 
     if (url.lastIndexOf('/') > 0) {
-      this.generateBreadcrumbTrail(url.substr(0, url.lastIndexOf('/'))); //Find last '/' and add everything before it as a parent route
+      this.generateBreadcrumbTrail(url.substr(0, url.lastIndexOf('/'))); // Find last '/' and add everything before it as a parent route
     } else if (this.prefix.length > 0) {
       this.urls.unshift(this.buildUrl(this.prefix));
     }

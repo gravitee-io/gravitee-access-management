@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Directive, ElementRef, Input, TemplateRef, ViewContainerRef} from '@angular/core';
-import {AuthService} from '../services/auth.service';
+import { Directive, ElementRef, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { AuthService } from '../services/auth.service';
 
 @Directive({
-  selector: '[hasPermission]'
+  selector: '[hasPermission]',
 })
 export class HasPermissionDirective {
   private permissions = [];
 
-  constructor(private element: ElementRef,
-              private templateRef: TemplateRef<any>,
-              private viewContainer: ViewContainerRef,
-              private authService: AuthService) {
-  }
+  constructor(
+    private element: ElementRef,
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef,
+    private authService: AuthService,
+  ) {}
 
   @Input()
   set hasPermission(val) {
@@ -41,5 +42,4 @@ export class HasPermissionDirective {
       this.viewContainer.clear();
     }
   }
-
 }

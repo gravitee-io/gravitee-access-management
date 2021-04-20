@@ -14,43 +14,42 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
-import { AppConfig } from "../../config/app.config";
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class PolicyService {
   private providersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  findByDomain(domainId): Observable<any>  {
-    return this.http.get<any>(this.providersURL + domainId + "/policies");
+  findByDomain(domainId): Observable<any> {
+    return this.http.get<any>(this.providersURL + domainId + '/policies');
   }
 
-  get(domainId, id): Observable<any>  {
-    return this.http.get<any>(this.providersURL + domainId + "/policies/" + id);
+  get(domainId, id): Observable<any> {
+    return this.http.get<any>(this.providersURL + domainId + '/policies/' + id);
   }
 
-  create(domainId, policy): Observable<any>  {
-    return this.http.post<any>(this.providersURL + domainId + "/policies", policy);
+  create(domainId, policy): Observable<any> {
+    return this.http.post<any>(this.providersURL + domainId + '/policies', policy);
   }
 
-  update(domainId, id, policy): Observable<any>  {
-    return this.http.put<any>(this.providersURL + domainId + "/policies/" + id, {
-      'name' : policy.name,
-      'configuration' : policy.configuration,
-      'order' : policy.order,
-      'enabled' : policy.enabled
+  update(domainId, id, policy): Observable<any> {
+    return this.http.put<any>(this.providersURL + domainId + '/policies/' + id, {
+      name: policy.name,
+      configuration: policy.configuration,
+      order: policy.order,
+      enabled: policy.enabled,
     });
   }
 
   updateAll(domainId, policies): Observable<any> {
-    return this.http.put<any>(this.providersURL + domainId + "/policies", policies);
+    return this.http.put<any>(this.providersURL + domainId + '/policies', policies);
   }
 
-  delete(domainId, id): Observable<any>  {
-    return this.http.delete<any>(this.providersURL + domainId + "/policies/" + id);
+  delete(domainId, id): Observable<any> {
+    return this.http.delete<any>(this.providersURL + domainId + '/policies/' + id);
   }
-
 }

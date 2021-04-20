@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.scim.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import java.util.List;
 
 /**

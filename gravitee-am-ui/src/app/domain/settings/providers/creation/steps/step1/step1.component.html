@@ -17,8 +17,7 @@
 -->
 <div fxLayout="column">
   <p class="gv-plugin-creation-description">
-    Choose how your users will connect to the authorization server.
-    That could be an Active Directory or a corporate authentication service.
+    Choose how your users will connect to the authorization server. That could be an Active Directory or a corporate authentication service.
   </p>
   <div fxLayout="row wrap" fxFlex fxLayoutGap="10px">
     <mat-card *ngFor="let provider of providers" fxFlex="30">
@@ -28,7 +27,7 @@
         </mat-radio-group>
       </mat-card-header>
       <mat-card-content>
-        {{displayName(provider)}}
+        {{ displayName(provider) }}
       </mat-card-content>
     </mat-card>
   </div>
@@ -43,7 +42,7 @@
           </mat-radio-group>
         </mat-card-header>
         <mat-card-content>
-          {{displayName(provider)}}
+          {{ displayName(provider) }}
         </mat-card-content>
       </mat-card>
     </div>

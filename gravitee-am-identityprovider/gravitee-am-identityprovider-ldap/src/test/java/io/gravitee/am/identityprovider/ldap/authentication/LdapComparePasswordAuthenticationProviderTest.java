@@ -33,8 +33,11 @@ import org.springframework.test.context.ContextConfiguration;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@ContextConfiguration(classes = { LdapAuthenticationProviderConfiguration.class,
-        LdapComparePasswordAuthenticationProviderTest.LdapAuthenticationConfiguration.class })
+@ContextConfiguration(
+    classes = {
+        LdapAuthenticationProviderConfiguration.class, LdapComparePasswordAuthenticationProviderTest.LdapAuthenticationConfiguration.class,
+    }
+)
 public class LdapComparePasswordAuthenticationProviderTest extends LdapAuthenticationProviderTest {
 
     @Test
@@ -44,22 +47,26 @@ public class LdapComparePasswordAuthenticationProviderTest extends LdapAuthentic
         String credentials = "benspassword";
         String principal = "ben";
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return credentials;
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return credentials;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return principal;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return principal;
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return null;
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return null;
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 

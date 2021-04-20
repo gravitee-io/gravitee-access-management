@@ -21,27 +21,31 @@
     <div fxLayout="column" fxFlex="70">
       <form (ngSubmit)="update()" #domainForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
-          <div fxLayout="column" style="margin-bottom: 10px;">
-            <mat-slide-toggle
-              (change)="enableDomain($event)"
-              [checked]="domain.enabled" [disabled]="readonly">
+          <div fxLayout="column" style="margin-bottom: 10px">
+            <mat-slide-toggle (change)="enableDomain($event)" [checked]="domain.enabled" [disabled]="readonly">
               Enable domain
             </mat-slide-toggle>
-            <mat-hint style="font-size: 75%;">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
+            <mat-hint style="font-size: 75%">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly" />
             <mat-hint>Your domain's name.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Path</mat-label>
-            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly">
+            <input matInput type="text" placeholder="Path" name="path" [(ngModel)]="domain.path" required [readonly]="readonly" />
             <mat-hint>Your domain's path. Context path for Authentication and Authorization API operations.</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <textarea matInput placeholder="Description" name="description" [(ngModel)]="domain.description" [readonly]="readonly"></textarea>
+            <textarea
+              matInput
+              placeholder="Description"
+              name="description"
+              [(ngModel)]="domain.description"
+              [readonly]="readonly"
+            ></textarea>
             <mat-hint>Your domain's description.</mat-hint>
           </mat-form-field>
         </div>
@@ -55,24 +59,27 @@
             <mat-form-field appearance="outline" floatLabel="always">
               <mat-label>Sharding tags</mat-label>
               <mat-chip-list #chipListTags>
-                <mat-chip *ngFor="let tag of selectedTags" color="primary"
-                          selected="true" (removed)="removeTag(tag)">
-                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                  &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
+                <mat-chip *ngFor="let tag of selectedTags" color="primary" selected="true" (removed)="removeTag(tag)">
+                  <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                  &nbsp;<span>{{ tag.id }}</span
+                  >&nbsp;|&nbsp;<small>{{ tag.name }}</small>
                   <mat-icon matChipRemove>cancel</mat-icon>
                 </mat-chip>
-                <input matInput
-                       aria-label="Sharding Tags"
-                       placeholder="Sharding Tags"
-                       [matAutocomplete]="auto"
-                       [matChipInputFor]="chipListTags" [readonly]="readonly"
-                       #chipInput>
+                <input
+                  matInput
+                  aria-label="Sharding Tags"
+                  placeholder="Sharding Tags"
+                  [matAutocomplete]="auto"
+                  [matChipInputFor]="chipListTags"
+                  [readonly]="readonly"
+                  #chipInput
+                />
               </mat-chip-list>
 
               <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
                 <mat-option *ngFor="let tag of tags" [value]="tag.id">
-                  <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                  <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
+                  <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                  <span>{{ tag.id }}</span> | <small>{{ tag.name }}</small>
                 </mat-option>
               </mat-autocomplete>
               <mat-hint>Select a sharding tag and press enter.</mat-hint>
@@ -86,8 +93,8 @@
       </form>
       <div *hasPermission="['domain_settings_delete']" class="gv-page-delete-zone" fxLayout="column">
         <p>This operation cannot be undone.</p>
-        Domain will be deleted included all related data such as clients, identity providers, certificates and roles.
-        Current domain's users will no longer have access to the platform to log in and access protected resources.
+        Domain will be deleted included all related data such as clients, identity providers, certificates and roles. Current domain's users
+        will no longer have access to the platform to log in and access protected resources.
         <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
           <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
@@ -97,9 +104,7 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage security domain</h3>
       <div class="gv-page-description-content">
-        <p>
-          Configure your security domain's name, path and description.
-        </p>
+        <p>Configure your security domain's name, path and description.</p>
         <small>Changing the security domain's path involve to change endpoint URLs in your current applications.</small>
         <br />
         <br />

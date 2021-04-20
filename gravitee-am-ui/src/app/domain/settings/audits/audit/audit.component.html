@@ -21,39 +21,39 @@
   <div class="audit-content" fxLayout="row">
     <form fxLayout="column" fxFlex="70">
       <div class="gv-form-section">
-        <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px;">
-          <mat-chip [color]="audit.outcome?.status === 'SUCCESS'? 'accent':'warn'" selected>
-            {{audit.outcome?.status}}
+        <mat-chip-list #chipList style="position: absolute; margin-top: -35px; margin-left: -10px">
+          <mat-chip [color]="audit.outcome?.status === 'SUCCESS' ? 'accent' : 'warn'" selected>
+            {{ audit.outcome?.status }}
           </mat-chip>
         </mat-chip-list>
         <mat-form-field *ngIf="audit.timestamp" appearance="outline" floatLabel="always">
           <mat-label>Timestamp</mat-label>
-          <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date: 'dd/MM/yyyy HH:mm:ss.sss'">
+          <input matInput placeholder="Timestamp" disabled [value]="audit.timestamp | date: 'dd/MM/yyyy HH:mm:ss.sss'" />
           <mat-hint>Time of the event</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.type" appearance="outline" floatLabel="always">
           <mat-label>Event Type</mat-label>
-          <input matInput placeholder="Event Type" disabled [value]="audit.type">
+          <input matInput placeholder="Event Type" disabled [value]="audit.type" />
           <mat-hint>Event type</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.actor?.displayName" appearance="outline" floatLabel="always">
           <mat-label>Actor</mat-label>
-          <input matInput placeholder="Actor" disabled [value]="audit.actor?.displayName">
+          <input matInput placeholder="Actor" disabled [value]="audit.actor?.displayName" />
           <mat-hint>Who triggered the event</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.accessPoint?.alternativeId" appearance="outline" floatLabel="always">
           <mat-label>Application</mat-label>
-          <input matInput placeholder="Application" disabled [value]="audit.accessPoint?.alternativeId">
+          <input matInput placeholder="Application" disabled [value]="audit.accessPoint?.alternativeId" />
           <mat-hint>Which application triggered the event</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.accessPoint?.ipAddress" appearance="outline" floatLabel="always">
           <mat-label>IP Address</mat-label>
-          <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress">
+          <input matInput placeholder="IP Address" disabled [value]="audit.accessPoint?.ipAddress" />
           <mat-hint>Remote IP Address</mat-hint>
         </mat-form-field>
         <mat-form-field *ngIf="audit.accessPoint?.ipAddress" appearance="outline" floatLabel="always">
           <mat-label>User Agent</mat-label>
-          <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent">
+          <input matInput placeholder="User Agent" disabled [value]="audit.accessPoint?.userAgent" />
           <mat-hint>Remote Client User Agent</mat-hint>
         </mat-form-field>
       </div>

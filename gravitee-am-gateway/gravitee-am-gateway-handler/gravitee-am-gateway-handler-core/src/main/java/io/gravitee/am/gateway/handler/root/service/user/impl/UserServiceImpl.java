@@ -49,12 +49,11 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.EmailValidator;
 import io.gravitee.am.service.validators.UserValidator;
-import io.reactivex.Observable;
 import io.reactivex.*;
+import io.reactivex.Observable;
+import java.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -105,91 +104,153 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Maybe<UserToken> verifyToken(String token) {
-        return Maybe.fromCallable(() -> jwtParser.parse(token))
-                .flatMap(jwt -> userService.findById(jwt.getSub()).zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null))));
+        return Maybe
+            .fromCallable(() -> jwtParser.parse(token))
+            .flatMap(
+                jwt ->
+                    userService
+                        .findById(jwt.getSub())
+                        .zipWith(clientSource(jwt.getAud()), (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null)))
+            );
     }
 
     @Override
     public Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // set user idp source
         AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-        final String source = (accountSettings != null && accountSettings.getDefaultIdentityProviderForRegistration() != null) ? accountSettings.getDefaultIdentityProviderForRegistration()
-                : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
+        final String source = (accountSettings != null && accountSettings.getDefaultIdentityProviderForRegistration() != null)
+            ? accountSettings.getDefaultIdentityProviderForRegistration()
+            : (user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource());
 
         // validate user and then check user uniqueness
-        return UserValidator.validate(user).andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
-                .isEmpty()
-                .map(isEmpty -> {
-                    if (!isEmpty) {
-                        throw new UserAlreadyExistsException(user.getUsername());
-                    }
-                    return true;
-                })
-                // check if user provider exists
-                .flatMap(irrelevant -> identityProviderManager.getUserProvider(source)
-                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
-                        .flatMapSingle(userProvider -> userProvider.create(convert(user)))
-                        .flatMap(idpUser -> {
-                            // AM 'users' collection is not made for authentication (but only management stuff)
-                            // clear password
-                            user.setPassword(null);
-                            // set external id
-                            user.setExternalId(idpUser.getId());
-                            // set source
-                            user.setSource(source);
-                            // set domain
-                            user.setReferenceType(ReferenceType.DOMAIN);
-                            user.setReferenceId(domain.getId());
-                            // internal user
-                            user.setInternal(true);
-                            // additional information
-                            extractAdditionalInformation(user, idpUser.getAdditionalInformation());
-                            // set date information
-                            user.setCreatedAt(new Date());
-                            user.setUpdatedAt(user.getCreatedAt());
-                            if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
-                                user.setLoggedAt(new Date());
-                                user.setLoginsCount(1l);
+        return UserValidator
+            .validate(user)
+            .andThen(
+                userService
+                    .findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source)
+                    .isEmpty()
+                    .map(
+                        isEmpty -> {
+                            if (!isEmpty) {
+                                throw new UserAlreadyExistsException(user.getUsername());
                             }
-                            return userService.create(user);
-                        })
-                        .flatMap(userService::enhance)
-                        .map(user1 -> new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false))
-                        .doOnSuccess(registrationResponse -> {
-                            // reload principal
-                            final User user1 = registrationResponse.getUser();
-                            io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
-                            ((DefaultUser) principal1).setId(user1.getId());
-                            ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
-                            principal1.getAdditionalInformation()
-                                    .put(StandardClaims.NAME,
-                                            user1.getDisplayName() != null ? user1.getDisplayName() :
-                                                    (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
-                            auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal1).type(EventType.USER_REGISTERED));
-                        })
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_REGISTERED).throwable(throwable)))
-                ));
+                            return true;
+                        }
+                    )
+                    // check if user provider exists
+                    .flatMap(
+                        irrelevant ->
+                            identityProviderManager
+                                .getUserProvider(source)
+                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
+                                .flatMapSingle(userProvider -> userProvider.create(convert(user)))
+                                .flatMap(
+                                    idpUser -> {
+                                        // AM 'users' collection is not made for authentication (but only management stuff)
+                                        // clear password
+                                        user.setPassword(null);
+                                        // set external id
+                                        user.setExternalId(idpUser.getId());
+                                        // set source
+                                        user.setSource(source);
+                                        // set domain
+                                        user.setReferenceType(ReferenceType.DOMAIN);
+                                        user.setReferenceId(domain.getId());
+                                        // internal user
+                                        user.setInternal(true);
+                                        // additional information
+                                        extractAdditionalInformation(user, idpUser.getAdditionalInformation());
+                                        // set date information
+                                        user.setCreatedAt(new Date());
+                                        user.setUpdatedAt(user.getCreatedAt());
+                                        if (accountSettings != null && accountSettings.isAutoLoginAfterRegistration()) {
+                                            user.setLoggedAt(new Date());
+                                            user.setLoginsCount(1l);
+                                        }
+                                        return userService.create(user);
+                                    }
+                                )
+                                .flatMap(userService::enhance)
+                                .map(
+                                    user1 ->
+                                        new RegistrationResponse(
+                                            user1,
+                                            accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null,
+                                            accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false
+                                        )
+                                )
+                                .doOnSuccess(
+                                    registrationResponse -> {
+                                        // reload principal
+                                        final User user1 = registrationResponse.getUser();
+                                        io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
+                                        ((DefaultUser) principal1).setId(user1.getId());
+                                        ((DefaultUser) principal1).setAdditionalInformation(principal.getAdditionalInformation());
+                                        principal1
+                                            .getAdditionalInformation()
+                                            .put(
+                                                StandardClaims.NAME,
+                                                user1.getDisplayName() != null
+                                                    ? user1.getDisplayName()
+                                                    : (
+                                                        user1.getFirstName() != null
+                                                            ? user1.getFirstName() +
+                                                            (user1.getLastName() != null ? " " + user1.getLastName() : "")
+                                                            : user1.getUsername()
+                                                    )
+                                            );
+                                        auditService.report(
+                                            AuditBuilder
+                                                .builder(UserAuditBuilder.class)
+                                                .domain(domain.getId())
+                                                .client(user.getClient())
+                                                .principal(principal1)
+                                                .type(EventType.USER_REGISTERED)
+                                        );
+                                    }
+                                )
+                                .doOnError(
+                                    throwable ->
+                                        auditService.report(
+                                            AuditBuilder
+                                                .builder(UserAuditBuilder.class)
+                                                .domain(domain.getId())
+                                                .client(user.getClient())
+                                                .principal(principal)
+                                                .type(EventType.USER_REGISTERED)
+                                                .throwable(throwable)
+                                        )
+                                )
+                    )
+            );
     }
 
     @Override
     public Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal) {
         // user has completed his account, add it to the idp
-        return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                // update the idp user
-                .flatMapSingle(userProvider -> {
-                    return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
-                            .onErrorResumeNext(ex -> {
+        return identityProviderManager
+            .getUserProvider(user.getSource())
+            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+            // update the idp user
+            .flatMapSingle(
+                userProvider -> {
+                    return userProvider
+                        .findByUsername(user.getUsername())
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
+                        .onErrorResumeNext(
+                            ex -> {
                                 if (ex instanceof UserNotFoundException) {
                                     // idp user not found, create its account
                                     return userProvider.create(convert(user));
                                 }
                                 return Single.error(ex);
-                            });
-                })
-                .flatMap(idpUser -> {
+                            }
+                        );
+                }
+            )
+            .flatMap(
+                idpUser -> {
                     // update 'users' collection for management and audit purpose
                     user.setPassword(null);
                     user.setRegistrationCompleted(true);
@@ -205,15 +266,42 @@ public class UserServiceImpl implements UserService {
                         user.setLoginsCount(1l);
                     }
                     return userService.update(user);
-                })
-                .flatMap(userService::enhance)
-                .map(user1 -> {
+                }
+            )
+            .flatMap(userService::enhance)
+            .map(
+                user1 -> {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                    return new RegistrationResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null, accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false);
-                })
-                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.REGISTRATION_CONFIRMATION).throwable(throwable)));
-
+                    return new RegistrationResponse(
+                        user1,
+                        accountSettings != null ? accountSettings.getRedirectUriAfterRegistration() : null,
+                        accountSettings != null ? accountSettings.isAutoLoginAfterRegistration() : false
+                    );
+                }
+            )
+            .doOnSuccess(
+                response ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(user.getClient())
+                            .principal(principal)
+                            .type(EventType.REGISTRATION_CONFIRMATION)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(user.getClient())
+                            .principal(principal)
+                            .type(EventType.REGISTRATION_CONFIRMATION)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
@@ -224,27 +312,36 @@ public class UserServiceImpl implements UserService {
         }
 
         // only idp manage password, find user idp and update its password
-        return identityProviderManager.getUserProvider(user.getSource())
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                // update the idp user
-                .flatMapSingle(userProvider -> {
-                    return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> {
+        return identityProviderManager
+            .getUserProvider(user.getSource())
+            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+            // update the idp user
+            .flatMapSingle(
+                userProvider -> {
+                    return userProvider
+                        .findByUsername(user.getUsername())
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                        .flatMapSingle(
+                            idpUser -> {
                                 // set password
                                 ((DefaultUser) idpUser).setCredentials(user.getPassword());
                                 return userProvider.update(idpUser.getId(), idpUser);
-                            })
-                            .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .onErrorResumeNext(
+                            ex -> {
                                 if (ex instanceof UserNotFoundException) {
                                     // idp user not found, create its account
                                     return userProvider.create(convert(user));
                                 }
                                 return Single.error(ex);
-                            });
-                })
-                // update the user in the AM repository
-                .flatMap(idpUser -> {
+                            }
+                        );
+                }
+            )
+            // update the user in the AM repository
+            .flatMap(
+                idpUser -> {
                     // update 'users' collection for management and audit purpose
                     // if user was in pre-registration mode, end the registration process
                     if (user.isPreRegistration()) {
@@ -263,50 +360,94 @@ public class UserServiceImpl implements UserService {
                         user.setLoginsCount(user.getLoginsCount() + 1);
                     }
                     return userService.update(user);
-                })
-                // reset login attempts in case of reset password action
-                .flatMap(user1 -> {
+                }
+            )
+            // reset login attempts in case of reset password action
+            .flatMap(
+                user1 -> {
                     LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                            .domain(user1.getReferenceId())
-                            .client(user1.getClient())
-                            .username(user1.getUsername())
-                            .build();
+                        .domain(user1.getReferenceId())
+                        .client(user1.getClient())
+                        .username(user1.getUsername())
+                        .build();
                     return loginAttemptService.reset(criteria).andThen(Single.just(user1));
-                })
-                .flatMap(userService::enhance)
-                .map(user1 -> {
+                }
+            )
+            .flatMap(userService::enhance)
+            .map(
+                user1 -> {
                     AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                    return new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false);
-                })
-                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
+                    return new ResetPasswordResponse(
+                        user1,
+                        accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null,
+                        accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false
+                    );
+                }
+            )
+            .doOnSuccess(
+                response ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(user.getClient())
+                            .principal(principal)
+                            .type(EventType.USER_PASSWORD_RESET)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(user.getClient())
+                            .principal(principal)
+                            .type(EventType.USER_PASSWORD_RESET)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
-
         if (!EmailValidator.isValid(email)) {
             return Completable.error(new EmailFormatInvalidException(email));
         }
 
-        return userService.findByDomainAndEmail(domain.getId(), email, true)
-                .flatMap(users -> {
+        return userService
+            .findByDomainAndEmail(domain.getId(), email, true)
+            .flatMap(
+                users -> {
                     Optional<User> optionalUser = users
-                            .stream()
-                            .filter(user -> user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase()))
-                            .findFirst();
+                        .stream()
+                        .filter(user -> user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase()))
+                        .findFirst();
                     if (optionalUser.isPresent()) {
                         User user = optionalUser.get();
                         // check if user can update its password according to its identity provider type
-                        return identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
-                                .map(__ -> {
+                        return identityProviderManager
+                            .getUserProvider(user.getSource())
+                            .switchIfEmpty(
+                                Single.error(
+                                    new UserInvalidException(
+                                        "User [ " +
+                                        user.getUsername() +
+                                        " ] cannot be updated because its identity provider does not support user provisioning"
+                                    )
+                                )
+                            )
+                            .map(
+                                __ -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ]needs to complete the activation process");
+                                        throw new AccountInactiveException(
+                                            "User [ " + user.getUsername() + " ]needs to complete the activation process"
+                                        );
                                     }
                                     return user;
-                                });
+                                }
+                            );
                     }
 
                     // if user has no email or email is unknown
@@ -315,20 +456,32 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new UserNotFoundException(email));
                     }
 
-                    return Observable.fromIterable(client.getIdentities())
-                            .flatMapMaybe(authProvider -> {
-                                return identityProviderManager.getUserProvider(authProvider)
-                                        .flatMap(userProvider -> {
-                                            return userProvider.findByEmail(email)
-                                                    .map(user -> Optional.of(user))
-                                                    .defaultIfEmpty(Optional.empty())
-                                                    .onErrorReturnItem(Optional.empty());
-                                        })
-                                        .defaultIfEmpty(Optional.empty());
-                            })
-                            .takeUntil(optional -> { return optional.isPresent(); })
-                            .lastOrError()
-                            .flatMap(optional -> {
+                    return Observable
+                        .fromIterable(client.getIdentities())
+                        .flatMapMaybe(
+                            authProvider -> {
+                                return identityProviderManager
+                                    .getUserProvider(authProvider)
+                                    .flatMap(
+                                        userProvider -> {
+                                            return userProvider
+                                                .findByEmail(email)
+                                                .map(user -> Optional.of(user))
+                                                .defaultIfEmpty(Optional.empty())
+                                                .onErrorReturnItem(Optional.empty());
+                                        }
+                                    )
+                                    .defaultIfEmpty(Optional.empty());
+                            }
+                        )
+                        .takeUntil(
+                            optional -> {
+                                return optional.isPresent();
+                            }
+                        )
+                        .lastOrError()
+                        .flatMap(
+                            optional -> {
                                 io.gravitee.am.identityprovider.api.User idpUser = optional.get();
                                 User newUser = new User();
                                 newUser.setId(RandomString.generate());
@@ -342,30 +495,66 @@ public class UserServiceImpl implements UserService {
                                 newUser.setCreatedAt(new Date());
                                 newUser.setUpdatedAt(newUser.getCreatedAt());
                                 return userService.create(newUser);
-                            })
-                            .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
-                })
-                .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
-                .doOnSuccess(user1 -> {
+                            }
+                        )
+                        .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
+                }
+            )
+            .doOnSuccess(user -> new Thread(() -> completeForgotPassword(user, client)).start())
+            .doOnSuccess(
+                user1 -> {
                     // reload principal
                     io.gravitee.am.identityprovider.api.User principal1 = new DefaultUser(user1.getUsername());
                     ((DefaultUser) principal1).setId(user1.getId());
-                    ((DefaultUser) principal1).setAdditionalInformation(principal != null && principal.getAdditionalInformation() != null ? new HashMap<>(principal.getAdditionalInformation()) : new HashMap<>());
-                    principal1.getAdditionalInformation()
-                            .put(StandardClaims.NAME,
-                                    user1.getDisplayName() != null ? user1.getDisplayName() :
-                                            (user1.getFirstName() != null ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "") : user1.getUsername()));
-                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
-                })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
-                .toCompletable();
+                    ((DefaultUser) principal1).setAdditionalInformation(
+                            principal != null && principal.getAdditionalInformation() != null
+                                ? new HashMap<>(principal.getAdditionalInformation())
+                                : new HashMap<>()
+                        );
+                    principal1
+                        .getAdditionalInformation()
+                        .put(
+                            StandardClaims.NAME,
+                            user1.getDisplayName() != null
+                                ? user1.getDisplayName()
+                                : (
+                                    user1.getFirstName() != null
+                                        ? user1.getFirstName() + (user1.getLastName() != null ? " " + user1.getLastName() : "")
+                                        : user1.getUsername()
+                                )
+                        );
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(client)
+                            .principal(principal1)
+                            .type(EventType.FORGOT_PASSWORD_REQUESTED)
+                    );
+                }
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(UserAuditBuilder.class)
+                            .domain(domain.getId())
+                            .client(client)
+                            .principal(principal)
+                            .type(EventType.FORGOT_PASSWORD_REQUESTED)
+                            .throwable(throwable)
+                    )
+            )
+            .toCompletable();
     }
 
     @Override
     public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor) {
-        return userService.findById(userId)
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapSingle(user -> {
+        return userService
+            .findById(userId)
+            .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+            .flatMapSingle(
+                user -> {
                     List<EnrolledFactor> enrolledFactors = user.getFactors();
                     if (enrolledFactors == null || enrolledFactors.isEmpty()) {
                         enrolledFactors = Collections.singletonList(enrolledFactor);
@@ -374,7 +563,8 @@ public class UserServiceImpl implements UserService {
                     }
                     user.setFactors(enrolledFactors);
                     return userService.update(user);
-                });
+                }
+            );
     }
 
     private void completeForgotPassword(User user, Client client) {
@@ -386,13 +576,13 @@ public class UserServiceImpl implements UserService {
     private Email convert(User user, Client client, io.gravitee.am.model.Email email, String redirectUri, String redirectUriName) {
         Map<String, Object> params = prepareEmail(user, client, email.getExpiresAfter(), redirectUri, redirectUriName);
         Email email1 = new EmailBuilder()
-                .to(user.getEmail())
-                .from(email.getFrom())
-                .fromName(email.getFromName())
-                .subject(email.getSubject())
-                .template(email.getTemplate())
-                .params(params)
-                .build();
+            .to(user.getEmail())
+            .from(email.getFrom())
+            .fromName(email.getFromName())
+            .subject(email.getSubject())
+            .template(email.getTemplate())
+            .params(params)
+            .build();
         return email1;
     }
 
@@ -413,17 +603,9 @@ public class UserServiceImpl implements UserService {
 
         // building the redirectUrl
         StringBuilder sb = new StringBuilder();
-        sb
-                .append(entryPoint)
-                .append("/")
-                .append(user.getReferenceId())
-                .append(redirectUri)
-                .append("?token=")
-                .append(token);
+        sb.append(entryPoint).append("/").append(user.getReferenceId()).append(redirectUri).append("?token=").append(token);
         if (client != null) {
-            sb
-                    .append("&client_id=")
-                    .append(client.getClientId());
+            sb.append("&client_id=").append(client.getClientId());
         }
         String redirectUrl = sb.toString();
         Map<String, Object> params = new HashMap<>();
@@ -436,8 +618,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private String getTemplateName(Client client) {
-        return Template.RESET_PASSWORD.template()
-                + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR +  client.getId() : "");
+        return Template.RESET_PASSWORD.template() + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 
     private MaybeSource<Optional<Client>> clientSource(String audience) {
@@ -445,9 +626,7 @@ public class UserServiceImpl implements UserService {
             return Maybe.just(Optional.empty());
         }
 
-        return clientSyncService.findById(audience)
-                .map(client -> Optional.of(client))
-                .defaultIfEmpty(Optional.empty());
+        return clientSyncService.findById(audience).map(client -> Optional.of(client)).defaultIfEmpty(Optional.empty());
     }
 
     private boolean forceUserRegistration(Domain domain, Client client) {
@@ -494,5 +673,4 @@ public class UserServiceImpl implements UserService {
             }
         }
     }
-
 }

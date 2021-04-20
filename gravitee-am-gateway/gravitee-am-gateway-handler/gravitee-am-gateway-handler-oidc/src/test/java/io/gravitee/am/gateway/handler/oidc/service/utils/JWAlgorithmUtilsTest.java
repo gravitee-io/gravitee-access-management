@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -73,7 +73,6 @@ public class JWAlgorithmUtilsTest {
     public void supportedIdTokenResponseAlg() {
         assertTrue("should have at least RSA-OAEP-256", JWAlgorithmUtils.getSupportedIdTokenResponseAlg().contains("RSA-OAEP-256"));
     }
-
 
     @Test
     public void isValidIdTokenResponseEnc_nok() {

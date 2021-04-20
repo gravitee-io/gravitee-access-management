@@ -23,9 +23,8 @@ describe('EmptystateComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ EmptystateComponent ]
-    })
-    .compileComponents();
+      declarations: [EmptystateComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

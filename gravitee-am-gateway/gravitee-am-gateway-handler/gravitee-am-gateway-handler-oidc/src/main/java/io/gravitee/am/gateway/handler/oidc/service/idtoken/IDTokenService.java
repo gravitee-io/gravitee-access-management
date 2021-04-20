@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Single;
 
@@ -26,8 +26,7 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface IDTokenService {
-
-    default Single<String>  create(OAuth2Request oAuth2Request, Client client, User user) {
+    default Single<String> create(OAuth2Request oAuth2Request, Client client, User user) {
         return create(oAuth2Request, client, user, null);
     }
 

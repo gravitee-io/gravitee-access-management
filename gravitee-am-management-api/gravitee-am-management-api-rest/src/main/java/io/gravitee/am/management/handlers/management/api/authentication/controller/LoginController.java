@@ -22,19 +22,18 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.ReCaptchaService;
 import io.gravitee.common.http.HttpHeaders;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,31 +62,49 @@ public class LoginController {
         Map<String, Object> params = new HashMap<>();
 
         // fetch domain social identity providers
-        List<IdentityProvider> socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
-                .stream()
-                .map(identity -> identityProviderManager.getIdentityProvider(identity))
-                .filter(IdentityProvider::isExternal)
-                .collect(Collectors.toList());
+        List<IdentityProvider> socialProviders = organizationService
+            .findById(organizationId)
+            .map(Organization::getIdentities)
+            .blockingGet()
+            .stream()
+            .map(identity -> identityProviderManager.getIdentityProvider(identity))
+            .filter(IdentityProvider::isExternal)
+            .collect(Collectors.toList());
 
         // enhance social providers data
         if (socialProviders != null && !socialProviders.isEmpty()) {
-            Set<IdentityProvider> enhancedSocialProviders = socialProviders.stream().map(identityProvider -> {
-                String identityProviderType = identityProvider.getType();
-                Optional<String> identityProviderSocialType = socialProviderTypes.stream().filter(socialProviderType -> identityProviderType.toLowerCase().contains(socialProviderType)).findFirst();
-                if (identityProviderSocialType.isPresent()) {
-                    identityProvider.setType(identityProviderSocialType.get());
-                }
-                return identityProvider;
-            }).collect(Collectors.toSet());
+            Set<IdentityProvider> enhancedSocialProviders = socialProviders
+                .stream()
+                .map(
+                    identityProvider -> {
+                        String identityProviderType = identityProvider.getType();
+                        Optional<String> identityProviderSocialType = socialProviderTypes
+                            .stream()
+                            .filter(socialProviderType -> identityProviderType.toLowerCase().contains(socialProviderType))
+                            .findFirst();
+                        if (identityProviderSocialType.isPresent()) {
+                            identityProvider.setType(identityProviderSocialType.get());
+                        }
+                        return identityProvider;
+                    }
+                )
+                .collect(Collectors.toSet());
 
             Map<String, String> authorizeUrls = new HashMap<>();
-            socialProviders.forEach(identity -> {
-                String identityId = identity.getId();
-                SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(identityId);
-                if (socialAuthenticationProvider != null) {
-                    authorizeUrls.put(identityId, socialAuthenticationProvider.signInUrl(buildRedirectUri(request, identityId)).getUri());
+            socialProviders.forEach(
+                identity -> {
+                    String identityId = identity.getId();
+                    SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(
+                        identityId
+                    );
+                    if (socialAuthenticationProvider != null) {
+                        authorizeUrls.put(
+                            identityId,
+                            socialAuthenticationProvider.signInUrl(buildRedirectUri(request, identityId)).getUri()
+                        );
+                    }
                 }
-            });
+            );
 
             params.put("oauth2Providers", enhancedSocialProviders);
             params.put("socialProviders", enhancedSocialProviders);
@@ -145,5 +162,4 @@ public class LoginController {
 
         return builder.build().toUriString();
     }
-
 }

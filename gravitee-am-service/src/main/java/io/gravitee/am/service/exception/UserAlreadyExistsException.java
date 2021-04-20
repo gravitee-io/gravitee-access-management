@@ -25,7 +25,7 @@ public class UserAlreadyExistsException extends AbstractManagementException {
 
     private String username;
 
-    public UserAlreadyExistsException() { }
+    public UserAlreadyExistsException() {}
 
     public UserAlreadyExistsException(String username) {
         this.username = username;

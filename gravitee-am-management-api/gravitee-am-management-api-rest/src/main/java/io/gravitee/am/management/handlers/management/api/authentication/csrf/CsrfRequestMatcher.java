@@ -15,13 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.csrf;
 
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 /**
  * CSRF is required only for non-safe methods and if the call is coming from the browser (ie. there is an existing
@@ -42,9 +41,16 @@ public class CsrfRequestMatcher implements RequestMatcher {
 
     @Override
     public boolean matches(HttpServletRequest request) {
-        return !allowedMethods.contains(request.getMethod()) &&
-                (request.getHeader(HttpHeaders.REFERER) != null ||
-                        request.getHeader(HttpHeaders.ORIGIN) != null ||
-                        (request.getCookies() != null && Arrays.stream(request.getCookies()).anyMatch(cookie -> authCookieName.equals(cookie.getName()))));
+        return (
+            !allowedMethods.contains(request.getMethod()) &&
+            (
+                request.getHeader(HttpHeaders.REFERER) != null ||
+                request.getHeader(HttpHeaders.ORIGIN) != null ||
+                (
+                    request.getCookies() != null &&
+                    Arrays.stream(request.getCookies()).anyMatch(cookie -> authCookieName.equals(cookie.getName()))
+                )
+            )
+        );
     }
 }

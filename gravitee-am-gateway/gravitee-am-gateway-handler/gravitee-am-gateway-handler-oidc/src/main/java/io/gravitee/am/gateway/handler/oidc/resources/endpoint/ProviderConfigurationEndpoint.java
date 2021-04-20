@@ -43,11 +43,12 @@ public class ProviderConfigurationEndpoint implements Handler<RoutingContext> {
             logger.error("Unable to resolve OpenID Connect provider configuration endpoint", e);
         }
 
-        context.response()
-                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .end(Json.encodePrettily(discoveryService.getConfiguration(basePath)));
+        context
+            .response()
+            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+            .end(Json.encodePrettily(discoveryService.getConfiguration(basePath)));
     }
 
     public OpenIDDiscoveryService getDiscoveryService() {

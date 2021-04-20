@@ -23,9 +23,8 @@ describe('ApplicationCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [ApplicationCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

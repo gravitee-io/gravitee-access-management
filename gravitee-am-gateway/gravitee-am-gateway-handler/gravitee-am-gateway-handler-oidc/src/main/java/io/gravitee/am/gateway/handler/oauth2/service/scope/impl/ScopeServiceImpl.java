@@ -19,12 +19,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.model.oauth2.Scope;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,11 +46,12 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Override
     public List<String> getDiscoveryScope() {
-        return scopeManager.findAll()
-                .stream()
-                .filter(scope -> scope.isDiscovery())
-                .map(Scope::getKey)
-                .sorted()
-                .collect(Collectors.toList());
+        return scopeManager
+            .findAll()
+            .stream()
+            .filter(scope -> scope.isDiscovery())
+            .map(Scope::getKey)
+            .sorted()
+            .collect(Collectors.toList());
     }
 }

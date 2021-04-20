@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -28,11 +28,10 @@ import io.vertx.ext.web.handler.impl.HttpStatusException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,15 +68,9 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);
                 if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
+                    routingContext.response().setStatusCode(routingContext.statusCode()).end();
                 } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
+                    routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                 }
             }
         }
@@ -101,11 +94,11 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 parameters.put("error_description", errorDetail);
             }
             // redirect
-            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request,  errorPage, parameters, true);
+            String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPage, parameters, true);
             doRedirect(routingContext.response(), proxiedErrorPage);
         } catch (Exception e) {
             logger.error("Unable to handle root error response", e);
-            doRedirect(routingContext.response(),  errorPage);
+            doRedirect(routingContext.response(), errorPage);
         }
     }
 

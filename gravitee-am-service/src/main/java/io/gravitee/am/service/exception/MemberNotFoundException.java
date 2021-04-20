@@ -25,7 +25,6 @@ public class MemberNotFoundException extends AbstractManagementException {
 
     private final String member;
 
-
     public MemberNotFoundException(String member) {
         this.member = member;
     }

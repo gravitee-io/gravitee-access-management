@@ -17,32 +17,32 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to sharding tags</small></a>
-  <h1>{{tag.name}}</h1>
+  <h1>{{ tag.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column">
+      <form (keydown.enter)="(false)" (ngSubmit)="update()" #tagForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>ID</mat-label>
-            <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled>
+            <input matInput type="text" placeholder="ID" name="id" [(ngModel)]="tag.id" required disabled />
             <mat-hint>Sharding tag's technical id which will be set to the gateway configuration file</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required [readonly]="readonly">
+            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="tag.name" required [readonly]="readonly" />
             <mat-hint>Sharding tag's name</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description" [readonly]="readonly">
+            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="tag.description" [readonly]="readonly" />
             <mat-hint>Sharding tag's description</mat-hint>
           </mat-form-field>
         </div>
 
         <div fxLayout="row" *hasPermission="['organization_tag_update']">
-          <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="!tagForm.valid || tagForm.pristine" type="submit">SAVE</button>
         </div>
       </form>
 
@@ -58,15 +58,13 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage sharding tag</h3>
       <div class="gv-page-description-content">
+        <p>A sharding-tag determines how security domain will be deployed across multiple AM Gateway.</p>
         <p>
-          A sharding-tag determines how security domain will be deployed across multiple AM Gateway.
-        </p>
-        <p>
-          To make the association between security domains and Gateway instances,
-          you must copy/paste the shard tag's ID to the <small style="color:grey;">gravitee.yml</small> file of the gateway instance :
+          To make the association between security domains and Gateway instances, you must copy/paste the shard tag's ID to the
+          <small style="color: grey">gravitee.yml</small> file of the gateway instance :
         </p>
 
-        <p style="padding: 10px; background: #f1f1f1;">
+        <p style="padding: 10px; background: #f1f1f1">
           <small>
             # Sharding tags configuration <br />
             # tags: public,private,!international
@@ -76,4 +74,3 @@
     </div>
   </div>
 </div>
-

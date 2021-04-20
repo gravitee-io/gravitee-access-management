@@ -17,7 +17,6 @@ package io.gravitee.am.reporter.api.audit.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.Reportable;
-
 import java.time.Instant;
 
 /**

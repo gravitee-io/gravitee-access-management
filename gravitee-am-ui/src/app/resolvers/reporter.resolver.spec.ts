@@ -20,7 +20,7 @@ import { ReporterResolver } from './reporter.resolver';
 describe('ReporterResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ReporterResolver]
+      providers: [ReporterResolver],
     });
   });
 

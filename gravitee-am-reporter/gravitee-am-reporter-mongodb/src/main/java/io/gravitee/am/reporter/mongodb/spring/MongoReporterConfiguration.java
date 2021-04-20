@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.reporter.mongodb.spring;
 
+import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
@@ -27,10 +31,6 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,17 +49,19 @@ public class MongoReporterConfiguration {
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
 
         // codec configuration for pojo mapping
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+        CodecRegistry pojoCodecRegistry = fromRegistries(
+            MongoClients.getDefaultCodecRegistry(),
+            fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        );
         builder.codecRegistry(pojoCodecRegistry);
 
         if ((this.configuration.getUri() != null) && (!this.configuration.getUri().isEmpty())) {
             // The builder can be configured with default options, which may be overridden by options specified in
             // the URI string.
             com.mongodb.MongoClientSettings settings = builder
-                    .codecRegistry(pojoCodecRegistry)
-                    .applyConnectionString(new ConnectionString(this.configuration.getUri()))
-                    .build();
+                .codecRegistry(pojoCodecRegistry)
+                .applyConnectionString(new ConnectionString(this.configuration.getUri()))
+                .build();
 
             return MongoClients.create(settings);
         } else {
@@ -70,16 +72,17 @@ public class MongoReporterConfiguration {
 
             // Mongo credentials
             if (this.configuration.isEnableCredentials()) {
-                MongoCredential credential = MongoCredential.createCredential(this.configuration
-                        .getUsernameCredentials(), this.configuration
-                        .getDatabaseCredentials(), this.configuration
-                        .getPasswordCredentials().toCharArray());
+                MongoCredential credential = MongoCredential.createCredential(
+                    this.configuration.getUsernameCredentials(),
+                    this.configuration.getDatabaseCredentials(),
+                    this.configuration.getPasswordCredentials().toCharArray()
+                );
                 builder.credential(credential);
             }
 
             com.mongodb.MongoClientSettings settings = builder
-                    .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
-                    .build();
+                .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
+                .build();
             return MongoClients.create(settings);
         }
     }

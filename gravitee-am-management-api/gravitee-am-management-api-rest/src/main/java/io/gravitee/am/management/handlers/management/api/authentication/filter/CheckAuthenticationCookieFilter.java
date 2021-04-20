@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.GenericFilterBean;
-
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.GenericFilterBean;
 
 /**
  * Check if authentication cookie is present, if not and the user session is still active, clear the session
@@ -63,9 +62,10 @@ public class CheckAuthenticationCookieFilter extends GenericFilterBean {
         }
 
         // get authentication cookie
-        Optional<Cookie> authCookie =  Arrays.stream(request.getCookies())
-                    .filter(cookie -> authCookieName.equals(cookie.getName()))
-                    .findAny();
+        Optional<Cookie> authCookie = Arrays
+            .stream(request.getCookies())
+            .filter(cookie -> authCookieName.equals(cookie.getName()))
+            .findAny();
 
         // cookie is still present, continue
         if (authCookie.isPresent()) {
@@ -80,7 +80,9 @@ public class CheckAuthenticationCookieFilter extends GenericFilterBean {
     }
 
     private boolean isUserAuthenticated() {
-        return SecurityContextHolder.getContext().getAuthentication() != null &&
-                SecurityContextHolder.getContext().getAuthentication().isAuthenticated();
+        return (
+            SecurityContextHolder.getContext().getAuthentication() != null &&
+            SecurityContextHolder.getContext().getAuthentication().isAuthenticated()
+        );
     }
 }

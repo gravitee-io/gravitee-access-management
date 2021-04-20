@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
@@ -28,8 +31,8 @@ import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.net.URI;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -38,17 +41,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"factor"})
+@Api(tags = { "factor" })
 public class FactorsResource extends AbstractResource {
 
     @Context
@@ -62,56 +61,88 @@ public class FactorsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered factors for a security domain",
-            notes = "User must have the DOMAIN_FACTOR[LIST] permission on the specified domain " +
-                    "or DOMAIN_FACTOR[LIST] permission on the specified environment " +
-                    "or DOMAIN_FACTOR[LIST] permission on the specified organization " +
-                    "Each returned factor is filtered and contains only basic information such as id, name and factor type.")
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered factors for a security domain", response = Factor.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "List registered factors for a security domain",
+        notes = "User must have the DOMAIN_FACTOR[LIST] permission on the specified domain " +
+        "or DOMAIN_FACTOR[LIST] permission on the specified environment " +
+        "or DOMAIN_FACTOR[LIST] permission on the specified organization " +
+        "Each returned factor is filtered and contains only basic information such as id, name and factor type."
+    )
+    @ApiResponses(
+        {
+            @ApiResponse(
+                code = 200,
+                message = "List registered factors for a security domain",
+                response = Factor.class,
+                responseContainer = "List"
+            ),
+            @ApiResponse(code = 500, message = "Internal server error"),
+        }
+    )
     public void list(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @Suspended final AsyncResponse response
+    ) {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(___ -> factorService.findByDomain(domain))
-                        .map(factors -> factors.stream().map(this::filterFactorInfos).collect(Collectors.toList())))
-                .subscribe(response::resume, response::resume);
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(___ -> factorService.findByDomain(domain))
+                    .map(factors -> factors.stream().map(this::filterFactorInfos).collect(Collectors.toList()))
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a factor",
-            notes = "User must have the DOMAIN_FACTOR[CREATE] permission on the specified domain " +
-                    "or DOMAIN_FACTOR[CREATE] permission on the specified environment " +
-                    "or DOMAIN_FACTOR[CREATE] permission on the specified organization")
-    @ApiResponses({
-            @ApiResponse(code = 201, message = "Factor successfully created"),
-            @ApiResponse(code = 500, message = "Internal server error")})
+    @ApiOperation(
+        value = "Create a factor",
+        notes = "User must have the DOMAIN_FACTOR[CREATE] permission on the specified domain " +
+        "or DOMAIN_FACTOR[CREATE] permission on the specified environment " +
+        "or DOMAIN_FACTOR[CREATE] permission on the specified organization"
+    )
+    @ApiResponses(
+        { @ApiResponse(code = 201, message = "Factor successfully created"), @ApiResponse(code = 500, message = "Internal server error") }
+    )
     public void create(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @ApiParam(name = "factor", required = true) @Valid @NotNull final NewFactor newFactor,
-            @Suspended final AsyncResponse response) {
-
+        @PathParam("organizationId") String organizationId,
+        @PathParam("environmentId") String environmentId,
+        @PathParam("domain") String domain,
+        @ApiParam(name = "factor", required = true) @Valid @NotNull final NewFactor newFactor,
+        @Suspended final AsyncResponse response
+    ) {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FACTOR, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> factorService.create(domain, newFactor, authenticatedUser))
-                        .map(factor -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/factors/" + factor.getId()))
+            .andThen(
+                domainService
+                    .findById(domain)
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                    .flatMapSingle(__ -> factorService.create(domain, newFactor, authenticatedUser))
+                    .map(
+                        factor ->
+                            Response
+                                .created(
+                                    URI.create(
+                                        "/organizations/" +
+                                        organizationId +
+                                        "/environments/" +
+                                        environmentId +
+                                        "/domains/" +
+                                        domain +
+                                        "/factors/" +
+                                        factor.getId()
+                                    )
+                                )
                                 .entity(factor)
-                                .build()))
-                .subscribe(response::resume, response::resume);
+                                .build()
+                    )
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{factor}")

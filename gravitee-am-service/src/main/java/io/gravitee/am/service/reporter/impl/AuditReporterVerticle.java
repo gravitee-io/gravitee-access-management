@@ -38,13 +38,11 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
 
     @Override
     public void start() throws Exception {
-        producer = vertx.eventBus()
-                .<Reportable>publisher(
-                        EVENT_BUS_ADDRESS,
-                        new DeliveryOptions()
-                                .setCodecName(ReportableMessageCodec.CODEC_NAME))
-                .exceptionHandler(
-                        throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable));
+        producer =
+            vertx
+                .eventBus()
+                .<Reportable>publisher(EVENT_BUS_ADDRESS, new DeliveryOptions().setCodecName(ReportableMessageCodec.CODEC_NAME))
+                .exceptionHandler(throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable));
     }
 
     @Override

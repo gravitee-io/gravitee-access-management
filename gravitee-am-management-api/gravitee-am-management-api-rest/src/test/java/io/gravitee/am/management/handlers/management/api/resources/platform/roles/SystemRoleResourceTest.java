@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.roles;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.RoleEntity;
 import io.gravitee.am.model.Domain;
@@ -25,12 +28,8 @@ import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,7 +39,6 @@ public class SystemRoleResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetSystemRole() {
-
         final String roleId = "role-id";
         final Role mockRole = new Role();
         mockRole.setId(roleId);
@@ -57,10 +55,11 @@ public class SystemRoleResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetRole_notFound() {
-
         final String roleId = "role-id";
 
-        doReturn(Single.error(new RoleNotFoundException(roleId))).when(roleService).findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId);
+        doReturn(Single.error(new RoleNotFoundException(roleId)))
+            .when(roleService)
+            .findById(ReferenceType.PLATFORM, Platform.DEFAULT, roleId);
 
         final Response response = target("platform").path("roles").path(roleId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

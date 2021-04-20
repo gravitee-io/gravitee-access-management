@@ -15,19 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,20 +71,23 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         if (endUser != null && client.isEnhanceScopesWithUserPermissions()) {
             Set<Role> roles = endUser.getRolesPermissions();
             if (roles != null && !roles.isEmpty()) {
-                Set<String> permissions = roles.stream()
-                        .map(role -> role.getOauthScopes() != null ? role.getOauthScopes() : Collections.<String>emptyList())
-                        .flatMap(List::stream)
-                        .collect(Collectors.toSet());
-                
+                Set<String> permissions = roles
+                    .stream()
+                    .map(role -> role.getOauthScopes() != null ? role.getOauthScopes() : Collections.<String>emptyList())
+                    .flatMap(List::stream)
+                    .collect(Collectors.toSet());
+
                 if (requestScopes != null) {
-                	// filter the actual scopes granted by the resource owner
-                    requestScopes.forEach(scope -> {
-                        if (!permissions.contains(scope) && !clientResolvedScopes.contains(scope)) {
-                        	invalidScopes.add(scope);
+                    // filter the actual scopes granted by the resource owner
+                    requestScopes.forEach(
+                        scope -> {
+                            if (!permissions.contains(scope) && !clientResolvedScopes.contains(scope)) {
+                                invalidScopes.add(scope);
+                            }
                         }
-                    });
+                    );
                 }
-                
+
                 // The request must be enhanced with all of user's permissions
                 invalidScopes.removeAll(permissions);
                 resolvedScopes.addAll(permissions);
@@ -93,11 +95,15 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         }
 
         if (!invalidScopes.isEmpty()) {
-            return Single.error(new InvalidScopeException("Invalid scope(s): " + invalidScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
+            return Single.error(
+                new InvalidScopeException("Invalid scope(s): " + invalidScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER)))
+            );
         }
 
         if (resolvedScopes.isEmpty() && (requestScopes != null && !requestScopes.isEmpty())) {
-            return Single.error(new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
+            return Single.error(
+                new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER)))
+            );
         }
 
         // set resolved scopes

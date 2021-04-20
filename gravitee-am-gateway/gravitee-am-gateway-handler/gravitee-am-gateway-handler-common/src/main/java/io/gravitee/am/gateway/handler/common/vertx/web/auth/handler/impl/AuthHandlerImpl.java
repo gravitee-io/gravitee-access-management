@@ -38,14 +38,17 @@ public abstract class AuthHandlerImpl extends io.vertx.ext.web.handler.impl.Auth
 
     @Override
     public void parseCredentials(RoutingContext context, Handler<AsyncResult<JsonObject>> handler) {
-        parseAuthorization(context, parseAuthorization -> {
-            if (parseAuthorization.failed()) {
-                handler.handle(Future.failedFuture(parseAuthorization.cause()));
-                return;
-            }
+        parseAuthorization(
+            context,
+            parseAuthorization -> {
+                if (parseAuthorization.failed()) {
+                    handler.handle(Future.failedFuture(parseAuthorization.cause()));
+                    return;
+                }
 
-            handler.handle(Future.succeededFuture(parseAuthorization.result()));
-        });
+                handler.handle(Future.succeededFuture(parseAuthorization.result()));
+            }
+        );
     }
 
     protected abstract void parseAuthorization(RoutingContext context, Handler<AsyncResult<JsonObject>> handler);

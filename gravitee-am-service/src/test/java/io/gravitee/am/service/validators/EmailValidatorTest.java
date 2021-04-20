@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.service.validators;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -27,33 +27,32 @@ import static org.junit.Assert.assertTrue;
 public class EmailValidatorTest {
 
     private static final String[] VALID_EMAILS = {
-            "email@gravitee.io",
-            "firstname.lastname@gravitee.io",
-            "email@subdomain.gravitee.io",
-            "firstname+lastname@gravitee.io",
-            "firstname.lastname+1-test@gravitee.io",
-            "1234567890@gravitee.io",
-            "email@gravitee-io.com",
-            "_______@gravitee.io",
-            "firstname-lastname@gravitee.io",
+        "email@gravitee.io",
+        "firstname.lastname@gravitee.io",
+        "email@subdomain.gravitee.io",
+        "firstname+lastname@gravitee.io",
+        "firstname.lastname+1-test@gravitee.io",
+        "1234567890@gravitee.io",
+        "email@gravitee-io.com",
+        "_______@gravitee.io",
+        "firstname-lastname@gravitee.io",
     };
 
     private static final String[] INVALID_EMAILS = {
-            "email",
-            "#@%^%#$@#$@#.com",
-            "@gravitee.io",
-            "Joe Smith <email@gravitee.io>",
-            "email@gravitee@gravitee.io",
-            ".email@gravitee.io",
-            "email.@gravitee.io",
-            "email..email@gravitee.io",
-            "email@gravitee",
-            "email@gravitee..io"
+        "email",
+        "#@%^%#$@#$@#.com",
+        "@gravitee.io",
+        "Joe Smith <email@gravitee.io>",
+        "email@gravitee@gravitee.io",
+        ".email@gravitee.io",
+        "email.@gravitee.io",
+        "email..email@gravitee.io",
+        "email@gravitee",
+        "email@gravitee..io",
     };
 
     @Test
     public void validate() {
-
         for (String email : VALID_EMAILS) {
             assertTrue(email + " should be valid", EmailValidator.isValid(email));
         }

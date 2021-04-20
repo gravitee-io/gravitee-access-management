@@ -22,7 +22,6 @@ import io.gravitee.am.service.model.UpdateCertificate;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -30,7 +29,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface CertificateService {
-
     Maybe<Certificate> findById(String id);
 
     Single<List<Certificate>> findAll();
@@ -62,5 +60,4 @@ public interface CertificateService {
     default Completable delete(String certificateId) {
         return delete(certificateId, null);
     }
-
 }

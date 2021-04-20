@@ -17,7 +17,6 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.Optional;
 
 /**
@@ -68,10 +67,10 @@ public class PatchScope {
 
     public Scope patch(Scope toPatch) {
         Scope patched = new Scope(toPatch);
-        SetterUtils.safeSet(patched::setName,this.getName());
+        SetterUtils.safeSet(patched::setName, this.getName());
         SetterUtils.safeSet(patched::setDescription, this.getDescription());
         SetterUtils.safeSet(patched::setExpiresIn, this.getExpiresIn());
-        if(!toPatch.isSystem()){
+        if (!toPatch.isSystem()) {
             SetterUtils.safeSet(patched::setDiscovery, this.getDiscovery(), boolean.class);
         }
         return patched;

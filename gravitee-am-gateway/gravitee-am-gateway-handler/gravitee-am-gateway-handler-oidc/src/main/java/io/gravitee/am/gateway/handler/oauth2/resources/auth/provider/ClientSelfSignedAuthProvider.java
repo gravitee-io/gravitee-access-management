@@ -24,13 +24,12 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-
-import javax.net.ssl.SSLSession;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLSession;
 
 /**
  * Client Authentication method : self_signed_tls_client_auth
@@ -54,9 +53,11 @@ public class ClientSelfSignedAuthProvider implements ClientAuthProvider {
     @Override
     public boolean canHandle(Client client, HttpServerRequest request) {
         // client_id is a required parameter for tls_client_auth so we are sure to have a client here
-        return client != null
-                && request.sslSession() != null
-                && ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(client.getTokenEndpointAuthMethod());
+        return (
+            client != null &&
+            request.sslSession() != null &&
+            ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(client.getTokenEndpointAuthMethod())
+        );
     }
 
     @Override
@@ -70,27 +71,35 @@ public class ClientSelfSignedAuthProvider implements ClientAuthProvider {
             X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
             String thumbprint = getThumbprint(peerCertificate, "SHA-1");
             String thumbprint256 = getThumbprint(peerCertificate, "SHA-256");
-            jwkService.getKeys(client)
-                    .subscribe(
-                            jwkSet -> {
-                                boolean match = jwkSet.getKeys()
-                                        .stream()
-                                        .anyMatch(jwk -> thumbprint256.equals(jwk.getX5tS256()) || thumbprint.equals(jwk.getX5t()));
-                                if (match) {
-                                    handler.handle(Future.succeededFuture(client));
-                                } else {
-                                    handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate")));
-                                }
-                            },
-                            throwable -> handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate"))),
-                            () -> handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported JWK Set"))));
+            jwkService
+                .getKeys(client)
+                .subscribe(
+                    jwkSet -> {
+                        boolean match = jwkSet
+                            .getKeys()
+                            .stream()
+                            .anyMatch(jwk -> thumbprint256.equals(jwk.getX5tS256()) || thumbprint.equals(jwk.getX5t()));
+                        if (match) {
+                            handler.handle(Future.succeededFuture(client));
+                        } else {
+                            handler.handle(
+                                Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate"))
+                            );
+                        }
+                    },
+                    throwable ->
+                        handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate"))),
+                    () -> handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported JWK Set")))
+                );
         } catch (Exception ex) {
-            handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported self-signed certificate")));
+            handler.handle(
+                Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported self-signed certificate"))
+            );
         }
     }
 
     private static String getThumbprint(X509Certificate cert, String algorithm)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
+        throws NoSuchAlgorithmException, CertificateEncodingException {
         MessageDigest md = MessageDigest.getInstance(algorithm);
         byte[] der = cert.getEncoded();
         md.update(der);

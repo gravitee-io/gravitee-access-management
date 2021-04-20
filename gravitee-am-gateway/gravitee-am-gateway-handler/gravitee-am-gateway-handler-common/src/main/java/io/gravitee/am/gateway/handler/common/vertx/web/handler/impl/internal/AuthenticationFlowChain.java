@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.Iterator;
 import java.util.List;
 

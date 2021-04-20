@@ -23,7 +23,7 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
 @Component({
   selector: 'app-reporter',
   templateUrl: './reporter.component.html',
-  styleUrls: ['./reporter.component.scss']
+  styleUrls: ['./reporter.component.scss'],
 })
 export class ReporterComponent implements OnInit {
   @ViewChild('reporterForm') form: any;
@@ -38,27 +38,28 @@ export class ReporterComponent implements OnInit {
   updateReporterConfiguration: any;
   formChanged: boolean = false;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private organizationService: OrganizationService,
-              private reporterService: ReporterService,
-              private breadcrumbService: BreadcrumbService,
-              private snackbarService: SnackbarService) {
-  }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private organizationService: OrganizationService,
+    private reporterService: ReporterService,
+    private breadcrumbService: BreadcrumbService,
+    private snackbarService: SnackbarService,
+  ) {}
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.reporter = this.route.snapshot.data['reporter'];
+    this.reporter = this.route.snapshot.data.reporter;
     this.reporterConfiguration = JSON.parse(this.reporter.configuration);
     this.updateReporterConfiguration = this.reporterConfiguration;
-    this.organizationService.reporterSchema(this.reporter.type).subscribe(data => {
+    this.organizationService.reporterSchema(this.reporter.type).subscribe((data) => {
       this.reporterSchema = data;
       // handle default null values
       let self = this;
-      Object.keys(this.reporterSchema['properties']).forEach(function(key) {
-        self.reporterSchema['properties'][key].default = '';
+      Object.keys(this.reporterSchema.properties).forEach(function (key) {
+        self.reporterSchema.properties[key].default = '';
       });
     });
     this.initBreadcrumb();
@@ -66,7 +67,7 @@ export class ReporterComponent implements OnInit {
 
   update() {
     this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration);
-    this.reporterService.update(this.domainId, this.reporter.id, this.reporter, this.organizationContext).subscribe(data => {
+    this.reporterService.update(this.domainId, this.reporter.id, this.reporter, this.organizationContext).subscribe((data) => {
       this.reporter = data;
       this.reporterConfiguration = JSON.parse(this.reporter.configuration);
       this.updateReporterConfiguration = this.reporterConfiguration;
@@ -92,10 +93,15 @@ export class ReporterComponent implements OnInit {
 
   initBreadcrumb() {
     if (this.organizationContext) {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/settings/management/audits/settings/' + this.reporter.id + '$', this.reporter.name);
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/settings/management/audits/settings/' + this.reporter.id + '$',
+        this.reporter.name,
+      );
     } else {
-      this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/audits/settings/' + this.reporter.id + '$', this.reporter.name);
+      this.breadcrumbService.addFriendlyNameForRouteRegex(
+        '/domains/' + this.domainId + '/settings/audits/settings/' + this.reporter.id + '$',
+        this.reporter.name,
+      );
     }
   }
-
 }

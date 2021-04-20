@@ -28,7 +28,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface EntrypointService {
-
     Single<Entrypoint> findById(String id, String organizationId);
 
     Flowable<Entrypoint> findAll(String organizationId);

@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Tag;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.TagMongo;
 import io.reactivex.*;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.springframework.stereotype.Component;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,10 +45,12 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
         tagsCollection = mongoOperations.getCollection("tags", TagMongo.class);
     }
 
-
     @Override
     public Maybe<Tag> findById(String id, String organizationId) {
-        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(tagsCollection.find(and(eq(FIELD_ORGANIZATION_ID, organizationId), eq(FIELD_ID, id))).first())
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -72,7 +73,9 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     @Override
     public Single<Tag> update(Tag item) {
         TagMongo tag = convert(item);
-        return Single.fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag)).flatMap(updateResult -> findById(tag.getId()).toSingle());
+        return Single
+            .fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag))
+            .flatMap(updateResult -> findById(tag.getId()).toSingle());
     }
 
     @Override

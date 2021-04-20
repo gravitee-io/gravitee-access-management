@@ -48,13 +48,17 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         LOGGER.info("Applying clients to applications upgrade");
 
-        clientRepository.collectionExists()
-                .flatMapCompletable(collectionExists -> {
+        clientRepository
+            .collectionExists()
+            .flatMapCompletable(
+                collectionExists -> {
                     if (collectionExists) {
                         LOGGER.info("Clients collection exists, update clients to applications ...");
-                        return clientRepository.findAll()
-                                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                                .flatMapSingle(client -> {
+                        return clientRepository
+                            .findAll()
+                            .flatMapObservable(clients -> Observable.fromIterable(clients))
+                            .flatMapSingle(
+                                client -> {
                                     LOGGER.info("Update client : {} - {}", client.getId(), client.getClientId());
                                     // force tokenEndpointAuthMethod to null, because this feature was not used in AM v2
                                     // for example even if the tokenEndpointAuthMethod was set to 'client_secret_basic'
@@ -64,22 +68,30 @@ public class ClientsToApplicationsUpgrader implements Upgrader, Ordered {
                                     if (client.getSoftwareVersion() == null || client.getSoftwareVersion().isEmpty()) {
                                         client.setSoftwareVersion(AM_V2_VERSION);
                                     }
-                                    return clientService.create(client)
-                                            .doOnSuccess(client1 -> LOGGER.info("Client : {} - {} successfully updated", client.getId(), client.getClientId()))
-                                            .doOnError(ex -> LOGGER.error("Failed to update client : {} - {}", client.getId(), client.getClientId()));
-                                })
-                                .toList()
-                                .toCompletable()
-                                .andThen(clientRepository.deleteCollection());
+                                    return clientService
+                                        .create(client)
+                                        .doOnSuccess(
+                                            client1 ->
+                                                LOGGER.info("Client : {} - {} successfully updated", client.getId(), client.getClientId())
+                                        )
+                                        .doOnError(
+                                            ex -> LOGGER.error("Failed to update client : {} - {}", client.getId(), client.getClientId())
+                                        );
+                                }
+                            )
+                            .toList()
+                            .toCompletable()
+                            .andThen(clientRepository.deleteCollection());
                     } else {
                         LOGGER.info("Clients collection doesn't exist, skip upgrade");
                         return Completable.complete();
                     }
-                })
-                .subscribe(
-                        () -> LOGGER.info("Clients to applications upgrade, done."),
-                        error -> LOGGER.error("An error occurs while updating clients to applications", error)
-                );
+                }
+            )
+            .subscribe(
+                () -> LOGGER.info("Clients to applications upgrade, done."),
+                error -> LOGGER.error("An error occurs while updating clients to applications", error)
+            );
 
         return true;
     }

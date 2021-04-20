@@ -23,9 +23,8 @@ describe('ApplicationFactorsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationFactorsComponent ]
-    })
-    .compileComponents();
+      declarations: [ApplicationFactorsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

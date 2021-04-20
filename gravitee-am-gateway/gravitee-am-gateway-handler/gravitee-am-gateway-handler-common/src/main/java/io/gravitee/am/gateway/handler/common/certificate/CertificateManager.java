@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.certificate;
 
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.reactivex.Maybe;
-
 import java.util.Collection;
 
 /**
@@ -25,7 +24,6 @@ import java.util.Collection;
  * @author GraviteeSource Team
  */
 public interface CertificateManager extends io.gravitee.am.certificate.api.CertificateManager {
-
     Maybe<CertificateProvider> get(String id);
 
     Maybe<CertificateProvider> findByAlgorithm(String algorithm);

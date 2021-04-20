@@ -23,9 +23,8 @@ describe('WidgetChartLineComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetChartLineComponent ]
-    })
-    .compileComponents();
+      declarations: [WidgetChartLineComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -23,9 +23,8 @@ describe('DomainSettingsMembershipsComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsMembershipsComponent ]
-    })
-      .compileComponents();
+      declarations: [DomainSettingsMembershipsComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

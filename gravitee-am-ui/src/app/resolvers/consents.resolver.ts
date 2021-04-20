@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs';
-import {UserService} from '../services/user.service';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { UserService } from '../services/user.service';
 
 @Injectable()
 export class ConsentsResolver implements Resolve<any> {
+  constructor(private userService: UserService) {}
 
-  constructor(private userService: UserService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const domainId = route.parent.parent.parent.paramMap.get('domainId');
     const userId = route.parent.paramMap.get('userId');
     const clientId = route.paramMap.get('clientId') ? route.paramMap.get('clientId') : route.queryParamMap.get('clientId');

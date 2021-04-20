@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.management.service.permissions;
 
+import static java.util.Collections.emptySet;
+
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.util.Collections.emptySet;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -39,14 +38,15 @@ class SimplePermissionAcls implements PermissionAcls {
     private Set<Acl> acls;
 
     public SimplePermissionAcls(ReferenceType referenceType, String referenceId, Permission permission, Set<Acl> acls) {
-
         Objects.requireNonNull(referenceType);
         Objects.requireNonNull(referenceId);
         Objects.requireNonNull(permission);
         Objects.requireNonNull(acls);
 
         if (!permission.isRelevantWith(referenceType)) {
-            throw new IllegalArgumentException(String.format("The permission [%s] is not relevant with type [%s]. ", permission, referenceType));
+            throw new IllegalArgumentException(
+                String.format("The permission [%s] is not relevant with type [%s]. ", permission, referenceType)
+            );
         }
 
         this.referenceType = referenceType;
@@ -57,18 +57,18 @@ class SimplePermissionAcls implements PermissionAcls {
 
     @Override
     public boolean match(Map<Membership, Map<Permission, Set<Acl>>> permissions) {
-
-        return permissions.keySet().stream()
-                .filter(membership -> permission.isRelevantWith(membership.getReferenceType()))
-                .filter(membership -> membership.getReferenceType() == referenceType && membership.getReferenceId().equals(referenceId))
-                .flatMap(membership -> permissions.get(membership).getOrDefault(permission, emptySet()).stream())
-                .collect(Collectors.toSet())
-                .containsAll(acls);
+        return permissions
+            .keySet()
+            .stream()
+            .filter(membership -> permission.isRelevantWith(membership.getReferenceType()))
+            .filter(membership -> membership.getReferenceType() == referenceType && membership.getReferenceId().equals(referenceId))
+            .flatMap(membership -> permissions.get(membership).getOrDefault(permission, emptySet()).stream())
+            .collect(Collectors.toSet())
+            .containsAll(acls);
     }
 
     @Override
     public Stream<Map.Entry<ReferenceType, String>> referenceStream() {
-
         return Stream.of(new AbstractMap.SimpleEntry<>(referenceType, referenceId));
     }
 

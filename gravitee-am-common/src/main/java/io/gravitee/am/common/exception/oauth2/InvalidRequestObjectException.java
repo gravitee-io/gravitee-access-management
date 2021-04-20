@@ -38,5 +38,4 @@ public class InvalidRequestObjectException extends OAuth2Exception {
     public String getOAuth2ErrorCode() {
         return "invalid_request_object";
     }
-
 }

@@ -16,8 +16,8 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
@@ -26,7 +26,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 import java.util.Set;
 
@@ -35,7 +34,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface RoleService {
-
     Flowable<Role> findAllAssignable(ReferenceType referenceType, String referenceId, ReferenceType assignableType);
 
     Single<Set<Role>> findByDomain(String domain);

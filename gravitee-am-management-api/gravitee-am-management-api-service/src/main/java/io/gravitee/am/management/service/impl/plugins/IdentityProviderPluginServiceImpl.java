@@ -23,12 +23,11 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -49,50 +48,69 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     @Override
     public Single<List<IdentityProviderPlugin>> findAll(Boolean external) {
         LOGGER.debug("List all identity provider plugins");
-        return Observable.fromIterable(identityProviderPluginManager.getAll().entrySet())
-                .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
-                .map(entry -> convert(entry.getValue()))
-                .toList()
-                .onErrorResumeNext(ex -> {
+        return Observable
+            .fromIterable(identityProviderPluginManager.getAll().entrySet())
+            .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
+            .map(entry -> convert(entry.getValue()))
+            .toList()
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to list all identity provider plugins", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException("An error occurs while trying to list all identity provider plugins", ex)
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<IdentityProviderPlugin> findById(String identityProviderId) {
         LOGGER.debug("Find identity provider plugin by ID: {}", identityProviderId);
-        return Maybe.create(emitter -> {
-            try {
-                Plugin identityProvider = identityProviderPluginManager.findById(identityProviderId);
-                if (identityProvider != null) {
-                    emitter.onSuccess(convert(identityProvider));
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    Plugin identityProvider = identityProviderPluginManager.findById(identityProviderId);
+                    if (identityProvider != null) {
+                        emitter.onSuccess(convert(identityProvider));
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception ex) {
+                    LOGGER.error("An error occurs while trying to get identity provider plugin : {}", identityProviderId, ex);
+                    emitter.onError(
+                        new TechnicalManagementException(
+                            "An error occurs while trying to get identity provider plugin : " + identityProviderId,
+                            ex
+                        )
+                    );
                 }
-            } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get identity provider plugin : {}", identityProviderId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get identity provider plugin : " + identityProviderId, ex));
             }
-        });
+        );
     }
 
     @Override
     public Maybe<String> getSchema(String identityProviderId) {
         LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
-        return Maybe.create(emitter -> {
-            try {
-                String schema = identityProviderPluginManager.getSchema(identityProviderId);
-                if (schema != null) {
-                    emitter.onSuccess(schema);
-                } else {
-                    emitter.onComplete();
+        return Maybe.create(
+            emitter -> {
+                try {
+                    String schema = identityProviderPluginManager.getSchema(identityProviderId);
+                    if (schema != null) {
+                        emitter.onSuccess(schema);
+                    } else {
+                        emitter.onComplete();
+                    }
+                } catch (Exception e) {
+                    LOGGER.error("An error occurs while trying to get schema for identity provider plugin {}", identityProviderId, e);
+                    emitter.onError(
+                        new TechnicalManagementException(
+                            "An error occurs while trying to get schema for identity provider plugin " + identityProviderId,
+                            e
+                        )
+                    );
                 }
-            } catch (Exception e) {
-                LOGGER.error("An error occurs while trying to get schema for identity provider plugin {}", identityProviderId, e);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get schema for identity provider plugin " + identityProviderId, e));
             }
-        });
+        );
     }
 
     private IdentityProviderPlugin convert(Plugin identityProviderPlugin) {

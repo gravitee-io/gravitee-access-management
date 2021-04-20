@@ -28,13 +28,12 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -56,49 +55,56 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext context) {
         // fetch client (required for the next steps)
-        parseClient(context, clientHandler -> {
-            if (clientHandler.failed()) {
-                context.fail(clientHandler.cause());
-                return;
-            }
-
-            // set client in the execution context
-            Client client = clientHandler.result();
-            context.put(CLIENT_CONTEXT_KEY, client);
-
-            // fetch social provider
-            parseSocialProvider(context, socialProviderHandler -> {
-                if (socialProviderHandler.failed()) {
-                    context.fail(socialProviderHandler.cause());
+        parseClient(
+            context,
+            clientHandler -> {
+                if (clientHandler.failed()) {
+                    context.fail(clientHandler.cause());
                     return;
                 }
 
-                // set social provider in the execution context
-                AuthenticationProvider authenticationProvider = socialProviderHandler.result();
-                context.put(PROVIDER_PARAMETER, authenticationProvider);
+                // set client in the execution context
+                Client client = clientHandler.result();
+                context.put(CLIENT_CONTEXT_KEY, client);
 
-                // continue
-                context.next();
-            });
-        });
+                // fetch social provider
+                parseSocialProvider(
+                    context,
+                    socialProviderHandler -> {
+                        if (socialProviderHandler.failed()) {
+                            context.fail(socialProviderHandler.cause());
+                            return;
+                        }
+
+                        // set social provider in the execution context
+                        AuthenticationProvider authenticationProvider = socialProviderHandler.result();
+                        context.put(PROVIDER_PARAMETER, authenticationProvider);
+
+                        // continue
+                        context.next();
+                    }
+                );
+            }
+        );
     }
 
     private void parseClient(RoutingContext context, Handler<AsyncResult<Client>> handler) {
         try {
-            final String clientId = getQueryParams(context.session().get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM)).get(Parameters.CLIENT_ID);
-            clientSyncService.findByClientId(clientId)
-                    .subscribe(
-                            client -> handler.handle(Future.succeededFuture(client)),
-                            ex -> {
-                                logger.error("An error occurs while getting client {}", clientId, ex);
-                                handler.handle(Future.failedFuture(new BadClientCredentialsException()));
-                            },
-                            () -> {
-                                logger.error("Unknown client {}", clientId);
-                                handler.handle(Future.failedFuture(new BadClientCredentialsException()));
-                            }
-                    );
-
+            final String clientId = getQueryParams(context.session().get(RedirectAuthHandler.DEFAULT_RETURN_URL_PARAM))
+                .get(Parameters.CLIENT_ID);
+            clientSyncService
+                .findByClientId(clientId)
+                .subscribe(
+                    client -> handler.handle(Future.succeededFuture(client)),
+                    ex -> {
+                        logger.error("An error occurs while getting client {}", clientId, ex);
+                        handler.handle(Future.failedFuture(new BadClientCredentialsException()));
+                    },
+                    () -> {
+                        logger.error("Unknown client {}", clientId);
+                        handler.handle(Future.failedFuture(new BadClientCredentialsException()));
+                    }
+                );
         } catch (Exception e) {
             logger.error("Failed to retrieve the initial client for the social authentication", e);
             handler.handle(Future.failedFuture(new BadClientCredentialsException()));
@@ -109,17 +115,19 @@ public class LoginCallbackParseHandler implements Handler<RoutingContext> {
         final String providerId = context.request().getParam(PROVIDER_PARAMETER);
 
         if (providerId != null) {
-            identityProviderManager.get(providerId)
-                    .subscribe(
-                            authenticationProvider -> handler.handle(Future.succeededFuture(authenticationProvider)),
-                            ex -> {
-                                logger.error("An error occurs while getting identity provider {}", providerId, ex);
-                                handler.handle(Future.failedFuture(ex));
-                            },
-                            () -> {
-                                logger.error("Unknown identity provider {}", providerId);
-                                handler.handle(Future.failedFuture(new BadClientCredentialsException()));
-                            });
+            identityProviderManager
+                .get(providerId)
+                .subscribe(
+                    authenticationProvider -> handler.handle(Future.succeededFuture(authenticationProvider)),
+                    ex -> {
+                        logger.error("An error occurs while getting identity provider {}", providerId, ex);
+                        handler.handle(Future.failedFuture(ex));
+                    },
+                    () -> {
+                        logger.error("Unknown identity provider {}", providerId);
+                        handler.handle(Future.failedFuture(new BadClientCredentialsException()));
+                    }
+                );
         } else {
             handler.handle(Future.failedFuture(new InvalidRequestException("Missing provider parameter")));
         }

@@ -15,11 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,12 +32,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -136,7 +135,7 @@ public class ClientSyncServiceTest {
     public void findTemplates() {
         TestObserver<List<Client>> test = clientSyncService.findTemplates().test();
         test.assertComplete().assertNoErrors();
-        test.assertValue(clients -> clients!=null && clients.size()==2);
+        test.assertValue(clients -> clients != null && clients.size() == 2);
     }
 
     @Test

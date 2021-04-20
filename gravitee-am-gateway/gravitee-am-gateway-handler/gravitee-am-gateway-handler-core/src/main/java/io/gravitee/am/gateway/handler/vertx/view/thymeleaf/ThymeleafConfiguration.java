@@ -52,8 +52,8 @@ public class ThymeleafConfiguration {
     @Bean
     public ITemplateResolver overrideTemplateResolver() {
         return new DomainBasedTemplateResolver();
-
     }
+
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new CustomClassLoaderTemplateResolver();
         templateResolver.setPrefix("/webroot/views/");
@@ -61,5 +61,4 @@ public class ThymeleafConfiguration {
         templateResolver.setTemplateMode("HTML");
         return templateResolver;
     }
-
 }

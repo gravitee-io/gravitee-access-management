@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface UserProvider {
-
     default Maybe<User> findByEmail(String email) {
         return Maybe.empty();
     }

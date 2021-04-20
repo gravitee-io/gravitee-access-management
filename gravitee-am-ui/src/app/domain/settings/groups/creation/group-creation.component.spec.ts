@@ -23,9 +23,8 @@ describe('UserCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserCreationComponent ]
-    })
-      .compileComponents();
+      declarations: [UserCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

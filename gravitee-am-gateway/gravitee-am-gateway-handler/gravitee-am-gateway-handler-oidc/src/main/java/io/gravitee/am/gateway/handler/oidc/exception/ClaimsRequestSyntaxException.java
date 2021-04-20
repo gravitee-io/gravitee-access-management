@@ -21,8 +21,7 @@ package io.gravitee.am.gateway.handler.oidc.exception;
  */
 public class ClaimsRequestSyntaxException extends Exception {
 
-    public ClaimsRequestSyntaxException() {
-    }
+    public ClaimsRequestSyntaxException() {}
 
     public ClaimsRequestSyntaxException(String message) {
         super(message);

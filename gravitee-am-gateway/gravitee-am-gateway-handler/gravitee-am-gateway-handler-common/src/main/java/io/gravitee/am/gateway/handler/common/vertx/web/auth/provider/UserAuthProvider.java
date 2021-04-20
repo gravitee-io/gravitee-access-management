@@ -29,6 +29,5 @@ import io.vertx.ext.web.RoutingContext;
  * @author GraviteeSource Team
  */
 public interface UserAuthProvider extends AuthProvider {
-
     void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler);
 }

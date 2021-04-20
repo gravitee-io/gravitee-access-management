@@ -20,7 +20,6 @@ package io.gravitee.am.identityprovider.api;
  * @author GraviteeSource Team
  */
 public interface Authentication {
-
     Object getCredentials();
 
     Object getPrincipal();

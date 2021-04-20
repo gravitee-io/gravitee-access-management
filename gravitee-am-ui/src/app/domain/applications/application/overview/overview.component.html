@@ -23,53 +23,62 @@
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>
-            The Access Management server relies mostly on OAuth 2.0/OpenID Connect protocols.
-            To communicate with it you will need the following information :
+            The Access Management server relies mostly on OAuth 2.0/OpenID Connect protocols. To communicate with it you will need the
+            following information :
           </p>
           <ul>
-            <li>The application's domain : <b>{{domain.path}}</b></li>
-            <li>The application's client ID (OAuth 2.0) : <b>{{clientId}}</b></li>
+            <li>
+              The application's domain : <b>{{ domain.path }}</b>
+            </li>
+            <li>
+              The application's client ID (OAuth 2.0) : <b>{{ clientId }}</b>
+            </li>
           </ul>
           <blockquote>
-            <p>
-              You can also get these details from the <a [routerLink]="['..', 'settings']">Application Settings</a> section.
-            </p>
+            <p>You can also get these details from the <a [routerLink]="['..', 'settings']">Application Settings</a> section.</p>
           </blockquote>
           <h2>Configure your Users</h2>
           <p>
-            Users of the application will be redirected to the Access Management server to log in,
-            and it will authenticate them using Identity Providers such as an LDAP server, a database, Web Services or Social Providers.
+            Users of the application will be redirected to the Access Management server to log in, and it will authenticate them using
+            Identity Providers such as an LDAP server, a database, Web Services or Social Providers.
           </p>
           <blockquote>
             <p>
-              You can configure these details from the <a [routerLink]="['..', 'idp']">Application Identity Providers</a> section, if none exists, please contact the administrator of the domain.
+              You can configure these details from the <a [routerLink]="['..', 'idp']">Application Identity Providers</a> section, if none
+              exists, please contact the administrator of the domain.
             </p>
           </blockquote>
           <h2>Initiate the Login Flow</h2>
           <p>
-            To set up authentication in your application and display to users the login page, you have to redirect your users to the following URL :
+            To set up authentication in your application and display to users the login page, you have to redirect your users to the
+            following URL :
           </p>
 
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{entrypoint.url}}/{{domain.path}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}</pre>
+            <pre #pre_authorize
+              >{{ entrypoint.url }}/{{ domain.path }}/oauth/authorize?client_id={{ clientId }}&response_type={{
+                getAuthorizationFlowResponseType()
+              }}&redirect_uri={{ redirectUri }}</pre
+            >
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
           <blockquote>
             <p>
-              All HTML pages displayed during those steps can be customised in the <a [routerLink]="['..', 'design']">Application Design</a> section.
+              All HTML pages displayed during those steps can be customised in the
+              <a [routerLink]="['..', 'design']">Application Design</a> section.
             </p>
           </blockquote>
           <p>Once users have been authenticated they will be redirected to your application URL :</p>
 
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_redirect_uri);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_redirect_uri)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_redirect_uri>{{redirectUri}}</pre>
+            <pre #pre_redirect_uri>{{ redirectUri }}</pre>
           </div>
 
           <p>Either with :</p>
@@ -78,70 +87,90 @@
             <li>an <b>access_token</b> with an <b>ID Token</b> depending on the query parameter <b>response_type</b></li>
           </ul>
           <blockquote>
-            <p>
-              An extra step is required if the response_type=code, exchange the authorization_code for an access_token.
-            </p>
+            <p>An extra step is required if the response_type=code, exchange the authorization_code for an access_token.</p>
           </blockquote>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader);">
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              (click)="copyToClipboard(pre_authorization_code_exchange, authorizationHeader)"
+            >
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+            <button
+              *ngIf="!isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeAuthorizationHeader = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader">
+            <button
+              *ngIf="isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeAuthorizationHeader = authorizationHeader"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
 
-            <pre #pre_authorization_code_exchange class="multiline">curl -X POST \
-  {{entrypoint.url}}/{{domain.path}}/oauth/token \
-  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
+            <pre #pre_authorization_code_exchange class="multiline">
+curl -X POST \
+  {{ entrypoint.url }}/{{ domain.path }}/oauth/token \
+  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{redirectUri}}&client_id={{clientId}}'</pre>
+  -d 'grant_type=authorization_code&code=|code|&redirect_uri={{ redirectUri }}&client_id={{ clientId }}'</pre
+            >
           </div>
 
           <h2>Get user information</h2>
           <p>The user's profile information can be extracted from the ID token or by calling the following URL :</p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_userinfo);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_userinfo)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_userinfo class="multiline">curl -X GET \
-  {{entrypoint.url}}/{{domain.path}}/oidc/userinfo \
-  -H 'Authorization: Bearer access_token'</pre>
+            <pre #pre_userinfo class="multiline">
+curl -X GET \
+  {{ entrypoint.url }}/{{ domain.path }}/oidc/userinfo \
+  -H 'Authorization: Bearer access_token'</pre
+            >
           </div>
-          <p>
-            The profile information is used to display their name and hide/show some UI actions according to their permissions.
-          </p>
+          <p>The profile information is used to display their name and hide/show some UI actions according to their permissions.</p>
 
           <h2>Call your APIs</h2>
           <p>
-            Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated users with sufficient privileges can access them.
+            Most of your applications require data from APIs. Some of those resources have restricted access, so that only authenticated
+            users with sufficient privileges can access them.
           </p>
           <div class="code">
-            <pre class="multiline">curl -X GET \
+            <pre class="multiline">
+curl -X GET \
   https://api.mycompany.com/api/v1/data \
-  -H 'Authorization: Bearer access_token'</pre>
+  -H 'Authorization: Bearer access_token'</pre
+            >
           </div>
 
           <h2>Log the User Out</h2>
-          <p>
-            Any authenticated users who want to invalidate their session can navigate to the following URL :
-          </p>
+          <p>Any authenticated users who want to invalidate their session can navigate to the following URL :</p>
           <div class="code">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout);">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_logout)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_logout>{{entrypoint.url}}/{{domain.path}}/logout</pre>
+            <pre #pre_logout>{{ entrypoint.url }}/{{ domain.path }}/logout</pre>
           </div>
           <blockquote>
             <p>
-              By default access tokens and refresh tokens are not revoked. You can add the invalidate_tokens=true query parameter to the request to invalidate current user tokens.
+              By default access tokens and refresh tokens are not revoked. You can add the invalidate_tokens=true query parameter to the
+              request to invalidate current user tokens.
             </p>
           </blockquote>
           <blockquote>
             <p>
-              You can also specify the target_url=https://myApp/logoutCallback query parameter to redirect the user to your application after logout process.
+              You can also specify the target_url=https://myApp/logoutCallback query parameter to redirect the user to your application
+              after logout process.
             </p>
           </blockquote>
         </div>
@@ -152,42 +181,76 @@
           <h2>Getting an access token</h2>
           <p>You can request an access token using the OAuth 2.0 client credentials grant type.</p>
           <div class="code" *ngIf="displayAuthBasicExample()">
-            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)">
+            <button
+              mat-icon-button
+              matSuffix
+              matTooltip="Copy to clipboard"
+              (click)="copyToClipboard(pre_auth_basic_token, authorizationHeader)"
+            >
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeAuthorizationHeader = hidden;">
+            <button
+              *ngIf="!isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeAuthorizationHeader = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeAuthorizationHeader)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeAuthorizationHeader = authorizationHeader;">
+            <button
+              *ngIf="isHidden(safeAuthorizationHeader)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeAuthorizationHeader = authorizationHeader"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
-            <pre #pre_auth_basic_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+            <pre #pre_auth_basic_token class="multiline">
+curl -X POST \
+              {{ entrypoint.url }}/{{ domain.path }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Authorization: Basic {{safeAuthorizationHeader}}' \
-  -d 'grant_type=client_credentials'</pre>
+  -H 'Authorization: Basic {{ safeAuthorizationHeader }}' \
+  -d 'grant_type=client_credentials'</pre
+            >
           </div>
           <div class="code" *ngIf="!displayAuthBasicExample()">
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_post_token, clientSecret)">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <button *ngIf="!isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Hide sensitive data" (click)="safeClientSecret = hidden;">
+            <button
+              *ngIf="!isHidden(safeClientSecret)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Hide sensitive data"
+              (click)="safeClientSecret = hidden"
+            >
               <mat-icon>visibility_off</mat-icon>
             </button>
-            <button *ngIf="isHidden(safeClientSecret)" mat-icon-button matSuffix matTooltip="Reveal sensitive data" (click)="safeClientSecret = clientSecret;">
+            <button
+              *ngIf="isHidden(safeClientSecret)"
+              mat-icon-button
+              matSuffix
+              matTooltip="Reveal sensitive data"
+              (click)="safeClientSecret = clientSecret"
+            >
               <mat-icon>visibility</mat-icon>
             </button>
-            <pre #pre_post_token class="multiline">curl -X POST \
-              {{entrypoint.url}}/{{domain.path}}/oauth/token \
+            <pre #pre_post_token class="multiline">
+curl -X POST \
+              {{ entrypoint.url }}/{{ domain.path }}/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
-  -d 'grant_type=client_credentials&client_id={{clientId}}&client_secret={{safeClientSecret}}'</pre>
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret={{ safeClientSecret }}'</pre
+            >
           </div>
           <p>If the request is valid, the authorization server will issue an access token to make authorized calls to the APIs.</p>
 
           <h2>Call your APIs</h2>
           <p>Use your access_token in your request via the Authorization HTTP header to obtain authorized access to the APIs.</p>
           <div class="code">
-            <pre class="multiline">curl -X GET \
+            <pre class="multiline">
+curl -X GET \
   https://api.mycompany.com/api/v1/data \
   -H 'Authorization: Bearer access_token'
             </pre>
@@ -196,5 +259,5 @@
       </div>
     </div>
   </div>
-  <textarea name="copyText" #copyText id="" style="opacity: 0;height: 0; width: 0; margin: 0; border: 0"></textarea>
+  <textarea name="copyText" #copyText id="" style="opacity: 0; height: 0; width: 0; margin: 0; border: 0"></textarea>
 </div>

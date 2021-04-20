@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
-
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;

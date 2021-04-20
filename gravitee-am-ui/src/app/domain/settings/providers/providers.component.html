@@ -18,21 +18,16 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Identity providers</h1>
   <div class="gv-page-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='providers'>
+    <ngx-datatable class="material" [columnMode]="'flex'" [headerHeight]="40" [footerHeight]="40" [rowHeight]="50" [rows]="providers">
       <ngx-datatable-column name="Identity Providers" [flexGrow]="4" [cellClass]="'idp-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="idp-header" fxLayout="row">
             <div class="idp-icon">
-              <mat-icon>{{getIdentityProviderTypeIcon(row.type)}}</mat-icon>
+              <mat-icon>{{ getIdentityProviderTypeIcon(row.type) }}</mat-icon>
             </div>
             <div class="idp-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-              <small>{{displayType(row.type)}}</small>
+              <h3>{{ row.name }}</h3>
+              <small>{{ displayType(row.type) }}</small>
             </div>
           </div>
         </ng-template>
@@ -41,19 +36,23 @@
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
             <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_identity_provider_read']"><mat-icon>settings</mat-icon></a>
-            <button *hasPermission="['domain_identity_provider_delete']" mat-icon-button (click)="delete(row.id, $event)"><mat-icon>delete</mat-icon></button>
+            <button *hasPermission="['domain_identity_provider_delete']" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon>delete</mat-icon>
+            </button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Identity providers will appear here'"
-                  [subMessage]="'Start creating a provider'"
-                  [icon]="'device_hub'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Identity providers will appear here'"
+    [subMessage]="'Start creating a provider'"
+    [icon]="'device_hub'"
+  ></app-emptystate>
 
-  <div *hasPermission="['domain_identity_provider_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['domain_identity_provider_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

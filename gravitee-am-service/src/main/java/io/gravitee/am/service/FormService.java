@@ -23,7 +23,6 @@ import io.gravitee.am.service.model.UpdateForm;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface FormService {
-
     Maybe<Form> findById(String id);
 
     Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
@@ -88,5 +86,4 @@ public interface FormService {
     default Completable delete(String domain, String pageId) {
         return delete(domain, pageId, null);
     }
-
 }

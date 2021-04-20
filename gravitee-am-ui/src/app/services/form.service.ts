@@ -13,45 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {HttpClient} from "@angular/common/http";
-import {AppConfig} from "../../config/app.config";
-import {Observable} from "rxjs";
-import {OrganizationService} from "./organization.service";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class FormService {
   private formsUrl = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) {
-  }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   get(domainId, appId, formTemplate): Observable<any> {
-    return this.http.get<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms?template=" + formTemplate);
+    return this.http.get<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms?template=' + formTemplate);
   }
 
   create(domainId, appId, form, organizationContext): Observable<any> {
-    if(organizationContext) {
+    if (organizationContext) {
       return this.organizationService.createForm(form);
     }
-    return this.http.post<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms", form);
+    return this.http.post<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms', form);
   }
 
   update(domainId, appId, id, form, organizationContext): Observable<any> {
-    if(organizationContext) {
+    if (organizationContext) {
       return this.organizationService.updateForm(id, form);
     }
-    return this.http.put<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms/" + id, {
-      'enabled': form.enabled,
-      'content': form.content
+    return this.http.put<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms/' + id, {
+      enabled: form.enabled,
+      content: form.content,
     });
   }
 
   delete(domainId, appId, id, organizationContext): Observable<any> {
-    if(organizationContext) {
+    if (organizationContext) {
       return this.organizationService.deleteForm(id);
     }
-    return this.http.delete<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms/" + id);
+    return this.http.delete<any>(this.formsUrl + domainId + (appId ? '/applications/' + appId : '') + '/forms/' + id);
   }
 }

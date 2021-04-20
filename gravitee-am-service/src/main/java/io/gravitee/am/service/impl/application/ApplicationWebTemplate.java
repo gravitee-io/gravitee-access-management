@@ -23,7 +23,6 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -65,7 +64,9 @@ public class ApplicationWebTemplate extends ApplicationAbstractTemplate {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         oAuthSettings.setClientId(oAuthSettings.getClientId() == null ? RandomString.generate() : oAuthSettings.getClientId());
         // we generate a client secret because a native application might use the password flow
-        oAuthSettings.setClientSecret(oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret());
+        oAuthSettings.setClientSecret(
+            oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret()
+        );
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
@@ -74,7 +75,9 @@ public class ApplicationWebTemplate extends ApplicationAbstractTemplate {
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE, GrantType.PASSWORD));
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
         } else {
-            Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null ? new HashSet<>() : new HashSet<>(oAuthSettings.getResponseTypes());
+            Set<String> defaultResponseTypes = oAuthSettings.getResponseTypes() == null
+                ? new HashSet<>()
+                : new HashSet<>(oAuthSettings.getResponseTypes());
             if (oAuthSettings.getGrantTypes().contains(GrantType.AUTHORIZATION_CODE)) {
                 // set default authorization code default response types
                 if (!haveAuthorizationCodeResponseTypes(oAuthSettings.getResponseTypes())) {

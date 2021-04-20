@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { GroupService } from "../../../../../services/group.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { MAT_DIALOG_DATA, MatAutocompleteTrigger, MatDialog, MatDialogRef } from "@angular/material";
-import { FormControl } from "@angular/forms";
-import { UserService } from "../../../../../services/user.service";
-import { COMMA, ENTER } from "@angular/cdk/keycodes";
+import { ActivatedRoute, Router } from '@angular/router';
+import { GroupService } from '../../../../../services/group.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { MAT_DIALOG_DATA, MatAutocompleteTrigger, MatDialog, MatDialogRef } from '@angular/material';
+import { FormControl } from '@angular/forms';
+import { UserService } from '../../../../../services/user.service';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import * as _ from 'lodash';
-import { OrganizationService } from "../../../../../services/organization.service";
-import {AuthService} from "../../../../../services/auth.service";
+import { OrganizationService } from '../../../../../services/organization.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-group-members',
   templateUrl: './members.component.html',
-  styleUrls: ['./members.component.scss']
+  styleUrls: ['./members.component.scss'],
 })
 export class GroupMembersComponent implements OnInit {
   private domainId: string;
@@ -39,28 +39,30 @@ export class GroupMembersComponent implements OnInit {
   page: any = {};
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private groupService: GroupService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private organizationService: OrganizationService,
-              private authService: AuthService,
-              private dialog: MatDialog) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private groupService: GroupService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private organizationService: OrganizationService,
+    private authService: AuthService,
+    private dialog: MatDialog,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 25;
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.editMode = this.authService.hasPermissions(['organization_group_update']);
     } else {
       this.editMode = this.authService.hasPermissions(['domain_group_update']);
     }
-    this.group = this.route.snapshot.parent.data['group'];
-    const pagedMembers = this.route.snapshot.data['members'];
+    this.group = this.route.snapshot.parent.data.group;
+    const pagedMembers = this.route.snapshot.data.members;
     this.page.totalElements = pagedMembers.totalCount;
     this.members = Object.assign([], pagedMembers.data);
   }
@@ -70,38 +72,40 @@ export class GroupMembersComponent implements OnInit {
   }
 
   loadMembers() {
-    const findMembers = this.organizationContext ? this.organizationService.groupMembers(this.group.id) :
-      this.groupService.findMembers(this.domainId, this.group.id,  this.page.pageNumber,  this.page.size);
+    const findMembers = this.organizationContext
+      ? this.organizationService.groupMembers(this.group.id)
+      : this.groupService.findMembers(this.domainId, this.group.id, this.page.pageNumber, this.page.size);
 
-    findMembers.subscribe(pagedMembers => {
-        this.page.totalElements = pagedMembers.totalCount;
-        this.members = Object.assign([], pagedMembers.data);
-      });
+    findMembers.subscribe((pagedMembers) => {
+      this.page.totalElements = pagedMembers.totalCount;
+      this.members = Object.assign([], pagedMembers.data);
+    });
   }
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Remove Member', 'Are you sure you want to remove this member ?')
-      .subscribe(res => {
-        if (res) {
-          var index = this.group.members.indexOf(id);
-          if (index > -1) {
-            this.group.members.splice(index, 1);
-          }
-          this.update('Member deleted')
+    this.dialogService.confirm('Remove Member', 'Are you sure you want to remove this member ?').subscribe((res) => {
+      if (res) {
+        var index = this.group.members.indexOf(id);
+        if (index > -1) {
+          this.group.members.splice(index, 1);
         }
-      });
+        this.update('Member deleted');
+      }
+    });
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.loadMembers();
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddMemberComponent, { width : '700px', data: { domain: this.domainId, organizationContext: this.organizationContext, groupMembers: this.group.members }});
-    dialogRef.afterClosed().subscribe(members => {
+    let dialogRef = this.dialog.open(AddMemberComponent, {
+      width: '700px',
+      data: { domain: this.domainId, organizationContext: this.organizationContext, groupMembers: this.group.members },
+    });
+    dialogRef.afterClosed().subscribe((members) => {
       if (members) {
         let memberIds = _.map(members, 'id');
         this.group.members = (this.group.members = this.group.members || []).concat(memberIds);
@@ -123,7 +127,7 @@ export class GroupMembersComponent implements OnInit {
   }
 
   private update(message) {
-    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe((data) => {
       this.group = data;
       this.loadMembers();
       this.snackbarService.open(message);
@@ -146,18 +150,22 @@ export class AddMemberComponent {
   separatorKeysCodes: number[] = [ENTER, COMMA];
   private groupMembers: string[] = [];
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<AddMemberComponent>,
-              private userService: UserService) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<AddMemberComponent>,
+    private userService: UserService,
+  ) {
     this.groupMembers = data.groupMembers || [];
-    this.memberCtrl.valueChanges
-      .subscribe(searchTerm => {
-        if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.userService.search(data.domain, searchTerm + '*', 0, 30, data.organizationContext).subscribe(response => {
-            this.filteredUsers = response.data.filter(domainUser => _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1);
-          });
-        }
-      });
+    this.memberCtrl.valueChanges.subscribe((searchTerm) => {
+      if (typeof searchTerm === 'string' || searchTerm instanceof String) {
+        this.userService.search(data.domain, searchTerm + '*', 0, 30, data.organizationContext).subscribe((response) => {
+          this.filteredUsers = response.data.filter(
+            (domainUser) =>
+              _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1,
+          );
+        });
+      }
+    });
   }
 
   onSelectionChanged(event) {

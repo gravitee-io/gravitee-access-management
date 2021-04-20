@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oidc.model.jwk;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.math.BigInteger;
 
 /**
@@ -66,15 +65,13 @@ public class RSAKey extends JWK {
         rsaKey.copy(source);
 
         /*If alg is not set then compute it*/
-        if(rsaKey.getAlg()==null && rsaKey.getN()!=null) {
+        if (rsaKey.getAlg() == null && rsaKey.getN() != null) {
             int keySize = new BigInteger(rsaKey.getN().getBytes()).bitLength();
-            if(keySize>=4096) {
+            if (keySize >= 4096) {
                 rsaKey.setAlg("RS512");
-            }
-            else if(keySize>=3072) {
+            } else if (keySize >= 3072) {
                 rsaKey.setAlg("RS384");
-            }
-            else if(keySize>=2048) {
+            } else if (keySize >= 2048) {
                 rsaKey.setAlg("RS256");
             }
         }

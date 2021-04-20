@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.client.MongoClientSettings;
@@ -32,17 +35,13 @@ import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.config.IRuntimeConfig;
 import de.flapdoodle.embed.process.config.io.ProcessOutput;
+import java.util.Collections;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.Collections;
-
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,14 +64,12 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-
-        final IMongodConfig mongodConfig = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION).build();
+        final IMongodConfig mongodConfig = new MongodConfigBuilder().version(Version.Main.PRODUCTION).build();
 
         IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
-                .defaultsWithLogger(Command.MongoD, logger)
-                .processOutput(ProcessOutput.getDefaultInstanceSilent())
-                .build();
+            .defaultsWithLogger(Command.MongoD, logger)
+            .processOutput(ProcessOutput.getDefaultInstanceSilent())
+            .build();
 
         MongodStarter runtime = MongodStarter.getInstance(runtimeConfig);
 
@@ -80,12 +77,26 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
         mongod = mongodExecutable.start();
 
         // cluster configuration
-        ClusterSettings clusterSettings = ClusterSettings.builder().hosts(Collections.singletonList(new ServerAddress(mongodConfig.net().getServerAddress().getHostName(), mongodConfig.net().getPort()))).build();
+        ClusterSettings clusterSettings = ClusterSettings
+            .builder()
+            .hosts(
+                Collections.singletonList(
+                    new ServerAddress(mongodConfig.net().getServerAddress().getHostName(), mongodConfig.net().getPort())
+                )
+            )
+            .build();
         // codec configuration
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+        CodecRegistry pojoCodecRegistry = fromRegistries(
+            MongoClients.getDefaultCodecRegistry(),
+            fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        );
 
-        MongoClientSettings settings = MongoClientSettings.builder().clusterSettings(clusterSettings).codecRegistry(pojoCodecRegistry).writeConcern(WriteConcern.ACKNOWLEDGED).build();
+        MongoClientSettings settings = MongoClientSettings
+            .builder()
+            .clusterSettings(clusterSettings)
+            .codecRegistry(pojoCodecRegistry)
+            .writeConcern(WriteConcern.ACKNOWLEDGED)
+            .build();
         mongoClient = MongoClients.create(settings);
         mongoDatabase = mongoClient.getDatabase(databaseName);
     }

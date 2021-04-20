@@ -38,5 +38,4 @@ public class ExtensionGrantConfiguration {
     public ExtensionGrantConfigurationFactory extensionGrantConfigurationFactory() {
         return new ExtensionGrantConfigurationFactoryImpl();
     }
-
 }

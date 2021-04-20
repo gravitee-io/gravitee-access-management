@@ -33,7 +33,6 @@ public class ClientRegistrationSettingsMongo {
     private List<String> allowedScopes;
     private boolean isClientTemplateEnabled;
 
-
     public boolean isAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
     }

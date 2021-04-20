@@ -23,16 +23,15 @@ import io.gravitee.am.service.model.PatchClient;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -57,45 +56,49 @@ public class ClientsUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         LOGGER.info("Applying clients upgrade");
 
-        domainService.findAll()
-                .flatMapObservable(domains -> Observable.fromIterable(domains))
-                .flatMapSingle(this::upgradeClients)
-                .subscribe();
+        domainService
+            .findAll()
+            .flatMapObservable(domains -> Observable.fromIterable(domains))
+            .flatMapSingle(this::upgradeClients)
+            .subscribe();
 
         return true;
     }
 
     private Single<List<Client>> upgradeClients(Domain domain) {
-        return clientService.findByDomain(domain.getId())
-                .filter(clients -> clients != null)
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .filter(this::mustBeUpgraded)
-                .flatMapSingle(this::upgradeClient)
-                .toList();
+        return clientService
+            .findByDomain(domain.getId())
+            .filter(clients -> clients != null)
+            .flatMapObservable(clients -> Observable.fromIterable(clients))
+            .filter(this::mustBeUpgraded)
+            .flatMapSingle(this::upgradeClient)
+            .toList();
     }
 
     private Single<Client> upgradeClient(Client client) {
         //Set default client name if not exists
-        if(client.getClientName()==null || client.getClientName().trim().isEmpty()) {
+        if (client.getClientName() == null || client.getClientName().trim().isEmpty()) {
             PatchClient patch = new PatchClient();
             patch.setClientName(Optional.of("Unknown Client"));
 
             //response_type have been introduced in the same time than client_name, we set it only if client_name is being upgraded.
-            if(client.getAuthorizedGrantTypes()!=null && !client.getAuthorizedGrantTypes().isEmpty()) {
+            if (client.getAuthorizedGrantTypes() != null && !client.getAuthorizedGrantTypes().isEmpty()) {
                 Set<String> responseTypes = ResponseTypeUtils.applyDefaultResponseType(client.getAuthorizedGrantTypes());
                 patch.setResponseTypes(Optional.of(responseTypes.stream().collect(Collectors.toList())));
             }
-            return clientService.patch(client.getDomain(), client.getId(),patch);
+            return clientService.patch(client.getDomain(), client.getId(), patch);
         }
         //Nothing to update
         return Single.just(client);
     }
 
     private boolean mustBeUpgraded(Client client) {
-        return client.getResponseTypes()==null ||
-                client.getResponseTypes().isEmpty() ||
-                client.getClientName()==null ||
-                client.getClientName().trim().isEmpty();
+        return (
+            client.getResponseTypes() == null ||
+            client.getResponseTypes().isEmpty() ||
+            client.getClientName() == null ||
+            client.getClientName().trim().isEmpty()
+        );
     }
 
     @Override

@@ -38,6 +38,6 @@ public class ApplicationAlreadyExistsException extends AbstractManagementExcepti
 
     @Override
     public String getMessage() {
-        return "An application [" + application + "] already exists for domain [" + domain+ "]";
+        return "An application [" + application + "] already exists for domain [" + domain + "]";
     }
 }

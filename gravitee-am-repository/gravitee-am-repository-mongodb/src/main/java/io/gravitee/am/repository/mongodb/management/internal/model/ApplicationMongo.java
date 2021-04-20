@@ -16,9 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.bson.Document;
-
 import java.util.Set;
+import org.bson.Document;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

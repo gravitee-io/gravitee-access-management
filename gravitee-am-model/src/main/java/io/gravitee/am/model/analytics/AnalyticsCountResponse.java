@@ -23,7 +23,7 @@ public class AnalyticsCountResponse implements AnalyticsResponse {
 
     private Long value;
 
-    public AnalyticsCountResponse() { }
+    public AnalyticsCountResponse() {}
 
     public AnalyticsCountResponse(Long value) {
         this.value = value;

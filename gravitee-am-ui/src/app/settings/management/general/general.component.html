@@ -27,11 +27,19 @@
             <mat-divider></mat-divider>
           </div>
           <div>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-select placeholder="Identity providers" multiple name="identities" [(ngModel)]="settings.identityProviders" [disabled]="readonly">
-              <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{ identityProvider.name }}</mat-option>
-            </mat-select>
-          </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-select
+                placeholder="Identity providers"
+                multiple
+                name="identities"
+                [(ngModel)]="settings.identityProviders"
+                [disabled]="readonly"
+              >
+                <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
+                  identityProvider.name
+                }}</mat-option>
+              </mat-select>
+            </mat-form-field>
           </div>
         </div>
         <div class="gv-form-section">
@@ -42,23 +50,29 @@
           </div>
           <div>
             <mat-form-field appearance="outline" floatLabel="always">
-              <mat-select placeholder="Social providers" multiple name="socialIdentities" [(ngModel)]="settings.socialIdentities" [disabled]="readonly">
-                <mat-option *ngFor="let socialIdentityProvider of socialIdentities" [value]="socialIdentityProvider.id">{{ socialIdentityProvider.name }}</mat-option>
+              <mat-select
+                placeholder="Social providers"
+                multiple
+                name="socialIdentities"
+                [(ngModel)]="settings.socialIdentities"
+                [disabled]="readonly"
+              >
+                <mat-option *ngFor="let socialIdentityProvider of socialIdentities" [value]="socialIdentityProvider.id">{{
+                  socialIdentityProvider.name
+                }}</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
         </div>
         <div *hasPermission="['organization_settings_update']">
-          <button mat-raised-button [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="!managementForm.valid || managementForm.pristine" type="submit">SAVE</button>
         </div>
       </form>
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>Manage the platform settings</h3>
       <div class="gv-page-description-content">
-        <p>
-          The platform preferences let you configure how your users will connect to the Access Management Admin Portal.
-        </p>
+        <p>The platform preferences let you configure how your users will connect to the Access Management Admin Portal.</p>
       </div>
     </div>
   </div>

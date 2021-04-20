@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot} from '@angular/router';
-import {combineLatest, Observable, of} from 'rxjs';
-import {catchError, map} from 'rxjs/operators';
-import {AuthService} from './../services/auth.service';
-import {DomainService} from '../services/domain.service';
-import {ApplicationService} from '../services/application.service';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot } from '@angular/router';
+import { combineLatest, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { AuthService } from './../services/auth.service';
+import { DomainService } from '../services/domain.service';
+import { ApplicationService } from '../services/application.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-
-  constructor(private authService: AuthService,
-              private domainService: DomainService,
-              private applicationService: ApplicationService) {}
+  constructor(private authService: AuthService, private domainService: DomainService, private applicationService: ApplicationService) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> | Promise<boolean> | boolean {
-
     // if no permission required, continue
     if (!route.data || !route.data.perms || !route.data.perms.only) {
       return true;
@@ -40,21 +36,25 @@ export class AuthGuard implements CanActivate {
     let resourceResult: Observable<any> = of([]);
     if (!requiredPerms[0].startsWith('organization') && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
-      const domainId = route.parent.paramMap.get('domainId') ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId') ? route.parent.parent.paramMap.get('domainId') : route.parent.parent.parent.paramMap.get('domainId');
+      const domainId = route.parent.paramMap.get('domainId')
+        ? route.parent.paramMap.get('domainId')
+        : route.parent.parent.paramMap.get('domainId')
+        ? route.parent.parent.paramMap.get('domainId')
+        : route.parent.parent.parent.paramMap.get('domainId');
       const appId = route.parent.paramMap.get('appId') ? route.parent.paramMap.get('appId') : route.parent.parent.paramMap.get('appId');
       // if permissions have been already loaded, continue;
       if ((appId && !this.authService.applicationPermissionsLoaded()) || (domainId && !this.authService.domainPermissionsLoaded())) {
-        resourceResult = (domainId && appId) ? this.applicationService.permissions(domainId, appId) : this.domainService.permissions(domainId);
+        resourceResult =
+          domainId && appId ? this.applicationService.permissions(domainId, appId) : this.domainService.permissions(domainId);
       }
     }
     // check permissions
     return combineLatest([userResult, resourceResult]).pipe(
-      map(() =>  this.isAuthorized(requiredPerms)),
+      map(() => this.isAuthorized(requiredPerms)),
       catchError((err) => {
         return of(false);
-      })
+      }),
     );
-
   }
 
   canDisplay(route: ActivatedRouteSnapshot, path): boolean {
@@ -64,7 +64,7 @@ export class AuthGuard implements CanActivate {
     }
     // if resource (application) should not display a settings page, continue
     if (path.data.types && path.data.types.only && path.data.types.only.length > 0) {
-      const app = route.parent.data['application'];
+      const app = route.parent.data.application;
       if (app && path.data.types.only.indexOf(app.type.toUpperCase()) === -1) {
         return false;
       }

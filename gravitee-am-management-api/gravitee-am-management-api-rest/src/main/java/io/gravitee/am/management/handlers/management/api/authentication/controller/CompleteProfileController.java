@@ -21,6 +21,13 @@ import io.gravitee.am.management.service.NewsletterService;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.UserService;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +39,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,7 +75,8 @@ public class CompleteProfileController {
     }
 
     @RequestMapping(value = "/completeProfile", method = RequestMethod.POST)
-    public void submit(HttpServletRequest request, HttpServletResponse response, HttpSession session, Authentication authentication) throws IOException {
+    public void submit(HttpServletRequest request, HttpServletResponse response, HttpSession session, Authentication authentication)
+        throws IOException {
         try {
             // get current principal
             DefaultUser principal = (DefaultUser) authentication.getPrincipal();

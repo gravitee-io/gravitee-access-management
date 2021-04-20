@@ -13,34 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {DialogService} from 'app/services/dialog.service';
-import {SnackbarService} from '../../../services/snackbar.service';
-import {ExtensionGrantService} from '../../../services/extension-grant.service';
-import {BreadcrumbService} from '../../../services/breadcrumb.service';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { DialogService } from 'app/services/dialog.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { ExtensionGrantService } from '../../../services/extension-grant.service';
+import { BreadcrumbService } from '../../../services/breadcrumb.service';
 
 @Component({
   selector: 'app-extension-grants',
   templateUrl: './extension-grants.component.html',
-  styleUrls: ['./extension-grants.component.scss']
+  styleUrls: ['./extension-grants.component.scss'],
 })
 export class DomainSettingsExtensionGrantsComponent implements OnInit {
   private extensionGrantTypes: any = {
-    'jwtbearer-am-extension-grant' : 'Extension Grant JWT Bearer'
+    'jwtbearer-am-extension-grant': 'Extension Grant JWT Bearer',
   };
   extensionGrants: any[];
   domainId: string;
 
-  constructor(private extensionGrantService: ExtensionGrantService,
-              private dialogService: DialogService,
-              private snackbarService: SnackbarService,
-              private breadcrumbService: BreadcrumbService,
-              private route: ActivatedRoute) { }
+  constructor(
+    private extensionGrantService: ExtensionGrantService,
+    private dialogService: DialogService,
+    private snackbarService: SnackbarService,
+    private breadcrumbService: BreadcrumbService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.extensionGrants = this.route.snapshot.data['extensionGrants'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.extensionGrants = this.route.snapshot.data.extensionGrants;
     this.initBreadcrumb();
   }
 
@@ -49,7 +51,7 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
   }
 
   loadTokenGranters() {
-    this.extensionGrantService.findByDomain(this.domainId).subscribe(response => this.extensionGrants = response);
+    this.extensionGrantService.findByDomain(this.domainId).subscribe((response) => (this.extensionGrants = response));
   }
 
   displayType(type) {
@@ -61,16 +63,14 @@ export class DomainSettingsExtensionGrantsComponent implements OnInit {
 
   delete(id, event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Extension Grant', 'Are you sure you want to delete this extension grant ?')
-      .subscribe(res => {
-        if (res) {
-          this.extensionGrantService.delete(this.domainId, id).subscribe(response => {
-            this.snackbarService.open('Extension Grant deleted');
-            this.loadTokenGranters();
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Extension Grant', 'Are you sure you want to delete this extension grant ?').subscribe((res) => {
+      if (res) {
+        this.extensionGrantService.delete(this.domainId, id).subscribe((response) => {
+          this.snackbarService.open('Extension Grant deleted');
+          this.loadTokenGranters();
+        });
+      }
+    });
   }
 
   private initBreadcrumb() {

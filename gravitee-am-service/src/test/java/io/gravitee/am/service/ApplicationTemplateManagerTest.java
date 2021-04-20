@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -22,22 +25,17 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
-import java.util.Arrays;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ApplicationTemplateManagerTest {
-
-   /* @Test
+    /* @Test
     public void create_generateUuidAsClientId() {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(domainService.reload(eq(DOMAIN), any())).thenReturn(Single.just(new Domain()));

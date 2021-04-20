@@ -41,16 +41,19 @@ public class UserEndpoint extends AbstractUserEndpoint {
     public void get(RoutingContext context) {
         final String userId = context.request().getParam("id");
         userService
-                .get(userId, location(context.request()))
-                .subscribe(
-                        user -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .putHeader(HttpHeaders.LOCATION, user.getMeta().getLocation())
-                                .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user)),
-                        error -> context.fail(error),
-                        () -> context.fail(new UserNotFoundException(userId)));
+            .get(userId, location(context.request()))
+            .subscribe(
+                user ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .putHeader(HttpHeaders.LOCATION, user.getMeta().getLocation())
+                        .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user)),
+                error -> context.fail(error),
+                () -> context.fail(new UserNotFoundException(userId))
+            );
     }
 
     /**
@@ -114,15 +117,19 @@ public class UserEndpoint extends AbstractUserEndpoint {
                 }
             }
 
-            userService.update(userId, user, location(context.request()))
-                    .subscribe(
-                            user1 -> context.response()
-                                    .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                    .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                    .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                    .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
-                                    .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
-                            error -> context.fail(error));
+            userService
+                .update(userId, user, location(context.request()))
+                .subscribe(
+                    user1 ->
+                        context
+                            .response()
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.LOCATION, user1.getMeta().getLocation())
+                            .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(user1)),
+                    error -> context.fail(error)
+                );
         } catch (DecodeException ex) {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
@@ -147,9 +154,6 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void delete(RoutingContext context) {
         final String userId = context.request().getParam("id");
-        userService.delete(userId)
-                .subscribe(
-                        () -> context.response().setStatusCode(204).end(),
-                        error -> context.fail(error));
+        userService.delete(userId).subscribe(() -> context.response().setStatusCode(204).end(), error -> context.fail(error));
     }
 }

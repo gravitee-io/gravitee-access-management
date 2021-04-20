@@ -25,7 +25,6 @@ import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.net.URI;
 import java.text.ParseException;
 import java.util.Arrays;
@@ -47,21 +46,22 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
     private static final String CLIENT_CONTEXT_KEY = "client";
 
-    private static final String HTTPS_SCHEME  = "https";
+    private static final String HTTPS_SCHEME = "https";
 
     // As per https://openid.net/specs/openid-connect-core-1_0.html#AuthRequests
     private static final List<String> OVERRIDABLE_PARAMETERS = Arrays.asList(
-            Parameters.CLAIMS,
-            Parameters.MAX_AGE,
-            io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
-            io.gravitee.am.common.oauth2.Parameters.SCOPE,
-            io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
-            Parameters.DISPLAY,
-            Parameters.PROMPT,
-            Parameters.UI_LOCALES,
-            Parameters.ID_TOKEN_HINT,
-            Parameters.LOGIN_HINT,
-            Parameters.ACR_VALUES);
+        Parameters.CLAIMS,
+        Parameters.MAX_AGE,
+        io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
+        io.gravitee.am.common.oauth2.Parameters.SCOPE,
+        io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
+        Parameters.DISPLAY,
+        Parameters.PROMPT,
+        Parameters.UI_LOCALES,
+        Parameters.ID_TOKEN_HINT,
+        Parameters.LOGIN_HINT,
+        Parameters.ACR_VALUES
+    );
 
     private RequestObjectService requestObjectService;
 
@@ -82,8 +82,10 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         }
 
         // if there is no request or request_uri parameters, continue
-        if ((context.request().getParam(Parameters.REQUEST) == null || context.request().getParam(Parameters.REQUEST).isEmpty())
-                && ((context.request().getParam(Parameters.REQUEST_URI) == null || context.request().getParam(Parameters.REQUEST_URI).isEmpty()))) {
+        if (
+            (context.request().getParam(Parameters.REQUEST) == null || context.request().getParam(Parameters.REQUEST).isEmpty()) &&
+            ((context.request().getParam(Parameters.REQUEST_URI) == null || context.request().getParam(Parameters.REQUEST_URI).isEmpty()))
+        ) {
             context.next();
             return;
         }
@@ -100,20 +102,20 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             requestObject = handleRequestObjectURI(context);
         }
 
-        requestObject
-                .subscribe(
-                        jwt -> {
-                            try {
-                                // Check OAuth2 parameters
-                                checkOAuthParameters(context, jwt);
-                                overrideRequestParameters(context, jwt);
-                                context.next();
-                            } catch (Exception ex) {
-                                context.fail(ex);
-                            }
-                        },
-                        context::fail,
-                        () -> context.next());
+        requestObject.subscribe(
+            jwt -> {
+                try {
+                    // Check OAuth2 parameters
+                    checkOAuthParameters(context, jwt);
+                    overrideRequestParameters(context, jwt);
+                    context.next();
+                } catch (Exception ex) {
+                    context.fail(ex);
+                }
+            },
+            context::fail,
+            () -> context.next()
+        );
     }
 
     private void checkRequestObjectParameters(RoutingContext context) {
@@ -137,7 +139,13 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                 URI uri = URI.create(requestUri);
 
                 // The scheme used in the request_uri value MUST be https or starts with urn:ros:
-                if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase(HTTPS_SCHEME) && !requestUri.startsWith(RequestObjectService.RESOURCE_OBJECT_URN_PREFIX))) {
+                if (
+                    uri.getScheme() == null ||
+                    (
+                        !uri.getScheme().equalsIgnoreCase(HTTPS_SCHEME) &&
+                        !requestUri.startsWith(RequestObjectService.RESOURCE_OBJECT_URN_PREFIX)
+                    )
+                ) {
                     throw new InvalidRequestUriException("request_uri parameter scheme must be HTTPS");
                 }
             } catch (IllegalArgumentException iae) {
@@ -153,9 +161,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST);
 
-            return requestObjectService
-                    .readRequestObject(request, context.get(CLIENT_CONTEXT_KEY))
-                    .toMaybe();
+            return requestObjectService.readRequestObject(request, context.get(CLIENT_CONTEXT_KEY)).toMaybe();
         } else {
             return Maybe.empty();
         }
@@ -168,9 +174,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST_URI);
 
-            return requestObjectService
-                    .readRequestObjectFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY))
-                    .toMaybe();
+            return requestObjectService.readRequestObjectFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY)).toMaybe();
         } else {
             return Maybe.empty();
         }
@@ -195,7 +199,6 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             if (reqObjResponseType != null && !reqObjResponseType.equals(responseType)) {
                 throw new InvalidRequestObjectException("response_type does not match request parameter");
             }
-
         } catch (ParseException pe) {
             throw new InvalidRequestObjectException();
         }
@@ -205,13 +208,14 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         try {
             Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
 
-            OVERRIDABLE_PARAMETERS
-                    .forEach(key -> {
-                        Object property = claims.get(key);
-                        if (property != null) {
-                            context.request().params().set(key, property.toString());
-                        }
-                    });
+            OVERRIDABLE_PARAMETERS.forEach(
+                key -> {
+                    Object property = claims.get(key);
+                    if (property != null) {
+                        context.request().params().set(key, property.toString());
+                    }
+                }
+            );
         } catch (ParseException pe) {
             throw new InvalidRequestObjectException();
         }

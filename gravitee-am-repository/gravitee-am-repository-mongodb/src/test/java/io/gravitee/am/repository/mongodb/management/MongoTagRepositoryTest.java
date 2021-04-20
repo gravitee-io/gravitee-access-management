@@ -20,10 +20,9 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.TagRepository;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import java.util.Set;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -112,7 +111,6 @@ public class MongoTagRepositoryTest extends AbstractManagementRepositoryTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(t -> t.getName().equals(updatedTag.getName()));
-
     }
 
     @Test

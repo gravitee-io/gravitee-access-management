@@ -19,5 +19,4 @@ package io.gravitee.am.model.analytics;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AnalyticsResponse {
-}
+public interface AnalyticsResponse {}

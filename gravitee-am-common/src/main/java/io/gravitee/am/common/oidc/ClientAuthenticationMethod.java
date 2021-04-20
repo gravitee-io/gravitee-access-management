@@ -26,7 +26,6 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public interface ClientAuthenticationMethod {
-
     /**
      * Clients that have received a client_secret value from the Authorization Server authenticate with the Authorization Server
      * in accordance with Section 2.3.1 of OAuth 2.0 [RFC6749] using the HTTP Basic authentication scheme.

@@ -23,8 +23,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
  */
 public class RedirectMismatchException extends OAuth2Exception {
 
-    public RedirectMismatchException() {
-    }
+    public RedirectMismatchException() {}
 
     public RedirectMismatchException(String message) {
         super(message);

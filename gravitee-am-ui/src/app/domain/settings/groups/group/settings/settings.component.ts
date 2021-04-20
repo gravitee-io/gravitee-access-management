@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbService } from '../../../../../services/breadcrumb.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { GroupService } from '../../../../../services/group.service';
-import {AuthService} from '../../../../../services/auth.service';
+import { AuthService } from '../../../../../services/auth.service';
 
 @Component({
   selector: 'app-group-settings',
   templateUrl: './settings.component.html',
-  styleUrls: ['./settings.component.scss']
+  styleUrls: ['./settings.component.scss'],
 })
 export class GroupSettingsComponent implements OnInit {
   @ViewChild('groupForm') form: any;
@@ -34,16 +34,18 @@ export class GroupSettingsComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private groupService: GroupService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private breadcrumbService: BreadcrumbService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private groupService: GroupService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.editMode = this.authService.hasPermissions(['organization_group_update']);
@@ -52,16 +54,19 @@ export class GroupSettingsComponent implements OnInit {
       this.editMode = this.authService.hasPermissions(['domain_group_update']);
       this.deleteMode = this.authService.hasPermissions(['domain_group_delete']);
     }
-    this.group = this.route.snapshot.parent.data['group'];
+    this.group = this.route.snapshot.parent.data.group;
     this.initBreadcrumb();
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$', this.group.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/groups/' + this.group.id + '$',
+      this.group.name,
+    );
   }
 
   update() {
-    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe(data => {
+    this.groupService.update(this.domainId, this.group.id, this.group, this.organizationContext).subscribe((data) => {
       this.group = data;
       this.form.reset(this.group);
       this.initBreadcrumb();
@@ -71,19 +76,17 @@ export class GroupSettingsComponent implements OnInit {
 
   delete(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Group', 'Are you sure you want to delete this group ?')
-      .subscribe(res => {
-        if (res) {
-          this.groupService.delete(this.domainId, this.group.id, this.organizationContext).subscribe(response => {
-            this.snackbarService.open('Group ' + this.group.name + ' deleted');
-            if (this.organizationContext) {
-              this.router.navigate(['/settings', 'management', 'groups']);
-            } else {
-              this.router.navigate(['/domains', this.domainId, 'settings', 'groups']);
-            }
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Group', 'Are you sure you want to delete this group ?').subscribe((res) => {
+      if (res) {
+        this.groupService.delete(this.domainId, this.group.id, this.organizationContext).subscribe((response) => {
+          this.snackbarService.open('Group ' + this.group.name + ' deleted');
+          if (this.organizationContext) {
+            this.router.navigate(['/settings', 'management', 'groups']);
+          } else {
+            this.router.navigate(['/domains', this.domainId, 'settings', 'groups']);
+          }
+        });
+      }
+    });
   }
 }

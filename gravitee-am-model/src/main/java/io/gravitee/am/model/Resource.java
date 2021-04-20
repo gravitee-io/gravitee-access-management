@@ -20,6 +20,5 @@ package io.gravitee.am.model;
  * @author GraviteeSource Team
  */
 public interface Resource {
-
     String getId();
 }

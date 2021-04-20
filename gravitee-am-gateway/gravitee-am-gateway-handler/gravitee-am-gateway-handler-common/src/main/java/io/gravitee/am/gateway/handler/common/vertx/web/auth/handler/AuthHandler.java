@@ -22,5 +22,4 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthHandler extends Handler<RoutingContext> {
-}
+public interface AuthHandler extends Handler<RoutingContext> {}

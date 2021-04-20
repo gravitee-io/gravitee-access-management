@@ -23,7 +23,6 @@ package io.gravitee.am.gateway.handler.scim.model;
  * @author GraviteeSource Team
  */
 public enum ScimType {
-
     /**
      * The specified filter syntax was invalid, or the specified attribute and filter comparison combination is not supported.
      */

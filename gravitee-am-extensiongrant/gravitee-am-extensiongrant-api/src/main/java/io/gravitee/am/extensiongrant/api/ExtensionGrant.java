@@ -20,7 +20,6 @@ package io.gravitee.am.extensiongrant.api;
  * @author GraviteeSource Team
  */
 public interface ExtensionGrant {
-
     Class<? extends ExtensionGrantConfiguration> configuration();
 
     Class<? extends ExtensionGrantProvider> provider();

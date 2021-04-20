@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import java.util.List;
 import java.util.Objects;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 /**
  * @author Florent CHAMFROY (florent.chamfroy at graviteesource.com)
@@ -35,7 +34,6 @@ public class NewOrganization {
 
     private List<String> domainRestrictions;
 
-    
     public String getName() {
         return name;
     }
@@ -75,10 +73,18 @@ public class NewOrganization {
 
     @Override
     public String toString() {
-        return "NewOrganizationEntity{" +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", domain restrictions='" + domainRestrictions + '\'' +
-                '}';
+        return (
+            "NewOrganizationEntity{" +
+            ", name='" +
+            name +
+            '\'' +
+            ", description='" +
+            description +
+            '\'' +
+            ", domain restrictions='" +
+            domainRestrictions +
+            '\'' +
+            '}'
+        );
     }
 }

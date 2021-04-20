@@ -15,15 +15,14 @@
  */
 package io.gravitee.am.service.model.openid;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.Optional;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)

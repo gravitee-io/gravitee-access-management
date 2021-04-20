@@ -22,7 +22,6 @@ import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Map;
 
 /**
@@ -30,7 +29,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface AuditService {
-
     Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size);
 
     Single<Page<Audit>> search(String domain, AuditReportableCriteria criteria, int page, int size);

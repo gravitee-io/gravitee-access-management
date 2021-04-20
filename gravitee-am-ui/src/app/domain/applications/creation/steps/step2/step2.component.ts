@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import * as _ from 'lodash';
 
 @Component({
   selector: 'application-creation-step2',
   templateUrl: './step2.component.html',
-  styleUrls: ['./step2.component.scss']
+  styleUrls: ['./step2.component.scss'],
 })
 export class ApplicationCreationStep2Component implements OnInit {
   @Input('application') application: any;
@@ -30,7 +30,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   applicationTypes: any[] = [
     {
       icon: 'language',
-      type: 'WEB'
+      type: 'WEB',
     },
     {
       icon: 'web',
@@ -43,17 +43,20 @@ export class ApplicationCreationStep2Component implements OnInit {
     {
       icon: 'storage',
       type: 'SERVICE',
-    }];
+    },
+  ];
 
-  constructor(private route: ActivatedRoute) { }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
-    this.domains = this.route.snapshot.data['domains'];
+    this.domainId = this.route.snapshot.parent.params.domainId;
+    this.domains = this.route.snapshot.data.domains;
   }
 
   icon(app) {
-    return _.find(this.applicationTypes, function (a) { return a.type === app.type }).icon;
+    return _.find(this.applicationTypes, function (a) {
+      return a.type === app.type;
+    }).icon;
   }
 
   displayRedirectUri(): boolean {

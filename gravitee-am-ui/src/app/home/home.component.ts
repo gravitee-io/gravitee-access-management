@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
-import {DomainService} from '../services/domain.service';
-import {AuthService} from '../services/auth.service';
-import {NavbarService} from "../components/navbar/navbar.service";
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { DomainService } from '../services/domain.service';
+import { AuthService } from '../services/auth.service';
+import { NavbarService } from '../components/navbar/navbar.service';
 
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent implements OnInit {
   readonly: boolean;
   isLoading = true;
 
-  constructor(private router: Router,
-              private domainService: DomainService,
-              private authService: AuthService,
-              private navbarService: NavbarService) {}
+  constructor(
+    private router: Router,
+    private domainService: DomainService,
+    private authService: AuthService,
+    private navbarService: NavbarService,
+  ) {}
 
   ngOnInit() {
     // redirect user to the its domain, if any
-    this.domainService.list().subscribe(response => {
+    this.domainService.list().subscribe((response) => {
       if (response && response.length > 0) {
         this.router.navigate(['/domains', response[0].id]);
       } else {

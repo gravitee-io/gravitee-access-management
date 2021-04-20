@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { CertificateService } from "../services/certificate.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { CertificateService } from '../services/certificate.service';
 
 @Injectable()
 export class CertificateResolver implements Resolve<any> {
+  constructor(private certificateService: CertificateService) {}
 
-  constructor(private certificateService: CertificateService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     let domainId: string = route.parent.parent.paramMap.get('domainId');
     let certificateId: string = route.paramMap.get('certificateId');
     return this.certificateService.get(domainId, certificateId);
   }
-
 }

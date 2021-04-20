@@ -15,26 +15,37 @@
     limitations under the License.
 
 -->
-<h5 matDialogTitle>
-  Role mappings
-</h5>
+<h5 matDialogTitle>Role mappings</h5>
 <mat-dialog-content>
   <form #userRoleForm="ngForm" fxLayout="column">
     <div fxLayout="column" fxFlex>
-      <h5 style="color: grey; margin: 5px 0 5px 0;">Users</h5>
+      <h5 style="color: grey; margin: 5px 0 5px 0">Users</h5>
       <mat-form-field fxFlex>
-        <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel/>
+        <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel />
       </mat-form-field>
     </div>
-    <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
+    <h5 style="color: grey; margin: 5px 0 15px 0">Roles</h5>
     <mat-form-field>
       <mat-select placeholder="Roles" name="roles" ngModel [multiple]="!data.organizationContext" required>
-        <mat-option *ngFor="let role of data.roles" [value]="role.id" [disabled]="role.name.endsWith('_PRIMARY_OWNER') && role.system === true">{{ role.name }}</mat-option>
+        <mat-option
+          *ngFor="let role of data.roles"
+          [value]="role.id"
+          [disabled]="role.name.endsWith('_PRIMARY_OWNER') && role.system === true"
+          >{{ role.name }}</mat-option
+        >
       </mat-select>
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(userRoleForm.value)" color="primary" [disabled]="userRoleForm.invalid || formInvalid">Save</button>
-  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
+  <button
+    type="button"
+    mat-raised-button
+    (click)="dialogRef.close(userRoleForm.value)"
+    color="primary"
+    [disabled]="userRoleForm.invalid || formInvalid"
+  >
+    Save
+  </button>
+  <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px">Cancel</button>
 </mat-dialog-actions>

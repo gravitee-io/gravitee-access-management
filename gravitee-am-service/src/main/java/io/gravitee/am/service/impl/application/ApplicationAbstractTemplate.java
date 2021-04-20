@@ -15,15 +15,15 @@
  */
 package io.gravitee.am.service.impl.application;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
 import static io.gravitee.am.common.oauth2.ResponseType.TOKEN;
 import static io.gravitee.am.common.oidc.ResponseType.*;
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN_TOKEN;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -36,10 +36,12 @@ public abstract class ApplicationAbstractTemplate implements ApplicationTemplate
             return false;
         }
 
-        return responseTypes.contains(CODE) ||
-                responseTypes.contains(CODE_TOKEN) ||
-                responseTypes.contains(CODE_ID_TOKEN) ||
-                responseTypes.contains(CODE_ID_TOKEN_TOKEN);
+        return (
+            responseTypes.contains(CODE) ||
+            responseTypes.contains(CODE_TOKEN) ||
+            responseTypes.contains(CODE_ID_TOKEN) ||
+            responseTypes.contains(CODE_ID_TOKEN_TOKEN)
+        );
     }
 
     protected boolean haveImplicitResponseTypes(List<String> responseTypes) {
@@ -47,9 +49,7 @@ public abstract class ApplicationAbstractTemplate implements ApplicationTemplate
             return false;
         }
 
-        return responseTypes.contains(TOKEN) ||
-                responseTypes.contains(ID_TOKEN) ||
-                responseTypes.contains(ID_TOKEN_TOKEN);
+        return responseTypes.contains(TOKEN) || responseTypes.contains(ID_TOKEN) || responseTypes.contains(ID_TOKEN_TOKEN);
     }
 
     protected Set<String> defaultAuthorizationCodeResponseTypes() {

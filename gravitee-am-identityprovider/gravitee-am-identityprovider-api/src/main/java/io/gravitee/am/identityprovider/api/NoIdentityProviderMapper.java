@@ -22,6 +22,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class NoIdentityProviderMapper implements IdentityProviderMapper {
+
     @Override
     public Map<String, String> getMappers() {
         return null;

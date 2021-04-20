@@ -22,9 +22,6 @@ import io.vertx.ext.web.Cookie;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.ext.web.handler.SessionHandler;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -32,6 +29,8 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
@@ -124,7 +123,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
         String saltPlusToken = tokens[0] + "." + tokens[1];
         String signature = BASE64.encodeToString(mac.doFinal(saltPlusToken.getBytes()));
 
-        if(!signature.equals(tokens[2])) {
+        if (!signature.equals(tokens[2])) {
             return false;
         }
 
@@ -139,9 +138,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
     protected void forbidden(RoutingContext ctx) {
         final int statusCode = 403;
         if (responseBody != null) {
-            ctx.response()
-                    .setStatusCode(statusCode)
-                    .end(responseBody);
+            ctx.response().setStatusCode(statusCode).end(responseBody);
         } else {
             ctx.fail(statusCode);
         }
@@ -149,7 +146,6 @@ public class CSRFHandlerImpl implements CSRFHandler {
 
     @Override
     public void handle(RoutingContext ctx) {
-
         if (nagHttps) {
             String uri = ctx.request().absoluteURI();
             if (uri != null && !uri.startsWith("https:")) {

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-snackbar',
   templateUrl: './snackbar.component.html',
-  styleUrls: ['./snackbar.component.scss']
+  styleUrls: ['./snackbar.component.scss'],
 })
 export class SnackbarComponent {
   public title: string;
   public errors: any[];
 
-  constructor() { }
+  constructor() {}
 }

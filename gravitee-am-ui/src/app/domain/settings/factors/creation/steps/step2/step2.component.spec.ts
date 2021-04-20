@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {FactorCreationStep2Component} from './step2.component';
+import { FactorCreationStep2Component } from './step2.component';
 
 describe('FactorCreationStep2Component', () => {
   let component: FactorCreationStep2Component;
@@ -23,9 +23,8 @@ describe('FactorCreationStep2Component', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorCreationStep2Component ]
-    })
-    .compileComponents();
+      declarations: [FactorCreationStep2Component],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

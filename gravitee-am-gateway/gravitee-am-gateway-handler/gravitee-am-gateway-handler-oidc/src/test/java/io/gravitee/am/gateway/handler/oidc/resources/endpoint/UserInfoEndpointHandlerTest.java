@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
@@ -30,10 +34,11 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
@@ -49,18 +54,12 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.*;
-
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,17 +87,21 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @InjectMocks
-    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, roleService, groupService, jwtService, jweService, openIDDiscoveryService);
+    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(
+        userService,
+        roleService,
+        groupService,
+        jwtService,
+        jweService,
+        openIDDiscoveryService
+    );
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        router.route(HttpMethod.GET, "/userinfo")
-                .handler(userInfoEndpoint);
-        router.route(HttpMethod.POST, "/userinfo")
-                .consumes(MediaType.APPLICATION_FORM_URLENCODED)
-                .handler(userInfoEndpoint);
+        router.route(HttpMethod.GET, "/userinfo").handler(userInfoEndpoint);
+        router.route(HttpMethod.POST, "/userinfo").consumes(MediaType.APPLICATION_FORM_URLENCODED).handler(userInfoEndpoint);
         router.route().failureHandler(new ExceptionHandler());
     }
 
@@ -106,20 +109,14 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     public void shouldNotInvokeUserEndpoint_noBearerToken() throws Exception {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
 
-        testRequest(
-                HttpMethod.GET, "/userinfo",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.GET, "/userinfo", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldNotInvokeUserEndpoint_noBearerToken_post() throws Exception {
-        router.route().order(-1)
-                .handler(BodyHandler.create())
-                .handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
+        router.route().order(-1).handler(BodyHandler.create()).handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
 
-        testRequest(
-                HttpMethod.POST, "/userinfo",
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+        testRequest(HttpMethod.POST, "/userinfo", HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
@@ -127,8 +124,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider()));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Error token"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Error token"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -136,24 +138,36 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new ServerErrorException())));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.BAD_REQUEST_400,
+            "Bad Request",
+            null
+        );
     }
 
     @Test
     public void shouldNotInvokeUserEndpoint_invalidToken_jwtDecode_post() throws Exception {
-        router.route().order(-1)
-                .handler(BodyHandler.create())
-                .handler(createOAuth2AuthHandler(oAuth2AuthProvider(new ServerErrorException())));
+        router
+            .route()
+            .order(-1)
+            .handler(BodyHandler.create())
+            .handler(createOAuth2AuthHandler(oAuth2AuthProvider(new ServerErrorException())));
 
         testRequest(
-                HttpMethod.POST, "/userinfo", req -> {
-                    final String body = "access_token=test-token";
-                    req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-                    req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
-                    req.write(Buffer.buffer(body));
-                },
-                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+            HttpMethod.POST,
+            "/userinfo",
+            req -> {
+                final String body = "access_token=test-token";
+                req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+                req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
+                req.write(Buffer.buffer(body));
+            },
+            HttpStatusCode.BAD_REQUEST_400,
+            "Bad Request",
+            null
+        );
     }
 
     @Test
@@ -164,8 +178,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new InvalidClientException())));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -176,8 +195,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(new InvalidTokenException())));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -193,8 +217,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(token, client)));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -214,8 +243,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.empty());
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.UNAUTHORIZED_401,
+            "Unauthorized",
+            null
+        );
     }
 
     @Test
@@ -232,8 +266,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.FORBIDDEN_403, "Forbidden", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.FORBIDDEN_403,
+            "Forbidden",
+            null
+        );
     }
 
     @Test
@@ -251,8 +290,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.FORBIDDEN_403, "Forbidden", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.FORBIDDEN_403,
+            "Forbidden",
+            null
+        );
     }
 
     @Test
@@ -275,8 +319,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET, "/userinfo", req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -294,21 +343,23 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        router.route().order(-1)
-                .handler(BodyHandler.create())
-                .handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
+        router.route().order(-1).handler(BodyHandler.create()).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.POST, "/userinfo", req ->
-                {
-                    final String body = "access_token=test-token";
-                    req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-                    req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
-                    req.write(Buffer.buffer(body));
-                },
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.POST,
+            "/userinfo",
+            req -> {
+                final String body = "access_token=test-token";
+                req.putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+                req.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(body.length()));
+                req.write(Buffer.buffer(body));
+            },
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -330,9 +381,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
-        testRequest(
-                HttpMethod.GET, "/userinfo?access_token=test-token",
-                HttpStatusCode.OK_200, "OK");
+        testRequest(HttpMethod.GET, "/userinfo?access_token=test-token", HttpStatusCode.OK_200, "OK");
     }
 
     @Test
@@ -355,16 +404,22 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(2, claims.size());
-                    assertFalse(claims.containsKey(StandardClaims.FAMILY_NAME));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(2, claims.size());
+                        assertFalse(claims.containsKey(StandardClaims.FAMILY_NAME));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -386,15 +441,21 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(15, claims.size());
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(15, claims.size());
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -416,17 +477,23 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(3, claims.size());
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(3, claims.size());
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -448,18 +515,24 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(4, claims.size());
-                    assertTrue(claims.containsKey(StandardClaims.ADDRESS));
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL));
-                    assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(4, claims.size());
+                        assertTrue(claims.containsKey(StandardClaims.ADDRESS));
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL));
+                        assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -481,16 +554,22 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(1, claims.size());
-                    assertTrue(!claims.containsKey(CustomClaims.ROLES));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(1, claims.size());
+                        assertTrue(!claims.containsKey(CustomClaims.ROLES));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -521,17 +600,23 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(2, claims.size());
-                    assertTrue(claims.containsKey(CustomClaims.ROLES));
-                    assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(2, claims.size());
+                        assertTrue(claims.containsKey(CustomClaims.ROLES));
+                        assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -554,16 +639,22 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Collections.emptyList()));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(1, claims.size());
-                    assertTrue(!claims.containsKey(CustomClaims.GROUPS));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(1, claims.size());
+                        assertTrue(!claims.containsKey(CustomClaims.GROUPS));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -593,17 +684,23 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(2, claims.size());
-                    assertTrue(claims.containsKey(CustomClaims.GROUPS));
-                    assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(2, claims.size());
+                        assertTrue(claims.containsKey(CustomClaims.GROUPS));
+                        assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -643,19 +740,25 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(3, claims.size());
-                    assertTrue(claims.containsKey(CustomClaims.ROLES));
-                    assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
-                    assertTrue(claims.containsKey(CustomClaims.GROUPS));
-                    assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(3, claims.size());
+                        assertTrue(claims.containsKey(CustomClaims.ROLES));
+                        assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
+                        assertTrue(claims.containsKey(CustomClaims.GROUPS));
+                        assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -695,21 +798,27 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> resp.bodyHandler(body -> {
-                    final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
-                    assertNotNull(claims);
-                    assertEquals(23, claims.size());
-                    assertTrue(claims.containsKey(CustomClaims.ROLES));
-                    assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
-                    assertTrue(claims.containsKey(CustomClaims.GROUPS));
-                    assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
-                    assertTrue(claims.containsKey("custom-claim"));
-                    assertTrue("gravitee".equals(claims.get("custom-claim")));
-                }),
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp ->
+                resp.bodyHandler(
+                    body -> {
+                        final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
+                        assertNotNull(claims);
+                        assertEquals(23, claims.size());
+                        assertTrue(claims.containsKey(CustomClaims.ROLES));
+                        assertTrue(((List) claims.get(CustomClaims.ROLES)).containsAll(Arrays.asList("role-1", "role-2")));
+                        assertTrue(claims.containsKey(CustomClaims.GROUPS));
+                        assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
+                        assertTrue(claims.containsKey("custom-claim"));
+                        assertTrue("gravitee".equals(claims.get("custom-claim")));
+                    }
+                ),
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -732,12 +841,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> {
-                    assertEquals(MediaType.APPLICATION_JSON,resp.getHeader(HttpHeaders.CONTENT_TYPE));
-                    resp.bodyHandler(body -> {
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp -> {
+                assertEquals(MediaType.APPLICATION_JSON, resp.getHeader(HttpHeaders.CONTENT_TYPE));
+                resp.bodyHandler(
+                    body -> {
                         final Map<String, Object> claims = Json.decodeValue(body.toString(), Map.class);
                         assertNotNull(claims);
                         assertEquals(5, claims.size());
@@ -745,9 +855,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                         assertTrue(claims.containsKey(StandardClaims.ADDRESS));
                         assertTrue(claims.containsKey(StandardClaims.EMAIL));
                         assertTrue(claims.containsKey(StandardClaims.EMAIL_VERIFIED));
-                    });
-                },
-                HttpStatusCode.OK_200, "OK", null);
+                    }
+                );
+            },
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     @Test
@@ -769,24 +883,27 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(jwtService.encodeUserinfo(any(),any())).thenReturn(Single.just("signedJwtBearer"));
-        when(jweService.encryptUserinfo("signedJwtBearer",client)).thenReturn(Single.just("signedJwtBearer"));
+        when(jwtService.encodeUserinfo(any(), any())).thenReturn(Single.just("signedJwtBearer"));
+        when(jweService.encryptUserinfo("signedJwtBearer", client)).thenReturn(Single.just("signedJwtBearer"));
 
         testRequest(
-                HttpMethod.GET,
-                "/userinfo",
-                req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
-                resp -> {
-                    assertEquals(MediaType.APPLICATION_JWT,resp.getHeader(HttpHeaders.CONTENT_TYPE));
-                    resp.bodyHandler(body -> assertEquals("signedJwtBearer",body.toString()));
-                },
-                HttpStatusCode.OK_200, "OK", null);
+            HttpMethod.GET,
+            "/userinfo",
+            req -> req.putHeader(HttpHeaders.AUTHORIZATION, "Bearer test-token"),
+            resp -> {
+                assertEquals(MediaType.APPLICATION_JWT, resp.getHeader(HttpHeaders.CONTENT_TYPE));
+                resp.bodyHandler(body -> assertEquals("signedJwtBearer", body.toString()));
+            },
+            HttpStatusCode.OK_200,
+            "OK",
+            null
+        );
     }
 
     private User createUser() {
         User user = new User();
         user.setId("user-id");
-        Map<String, Object> additionalInformation  = new HashMap<>();
+        Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, "user");
         additionalInformation.put(StandardClaims.NAME, "gravitee user");
         additionalInformation.put(StandardClaims.FAMILY_NAME, "gravitee");

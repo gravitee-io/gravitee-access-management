@@ -18,19 +18,18 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -89,15 +88,19 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         }
 
         // render the registration confirmation page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render registration confirmation page", res.cause());
-                routingContext.fail(res.cause());
+        engine.render(
+            routingContext.data(),
+            getTemplateFileName(client),
+            res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    logger.error("Unable to render registration confirmation page", res.cause());
+                    routingContext.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private String getTemplateFileName(Client client) {

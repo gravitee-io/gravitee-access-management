@@ -41,33 +41,27 @@ public class MembershipCriteria {
     }
 
     public Optional<List<String>> getGroupIds() {
-
         return Optional.ofNullable(groupIds);
     }
 
     public Optional<String> getUserId() {
-
         return Optional.ofNullable(userId);
     }
 
     public Optional<String> getRoleId() {
-
         return Optional.ofNullable(roleId);
     }
-
 
     public boolean isLogicalOR() {
         return logicalOR;
     }
 
     public MembershipCriteria setLogicalOR(boolean logicalOR) {
-
         this.logicalOR = logicalOR;
         return this;
     }
 
     public MembershipCriteria setGroupIds(List<String> groupIds) {
-
         this.groupIds = groupIds;
         return this;
     }

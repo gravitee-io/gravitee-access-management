@@ -1,5 +1,4 @@
-
-import {tap} from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -16,57 +15,58 @@ import {tap} from 'rxjs/operators';
  * limitations under the License.
  */
 
-import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Router} from '@angular/router';
-import {Observable} from 'rxjs';
-import {SnackbarService} from '../services/snackbar.service';
-import {AuthService} from '../services/auth.service';
-import {HttpResponseBase} from "@angular/common/http/src/response";
+import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { SnackbarService } from '../services/snackbar.service';
+import { AuthService } from '../services/auth.service';
+import { HttpResponseBase } from '@angular/common/http/src/response';
 
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
-
   private xsrfToken: string;
 
-  constructor(private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private router: Router) {}
+  constructor(private snackbarService: SnackbarService, private authService: AuthService, private router: Router) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [ this.xsrfToken ]} : {}
+      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [this.xsrfToken] } : {},
     });
 
-    return next.handle(request).pipe(tap((event: HttpEvent<any>) => {
-      if (event instanceof HttpResponse) {
-        this.saveXsrfToken(event);
-      }
-    }, (err: any) => {
-      if (err.status === 404) {
-        this.router.navigate(['/404']);
-      }
-      if (err instanceof HttpErrorResponse) {
-        this.saveXsrfToken(err);
+    return next.handle(request).pipe(
+      tap(
+        (event: HttpEvent<any>) => {
+          if (event instanceof HttpResponse) {
+            this.saveXsrfToken(event);
+          }
+        },
+        (err: any) => {
+          if (err.status === 404) {
+            this.router.navigate(['/404']);
+          }
+          if (err instanceof HttpErrorResponse) {
+            this.saveXsrfToken(err);
 
-        if (err.status === 401) {
-          this.snackbarService.open('The authentication session expires or the user is not authorized');
-          this.authService.unauthorized();
-        } else if (err.status === 403) {
-          this.snackbarService.open('Access denied');
-        } else {
-          this.snackbarService.open(err.error.message || 'Server error');
-        }
-      }
-    }));
+            if (err.status === 401) {
+              this.snackbarService.open('The authentication session expires or the user is not authorized');
+              this.authService.unauthorized();
+            } else if (err.status === 403) {
+              this.snackbarService.open('Access denied');
+            } else {
+              this.snackbarService.open(err.error.message || 'Server error');
+            }
+          }
+        },
+      ),
+    );
   }
 
   private saveXsrfToken(response: HttpResponseBase) {
-
     let xsrfTokenHeader = response.headers.get('X-Xsrf-Token');
 
-    if(xsrfTokenHeader !== null) {
+    if (xsrfTokenHeader !== null) {
       this.xsrfToken = xsrfTokenHeader;
     }
   }

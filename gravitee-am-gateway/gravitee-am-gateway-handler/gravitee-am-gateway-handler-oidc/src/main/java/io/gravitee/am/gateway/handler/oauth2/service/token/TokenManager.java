@@ -22,7 +22,6 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface TokenManager extends Service {
-
     void storeAccessToken(io.gravitee.am.repository.oauth2.model.AccessToken accessToken);
 
     void storeRefreshToken(io.gravitee.am.repository.oauth2.model.RefreshToken refreshToken);

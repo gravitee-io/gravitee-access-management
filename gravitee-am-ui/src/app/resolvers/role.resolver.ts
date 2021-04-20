@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from "@angular/router";
-import { Observable } from "rxjs";
-import { RoleService } from "../services/role.service";
-import { OrganizationService } from "../services/organization.service";
+import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Observable } from 'rxjs';
+import { RoleService } from '../services/role.service';
+import { OrganizationService } from '../services/organization.service';
 
 @Injectable()
 export class RoleResolver implements Resolve<any> {
+  constructor(private roleService: RoleService, private organizationService: OrganizationService) {}
 
-  constructor(private roleService: RoleService,
-              private organizationService: OrganizationService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
     const roleId = route.paramMap.get('roleId');
     if (state.url.startsWith('/settings')) {
-      if(route.queryParams['system'] === "true"){
+      if (route.queryParams.system === 'true') {
         return this.organizationService.systemRole(roleId);
       }
       return this.organizationService.role(roleId);
@@ -37,5 +35,4 @@ export class RoleResolver implements Resolve<any> {
     const domainId = route.parent.parent.paramMap.get('domainId');
     return this.roleService.get(domainId, roleId);
   }
-
 }

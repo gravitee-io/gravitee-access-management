@@ -18,7 +18,6 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -139,15 +138,20 @@ public class PatchApplication {
      * @return the list of required permissions.
      */
     public Set<Permission> getRequiredPermissions() {
-
         Set<Permission> requiredPermissions = new HashSet<>();
 
-        if (name != null && name.isPresent()
-                || description != null && description.isPresent()
-                || enabled != null && enabled.isPresent()
-                || template != null && template.isPresent()
-                || metadata != null && metadata.isPresent()) {
-
+        if (
+            name != null &&
+            name.isPresent() ||
+            description != null &&
+            description.isPresent() ||
+            enabled != null &&
+            enabled.isPresent() ||
+            template != null &&
+            template.isPresent() ||
+            metadata != null &&
+            metadata.isPresent()
+        ) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 

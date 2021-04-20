@@ -15,12 +15,12 @@
  */
 import { TestBed, inject } from '@angular/core/testing';
 
-import { RoleResolver } from "./role.resolver";
+import { RoleResolver } from './role.resolver';
 
 describe('RoleResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RoleResolver]
+      providers: [RoleResolver],
     });
   });
 

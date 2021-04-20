@@ -24,6 +24,11 @@ import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -31,12 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +45,7 @@ public class FactorPluginManagerImpl implements FactorPluginManager {
 
     private final Logger logger = LoggerFactory.getLogger(FactorPluginManagerImpl.class);
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
 
     private final Map<String, Factor> factors = new HashMap<>();
     private final Map<Factor, Plugin> factorPlugins = new HashMap<>();
@@ -59,11 +58,9 @@ public class FactorPluginManagerImpl implements FactorPluginManager {
 
     @Override
     public void register(FactorDefinition factorDefinition) {
-        factors.putIfAbsent(factorDefinition.getPlugin().id(),
-                factorDefinition.getFactor());
+        factors.putIfAbsent(factorDefinition.getPlugin().id(), factorDefinition.getFactor());
 
-        factorPlugins.putIfAbsent(factorDefinition.getFactor(),
-                factorDefinition.getPlugin());
+        factorPlugins.putIfAbsent(factorDefinition.getFactor(), factorDefinition.getPlugin());
     }
 
     @Override
@@ -86,10 +83,7 @@ public class FactorPluginManagerImpl implements FactorPluginManager {
             Class<? extends FactorConfiguration> configurationClass = factor.configuration();
             FactorConfiguration factorConfiguration = factorConfigurationFactory.create(configurationClass, configuration);
 
-            return create0(
-                    factorPlugins.get(factor),
-                    factor.factorProvider(),
-                    factorConfiguration);
+            return create0(factorPlugins.get(factor), factor.factorProvider(), factorConfiguration);
         } else {
             logger.error("No factor is registered for type {}", type);
             throw new IllegalStateException("No factor is registered for type " + type);
@@ -101,8 +95,9 @@ public class FactorPluginManagerImpl implements FactorPluginManager {
         Factor factor = factors.get(factorId);
         Path policyWorkspace = factorPlugins.get(factor).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+        File[] schemas = policyWorkspace
+            .toFile()
+            .listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
         if (schemas.length == 1) {
             File schemaDir = schemas[0];
@@ -123,26 +118,28 @@ public class FactorPluginManagerImpl implements FactorPluginManager {
         try {
             T identityObj = createInstance(identityClass);
             final Import annImport = identityClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
+            ApplicationContext idpApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
+                    }
+
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add authenticator configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new FactorConfigurationBeanFactoryPostProcessor(factorConfiguration)
+                        );
+
+                        return configurableApplicationContext;
+                    }
                 }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add authenticator configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new FactorConfigurationBeanFactoryPostProcessor(factorConfiguration));
-
-                    return configurableApplicationContext;
-                }
-            });
+            );
 
             idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(identityObj);
 

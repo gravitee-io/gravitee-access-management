@@ -20,6 +20,5 @@ package io.gravitee.am.common.factor;
  * @author GraviteeSource Team
  */
 public interface FactorSecurityType {
-
     String SHARED_SECRET = "SHARED_SECRET";
 }

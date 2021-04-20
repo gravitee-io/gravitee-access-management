@@ -22,7 +22,6 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -35,11 +34,11 @@ import java.util.*;
  */
 public class Client implements Cloneable, Resource {
 
-    public final static int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
-    public final static int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
-    public final static int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
-    public final static List<String> DEFAULT_GRANT_TYPES = Collections.singletonList(GrantType.AUTHORIZATION_CODE);
-    public final static List<String> DEFAULT_RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
+    public static final int DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS = 7200;
+    public static final int DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS = 14400;
+    public static final int DEFAULT_ID_TOKEN_VALIDITY_SECONDS = 14400;
+    public static final List<String> DEFAULT_GRANT_TYPES = Collections.singletonList(GrantType.AUTHORIZATION_CODE);
+    public static final List<String> DEFAULT_RESPONSE_TYPES = Collections.singletonList(ResponseType.CODE);
 
     private String id;
 
@@ -186,7 +185,7 @@ public class Client implements Cloneable, Resource {
 
     private Map<String, Object> metadata;
 
-    public Client() { }
+    public Client() {}
 
     public Client(Client other) {
         this.id = other.id;
@@ -288,7 +287,9 @@ public class Client implements Cloneable, Resource {
         return authorizedGrantTypes;
     }
 
-    public void setAuthorizedGrantTypes(List<String> grantTypes) { this.authorizedGrantTypes = grantTypes; }
+    public void setAuthorizedGrantTypes(List<String> grantTypes) {
+        this.authorizedGrantTypes = grantTypes;
+    }
 
     public List<String> getResponseTypes() {
         return responseTypes;
@@ -577,9 +578,8 @@ public class Client implements Cloneable, Resource {
     public void setClientSecretExpiresAt(Date clientSecretExpiresAt) {
         //Enforce date to UTC time zone.
         if (clientSecretExpiresAt != null) {
-            this.clientSecretExpiresAt = Date.from(
-                    ZonedDateTime.ofInstant(clientSecretExpiresAt.toInstant(), ZoneId.of("UTC")).toInstant()
-            );
+            this.clientSecretExpiresAt =
+                Date.from(ZonedDateTime.ofInstant(clientSecretExpiresAt.toInstant(), ZoneId.of("UTC")).toInstant());
         }
     }
 
@@ -800,18 +800,18 @@ public class Client implements Cloneable, Resource {
     public Client clone() throws CloneNotSupportedException {
         Client clone = (Client) super.clone();
 
-        clone.setRedirectUris(this.getRedirectUris()!=null?new ArrayList<>(this.getRedirectUris()):null);
-        clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes()!=null?new ArrayList<>(this.getAuthorizedGrantTypes()):null);
-        clone.setResponseTypes(this.getResponseTypes()!=null?new ArrayList<>(this.getResponseTypes()):null);
-        clone.setContacts(this.getContacts()!=null?new ArrayList<>(this.getContacts()):null);
-        clone.setDefaultACRvalues(this.getDefaultACRvalues()!=null?new ArrayList<>(this.getDefaultACRvalues()):null);
-        clone.setRequestUris(this.getRequestUris()!=null?new ArrayList<>(this.getRequestUris()):null);
-        clone.setScopes(this.getScopes()!=null?new ArrayList<>(this.getScopes()):null);
-        clone.setScopeApprovals(this.getScopeApprovals()!=null?new HashMap<>(this.getScopeApprovals()):null);
-        clone.setAutoApproveScopes(this.getAutoApproveScopes()!=null?new ArrayList<>(this.getAutoApproveScopes()):null);
-        clone.setIdentities(this.getIdentities()!=null?new HashSet<>(this.getIdentities()):null);
-        clone.setFactors(this.getFactors()!=null?new HashSet<>(this.getFactors()):null);
-        clone.setJwks(this.getJwks()!=null?this.getJwks().clone():null);
+        clone.setRedirectUris(this.getRedirectUris() != null ? new ArrayList<>(this.getRedirectUris()) : null);
+        clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes() != null ? new ArrayList<>(this.getAuthorizedGrantTypes()) : null);
+        clone.setResponseTypes(this.getResponseTypes() != null ? new ArrayList<>(this.getResponseTypes()) : null);
+        clone.setContacts(this.getContacts() != null ? new ArrayList<>(this.getContacts()) : null);
+        clone.setDefaultACRvalues(this.getDefaultACRvalues() != null ? new ArrayList<>(this.getDefaultACRvalues()) : null);
+        clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
+        clone.setScopes(this.getScopes() != null ? new ArrayList<>(this.getScopes()) : null);
+        clone.setScopeApprovals(this.getScopeApprovals() != null ? new HashMap<>(this.getScopeApprovals()) : null);
+        clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
+        clone.setIdentities(this.getIdentities() != null ? new HashSet<>(this.getIdentities()) : null);
+        clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
+        clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
 
         return clone;
     }

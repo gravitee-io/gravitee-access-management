@@ -14,40 +14,40 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ExtensionGrantService {
   private extensionGrantsUrl = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.extensionGrantsUrl + domainId + "/extensionGrants");
+    return this.http.get<any>(this.extensionGrantsUrl + domainId + '/extensionGrants');
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
+    return this.http.get<any>(this.extensionGrantsUrl + domainId + '/extensionGrants/' + id);
   }
 
   create(domainId, tokenGranter): Observable<any> {
-    return this.http.post<any>(this.extensionGrantsUrl + domainId + "/extensionGrants", tokenGranter);
+    return this.http.post<any>(this.extensionGrantsUrl + domainId + '/extensionGrants', tokenGranter);
   }
 
   update(domainId, id, tokenGranter): Observable<any> {
-    return this.http.put<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id, {
-      'name' : tokenGranter.name,
-      'configuration' : tokenGranter.configuration,
-      'grantType': tokenGranter.grantType,
-      'identityProvider': tokenGranter.identityProvider,
-      'createUser': tokenGranter.createUser,
-      'userExists': tokenGranter.userExists
+    return this.http.put<any>(this.extensionGrantsUrl + domainId + '/extensionGrants/' + id, {
+      name: tokenGranter.name,
+      configuration: tokenGranter.configuration,
+      grantType: tokenGranter.grantType,
+      identityProvider: tokenGranter.identityProvider,
+      createUser: tokenGranter.createUser,
+      userExists: tokenGranter.userExists,
     });
   }
 
   delete(domainId, id): Observable<any> {
-    return this.http.delete<any>(this.extensionGrantsUrl + domainId + "/extensionGrants/" + id);
+    return this.http.delete<any>(this.extensionGrantsUrl + domainId + '/extensionGrants/' + id);
   }
 }

@@ -20,52 +20,68 @@
   <div *ngIf="!isEmpty" class="applications-search">
     <mat-form-field>
       <mat-icon matPrefix="">search</mat-icon>
-      <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+      <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
   </div>
   <div class="gv-page-content" *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='applications'
-                   [externalPaging]="true"
-                   [count]="page.totalElements"
-                   [offset]="page.pageNumber"
-                   [limit]="page.size"
-                   (page)='setPage($event)'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="applications"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+    >
       <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'app-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="app-header" fxLayout="row">
-            <div class="app-logo"
-                 matBadge="&#8288;"
-                 matBadgeSize="small"
-                 [ngClass]="(row.enabled && !row.template) ? 'app-enabled': (!row.enabled ? 'app-disabled' : row.template ? 'app-is-template' : '')"
-                 [matTooltip]="(row.enabled && !row.template) ? 'App enabled': (!row.enabled ? 'App disabled' : row.template ? 'Application is set as a template' : '')">
+            <div
+              class="app-logo"
+              matBadge="&#8288;"
+              matBadgeSize="small"
+              [ngClass]="
+                row.enabled && !row.template ? 'app-enabled' : !row.enabled ? 'app-disabled' : row.template ? 'app-is-template' : ''
+              "
+              [matTooltip]="
+                row.enabled && !row.template
+                  ? 'App enabled'
+                  : !row.enabled
+                  ? 'App disabled'
+                  : row.template
+                  ? 'Application is set as a template'
+                  : ''
+              "
+            >
               <svg width="40" height="40" [identiconHash]="row.name"></svg>
             </div>
             <div class="app-information" fxLayout="column">
-              <a [routerLink]="['/domains', domainId, 'applications', row.id]">{{row.name}}</a>
-              <small>{{row.type}}</small>
+              <a [routerLink]="['/domains', domainId, 'applications', row.id]">{{ row.name }}</a>
+              <small>{{ row.type }}</small>
             </div>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Last updated at" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.updatedAt | humanDate}}
+          {{ row.updatedAt | humanDate }}
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Applications will appear here'"
-                  [subMessage]="'No data to display'"
-                  [icon]="'devices'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Applications will appear here'"
+    [subMessage]="'No data to display'"
+    [icon]="'devices'"
+  ></app-emptystate>
 
-  <div *hasPermission="['application_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['application_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="this.newApplicationRouterLink">
       <mat-icon>add</mat-icon>
     </a>

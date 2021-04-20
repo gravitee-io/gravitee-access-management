@@ -23,9 +23,8 @@ describe('ScopesComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ScopesComponent ]
-    })
-    .compileComponents();
+      declarations: [ScopesComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

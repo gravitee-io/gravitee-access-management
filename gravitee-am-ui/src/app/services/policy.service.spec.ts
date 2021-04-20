@@ -20,7 +20,7 @@ import { PolicyService } from './policy.service';
 describe('PolicyService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PolicyService]
+      providers: [PolicyService],
     });
   });
 

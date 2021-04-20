@@ -27,7 +27,7 @@ public class AnalyticsGroupByResponse implements AnalyticsResponse {
 
     private Map<String, Map<String, Object>> metadata;
 
-    public AnalyticsGroupByResponse() { }
+    public AnalyticsGroupByResponse() {}
 
     public AnalyticsGroupByResponse(Map<Object, Object> values) {
         this.values = values;

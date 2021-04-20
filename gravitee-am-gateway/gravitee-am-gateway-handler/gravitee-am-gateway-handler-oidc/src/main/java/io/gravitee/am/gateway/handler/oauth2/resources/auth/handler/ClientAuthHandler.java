@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,10 +32,13 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface ClientAuthHandler {
-
     String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown or invalid client";
 
-    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService) {
+    static Handler<RoutingContext> create(
+        ClientSyncService clientSyncService,
+        ClientAssertionService clientAssertionService,
+        JWKService jwkService
+    ) {
         List<ClientAuthProvider> clientAuthProviders = new ArrayList<>();
         clientAuthProviders.add(new ClientBasicAuthProvider());
         clientAuthProviders.add(new ClientPostAuthProvider());

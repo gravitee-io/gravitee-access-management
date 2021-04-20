@@ -16,14 +16,13 @@
 package io.gravitee.am.gateway.handler.email;
 
 import io.gravitee.am.common.email.Email;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface EmailService {
-
     void send(Email email, User user, Client client);
 }

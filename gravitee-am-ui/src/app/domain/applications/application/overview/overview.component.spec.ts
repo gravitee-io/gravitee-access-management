@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {ApplicationOverviewComponent} from './overview.component';
+import { ApplicationOverviewComponent } from './overview.component';
 
 describe('ApplicationOverviewComponent', () => {
   let component: ApplicationOverviewComponent;
@@ -23,9 +23,8 @@ describe('ApplicationOverviewComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationOverviewComponent ]
-    })
-    .compileComponents();
+      declarations: [ApplicationOverviewComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

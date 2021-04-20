@@ -41,26 +41,30 @@ public class OTPFactorProvider implements FactorProvider {
 
     @Override
     public Completable verify(String secretKey, String code) {
-        return Completable.create(emitter -> {
-            try {
-                final String otpCode = TOTP.generateTOTP(SharedSecret.base32Str2Hex(secretKey));
-                if (!code.equals(otpCode)) {
+        return Completable.create(
+            emitter -> {
+                try {
+                    final String otpCode = TOTP.generateTOTP(SharedSecret.base32Str2Hex(secretKey));
+                    if (!code.equals(otpCode)) {
+                        emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
+                    }
+                    emitter.onComplete();
+                } catch (Exception ex) {
+                    logger.error("An error occurs while validating 2FA code", ex);
                     emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
                 }
-                emitter.onComplete();
-            } catch (Exception ex) {
-                logger.error("An error occurs while validating 2FA code", ex);
-                emitter.onError(new InvalidCodeException("Invalid 2FA Code"));
             }
-        });
+        );
     }
 
     @Override
     public Single<Enrollment> enroll(String account) {
-        return Single.fromCallable(() -> {
-            final String key = SharedSecret.generate();
-            final String barCode = QRCode.generate(QRCode.generateURI(key, otpFactorConfiguration.getIssuer(), account), 200, 200);
-            return new Enrollment(key, barCode);
-        });
+        return Single.fromCallable(
+            () -> {
+                final String key = SharedSecret.generate();
+                final String barCode = QRCode.generate(QRCode.generateURI(key, otpFactorConfiguration.getIssuer(), account), 200, 200);
+                return new Enrollment(key, barCode);
+            }
+        );
     }
 }

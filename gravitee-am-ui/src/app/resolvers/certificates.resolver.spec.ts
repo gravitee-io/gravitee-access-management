@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {CertificatesResolver} from "./certificates.resolver";
+import { inject, TestBed } from '@angular/core/testing';
+import { CertificatesResolver } from './certificates.resolver';
 
 describe('CertificatesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CertificatesResolver]
+      providers: [CertificatesResolver],
     });
   });
 

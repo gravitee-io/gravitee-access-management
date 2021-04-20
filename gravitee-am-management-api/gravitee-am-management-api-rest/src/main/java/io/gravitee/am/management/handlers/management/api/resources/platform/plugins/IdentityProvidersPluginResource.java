@@ -19,7 +19,8 @@ import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
+import java.util.Comparator;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -30,15 +31,13 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Comparator;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Identity Provider"})
+@Api(tags = { "Plugin", "Identity Provider" })
 public class IdentityProvidersPluginResource {
 
     @Context
@@ -49,16 +48,18 @@ public class IdentityProvidersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List identity provider plugins",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void list(@QueryParam("external") Boolean external,
-                     @Suspended final AsyncResponse response) {
-
-        identityProviderPluginService.findAll(external)
-                .map(identityProviderPlugins -> identityProviderPlugins.stream()
+    @ApiOperation(value = "List identity provider plugins", notes = "There is no particular permission needed. User must be authenticated.")
+    public void list(@QueryParam("external") Boolean external, @Suspended final AsyncResponse response) {
+        identityProviderPluginService
+            .findAll(external)
+            .map(
+                identityProviderPlugins ->
+                    identityProviderPlugins
+                        .stream()
                         .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
-                        .collect(Collectors.toList()))
-                .subscribe(response::resume, response::resume);
+                        .collect(Collectors.toList())
+            )
+            .subscribe(response::resume, response::resume);
     }
 
     @Path("{identity}")

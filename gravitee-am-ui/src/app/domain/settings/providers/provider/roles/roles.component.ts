@@ -15,12 +15,12 @@
  */
 import { Component, OnInit, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ActivatedRoute, Router } from "@angular/router";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
-import { AppConfig } from "../../../../../../config/app.config";
-import { NgForm } from "@angular/forms";
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ProviderService } from '../../../../../services/provider.service';
+import { DialogService } from '../../../../../services/dialog.service';
+import { AppConfig } from '../../../../../../config/app.config';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-roles',
@@ -43,12 +43,12 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
-    this.provider = this.route.snapshot.parent.data['provider'];
-    this.roles = this.route.snapshot.data['roles'];
+    this.provider = this.route.snapshot.parent.data.provider;
+    this.roles = this.route.snapshot.data.roles;
     if (this.provider.roleMapper) {
       this.providerRoleMapper = this.provider.roleMapper;
     }
@@ -63,7 +63,7 @@ export class ProviderRolesComponent implements OnInit {
         let roleMapped = false;
         let mapperRoles;
 
-        if(Array.isArray(mapper.roles)) {
+        if (Array.isArray(mapper.roles)) {
           mapperRoles = mapper.roles;
         } else {
           mapperRoles = [ mapper.roles ];
@@ -106,7 +106,7 @@ export class ProviderRolesComponent implements OnInit {
   update() {
     this.provider.roleMapper = this.providerRoleMapper;
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
-      this.snackbarService.open("Role mapping updated");
+      this.snackbarService.open('Role mapping updated');
     })
   }
 

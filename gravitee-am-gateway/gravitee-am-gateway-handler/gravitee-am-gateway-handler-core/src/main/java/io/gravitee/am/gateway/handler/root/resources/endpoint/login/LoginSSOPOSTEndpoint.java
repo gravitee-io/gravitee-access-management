@@ -30,13 +30,12 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,35 +62,51 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
 
         if (!canHandle(authenticationProvider)) {
             logger.error("Identity provider {} invalid or unknown for SSO POST login", identityProvider);
-            routingContext.fail(new InvalidRequestException("Identity provider " + identityProvider + " invalid or unknown for SSO POST login"));
+            routingContext.fail(
+                new InvalidRequestException("Identity provider " + identityProvider + " invalid or unknown for SSO POST login")
+            );
             return;
         }
 
-        parseSSOSignInURL(routingContext, identityProvider, (SocialAuthenticationProvider) authenticationProvider, resultHandler -> {
-            if (resultHandler.failed()) {
-                routingContext.fail(resultHandler.cause());
-                return;
-            }
-
-            Request request = resultHandler.result();
-            // prepare context
-            routingContext.put(FORM_ACTION_CONTEXT_KEY, request.getUri());
-            routingContext.put(FORM_PARAMETERS, getParams(request.getBody()));
-
-            // render login SSO POST page
-            engine.render(routingContext.data(), "login_sso_post", res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render Login SSO POST page", res.cause());
-                    routingContext.fail(res.cause());
+        parseSSOSignInURL(
+            routingContext,
+            identityProvider,
+            (SocialAuthenticationProvider) authenticationProvider,
+            resultHandler -> {
+                if (resultHandler.failed()) {
+                    routingContext.fail(resultHandler.cause());
+                    return;
                 }
-            });
-        });
+
+                Request request = resultHandler.result();
+                // prepare context
+                routingContext.put(FORM_ACTION_CONTEXT_KEY, request.getUri());
+                routingContext.put(FORM_PARAMETERS, getParams(request.getBody()));
+
+                // render login SSO POST page
+                engine.render(
+                    routingContext.data(),
+                    "login_sso_post",
+                    res -> {
+                        if (res.succeeded()) {
+                            routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                            routingContext.response().end(res.result());
+                        } else {
+                            logger.error("Unable to render Login SSO POST page", res.cause());
+                            routingContext.fail(res.cause());
+                        }
+                    }
+                );
+            }
+        );
     }
 
-    private void parseSSOSignInURL(RoutingContext routingContext, String identityProvider, SocialAuthenticationProvider authenticationProvider, Handler<AsyncResult<Request>> resultHandler) {
+    private void parseSSOSignInURL(
+        RoutingContext routingContext,
+        String identityProvider,
+        SocialAuthenticationProvider authenticationProvider,
+        Handler<AsyncResult<Request>> resultHandler
+    ) {
         try {
             Request request = authenticationProvider.signInUrl(buildRedirectUri(routingContext.request(), identityProvider));
             if (HttpMethod.GET.equals(request.getMethod())) {
@@ -105,7 +120,11 @@ public class LoginSSOPOSTEndpoint implements Handler<RoutingContext> {
     }
 
     private String buildRedirectUri(HttpServerRequest request, String identityProvider) throws URISyntaxException {
-        return UriBuilderRequest.resolveProxyRequest(request, "/" + domain.getPath() + "/login/callback", Collections.singletonMap("provider", identityProvider));
+        return UriBuilderRequest.resolveProxyRequest(
+            request,
+            "/" + domain.getPath() + "/login/callback",
+            Collections.singletonMap("provider", identityProvider)
+        );
     }
 
     private boolean canHandle(AuthenticationProvider authenticationProvider) {

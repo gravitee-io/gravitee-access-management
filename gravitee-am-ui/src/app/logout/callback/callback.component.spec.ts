@@ -23,9 +23,8 @@ describe('LogoutCallbackComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ LogoutCallbackComponent ]
-    })
-    .compileComponents();
+      declarations: [LogoutCallbackComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

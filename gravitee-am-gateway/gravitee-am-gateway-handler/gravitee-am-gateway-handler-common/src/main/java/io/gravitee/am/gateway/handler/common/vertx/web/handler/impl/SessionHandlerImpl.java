@@ -52,8 +52,16 @@ public class SessionHandlerImpl implements SessionHandler {
     private int minLength;
     private AuthProvider authProvider;
 
-    public SessionHandlerImpl(String sessionCookieName, String sessionCookiePath, long sessionTimeout, boolean nagHttps,
-                              boolean sessionCookieSecure, boolean sessionCookieHttpOnly, int minLength, SessionStore sessionStore) {
+    public SessionHandlerImpl(
+        String sessionCookieName,
+        String sessionCookiePath,
+        long sessionTimeout,
+        boolean nagHttps,
+        boolean sessionCookieSecure,
+        boolean sessionCookieHttpOnly,
+        int minLength,
+        SessionStore sessionStore
+    ) {
         this.sessionCookieName = sessionCookieName;
         this.sessionCookiePath = sessionCookiePath;
         this.sessionTimeout = sessionTimeout;
@@ -117,8 +125,7 @@ public class SessionHandlerImpl implements SessionHandler {
         if (nagHttps && log.isDebugEnabled()) {
             String uri = context.request().absoluteURI();
             if (!uri.startsWith("https:")) {
-                log.debug(
-                        "Using session cookies without https could make you susceptible to session hijacking: " + uri);
+                log.debug("Using session cookies without https could make you susceptible to session hijacking: " + uri);
             }
         }
 
@@ -129,51 +136,54 @@ public class SessionHandlerImpl implements SessionHandler {
             String sessionID = cookie.getValue();
             if (sessionID != null && sessionID.length() > minLength) {
                 // we passed the OWASP min length requirements
-                getSession(context.vertx(), sessionID, res -> {
-                    if (res.succeeded()) {
-                        Session session = res.result();
-                        if (session != null) {
-                            context.setSession(session);
-                            // attempt to load the user from the session if auth provider is known
-                            if (authProvider != null) {
-                                UserHolder holder = session.get(SESSION_USER_HOLDER_KEY);
-                                if (holder != null) {
-                                    User user = null;
-                                    RoutingContext prevContext = holder.context;
-                                    if (prevContext != null) {
-                                        user = prevContext.user();
-                                    } else if (holder.user != null) {
-                                        user = holder.user;
-                                        user.setAuthProvider(authProvider);
+                getSession(
+                    context.vertx(),
+                    sessionID,
+                    res -> {
+                        if (res.succeeded()) {
+                            Session session = res.result();
+                            if (session != null) {
+                                context.setSession(session);
+                                // attempt to load the user from the session if auth provider is known
+                                if (authProvider != null) {
+                                    UserHolder holder = session.get(SESSION_USER_HOLDER_KEY);
+                                    if (holder != null) {
+                                        User user = null;
+                                        RoutingContext prevContext = holder.context;
+                                        if (prevContext != null) {
+                                            user = prevContext.user();
+                                        } else if (holder.user != null) {
+                                            user = holder.user;
+                                            user.setAuthProvider(authProvider);
+                                            holder.context = context;
+                                            holder.user = null;
+                                        }
                                         holder.context = context;
-                                        holder.user = null;
+                                        if (user != null) {
+                                            context.setUser(user);
+                                        }
                                     }
-                                    holder.context = context;
-                                    if (user != null) {
-                                        context.setUser(user);
-                                    }
+                                    addStoreSessionHandler(context, holder == null);
+                                } else {
+                                    // never store user as there's no provider for auth
+                                    addStoreSessionHandler(context, false);
                                 }
-                                addStoreSessionHandler(context, holder == null);
                             } else {
-                                // never store user as there's no provider for auth
-                                addStoreSessionHandler(context, false);
+                                // Cannot find session - either it timed out, or was explicitly destroyed at the
+                                // server side on a
+                                // previous request.
+
+                                // OWASP clearly states that we shouldn't recreate the session as it allows
+                                // session fixation.
+                                // create a new anonymous session.
+                                createNewSession(context);
                             }
-
                         } else {
-                            // Cannot find session - either it timed out, or was explicitly destroyed at the
-                            // server side on a
-                            // previous request.
-
-                            // OWASP clearly states that we shouldn't recreate the session as it allows
-                            // session fixation.
-                            // create a new anonymous session.
-                            createNewSession(context);
+                            context.fail(res.cause());
                         }
-                    } else {
-                        context.fail(res.cause());
+                        context.next();
                     }
-                    context.next();
-                });
+                );
                 return;
             }
         }
@@ -186,97 +196,112 @@ public class SessionHandlerImpl implements SessionHandler {
         doGetSession(vertx, System.currentTimeMillis(), sessionID, resultHandler);
     }
 
-    private void doGetSession(Vertx vertx, long startTime, String sessionID,
-                              Handler<AsyncResult<Session>> resultHandler) {
-        sessionStore.get(sessionID, res -> {
-            if (res.succeeded()) {
-                if (res.result() == null) {
-                    // Can't find it so retry. This is necessary for clustered sessions as it can
-                    // take sometime for the session
-                    // to propagate across the cluster so if the next request for the session comes
-                    // in quickly at a different
-                    // node there is a possibility it isn't available yet.
-                    long retryTimeout = sessionStore.retryTimeout();
-                    if (retryTimeout > 0 && System.currentTimeMillis() - startTime < retryTimeout) {
-                        vertx.setTimer(5, v -> doGetSession(vertx, startTime, sessionID, resultHandler));
-                        return;
+    private void doGetSession(Vertx vertx, long startTime, String sessionID, Handler<AsyncResult<Session>> resultHandler) {
+        sessionStore.get(
+            sessionID,
+            res -> {
+                if (res.succeeded()) {
+                    if (res.result() == null) {
+                        // Can't find it so retry. This is necessary for clustered sessions as it can
+                        // take sometime for the session
+                        // to propagate across the cluster so if the next request for the session comes
+                        // in quickly at a different
+                        // node there is a possibility it isn't available yet.
+                        long retryTimeout = sessionStore.retryTimeout();
+                        if (retryTimeout > 0 && System.currentTimeMillis() - startTime < retryTimeout) {
+                            vertx.setTimer(5, v -> doGetSession(vertx, startTime, sessionID, resultHandler));
+                            return;
+                        }
                     }
                 }
+                resultHandler.handle(res);
             }
-            resultHandler.handle(res);
-        });
+        );
     }
 
     private void addStoreSessionHandler(RoutingContext context, boolean storeUser) {
-        context.addHeadersEndHandler(v -> {
-            Session session = context.session();
-            if (!session.isDestroyed()) {
-                final int currentStatusCode = context.response().getStatusCode();
-                // Store the session (only and only if there was no error)
-                if (currentStatusCode >= 200 && currentStatusCode < 400 && !oauth2Error(context)) {
-
-                    // store the current user into the session
-                    if (storeUser) {
-                        // during the request the user might have been removed
-                        if (context.user() != null) {
-                            session.put(SESSION_USER_HOLDER_KEY, new UserHolder(context));
+        context.addHeadersEndHandler(
+            v -> {
+                Session session = context.session();
+                if (!session.isDestroyed()) {
+                    final int currentStatusCode = context.response().getStatusCode();
+                    // Store the session (only and only if there was no error)
+                    if (currentStatusCode >= 200 && currentStatusCode < 400 && !oauth2Error(context)) {
+                        // store the current user into the session
+                        if (storeUser) {
+                            // during the request the user might have been removed
+                            if (context.user() != null) {
+                                session.put(SESSION_USER_HOLDER_KEY, new UserHolder(context));
+                            }
                         }
-                    }
 
-                    session.setAccessed();
-                    if (session.isRegenerated()) {
-                        // this means that a session id has been changed, usually it means a session
-                        // upgrade
-                        // (e.g.: anonymous to authenticated) or that the security requirements have
-                        // changed
-                        // see:
-                        // https://www.owasp.org/index.php/Session_Management_Cheat_Sheet#Session_ID_Life_Cycle
+                        session.setAccessed();
+                        if (session.isRegenerated()) {
+                            // this means that a session id has been changed, usually it means a session
+                            // upgrade
+                            // (e.g.: anonymous to authenticated) or that the security requirements have
+                            // changed
+                            // see:
+                            // https://www.owasp.org/index.php/Session_Management_Cheat_Sheet#Session_ID_Life_Cycle
 
-                        // the session cookie needs to be updated to the new id
-                        final Cookie cookie = context.getCookie(sessionCookieName);
-                        // restore defaults
-                        cookie
+                            // the session cookie needs to be updated to the new id
+                            final Cookie cookie = context.getCookie(sessionCookieName);
+                            // restore defaults
+                            cookie
                                 .setValue(session.value())
                                 .setPath(sessionCookiePath)
                                 .setSecure(sessionCookieSecure)
                                 .setHttpOnly(sessionCookieHttpOnly);
 
-                        // we must invalidate the old id
-                        sessionStore.delete(session.oldId(), delete -> {
-                            if (delete.failed()) {
-                                log.error("Failed to delete previous session", delete.cause());
-                            } else {
-                                // we must wait for the result of the previous call in order to save the new one
-                                sessionStore.put(session, res -> {
+                            // we must invalidate the old id
+                            sessionStore.delete(
+                                session.oldId(),
+                                delete -> {
+                                    if (delete.failed()) {
+                                        log.error("Failed to delete previous session", delete.cause());
+                                    } else {
+                                        // we must wait for the result of the previous call in order to save the new one
+                                        sessionStore.put(
+                                            session,
+                                            res -> {
+                                                if (res.failed()) {
+                                                    log.error("Failed to store session", res.cause());
+                                                }
+                                            }
+                                        );
+                                    }
+                                }
+                            );
+                        } else {
+                            sessionStore.put(
+                                session,
+                                res -> {
                                     if (res.failed()) {
                                         log.error("Failed to store session", res.cause());
                                     }
-                                });
-                            }
-                        });
+                                }
+                            );
+                        }
                     } else {
-                        sessionStore.put(session, res -> {
-                            if (res.failed()) {
-                                log.error("Failed to store session", res.cause());
-                            }
-                        });
+                        // don't send a cookie if status is not 2xx or 3xx
+                        // remove it from the set (do not invalidate)
+                        context.removeCookie(sessionCookieName, false);
                     }
                 } else {
-                    // don't send a cookie if status is not 2xx or 3xx
-                    // remove it from the set (do not invalidate)
-                    context.removeCookie(sessionCookieName, false);
+                    // invalidate the cookie as the session has been destroyed
+                    context.removeCookie(sessionCookieName);
+                    // delete from the storage
+                    sessionStore.delete(
+                        session.id(),
+                        res -> {
+                            if (res.failed()) {
+                                log.error("Failed to delete session", res.cause());
+                            }
+                        }
+                    );
                 }
-            } else {
-                // invalidate the cookie as the session has been destroyed
-                context.removeCookie(sessionCookieName);
-                // delete from the storage
-                sessionStore.delete(session.id(), res -> {
-                    if (res.failed()) {
-                        log.error("Failed to delete session", res.cause());
-                    }
-                });
             }
-        });
+        );
     }
 
     private void createNewSession(RoutingContext context) {
@@ -296,5 +321,3 @@ public class SessionHandlerImpl implements SessionHandler {
         return context.failed() && context.failure() instanceof OAuth2Exception;
     }
 }
-
-

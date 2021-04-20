@@ -18,7 +18,7 @@ import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChange
 @Component({
   selector: 'factor-form',
   templateUrl: './form.component.html',
-  styleUrls: ['./form.component.scss']
+  styleUrls: ['./form.component.scss'],
 })
 export class FactorFormComponent implements OnInit, OnChanges {
   @Input('factorConfiguration') configuration: any = {};
@@ -27,10 +27,9 @@ export class FactorFormComponent implements OnInit, OnChanges {
   displayForm = false;
   data: any = {};
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.factorSchema) {
@@ -53,7 +52,7 @@ export class FactorFormComponent implements OnInit, OnChanges {
   }
 
   isValid(isValid: boolean) {
-    const configurationWrapper = { 'isValid' : isValid, 'configuration': this.configuration};
+    const configurationWrapper = { isValid: isValid, configuration: this.configuration };
     this.configurationCompleted.emit(configurationWrapper);
   }
 }

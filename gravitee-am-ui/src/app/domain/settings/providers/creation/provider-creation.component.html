@@ -30,7 +30,7 @@
         </ng-template>
         <provider-creation-step1 [provider]="provider"></provider-creation-step1>
         <div class="stepper-button-zone" fxLayout="row" fxLayoutAlign="end end">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!provider.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!provider.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Identity Provider configuration</small>
         </ng-template>
-        <provider-creation-step2 *ngIf="stepper.selectedIndex == 1" [provider]="provider" [(configurationIsValid)]="configurationIsValid"></provider-creation-step2>
+        <provider-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [provider]="provider"
+          [(configurationIsValid)]="configurationIsValid"
+        ></provider-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

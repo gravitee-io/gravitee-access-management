@@ -36,15 +36,14 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -80,23 +79,32 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         // If user can't be authenticated, send an exception
 
         // Skip external identity provider for authentication with credentials.
-        List<String> identities = client.getIdentities() != null ?
-                client.getIdentities()
-                        .stream()
-                        .map(idp -> identityProviderManager.getIdentityProvider(idp))
-                        .filter(idp -> idp != null && !idp.isExternal())
-                        .map(IdentityProvider::getId)
-                        .collect(Collectors.toList()) : null;
+        List<String> identities = client.getIdentities() != null
+            ? client
+                .getIdentities()
+                .stream()
+                .map(idp -> identityProviderManager.getIdentityProvider(idp))
+                .filter(idp -> idp != null && !idp.isExternal())
+                .map(IdentityProvider::getId)
+                .collect(Collectors.toList())
+            : null;
         if (identities == null || identities.isEmpty()) {
             logger.error("No identity provider found for client : " + client.getClientId());
-            return Single.error(new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId()));
+            return Single.error(
+                new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId())
+            );
         }
 
-        return Observable.fromIterable(identities)
-                .flatMapMaybe(authProvider -> authenticate0(client, authentication, authProvider))
-                .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
-                .lastOrError()
-                .flatMap(userAuthentication -> {
+        return Observable
+            .fromIterable(identities)
+            .flatMapMaybe(authProvider -> authenticate0(client, authentication, authProvider))
+            .takeUntil(
+                userAuthentication ->
+                    userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException
+            )
+            .lastOrError()
+            .flatMap(
+                userAuthentication -> {
                     io.gravitee.am.identityprovider.api.User user = userAuthentication.getUser();
                     if (user == null) {
                         Throwable lastException = userAuthentication.getLastException();
@@ -109,7 +117,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(lastException);
                             } else {
                                 logger.error("An error occurs during user authentication", lastException);
-                                return Single.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
+                                return Single.error(
+                                    new InternalAuthenticationServiceException(
+                                        "Unable to validate credentials. The user account you are trying to access may be experiencing a problem.",
+                                        lastException
+                                    )
+                                );
                             }
                         } else {
                             return Single.error(new UsernameNotFoundException("No user found for registered providers"));
@@ -118,9 +131,19 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         // complete user connection
                         return connect(user);
                     }
-                })
-                .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
-                .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
+                }
+            )
+            .doOnSuccess(
+                user ->
+                    eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user))
+            )
+            .doOnError(
+                throwable ->
+                    eventManager.publishEvent(
+                        AuthenticationEvent.FAILURE,
+                        new AuthenticationDetails(authentication, domain, client, throwable)
+                    )
+            );
     }
 
     @Override
@@ -135,66 +158,107 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider) {
         return preAuthentication(client, authentication, authProvider)
-                .andThen(identityProviderManager.get(authProvider))
-                .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage")))
-                .flatMap(authenticationProvider -> {
-                    logger.debug("Authentication attempt using identity provider {} ({})", authenticationProvider, authenticationProvider.getClass().getName());
-                    return authenticationProvider.loadUserByUsername(authentication)
-                            .switchIfEmpty(Maybe.error(new UsernameNotFoundException((String) authentication.getPrincipal())));
-                })
-                .map(user -> {
-                    logger.debug("Successfully Authenticated: " + authentication.getPrincipal() + " with provider authentication provider " + authProvider);
-                    Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
+            .andThen(identityProviderManager.get(authProvider))
+            .switchIfEmpty(
+                Maybe.error(
+                    new BadCredentialsException(
+                        "Unable to load authentication provider " + authProvider + ", an error occurred during the initialization stage"
+                    )
+                )
+            )
+            .flatMap(
+                authenticationProvider -> {
+                    logger.debug(
+                        "Authentication attempt using identity provider {} ({})",
+                        authenticationProvider,
+                        authenticationProvider.getClass().getName()
+                    );
+                    return authenticationProvider
+                        .loadUserByUsername(authentication)
+                        .switchIfEmpty(Maybe.error(new UsernameNotFoundException((String) authentication.getPrincipal())));
+                }
+            )
+            .map(
+                user -> {
+                    logger.debug(
+                        "Successfully Authenticated: " +
+                        authentication.getPrincipal() +
+                        " with provider authentication provider " +
+                        authProvider
+                    );
+                    Map<String, Object> additionalInformation = user.getAdditionalInformation() == null
+                        ? new HashMap<>()
+                        : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getId());
-                    ((DefaultUser ) user).setAdditionalInformation(additionalInformation);
+                    ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return new UserAuthentication(user, null);
-                })
-                .onErrorResumeNext(error -> {
-                    logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
+                }
+            )
+            .onErrorResumeNext(
+                error -> {
+                    logger.debug(
+                        "Unable to authenticate [{}] with authentication provider [{}]",
+                        authentication.getPrincipal(),
+                        authProvider,
+                        error
+                    );
                     return Maybe.just(new UserAuthentication(null, error));
-                })
-                .flatMap(userAuthentication -> postAuthentication(client, authentication, authProvider, userAuthentication).andThen(Maybe.just(userAuthentication)));
+                }
+            )
+            .flatMap(
+                userAuthentication ->
+                    postAuthentication(client, authentication, authProvider, userAuthentication).andThen(Maybe.just(userAuthentication))
+            );
     }
 
     private Completable preAuthentication(Client client, Authentication authentication, String source) {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                    .domain(domain.getId())
-                    .client(client.getId())
-                    .identityProvider(source)
-                    .username((String) authentication.getPrincipal())
-                    .build();
+                .domain(domain.getId())
+                .client(client.getId())
+                .identityProvider(source)
+                .username((String) authentication.getPrincipal())
+                .build();
             return loginAttemptService
-                    .checkAccount(criteria, accountSettings)
-                    .map(Optional::of)
-                    .defaultIfEmpty(Optional.empty())
-                    .flatMapCompletable(optLoginAttempt -> {
+                .checkAccount(criteria, accountSettings)
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMapCompletable(
+                    optLoginAttempt -> {
                         if (optLoginAttempt.isPresent() && optLoginAttempt.get().isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                             Map<String, String> details = new HashMap<>();
                             details.put("attempt_id", optLoginAttempt.get().getId());
-                            return Completable.error(new AccountLockedException("User " + authentication.getPrincipal() + " is locked", details));
+                            return Completable.error(
+                                new AccountLockedException("User " + authentication.getPrincipal() + " is locked", details)
+                            );
                         }
                         return Completable.complete();
-                    });
+                    }
+                );
         }
         return Completable.complete();
     }
 
-    private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
+    private Completable postAuthentication(
+        Client client,
+        Authentication authentication,
+        String source,
+        UserAuthentication userAuthentication
+    ) {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
             LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                    .domain(domain.getId())
-                    .client(client.getId())
-                    .identityProvider(source)
-                    .username((String) authentication.getPrincipal())
-                    .build();
+                .domain(domain.getId())
+                .client(client.getId())
+                .identityProvider(source)
+                .username((String) authentication.getPrincipal())
+                .build();
             // no exception clear login attempt
             if (userAuthentication.getLastException() == null) {
                 return loginAttemptService.loginSucceeded(criteria);
-            } else if (userAuthentication.getLastException() instanceof BadCredentialsException){
+            } else if (userAuthentication.getLastException() instanceof BadCredentialsException) {
                 return loginAttemptService.loginFailed(criteria, accountSettings);
             }
         }
@@ -202,11 +266,11 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private class UserAuthentication {
+
         private io.gravitee.am.identityprovider.api.User user;
         private Throwable lastException;
 
-        public UserAuthentication() {
-        }
+        public UserAuthentication() {}
 
         public UserAuthentication(io.gravitee.am.identityprovider.api.User user, Throwable lastException) {
             this.user = user;

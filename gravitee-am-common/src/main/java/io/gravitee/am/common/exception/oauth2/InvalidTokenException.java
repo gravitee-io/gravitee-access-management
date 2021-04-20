@@ -37,8 +37,7 @@ public class InvalidTokenException extends OAuth2Exception {
     private JWT jwt;
     private String details;
 
-    public InvalidTokenException() {
-    }
+    public InvalidTokenException() {}
 
     public InvalidTokenException(String message) {
         super(message);

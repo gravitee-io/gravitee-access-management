@@ -174,7 +174,6 @@ public class MongoApplicationRepositoryTest extends AbstractManagementRepository
         testObserver.assertNoErrors();
         testObserver.assertValue(apps -> apps.getData().size() == 1);
         testObserver.assertValue(apps -> apps.getData().iterator().next().getName().equals(app.getName()));
-
     }
 
     @Test
@@ -204,5 +203,4 @@ public class MongoApplicationRepositoryTest extends AbstractManagementRepository
         testObserver.assertNoErrors();
         testObserver.assertValue(apps -> apps.getData().size() == 2);
     }
-
 }

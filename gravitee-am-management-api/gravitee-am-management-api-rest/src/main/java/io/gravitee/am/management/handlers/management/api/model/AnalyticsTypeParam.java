@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.common.analytics.Type;
-
 import javax.ws.rs.WebApplicationException;
 
 /**
@@ -35,8 +34,7 @@ public class AnalyticsTypeParam extends AbstractParam<Type> {
             if (param != null) {
                 return Type.valueOf(param.toUpperCase());
             }
-        } catch (IllegalArgumentException iae) {
-        }
+        } catch (IllegalArgumentException iae) {}
 
         return null;
     }

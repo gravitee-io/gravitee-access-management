@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.reporter;
 
-
 import io.gravitee.am.reporter.api.Reportable;
 
 /**
@@ -23,6 +22,5 @@ import io.gravitee.am.reporter.api.Reportable;
  * @author GraviteeSource Team
  */
 public interface AuditReporterService {
-
     void report(Reportable reportable);
 }

@@ -40,13 +40,12 @@ import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -66,182 +65,224 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Maybe<Client> findById(String id) {
         LOGGER.debug("Find client by ID: {}", id);
-        return applicationService.findById(id)
-                .map(application -> {
+        return applicationService
+            .findById(id)
+            .map(
+                application -> {
                     Client client = Application.convert(application);
                     // Send an empty array in case of no grant types
                     if (client.getAuthorizedGrantTypes() == null) {
                         client.setAuthorizedGrantTypes(Collections.emptyList());
                     }
                     return client;
-                });
+                }
+            );
     }
 
     @Override
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("Find client by domain: {} and client id: {}", domain, clientId);
-        return applicationService.findByDomainAndClientId(domain, clientId)
-                .map(Application::convert)
-                .onErrorResumeNext(ex -> {
+        return applicationService
+            .findByDomainAndClientId(domain, clientId)
+            .map(Application::convert)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find client by domain: {} and client id: {}", domain, clientId, ex);
-                    return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find client by domain: %s and client id: %s", domain, clientId), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find client by domain: %s and client id: %s", domain, clientId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Set<Client>> findByDomain(String domain) {
         LOGGER.debug("Find clients by domain", domain);
-        return applicationService.findByDomain(domain)
-                .map(pagedApplications -> pagedApplications
-                        .stream()
-                        .map(Application::convert)
-                        .collect(Collectors.toSet()));
+        return applicationService
+            .findByDomain(domain)
+            .map(pagedApplications -> pagedApplications.stream().map(Application::convert).collect(Collectors.toSet()));
     }
 
     @Override
     public Single<Set<Client>> search(String domain, String query) {
         LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
-        return applicationService.search(domain, query, 0, Integer.MAX_VALUE)
-                .map(pagedApplications -> pagedApplications.getData()
-                        .stream()
-                        .map(Application::convert)
-                        .collect(Collectors.toSet()));
+        return applicationService
+            .search(domain, query, 0, Integer.MAX_VALUE)
+            .map(pagedApplications -> pagedApplications.getData().stream().map(Application::convert).collect(Collectors.toSet()));
     }
 
     @Override
     public Single<Page<Client>> search(String domain, String query, int page, int size) {
         LOGGER.debug("Search clients for domain {} and with query {}", domain, query);
-        return applicationService.search(domain, query, page, size)
-                .map(pagedApplications -> {
-                    Set<Client> clients = pagedApplications.getData()
-                            .stream()
-                            .map(Application::convert)
-                            .collect(Collectors.toSet());
+        return applicationService
+            .search(domain, query, page, size)
+            .map(
+                pagedApplications -> {
+                    Set<Client> clients = pagedApplications.getData().stream().map(Application::convert).collect(Collectors.toSet());
                     return new Page(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
-                });
+                }
+            );
     }
 
     @Override
     public Single<Page<Client>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find clients by domain", domain);
-        return applicationService.findByDomain(domain, page, size)
-                .map(pagedApplications -> {
-                    List<Client> clients = pagedApplications.getData()
-                            .stream()
-                            .map(Application::convert)
-                            .collect(Collectors.toList());
+        return applicationService
+            .findByDomain(domain, page, size)
+            .map(
+                pagedApplications -> {
+                    List<Client> clients = pagedApplications.getData().stream().map(Application::convert).collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find clients by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find clients by domain: %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find clients by domain: %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<Set<Client>> findAll() {
         LOGGER.debug("Find clients");
-        return applicationService.findAll()
-                .map(pagedApplications -> pagedApplications
-                        .stream()
-                        .map(Application::convert)
-                        .collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
+        return applicationService
+            .findAll()
+            .map(pagedApplications -> pagedApplications.stream().map(Application::convert).collect(Collectors.toSet()))
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Page<Client>> findAll(int page, int size) {
         LOGGER.debug("Find clients");
-        return applicationService.findAll(page, size)
-                .map(pagedApplications -> {
-                    List<Client> clients = pagedApplications.getData()
-                            .stream()
-                            .map(Application::convert)
-                            .collect(Collectors.toList());
+        return applicationService
+            .findAll(page, size)
+            .map(
+                pagedApplications -> {
+                    List<Client> clients = pagedApplications.getData().stream().map(Application::convert).collect(Collectors.toList());
                     return new Page<>(clients, pagedApplications.getCurrentPage(), pagedApplications.getTotalCount());
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find clients", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Set<TopClient>> findTopClients() {
         LOGGER.debug("Find top clients");
-        return applicationService.findTopApplications()
-                .map(topApplications -> {
+        return applicationService
+            .findTopApplications()
+            .map(
+                topApplications -> {
                     return topApplications
-                            .stream()
-                            .map(topApplication -> {
+                        .stream()
+                        .map(
+                            topApplication -> {
                                 TopClient topClient = new TopClient();
                                 topClient.setClient(Application.convert(topApplication.getApplication()));
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
-                            })
-                            .collect(Collectors.toSet());
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .collect(Collectors.toSet());
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find top clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find top clients", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<Set<TopClient>> findTopClientsByDomain(String domain) {
         LOGGER.debug("Find top clients by domain: {}", domain);
-        return applicationService.findTopApplicationsByDomain(domain)
-                .map(topApplications -> {
+        return applicationService
+            .findTopApplicationsByDomain(domain)
+            .map(
+                topApplications -> {
                     return topApplications
-                            .stream()
-                            .map(topApplication -> {
+                        .stream()
+                        .map(
+                            topApplication -> {
                                 TopClient topClient = new TopClient();
                                 topClient.setClient(Application.convert(topApplication.getApplication()));
                                 topClient.setAccessTokens(topApplication.getAccessTokens());
                                 return topClient;
-                            })
-                            .collect(Collectors.toSet());
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .collect(Collectors.toSet());
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find top clients by domain", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find top clients by domain", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<TotalClient> findTotalClientsByDomain(String domain) {
         LOGGER.debug("Find total clients by domain: {}", domain);
-        return applicationService.countByDomain(domain)
-                .map(totalClients -> {
+        return applicationService
+            .countByDomain(domain)
+            .map(
+                totalClients -> {
                     TotalClient totalClient = new TotalClient();
                     totalClient.setTotalClients(totalClients);
                     return totalClient;
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find total clients by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find total clients by domain: %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find total clients by domain: %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Single<TotalClient> findTotalClients() {
         LOGGER.debug("Find total client");
-        return applicationService.count()
-                .map(totalClients -> {
+        return applicationService
+            .count()
+            .map(
+                totalClients -> {
                     TotalClient totalClient = new TotalClient();
                     totalClient.setTotalClients(totalClients);
                     return totalClient;
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find total clients", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find total clients", ex));
-                });
+                }
+            );
     }
 
     @Override
@@ -262,23 +303,22 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> create(Client client) {
         LOGGER.debug("Create a client {} for domain {}", client, client.getDomain());
 
-        if(client.getDomain()==null || client.getDomain().trim().isEmpty()) {
+        if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
         boolean clientIdGenerated = false;
         client.setId(client.getId() != null ? client.getId() : RandomString.generate());
         // client_id & client_secret may be already informed if created through UI
-        if(client.getClientId()==null) {
+        if (client.getClientId() == null) {
             client.setClientId(SecureRandomString.generate());
             clientIdGenerated = true;
         }
-        if(client.getClientSecret()==null || client.getClientSecret().trim().isEmpty()) {
+        if (client.getClientSecret() == null || client.getClientSecret().trim().isEmpty()) {
             client.setClientSecret(SecureRandomString.generate());
         }
-        if(client.getClientName()==null || client.getClientName().trim().isEmpty()) {
-
-            if(clientIdGenerated) {
+        if (client.getClientName() == null || client.getClientName().trim().isEmpty()) {
+            if (clientIdGenerated) {
                 client.setClientName(DEFAULT_CLIENT_NAME);
             } else {
                 // ClientId has been provided by user, reuse it as clientName.
@@ -295,28 +335,26 @@ public class ClientServiceImpl implements ClientService {
         client.setCreatedAt(new Date());
         client.setUpdatedAt(client.getCreatedAt());
 
-        return applicationService.create(convert(client))
-                .map(Application::convert);
+        return applicationService.create(convert(client)).map(Application::convert);
     }
 
     @Override
     public Single<Client> update(Client client) {
         LOGGER.debug("Update client {} for domain {}", client.getClientId(), client.getDomain());
 
-        if(client.getDomain()==null || client.getDomain().trim().isEmpty()) {
+        if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
-        return applicationService.update(convert(client))
-                .map(Application::convert);
+        return applicationService.update(convert(client)).map(Application::convert);
     }
 
     @Override
     public Single<Client> patch(String domain, String id, PatchClient patchClient, boolean forceNull, User principal) {
         LOGGER.debug("Patch a client {} for domain {}", id, domain);
         return findById(id)
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
-                .flatMapSingle(toPatch -> this.update(patchClient.patch(toPatch, forceNull)));
+            .switchIfEmpty(Maybe.error(new ClientNotFoundException(id)))
+            .flatMapSingle(toPatch -> this.update(patchClient.patch(toPatch, forceNull)));
     }
 
     @Override
@@ -328,8 +366,7 @@ public class ClientServiceImpl implements ClientService {
     @Override
     public Single<Client> renewClientSecret(String domain, String id, User principal) {
         LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
-        return applicationService.renewClientSecret(domain, id, principal)
-                .map(Application::convert);
+        return applicationService.renewClientSecret(domain, id, principal).map(Application::convert);
     }
 
     private Application convert(Client client) {

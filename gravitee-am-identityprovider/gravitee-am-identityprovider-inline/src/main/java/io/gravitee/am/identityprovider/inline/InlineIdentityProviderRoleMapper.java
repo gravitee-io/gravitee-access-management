@@ -1,5 +1,5 @@
-
 package io.gravitee.am.identityprovider.inline;
+
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -16,7 +16,6 @@ package io.gravitee.am.identityprovider.inline;
  * limitations under the License.
  */
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-
 import java.util.Map;
 
 /**

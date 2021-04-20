@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.http.authentication;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
@@ -23,6 +26,8 @@ import io.gravitee.am.identityprovider.http.HttpIdentityProviderMapper;
 import io.gravitee.am.identityprovider.http.HttpIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
 import io.reactivex.observers.TestObserver;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,18 +36,15 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { HttpAuthenticationProviderTestConfiguration.class, HttpAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(
+    classes = { HttpAuthenticationProviderTestConfiguration.class, HttpAuthenticationProviderConfiguration.class },
+    loader = AnnotationConfigContextLoader.class
+)
 public class HttpAuthenticationProviderTest {
 
     @Autowired
@@ -59,26 +61,32 @@ public class HttpAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication() {
-        stubFor(any(urlPathEqualTo("/api/authentication"))
+        stubFor(
+            any(urlPathEqualTo("/api/authentication"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"sub\" : \"123456789\", \"preferred_username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"sub\" : \"123456789\", \"preferred_username\" : \"johndoe\"}"))
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "johndoe";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "johndoe";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "johndoepassword";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "johndoepassword";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return new SimpleAuthenticationContext(new DummyRequest());
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return new SimpleAuthenticationContext(new DummyRequest());
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -90,26 +98,28 @@ public class HttpAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
-        stubFor(any(urlPathEqualTo("/api/authentication"))
-                .withRequestBody(matching(".*"))
-                .willReturn(unauthorized()));
+        stubFor(any(urlPathEqualTo("/api/authentication")).withRequestBody(matching(".*")).willReturn(unauthorized()));
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "johndoe";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "johndoe";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "johndoepassword";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "johndoepassword";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return new SimpleAuthenticationContext(new DummyRequest());
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return new SimpleAuthenticationContext(new DummyRequest());
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertError(BadCredentialsException.class);
@@ -117,26 +127,28 @@ public class HttpAuthenticationProviderTest {
 
     @Test
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
-        stubFor(any(urlPathEqualTo("/api/authentication"))
-                .withRequestBody(matching(".*"))
-                .willReturn(notFound()));
+        stubFor(any(urlPathEqualTo("/api/authentication")).withRequestBody(matching(".*")).willReturn(notFound()));
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "johndoe";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "johndoe";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "johndoepassword";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "johndoepassword";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return new SimpleAuthenticationContext(new DummyRequest());
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return new SimpleAuthenticationContext(new DummyRequest());
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertError(UsernameNotFoundException.class);
@@ -150,26 +162,32 @@ public class HttpAuthenticationProviderTest {
         attributes.put("preferred_username", "username");
         mapper.setMappers(attributes);
 
-        stubFor(any(urlPathEqualTo("/api/authentication"))
+        stubFor(
+            any(urlPathEqualTo("/api/authentication"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}"))
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "johndoe";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "johndoe";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "johndoepassword";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "johndoepassword";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return new SimpleAuthenticationContext(new DummyRequest());
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return new SimpleAuthenticationContext(new DummyRequest());
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -179,34 +197,39 @@ public class HttpAuthenticationProviderTest {
         testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
     }
 
-
     @Test
     public void shouldLoadUserByUsername_roleMapping() {
         // configure role mapping
         Map<String, String[]> roles = new HashMap<>();
-        roles.put("admin", new String[] { "preferred_username=johndoe"});
+        roles.put("admin", new String[] { "preferred_username=johndoe" });
         roleMapper.setRoles(roles);
 
-        stubFor(any(urlPathEqualTo("/api/authentication"))
+        stubFor(
+            any(urlPathEqualTo("/api/authentication"))
                 .withRequestBody(matching(".*"))
-                .willReturn(okJson("{\"sub\" : \"123456789\", \"preferred_username\" : \"johndoe\"}")));
+                .willReturn(okJson("{\"sub\" : \"123456789\", \"preferred_username\" : \"johndoe\"}"))
+        );
 
-        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
-            @Override
-            public Object getCredentials() {
-                return "johndoe";
-            }
+        TestObserver<User> testObserver = authenticationProvider
+            .loadUserByUsername(
+                new Authentication() {
+                    @Override
+                    public Object getCredentials() {
+                        return "johndoe";
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return "johndoepassword";
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return "johndoepassword";
+                    }
 
-            @Override
-            public AuthenticationContext getContext() {
-                return new SimpleAuthenticationContext(new DummyRequest());
-            }
-        }).test();
+                    @Override
+                    public AuthenticationContext getContext() {
+                        return new SimpleAuthenticationContext(new DummyRequest());
+                    }
+                }
+            )
+            .test();
 
         testObserver.awaitTerminalEvent();
 
@@ -216,5 +239,4 @@ public class HttpAuthenticationProviderTest {
         testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
         testObserver.assertValue(u -> u.getRoles().contains("admin"));
     }
-
 }

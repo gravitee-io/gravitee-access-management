@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BreadcrumbService } from '../../../../services/breadcrumb.service';
 import { OrganizationService } from '../../../../services/organization.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
@@ -25,7 +25,7 @@ import { FactorService } from '../../../../services/factor.service';
 @Component({
   selector: 'app-factor',
   templateUrl: './factor.component.html',
-  styleUrls: ['./factor.component.scss']
+  styleUrls: ['./factor.component.scss'],
 })
 export class FactorComponent implements OnInit {
   private domainId: string;
@@ -38,22 +38,24 @@ export class FactorComponent implements OnInit {
   updateFactorConfiguration: any;
   editMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService,
-              private organizationService: OrganizationService,
-              private factorService: FactorService,
-              private snackbarService: SnackbarService,
-              private dialogService: DialogService,
-              private authService: AuthService) { }
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private breadcrumbService: BreadcrumbService,
+    private organizationService: OrganizationService,
+    private factorService: FactorService,
+    private snackbarService: SnackbarService,
+    private dialogService: DialogService,
+    private authService: AuthService,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
-    this.factor = this.route.snapshot.data['factor'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
+    this.factor = this.route.snapshot.data.factor;
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
     this.editMode = this.authService.hasPermissions(['domain_factor_edit']);
-    this.organizationService.factorSchema(this.factor.type).subscribe(data => {
+    this.organizationService.factorSchema(this.factor.type).subscribe((data) => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {
@@ -65,10 +67,10 @@ export class FactorComponent implements OnInit {
 
   update() {
     this.factor.configuration = JSON.stringify(this.updateFactorConfiguration);
-    this.factorService.update(this.domainId, this.factor.id, this.factor).subscribe(data => {
+    this.factorService.update(this.domainId, this.factor.id, this.factor).subscribe((data) => {
       this.initBreadcrumb();
       this.snackbarService.open('Factor updated');
-    })
+    });
   }
 
   enableFactorUpdate(configurationWrapper) {
@@ -80,20 +82,21 @@ export class FactorComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/settings/factors/' + this.factor.id + '$', this.factor.name);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/settings/factors/' + this.factor.id + '$',
+      this.factor.name,
+    );
   }
 
   delete(event) {
     event.preventDefault();
-    this.dialogService
-      .confirm('Delete Factor', 'Are you sure you want to delete this factor ?')
-      .subscribe(res => {
-        if (res) {
-          this.factorService.delete(this.domainId, this.factor.id).subscribe(() => {
-            this.snackbarService.open('Factor deleted');
-            this.router.navigate(['/domains', this.domainId, 'settings', 'factors']);
-          });
-        }
-      });
+    this.dialogService.confirm('Delete Factor', 'Are you sure you want to delete this factor ?').subscribe((res) => {
+      if (res) {
+        this.factorService.delete(this.domainId, this.factor.id).subscribe(() => {
+          this.snackbarService.open('Factor deleted');
+          this.router.navigate(['/domains', this.domainId, 'settings', 'factors']);
+        });
+      }
+    });
   }
 }

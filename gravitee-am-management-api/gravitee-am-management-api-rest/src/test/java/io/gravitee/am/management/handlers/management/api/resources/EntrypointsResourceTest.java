@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Entrypoint;
@@ -23,19 +29,12 @@ import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import org.junit.Test;
-
+import java.util.Collections;
+import java.util.List;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
+import org.junit.Test;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -60,9 +59,7 @@ public class EntrypointsResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.just(entrypoint, entrypoint2)).when(entrypointService).findAll(ORGANIZATION_ID);
 
-        final Response response = target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").request().get();
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("entrypoints").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final List<Entrypoint> responseEntity = readEntity(response, List.class);
@@ -73,9 +70,7 @@ public class EntrypointsResourceTest extends JerseySpringTest {
     public void shouldGetEntrypoints_technicalManagementException() {
         doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(entrypointService).findAll(anyString());
 
-        final Response response = target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints").request().get();
+        final Response response = target("organizations").path(ORGANIZATION_ID).path("entrypoints").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -92,12 +87,10 @@ public class EntrypointsResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(entrypoint)).when(entrypointService).create(eq(ORGANIZATION_ID), any(NewEntrypoint.class), any(User.class));
 
-        WebTarget path = target("organizations")
-                .path(ORGANIZATION_ID)
-                .path("entrypoints");
+        WebTarget path = target("organizations").path(ORGANIZATION_ID).path("entrypoints");
 
         final Response response = post(path, newEntrypoint);
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
-        assertEquals(path.getUri().toString() + "/"+ entrypoint.getId(), response.getHeaderString(HttpHeaders.LOCATION));
+        assertEquals(path.getUri().toString() + "/" + entrypoint.getId(), response.getHeaderString(HttpHeaders.LOCATION));
     }
 }

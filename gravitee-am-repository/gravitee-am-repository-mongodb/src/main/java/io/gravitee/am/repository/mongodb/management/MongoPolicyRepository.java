@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.utils.RandomString;
@@ -25,14 +27,11 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.mongodb.client.model.Filters.eq;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -58,7 +57,10 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Single<List<Policy>> findByDomain(String domain) {
-        return Observable.fromPublisher(policiesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
+        return Observable
+            .fromPublisher(policiesCollection.find(eq(FIELD_DOMAIN, domain)))
+            .map(this::convert)
+            .collect(ArrayList::new, List::add);
     }
 
     @Override
@@ -76,7 +78,9 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @Override
     public Single<Policy> update(Policy item) {
         PolicyMongo policy = convert(item);
-        return Single.fromPublisher(policiesCollection.replaceOne(eq(FIELD_ID, policy.getId()), policy)).flatMap(updateResult -> findById(policy.getId()).toSingle());
+        return Single
+            .fromPublisher(policiesCollection.replaceOne(eq(FIELD_ID, policy.getId()), policy))
+            .flatMap(updateResult -> findById(policy.getId()).toSingle());
     }
 
     @Override
@@ -123,5 +127,4 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
         policy.setUpdatedAt(policyMongo.getUpdatedAt());
         return policy;
     }
-
 }

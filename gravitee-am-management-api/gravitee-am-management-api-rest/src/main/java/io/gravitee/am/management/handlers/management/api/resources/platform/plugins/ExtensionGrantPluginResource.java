@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Extension Grant"})
+@Api(tags = { "Plugin", "Extension Grant" })
 public class ExtensionGrantPluginResource {
 
     @Context
@@ -49,32 +48,30 @@ public class ExtensionGrantPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an extension grant plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(
-            @PathParam("extensionGrant") String extensionGrantId,
-            @Suspended final AsyncResponse response) {
-
-        extensionGrantPluginService.findById(extensionGrantId)
-                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
-                .map(extensionGrantPlugin -> Response.ok(extensionGrantPlugin).build())
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get an extension grant plugin", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("extensionGrant") String extensionGrantId, @Suspended final AsyncResponse response) {
+        extensionGrantPluginService
+            .findById(extensionGrantId)
+            .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
+            .map(extensionGrantPlugin -> Response.ok(extensionGrantPlugin).build())
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an extension grant plugin's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void getSchema(@PathParam("extensionGrant") String extensionGrantId,
-                          @Suspended final AsyncResponse response) {
-
+    @ApiOperation(
+        value = "Get an extension grant plugin's schema",
+        notes = "There is no particular permission needed. User must be authenticated."
+    )
+    public void getSchema(@PathParam("extensionGrant") String extensionGrantId, @Suspended final AsyncResponse response) {
         // Check that the extension grant exists
-        extensionGrantPluginService.findById(extensionGrantId)
-                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
-                .flatMap(irrelevant -> extensionGrantPluginService.getSchema(extensionGrantId))
-                .switchIfEmpty(Maybe.error(new ExtensionGrantPluginSchemaNotFoundException(extensionGrantId)))
-                .map(extensionGrantPluginSchema -> Response.ok(extensionGrantPluginSchema).build())
-                .subscribe(response::resume, response::resume);
+        extensionGrantPluginService
+            .findById(extensionGrantId)
+            .switchIfEmpty(Maybe.error(new ExtensionGrantPluginNotFoundException(extensionGrantId)))
+            .flatMap(irrelevant -> extensionGrantPluginService.getSchema(extensionGrantId))
+            .switchIfEmpty(Maybe.error(new ExtensionGrantPluginSchemaNotFoundException(extensionGrantId)))
+            .map(extensionGrantPluginSchema -> Response.ok(extensionGrantPluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

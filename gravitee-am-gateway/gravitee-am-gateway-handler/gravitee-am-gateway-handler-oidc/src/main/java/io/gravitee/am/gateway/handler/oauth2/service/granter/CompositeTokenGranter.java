@@ -31,12 +31,11 @@ import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,17 +55,16 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private AuthorizationCodeService authorizationCodeService;
 
-    public CompositeTokenGranter() { }
+    public CompositeTokenGranter() {}
 
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return Observable
-                .fromIterable(tokenGranters.values())
-                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
-                .firstElement()
-                .switchIfEmpty(Maybe.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client));
+            .fromIterable(tokenGranters.values())
+            .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
+            .firstElement()
+            .switchIfEmpty(Maybe.error(new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+            .flatMapSingle(tokenGranter -> tokenGranter.grant(tokenRequest, client));
     }
-
 
     public void addTokenGranter(String tokenGranterId, TokenGranter tokenGranter) {
         Objects.requireNonNull(tokenGranterId);
@@ -86,8 +84,14 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Override
     public void afterPropertiesSet() {
         addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
-        addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService,userAuthenticationManager));
-        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager));
+        addTokenGranter(
+            GrantType.PASSWORD,
+            new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager)
+        );
+        addTokenGranter(
+            GrantType.AUTHORIZATION_CODE,
+            new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager)
+        );
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
     }
 }

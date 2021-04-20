@@ -26,7 +26,6 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, String> {
-
     Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria);
 
     Completable delete(LoginAttemptCriteria criteria);

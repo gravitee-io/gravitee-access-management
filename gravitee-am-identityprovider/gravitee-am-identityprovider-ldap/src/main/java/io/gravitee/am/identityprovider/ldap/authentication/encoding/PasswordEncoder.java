@@ -23,7 +23,6 @@ import org.ldaptive.LdapException;
  * @author GraviteeSource Team
  */
 public interface PasswordEncoder {
-
     byte[] digestCredential(final Credential credential) throws LdapException;
 
     String getPasswordSchemeLabel();

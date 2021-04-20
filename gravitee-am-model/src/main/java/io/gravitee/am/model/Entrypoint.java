@@ -35,7 +35,7 @@ public class Entrypoint {
     private Date createdAt;
     private Date updatedAt;
 
-    public Entrypoint(){}
+    public Entrypoint() {}
 
     public Entrypoint(Entrypoint other) {
         this.id = other.id;
@@ -78,9 +78,7 @@ public class Entrypoint {
         if (this == o) return true;
         if (!(o instanceof Entrypoint)) return false;
         Entrypoint that = (Entrypoint) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(url, that.url) &&
-                Objects.equals(tags, that.tags);
+        return Objects.equals(id, that.id) && Objects.equals(url, that.url) && Objects.equals(tags, that.tags);
     }
 
     @Override
@@ -90,11 +88,7 @@ public class Entrypoint {
 
     @Override
     public String toString() {
-        return "EntrypointEntity{" +
-                "id='" + id + '\'' +
-                ", value='" + url + '\'' +
-                ", tags=" + tags +
-                '}';
+        return "EntrypointEntity{" + "id='" + id + '\'' + ", value='" + url + '\'' + ", tags=" + tags + '}';
     }
 
     public String getOrganizationId() {

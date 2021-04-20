@@ -16,19 +16,18 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,18 +77,22 @@ public class ResetPasswordEndpoint implements Handler<RoutingContext> {
         Client client = routingContext.get("client");
 
         // render the reset password page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render reset password page", res.cause());
-                routingContext.fail(res.cause());
+        engine.render(
+            routingContext.data(),
+            getTemplateFileName(client),
+            res -> {
+                if (res.succeeded()) {
+                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                    routingContext.response().end(res.result());
+                } else {
+                    logger.error("Unable to render reset password page", res.cause());
+                    routingContext.fail(res.cause());
+                }
             }
-        });
+        );
     }
 
     private String getTemplateFileName(Client client) {
-        return "reset_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId(): "");
+        return "reset_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 }

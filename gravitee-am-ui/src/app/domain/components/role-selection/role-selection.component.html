@@ -18,14 +18,12 @@
 <div class="role-container" fxLayout="column">
   <mat-form-field>
     <mat-chip-list #chipList aria-label="Roles selection">
-      <mat-chip
-        *ngFor="let role of initialSelectedRoles"
-        [removable]="true"
-        (removed)="remove(role.id)">
-        {{role.name}}
+      <mat-chip *ngFor="let role of initialSelectedRoles" [removable]="true" (removed)="remove(role.id)">
+        {{ role.name }}
         <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
       </mat-chip>
-      <input (click)="onFocus()"
+      <input
+        (click)="onFocus()"
         name="role"
         #roleInput
         placeholder="Select roles to assign to this user..."
@@ -33,11 +31,12 @@
         [matAutocomplete]="auto"
         [matChipInputFor]="chipList"
         [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-        [matChipInputAddOnBlur]="addOnBlur">
+        [matChipInputAddOnBlur]="addOnBlur"
+      />
     </mat-chip-list>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
       <mat-option *ngFor="let role of filteredRoles" [value]="role.id">
-        {{role.name}}
+        {{ role.name }}
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>

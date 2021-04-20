@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
-import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -27,6 +27,7 @@ public class UpdateGroup {
 
     @NotNull
     private String name;
+
     private String description;
     private List<String> members;
     private List<String> roles;
@@ -55,7 +56,6 @@ public class UpdateGroup {
         this.members = members;
     }
 
-
     public List<String> getRoles() {
         return roles;
     }
@@ -66,11 +66,20 @@ public class UpdateGroup {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"UpdateGroup\", " +
-                "\"name\":" + (name == null ? "null" : "\"" + name + "\"") + ", " +
-                "\"description\":" + (description == null ? "null" : "\"" + description + "\"") + ", " +
-                "\"members\":" + (members == null ? "null" : Arrays.toString(members.toArray())) + ", " +
-                "\"roles\":" + (roles == null ? "null" : Arrays.toString(roles.toArray())) +
-                "}";
+        return (
+            "{\"_class\":\"UpdateGroup\", " +
+            "\"name\":" +
+            (name == null ? "null" : "\"" + name + "\"") +
+            ", " +
+            "\"description\":" +
+            (description == null ? "null" : "\"" + description + "\"") +
+            ", " +
+            "\"members\":" +
+            (members == null ? "null" : Arrays.toString(members.toArray())) +
+            ", " +
+            "\"roles\":" +
+            (roles == null ? "null" : Arrays.toString(roles.toArray())) +
+            "}"
+        );
     }
 }

@@ -22,7 +22,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin", "Certificate"})
+@Api(tags = { "Plugin", "Certificate" })
 public class CertificatePluginResource {
 
     @Context
@@ -49,33 +48,27 @@ public class CertificatePluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an certificate plugin",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(
-            @PathParam("certificate") String certificateId,
-            @Suspended final AsyncResponse response) {
-
-        certificatePluginService.findById(certificateId)
-                .map(extensionGrantPlugin -> Response.ok(certificateId).build())
-                .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
-                .subscribe(response::resume, response::resume);
+    @ApiOperation(value = "Get an certificate plugin", notes = "There is no particular permission needed. User must be authenticated.")
+    public void get(@PathParam("certificate") String certificateId, @Suspended final AsyncResponse response) {
+        certificatePluginService
+            .findById(certificateId)
+            .map(extensionGrantPlugin -> Response.ok(certificateId).build())
+            .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
+            .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an certificate's schema",
-            notes = "There is no particular permission needed. User must be authenticated.")
-    public void getSchema(
-            @PathParam("certificate") String certificateId,
-            @Suspended final AsyncResponse response) {
-
+    @ApiOperation(value = "Get an certificate's schema", notes = "There is no particular permission needed. User must be authenticated.")
+    public void getSchema(@PathParam("certificate") String certificateId, @Suspended final AsyncResponse response) {
         // Check that the certificate exists
-        certificatePluginService.findById(certificateId)
-                .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
-                .flatMap(irrelevant -> certificatePluginService.getSchema(certificateId))
-                .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificateId)))
-                .map(certificatePluginSchema -> Response.ok(certificatePluginSchema).build())
-                .subscribe(response::resume, response::resume);
+        certificatePluginService
+            .findById(certificateId)
+            .switchIfEmpty(Maybe.error(new CertificatePluginNotFoundException(certificateId)))
+            .flatMap(irrelevant -> certificatePluginService.getSchema(certificateId))
+            .switchIfEmpty(Maybe.error(new CertificatePluginSchemaNotFoundException(certificateId)))
+            .map(certificatePluginSchema -> Response.ok(certificatePluginSchema).build())
+            .subscribe(response::resume, response::resume);
     }
 }

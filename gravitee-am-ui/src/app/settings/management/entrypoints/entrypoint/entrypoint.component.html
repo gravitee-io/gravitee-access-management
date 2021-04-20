@@ -17,50 +17,80 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to entrypoints</small></a>
-  <h1>{{entrypoint.name}}</h1>
+  <h1>{{ entrypoint.name }}</h1>
   <div fxLayout="row">
     <div fxLayout="column" fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="update()" #entrypointForm="ngForm" fxLayout="column">
+      <form (keydown.enter)="(false)" (ngSubmit)="update()" #entrypointForm="ngForm" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="entrypoint.name" required [readonly]="readonly" [disabled]="entrypoint.defaultEntrypoint">
+            <input
+              matInput
+              type="text"
+              placeholder="Name"
+              name="name"
+              [(ngModel)]="entrypoint.name"
+              required
+              [readonly]="readonly"
+              [disabled]="entrypoint.defaultEntrypoint"
+            />
             <mat-hint>Entrypoint's name</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
-            <input matInput type="text" placeholder="Description" name="description" [(ngModel)]="entrypoint.description" [readonly]="readonly" [disabled]="entrypoint.defaultEntrypoint">
+            <input
+              matInput
+              type="text"
+              placeholder="Description"
+              name="description"
+              [(ngModel)]="entrypoint.description"
+              [readonly]="readonly"
+              [disabled]="entrypoint.defaultEntrypoint"
+            />
             <mat-hint>Entrypoint's description</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Entrypoint url</mat-label>
-            <input matInput type="text" placeholder="url" name="url" [(ngModel)]="entrypoint.url" [readonly]="readonly" required pattern="https?://.+">
+            <input
+              matInput
+              type="text"
+              placeholder="url"
+              name="url"
+              [(ngModel)]="entrypoint.url"
+              [readonly]="readonly"
+              required
+              pattern="https?://.+"
+            />
             <mat-hint>Entrypoint's url</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Sharding tags</mat-label>
             <mat-chip-list #chipListTags>
-              <mat-chip *ngFor="let tag of selectedTags" color="primary"
-                        selected="true" (removed)="removeTag(tag)">
-                <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                &nbsp;<span>{{tag.id}}</span>&nbsp;|&nbsp;<small>{{tag.name}}</small>
+              <mat-chip *ngFor="let tag of selectedTags" color="primary" selected="true" (removed)="removeTag(tag)">
+                <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                &nbsp;<span>{{ tag.id }}</span
+                >&nbsp;|&nbsp;<small>{{ tag.name }}</small>
                 <mat-icon matChipRemove>cancel</mat-icon>
               </mat-chip>
-              <input matInput
-                     aria-label="Sharding Tags"
-                     placeholder="Sharding Tags"
-                     [matAutocomplete]="auto"
-                     [matChipInputFor]="chipListTags" [readonly]="readonly" [disabled]="entrypoint.defaultEntrypoint"
-                     #chipInput>
+              <input
+                matInput
+                aria-label="Sharding Tags"
+                placeholder="Sharding Tags"
+                [matAutocomplete]="auto"
+                [matChipInputFor]="chipListTags"
+                [readonly]="readonly"
+                [disabled]="entrypoint.defaultEntrypoint"
+                #chipInput
+              />
             </mat-chip-list>
 
             <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addTag($event)">
               <mat-option *ngFor="let tag of tags" [value]="tag.id">
-                <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
-                <span>{{ tag.id }}</span> | <small>{{tag.name}}</small>
+                <mat-icon style="vertical-align: middle">filter_none</mat-icon>
+                <span>{{ tag.id }}</span> | <small>{{ tag.name }}</small>
               </mat-option>
             </mat-autocomplete>
             <mat-hint>Select a sharding tag and press enter.</mat-hint>
@@ -68,9 +98,10 @@
         </div>
 
         <div fxLayout="row" *hasPermission="['organization_entrypoint_update']">
-          <button mat-raised-button [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged" type="submit">
+            SAVE
+          </button>
         </div>
-
       </form>
 
       <div class="gv-page-delete-zone" fxLayout="column" *ngIf="canDelete()">
@@ -85,18 +116,18 @@
     <div class="gv-page-description" fxFlex>
       <h3>Manage entrypoint</h3>
       <div class="gv-page-description-content">
+        <p>An entrypoint determines which url your end-users will have to use to contact the AM Gateway.</p>
         <p>
-          An entrypoint determines which url your end-users will have to use to contact the AM Gateway.
+          Entrypoints are associated with tags. When a tag is also associated to a domain, the corresponding entrypoint will be
+          automatically selected to display the right url to use to contact the Gateway.
         </p>
         <p>
-          Entrypoints are associated with tags. When a tag is also associated to a domain, the corresponding entrypoint will be automatically selected to display the right url to use to contact the Gateway.
-        </p>
-        <p>
-          So, if you associate one of the following tags [ <small style="color:grey;">{{entrypoint.tags.length > 0 ? entrypoint.tags.join(', ') : 'No tag defined'}}</small> ] to a domain <small style="color:grey;">my-domain</small>,
-          domain users will access to AM Gateway through the following url <small style="color:grey;">{{entrypoint.url}}/my-domain</small>
+          So, if you associate one of the following tags [
+          <small style="color: grey">{{ entrypoint.tags.length > 0 ? entrypoint.tags.join(', ') : 'No tag defined' }}</small> ] to a domain
+          <small style="color: grey">my-domain</small>, domain users will access to AM Gateway through the following url
+          <small style="color: grey">{{ entrypoint.url }}/my-domain</small>
         </p>
       </div>
     </div>
   </div>
 </div>
-

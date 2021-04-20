@@ -23,9 +23,8 @@ describe('RolesComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsRolesComponent ]
-    })
-    .compileComponents();
+      declarations: [DomainSettingsRolesComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

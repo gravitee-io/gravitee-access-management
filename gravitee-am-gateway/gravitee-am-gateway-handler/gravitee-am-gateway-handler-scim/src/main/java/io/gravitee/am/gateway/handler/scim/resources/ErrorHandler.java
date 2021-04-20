@@ -68,8 +68,13 @@ public class ErrorHandler implements Handler<RoutingContext> {
             // management exception (resource not found, server error, ...)
             if (throwable instanceof AbstractManagementException) {
                 AbstractManagementException technicalManagementException = (AbstractManagementException) throwable;
-                handleException(routingContext, technicalManagementException.getHttpStatusCode(), technicalManagementException.getMessage(), null);
-            // oauth2 exception (token invalid exception)
+                handleException(
+                    routingContext,
+                    technicalManagementException.getHttpStatusCode(),
+                    technicalManagementException.getMessage(),
+                    null
+                );
+                // oauth2 exception (token invalid exception)
             } else if (throwable instanceof OAuth2Exception) {
                 OAuth2Exception oAuth2Exception = (OAuth2Exception) throwable;
                 handleException(routingContext, oAuth2Exception.getHttpStatusCode(), oAuth2Exception.getMessage(), null);
@@ -83,19 +88,18 @@ public class ErrorHandler implements Handler<RoutingContext> {
                 }
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
-                handleException(routingContext, policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage(), null);
+                handleException(
+                    routingContext,
+                    policyChainException.statusCode(),
+                    policyChainException.key() + " : " + policyChainException.getMessage(),
+                    null
+                );
             } else {
                 logger.error(throwable.getMessage(), throwable);
                 if (routingContext.statusCode() != -1) {
-                    routingContext
-                            .response()
-                            .setStatusCode(routingContext.statusCode())
-                            .end();
+                    routingContext.response().setStatusCode(routingContext.statusCode()).end();
                 } else {
-                    routingContext
-                            .response()
-                            .setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
-                            .end();
+                    routingContext.response().setStatusCode(HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
                 }
             }
         }
@@ -107,15 +111,15 @@ public class ErrorHandler implements Handler<RoutingContext> {
         error.setDetail(errorDetail);
         if (scimType != null) {
             error.setScimType(scimType.value());
-        } else if(httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
+        } else if (httpStatusCode == HttpStatusCode.BAD_REQUEST_400) {
             error.setScimType(ScimType.INVALID_VALUE.value());
         }
         routingContext
-                .response()
-                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                .setStatusCode(httpStatusCode)
-                .end(Json.encodePrettily(error));
+            .response()
+            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+            .setStatusCode(httpStatusCode)
+            .end(Json.encodePrettily(error));
     }
 }

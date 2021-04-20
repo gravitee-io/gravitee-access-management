@@ -15,16 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
@@ -37,19 +40,15 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
+import javax.annotation.PostConstruct;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -75,26 +74,51 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1));
         super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1));
-        super.createIndex(usersCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1));
+        super.createIndex(
+            usersCollection,
+            new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1)
+        );
+        super.createIndex(
+            usersCollection,
+            new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1).append(FIELD_SOURCE, 1)
+        );
+        super.createIndex(
+            usersCollection,
+            new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1)
+        );
     }
 
     @Override
     public Single<Set<User>> findByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(HashSet::new, Set::add);
+        return Observable
+            .fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain))))
+            .map(this::convert)
+            .collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
-        Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        Single<Long> countOperation = Observable
+            .fromPublisher(
+                usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))
+            )
+            .first(0l);
+        Single<Set<User>> usersOperation = Observable
+            .fromPublisher(
+                usersCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))
+                    .sort(new BasicDBObject(FIELD_USERNAME, 1))
+                    .skip(size * page)
+                    .limit(size)
+            )
+            .map(this::convert)
+            .collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
     }
 
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
-       return findAll(DOMAIN, domain, page, size);
+        return findAll(DOMAIN, domain, page, size);
     }
 
     @Override
@@ -108,54 +132,64 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             searchQuery = new BasicDBObject(FIELD_USERNAME, Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
         }
 
-        Bson mongoQuery = and(
-                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_REFERENCE_ID, referenceId),
-                searchQuery);
+        Bson mongoQuery = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        Single<Set<User>> usersOperation = Observable
+            .fromPublisher(usersCollection.find(mongoQuery).skip(size * page).limit(size))
+            .map(this::convert)
+            .collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
     }
 
     @Override
     public Single<Page<User>> search(String domain, String query, int page, int size) {
-
         return search(DOMAIN, domain, query, page, size);
     }
 
     @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
-        BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_EMAIL_CLAIM, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
-        Bson mongoQuery = and(
-                eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
-                eq(FIELD_REFERENCE_ID, domain),
-                or(emailQuery, emailClaimQuery));
+        BasicDBObject emailClaimQuery = new BasicDBObject(
+            FIELD_EMAIL_CLAIM,
+            (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE)
+        );
+        Bson mongoQuery = and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), or(emailQuery, emailClaimQuery));
 
         return Observable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert).collect(ArrayList::new, List::add);
     }
 
     @Override
     public Maybe<User> findByUsernameAndDomain(String domain, String username) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+                    .find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username)))
+                    .limit(1)
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+                    .find(
+                        and(
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_USERNAME, username),
+                            eq(FIELD_SOURCE, source)
+                        )
+                    )
+                    .limit(1)
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -165,13 +199,22 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
-        return Observable.fromPublisher(
+        return Observable
+            .fromPublisher(
                 usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
-                        .limit(1)
-                        .first())
-                .firstElement()
-                .map(this::convert);
+                    .find(
+                        and(
+                            eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                            eq(FIELD_REFERENCE_ID, referenceId),
+                            eq(FIELD_EXTERNAL_ID, externalId),
+                            eq(FIELD_SOURCE, source)
+                        )
+                    )
+                    .limit(1)
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -181,7 +224,14 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, userId))).first()).firstElement().map(this::convert);
+        return Observable
+            .fromPublisher(
+                usersCollection
+                    .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, userId)))
+                    .first()
+            )
+            .firstElement()
+            .map(this::convert);
     }
 
     @Override
@@ -199,7 +249,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     @Override
     public Single<User> update(User item) {
         UserMongo user = convert(item);
-        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user)).flatMap(updateResult -> findById(user.getId()).toSingle());
+        return Single
+            .fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user))
+            .flatMap(updateResult -> findById(user.getId()).toSingle());
     }
 
     @Override
@@ -209,7 +261,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Single<Long> countByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).first(0l);
+        return Observable
+            .fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain))))
+            .first(0l);
     }
 
     @Override
@@ -225,48 +279,115 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
-        return Observable.fromPublisher(usersCollection.aggregate(
-                Arrays.asList(
+        return Observable
+            .fromPublisher(
+                usersCollection.aggregate(
+                    Arrays.asList(
                         Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()))),
                         Aggregates.group(
-                                new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum("total", 1),
-                                Accumulators.sum("disabled", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))),
-                                Accumulators.sum("locked", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
-                                Accumulators.sum("inactive", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
+                            new BasicDBObject("_id", query.getField()),
+                            Accumulators.sum("total", 1),
+                            Accumulators.sum(
+                                "disabled",
+                                new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$enabled", false)), 1, 0))
+                            ),
+                            Accumulators.sum(
+                                "locked",
+                                new BasicDBObject(
+                                    "$cond",
+                                    Arrays.asList(
+                                        new BasicDBObject(
+                                            "$and",
+                                            Arrays.asList(
+                                                new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)),
+                                                new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date()))
+                                            )
+                                        ),
+                                        1,
+                                        0
+                                    )
+                                )
+                            ),
+                            Accumulators.sum(
+                                "inactive",
+                                new BasicDBObject(
+                                    "$cond",
+                                    Arrays.asList(
+                                        new BasicDBObject(
+                                            "$lte",
+                                            Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))
+                                        ),
+                                        1,
+                                        0
+                                    )
+                                )
+                            )
                         )
-                )))
-                .map(doc -> {
-                    Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
+                    )
+                )
+            )
+            .map(
+                doc -> {
+                    Long nonActiveUsers =
+                        ((Number) doc.get("disabled")).longValue() +
+                        ((Number) doc.get("locked")).longValue() +
+                        ((Number) doc.get("inactive")).longValue();
                     Long activeUsers = ((Number) doc.get("total")).longValue() - nonActiveUsers;
                     Map<Object, Object> users = new HashMap<>();
                     users.put("active", activeUsers);
-                    users.putAll(doc.entrySet()
+                    users.putAll(
+                        doc
+                            .entrySet()
                             .stream()
                             .filter(e -> !"_id".equals(e.getKey()) && !"total".equals(e.getKey()))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                    );
                     return users;
-                })
-                .first(Collections.emptyMap());
+                }
+            )
+            .first(Collections.emptyMap());
     }
 
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
-        return Observable.fromPublisher(usersCollection.aggregate(
-                Arrays.asList(
-                        Aggregates.match(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, query.getDomain()), eq(FIELD_PRE_REGISTRATION, true))),
-                        Aggregates.group(new BasicDBObject("_id", query.getField()),
-                                Accumulators.sum("total", 1),
-                                Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
-                )))
-                .map(doc -> {
+        return Observable
+            .fromPublisher(
+                usersCollection.aggregate(
+                    Arrays.asList(
+                        Aggregates.match(
+                            and(
+                                eq(FIELD_REFERENCE_TYPE, DOMAIN.name()),
+                                eq(FIELD_REFERENCE_ID, query.getDomain()),
+                                eq(FIELD_PRE_REGISTRATION, true)
+                            )
+                        ),
+                        Aggregates.group(
+                            new BasicDBObject("_id", query.getField()),
+                            Accumulators.sum("total", 1),
+                            Accumulators.sum(
+                                "completed",
+                                new BasicDBObject(
+                                    "$cond",
+                                    Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0)
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            .map(
+                doc -> {
                     Map<Object, Object> registrations = new HashMap<>();
-                    registrations.putAll(doc.entrySet()
+                    registrations.putAll(
+                        doc
+                            .entrySet()
                             .stream()
                             .filter(e -> !"_id".equals(e.getKey()))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                    );
                     return registrations;
-                })
-                .first(Collections.emptyMap());
+                }
+            )
+            .first(Collections.emptyMap());
     }
 
     private User convert(UserMongo userMongo) {
@@ -357,7 +478,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         userMongo.setAddresses(toMongoAddresses(user.getAddresses()));
         userMongo.setX509Certificates(toMongoCertificates(user.getX509Certificates()));
         userMongo.setFactors(user.getFactors());
-        userMongo.setAdditionalInformation(user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document());
+        userMongo.setAdditionalInformation(
+            user.getAdditionalInformation() != null ? new Document(user.getAdditionalInformation()) : new Document()
+        );
         userMongo.setCreatedAt(user.getCreatedAt());
         userMongo.setUpdatedAt(user.getUpdatedAt());
         return userMongo;
@@ -368,14 +491,17 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return mongoAttributes
-                .stream()
-                .map(mongoAttribute -> {
+            .stream()
+            .map(
+                mongoAttribute -> {
                     Attribute modelAttribute = new Attribute();
                     modelAttribute.setPrimary(mongoAttribute.isPrimary());
                     modelAttribute.setValue(mongoAttribute.getValue());
                     modelAttribute.setType(mongoAttribute.getType());
                     return modelAttribute;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<AttributeMongo> toMongoAttributes(List<Attribute> modelAttributes) {
@@ -383,14 +509,17 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return modelAttributes
-                .stream()
-                .map(modelAttribute -> {
+            .stream()
+            .map(
+                modelAttribute -> {
                     AttributeMongo mongoAttribute = new AttributeMongo();
                     mongoAttribute.setPrimary(modelAttribute.isPrimary());
                     mongoAttribute.setValue(modelAttribute.getValue());
                     mongoAttribute.setType(modelAttribute.getType());
                     return mongoAttribute;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<Address> toModelAddresses(List<AddressMongo> mongoAddresses) {
@@ -398,8 +527,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return mongoAddresses
-                .stream()
-                .map(mongoAddress -> {
+            .stream()
+            .map(
+                mongoAddress -> {
                     Address modelAddress = new Address();
                     modelAddress.setType(mongoAddress.getType());
                     modelAddress.setFormatted(mongoAddress.getFormatted());
@@ -410,7 +540,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
                     modelAddress.setRegion(mongoAddress.getRegion());
                     modelAddress.setPrimary(mongoAddress.isPrimary());
                     return modelAddress;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<AddressMongo> toMongoAddresses(List<Address> modelAddresses) {
@@ -418,8 +550,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return modelAddresses
-                .stream()
-                .map(modelAddress -> {
+            .stream()
+            .map(
+                modelAddress -> {
                     AddressMongo mongoAddress = new AddressMongo();
                     mongoAddress.setType(modelAddress.getType());
                     mongoAddress.setFormatted(modelAddress.getFormatted());
@@ -430,7 +563,9 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
                     mongoAddress.setRegion(modelAddress.getRegion());
                     mongoAddress.setPrimary(modelAddress.isPrimary());
                     return mongoAddress;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<Certificate> toModelCertificates(List<CertificateMongo> mongoCertificates) {
@@ -438,12 +573,15 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return mongoCertificates
-                .stream()
-                .map(mongoCertificate -> {
+            .stream()
+            .map(
+                mongoCertificate -> {
                     Certificate modelCertificate = new Certificate();
                     modelCertificate.setValue(mongoCertificate.getValue());
                     return modelCertificate;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 
     private List<CertificateMongo> toMongoCertificates(List<Certificate> modelCertificates) {
@@ -451,11 +589,14 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
             return null;
         }
         return modelCertificates
-                .stream()
-                .map(modelCertificate -> {
+            .stream()
+            .map(
+                modelCertificate -> {
                     CertificateMongo mongoCertificate = new CertificateMongo();
                     mongoCertificate.setValue(modelCertificate.getValue());
                     return mongoCertificate;
-                }).collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 }

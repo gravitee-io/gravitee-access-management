@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -26,9 +25,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface PolicyRepository extends CrudRepository<Policy, String> {
-
     Single<List<Policy>> findAll();
 
     Single<List<Policy>> findByDomain(String domain);
-
 }

@@ -29,8 +29,7 @@ public class CustomBlockingConnectionPool extends BlockingConnectionPool {
     private static final int DEFAULT_MAX_RETRIES = 3;
     private int maxRetries = DEFAULT_MAX_RETRIES;
 
-    public CustomBlockingConnectionPool() {
-    }
+    public CustomBlockingConnectionPool() {}
 
     public CustomBlockingConnectionPool(DefaultConnectionFactory cf) {
         super(cf);
@@ -60,8 +59,7 @@ public class CustomBlockingConnectionPool extends BlockingConnectionPool {
      * @throws  IllegalStateException  if the pool cannot grow to the supplied size and {@link
      *                                 #createAvailableConnection(boolean)} throws
      */
-    protected void grow(final int size, final boolean throwOnFailure)
-    {
+    protected void grow(final int size, final boolean throwOnFailure) {
         logger.trace("waiting for pool lock to initialize pool {}", poolLock.getQueueLength());
 
         int count = 0;

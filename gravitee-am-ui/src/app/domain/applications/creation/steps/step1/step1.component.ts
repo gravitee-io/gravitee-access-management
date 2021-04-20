@@ -18,7 +18,7 @@ import { Component, OnInit, Input } from '@angular/core';
 @Component({
   selector: 'application-creation-step1',
   templateUrl: './step1.component.html',
-  styleUrls: ['./step1.component.scss']
+  styleUrls: ['./step1.component.scss'],
 })
 export class ApplicationCreationStep1Component {
   @Input() application;
@@ -28,29 +28,30 @@ export class ApplicationCreationStep1Component {
       icon: 'language',
       type: 'WEB',
       description: 'Traditional web apps',
-      subDescription: 'e.g : .NET, Java'
+      subDescription: 'e.g : .NET, Java',
     },
     {
       name: 'Single-Page App',
       icon: 'web',
       type: 'BROWSER',
       description: 'JavaScript front-end apps',
-      subDescription: 'e.g : Angular, React, VueJS'
+      subDescription: 'e.g : Angular, React, VueJS',
     },
     {
       name: 'Native',
       icon: 'devices_other',
       type: 'NATIVE',
       description: 'Mobile, Desktop apps',
-      subDescription: 'e.g : iOS, Android'
+      subDescription: 'e.g : iOS, Android',
     },
     {
       name: 'Backend to Backend',
       icon: 'storage',
       type: 'SERVICE',
       description: 'Machine-to-Machine apps',
-      subDescription : 'e.g : Shell script, daemon, CLI'
-    }];
+      subDescription: 'e.g : Shell script, daemon, CLI',
+    },
+  ];
 
   constructor() {}
 

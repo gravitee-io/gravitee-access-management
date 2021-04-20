@@ -26,7 +26,6 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface User extends Serializable {
-
     /**
      * Returns the technical id used of the user
      *

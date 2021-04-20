@@ -27,12 +27,11 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class TransactionHandler implements Handler<RoutingContext> {
 
-    final static String DEFAULT_TRANSACTIONAL_ID_HEADER = "X-Gravitee-Transaction-Id";
+    static final String DEFAULT_TRANSACTIONAL_ID_HEADER = "X-Gravitee-Transaction-Id";
 
     private String transactionHeader = DEFAULT_TRANSACTIONAL_ID_HEADER;
 
-    TransactionHandler() {
-    }
+    TransactionHandler() {}
 
     TransactionHandler(String transactionHeader) {
         this.transactionHeader = transactionHeader;
@@ -46,7 +45,7 @@ public class TransactionHandler implements Handler<RoutingContext> {
             transactionId = UUID.toString(UUID.random());
             context.request().headers().set(transactionHeader, transactionId);
         }
-        context.response().headers().set(transactionHeader,transactionId);
+        context.response().headers().set(transactionHeader, transactionId);
 
         context.next();
     }

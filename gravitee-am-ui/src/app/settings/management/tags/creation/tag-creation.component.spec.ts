@@ -23,9 +23,8 @@ describe('TagCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ TagCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [TagCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

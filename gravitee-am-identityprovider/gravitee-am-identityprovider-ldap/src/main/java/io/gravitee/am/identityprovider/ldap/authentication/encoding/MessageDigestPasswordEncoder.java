@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication.encoding;
 
-import org.ldaptive.Credential;
-import org.ldaptive.LdapException;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import org.ldaptive.Credential;
+import org.ldaptive.LdapException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

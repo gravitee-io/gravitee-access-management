@@ -24,7 +24,7 @@ public class Enrollment {
     private String key;
     private String barCode;
 
-    public Enrollment() { }
+    public Enrollment() {}
 
     public Enrollment(String key, String barCode) {
         this.key = key;

@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.policy.impl;
 
 import io.gravitee.am.gateway.policy.PolicyMetadata;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Map;

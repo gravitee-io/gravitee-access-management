@@ -21,13 +21,13 @@
     <div fxFlex="70">
       <form (ngSubmit)="save()">
         <div class="gv-form-section" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableSCIM($event)"
-            [checked]="isSCIMEnabled()" [disabled]="!editMode">
+          <mat-slide-toggle (change)="enableSCIM($event)" [checked]="isSCIMEnabled()" [disabled]="!editMode">
             System for Cross-domain Identity Management (SCIM) Support
           </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable application owner to self register its users and groups through SCIM endpoints.
-            SCIM service provider's configuration is available under <i>/scim/ServiceProviderConfig.</i></mat-hint>
+          <mat-hint style="font-size: 75%"
+            >Enable application owner to self register its users and groups through SCIM endpoints. SCIM service provider's configuration is
+            available under <i>/scim/ServiceProviderConfig.</i></mat-hint
+          >
         </div>
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button [disabled]="!formChanged" type="submit">SAVE</button>

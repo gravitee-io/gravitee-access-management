@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.service;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -31,19 +35,14 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Collections;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,7 +66,7 @@ public class IdentityProviderServiceTest {
     @Mock
     private AuditService auditService;
 
-    private final static String DOMAIN = "domain1";
+    private static final String DOMAIN = "domain1";
 
     @Test
     public void shouldFindById() {
@@ -101,7 +100,8 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Single.just(Collections.singleton(new IdentityProvider())));
+        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN)))
+            .thenReturn(Single.just(Collections.singleton(new IdentityProvider())));
         TestObserver<List<IdentityProvider>> testObserver = identityProviderService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
@@ -159,7 +159,8 @@ public class IdentityProviderServiceTest {
         idp.setReferenceType(ReferenceType.DOMAIN);
         idp.setReferenceId("domain#1");
 
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -176,7 +177,8 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldUpdate_technicalException() {
         UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
         identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).subscribe(testObserver);
@@ -187,7 +189,8 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldDelete_notExistingIdentityProvider() {
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.empty());
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.empty());
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
@@ -200,8 +203,10 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldDelete_identitiesWithClients() {
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
-        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.just(new IdentityProvider()));
+        when(applicationService.findByIdentityProvider("my-identity-provider"))
+            .thenReturn(Single.just(Collections.singleton(new Application())));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
@@ -211,10 +216,10 @@ public class IdentityProviderServiceTest {
         verify(identityProviderRepository, never()).delete(anyString());
     }
 
-
     @Test
     public void shouldDelete_technicalException() {
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.just(new IdentityProvider()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
@@ -225,7 +230,8 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldDelete() {
         IdentityProvider existingIdentityProvider = Mockito.mock(IdentityProvider.class);
-        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(existingIdentityProvider));
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider")))
+            .thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
         when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));

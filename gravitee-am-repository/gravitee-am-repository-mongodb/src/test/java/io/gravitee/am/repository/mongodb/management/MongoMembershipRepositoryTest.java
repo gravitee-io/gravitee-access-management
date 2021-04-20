@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static io.gravitee.am.repository.mongodb.management.MongoIdentityProviderRepositoryTest.ORGANIZATION_ID;
+
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
@@ -22,13 +24,10 @@ import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Arrays;
 import java.util.List;
-
-import static io.gravitee.am.repository.mongodb.management.MongoIdentityProviderRepositoryTest.ORGANIZATION_ID;
+import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -46,7 +45,6 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testFindById() {
-
         Membership membership = new Membership();
         membership.setRoleId("role#1");
         membership.setReferenceType(ReferenceType.ORGANIZATION);
@@ -60,17 +58,19 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
-        obs.assertValue(m -> m.getId().equals(createdMembership.getId())
-                && m.getRoleId().equals(membership.getRoleId())
-                && m.getReferenceType() == membership.getReferenceType()
-                && m.getReferenceId().equals(membership.getReferenceId())
-                && m.getMemberType() == membership.getMemberType()
-                && m.getMemberId().equals(membership.getMemberId()));
+        obs.assertValue(
+            m ->
+                m.getId().equals(createdMembership.getId()) &&
+                m.getRoleId().equals(membership.getRoleId()) &&
+                m.getReferenceType() == membership.getReferenceType() &&
+                m.getReferenceId().equals(membership.getReferenceId()) &&
+                m.getMemberType() == membership.getMemberType() &&
+                m.getMemberId().equals(membership.getMemberId())
+        );
     }
 
     @Test
     public void testFindByReference() {
-
         Membership membership = new Membership();
         membership.setRoleId("role#1");
         membership.setReferenceType(ReferenceType.ORGANIZATION);
@@ -89,7 +89,6 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testFindByMember() {
-
         Membership membership = new Membership();
         membership.setRoleId("role#1");
         membership.setReferenceType(ReferenceType.ORGANIZATION);
@@ -114,10 +113,8 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
         obs.assertValue(m -> m.size() == 2);
     }
 
-
     @Test
     public void testFindByReferenceAndMember() {
-
         Membership membership = new Membership();
         membership.setRoleId("role#1");
         membership.setReferenceType(ReferenceType.ORGANIZATION);
@@ -127,7 +124,9 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
 
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
-        TestObserver<Membership> obs = membershipRepository.findByReferenceAndMember(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberType(), membership.getMemberId()).test();
+        TestObserver<Membership> obs = membershipRepository
+            .findByReferenceAndMember(ReferenceType.ORGANIZATION, ORGANIZATION_ID, membership.getMemberType(), membership.getMemberId())
+            .test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
@@ -136,7 +135,6 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
 
     @Test
     public void testFindByCriteria() {
-
         Membership membership = new Membership();
         membership.setRoleId("role#1");
         membership.setReferenceType(ReferenceType.ORGANIZATION);
@@ -191,5 +189,4 @@ public class MongoMembershipRepositoryTest extends AbstractManagementRepositoryT
         obs.awaitTerminalEvent();
         obs.assertValueCount(2);
     }
-
 }

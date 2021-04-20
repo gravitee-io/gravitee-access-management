@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {EmailService} from "./email.service";
+import { inject, TestBed } from '@angular/core/testing';
+import { EmailService } from './email.service';
 
 describe('EmailService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EmailService]
+      providers: [EmailService],
     });
   });
 

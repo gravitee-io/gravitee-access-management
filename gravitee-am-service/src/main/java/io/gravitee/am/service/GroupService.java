@@ -16,15 +16,14 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -32,7 +31,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface GroupService {
-
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
     Single<Page<Group>> findByDomain(String domain, int page, int size);
@@ -55,19 +53,42 @@ public interface GroupService {
 
     Maybe<Group> findById(String id);
 
-    Single<Group> create(ReferenceType referenceType, String referenceId, NewGroup newGroup, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> create(
+        ReferenceType referenceType,
+        String referenceId,
+        NewGroup newGroup,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<Group> create(String domain, NewGroup group, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<Group> update(ReferenceType referenceType, String referenceId, String id, UpdateGroup updateGroup, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> update(
+        ReferenceType referenceType,
+        String referenceId,
+        String id,
+        UpdateGroup updateGroup,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     Single<Group> update(String domain, String id, UpdateGroup group, io.gravitee.am.identityprovider.api.User principal);
 
     Completable delete(ReferenceType referenceType, String referenceId, String groupId, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<Group> assignRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> assignRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String groupId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
-    Single<Group> revokeRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles, io.gravitee.am.identityprovider.api.User principal);
+    Single<Group> revokeRoles(
+        ReferenceType referenceType,
+        String referenceId,
+        String groupId,
+        List<String> roles,
+        io.gravitee.am.identityprovider.api.User principal
+    );
 
     default Single<Group> create(String domain, NewGroup group) {
         return create(domain, group, null);
@@ -88,5 +109,4 @@ public interface GroupService {
     default Single<Group> revokeRoles(ReferenceType referenceType, String referenceId, String groupId, List<String> roles) {
         return revokeRoles(referenceType, referenceId, groupId, roles, null);
     }
-
 }

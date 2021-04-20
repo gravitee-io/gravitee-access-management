@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { AppConfig } from "../../config/app.config";
-import { HttpClient } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { AppConfig } from '../../config/app.config';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class DashboardService {
   private dashboardURL = AppConfig.settings.baseURL + '/dashboard/';
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
   findApplications(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "applications" + ((domainId) ? "?domainId="+domainId : ""));
+    return this.http.get<any>(this.dashboardURL + 'applications' + (domainId ? '?domainId=' + domainId : ''));
   }
 
   findTopApplications(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "applications/top" + ((domainId) ? "?domainId="+domainId : ""));
+    return this.http.get<any>(this.dashboardURL + 'applications/top' + (domainId ? '?domainId=' + domainId : ''));
   }
 
   findTotalApplications(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "applications/total" + ((domainId) ? "?domainId="+domainId : ""));
+    return this.http.get<any>(this.dashboardURL + 'applications/total' + (domainId ? '?domainId=' + domainId : ''));
   }
 
   findTotalTokens(domainId: any): Observable<any> {
-    return this.http.get<any>(this.dashboardURL + "tokens" + ((domainId) ? "?domainId="+domainId : ""));
+    return this.http.get<any>(this.dashboardURL + 'tokens' + (domainId ? '?domainId=' + domainId : ''));
   }
 }

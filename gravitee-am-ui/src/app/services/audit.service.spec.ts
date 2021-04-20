@@ -20,7 +20,7 @@ import { AuditService } from './audit.service';
 describe('UserService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuditService]
+      providers: [AuditService],
     });
   });
 

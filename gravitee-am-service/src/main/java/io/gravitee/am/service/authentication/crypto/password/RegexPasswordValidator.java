@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.service.authentication.crypto.password;
 
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,10 +29,12 @@ public class RegexPasswordValidator implements PasswordValidator, InitializingBe
     private Pattern pattern;
     private Matcher matcher;
 
-    @Value("${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}")
+    @Value(
+        "${user.password.policy.pattern:^(?:(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))(?!.*(.)\\1{2,})[A-Za-z0-9!~<>,;:_\\-=?*+#.\"'&§`£€%°()\\\\\\|\\[\\]\\-\\$\\^\\@\\/]{8,32}$}"
+    )
     private String passwordPattern;
 
-    public RegexPasswordValidator() { }
+    public RegexPasswordValidator() {}
 
     public RegexPasswordValidator(String pattern) {
         this.pattern = Pattern.compile(pattern);
@@ -41,15 +42,13 @@ public class RegexPasswordValidator implements PasswordValidator, InitializingBe
 
     @Override
     public boolean validate(final String password) {
-
-        if(password.length() > PASSWORD_MAX_LENGTH) {
+        if (password.length() > PASSWORD_MAX_LENGTH) {
             return false;
         }
 
         matcher = pattern.matcher(password);
         return matcher.matches();
     }
-
 
     @Override
     public void afterPropertiesSet() {

@@ -15,14 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.bson.Document;
-import org.bson.codecs.pojo.annotations.BsonId;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.bson.Document;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -20,9 +20,7 @@ import { HomeComponent } from './home.component';
 describe('HomeComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [
-        HomeComponent
-      ],
+      declarations: [HomeComponent],
     }).compileComponents();
   }));
 
@@ -32,7 +30,7 @@ describe('HomeComponent', () => {
     expect(app).toBeTruthy();
   }));
 
-  it(`should have as title 'app works!'`, async(() => {
+  it("should have as title 'app works!'", async(() => {
     const fixture = TestBed.createComponent(HomeComponent);
     const app = fixture.debugElement.componentInstance;
     expect(app.title).toEqual('app works!');

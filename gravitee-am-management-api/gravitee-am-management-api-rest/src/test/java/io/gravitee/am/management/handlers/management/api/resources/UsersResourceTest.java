@@ -15,29 +15,28 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -70,12 +69,12 @@ public class UsersResourceTest extends JerseySpringTest {
         doReturn(Single.just(pagedUsers)).when(userService).findByDomain(domainId, 0, 10);
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .queryParam("page", 0)
-                .queryParam("size", 10)
-                .request()
-                .get();
+            .path(domainId)
+            .path("users")
+            .queryParam("page", 0)
+            .queryParam("size", 10)
+            .request()
+            .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
@@ -103,10 +102,7 @@ public class UsersResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(false).when(passwordValidator).validate(anyString());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .request().post(Entity.json(newUser));
+        final Response response = target("domains").path(domainId).path("users").request().post(Entity.json(newUser));
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
@@ -125,10 +121,7 @@ public class UsersResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.error(new UserProviderNotFoundException(newUser.getSource()))).when(userService).create(anyString(), any(), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .request().post(Entity.json(newUser));
+        final Response response = target("domains").path(domainId).path("users").request().post(Entity.json(newUser));
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
@@ -147,10 +140,7 @@ public class UsersResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(new User())).when(userService).create(anyString(), any(), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .request().post(Entity.json(newUser));
+        final Response response = target("domains").path(domainId).path("users").request().post(Entity.json(newUser));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

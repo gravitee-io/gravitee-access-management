@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { AuthService } from "../../services/auth.service";
-import { Router } from "@angular/router";
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-callback',
-  template: ``
+  template: '',
 })
 export class LogoutCallbackComponent implements OnInit {
-
-  constructor(private authService: AuthService, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.authService.logout().subscribe(res => this.router.navigate(['/login']));
+    this.authService.logout().subscribe((res) => this.router.navigate(['/login']));
   }
-
 }

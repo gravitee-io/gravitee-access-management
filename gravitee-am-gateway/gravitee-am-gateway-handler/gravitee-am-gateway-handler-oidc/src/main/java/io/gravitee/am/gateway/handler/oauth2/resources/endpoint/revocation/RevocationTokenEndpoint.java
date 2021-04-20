@@ -36,14 +36,13 @@ import org.slf4j.LoggerFactory;
  */
 public class RevocationTokenEndpoint implements Handler<RoutingContext> {
 
-    private final static Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
-    private final static String TOKEN_PARAM = "token";
-    private final static String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
+    private static final Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
+    private static final String TOKEN_PARAM = "token";
+    private static final String TOKEN_TYPE_HINT_PARAM = "token_type_hint";
     private static final String CLIENT_CONTEXT_KEY = "client";
     private RevocationTokenService revocationTokenService;
 
-    public RevocationTokenEndpoint() {
-    }
+    public RevocationTokenEndpoint() {}
 
     public RevocationTokenEndpoint(RevocationTokenService revocationTokenService) {
         this.revocationTokenService = revocationTokenService;
@@ -62,9 +61,8 @@ public class RevocationTokenEndpoint implements Handler<RoutingContext> {
         }
 
         revocationTokenService
-                .revoke(createRequest(context), client)
-                .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
-
+            .revoke(createRequest(context), client)
+            .subscribe(() -> context.response().setStatusCode(200).end(), error -> context.fail(error));
     }
 
     private static RevocationTokenRequest createRequest(RoutingContext context) {

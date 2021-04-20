@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -28,14 +28,13 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolve
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -57,12 +56,14 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     private final IdentityProviderManager identityProviderManager;
     private Date minDate;
 
-    public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
-                                 ExtensionGrant extensionGrant,
-                                 UserAuthenticationManager userAuthenticationManager,
-                                 TokenService tokenService,
-                                 TokenRequestResolver tokenRequestResolver,
-                                 IdentityProviderManager identityProviderManager) {
+    public ExtensionGrantGranter(
+        ExtensionGrantProvider extensionGrantProvider,
+        ExtensionGrant extensionGrant,
+        UserAuthenticationManager userAuthenticationManager,
+        TokenService tokenService,
+        TokenRequestResolver tokenRequestResolver,
+        IdentityProviderManager identityProviderManager
+    ) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
@@ -89,12 +90,19 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
 
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
-        return extensionGrantProvider.grant(convert(tokenRequest))
-                .flatMap(endUser -> {
+        return extensionGrantProvider
+            .grant(convert(tokenRequest))
+            .flatMap(
+                endUser -> {
                     if (extensionGrant.isCreateUser()) {
-                        Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(endUser.getAdditionalInformation());
+                        Map<String, Object> additionalInformation = endUser.getAdditionalInformation() == null
+                            ? new HashMap<>()
+                            : new HashMap<>(endUser.getAdditionalInformation());
                         // set source provider
-                        additionalInformation.put("source", extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId());
+                        additionalInformation.put(
+                            "source",
+                            extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId()
+                        );
                         additionalInformation.put("client_id", client.getId());
                         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
                         return userAuthenticationManager.connect(endUser, false).toMaybe();
@@ -105,9 +113,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                 return Maybe.error(new InvalidGrantException("No identity_provider provided"));
                             }
                             return identityProviderManager
-                                    .get(extensionGrant.getIdentityProvider())
-                                    .flatMap((Function<AuthenticationProvider, MaybeSource<io.gravitee.am.identityprovider.api.User>>) authProvider -> authProvider.loadUserByUsername(endUser.getUsername()))
-                                    .map(idpUser -> {
+                                .get(extensionGrant.getIdentityProvider())
+                                .flatMap(
+                                    (Function<AuthenticationProvider, MaybeSource<io.gravitee.am.identityprovider.api.User>>) authProvider ->
+                                        authProvider.loadUserByUsername(endUser.getUsername())
+                                )
+                                .map(
+                                    idpUser -> {
                                         User user = new User();
                                         user.setId(idpUser.getId());
                                         user.setUsername(endUser.getUsername());
@@ -123,8 +135,9 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                         user.setUpdatedAt(idpUser.getUpdatedAt());
                                         user.setRoles(idpUser.getRoles());
                                         return user;
-                                    })
-                                    .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
+                                    }
+                                )
+                                .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
                         } else {
                             User user = new User();
                             // we do not router AM user, user id is the idp user id
@@ -134,10 +147,13 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                             return Maybe.just(user);
                         }
                     }
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     return Maybe.error(new InvalidGrantException(ex.getMessage()));
-                });
+                }
+            );
     }
 
     public void setMinDate(Date minDate) {
@@ -156,8 +172,14 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
 
     private boolean canHandle(Client client) {
         final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
-        return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
-                && ( authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
-                    || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
+        return (
+            authorizedGrantTypes != null &&
+            !authorizedGrantTypes.isEmpty() &&
+            (
+                authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId()) ||
+                authorizedGrantTypes.contains(extensionGrant.getGrantType()) &&
+                extensionGrant.getCreatedAt().equals(minDate)
+            )
+        );
     }
 }

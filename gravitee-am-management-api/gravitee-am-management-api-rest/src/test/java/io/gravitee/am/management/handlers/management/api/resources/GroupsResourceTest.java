@@ -15,6 +15,11 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
@@ -25,18 +30,12 @@ import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,17 +64,17 @@ public class GroupsResourceTest extends JerseySpringTest {
         doReturn(Single.just(pagedUsers)).when(groupService).findByDomain(domainId, 0, 10);
 
         final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .queryParam("page", 0)
-                .queryParam("size", 10)
-                .request()
-                .get();
+            .path(domainId)
+            .path("groups")
+            .queryParam("page", 0)
+            .queryParam("size", 10)
+            .request()
+            .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map entity = readEntity(response, Map.class);
-        assertTrue(((List)entity.get("data")).size() == 2);
+        assertTrue(((List) entity.get("data")).size() == 2);
     }
 
     @Test
@@ -102,10 +101,7 @@ public class GroupsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(group)).when(groupService).create(any(), any(), any());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("groups")
-                .request().post(Entity.json(newGroup));
+        final Response response = target("domains").path(domainId).path("groups").request().post(Entity.json(newGroup));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

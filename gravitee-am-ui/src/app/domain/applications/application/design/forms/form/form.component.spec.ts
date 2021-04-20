@@ -23,9 +23,8 @@ describe('ApplicationFormComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationFormComponent ]
-    })
-    .compileComponents();
+      declarations: [ApplicationFormComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

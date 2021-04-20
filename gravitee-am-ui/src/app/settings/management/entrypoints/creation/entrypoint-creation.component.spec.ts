@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {EntrypointCreationComponent} from './entrypoint-creation.component';
+import { EntrypointCreationComponent } from './entrypoint-creation.component';
 
 describe('EntrypointCreationComponent', () => {
   let component: EntrypointCreationComponent;
@@ -23,9 +23,8 @@ describe('EntrypointCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ EntrypointCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [EntrypointCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

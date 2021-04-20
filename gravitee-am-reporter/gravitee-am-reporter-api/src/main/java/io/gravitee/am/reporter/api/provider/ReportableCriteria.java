@@ -20,7 +20,6 @@ package io.gravitee.am.reporter.api.provider;
  * @author GraviteeSource Team
  */
 public interface ReportableCriteria {
-
     long from();
     long to();
 }

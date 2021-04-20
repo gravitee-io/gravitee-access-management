@@ -19,7 +19,6 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -28,7 +27,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String> {
-
     Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId);
 
     Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user);
@@ -40,5 +38,4 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
     Completable deleteByDomainAndUserAndClient(String domain, String user, String client);
 
     Completable deleteByDomainAndUser(String domain, String user);
-
 }

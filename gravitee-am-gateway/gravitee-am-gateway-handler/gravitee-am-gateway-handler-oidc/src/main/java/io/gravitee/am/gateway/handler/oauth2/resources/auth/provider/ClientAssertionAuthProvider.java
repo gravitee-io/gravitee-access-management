@@ -60,7 +60,7 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
     private static final Logger logger = LoggerFactory.getLogger(ClientAssertionAuthProvider.class);
     private ClientAssertionService clientAssertionService;
 
-    public ClientAssertionAuthProvider() { }
+    public ClientAssertionAuthProvider() {}
 
     public ClientAssertionAuthProvider(ClientAssertionService clientAssertionService) {
         this.clientAssertionService = clientAssertionService;
@@ -68,14 +68,21 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
 
     @Override
     public boolean canHandle(Client client, HttpServerRequest request) {
-        if (client != null && (
+        if (
+            client != null &&
+            (
                 ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(client.getTokenEndpointAuthMethod()) ||
-                        ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod()))) {
+                ClientAuthenticationMethod.CLIENT_SECRET_JWT.equals(client.getTokenEndpointAuthMethod())
+            )
+        ) {
             return true;
         }
 
-        if ((client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty())
-                && getClientAssertion(request) != null && getClientAssertionType(request) != null) {
+        if (
+            (client == null || client.getTokenEndpointAuthMethod() == null || client.getTokenEndpointAuthMethod().isEmpty()) &&
+            getClientAssertion(request) != null &&
+            getClientAssertionType(request) != null
+        ) {
             return true;
         }
         return false;
@@ -88,27 +95,34 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
         String clientId = request.getParam(Parameters.CLIENT_ID);
         String basePath = UriBuilderRequest.extractBasePath(request);
 
-        clientAssertionService.assertClient(clientAssertionType, clientAssertion, basePath)
-                .flatMap(client1 -> {
+        clientAssertionService
+            .assertClient(clientAssertionType, clientAssertion, basePath)
+            .flatMap(
+                client1 -> {
                     // clientId is optional, but if provided we must ensure it is the same than the logged client.
-                    if(clientId != null && !clientId.equals(client1.getClientId())) {
+                    if (clientId != null && !clientId.equals(client1.getClientId())) {
                         return Maybe.error(new InvalidClientException("client_id parameter does not match with assertion"));
                     }
                     return Maybe.just(client1);
-                })
-                .subscribe(
-                        client1 -> handler.handle(Future.succeededFuture(client1)),
-                        throwable -> {
-                            if (throwable instanceof InvalidClientException) {
-                                logger.debug("Failed to authenticate client with assertion method", throwable);
-                                handler.handle(Future.failedFuture(throwable));
-                            } else {
-                                logger.error("Failed to authenticate client with assertion method", throwable);
-                                handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: Failed to authenticate client with assertion method", throwable)));
-                            }
-                        },
-                        () -> handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
-                );
+                }
+            )
+            .subscribe(
+                client1 -> handler.handle(Future.succeededFuture(client1)),
+                throwable -> {
+                    if (throwable instanceof InvalidClientException) {
+                        logger.debug("Failed to authenticate client with assertion method", throwable);
+                        handler.handle(Future.failedFuture(throwable));
+                    } else {
+                        logger.error("Failed to authenticate client with assertion method", throwable);
+                        handler.handle(
+                            Future.failedFuture(
+                                new InvalidClientException("Invalid client: Failed to authenticate client with assertion method", throwable)
+                            )
+                        );
+                    }
+                },
+                () -> handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)))
+            );
     }
 
     public void setClientAssertionService(ClientAssertionService clientAssertionService) {
@@ -122,5 +136,4 @@ public class ClientAssertionAuthProvider implements ClientAuthProvider {
     private String getClientAssertion(HttpServerRequest request) {
         return request.getParam(Parameters.CLIENT_ASSERTION);
     }
-
 }

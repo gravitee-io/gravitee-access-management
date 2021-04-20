@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from "@angular/router";
-import { ProviderService } from "../../../services/provider.service";
-import { SnackbarService } from "../../../services/snackbar.service";
-import { OrganizationService } from "../../../services/organization.service";
-import { AuthService } from "../../../services/auth.service";
+import { ActivatedRoute } from '@angular/router';
+import { ProviderService } from '../../../services/provider.service';
+import { SnackbarService } from '../../../services/snackbar.service';
+import { OrganizationService } from '../../../services/organization.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-settings-management-general',
   templateUrl: './general.component.html',
-  styleUrls: ['./general.component.scss']
+  styleUrls: ['./general.component.scss'],
 })
 export class ManagementGeneralComponent implements OnInit {
   settings: any;
@@ -31,32 +31,37 @@ export class ManagementGeneralComponent implements OnInit {
   socialIdentities: any[] = [];
   readonly: boolean;
 
-  constructor(private providerService: ProviderService,
-              private organizationService: OrganizationService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute) { }
+  constructor(
+    private providerService: ProviderService,
+    private organizationService: OrganizationService,
+    private snackbarService: SnackbarService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.settings = this.route.snapshot.data['settings'];
+    this.settings = this.route.snapshot.data.settings;
     this.readonly = !this.authService.hasPermissions(['organization_settings_update']);
-    this.organizationService.identityProviders().subscribe(data => {
-
+    this.organizationService.identityProviders().subscribe((data) => {
       // Separate all idps and all social idps.
-      this.identityProviders = data.filter(idp => !idp.external);
-      this.socialIdentities = data.filter(idp => idp.external);
+      this.identityProviders = data.filter((idp) => !idp.external);
+      this.socialIdentities = data.filter((idp) => idp.external);
 
       // Prepare the list of selected idps and social idps.
-      this.settings.identityProviders = this.identityProviders.filter(idp => !idp.external && this.settings.identities.includes(idp.id)).map(idp => idp.id);
-      this.settings.socialIdentities = this.socialIdentities.filter(idp => idp.external && this.settings.identities.includes(idp.id)).map(idp => idp.id);
-    })
+      this.settings.identityProviders = this.identityProviders
+        .filter((idp) => !idp.external && this.settings.identities.includes(idp.id))
+        .map((idp) => idp.id);
+      this.settings.socialIdentities = this.socialIdentities
+        .filter((idp) => idp.external && this.settings.identities.includes(idp.id))
+        .map((idp) => idp.id);
+    });
   }
 
   update() {
     const settings = {};
-    settings['identities'] = this.settings.identityProviders.concat(this.settings.socialIdentities);
+    settings.identities = this.settings.identityProviders.concat(this.settings.socialIdentities);
 
-    this.organizationService.patchSettings(settings).subscribe(response => {
+    this.organizationService.patchSettings(settings).subscribe((response) => {
       this.snackbarService.open('Settings updated');
     });
   }

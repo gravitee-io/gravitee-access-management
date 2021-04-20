@@ -17,9 +17,8 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-import org.bson.codecs.pojo.annotations.BsonId;
-
 import java.util.Date;
+import org.bson.codecs.pojo.annotations.BsonId;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,6 +28,7 @@ public class EmailMongo extends Auditable {
 
     @BsonId
     private String id;
+
     private boolean enabled;
     private ReferenceType referenceType;
     private String referenceId;

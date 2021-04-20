@@ -16,7 +16,6 @@
 package io.gravitee.am.identityprovider.github;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-
 import java.util.Set;
 
 /**

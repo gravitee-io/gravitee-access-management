@@ -18,7 +18,7 @@
 <div>
   <div>
     <div fxFlex="70">
-      <form (keydown.enter)="false" (ngSubmit)="patch()">
+      <form (keydown.enter)="(false)" (ngSubmit)="patch()">
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>MFA</h5>
@@ -27,42 +27,43 @@
           </div>
           <div fxLayout="column">
             <div *ngIf="hasFactors()">
-              <ngx-datatable class="material"
-                             [columnMode]="'flex'"
-                             [headerHeight]="40"
-                             [footerHeight]="40"
-                             [rowHeight]="50"
-                             [rows]='factors'>
+              <ngx-datatable
+                class="material"
+                [columnMode]="'flex'"
+                [headerHeight]="40"
+                [footerHeight]="40"
+                [rowHeight]="50"
+                [rows]="factors"
+              >
                 <ngx-datatable-column name="Factors" [flexGrow]="4">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    {{row.name}}
+                    {{ row.name }}
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" [flexGrow]="1">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                   <span style="display: flex; align-items: center;">
-                    <mat-icon>{{getFactorTypeIcon(row.type)}}</mat-icon>
-                    <small style="margin-left: 5px;">{{displayFactorType(row.type)}}</small>
-                  </span>
+                    <span style="display: flex; align-items: center">
+                      <mat-icon>{{ getFactorTypeIcon(row.type) }}</mat-icon>
+                      <small style="margin-left: 5px">{{ displayFactorType(row.type) }}</small>
+                    </span>
                   </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column name="" [flexGrow]="1">
                   <ng-template let-row="row" ngx-datatable-cell-template>
-                    <mat-slide-toggle (change)="selectFactor($event, row.id)"
-                                      [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
+                    <mat-slide-toggle (change)="selectFactor($event, row.id)" [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
                     </mat-slide-toggle>
                   </ng-template>
                 </ngx-datatable-column>
               </ngx-datatable>
             </div>
 
-            <div *ngIf="!hasFactors()" style="font-size: 14px; text-align: center;">
+            <div *ngIf="!hasFactors()" style="font-size: 14px; text-align: center">
               <p>No multi-factor authentication has been set up.</p>
             </div>
           </div>
         </div>
 
-        <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_factor_update']">
+        <div fxLayout="row" style="margin-top: 20px" *hasPermission="['application_factor_update']">
           <button mat-raised-button type="submit" [disabled]="!formChanged">SAVE</button>
         </div>
       </form>
@@ -70,7 +71,10 @@
     <div class="gv-page-description" fxFlex>
       <h3>Multi-factor Authentication</h3>
       <div class="gv-page-description-content">
-        <p>By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after he has been authenticated.</p>
+        <p>
+          By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after he has been
+          authenticated.
+        </p>
       </div>
     </div>
   </div>

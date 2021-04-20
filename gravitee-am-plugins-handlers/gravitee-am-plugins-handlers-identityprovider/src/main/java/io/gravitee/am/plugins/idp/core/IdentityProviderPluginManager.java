@@ -20,7 +20,6 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.plugin.core.api.Plugin;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -30,20 +29,30 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderPluginManager {
-
     void register(IdentityProviderDefinition identityProviderPluginDefinition);
 
     Map<IdentityProvider, Plugin> getAll();
 
     Plugin findById(String identityProviderId);
 
-    AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager);
+    AuthenticationProvider create(
+        String type,
+        String configuration,
+        Map<String, String> mappers,
+        Map<String, String[]> roleMapper,
+        CertificateManager certificateManager
+    );
 
     UserProvider create(String type, String configuration);
 
     String getSchema(String identityProviderId) throws IOException;
 
-    default AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
+    default AuthenticationProvider create(
+        String type,
+        String configuration,
+        Map<String, String> mappers,
+        Map<String, String[]> roleMapper
+    ) {
         return create(type, configuration, mappers, roleMapper, null);
     }
 }

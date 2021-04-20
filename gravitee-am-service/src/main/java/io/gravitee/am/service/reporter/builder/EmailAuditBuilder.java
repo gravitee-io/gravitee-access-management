@@ -18,8 +18,8 @@ package io.gravitee.am.service.reporter.builder;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.model.Platform;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

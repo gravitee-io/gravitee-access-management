@@ -38,15 +38,14 @@ import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -74,31 +73,47 @@ public class ReporterServiceImpl implements ReporterService {
     @Override
     public Single<List<Reporter>> findAll() {
         LOGGER.debug("Find all reporters");
-        return reporterRepository.findAll()
-                .onErrorResumeNext(ex -> {
+        return reporterRepository
+            .findAll()
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find all reporter", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find all reporters", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Single<List<Reporter>> findByDomain(String domain) {
         LOGGER.debug("Find reporters by domain: {}", domain);
-        return reporterRepository.findByDomain(domain)
-                .onErrorResumeNext(ex -> {
+        return reporterRepository
+            .findByDomain(domain)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find reporters by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", domain), ex));
-                });
+                    return Single.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to find reporters by domain: %s", domain),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 
     @Override
     public Maybe<Reporter> findById(String id) {
         LOGGER.debug("Find reporter by id: {}", id);
-        return reporterRepository.findById(id)
-                .onErrorResumeNext(ex -> {
+        return reporterRepository
+            .findById(id)
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to find reporters by id: {}", id, ex);
-                    return Maybe.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by id: %s", id), ex));
-                });
+                    return Maybe.error(
+                        new TechnicalManagementException(String.format("An error occurs while trying to find reporters by id: %s", id), ex)
+                    );
+                }
+            );
     }
 
     @Override
@@ -114,7 +129,19 @@ public class ReporterServiceImpl implements ReporterService {
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
         newReporter.setType("mongodb");
-        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits_" + domain + "\",\"bulkActions\":1000,\"flushInterval\":5}");
+        newReporter.setConfiguration(
+            "{\"uri\":\"" +
+            mongoUri +
+            "\",\"host\":\"" +
+            mongoHost +
+            "\",\"port\":" +
+            mongoPort +
+            ",\"enableCredentials\":false,\"database\":\"" +
+            mongoDBName +
+            "\",\"reportableCollection\":\"reporter_audits_" +
+            domain +
+            "\",\"bulkActions\":1000,\"flushInterval\":5}"
+        );
 
         LOGGER.debug("Create default reporter for domain {}", domain);
         return create(domain, newReporter);
@@ -136,77 +163,164 @@ public class ReporterServiceImpl implements ReporterService {
         reporter.setCreatedAt(new Date());
         reporter.setUpdatedAt(reporter.getCreatedAt());
 
-        return reporterRepository.create(reporter)
-                .flatMap(reporter1 -> {
+        return reporterRepository
+            .create(reporter)
+            .flatMap(
+                reporter1 -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.CREATE));
+                    Event event = new Event(
+                        Type.REPORTER,
+                        new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.CREATE)
+                    );
                     return eventService.create(event).flatMap(__ -> Single.just(reporter1));
-                })
-                .onErrorResumeNext(ex -> {
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     LOGGER.error("An error occurs while trying to create a reporter", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a reporter", ex));
-                })
-                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
+                }
+            )
+            .doOnSuccess(
+                reporter1 ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(ReporterAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.REPORTER_CREATED)
+                            .reporter(reporter1)
+                    )
+            )
+            .doOnError(
+                throwable ->
+                    auditService.report(
+                        AuditBuilder
+                            .builder(ReporterAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.REPORTER_CREATED)
+                            .throwable(throwable)
+                    )
+            );
     }
 
     @Override
     public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal) {
         LOGGER.debug("Update a reporter {} for domain {}", id, domain);
 
-        return reporterRepository.findById(id)
-                .switchIfEmpty(Maybe.error(new ReporterNotFoundException(id)))
-                .flatMapSingle(oldReporter -> {
+        return reporterRepository
+            .findById(id)
+            .switchIfEmpty(Maybe.error(new ReporterNotFoundException(id)))
+            .flatMapSingle(
+                oldReporter -> {
                     Reporter reporterToUpdate = new Reporter(oldReporter);
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
                     reporterToUpdate.setName(updateReporter.getName());
                     reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
                     reporterToUpdate.setUpdatedAt(new Date());
 
-                    return reporterRepository.update(reporterToUpdate)
-                            .flatMap(reporter1 -> {
+                    return reporterRepository
+                        .update(reporterToUpdate)
+                        .flatMap(
+                            reporter1 -> {
                                 // create event for sync process
                                 // except for admin domain
                                 if (!ADMIN_DOMAIN.equals(domain)) {
-                                    Event event = new Event(Type.REPORTER, new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE));
+                                    Event event = new Event(
+                                        Type.REPORTER,
+                                        new Payload(reporter1.getId(), ReferenceType.DOMAIN, reporter1.getDomain(), Action.UPDATE)
+                                    );
                                     return eventService.create(event).flatMap(__ -> Single.just(reporter1));
                                 } else {
                                     return Single.just(reporter1);
                                 }
-                            })
-                            .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(oldReporter).reporter(reporter1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                            }
+                        )
+                        .doOnSuccess(
+                            reporter1 ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ReporterAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REPORTER_UPDATED)
+                                        .oldValue(oldReporter)
+                                        .reporter(reporter1)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ReporterAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REPORTER_UPDATED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update a reporter", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update a reporter", ex));
-                });
+                }
+            );
     }
 
     @Override
     public Completable delete(String reporterId, User principal) {
         LOGGER.debug("Delete reporter {}", reporterId);
-        return reporterRepository.findById(reporterId)
-                .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
-                .flatMapCompletable(reporter -> {
+        return reporterRepository
+            .findById(reporterId)
+            .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporterId)))
+            .flatMapCompletable(
+                reporter -> {
                     // create event for sync process
-                    Event event = new Event(Type.REPORTER, new Payload(reporterId, ReferenceType.DOMAIN, reporter.getDomain(), Action.DELETE));
-                    return reporterRepository.delete(reporterId)
-                            .andThen(eventService.create(event))
-                            .toCompletable()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).reporter(reporter)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_DELETED).throwable(throwable)));
-                })
-                .onErrorResumeNext(ex -> {
+                    Event event = new Event(
+                        Type.REPORTER,
+                        new Payload(reporterId, ReferenceType.DOMAIN, reporter.getDomain(), Action.DELETE)
+                    );
+                    return reporterRepository
+                        .delete(reporterId)
+                        .andThen(eventService.create(event))
+                        .toCompletable()
+                        .doOnComplete(
+                            () ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ReporterAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REPORTER_DELETED)
+                                        .reporter(reporter)
+                                )
+                        )
+                        .doOnError(
+                            throwable ->
+                                auditService.report(
+                                    AuditBuilder
+                                        .builder(ReporterAuditBuilder.class)
+                                        .principal(principal)
+                                        .type(EventType.REPORTER_DELETED)
+                                        .throwable(throwable)
+                                )
+                        );
+                }
+            )
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to delete reporter: {}", reporterId, ex);
-                    return Completable.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to delete reporter: %s", reporterId), ex));
-                });
+                    return Completable.error(
+                        new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete reporter: %s", reporterId),
+                            ex
+                        )
+                    );
+                }
+            );
     }
 }

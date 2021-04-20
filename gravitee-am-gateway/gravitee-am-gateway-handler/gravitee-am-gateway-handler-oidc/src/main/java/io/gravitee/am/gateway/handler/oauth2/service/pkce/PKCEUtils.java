@@ -44,9 +44,11 @@ public final class PKCEUtils {
      * @return
      */
     public static boolean validCodeChallenge(String codeChallenge) {
-        return !(codeChallenge.length() < PKCE_CODE_CHALLENGE_MIN_LENGTH
-                || codeChallenge.length() > PKCE_CODE_CHALLENGE_MAX_LENGTH
-                || !CODE_CHALLENGE_PATTERN.matcher(codeChallenge).matches());
+        return !(
+            codeChallenge.length() < PKCE_CODE_CHALLENGE_MIN_LENGTH ||
+            codeChallenge.length() > PKCE_CODE_CHALLENGE_MAX_LENGTH ||
+            !CODE_CHALLENGE_PATTERN.matcher(codeChallenge).matches()
+        );
     }
 
     /**
@@ -57,9 +59,11 @@ public final class PKCEUtils {
      * @return
      */
     public static boolean validCodeVerifier(String codeVerifier) {
-        return !(codeVerifier.length() < PKCE_CODE_VERIFIER_MIN_LENGTH
-                || codeVerifier.length() > PKCE_CODE_VERIFIER_MAX_LENGTH
-                || !VALID_CODE_VERIFIER_PATTERN.matcher(codeVerifier).matches());
+        return !(
+            codeVerifier.length() < PKCE_CODE_VERIFIER_MIN_LENGTH ||
+            codeVerifier.length() > PKCE_CODE_VERIFIER_MAX_LENGTH ||
+            !VALID_CODE_VERIFIER_PATTERN.matcher(codeVerifier).matches()
+        );
     }
 
     /**

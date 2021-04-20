@@ -23,7 +23,6 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface EmailManager extends Service<EmailManager> {
-
     String TEMPLATE_NAME_SEPARATOR = "|";
 
     Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);

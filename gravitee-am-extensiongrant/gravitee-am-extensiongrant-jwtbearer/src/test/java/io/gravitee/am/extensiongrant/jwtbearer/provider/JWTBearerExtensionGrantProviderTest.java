@@ -15,22 +15,21 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.User;
 import io.jsonwebtoken.Claims;
+import java.util.*;
+import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.*;
-import java.util.regex.Pattern;
-
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -82,13 +81,11 @@ public class JWTBearerExtensionGrantProviderTest {
 
         Claims claims = createClaims(assertionClaims);
 
-
         User user = jwtBearerExtensionGrantProvider.createUser(claims);
 
         assertEquals(3, user.getAdditionalInformation().values().size());
         assertEquals("test_username", user.getAdditionalInformation().get("username"));
         assertEquals("test_email", user.getAdditionalInformation().get("email"));
-
     }
 
     private Claims createClaims(Map<String, Object> claims) {

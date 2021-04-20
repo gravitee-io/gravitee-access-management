@@ -50,17 +50,17 @@ public class HttpAuthenticationProviderConfiguration {
     public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
-                .setUserAgent(DEFAULT_USER_AGENT)
-                .setConnectTimeout(configuration.getConnectTimeout())
-                .setMaxPoolSize(configuration.getMaxPoolSize());
+            .setUserAgent(DEFAULT_USER_AGENT)
+            .setConnectTimeout(configuration.getConnectTimeout())
+            .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        final boolean ssl = configuration.getAuthenticationResource().getBaseURL() != null
-                && configuration.getAuthenticationResource().getBaseURL().startsWith("https://");
+        final boolean ssl =
+            configuration.getAuthenticationResource().getBaseURL() != null &&
+            configuration.getAuthenticationResource().getBaseURL().startsWith("https://");
         if (ssl) {
             httpClientOptions.setSsl(true);
             httpClientOptions.setTrustAll(true);
         }
-
 
         return webClientBuilder.createWebClient(vertx, httpClientOptions);
     }

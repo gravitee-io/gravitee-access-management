@@ -16,12 +16,11 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -29,7 +28,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface GroupRepository extends CrudRepository<Group, String> {
-
     Single<List<Group>> findByMember(String memberId);
 
     Single<List<Group>> findAll(ReferenceType referenceType, String referenceId);

@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -156,13 +156,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator);
 
         // login route
-        rootRouter.get("/login")
-                .handler(new LoginRequestParseHandler())
-                .handler(clientRequestParseHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, domain))
-                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
-        rootRouter.post("/login")
-                .handler(FormLoginHandler.create(userAuthProvider));
+        rootRouter
+            .get("/login")
+            .handler(new LoginRequestParseHandler())
+            .handler(clientRequestParseHandler)
+            .handler(new LoginSocialAuthenticationHandler(identityProviderManager, domain))
+            .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
+        rootRouter.post("/login").handler(FormLoginHandler.create(userAuthProvider));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager));
@@ -171,78 +171,90 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler();
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine, domain);
-        rootRouter.get("/login/callback")
-                .handler(loginCallbackParseHandler)
-                .handler(loginCallbackOpenIDConnectFlowHandler)
-                .handler(socialAuthHandler)
-                .handler(loginCallbackEndpoint)
-                .failureHandler(loginCallbackFailureHandler);
-        rootRouter.post("/login/callback")
-                .handler(loginCallbackParseHandler)
-                .handler(loginCallbackOpenIDConnectFlowHandler)
-                .handler(socialAuthHandler)
-                .handler(loginCallbackEndpoint)
-                .failureHandler(loginCallbackFailureHandler);
-        rootRouter.get("/login/SSO/POST")
-                .handler(loginCallbackParseHandler)
-                .handler(loginSSOPOSTEndpoint)
-                .failureHandler(loginCallbackFailureHandler);
+        rootRouter
+            .get("/login/callback")
+            .handler(loginCallbackParseHandler)
+            .handler(loginCallbackOpenIDConnectFlowHandler)
+            .handler(socialAuthHandler)
+            .handler(loginCallbackEndpoint)
+            .failureHandler(loginCallbackFailureHandler);
+        rootRouter
+            .post("/login/callback")
+            .handler(loginCallbackParseHandler)
+            .handler(loginCallbackOpenIDConnectFlowHandler)
+            .handler(socialAuthHandler)
+            .handler(loginCallbackEndpoint)
+            .failureHandler(loginCallbackFailureHandler);
+        rootRouter
+            .get("/login/SSO/POST")
+            .handler(loginCallbackParseHandler)
+            .handler(loginSSOPOSTEndpoint)
+            .failureHandler(loginCallbackFailureHandler);
 
         // MFA route
-        rootRouter.route("/mfa/enroll")
-                .handler(clientRequestParseHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
-        rootRouter.route("/mfa/challenge")
-                .handler(clientRequestParseHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine));
+        rootRouter
+            .route("/mfa/enroll")
+            .handler(clientRequestParseHandler)
+            .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
+        rootRouter
+            .route("/mfa/challenge")
+            .handler(clientRequestParseHandler)
+            .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine));
 
         // logout route
         rootRouter.route("/logout").handler(new LogoutEndpoint(domain, tokenService, auditService));
 
         // error route
-        rootRouter.route(HttpMethod.GET, "/error")
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+        rootRouter.route(HttpMethod.GET, "/error").handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
 
         // mount forgot/reset registration pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isRegisterEnabled()) {
-            rootRouter.route(HttpMethod.GET, "/register")
-                    .handler(clientRequestParseHandler)
-                    .handler(new RegisterEndpoint(thymeleafTemplateEngine));
-            rootRouter.route(HttpMethod.POST, "/register")
-                    .handler(new RegisterSubmissionRequestParseHandler())
-                    .handler(clientRequestParseHandlerOptional)
-                    .handler(passwordPolicyRequestParseHandler)
-                    .handler(new RegisterSubmissionEndpoint(userService, domain));
+            rootRouter
+                .route(HttpMethod.GET, "/register")
+                .handler(clientRequestParseHandler)
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine));
+            rootRouter
+                .route(HttpMethod.POST, "/register")
+                .handler(new RegisterSubmissionRequestParseHandler())
+                .handler(clientRequestParseHandlerOptional)
+                .handler(passwordPolicyRequestParseHandler)
+                .handler(new RegisterSubmissionEndpoint(userService, domain));
         }
 
-        rootRouter.route(HttpMethod.GET,"/confirmRegistration")
-                .handler(new RegisterConfirmationRequestParseHandler(userService))
-                .handler(clientRequestParseHandlerOptional)
-                .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine));
-        rootRouter.route(HttpMethod.POST, "/confirmRegistration")
-                .handler(new RegisterConfirmationSubmissionRequestParseHandler())
-                .handler(userTokenRequestParseHandler)
-                .handler(passwordPolicyRequestParseHandler)
-                .handler(new RegisterConfirmationSubmissionEndpoint(userService));
+        rootRouter
+            .route(HttpMethod.GET, "/confirmRegistration")
+            .handler(new RegisterConfirmationRequestParseHandler(userService))
+            .handler(clientRequestParseHandlerOptional)
+            .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine));
+        rootRouter
+            .route(HttpMethod.POST, "/confirmRegistration")
+            .handler(new RegisterConfirmationSubmissionRequestParseHandler())
+            .handler(userTokenRequestParseHandler)
+            .handler(passwordPolicyRequestParseHandler)
+            .handler(new RegisterConfirmationSubmissionEndpoint(userService));
 
         // mount forgot/reset password pages only if the option is enabled
         if (domain.getLoginSettings() != null && domain.getLoginSettings().isForgotPasswordEnabled()) {
-            rootRouter.route(HttpMethod.GET, "/forgotPassword")
-                    .handler(clientRequestParseHandler)
-                    .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine));
-            rootRouter.route(HttpMethod.POST, "/forgotPassword")
-                    .handler(new ForgotPasswordSubmissionRequestParseHandler())
-                    .handler(clientRequestParseHandler)
-                    .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
-            rootRouter.route(HttpMethod.GET, "/resetPassword")
-                    .handler(new ResetPasswordRequestParseHandler(userService))
-                    .handler(clientRequestParseHandlerOptional)
-                    .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine));
-            rootRouter.route(HttpMethod.POST, "/resetPassword")
-                    .handler(new ResetPasswordSubmissionRequestParseHandler())
-                    .handler(userTokenRequestParseHandler)
-                    .handler(passwordPolicyRequestParseHandler)
-                    .handler(new ResetPasswordSubmissionEndpoint(userService));
+            rootRouter
+                .route(HttpMethod.GET, "/forgotPassword")
+                .handler(clientRequestParseHandler)
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine));
+            rootRouter
+                .route(HttpMethod.POST, "/forgotPassword")
+                .handler(new ForgotPasswordSubmissionRequestParseHandler())
+                .handler(clientRequestParseHandler)
+                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
+            rootRouter
+                .route(HttpMethod.GET, "/resetPassword")
+                .handler(new ResetPasswordRequestParseHandler(userService))
+                .handler(clientRequestParseHandlerOptional)
+                .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine));
+            rootRouter
+                .route(HttpMethod.POST, "/resetPassword")
+                .handler(new ResetPasswordSubmissionRequestParseHandler())
+                .handler(userTokenRequestParseHandler)
+                .handler(passwordPolicyRequestParseHandler)
+                .handler(new ResetPasswordSubmissionEndpoint(userService));
         }
 
         // error handler
@@ -259,47 +271,23 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     private void sessionAndCookieHandler(Router router) {
         // Login endpoint
-        router.route("/login")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
-        router
-                .route("/login/callback")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
-        router
-                .route("/login/SSO/POST")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
+        router.route("/login").handler(cookieHandler).handler(sessionHandler);
+        router.route("/login/callback").handler(cookieHandler).handler(sessionHandler);
+        router.route("/login/SSO/POST").handler(cookieHandler).handler(sessionHandler);
 
         // MFA endpoint
-        router.route("/mfa/enroll")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
-        router.route("/mfa/challenge")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
+        router.route("/mfa/enroll").handler(cookieHandler).handler(sessionHandler);
+        router.route("/mfa/challenge").handler(cookieHandler).handler(sessionHandler);
 
         // Logout endpoint
-        router
-                .route("/logout")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
+        router.route("/logout").handler(cookieHandler).handler(sessionHandler);
 
         // Registration confirmation endpoint
-        router
-                .post("/register")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
-        router
-                .route("/confirmRegistration")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
+        router.post("/register").handler(cookieHandler).handler(sessionHandler);
+        router.route("/confirmRegistration").handler(cookieHandler).handler(sessionHandler);
 
         // Reset password endpoint
-        router
-                .route("/resetPassword")
-                .handler(cookieHandler)
-                .handler(sessionHandler);
+        router.route("/resetPassword").handler(cookieHandler).handler(sessionHandler);
     }
 
     private void csrfHandler(Router router) {

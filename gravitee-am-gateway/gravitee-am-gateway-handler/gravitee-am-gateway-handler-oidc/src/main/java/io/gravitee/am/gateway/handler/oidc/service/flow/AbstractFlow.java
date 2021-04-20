@@ -24,11 +24,10 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
-import org.springframework.context.ApplicationContext;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,12 +54,21 @@ public abstract class AbstractFlow implements Flow {
     @Override
     public Single<AuthorizationResponse> run(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return prepareResponse(authorizationRequest, client, endUser)
-                .flatMap(response -> processResponse(response, authorizationRequest, client, endUser));
+            .flatMap(response -> processResponse(response, authorizationRequest, client, endUser));
     }
 
-    protected abstract Single<AuthorizationResponse> prepareResponse(AuthorizationRequest authorizationRequest, Client client, User endUser);
+    protected abstract Single<AuthorizationResponse> prepareResponse(
+        AuthorizationRequest authorizationRequest,
+        Client client,
+        User endUser
+    );
 
-    private Single<AuthorizationResponse> processResponse(AuthorizationResponse authorizationResponse, AuthorizationRequest authorizationRequest, Client client, User endUser) {
+    private Single<AuthorizationResponse> processResponse(
+        AuthorizationResponse authorizationResponse,
+        AuthorizationRequest authorizationRequest,
+        Client client,
+        User endUser
+    ) {
         // Response Mode is not supplied by the client, process the response as usual
         if (authorizationRequest.getResponseMode() == null || !authorizationRequest.getResponseMode().endsWith("jwt")) {
             return Single.just(authorizationResponse);
@@ -74,15 +82,18 @@ public abstract class AbstractFlow implements Flow {
         jwtAuthorizationResponse.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
 
         // Sign if needed, else return unsigned JWT
-        return jwtService.encodeAuthorization(jwtAuthorizationResponse.build(), client)
-                // Encrypt if needed, else return JWT
-                .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
-                .map(token -> {
+        return jwtService
+            .encodeAuthorization(jwtAuthorizationResponse.build(), client)
+            // Encrypt if needed, else return JWT
+            .flatMap(authorization -> jweService.encryptAuthorization(authorization, client))
+            .map(
+                token -> {
                     jwtAuthorizationResponse.setResponseType(authorizationRequest.getResponseType());
                     jwtAuthorizationResponse.setResponseMode(authorizationRequest.getResponseMode());
                     jwtAuthorizationResponse.setToken(token);
                     return jwtAuthorizationResponse;
-                });
+                }
+            );
     }
 
     void setApplicationContext(ApplicationContext applicationContext) {

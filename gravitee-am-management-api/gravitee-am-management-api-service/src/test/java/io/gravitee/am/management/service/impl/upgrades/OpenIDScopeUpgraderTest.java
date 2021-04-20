@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.management.service.impl.upgrades.OpenIDScopeUpgrader;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
@@ -24,18 +27,14 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.UpdateSystemScope;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Arrays;
+import java.util.HashSet;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -67,7 +66,7 @@ public class OpenIDScopeUpgraderTest {
     @Test
     public void shouldCreateSystemScope() {
         when(scopeService.findByDomainAndKey(eq(DOMAIN_ID), anyString())).thenReturn(Maybe.empty());
-        when(scopeService.create(anyString(),any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
 
         assertTrue(openIDScopeUpgrader.upgrade());
         verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
@@ -77,18 +76,18 @@ public class OpenIDScopeUpgraderTest {
     public void shouldUpdateSystemScope() {
         Scope openId = new Scope();
         openId.setId("1");
-        openId.setSystem(false);//expect to be updated because not set as system
+        openId.setSystem(false); //expect to be updated because not set as system
         openId.setKey("openid");
 
         Scope phone = new Scope();
         phone.setId("2");
         phone.setSystem(true);
         phone.setKey("phone");
-        phone.setDiscovery(false);//expect to be updated because not same discovery value
+        phone.setDiscovery(false); //expect to be updated because not same discovery value
 
         Scope email = new Scope();
         email.setId("3");
-        email.setSystem(true);//expect not to be updated
+        email.setSystem(true); //expect not to be updated
         email.setKey("email");
         email.setDiscovery(true);
 
@@ -96,11 +95,11 @@ public class OpenIDScopeUpgraderTest {
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "openid")).thenReturn(Maybe.just(openId));
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "phone")).thenReturn(Maybe.just(phone));
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "email")).thenReturn(Maybe.just(email));
-        when(scopeService.create(anyString(),any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
         when(scopeService.update(anyString(), anyString(), any(UpdateSystemScope.class))).thenReturn(Single.just(new Scope()));
 
         assertTrue(openIDScopeUpgrader.upgrade());
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length-3)).create(anyString(), any(NewSystemScope.class));
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length - 3)).create(anyString(), any(NewSystemScope.class));
         verify(scopeService, times(2)).update(anyString(), anyString(), any(UpdateSystemScope.class));
     }
 }

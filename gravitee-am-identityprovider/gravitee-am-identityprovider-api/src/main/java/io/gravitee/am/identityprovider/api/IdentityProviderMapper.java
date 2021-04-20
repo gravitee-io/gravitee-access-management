@@ -22,9 +22,7 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public interface IdentityProviderMapper {
-
     Map<String, String> getMappers();
 
     void setMappers(Map<String, String> mappers);
-
 }

@@ -20,12 +20,12 @@ import { FactorService } from '../services/factor.service';
 
 @Injectable()
 export class FactorsResolver implements Resolve<any> {
+  constructor(private factorService: FactorService) {}
 
-  constructor(private factorService: FactorService) { }
-
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    const domainId = (route.parent.paramMap.get('domainId')) ? route.parent.paramMap.get('domainId') : route.parent.parent.paramMap.get('domainId');
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> | Promise<any> | any {
+    const domainId = route.parent.paramMap.get('domainId')
+      ? route.parent.paramMap.get('domainId')
+      : route.parent.parent.paramMap.get('domainId');
     return this.factorService.findByDomain(domainId);
   }
-
 }

@@ -39,19 +39,19 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
+public class MFAEnrollEndpoint implements Handler<RoutingContext> {
+
     private static final Logger logger = LoggerFactory.getLogger(MFAEnrollEndpoint.class);
     private static final String CLIENT_CONTEXT_KEY = "client";
     private static final String MFA_SKIPPED_KEY = "mfaEnrollmentSkipped";
@@ -82,32 +82,41 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
     private void renderPage(RoutingContext routingContext) {
         try {
-            final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            final io.gravitee.am.model.User endUser =
+                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
             final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().uri(), null);
 
             // load factor providers
-            load(factors, endUser, h -> {
-                if (h.failed()) {
-                    logger.error("An error occurs while loading factor providers", h.cause());
-                    routingContext.fail(503);
-                    return;
-                }
-                // put factors in context
-                routingContext.put("factors", h.result());
-                routingContext.put("action", action);
-                // render the mfa enroll page
-                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                    if (res.succeeded()) {
-                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                        routingContext.response().end(res.result());
-                    } else {
-                        logger.error("Unable to render MFA enroll page", res.cause());
-                        routingContext.fail(res.cause());
+            load(
+                factors,
+                endUser,
+                h -> {
+                    if (h.failed()) {
+                        logger.error("An error occurs while loading factor providers", h.cause());
+                        routingContext.fail(503);
+                        return;
                     }
-                });
-            });
+                    // put factors in context
+                    routingContext.put("factors", h.result());
+                    routingContext.put("action", action);
+                    // render the mfa enroll page
+                    engine.render(
+                        routingContext.data(),
+                        getTemplateFileName(client),
+                        res -> {
+                            if (res.succeeded()) {
+                                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
+                                routingContext.response().end(res.result());
+                            } else {
+                                logger.error("Unable to render MFA enroll page", res.cause());
+                                routingContext.fail(res.cause());
+                            }
+                        }
+                    );
+                }
+            );
         } catch (Exception ex) {
             logger.error("An error occurs while rendering MFA enroll page", ex);
             routingContext.fail(503);
@@ -148,21 +157,19 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
     }
 
     private void load(Map<io.gravitee.am.model.Factor, FactorProvider> providers, User user, Handler<AsyncResult<List<Factor>>> handler) {
-        Observable.fromIterable(providers.entrySet())
-                .flatMapSingle(entry -> entry.getValue().enroll(user.getUsername())
-                        .map(enrollment -> new Factor(entry.getKey(), enrollment))
-                )
-                .toList()
-                .subscribe(
-                        factors -> handler.handle(Future.succeededFuture(factors)),
-                        error -> handler.handle(Future.failedFuture(error)));
+        Observable
+            .fromIterable(providers.entrySet())
+            .flatMapSingle(entry -> entry.getValue().enroll(user.getUsername()).map(enrollment -> new Factor(entry.getKey(), enrollment)))
+            .toList()
+            .subscribe(factors -> handler.handle(Future.succeededFuture(factors)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private Map<io.gravitee.am.model.Factor, FactorProvider> getFactors(Client client) {
-        return client.getFactors()
-                .stream()
-                .filter(f -> factorManager.get(f) != null)
-                .collect(Collectors.toMap(f -> factorManager.getFactor(f), f -> factorManager.get(f)));
+        return client
+            .getFactors()
+            .stream()
+            .filter(f -> factorManager.get(f) != null)
+            .collect(Collectors.toMap(f -> factorManager.getFactor(f), f -> factorManager.get(f)));
     }
 
     private String getTemplateFileName(Client client) {
@@ -174,6 +181,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
     }
 
     private class Factor {
+
         private String id;
         private String factorType;
         private Enrollment enrollment;

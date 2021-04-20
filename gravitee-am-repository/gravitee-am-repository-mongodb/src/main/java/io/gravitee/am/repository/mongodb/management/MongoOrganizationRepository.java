@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.eq;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Organization;
@@ -24,12 +26,9 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import javax.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
-
-import static com.mongodb.client.model.Filters.eq;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -49,26 +48,23 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
 
     @Override
     public Maybe<Organization> findById(String id) {
-
-        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
-                .firstElement()
-                .map(this::convert);
+        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Single<Organization> create(Organization organization) {
-
         organization.setId(organization.getId() == null ? RandomString.generate() : organization.getId());
 
-        return Single.fromPublisher(collection.insertOne(convert(organization)))
-                .flatMap(success -> findById(organization.getId()).toSingle());
+        return Single
+            .fromPublisher(collection.insertOne(convert(organization)))
+            .flatMap(success -> findById(organization.getId()).toSingle());
     }
 
     @Override
     public Single<Organization> update(Organization organization) {
-
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, organization.getId()), convert(organization)))
-                .flatMap(updateResult -> findById(organization.getId()).toSingle());
+        return Single
+            .fromPublisher(collection.replaceOne(eq(FIELD_ID, organization.getId()), convert(organization)))
+            .flatMap(updateResult -> findById(organization.getId()).toSingle());
     }
 
     @Override
@@ -78,12 +74,10 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
 
     @Override
     public Single<Long> count() {
-
         return Single.fromPublisher(collection.countDocuments());
     }
 
     private Organization convert(OrganizationMongo organizationMongo) {
-
         Organization organization = new Organization();
         organization.setId(organizationMongo.getId());
         organization.setDescription(organizationMongo.getDescription());
@@ -97,7 +91,6 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
     }
 
     private OrganizationMongo convert(Organization organization) {
-
         OrganizationMongo organizationMongo = new OrganizationMongo();
         organizationMongo.setId(organization.getId());
         organizationMongo.setDescription(organization.getDescription());

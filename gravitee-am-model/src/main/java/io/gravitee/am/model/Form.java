@@ -34,8 +34,7 @@ public class Form {
     private Date createdAt;
     private Date updatedAt;
 
-    public Form() {
-    }
+    public Form() {}
 
     public Form(boolean enabled) {
         this.enabled = enabled;

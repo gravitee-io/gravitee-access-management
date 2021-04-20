@@ -20,10 +20,11 @@ package io.gravitee.am.gateway.policy;
  * @author GraviteeSource Team
  */
 public interface Policy {
-
     String id();
 
-    default void execute(Object ... args) throws PolicyException {}
+    default void execute(Object... args) throws PolicyException {}
 
-    default boolean isRunnable() { return true; }
+    default boolean isRunnable() {
+        return true;
+    }
 }

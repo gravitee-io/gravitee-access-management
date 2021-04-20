@@ -41,14 +41,18 @@ public class ServiceProviderConfigurationEndpointHandler implements Handler<Rout
 
     @Override
     public void handle(RoutingContext context) {
-        serviceProviderConfigService.get()
-                .subscribe(
-                        config -> context.response()
-                                .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
-                                .putHeader(HttpHeaders.PRAGMA, "no-cache")
-                                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
-                                .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config)),
-                        error -> context.fail(error));
+        serviceProviderConfigService
+            .get()
+            .subscribe(
+                config ->
+                    context
+                        .response()
+                        .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                        .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                        .end(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(config)),
+                error -> context.fail(error)
+            );
     }
 
     public static ServiceProviderConfigurationEndpointHandler create(ServiceProviderConfigService serviceProviderConfigService) {

@@ -19,21 +19,21 @@
   <h1>Administrative roles</h1>
   <div class="gv-page-content" fxLayout="row">
     <div fxFlex="70">
-      <app-memberships [members]="members"
-                       [roleType]="roleType"
-                       [createMode]="createMode"
-                       [editMode]="editMode"
-                       [deleteMode]="deleteMode"
-                       (membershipAdded)="add($event)"
-                       (membershipDeleted)="delete($event)"
-                       (membershipUpdated)="update($event)"></app-memberships>
+      <app-memberships
+        [members]="members"
+        [roleType]="roleType"
+        [createMode]="createMode"
+        [editMode]="editMode"
+        [deleteMode]="deleteMode"
+        (membershipAdded)="add($event)"
+        (membershipDeleted)="delete($event)"
+        (membershipUpdated)="update($event)"
+      ></app-memberships>
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>Organization access</h3>
       <div class="gv-page-description-content">
-        <p>
-          Grant access to organization by adding users and groups.
-        </p>
+        <p>Grant access to organization by adding users and groups.</p>
       </div>
     </div>
   </div>

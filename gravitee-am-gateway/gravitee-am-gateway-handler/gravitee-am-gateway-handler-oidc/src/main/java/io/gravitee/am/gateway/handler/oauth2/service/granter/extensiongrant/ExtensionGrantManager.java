@@ -21,6 +21,4 @@ import io.gravitee.common.service.Service;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantManager extends Service {
-
-}
+public interface ExtensionGrantManager extends Service {}

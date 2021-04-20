@@ -23,8 +23,7 @@ import io.gravitee.am.gateway.handler.scim.model.ScimType;
  */
 public class InvalidSyntaxException extends SCIMException {
 
-    public InvalidSyntaxException() {
-    }
+    public InvalidSyntaxException() {}
 
     public InvalidSyntaxException(String message) {
         super(message);

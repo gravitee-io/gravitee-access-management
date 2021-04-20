@@ -23,7 +23,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -31,7 +30,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface TagService {
-
     Maybe<Tag> findById(String id, String organizationId);
 
     Flowable<Tag> findAll(String organizationId);

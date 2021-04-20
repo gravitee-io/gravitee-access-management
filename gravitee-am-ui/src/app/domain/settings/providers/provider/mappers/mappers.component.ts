@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
-import { SnackbarService } from "../../../../../services/snackbar.service";
-import { ProviderService } from "../../../../../services/provider.service";
-import { DialogService } from "../../../../../services/dialog.service";
+import {ActivatedRoute, Router} from '@angular/router';
+import { SnackbarService } from '../../../../../services/snackbar.service';
+import { ProviderService } from '../../../../../services/provider.service';
+import { DialogService } from '../../../../../services/dialog.service';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 @Component({
@@ -47,8 +47,8 @@ export class ProviderMappersComponent implements OnInit {
               private dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.provider = this.route.snapshot.parent.data['provider'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.provider = this.route.snapshot.parent.data.provider;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }
@@ -61,7 +61,7 @@ export class ProviderMappersComponent implements OnInit {
 
   setMappers(mappers) {
     this.mappers = [];
-    for (var k in mappers){
+    for (var k in mappers) {
       if (mappers.hasOwnProperty(k)) {
         this.mappers.push({
           key: k,
@@ -78,7 +78,7 @@ export class ProviderMappersComponent implements OnInit {
         if (!this.attributeExits(mapper.key)) {
           this.mappers.push(mapper);
           this.mappers = [...this.mappers];
-          this.update("Attribute added");
+          this.update('Attribute added');
         } else {
           this.snackbarService.open(`Error : attribute ${mapper.key} already exists`);
         }
@@ -104,7 +104,7 @@ export class ProviderMappersComponent implements OnInit {
       this.editing[rowIndex + '-' + cell] = false;
       this.mappers[rowIndex][cell] = mapper;
       this.mappers = [...this.mappers];
-      this.update("Mapper saved");
+      this.update('Mapper saved');
     }
   }
 

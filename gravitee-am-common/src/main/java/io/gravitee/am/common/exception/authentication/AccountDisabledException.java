@@ -21,7 +21,7 @@ package io.gravitee.am.common.exception.authentication;
  */
 public class AccountDisabledException extends AccountStatusException {
 
-    public AccountDisabledException() { }
+    public AccountDisabledException() {}
 
     public AccountDisabledException(String msg) {
         super(msg);

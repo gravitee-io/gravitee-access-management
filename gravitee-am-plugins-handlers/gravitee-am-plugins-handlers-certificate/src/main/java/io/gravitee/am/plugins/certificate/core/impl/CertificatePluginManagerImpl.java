@@ -25,6 +25,11 @@ import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,12 +38,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -46,7 +45,7 @@ import java.util.*;
 public class CertificatePluginManagerImpl implements CertificatePluginManager {
 
     private final Logger logger = LoggerFactory.getLogger(CertificatePluginManagerImpl.class);
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
     private final Map<String, Certificate> certificates = new HashMap<>();
     private final Map<Certificate, Plugin> certificatePlugins = new HashMap<>();
 
@@ -58,11 +57,9 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
 
     @Override
     public void register(CertificateDefinition certificatePluginDefinition) {
-        certificates.putIfAbsent(certificatePluginDefinition.getPlugin().id(),
-                certificatePluginDefinition.getCertificate());
+        certificates.putIfAbsent(certificatePluginDefinition.getPlugin().id(), certificatePluginDefinition.getCertificate());
 
-        certificatePlugins.putIfAbsent(certificatePluginDefinition.getCertificate(),
-                certificatePluginDefinition.getPlugin());
+        certificatePlugins.putIfAbsent(certificatePluginDefinition.getCertificate(), certificatePluginDefinition.getPlugin());
     }
 
     @Override
@@ -89,10 +86,11 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
             certificateMetadata.setMetadata(metadata);
 
             return create0(
-                    certificatePlugins.get(certificate),
-                    certificate.certificateProvider(),
-                    certificateConfiguration,
-                    certificateMetadata);
+                certificatePlugins.get(certificate),
+                certificate.certificateProvider(),
+                certificateConfiguration,
+                certificateMetadata
+            );
         } else {
             logger.error("No certificate provider is registered for type {}", type);
             throw new IllegalStateException("No certificate provider is registered for type " + type);
@@ -104,8 +102,9 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
         Certificate certificate = certificates.get(certificateId);
         Path policyWorkspace = certificatePlugins.get(certificate).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+        File[] schemas = policyWorkspace
+            .toFile()
+            .listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
         if (schemas.length == 1) {
             File schemaDir = schemas[0];
@@ -118,7 +117,12 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> certificateClass, CertificateConfiguration certificateConfiguration, CertificateMetadata metadata) {
+    private <T> T create0(
+        Plugin plugin,
+        Class<T> certificateClass,
+        CertificateConfiguration certificateConfiguration,
+        CertificateMetadata metadata
+    ) {
         if (certificateClass == null) {
             return null;
         }
@@ -126,30 +130,33 @@ public class CertificatePluginManagerImpl implements CertificatePluginManager {
         try {
             T certificateObj = createInstance(certificateClass);
             final Import annImport = certificateClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
+            ApplicationContext idpApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
+                    }
+
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add certificate configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration)
+                        );
+
+                        // Add certificate metadata bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new CertificateMetadataBeanFactoryPostProcessor(metadata)
+                        );
+
+                        return configurableApplicationContext;
+                    }
                 }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add certificate configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration));
-
-                    // Add certificate metadata bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new CertificateMetadataBeanFactoryPostProcessor(metadata));
-
-                    return configurableApplicationContext;
-                }
-            });
+            );
 
             idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(certificateObj);
 

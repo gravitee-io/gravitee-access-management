@@ -20,7 +20,6 @@ import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -30,9 +29,7 @@ import java.util.stream.Stream;
  * @author GraviteeSource Team
  */
 public interface PermissionAcls {
-
     boolean match(Map<Membership, Map<Permission, Set<Acl>>> permissions);
 
     Stream<Map.Entry<ReferenceType, String>> referenceStream();
-
 }

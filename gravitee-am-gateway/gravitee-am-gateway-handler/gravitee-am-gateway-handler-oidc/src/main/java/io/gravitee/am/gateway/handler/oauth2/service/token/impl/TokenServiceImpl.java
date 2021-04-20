@@ -36,9 +36,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.common.util.MultiValueMap;
@@ -47,12 +47,11 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.time.Instant;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.Instant;
-import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -89,54 +88,70 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
-        return jwtService.decodeAndVerify(token, client)
-                .onErrorResumeNext(ex -> {
+        return jwtService
+            .decodeAndVerify(token, client)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
                     }
                     return Single.error(ex);
-                })
-                .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt)));
+                }
+            )
+            .flatMapMaybe(jwt -> accessTokenRepository.findByToken(jwt.getJti()).map(accessToken -> convertAccessToken(jwt)));
     }
 
     @Override
     public Maybe<Token> getRefreshToken(String refreshToken, Client client) {
-        return jwtService.decodeAndVerify(refreshToken, client)
-                .onErrorResumeNext(ex -> {
+        return jwtService
+            .decodeAndVerify(refreshToken, client)
+            .onErrorResumeNext(
+                ex -> {
                     if (ex instanceof JWTException) {
                         return Single.error(new InvalidTokenException(ex.getMessage(), ex));
                     }
                     return Single.error(ex);
-                })
-                .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt)));
+                }
+            )
+            .flatMapMaybe(jwt -> refreshTokenRepository.findByToken(jwt.getJti()).map(refreshToken1 -> convertRefreshToken(jwt)));
     }
 
     @Override
     public Single<Token> introspect(String token) {
-        return introspectionTokenService.introspect(token, false)
-                .map(jwt -> convertAccessToken(jwt));
+        return introspectionTokenService.introspect(token, false).map(jwt -> convertAccessToken(jwt));
     }
 
     @Override
     public Single<Token> create(OAuth2Request oAuth2Request, Client client, User endUser) {
         // create execution context
-        return Single.fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
-                .flatMap(executionContext -> {
+        return Single
+            .fromCallable(() -> createExecutionContext(oAuth2Request, client, endUser))
+            .flatMap(
+                executionContext -> {
                     // create JWT access token
                     JWT accessToken = createAccessTokenJWT(oAuth2Request, client, endUser, executionContext);
                     // create JWT refresh token
-                    JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
+                    JWT refreshToken = oAuth2Request.isSupportRefreshToken()
+                        ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken)
+                        : null;
                     // encode and sign JWT tokens
                     // and create token response (+ enhance information)
-                    return Single.zip(
+                    return Single
+                        .zip(
                             jwtService.encode(accessToken, client),
-                            (refreshToken != null ? jwtService.encode(refreshToken, client).map(Optional::of) : Single.just(Optional.<String>empty())),
-                            (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
-                            .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
-                            // on success store tokens in the repository
-                            .doOnSuccess(token -> storeTokens(accessToken, refreshToken, oAuth2Request));
-
-                });
+                            (
+                                refreshToken != null
+                                    ? jwtService.encode(refreshToken, client).map(Optional::of)
+                                    : Single.just(Optional.<String>empty())
+                            ),
+                            (encodedAccessToken, optionalEncodedRefreshToken) ->
+                                convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request)
+                        )
+                        .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
+                        // on success store tokens in the repository
+                        .doOnSuccess(token -> storeTokens(accessToken, refreshToken, oAuth2Request));
+                }
+            );
     }
 
     @Override
@@ -144,8 +159,9 @@ public class TokenServiceImpl implements TokenService {
         // invalid_grant : The provided authorization grant (e.g., authorization code, resource owner credentials) or refresh token is
         // invalid, expired, revoked or was issued to another client.
         return getRefreshToken(refreshToken, client)
-                .switchIfEmpty(Single.error(new InvalidGrantException("Refresh token is invalid")))
-                .flatMap(refreshToken1 -> {
+            .switchIfEmpty(Single.error(new InvalidGrantException("Refresh token is invalid")))
+            .flatMap(
+                refreshToken1 -> {
                     if (refreshToken1.getExpireAt().before(new Date())) {
                         throw new InvalidGrantException("Refresh token is expired");
                     }
@@ -154,9 +170,9 @@ public class TokenServiceImpl implements TokenService {
                     }
 
                     // refresh token is used only once
-                    return refreshTokenRepository.delete(refreshToken1.getValue())
-                            .andThen(Single.just(refreshToken1));
-                });
+                    return refreshTokenRepository.delete(refreshToken1.getValue()).andThen(Single.just(refreshToken1));
+                }
+            );
     }
 
     @Override
@@ -171,7 +187,7 @@ public class TokenServiceImpl implements TokenService {
 
     private void storeTokens(JWT accessToken, JWT refreshToken, OAuth2Request oAuth2Request) {
         // store access token
-        tokenManager.storeAccessToken(convert(accessToken, refreshToken,  oAuth2Request));
+        tokenManager.storeAccessToken(convert(accessToken, refreshToken, oAuth2Request));
         // store refresh token (if exists)
         if (refreshToken != null) {
             tokenManager.storeRefreshToken(convert(refreshToken));
@@ -188,7 +204,9 @@ public class TokenServiceImpl implements TokenService {
         accessToken.setCreatedAt(new Date(token.getIat() * 1000));
         accessToken.setExpireAt(new Date(token.getExp() * 1000));
         // set authorization code
-        accessToken.setAuthorizationCode(oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null);
+        accessToken.setAuthorizationCode(
+            oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(io.gravitee.am.common.oauth2.Parameters.CODE) : null
+        );
         // set refresh token
         accessToken.setRefreshToken(refreshToken != null ? refreshToken.getJti() : null);
         return accessToken;
@@ -227,7 +245,6 @@ public class TokenServiceImpl implements TokenService {
         return token;
     }
 
-
     /**
      * Convert JWT object to Access Token
      * @param jwt jwt to convert
@@ -254,7 +271,9 @@ public class TokenServiceImpl implements TokenService {
         token.setScope(jwt.getScope());
         token.setCreatedAt(new Date(jwt.getIat() * 1000l));
         token.setExpireAt(new Date(jwt.getExp() * 1000l));
-        token.setExpiresIn(token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0);
+        token.setExpiresIn(
+            token.getExpireAt() != null ? Long.valueOf((token.getExpireAt().getTime() - System.currentTimeMillis()) / 1000L) : 0
+        );
         token.setAdditionalInformation(jwt);
         return token;
     }
@@ -283,12 +302,11 @@ public class TokenServiceImpl implements TokenService {
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getRefreshTokenValiditySeconds()).getEpochSecond());
         // set custom claims from the current access token
         Map<String, Object> customClaims = new HashMap<>(accessToken);
-        Claims.claims().forEach(claim ->  customClaims.remove(claim));
+        Claims.claims().forEach(claim -> customClaims.remove(claim));
         jwt.putAll(customClaims);
 
         return jwt;
     }
-
 
     private JWT createJWT(OAuth2Request oAuth2Request, Client client, User user) {
         JWT jwt = new JWT();
@@ -310,20 +328,24 @@ public class TokenServiceImpl implements TokenService {
     private void enhanceJWT(JWT jwt, List<TokenClaim> customClaims, TokenTypeHint tokenTypeHint, ExecutionContext executionContext) {
         if (customClaims != null && !customClaims.isEmpty()) {
             customClaims
-                    .stream()
-                    .filter(tokenClaim -> tokenTypeHint.equals(tokenClaim.getTokenType()))
-                    .forEach(tokenClaim -> {
+                .stream()
+                .filter(tokenClaim -> tokenTypeHint.equals(tokenClaim.getTokenType()))
+                .forEach(
+                    tokenClaim -> {
                         try {
                             String claimName = tokenClaim.getClaimName();
                             String claimExpression = tokenClaim.getClaimValue();
-                            Object extValue = (claimExpression != null) ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class) : null;
+                            Object extValue = (claimExpression != null)
+                                ? executionContext.getTemplateEngine().getValue(claimExpression, Object.class)
+                                : null;
                             if (extValue != null) {
                                 jwt.putIfAbsent(claimName, extValue);
                             }
                         } catch (Exception ex) {
                             logger.debug("An error occurs while parsing expression language : {}", tokenClaim.getClaimValue(), ex);
                         }
-                    });
+                    }
+                );
         }
     }
 

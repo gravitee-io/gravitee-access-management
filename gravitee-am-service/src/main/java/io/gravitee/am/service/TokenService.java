@@ -25,7 +25,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface TokenService {
-
     Single<TotalToken> findTotalTokensByDomain(String domain);
 
     Single<TotalToken> findTotalTokensByApplication(Application application);

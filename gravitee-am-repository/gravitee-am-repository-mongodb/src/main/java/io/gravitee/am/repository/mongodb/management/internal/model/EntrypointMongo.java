@@ -16,14 +16,13 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
-
 import java.util.List;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EntrypointMongo  extends Auditable {
+public class EntrypointMongo extends Auditable {
 
     private String id;
     private String name;

@@ -16,7 +16,6 @@
 package io.gravitee.am.model;
 
 import io.gravitee.am.model.membership.MemberType;
-
 import java.util.Date;
 
 /**
@@ -50,12 +49,10 @@ public class Membership {
     }
 
     public boolean isUserMember(String userId) {
-
         return memberType == MemberType.USER && memberId.equals(userId);
     }
 
     public boolean isGroupMember(String groupId) {
-
         return memberType == MemberType.GROUP && memberId.equals(groupId);
     }
 
@@ -133,16 +130,35 @@ public class Membership {
 
     @Override
     public String toString() {
-        return "{\"_class\":\"Membership\", " +
-                "\"id\":" + (id == null ? "null" : "\"" + id + "\"") + ", " +
-                "\"domain\":" + (domain == null ? "null" : "\"" + domain + "\"") + ", " +
-                "\"memberId\":" + (memberId == null ? "null" : "\"" + memberId + "\"") + ", " +
-                "\"memberType\":" + (memberType == null ? "null" : memberType) + ", " +
-                "\"referenceId\":" + (referenceId == null ? "null" : "\"" + referenceId + "\"") + ", " +
-                "\"referenceType\":" + (referenceType == null ? "null" : referenceType) + ", " +
-                "\"role\":" + (roleId == null ? "null" : "\"" + roleId + "\"") + ", " +
-                "\"createdAt\":" + (createdAt == null ? "null" : createdAt) + ", " +
-                "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
-                "}";
+        return (
+            "{\"_class\":\"Membership\", " +
+            "\"id\":" +
+            (id == null ? "null" : "\"" + id + "\"") +
+            ", " +
+            "\"domain\":" +
+            (domain == null ? "null" : "\"" + domain + "\"") +
+            ", " +
+            "\"memberId\":" +
+            (memberId == null ? "null" : "\"" + memberId + "\"") +
+            ", " +
+            "\"memberType\":" +
+            (memberType == null ? "null" : memberType) +
+            ", " +
+            "\"referenceId\":" +
+            (referenceId == null ? "null" : "\"" + referenceId + "\"") +
+            ", " +
+            "\"referenceType\":" +
+            (referenceType == null ? "null" : referenceType) +
+            ", " +
+            "\"role\":" +
+            (roleId == null ? "null" : "\"" + roleId + "\"") +
+            ", " +
+            "\"createdAt\":" +
+            (createdAt == null ? "null" : createdAt) +
+            ", " +
+            "\"updatedAt\":" +
+            (updatedAt == null ? "null" : updatedAt) +
+            "}"
+        );
     }
 }

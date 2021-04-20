@@ -34,7 +34,6 @@ import org.glassfish.jersey.server.ServerProperties;
 public class ManagementApplication extends ResourceConfig {
 
     public ManagementApplication() {
-
         BeanConfig beanConfig = new BeanConfig();
         beanConfig.setVersion(Version.RUNTIME_VERSION.MAJOR_VERSION);
         beanConfig.setResourcePackage("io.gravitee.am.management.handlers.management.api.resources");

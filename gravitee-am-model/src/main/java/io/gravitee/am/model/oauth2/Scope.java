@@ -65,8 +65,7 @@ public class Scope {
 
     private boolean discovery;
 
-    public Scope() {
-    }
+    public Scope() {}
 
     public Scope(String key) {
         this.key = key;

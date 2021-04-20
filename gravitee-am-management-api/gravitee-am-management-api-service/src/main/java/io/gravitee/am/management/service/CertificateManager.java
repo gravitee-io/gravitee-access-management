@@ -24,6 +24,5 @@ import io.reactivex.Maybe;
  * @author GraviteeSource Team
  */
 public interface CertificateManager extends Service<CertificateManager> {
-
     Maybe<CertificateProvider> getCertificateProvider(String certificateId);
 }

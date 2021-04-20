@@ -32,14 +32,13 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Once the End-User is authenticated, the Authorization Server MUST obtain an authorization decision before releasing information to the Relying Party.
@@ -69,7 +68,9 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         final Session session = routingContext.session();
         final HttpServerRequest request = routingContext.request();
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final io.gravitee.am.model.User user = routingContext.user() != null ? ((User) routingContext.user().getDelegate()).getUser() : null;
+        final io.gravitee.am.model.User user = routingContext.user() != null
+            ? ((User) routingContext.user().getDelegate()).getUser()
+            : null;
         final AuthorizationRequest authorizationRequest = session.get(OAuth2Constants.AUTHORIZATION_REQUEST);
         final Set<String> requestedConsent = authorizationRequest.getScopes();
         // no consent to check, continue
@@ -95,8 +96,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         }
         // application has forced to prompt consent screen to the user
         // go to the user consent page
-        if (request.params().contains(Parameters.PROMPT)
-                && request.params().get(Parameters.PROMPT).contains("consent")) {
+        if (request.params().contains(Parameters.PROMPT) && request.params().get(Parameters.PROMPT).contains("consent")) {
             session.put(REQUESTED_CONSENT_CONTEXT_KEY, requestedConsent);
             redirectToConsentPage(request);
             return;
@@ -108,35 +108,44 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             return;
         }
         // check user consent
-        checkUserConsent(client, user, h -> {
-            if (h.failed()) {
-                routingContext.fail(h.cause());
-                return;
+        checkUserConsent(
+            client,
+            user,
+            h -> {
+                if (h.failed()) {
+                    routingContext.fail(h.cause());
+                    return;
+                }
+                Set<String> approvedConsent = h.result();
+                // user approved consent, continue
+                if (approvedConsent.containsAll(requestedConsent)) {
+                    authorizationRequest.setApproved(true);
+                    routingContext.next();
+                    return;
+                }
+                // else go to the user consent page
+                Set<String> requiredConsent = requestedConsent
+                    .stream()
+                    .filter(requestedScope -> !approvedConsent.contains(requestedScope))
+                    .collect(Collectors.toSet());
+                session.put(REQUESTED_CONSENT_CONTEXT_KEY, requiredConsent);
+                redirectToConsentPage(request);
             }
-            Set<String> approvedConsent = h.result();
-            // user approved consent, continue
-            if (approvedConsent.containsAll(requestedConsent)) {
-                authorizationRequest.setApproved(true);
-                routingContext.next();
-                return;
-            }
-            // else go to the user consent page
-            Set<String> requiredConsent = requestedConsent.stream().filter(requestedScope -> !approvedConsent.contains(requestedScope)).collect(Collectors.toSet());
-            session.put(REQUESTED_CONSENT_CONTEXT_KEY, requiredConsent);
-            redirectToConsentPage(request);
-        });
+        );
     }
 
     private void checkUserConsent(Client client, io.gravitee.am.model.User user, Handler<AsyncResult<Set<String>>> handler) {
-        userConsentService.checkConsent(client, user)
-                .subscribe(
-                        result -> handler.handle(Future.succeededFuture(result)),
-                        error -> handler.handle(Future.failedFuture(error)));
+        userConsentService
+            .checkConsent(client, user)
+            .subscribe(result -> handler.handle(Future.succeededFuture(result)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     private boolean skipConsent(Set<String> requestedConsent, Client client) {
         List<String> clientAutoApproveScopes = client.getAutoApproveScopes();
-        Set<String> approvedScopes = requestedConsent.stream().filter(s -> isAutoApprove(clientAutoApproveScopes, s)).collect(Collectors.toSet());
+        Set<String> approvedScopes = requestedConsent
+            .stream()
+            .filter(s -> isAutoApprove(clientAutoApproveScopes, s))
+            .collect(Collectors.toSet());
         return approvedScopes.containsAll(requestedConsent);
     }
 
@@ -154,18 +163,16 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
 
     public void redirectToConsentPage(HttpServerRequest request) {
         try {
-            final Map<String, String> requestParameters = request.params().entries().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            final Map<String, String> requestParameters = request
+                .params()
+                .entries()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             String proxiedRedirectURI = UriBuilderRequest.resolveProxyRequest(request, redirectURL, requestParameters, true);
-            request.response()
-                    .putHeader(HttpHeaders.LOCATION, proxiedRedirectURI)
-                    .setStatusCode(302)
-                    .end();
+            request.response().putHeader(HttpHeaders.LOCATION, proxiedRedirectURI).setStatusCode(302).end();
         } catch (Exception e) {
             LOGGER.warn("Failed to decode consent redirect url", e);
-            request.response()
-                    .putHeader(HttpHeaders.LOCATION, redirectURL)
-                    .setStatusCode(302)
-                    .end();
+            request.response().putHeader(HttpHeaders.LOCATION, redirectURL).setStatusCode(302).end();
         }
     }
 }

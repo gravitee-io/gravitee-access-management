@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;

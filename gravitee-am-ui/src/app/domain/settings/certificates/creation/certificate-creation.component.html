@@ -30,7 +30,7 @@
         </ng-template>
         <certificate-creation-step1 [certificate]="certificate"></certificate-creation-step1>
         <div fxLayout="row" fxLayoutAlign="end end" class="stepper-button-zone">
-          <button mat-raised-button color="primary" matStepperNext type="button"[disabled]="!certificate.type">Next</button>
+          <button mat-raised-button color="primary" matStepperNext type="button" [disabled]="!certificate.type">Next</button>
         </div>
       </mat-step>
       <mat-step>
@@ -38,7 +38,11 @@
           <h5>Settings</h5>
           <small>Certificate configuration</small>
         </ng-template>
-        <certificate-creation-step2 *ngIf="stepper.selectedIndex == 1" [certificate]="certificate" [(configurationIsValid)]="configurationIsValid"></certificate-creation-step2>
+        <certificate-creation-step2
+          *ngIf="stepper.selectedIndex == 1"
+          [certificate]="certificate"
+          [(configurationIsValid)]="configurationIsValid"
+        ></certificate-creation-step2>
         <div class="stepper-button-zone">
           <button mat-raised-button matStepperPrevious type="button">Back</button>
           <span fxFlex></span>

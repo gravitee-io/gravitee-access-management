@@ -16,10 +16,9 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-
+import io.gravitee.am.model.oidc.Client;
 import java.util.Map;
 
 /**
@@ -35,7 +34,7 @@ public class AuthenticationDetails {
     private Throwable throwable;
     private Map<String, Object> details;
 
-    public AuthenticationDetails() { }
+    public AuthenticationDetails() {}
 
     public AuthenticationDetails(Authentication principal, Domain domain, Client client, User user) {
         this.principal = principal;

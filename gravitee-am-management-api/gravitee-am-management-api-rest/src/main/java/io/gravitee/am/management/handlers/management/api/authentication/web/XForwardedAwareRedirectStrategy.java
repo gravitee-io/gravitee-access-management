@@ -16,15 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.authentication.web;
 
 import io.gravitee.common.http.HttpHeaders;
+import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.UrlUtils;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,7 +55,7 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
         if (host != null && !host.isEmpty()) {
             if (host.contains(":")) {
                 // Forwarded host contains both host and port
-                String [] parts = host.split(":");
+                String[] parts = host.split(":");
                 builder.host(parts[0]);
                 builder.port(parts[1]);
             } else {
@@ -116,5 +115,4 @@ public class XForwardedAwareRedirectStrategy implements RedirectStrategy {
     public void setContextRelative(boolean useRelativeContext) {
         this.contextRelative = useRelativeContext;
     }
-
 }

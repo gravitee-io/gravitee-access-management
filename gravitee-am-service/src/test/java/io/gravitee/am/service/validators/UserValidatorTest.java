@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.service.validators;
 
+import static org.junit.Assert.*;
+
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -30,7 +30,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate() {
-
         User user = getValidUser();
 
         Throwable throwable = UserValidator.validate(user).blockingGet();
@@ -40,7 +39,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_usernameEmail() {
-
         User user = getValidUser();
         user.setUsername("user.valid+1-test@gravitee.io");
 
@@ -51,7 +49,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_displayNameEmail() {
-
         User user = getValidUser();
         user.setDisplayName("user.valid+1-test@gravitee.io");
 
@@ -62,7 +59,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_usernameHashtag() {
-
         User user = getValidUser();
         user.setUsername("user#gravitee.io");
 
@@ -73,7 +69,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidEmail() {
-
         User user = getValidUser();
         user.setEmail("invalid");
 
@@ -85,7 +80,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidFirstName() {
-
         User user = getValidUser();
         user.setFirstName("$¨¨^invalid");
 
@@ -97,7 +91,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidLastName() {
-
         User user = getValidUser();
         user.setLastName("$¨¨^invalid");
 
@@ -109,7 +102,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidNickName() {
-
         User user = getValidUser();
         user.setNickName("$¨¨^invalid");
 
@@ -121,7 +113,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidDisplayName() {
-
         User user = getValidUser();
         user.setDisplayName("$¨¨^invalid");
 
@@ -133,7 +124,6 @@ public class UserValidatorTest {
 
     @Test
     public void validate_invalidUsername() {
-
         User user = getValidUser();
         user.setUsername("$¨¨^invalid");
 

@@ -19,11 +19,10 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URISyntaxException;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handle proxy specific things such as resolving external url via X-Forwarded-* proxy headers
@@ -57,7 +56,8 @@ public class UriBuilderRequest {
      * @return request uri representation
      * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters) throws URISyntaxException {
+    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters)
+        throws URISyntaxException {
         return resolve(request, path, parameters, false);
     }
 
@@ -70,11 +70,21 @@ public class UriBuilderRequest {
      * @return request uri representation
      * @throws URISyntaxException
      */
-    public static String resolveProxyRequest(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
+    public static String resolveProxyRequest(
+        final HttpServerRequest request,
+        final String path,
+        final Map<String, String> parameters,
+        boolean encoded
+    ) throws URISyntaxException {
         return resolve(request, path, parameters, encoded);
     }
 
-    private static String resolve(final HttpServerRequest request, final String path, final Map<String, String> parameters, boolean encoded) throws URISyntaxException {
+    private static String resolve(
+        final HttpServerRequest request,
+        final String path,
+        final Map<String, String> parameters,
+        boolean encoded
+    ) throws URISyntaxException {
         UriBuilder builder = UriBuilder.newInstance();
 
         // scheme
@@ -107,10 +117,12 @@ public class UriBuilderRequest {
             builder.parameters(parameters);
         } else {
             if (parameters != null) {
-                parameters.forEach((k, v) -> {
-                    // some parameters can be already URL encoded, decode first
-                    builder.addParameter(k, UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(v)));
-                });
+                parameters.forEach(
+                    (k, v) -> {
+                        // some parameters can be already URL encoded, decode first
+                        builder.addParameter(k, UriBuilder.encodeURIComponent(UriBuilder.decodeURIComponent(v)));
+                    }
+                );
             }
         }
         return builder.buildString();

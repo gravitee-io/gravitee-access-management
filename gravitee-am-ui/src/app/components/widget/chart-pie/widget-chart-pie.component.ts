@@ -13,41 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, Input, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import * as Highcharts from 'highcharts';
 
 @Component({
   selector: 'gv-widget-chart-pie',
   templateUrl: './widget-chart-pie.component.html',
-  styleUrls: ['./widget-chart-pie.component.scss']
+  styleUrls: ['./widget-chart-pie.component.scss'],
 })
 export class WidgetChartPieComponent implements OnInit, OnChanges {
   @Input('Highcharts') Highcharts: typeof Highcharts;
   @Input('chart') chart: any;
   chartOptions: Highcharts.Options;
 
-  constructor() { }
+  constructor() {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.chart.currentValue && changes.chart.currentValue.response) {
       let title = {};
       const response = changes.chart.currentValue.response;
       const series = [];
-      const series0 = {type: 'pie', name: '', colorByPoint: true, data: []};
+      const series0 = { type: 'pie', name: '', colorByPoint: true, data: [] };
       series.push(series0);
       if (response.values && Object.keys(response.values).length > 0) {
-        series0['data'] = Object.keys(response.values).map(key => ([key, response.values[key]]));
+        series0.data = Object.keys(response.values).map((key) => [key, response.values[key]]);
       } else {
         // set empty message
-        const chartTitle =  `<div style="text-align: center;"><p>No data to display</p></div>`;
+        const chartTitle = '<div style="text-align: center;"><p>No data to display</p></div>';
         title = {
           useHTML: true,
           text: chartTitle,
           align: 'center',
-          verticalAlign: 'middle'
+          verticalAlign: 'middle',
         };
       }
       const plotOptions = {
@@ -56,22 +55,21 @@ export class WidgetChartPieComponent implements OnInit, OnChanges {
           cursor: 'pointer',
           dataLabels: {
             enabled: true,
-            format: '<b>{point.name}</b>: {point.percentage:.1f} %'
-          }
-        }
+            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          },
+        },
       };
       this.chartOptions = {
-        title : title,
+        title: title,
         chart: {
           plotBackgroundColor: null,
           plotBorderWidth: null,
           plotShadow: false,
-          type: 'pie'
+          type: 'pie',
         },
-        plotOptions : plotOptions,
-        series : series
+        plotOptions: plotOptions,
+        series: series,
       };
     }
   }
 }
-

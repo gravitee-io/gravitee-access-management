@@ -15,30 +15,28 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Form;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.model.NewForm;
-import io.gravitee.common.http.HttpStatusCode;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Response;
-
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Form;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewForm;
+import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
+import java.io.IOException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,11 +58,7 @@ public class FormsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockForm)).when(formService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
 
-        final Response response = target("domains")
-                .path(domainId).path("forms")
-                .queryParam("template", Template.LOGIN)
-                .request()
-                .get();
+        final Response response = target("domains").path(domainId).path("forms").queryParam("template", Template.LOGIN).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Form responseEntity = readEntity(response, Form.class);
@@ -74,13 +68,11 @@ public class FormsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetForms_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(formService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
+        doReturn(Maybe.error(new TechnicalManagementException("error occurs")))
+            .when(formService)
+            .findByDomainAndTemplate(domainId, Template.LOGIN.template());
 
-        final Response response = target("domains")
-                .path(domainId).path("forms")
-                .queryParam("template", Template.LOGIN)
-                .request()
-                .get();
+        final Response response = target("domains").path(domainId).path("forms").queryParam("template", Template.LOGIN).request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
@@ -98,10 +90,7 @@ public class FormsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(new Form())).when(formService).create(eq(domainId), any(), any(User.class));
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("forms")
-                .request().post(Entity.json(newForm));
+        final Response response = target("domains").path(domainId).path("forms").request().post(Entity.json(newForm));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

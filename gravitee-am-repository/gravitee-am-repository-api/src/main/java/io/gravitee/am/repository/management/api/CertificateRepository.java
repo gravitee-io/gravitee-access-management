@@ -18,7 +18,6 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Single;
-
 import java.util.Set;
 
 /**
@@ -26,7 +25,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface CertificateRepository extends CrudRepository<Certificate, String> {
-
     Single<Set<Certificate>> findAll();
 
     Single<Set<Certificate>> findByDomain(String domain);

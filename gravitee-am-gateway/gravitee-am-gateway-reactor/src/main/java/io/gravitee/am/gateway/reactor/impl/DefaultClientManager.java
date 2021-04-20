@@ -17,12 +17,11 @@ package io.gravitee.am.gateway.reactor.impl;
 
 import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.model.oidc.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

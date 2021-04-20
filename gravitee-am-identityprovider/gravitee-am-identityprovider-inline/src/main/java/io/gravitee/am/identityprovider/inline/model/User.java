@@ -31,7 +31,7 @@ public class User {
     private String username;
     private String password;
     private String email;
-    private String [] roles;
+    private String[] roles;
 
     public String getFirstname() {
         return firstname;

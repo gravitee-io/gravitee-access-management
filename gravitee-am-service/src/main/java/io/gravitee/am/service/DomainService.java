@@ -24,7 +24,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.Collection;
 import java.util.Set;
 
@@ -34,7 +33,6 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface DomainService {
-
     Maybe<Domain> findById(String id);
 
     Flowable<Domain> findAllByEnvironment(String organizationId, String environment);

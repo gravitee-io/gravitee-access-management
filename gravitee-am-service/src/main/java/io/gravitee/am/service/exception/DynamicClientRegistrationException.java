@@ -38,5 +38,4 @@ public class DynamicClientRegistrationException extends AbstractManagementExcept
     public String getMessage() {
         return "Dynamic Client Registration is not enabled on [" + domain + "] domain.";
     }
-
 }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.model;
 
+import static org.junit.Assert.*;
+
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -24,16 +26,13 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
 import io.gravitee.am.service.model.openid.PatchOIDCSettings;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -116,7 +115,6 @@ public class PatchDomainTest {
 
     @Test
     public void testGetRequiredPermissions() {
-
         PatchDomain patchDomain = new PatchDomain();
         assertEquals(Collections.emptySet(), patchDomain.getRequiredPermissions());
 
@@ -157,7 +155,7 @@ public class PatchDomainTest {
 
         patchDomain = new PatchDomain();
         patchDomain.setScim(Optional.of(new SCIMSettings()));
-        assertEquals(new HashSet<>(Arrays.asList( Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
+        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
 
         // Check multiple permissions.
         patchDomain = new PatchDomain();
@@ -165,6 +163,9 @@ public class PatchDomainTest {
         patchDomain.setOidc(Optional.of(oidcSettings));
         patchDomain.setScim(Optional.of(new SCIMSettings()));
 
-        assertEquals(new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID, Permission.DOMAIN_SCIM)), patchDomain.getRequiredPermissions());
+        assertEquals(
+            new HashSet<>(Arrays.asList(Permission.DOMAIN_SETTINGS, Permission.DOMAIN_OPENID, Permission.DOMAIN_SCIM)),
+            patchDomain.getRequiredPermissions()
+        );
     }
 }

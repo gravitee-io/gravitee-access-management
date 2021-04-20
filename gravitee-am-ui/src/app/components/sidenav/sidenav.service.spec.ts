@@ -20,7 +20,7 @@ import { SidenavService } from './sidenav.service';
 describe('SidenavService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SidenavService]
+      providers: [SidenavService],
     });
   });
 

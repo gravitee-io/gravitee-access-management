@@ -25,7 +25,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-
 /**
  * The authorization server must ensure that the client used for the Authorization Request is registered and
  * should not redirect to login page if the client does not exist
@@ -46,26 +45,32 @@ public class AuthorizationRequestParseClientHandler implements Handler<RoutingCo
     public void handle(RoutingContext context) {
         final String clientId = context.request().getParam(Parameters.CLIENT_ID);
 
-        authenticate(clientId, resultHandler -> {
-            if (resultHandler.failed()) {
-                context.fail(resultHandler.cause());
-                return;
-            }
-            // put client in the execution context
-            Client client = resultHandler.result();
-            context.put(CLIENT_CONTEXT_KEY, client);
+        authenticate(
+            clientId,
+            resultHandler -> {
+                if (resultHandler.failed()) {
+                    context.fail(resultHandler.cause());
+                    return;
+                }
+                // put client in the execution context
+                Client client = resultHandler.result();
+                context.put(CLIENT_CONTEXT_KEY, client);
 
-            context.next();
-        });
+                context.next();
+            }
+        );
     }
 
     private void authenticate(String clientId, Handler<AsyncResult<Client>> authHandler) {
         clientSyncService
-                .findByClientId(clientId)
-                .subscribe(
-                        client -> authHandler.handle(Future.succeededFuture(client)),
-                        error -> authHandler.handle(Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))),
-                        () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
-                );
+            .findByClientId(clientId)
+            .subscribe(
+                client -> authHandler.handle(Future.succeededFuture(client)),
+                error ->
+                    authHandler.handle(
+                        Future.failedFuture(new ServerErrorException("Server error: unable to find client with client_id " + clientId))
+                    ),
+                () -> authHandler.handle(Future.failedFuture(new InvalidRequestException("No client found for client_id " + clientId)))
+            );
     }
 }

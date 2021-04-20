@@ -15,16 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import static io.vertx.core.http.HttpHeaders.COOKIE;
+import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
+
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CookieHandler;
 import io.vertx.ext.web.impl.CookieImpl;
-
 import java.util.Set;
-
-import static io.vertx.core.http.HttpHeaders.COOKIE;
-import static io.vertx.core.http.HttpHeaders.SET_COOKIE;
 
 /**
  * Override default Vert.x Cookie Handler to set proxy cookie path
@@ -48,15 +47,17 @@ public class CookieHandlerImpl implements CookieHandler {
             }
         }
 
-        context.addHeadersEndHandler(v -> {
-            // save the cookies
-            Set<io.vertx.ext.web.Cookie> cookies = context.cookies();
-            for (io.vertx.ext.web.Cookie cookie: cookies) {
-                if (cookie.isChanged()) {
-                    proxy(context, cookie);
+        context.addHeadersEndHandler(
+            v -> {
+                // save the cookies
+                Set<io.vertx.ext.web.Cookie> cookies = context.cookies();
+                for (io.vertx.ext.web.Cookie cookie : cookies) {
+                    if (cookie.isChanged()) {
+                        proxy(context, cookie);
+                    }
                 }
             }
-        });
+        );
 
         context.next();
     }

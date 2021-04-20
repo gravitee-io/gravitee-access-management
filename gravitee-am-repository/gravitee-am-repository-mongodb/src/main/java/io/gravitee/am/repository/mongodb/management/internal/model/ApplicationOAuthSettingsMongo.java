@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import org.bson.Document;
-
 import java.util.Date;
 import java.util.List;
+import org.bson.Document;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

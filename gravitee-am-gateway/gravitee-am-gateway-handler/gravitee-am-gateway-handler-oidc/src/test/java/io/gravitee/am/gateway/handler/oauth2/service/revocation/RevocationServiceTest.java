@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.revocation;
 
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
+
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.RevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.RefreshToken;
-import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -31,9 +34,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -90,7 +90,6 @@ public class RevocationServiceTest {
         verify(tokenService, never()).deleteAccessToken(anyString());
         verify(tokenService, times(1)).getRefreshToken("token", client);
         verify(tokenService, never()).deleteRefreshToken(anyString());
-
     }
 
     @Test
@@ -115,7 +114,6 @@ public class RevocationServiceTest {
         verify(tokenService, times(1)).deleteAccessToken("token");
         verify(tokenService, never()).getRefreshToken(anyString(), any());
         verify(tokenService, never()).deleteRefreshToken(anyString());
-
     }
 
     @Test
@@ -141,6 +139,5 @@ public class RevocationServiceTest {
         verify(tokenService, times(1)).deleteRefreshToken("token");
         verify(tokenService, never()).getAccessToken("token", client);
         verify(tokenService, never()).deleteAccessToken("token");
-
     }
 }

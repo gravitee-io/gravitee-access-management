@@ -40,11 +40,7 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({
-        CommonConfiguration.class,
-        RootConfiguration.class,
-        SecurityDomainRouterConfiguration.class
-})
+@Import({ CommonConfiguration.class, RootConfiguration.class, SecurityDomainRouterConfiguration.class })
 public class HandlerConfiguration {
 
     @Autowired
@@ -79,5 +75,4 @@ public class HandlerConfiguration {
     public Router router() {
         return Router.router(vertx);
     }
-
 }

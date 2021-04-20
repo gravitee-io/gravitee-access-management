@@ -32,11 +32,10 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,56 +65,66 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
         User user = convert(params);
 
         // register the user
-        register(client, user, getAuthenticatedUser(context), h -> {
-            // prepare response
-            Map<String, String> queryParams = new HashMap<>();
-            // add client_id parameter for future use
-            if (client != null) {
-                queryParams.put(Parameters.CLIENT_ID, client.getClientId());
-            }
-
-            // if failure, return to the register page with an error
-            if (h.failed()) {
-                if (h.cause() instanceof InvalidUserException) {
-                    queryParams.put(WARNING_PARAM, "invalid_user_information");
-                } else if (h.cause() instanceof EmailFormatInvalidException) {
-                    queryParams.put(WARNING_PARAM, "invalid_email");
-                } else {
-                    LOGGER.error("An error occurs while ending user registration", h.cause());
-                    queryParams.put(ERROR_PARAM, "registration_failed");
+        register(
+            client,
+            user,
+            getAuthenticatedUser(context),
+            h -> {
+                // prepare response
+                Map<String, String> queryParams = new HashMap<>();
+                // add client_id parameter for future use
+                if (client != null) {
+                    queryParams.put(Parameters.CLIENT_ID, client.getClientId());
                 }
-                redirectToPage(context, queryParams, h.cause());
-                return;
-            }
 
-            // handle response
-            RegistrationResponse registrationResponse = h.result();
-            // if auto login option is enabled add the user to the session
-            if (registrationResponse.isAutoLogin()) {
-                context.setUser(io.vertx.reactivex.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())));
-                // the user has upgraded from unauthenticated to authenticated
-                // session should be upgraded as recommended by owasp
-                context.session().regenerateId();
+                // if failure, return to the register page with an error
+                if (h.failed()) {
+                    if (h.cause() instanceof InvalidUserException) {
+                        queryParams.put(WARNING_PARAM, "invalid_user_information");
+                    } else if (h.cause() instanceof EmailFormatInvalidException) {
+                        queryParams.put(WARNING_PARAM, "invalid_email");
+                    } else {
+                        LOGGER.error("An error occurs while ending user registration", h.cause());
+                        queryParams.put(ERROR_PARAM, "registration_failed");
+                    }
+                    redirectToPage(context, queryParams, h.cause());
+                    return;
+                }
+
+                // handle response
+                RegistrationResponse registrationResponse = h.result();
+                // if auto login option is enabled add the user to the session
+                if (registrationResponse.isAutoLogin()) {
+                    context.setUser(
+                        io.vertx.reactivex.ext.auth.User.newInstance(
+                            new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(registrationResponse.getUser())
+                        )
+                    );
+                    // the user has upgraded from unauthenticated to authenticated
+                    // session should be upgraded as recommended by owasp
+                    context.session().regenerateId();
+                }
+                // no redirect uri has been set, redirect to the default page
+                if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
+                    queryParams.put(SUCCESS_PARAM, "registration_succeed");
+                    redirectToPage(context, queryParams);
+                    return;
+                }
+                // else, redirect to the custom redirect_uri
+                context.response().putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri()).setStatusCode(302).end();
             }
-            // no redirect uri has been set, redirect to the default page
-            if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
-                queryParams.put(SUCCESS_PARAM, "registration_succeed");
-                redirectToPage(context, queryParams);
-                return;
-            }
-            // else, redirect to the custom redirect_uri
-            context.response()
-                    .putHeader(HttpHeaders.LOCATION, registrationResponse.getRedirectUri())
-                    .setStatusCode(302)
-                    .end();
-        });
+        );
     }
 
-    private void register(Client client, User user, io.gravitee.am.identityprovider.api.User principal, Handler<AsyncResult<RegistrationResponse>> handler) {
-        userService.register(client, user, principal)
-                .subscribe(
-                        response -> handler.handle(Future.succeededFuture(response)),
-                        error -> handler.handle(Future.failedFuture(error)));
+    private void register(
+        Client client,
+        User user,
+        io.gravitee.am.identityprovider.api.User principal,
+        Handler<AsyncResult<RegistrationResponse>> handler
+    ) {
+        userService
+            .register(client, user, principal)
+            .subscribe(response -> handler.handle(Future.succeededFuture(response)), error -> handler.handle(Future.failedFuture(error)));
     }
 
     @Override
@@ -140,7 +149,5 @@ public class RegisterSubmissionEndpoint extends UserRequestHandler {
         user.setClient(params.get("client_id"));
 
         return user;
-
-
     }
 }

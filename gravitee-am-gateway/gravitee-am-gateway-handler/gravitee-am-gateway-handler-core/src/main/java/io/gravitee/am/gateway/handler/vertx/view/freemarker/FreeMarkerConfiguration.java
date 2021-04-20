@@ -20,14 +20,13 @@ import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
+import java.io.File;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -43,8 +42,9 @@ public class FreeMarkerConfiguration {
 
     @Bean
     public freemarker.template.Configuration getConfiguration() {
-        final freemarker.template.Configuration configuration =
-                new freemarker.template.Configuration(freemarker.template.Configuration.VERSION_2_3_22);
+        final freemarker.template.Configuration configuration = new freemarker.template.Configuration(
+            freemarker.template.Configuration.VERSION_2_3_22
+        );
         configuration.setLocalizedLookup(false);
         configuration.setOutputFormat(HTMLOutputFormat.INSTANCE);
         configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);

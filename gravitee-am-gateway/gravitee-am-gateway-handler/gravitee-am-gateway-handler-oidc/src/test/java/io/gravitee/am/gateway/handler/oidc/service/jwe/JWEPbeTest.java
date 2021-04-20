@@ -15,17 +15,25 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwe;
 
+import static com.nimbusds.jose.JWEAlgorithm.*;
+import static org.junit.runners.Parameterized.Parameters;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.nimbusds.jose.JWEObject;
 import com.nimbusds.jose.crypto.PasswordBasedDecrypter;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.impl.JWEServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,15 +42,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.stream.Collectors;
-
-import static com.nimbusds.jose.JWEAlgorithm.*;
-import static org.junit.runners.Parameterized.Parameters;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -68,14 +67,17 @@ public class JWEPbeTest {
         this.enc = enc;
     }
 
-    @Parameters(name="Encrypt with AES alg {0}, enc {1}")
+    @Parameters(name = "Encrypt with AES alg {0}, enc {1}")
     public static Collection<Object[]> data() {
         //return list of Object[]{Algorithm, Encryption}
-        return Arrays.asList(PBES2_HS256_A128KW, PBES2_HS384_A192KW, PBES2_HS512_A256KW).stream().flatMap(
-                algorithm -> JWAlgorithmUtils.getSupportedIdTokenResponseEnc().stream().map(
-                        enc -> new Object[]{algorithm.getName(),enc}
-                )
-        ).collect(Collectors.toList());
+        return Arrays
+            .asList(PBES2_HS256_A128KW, PBES2_HS384_A192KW, PBES2_HS512_A256KW)
+            .stream()
+            .flatMap(
+                algorithm ->
+                    JWAlgorithmUtils.getSupportedIdTokenResponseEnc().stream().map(enc -> new Object[] { algorithm.getName(), enc })
+            )
+            .collect(Collectors.toList());
     }
 
     @Test
@@ -93,16 +95,18 @@ public class JWEPbeTest {
         client.setIdTokenEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptIdToken("JWT", client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jweString -> {
-            JWEObject jwe = JWEObject.parse((String)jweString);
-            jwe.decrypt(new PasswordBasedDecrypter(jwk.getKeyValue().decode()));
-            return "JWT".equals(jwe.getPayload().toString());
-        });
+        testObserver.assertValue(
+            jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
+                jwe.decrypt(new PasswordBasedDecrypter(jwk.getKeyValue().decode()));
+                return "JWT".equals(jwe.getPayload().toString());
+            }
+        );
     }
 
     @Test
@@ -120,15 +124,17 @@ public class JWEPbeTest {
         client.setUserinfoEncryptedResponseEnc(this.enc);
 
         when(jwkService.getKeys(client)).thenReturn(Maybe.just(new JWKSet()));
-        when(jwkService.filter(any(),any())).thenReturn(Maybe.just(key));
+        when(jwkService.filter(any(), any())).thenReturn(Maybe.just(key));
 
         TestObserver testObserver = jweService.encryptUserinfo("JWT", client).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(jweString -> {
-            JWEObject jwe = JWEObject.parse((String)jweString);
-            jwe.decrypt(new PasswordBasedDecrypter(jwk.getKeyValue().decode()));
-            return "JWT".equals(jwe.getPayload().toString());
-        });
+        testObserver.assertValue(
+            jweString -> {
+                JWEObject jwe = JWEObject.parse((String) jweString);
+                jwe.decrypt(new PasswordBasedDecrypter(jwk.getKeyValue().decode()));
+                return "JWT".equals(jwe.getPayload().toString());
+            }
+        );
     }
 }

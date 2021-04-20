@@ -26,6 +26,11 @@ import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -33,12 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,7 +47,7 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
 
     private final Logger logger = LoggerFactory.getLogger(ExtensionGrantPluginManagerImpl.class);
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
+    private static final String SCHEMAS_DIRECTORY = "schemas";
 
     private final Map<String, ExtensionGrant> extensionGrants = new HashMap<>();
     private final Map<ExtensionGrant, Plugin> extensionGrantPlugins = new HashMap<>();
@@ -61,11 +60,9 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
 
     @Override
     public void register(ExtensionGrantDefinition extensionGrantDefinition) {
-        extensionGrants.putIfAbsent(extensionGrantDefinition.getPlugin().id(),
-                extensionGrantDefinition.getExtensionGrant());
+        extensionGrants.putIfAbsent(extensionGrantDefinition.getPlugin().id(), extensionGrantDefinition.getExtensionGrant());
 
-        extensionGrantPlugins.putIfAbsent(extensionGrantDefinition.getExtensionGrant(),
-                extensionGrantDefinition.getPlugin());
+        extensionGrantPlugins.putIfAbsent(extensionGrantDefinition.getExtensionGrant(), extensionGrantDefinition.getPlugin());
     }
 
     @Override
@@ -86,11 +83,17 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
 
         if (extensionGrant != null) {
             Class<? extends ExtensionGrantConfiguration> configurationClass = extensionGrant.configuration();
-            ExtensionGrantConfiguration extensionGrantConfiguration = extensionGrantConfigurationFactory.create(configurationClass, configuration);
+            ExtensionGrantConfiguration extensionGrantConfiguration = extensionGrantConfigurationFactory.create(
+                configurationClass,
+                configuration
+            );
 
-            return create0(extensionGrantPlugins.get(extensionGrant),
-                    extensionGrant.provider(),
-                    extensionGrantConfiguration, authenticationProvider);
+            return create0(
+                extensionGrantPlugins.get(extensionGrant),
+                extensionGrant.provider(),
+                extensionGrantConfiguration,
+                authenticationProvider
+            );
         } else {
             logger.error("No extension grant provider is registered for type {}", type);
             throw new IllegalStateException("No extension grant provider is registered for type " + type);
@@ -102,8 +105,9 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
         ExtensionGrant extensionGrant = extensionGrants.get(tokenGranterId);
         Path policyWorkspace = extensionGrantPlugins.get(extensionGrant).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+        File[] schemas = policyWorkspace
+            .toFile()
+            .listFiles(pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
         if (schemas.length == 1) {
             File schemaDir = schemas[0];
@@ -116,7 +120,12 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
         return null;
     }
 
-    private <T> T create0(Plugin plugin, Class<T> extensionGrantClass, ExtensionGrantConfiguration extensionGrantConfiguration, AuthenticationProvider authenticationProvider) {
+    private <T> T create0(
+        Plugin plugin,
+        Class<T> extensionGrantClass,
+        ExtensionGrantConfiguration extensionGrantConfiguration,
+        AuthenticationProvider authenticationProvider
+    ) {
         if (extensionGrantClass == null) {
             return null;
         }
@@ -124,30 +133,35 @@ public class ExtensionGrantPluginManagerImpl implements ExtensionGrantPluginMana
         try {
             T extensionGrantObj = createInstance(extensionGrantClass);
             final Import annImport = extensionGrantClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+            Set<Class<?>> configurations = (annImport != null) ? new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
 
-            ApplicationContext extensionGrantApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
+            ApplicationContext extensionGrantApplicationContext = pluginContextFactory.create(
+                new AnnotationBasedPluginContextConfigurer(plugin) {
+                    @Override
+                    public Set<Class<?>> configurations() {
+                        return configurations;
+                    }
+
+                    @Override
+                    public ConfigurableApplicationContext applicationContext() {
+                        ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+
+                        // Add extension grant configuration bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration)
+                        );
+
+                        // Add extension grant identity provider bean
+                        configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new ExtensionGrantIdentityProviderFactoryPostProcessor(
+                                authenticationProvider != null ? authenticationProvider : new NoAuthenticationProvider()
+                            )
+                        );
+
+                        return configurableApplicationContext;
+                    }
                 }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add extension grant configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration));
-
-                    // Add extension grant identity provider bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new ExtensionGrantIdentityProviderFactoryPostProcessor(authenticationProvider != null ? authenticationProvider : new NoAuthenticationProvider()));
-
-                    return configurableApplicationContext;
-                }
-            });
+            );
 
             extensionGrantApplicationContext.getAutowireCapableBeanFactory().autowireBean(extensionGrantObj);
 

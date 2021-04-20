@@ -19,7 +19,7 @@ package io.gravitee.am.management.handlers.management.api.model;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class TopClientListItem extends ClientListItem{
+public class TopClientListItem extends ClientListItem {
 
     private long accessTokens;
 

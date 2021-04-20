@@ -22,6 +22,5 @@ import io.gravitee.am.certificate.api.CertificateConfiguration;
  * @author GraviteeSource Team
  */
 public interface CertificateConfigurationFactory {
-
     <T extends CertificateConfiguration> T create(Class<T> clazz, String content);
 }

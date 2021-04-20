@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.common.user;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
 import java.util.List;
 
 /**
@@ -26,7 +25,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface UserService {
-
     /**
      * Find a user by its technical id
      * @param id user technical id

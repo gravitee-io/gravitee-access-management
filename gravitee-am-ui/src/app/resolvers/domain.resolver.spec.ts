@@ -20,7 +20,7 @@ import { DomainResolver } from './domain.resolver';
 describe('DomainResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainResolver]
+      providers: [DomainResolver],
     });
   });
 

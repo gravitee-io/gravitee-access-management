@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.github.authentication;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -38,15 +40,12 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
-
-import java.util.*;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -97,8 +96,7 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
-        return authenticate(authentication)
-                .flatMap(accessToken -> profile(accessToken));
+        return authenticate(authentication).flatMap(accessToken -> profile(accessToken));
     }
 
     @Override
@@ -120,33 +118,39 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
         urlParameters.add(new BasicNameValuePair(CODE, authorizationCode));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 
-        return client.postAbs(configuration.getAccessTokenUri())
-                .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
-                .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
-                .rxSendBuffer(Buffer.buffer(bodyRequest))
-                .toMaybe()
-                .map(httpResponse -> {
+        return client
+            .postAbs(configuration.getAccessTokenUri())
+            .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
+            .rxSendBuffer(Buffer.buffer(bodyRequest))
+            .toMaybe()
+            .map(
+                httpResponse -> {
                     if (httpResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
 
                     Map<String, String> bodyResponse = URLEncodedUtils.format(httpResponse.bodyAsString());
                     return bodyResponse.get("access_token");
-                });
+                }
+            );
     }
 
     private Maybe<User> profile(String accessToken) {
-        return client.getAbs(configuration.getUserProfileUri())
-                .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken)
-                .rxSend()
-                .toMaybe()
-                .map(httpClientResponse -> {
+        return client
+            .getAbs(configuration.getUserProfileUri())
+            .putHeader(HttpHeaders.AUTHORIZATION, "token " + accessToken)
+            .rxSend()
+            .toMaybe()
+            .map(
+                httpClientResponse -> {
                     if (httpClientResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
                     return createUser(httpClientResponse.bodyAsJsonObject().getMap());
-                });
+                }
+            );
     }
 
     private User createUser(Map<String, Object> attributes) {
@@ -176,11 +180,14 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
         }
 
         Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
+        this.mapper.getMappers()
+            .forEach(
+                (k, v) -> {
+                    if (attributes.containsKey(v)) {
+                        claims.put(k, attributes.get(v));
+                    }
+                }
+            );
         return claims;
     }
 
@@ -190,23 +197,31 @@ public class GithubAuthenticationProvider implements SocialAuthenticationProvide
         }
 
         Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
+        roleMapper
+            .getRoles()
+            .forEach(
+                (role, users) -> {
+                    Arrays
+                        .asList(users)
+                        .forEach(
+                            u -> {
+                                // role mapping have the following syntax userAttribute=userValue
+                                String[] roleMapping = u.split("=", 2);
+                                String userAttribute = roleMapping[0];
+                                String userValue = roleMapping[1];
+                                if (attributes.containsKey(userAttribute)) {
+                                    Object attribute = attributes.get(userAttribute);
+                                    // attribute is a list
+                                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
+                                        roles.add(role);
+                                    } else if (userValue.equals(attributes.get(userAttribute))) {
+                                        roles.add(role);
+                                    }
+                                }
+                            }
+                        );
                 }
-            });
-        });
+            );
 
         return new ArrayList<>(roles);
     }

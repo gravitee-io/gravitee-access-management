@@ -20,6 +20,7 @@ package io.gravitee.am.model.analytics;
  * @author GraviteeSource Team
  */
 public class Timestamp {
+
     private final Long from;
     private final Long to;
     private final Long interval;

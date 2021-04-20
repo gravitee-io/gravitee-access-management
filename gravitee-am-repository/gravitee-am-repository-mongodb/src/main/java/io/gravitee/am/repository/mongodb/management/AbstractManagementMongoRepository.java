@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import static com.mongodb.client.model.Filters.*;
+
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.reactivex.Maybe;
-import org.bson.conversions.Bson;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.mongodb.client.model.Filters.*;
+import org.bson.conversions.Bson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,20 +43,21 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Qualifier("managementMongoTemplate")
     protected MongoDatabase mongoOperations;
 
-
     protected Bson toBsonFilter(String name, Optional<?> optional) {
+        return optional
+            .map(
+                value -> {
+                    if (value instanceof Enum) {
+                        return eq(name, ((Enum<?>) value).name());
+                    }
 
-        return optional.map(value -> {
-            if (value instanceof Enum) {
-                return eq(name, ((Enum<?>) value).name());
-            }
-
-            return eq(name, value);
-        }).orElse(null);
+                    return eq(name, value);
+                }
+            )
+            .orElse(null);
     }
 
     protected Maybe<Bson> toBsonFilter(boolean logicalOr, Bson... filter) {
-
         List<Bson> filterCriteria = Stream.of(filter).filter(Objects::nonNull).collect(Collectors.toList());
 
         if (filterCriteria.isEmpty()) {

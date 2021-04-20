@@ -21,10 +21,9 @@ import io.gravitee.am.identityprovider.github.GithubIdentityProviderMapper;
 import io.gravitee.am.identityprovider.github.GithubIdentityProviderRoleMapper;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.reactivex.core.Vertx;
+import java.util.Properties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Properties;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.Completable;
@@ -23,9 +26,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import static org.junit.Assert.assertFalse;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

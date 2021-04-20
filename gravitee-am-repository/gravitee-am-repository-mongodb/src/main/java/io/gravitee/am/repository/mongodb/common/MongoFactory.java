@@ -15,10 +15,21 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
 import com.mongodb.*;
 import com.mongodb.connection.*;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
@@ -26,18 +37,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import java.io.FileInputStream;
-import java.security.KeyStore;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,9 +62,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
 
         CodecRegistry defaultCodecRegistry = MongoClients.getDefaultCodecRegistry();
-        CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder()
-                .automatic(true)
-                .build());
+        CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder().automatic(true).build());
 
         builder.codecRegistry(fromRegistries(defaultCodecRegistry, pojoCodecRegistry));
 
@@ -74,9 +71,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         if (uri != null && !uri.isEmpty()) {
             // The builder can be configured with default options, which may be overridden by options specified in
             // the URI string.
-            MongoClientSettings settings = builder
-                    .applyConnectionString(new ConnectionString(uri))
-                    .build();
+            MongoClientSettings settings = builder.applyConnectionString(new ConnectionString(uri)).build();
 
             return MongoClients.create(settings);
         } else {
@@ -104,26 +99,16 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             String keystorePassword = readPropertyValue(propertyPrefix + "keystorePassword", String.class);
             String keyPassword = readPropertyValue(propertyPrefix + "keyPassword", String.class);
 
-            if (maxWaitTime != null)
-                connectionPoolBuilder.maxWaitTime(maxWaitTime, TimeUnit.MILLISECONDS);
-            if (connectTimeout != null)
-                socketBuilder.connectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
-            if (socketTimeout != null)
-                socketBuilder.readTimeout(socketTimeout, TimeUnit.MILLISECONDS);
-            if (socketKeepAlive != null)
-                socketBuilder.keepAlive(socketKeepAlive);
-            if (maxConnectionLifeTime != null)
-                connectionPoolBuilder.maxConnectionLifeTime(maxConnectionLifeTime, TimeUnit.MILLISECONDS);
-            if (maxConnectionIdleTime != null)
-                connectionPoolBuilder.maxConnectionIdleTime(maxConnectionIdleTime, TimeUnit.MILLISECONDS);
-            if (minHeartbeatFrequency != null)
-                serverBuilder.minHeartbeatFrequency(minHeartbeatFrequency, TimeUnit.MILLISECONDS);
-            if (description != null)
-                clusterBuilder.description(description);
-            if (heartbeatFrequency != null)
-                serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
-            if (sslEnabled != null)
-                sslBuilder.enabled(sslEnabled);
+            if (maxWaitTime != null) connectionPoolBuilder.maxWaitTime(maxWaitTime, TimeUnit.MILLISECONDS);
+            if (connectTimeout != null) socketBuilder.connectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
+            if (socketTimeout != null) socketBuilder.readTimeout(socketTimeout, TimeUnit.MILLISECONDS);
+            if (socketKeepAlive != null) socketBuilder.keepAlive(socketKeepAlive);
+            if (maxConnectionLifeTime != null) connectionPoolBuilder.maxConnectionLifeTime(maxConnectionLifeTime, TimeUnit.MILLISECONDS);
+            if (maxConnectionIdleTime != null) connectionPoolBuilder.maxConnectionIdleTime(maxConnectionIdleTime, TimeUnit.MILLISECONDS);
+            if (minHeartbeatFrequency != null) serverBuilder.minHeartbeatFrequency(minHeartbeatFrequency, TimeUnit.MILLISECONDS);
+            if (description != null) clusterBuilder.description(description);
+            if (heartbeatFrequency != null) serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
+            if (sslEnabled != null) sslBuilder.enabled(sslEnabled);
             if (keystore != null) {
                 try {
                     SSLContext ctx = SSLContext.getInstance("TLS");
@@ -138,8 +123,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                     throw new IllegalStateException("Error creating the keystore for mongodb", e);
                 }
             }
-            if (serverSelectionTimeout != null)
-                clusterBuilder.serverSelectionTimeout(serverSelectionTimeout, TimeUnit.MILLISECONDS);
+            if (serverSelectionTimeout != null) clusterBuilder.serverSelectionTimeout(serverSelectionTimeout, TimeUnit.MILLISECONDS);
 
             // credentials option
             String username = readPropertyValue(propertyPrefix + "username");
@@ -172,12 +156,12 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             ServerSettings serverSettings = serverBuilder.build();
             SslSettings sslSettings = sslBuilder.build();
             MongoClientSettings settings = builder
-                    .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
-                    .applyToSocketSettings(builder1 -> builder1.applySettings(socketSettings))
-                    .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolSettings))
-                    .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
-                    .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
-                    .build();
+                .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
+                .applyToSocketSettings(builder1 -> builder1.applySettings(socketSettings))
+                .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolSettings))
+                .applyToServerSettings(builder1 -> builder1.applySettings(serverSettings))
+                .applyToSslSettings(builder1 -> builder1.applySettings(sslSettings))
+                .build();
 
             return MongoClients.create(settings);
         }

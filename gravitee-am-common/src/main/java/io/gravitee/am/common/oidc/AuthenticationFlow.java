@@ -24,9 +24,7 @@ package io.gravitee.am.common.oidc;
  * @author GraviteeSource Team
  */
 public enum AuthenticationFlow {
-
     AUTHORIZATION_CODE_FLOW,
     IMPLICIT_FLOW,
-    HYBRID_FLOW
-
+    HYBRID_FLOW,
 }

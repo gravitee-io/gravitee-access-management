@@ -16,7 +16,6 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Template;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
@@ -27,15 +26,21 @@ import javax.validation.constraints.NotNull;
 public class NewEmail {
 
     private boolean enabled;
+
     @NotNull
     private Template template;
+
     @NotNull
     private String from;
+
     private String fromName;
+
     @NotNull
     private String subject;
+
     @NotNull
     private String content;
+
     @NotNull
     @Min(1)
     private int expiresAfter = 84600;

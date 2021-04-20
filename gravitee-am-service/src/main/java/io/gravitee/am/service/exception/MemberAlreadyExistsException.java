@@ -25,7 +25,6 @@ public class MemberAlreadyExistsException extends AbstractManagementException {
 
     private final String member;
 
-
     public MemberAlreadyExistsException(String member) {
         this.member = member;
     }

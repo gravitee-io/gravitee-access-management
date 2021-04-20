@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.handler.authorization;
 
+import static org.mockito.Mockito.doNothing;
+
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -29,14 +31,6 @@ import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbidden
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,8 +39,13 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
-
-import static org.mockito.Mockito.doNothing;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -73,14 +72,12 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -94,16 +91,14 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("client_id", "unknown_client")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("client_id", "unknown_client")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
         System.out.println(new PlainJWT(claimsSet).serialize());
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -117,16 +112,14 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("state", "override-state")
-                .claim("nonce", "override-nonce")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("state", "override-state")
+            .claim("nonce", "override-nonce")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -140,15 +133,13 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("max_age", 360000)
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("max_age", 360000)
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -162,15 +153,13 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("redirect_uri", "https://op-test:60001/authz_cb")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("redirect_uri", "https://op-test:60001/authz_cb")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
@@ -184,24 +173,23 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("redirect_uri", "https://op-test:60001/authz_cb")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("redirect_uri", "https://op-test:60001/authz_cb")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-encryption").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-encryption").build(), claimsSet);
 
         signedJWT.sign(signer);
 
         // Create JWE object with signed JWT as payload
         JWEObject jweObject = new JWEObject(
-                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
-                        .contentType("JWT") // required to indicate nested JWT
-                        .build(),
-                new Payload(signedJWT));
+            new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
+                .contentType("JWT") // required to indicate nested JWT
+                .build(),
+            new Payload(signedJWT)
+        );
 
         // Encrypt with the recipient's public key
         jweObject.encrypt(new RSAEncrypter(rsaKey));
@@ -216,24 +204,23 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("max_age", 360000)
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("max_age", 360000)
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
         // Create JWE object with signed JWT as payload
         JWEObject jweObject = new JWEObject(
-                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
-                        .contentType("JWT") // required to indicate nested JWT
-                        .build(),
-                new Payload(signedJWT));
+            new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
+                .contentType("JWT") // required to indicate nested JWT
+                .build(),
+            new Payload(signedJWT)
+        );
 
         // Encrypt with the recipient's public key
         jweObject.encrypt(new RSAEncrypter(rsaKey));
@@ -248,24 +235,23 @@ public class AuthorizationRequestParseRequestObjectHandlerTest {
         JWSSigner signer = new RSASSASigner(rsaKey);
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject("alice")
-                .issuer("https://c2id.com")
-                .claim("redirect_uri", "https://op-test:60001/authz_cb")
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
-                .build();
+            .subject("alice")
+            .issuer("https://c2id.com")
+            .claim("redirect_uri", "https://op-test:60001/authz_cb")
+            .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+            .build();
 
-        SignedJWT signedJWT = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(),
-                claimsSet);
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256).keyID("rsa-signature").build(), claimsSet);
 
         signedJWT.sign(signer);
 
         // Create JWE object with signed JWT as payload
         JWEObject jweObject = new JWEObject(
-                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
-                        .contentType("JWT") // required to indicate nested JWT
-                        .build(),
-                new Payload(signedJWT));
+            new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
+                .contentType("JWT") // required to indicate nested JWT
+                .build(),
+            new Payload(signedJWT)
+        );
 
         // Encrypt with the recipient's public key
         jweObject.encrypt(new RSAEncrypter(rsaKey));

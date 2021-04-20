@@ -27,15 +27,14 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -43,7 +42,8 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component("managementIdentityProviderManager")
-public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl
+    implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
 
     private final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -75,7 +75,9 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
         logger.info("Initializing identity providers for default organization");
         try {
-            List<IdentityProvider> identityProviders = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT).blockingGet();
+            List<IdentityProvider> identityProviders = identityProviderService
+                .findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
+                .blockingGet();
             identityProviders.forEach(this::updateAuthenticationProvider);
             logger.info("Identity providers loaded for organization {}", Organization.DEFAULT);
         } catch (Exception e) {
@@ -85,7 +87,10 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
-        if (event.content().getReferenceType() == ReferenceType.ORGANIZATION && Organization.DEFAULT.equals(event.content().getReferenceId())) {
+        if (
+            event.content().getReferenceType() == ReferenceType.ORGANIZATION &&
+            Organization.DEFAULT.equals(event.content().getReferenceId())
+        ) {
             switch (event.type()) {
                 case DEPLOY:
                 case UPDATE:
@@ -101,14 +106,16 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     private void updateIdentityProvider(String identityProviderId, IdentityProviderEvent identityProviderEvent) {
         final String eventType = identityProviderEvent.toString().toLowerCase();
         logger.info("Organization {} has received {} identity provider event for {}", Organization.DEFAULT, eventType, identityProviderId);
-        identityProviderService.findById(identityProviderId)
-                .subscribe(
-                        identityProvider -> {
-                            updateAuthenticationProvider(identityProvider);
-                            logger.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, Organization.DEFAULT);
-                        },
-                        error -> logger.error("Unable to {} identity provider for organization {}", eventType, Organization.DEFAULT, error),
-                        () -> logger.error("No identity provider found with id {}", identityProviderId));
+        identityProviderService
+            .findById(identityProviderId)
+            .subscribe(
+                identityProvider -> {
+                    updateAuthenticationProvider(identityProvider);
+                    logger.info("Identity provider {} {}d for organization {}", identityProviderId, eventType, Organization.DEFAULT);
+                },
+                error -> logger.error("Unable to {} identity provider for organization {}", eventType, Organization.DEFAULT, error),
+                () -> logger.error("No identity provider found with id {}", identityProviderId)
+            );
     }
 
     private void updateAuthenticationProvider(IdentityProvider identityProvider) {
@@ -117,9 +124,12 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
             // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper());
+            AuthenticationProvider authenticationProvider = identityProviderPluginManager.create(
+                identityProvider.getType(),
+                identityProvider.getConfiguration(),
+                identityProvider.getMappers(),
+                identityProvider.getRoleMapper()
+            );
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();
@@ -134,7 +144,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     }
 
     private void removeIdentityProvider(String identityProviderId) {
-        logger.info("Organization {} has received identity provider event, delete identity provider {}", Organization.DEFAULT, identityProviderId);
+        logger.info(
+            "Organization {} has received identity provider event, delete identity provider {}",
+            Organization.DEFAULT,
+            identityProviderId
+        );
         clearProvider(identityProviderId);
     }
 

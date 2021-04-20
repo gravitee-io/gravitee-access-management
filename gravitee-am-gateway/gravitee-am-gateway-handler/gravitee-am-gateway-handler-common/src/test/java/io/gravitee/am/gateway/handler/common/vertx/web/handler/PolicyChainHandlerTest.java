@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import static org.mockito.Mockito.*;
+
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.core.processor.Processor;
 import io.gravitee.am.gateway.handler.common.policy.PolicyManager;
@@ -27,15 +29,12 @@ import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,7 +74,12 @@ public class PolicyChainHandlerTest {
     public void shouldNotInvoke_noPolicies() {
         when(policyManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT)).thenReturn(Single.just(Collections.emptyList()));
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(policyManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(
+            policyManager,
+            policyChainProcessorFactory,
+            executionContextFactory,
+            ExtensionPoint.PRE_CONSENT
+        );
 
         policyChainHandler.handle(routingContext);
 
@@ -96,7 +100,12 @@ public class PolicyChainHandlerTest {
         when(processor.errorHandler(any())).thenReturn(processor);
         when(policyChainProcessorFactory.create(Collections.singletonList(policy), executionContext)).thenReturn(processor);
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(policyManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(
+            policyManager,
+            policyChainProcessorFactory,
+            executionContextFactory,
+            ExtensionPoint.PRE_CONSENT
+        );
 
         policyChainHandler.handle(routingContext);
 
@@ -117,7 +126,12 @@ public class PolicyChainHandlerTest {
         when(processor.errorHandler(any())).thenReturn(processor);
         when(policyChainProcessorFactory.create(Arrays.asList(policy, policy), executionContext)).thenReturn(processor);
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(policyManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(
+            policyManager,
+            policyChainProcessorFactory,
+            executionContextFactory,
+            ExtensionPoint.PRE_CONSENT
+        );
 
         policyChainHandler.handle(routingContext);
 

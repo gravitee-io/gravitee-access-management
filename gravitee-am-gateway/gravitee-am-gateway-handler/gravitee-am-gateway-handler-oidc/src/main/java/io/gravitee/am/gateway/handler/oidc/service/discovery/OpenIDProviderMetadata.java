@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 /**

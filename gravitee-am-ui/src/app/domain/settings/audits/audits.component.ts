@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from "@angular/router";
-import { AppConfig } from "../../../../config/app.config";
-import { AuditService } from "../../../services/audit.service";
+import { ActivatedRoute, Router } from '@angular/router';
+import { AppConfig } from '../../../../config/app.config';
+import { AuditService } from '../../../services/audit.service';
 import * as moment from 'moment';
-import { OrganizationService } from "../../../services/organization.service";
-import { UserService } from "../../../services/user.service";
-import { FormControl } from "@angular/forms";
+import { OrganizationService } from '../../../services/organization.service';
+import { UserService } from '../../../services/user.service';
+import { FormControl } from '@angular/forms';
 import * as _ from 'lodash';
-import {AuthService} from "../../../services/auth.service";
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-audits',
   templateUrl: './audits.component.html',
-  styleUrls: ['./audits.component.scss']
+  styleUrls: ['./audits.component.scss'],
 })
 export class AuditsComponent implements OnInit {
   private startDateChanged = false;
@@ -48,68 +48,69 @@ export class AuditsComponent implements OnInit {
   displayReset = false;
   expanded: any = {};
   loadingIndicator: boolean;
-  config: any = {lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json'};
+  config: any = { lineWrapping: true, lineNumbers: true, readOnly: true, mode: 'application/json' };
   filteredUsers: any[];
   selectedUser: any;
   selectedTimeRange = '1d';
   timeRanges: any[] = [
     {
-      'id': '1h',
-      'name': 'Last hour',
-      'value': 1,
-      'unit': 'hours'
+      id: '1h',
+      name: 'Last hour',
+      value: 1,
+      unit: 'hours',
     },
     {
-      'id': '12h',
-      'name': 'Last 12 hours',
-      'value': 12,
-      'unit': 'hours'
+      id: '12h',
+      name: 'Last 12 hours',
+      value: 12,
+      unit: 'hours',
     },
     {
-      'id': '1d',
-      'name': 'Today',
-      'value': 1,
-      'unit': 'days',
-      'default': true
+      id: '1d',
+      name: 'Today',
+      value: 1,
+      unit: 'days',
+      default: true,
     },
     {
-      'id': '7d',
-      'name': 'This week',
-      'value': 1,
-      'unit': 'weeks'
+      id: '7d',
+      name: 'This week',
+      value: 1,
+      unit: 'weeks',
     },
     {
-      'id': '30d',
-      'name': 'This month',
-      'value': 1,
-      'unit': 'months'
+      id: '30d',
+      name: 'This month',
+      value: 1,
+      unit: 'months',
     },
     {
-      'id': '90d',
-      'name': 'Last 90 days',
-      'value': 3,
-      'unit': 'months'
-    }
-  ]
+      id: '90d',
+      name: 'Last 90 days',
+      value: 3,
+      unit: 'months',
+    },
+  ];
 
-  constructor(private route: ActivatedRoute,
-              private router: Router,
-              private auditService: AuditService,
-              private organizationService: OrganizationService,
-              private userService: UserService,
-              private authService: AuthService) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private auditService: AuditService,
+    private organizationService: OrganizationService,
+    private userService: UserService,
+    private authService: AuthService,
+  ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
-    this.userCtrl.valueChanges
-      .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.organizationContext).subscribe(response => {
-          this.filteredUsers = response.data;
-        });
+    this.userCtrl.valueChanges.subscribe((searchTerm) => {
+      this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.organizationContext).subscribe((response) => {
+        this.filteredUsers = response.data;
       });
+    });
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.parent.params.domainId;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.requiredReadPermission = 'organization_audit_read';
@@ -117,16 +118,16 @@ export class AuditsComponent implements OnInit {
       this.requiredReadPermission = 'domain_audit_read';
     }
     // load event types
-    this.organizationService.auditEventTypes().subscribe(data => this.eventTypes = data);
+    this.organizationService.auditEventTypes().subscribe((data) => (this.eventTypes = data));
     // load audits
     this.search();
   }
 
   get isEmpty() {
-    return !this.audits || this.audits.length === 0 && !this.displayReset;
+    return !this.audits || (this.audits.length === 0 && !this.displayReset);
   }
 
-  setPage(pageInfo){
+  setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
     this.searchAudits();
   }
@@ -151,7 +152,7 @@ export class AuditsComponent implements OnInit {
       routerLink.push('settings');
     }
 
-    if(routerLink.length > 0) {
+    if (routerLink.length > 0) {
       routerLink.push('users');
       routerLink.push(row.actor.id);
     }
@@ -202,7 +203,7 @@ export class AuditsComponent implements OnInit {
   getTargetParams(row) {
     let params = {};
     if (row.target.type === 'FORM' || row.target.type === 'EMAIL') {
-      params['template'] = row.target.displayName.toUpperCase();
+      params.template = row.target.displayName.toUpperCase();
     }
     return params;
   }
@@ -245,17 +246,33 @@ export class AuditsComponent implements OnInit {
   }
 
   searchAudits() {
-    let selectedTimeRange = _.find(this.timeRanges, { id : this.selectedTimeRange });
-    let from = this.startDateChanged ? moment(this.startDate).valueOf() : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
+    let selectedTimeRange = _.find(this.timeRanges, { id: this.selectedTimeRange });
+    let from = this.startDateChanged
+      ? moment(this.startDate).valueOf()
+      : moment().subtract(selectedTimeRange.value, selectedTimeRange.unit);
     let to = this.endDateChanged ? moment(this.endDate).valueOf() : moment().valueOf();
-    let user = this.selectedUser || (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
+    let user =
+      this.selectedUser ||
+      (this.userCtrl.value ? (typeof this.userCtrl.value === 'string' ? this.userCtrl.value : this.userCtrl.value.username) : null);
     this.loadingIndicator = true;
-    this.auditService.search(this.domainId, this.page.pageNumber, this.page.size, this.eventType, this.eventStatus, user, from, to, this.organizationContext).subscribe(pagedAudits => {
-      this.page.totalElements = pagedAudits.totalCount;
-      this.audits = pagedAudits.data;
-      this.selectedUser = null;
-      this.loadingIndicator = false;
-    });
+    this.auditService
+      .search(
+        this.domainId,
+        this.page.pageNumber,
+        this.page.size,
+        this.eventType,
+        this.eventStatus,
+        user,
+        from,
+        to,
+        this.organizationContext,
+      )
+      .subscribe((pagedAudits) => {
+        this.page.totalElements = pagedAudits.totalCount;
+        this.audits = pagedAudits.data;
+        this.selectedUser = null;
+        this.loadingIndicator = false;
+      });
   }
 
   toggleExpandRow(row) {
@@ -275,10 +292,9 @@ export class AuditsComponent implements OnInit {
   }
 
   onUserSelectionChanged(event) {
-    this.selectedUser = event.option.value["username"];
+    this.selectedUser = event.option.value.username;
     this.displayReset = true;
   }
-
 
   displayUserFn(user?: any): string | undefined {
     return user ? user.username : undefined;
@@ -286,7 +302,7 @@ export class AuditsComponent implements OnInit {
 
   displayUserName(user) {
     if (user.firstName) {
-      return user.firstName + " " + (user.lastName ? user.lastName : '');
+      return user.firstName + ' ' + (user.lastName ? user.lastName : '');
     } else {
       return user.username;
     }

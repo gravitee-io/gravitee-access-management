@@ -52,18 +52,24 @@ public class VertxEmbeddedContainer extends AbstractLifecycleComponent<VertxEmbe
 
         DeploymentOptions options = new DeploymentOptions().setInstances(instances);
 
-        Single<String> deployment = vertx.rxDeployVerticle(SpringVerticleFactory.VERTICLE_PREFIX + ':' + GraviteeVerticle.class.getName(), options);
+        Single<String> deployment = vertx.rxDeployVerticle(
+            SpringVerticleFactory.VERTICLE_PREFIX + ':' + GraviteeVerticle.class.getName(),
+            options
+        );
 
-        deployment.subscribe(id -> {
-            // Deployed
-            deploymentId = id;
-        }, err -> {
-            // Could not deploy
-            logger.error("Unable to start HTTP server", err.getCause());
+        deployment.subscribe(
+            id -> {
+                // Deployed
+                deploymentId = id;
+            },
+            err -> {
+                // Could not deploy
+                logger.error("Unable to start HTTP server", err.getCause());
 
-            // HTTP Server is a required component. Shutdown if not available
-            Runtime.getRuntime().exit(1);
-        });
+                // HTTP Server is a required component. Shutdown if not available
+                Runtime.getRuntime().exit(1);
+            }
+        );
     }
 
     @Override

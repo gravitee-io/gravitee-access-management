@@ -20,7 +20,6 @@ package io.gravitee.am.identityprovider.mongo.utils;
  * @author GraviteeSource Team
  */
 public enum PasswordEncoder {
-
     NONE("None"),
     BCRYPT("BCrypt");
 

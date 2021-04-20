@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -191,8 +190,10 @@ public class OAuth2Request extends BaseRequest {
             return false;
         }
 
-        if (getResponseType() != null
-                && (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))) {
+        if (
+            getResponseType() != null &&
+            (ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()))
+        ) {
             return true;
         }
         if (getScopes() != null && getScopes().contains(Scope.OPENID.getKey())) {
@@ -202,8 +203,9 @@ public class OAuth2Request extends BaseRequest {
     }
 
     public boolean isSupportAtHashValue() {
-        return getResponseType() != null
-                && (ResponseType.ID_TOKEN_TOKEN.equals(getResponseType())
-                || ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()));
+        return (
+            getResponseType() != null &&
+            (ResponseType.ID_TOKEN_TOKEN.equals(getResponseType()) || ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()))
+        );
     }
 }

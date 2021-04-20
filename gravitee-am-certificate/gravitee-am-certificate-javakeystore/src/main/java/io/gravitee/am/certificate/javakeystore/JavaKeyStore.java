@@ -25,6 +25,7 @@ import io.gravitee.am.certificate.javakeystore.provider.JavaKeyStoreProvider;
  * @author GraviteeSource Team
  */
 public class JavaKeyStore implements Certificate {
+
     @Override
     public Class<? extends CertificateConfiguration> configuration() {
         return JavaKeyStoreConfiguration.class;

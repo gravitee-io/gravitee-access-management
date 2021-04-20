@@ -92,4 +92,3 @@ public class TokenRequest extends OAuth2Request {
         return oAuth2Request;
     }
 }
-

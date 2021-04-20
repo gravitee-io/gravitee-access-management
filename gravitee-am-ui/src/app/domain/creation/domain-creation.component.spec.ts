@@ -15,7 +15,7 @@
  */
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {DomainCreationComponent} from './domain-creation.component';
+import { DomainCreationComponent } from './domain-creation.component';
 
 describe('DomainCreationComponent', () => {
   let component: DomainCreationComponent;
@@ -23,9 +23,8 @@ describe('DomainCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [DomainCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

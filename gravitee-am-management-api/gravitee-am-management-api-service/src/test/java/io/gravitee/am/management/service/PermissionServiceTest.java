@@ -15,6 +15,15 @@
  */
 package io.gravitee.am.management.service;
 
+import static io.gravitee.am.management.service.permissions.Permissions.*;
+import static io.gravitee.am.model.Acl.CREATE;
+import static io.gravitee.am.model.Acl.READ;
+import static io.gravitee.am.model.permissions.Permission.*;
+import static java.util.Collections.emptyList;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
@@ -26,22 +35,12 @@ import io.gravitee.am.service.RoleService;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.*;
-
-import static io.gravitee.am.management.service.permissions.Permissions.*;
-import static io.gravitee.am.model.Acl.CREATE;
-import static io.gravitee.am.model.Acl.READ;
-import static io.gravitee.am.model.permissions.Permission.*;
-import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -76,7 +75,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_fromUserMemberships() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -93,13 +91,22 @@ public class PermissionServiceTest {
         role.setPermissionAcls(Permission.of(ORGANIZATION, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
-                && !criteria.getGroupIds().isPresent()
-                && criteria.isLogicalOR()))).thenReturn(Flowable.just(membership));
+        when(
+            membershipService.findByCriteria(
+                eq(ReferenceType.ORGANIZATION),
+                eq(ORGANIZATION_ID),
+                argThat(
+                    criteria ->
+                        criteria.getUserId().get().equals(user.getId()) && !criteria.getGroupIds().isPresent() && criteria.isLogicalOR()
+                )
+            )
+        )
+            .thenReturn(Flowable.just(membership));
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(Collections.singleton(role)));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
-                .test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -108,7 +115,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_fromGroupMemberships() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -131,13 +137,24 @@ public class PermissionServiceTest {
         group.setMembers(Arrays.asList(user.getId()));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group)));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), argThat(criteria -> criteria.getUserId().get().equals(user.getId())
-                && criteria.getGroupIds().get().equals(Arrays.asList(group.getId()))
-                && criteria.isLogicalOR()))).thenReturn(Flowable.just(membership));
+        when(
+            membershipService.findByCriteria(
+                eq(ReferenceType.ORGANIZATION),
+                eq(ORGANIZATION_ID),
+                argThat(
+                    criteria ->
+                        criteria.getUserId().get().equals(user.getId()) &&
+                        criteria.getGroupIds().get().equals(Arrays.asList(group.getId())) &&
+                        criteria.isLogicalOR()
+                )
+            )
+        )
+            .thenReturn(Flowable.just(membership));
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(Collections.singleton(role)));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
-                .test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -146,15 +163,16 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermissionResource_noMembership() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.empty());
 
-        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
-                .test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ))
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -163,7 +181,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_hasAllPermissions() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -192,13 +209,22 @@ public class PermissionServiceTest {
         domainRole.setPermissionAcls(Permission.of(DOMAIN, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
-        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
-        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(organizationMembership));
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(domainMembership));
+        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId())))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user,
-                and(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
-                        of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(
+                user,
+                and(
+                    of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
+                    of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ)
+                )
+            )
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -207,7 +233,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_hasNotAllPermissions() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -236,13 +261,22 @@ public class PermissionServiceTest {
         domainRole.setPermissionAcls(Permission.of(DOMAIN, CREATE));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
-        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
-        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(organizationMembership));
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(domainMembership));
+        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId())))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user,
-                and(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
-                        of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(
+                user,
+                and(
+                    of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
+                    of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ)
+                )
+            )
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -251,7 +285,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_hasOneOfPermissions() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -280,13 +313,22 @@ public class PermissionServiceTest {
         domainRole.setPermissionAcls(Permission.of(DOMAIN, CREATE));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership));
-        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(domainMembership));
-        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(organizationMembership));
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(domainMembership));
+        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), domainMembership.getRoleId())))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, domainRole))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user,
-                or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
-                        of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ))).test(); // OR instead of AND
+        TestObserver<Boolean> obs = cut
+            .hasPermission(
+                user,
+                or(
+                    of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ),
+                    of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, READ)
+                )
+            )
+            .test(); // OR instead of AND
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -295,7 +337,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_hasPermissionsOnAnotherReference() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -312,13 +353,21 @@ public class PermissionServiceTest {
         role.setPermissionAcls(Permission.of(DOMAIN, READ, CREATE)); // The permission create is set on organization but expected on a domain.
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
-        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class))).thenReturn(Flowable.empty());
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(membership));
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.empty());
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(role))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user,
-                and(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, DOMAIN, READ),
-                        of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, CREATE))).test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(
+                user,
+                and(
+                    of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, DOMAIN, READ),
+                    of(ReferenceType.DOMAIN, DOMAIN_ID, Permission.DOMAIN, CREATE)
+                )
+            )
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -327,7 +376,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_hasPermissionsButNotAssignableToType() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -340,15 +388,15 @@ public class PermissionServiceTest {
 
         Role role = new Role();
         role.setId(ROLE_ID);
-        role.setAssignableType(ReferenceType.ORGANIZATION);// The role is assignable to organization only by affected to an application.
+        role.setAssignableType(ReferenceType.ORGANIZATION); // The role is assignable to organization only by affected to an application.
         role.setPermissionAcls(Permission.of(APPLICATION, READ));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(emptyList()));
-        when(membershipService.findByCriteria(eq(ReferenceType.APPLICATION), eq(APPLICATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(membership));
+        when(membershipService.findByCriteria(eq(ReferenceType.APPLICATION), eq(APPLICATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(membership));
         when(roleService.findByIdIn(Arrays.asList(membership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(role))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ))
-                .test();
+        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.APPLICATION, APPLICATION_ID, APPLICATION, READ)).test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -357,7 +405,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_checkNotRelevant() {
-
         try {
             cut.hasPermission(null, of(ReferenceType.APPLICATION, APPLICATION_ID, ORGANIZATION, READ));
         } catch (IllegalArgumentException iae) {
@@ -367,7 +414,6 @@ public class PermissionServiceTest {
 
     @Test
     public void hasPermission_aclsFromDifferentGroupAndUser() {
-
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
 
@@ -402,10 +448,14 @@ public class PermissionServiceTest {
         group.setMembers(Arrays.asList(user.getId()));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group)));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership, groupMembership));
-        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(organizationMembership, groupMembership));
+        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId())))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
 
-        TestObserver<Boolean> obs = cut.hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ, CREATE)).test();
+        TestObserver<Boolean> obs = cut
+            .hasPermission(user, of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, Permission.ORGANIZATION, READ, CREATE))
+            .test();
 
         obs.awaitTerminalEvent();
         obs.assertComplete();
@@ -414,7 +464,6 @@ public class PermissionServiceTest {
 
     @Test
     public void findAllPermission() {
-
         // Note: findAllPermission is based on same business logic than hasPermissions.
         DefaultUser user = new DefaultUser("user");
         user.setId(USER_ID);
@@ -450,8 +499,10 @@ public class PermissionServiceTest {
         group.setMembers(Arrays.asList(user.getId()));
 
         when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group)));
-        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class))).thenReturn(Flowable.just(organizationMembership, groupMembership));
-        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId()))).thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
+        when(membershipService.findByCriteria(eq(ReferenceType.ORGANIZATION), eq(ORGANIZATION_ID), any(MembershipCriteria.class)))
+            .thenReturn(Flowable.just(organizationMembership, groupMembership));
+        when(roleService.findByIdIn(Arrays.asList(organizationMembership.getRoleId(), groupMembership.getRoleId())))
+            .thenReturn(Single.just(new HashSet<>(Arrays.asList(organizationRole, groupRole))));
 
         TestObserver<Map<Permission, Set<Acl>>> obs = cut.findAllPermissions(user, ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
 
@@ -459,5 +510,4 @@ public class PermissionServiceTest {
         obs.assertComplete();
         obs.assertValue(permissions -> permissions.get(ORGANIZATION).containsAll(new HashSet<>(Arrays.asList(READ, CREATE))));
     }
-
 }

@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.swagger.annotations.Api;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.core.Context;
@@ -25,7 +24,7 @@ import javax.ws.rs.core.Context;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Api(tags = {"Plugin"})
+@Api(tags = { "Plugin" })
 public class PluginsResource {
 
     @Context

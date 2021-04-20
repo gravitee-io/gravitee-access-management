@@ -21,7 +21,7 @@ import { BreadcrumbService } from '../../../../../../services/breadcrumb.service
 @Component({
   selector: 'app-application-email',
   templateUrl: './email.component.html',
-  styleUrls: ['./email.component.scss']
+  styleUrls: ['./email.component.scss'],
 })
 export class ApplicationEmailComponent implements OnInit {
   private domainId: string;
@@ -32,14 +32,12 @@ export class ApplicationEmailComponent implements OnInit {
   editMode: boolean;
   deleteMode: boolean;
 
-  constructor(private route: ActivatedRoute,
-              private authService: AuthService,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(private route: ActivatedRoute, private authService: AuthService, private breadcrumbService: BreadcrumbService) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.parent.parent.params['domainId'];
-    this.appId = this.route.snapshot.parent.parent.params['appId'];
-    this.rawTemplate = this.route.snapshot.queryParams['template'];
+    this.domainId = this.route.snapshot.parent.parent.parent.params.domainId;
+    this.appId = this.route.snapshot.parent.parent.params.appId;
+    this.rawTemplate = this.route.snapshot.queryParams.template;
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['application_email_template_create']);
     this.editMode = this.authService.hasPermissions(['application_email_template_update']);
@@ -48,6 +46,9 @@ export class ApplicationEmailComponent implements OnInit {
   }
 
   initBreadcrumb() {
-    this.breadcrumbService.addFriendlyNameForRouteRegex('/domains/' + this.domainId + '/applications/' + this.appId + '/design/emails/email*', this.template);
+    this.breadcrumbService.addFriendlyNameForRouteRegex(
+      '/domains/' + this.domainId + '/applications/' + this.appId + '/design/emails/email*',
+      this.template,
+    );
   }
 }

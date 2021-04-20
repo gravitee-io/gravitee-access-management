@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.Client;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,16 +52,19 @@ public class DynamicClientRegistrationTemplate {
     }
 
     public static List<DynamicClientRegistrationTemplate> from(List<Client> templates) {
-        if(templates==null) {
+        if (templates == null) {
             return Collections.emptyList();
         }
-        return templates.stream()
-                .map(template -> {
+        return templates
+            .stream()
+            .map(
+                template -> {
                     DynamicClientRegistrationTemplate res = new DynamicClientRegistrationTemplate();
                     res.setSoftwareId(template.getId());
                     res.setDescription(template.getClientName());
                     return res;
-                })
-                .collect(Collectors.toList());
+                }
+            )
+            .collect(Collectors.toList());
     }
 }

@@ -24,7 +24,6 @@ import io.reactivex.Single;
  * @author GraviteeSource Team
  */
 public interface CertificateProvider {
-
     Single<Key> key();
 
     Single<String> publicKey();

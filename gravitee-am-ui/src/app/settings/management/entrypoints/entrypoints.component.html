@@ -19,24 +19,26 @@
   <h1 *ngIf="!isEmpty">Entrypoints</h1>
 
   <div *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="55"
-                   [rows]='entrypoints'
-                   [sorts]="[{prop: 'name', dir: 'asc'}]">
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="55"
+      [rows]="entrypoints"
+      [sorts]="[{ prop: 'name', dir: 'asc' }]"
+    >
       <ngx-datatable-column name="Name" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-         <div class="entrypoint-name" fxLayout="column">
-            <h3>{{row.name}}</h3>
-            <small>{{row.description}}</small>
+          <div class="entrypoint-name" fxLayout="column">
+            <h3>{{ row.name }}</h3>
+            <small>{{ row.description }}</small>
           </div>
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Endpoint" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          {{row.url}}
+          {{ row.url }}
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
@@ -50,12 +52,14 @@
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Entrypoints will appear here'"
-                  [subMessage]="'Start creating a entrypoint'"
-                  [icon]="'filter_none'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Entrypoints will appear here'"
+    [subMessage]="'Start creating a entrypoint'"
+    [icon]="'filter_none'"
+  ></app-emptystate>
 
-  <div *hasPermission="['organization_entrypoint_create']" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *hasPermission="['organization_entrypoint_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

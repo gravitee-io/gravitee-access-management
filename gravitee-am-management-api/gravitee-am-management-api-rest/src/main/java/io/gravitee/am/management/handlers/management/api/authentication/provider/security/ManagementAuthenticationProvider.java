@@ -22,6 +22,10 @@ import io.gravitee.am.management.handlers.management.api.authentication.web.WebA
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,11 +36,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.util.StringUtils;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,24 +74,28 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
         // Create a end-user authentication for underlying providers associated to the organization
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
-                authentication.getName(),
-                authentication.getCredentials(), new SimpleAuthenticationContext());
+            authentication.getName(),
+            authentication.getCredentials(),
+            new SimpleAuthenticationContext()
+        );
 
         while (iter.hasNext() && user == null) {
             String provider = iter.next();
 
             IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(provider);
 
-            if(identityProvider == null || identityProvider.isExternal()) {
+            if (identityProvider == null || identityProvider.isExternal()) {
                 // Skip external identity provider for authentication with credentials.
                 continue;
             }
 
-            io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider =
-                    identityProviderManager.get(provider);
+            io.gravitee.am.identityprovider.api.AuthenticationProvider authenticationProvider = identityProviderManager.get(provider);
 
             if (authenticationProvider == null) {
-                lastException = new BadCredentialsException("Unable to load authentication provider " + provider + ", an error occurred during the initialization stage");
+                lastException =
+                    new BadCredentialsException(
+                        "Unable to load authentication provider " + provider + ", an error occurred during the initialization stage"
+                    );
                 continue;
             }
 
@@ -112,7 +115,11 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         }
 
         if (user != null) {
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, provAuthentication.getCredentials(), AuthorityUtils.NO_AUTHORITIES);
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                user,
+                provAuthentication.getCredentials(),
+                AuthorityUtils.NO_AUTHORITIES
+            );
             authenticationToken.setDetails(details);
             return authenticationToken;
         }
@@ -122,8 +129,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return authentication.equals(
-                UsernamePasswordAuthenticationToken.class);
+        return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 
     public void setIdentityProviderManager(IdentityProviderManager identityProviderManager) {

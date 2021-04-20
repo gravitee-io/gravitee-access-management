@@ -26,12 +26,11 @@ import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.exception.AuditNotFoundException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,7 +45,13 @@ public class AuditServiceImpl implements AuditService {
     private AuditReporterManager auditReporterManager;
 
     @Override
-    public Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size) {
+    public Single<Page<Audit>> search(
+        ReferenceType referenceType,
+        String referenceId,
+        AuditReportableCriteria criteria,
+        int page,
+        int size
+    ) {
         try {
             return getReporter(referenceType, referenceId).search(referenceType, referenceId, criteria, page, size);
         } catch (Exception ex) {
@@ -57,7 +62,6 @@ public class AuditServiceImpl implements AuditService {
 
     @Override
     public Single<Page<Audit>> search(String domain, AuditReportableCriteria criteria, int page, int size) {
-
         return search(ReferenceType.DOMAIN, domain, criteria, page, size);
     }
 
@@ -74,10 +78,17 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public Single<Audit> findById(ReferenceType referenceType, String referenceId, String auditId) {
         try {
-            return getReporter(referenceType, referenceId).findById(referenceType, referenceId, auditId)
-                    .switchIfEmpty(Single.error(new AuditNotFoundException(auditId)));
+            return getReporter(referenceType, referenceId)
+                .findById(referenceType, referenceId, auditId)
+                .switchIfEmpty(Single.error(new AuditNotFoundException(auditId)));
         } catch (Exception ex) {
-            logger.error("An error occurs while trying to find audit by id: {} and for the {}}: {}", auditId, referenceType, referenceId, ex);
+            logger.error(
+                "An error occurs while trying to find audit by id: {} and for the {}}: {}",
+                auditId,
+                referenceType,
+                referenceId,
+                ex
+            );
             return Single.error(ex);
         }
     }
@@ -90,7 +101,6 @@ public class AuditServiceImpl implements AuditService {
     private Reporter getReporter(String domain) {
         return auditReporterManager.getReporter(domain);
     }
-
 
     private Reporter getReporter(ReferenceType referenceType, String referenceId) {
         return auditReporterManager.getReporter(referenceType, referenceId);

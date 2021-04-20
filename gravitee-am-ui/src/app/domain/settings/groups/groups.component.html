@@ -18,17 +18,19 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Groups</h1>
   <div *ngIf="!isEmpty">
-    <ngx-datatable class="material"
-                   [columnMode]="'flex'"
-                   [headerHeight]="40"
-                   [footerHeight]="40"
-                   [rowHeight]="50"
-                   [rows]='groups'
-                   [externalPaging]="true"
-                   [count]="page.totalElements"
-                   [offset]="page.pageNumber"
-                   [limit]="page.size"
-                   (page)='setPage($event)'>
+    <ngx-datatable
+      class="material"
+      [columnMode]="'flex'"
+      [headerHeight]="40"
+      [footerHeight]="40"
+      [rowHeight]="50"
+      [rows]="groups"
+      [externalPaging]="true"
+      [count]="page.totalElements"
+      [offset]="page.pageNumber"
+      [limit]="page.size"
+      (page)="setPage($event)"
+    >
       <ngx-datatable-column name="Groups" [flexGrow]="4" [cellClass]="'group-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="group-header" fxLayout="row">
@@ -36,8 +38,8 @@
               <mat-icon>group</mat-icon>
             </div>
             <div class="group-information" fxLayout="column">
-              <h3>{{row.name}}</h3>
-              <small>{{row.description}}</small>
+              <h3>{{ row.name }}</h3>
+              <small>{{ row.description }}</small>
             </div>
           </div>
         </ng-template>
@@ -45,20 +47,26 @@
       <ngx-datatable-column name="" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions">
-            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_group_read']"><mat-icon matTooltip="Settings">settings</mat-icon></a>
-            <button *ngIf="deleteMode" mat-icon-button (click)="delete(row.id, $event)"><mat-icon matTooltip="Delete">delete</mat-icon></button>
+            <a mat-icon-button [routerLink]="[row.id]" *hasPermission="['domain_group_read']"
+              ><mat-icon matTooltip="Settings">settings</mat-icon></a
+            >
+            <button *ngIf="deleteMode" mat-icon-button (click)="delete(row.id, $event)">
+              <mat-icon matTooltip="Delete">delete</mat-icon>
+            </button>
           </div>
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Groups will appear here'"
-                  [subMessage]="'No data to display'"
-                  [icon]="'people'"></app-emptystate>
+  <app-emptystate
+    *ngIf="isEmpty"
+    [message]="'Groups will appear here'"
+    [subMessage]="'No data to display'"
+    [icon]="'people'"
+  ></app-emptystate>
 
-  <div *ngIf="createMode" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *ngIf="createMode" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oidc.model.jwk;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 
 /**

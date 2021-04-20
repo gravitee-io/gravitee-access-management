@@ -16,15 +16,10 @@
 
 -->
 <div class="gv-page-container">
-
   <h1>Client Registration Settings</h1>
   <nav mat-tab-nav-bar color="accent">
-    <a mat-tab-link
-       *ngFor="let link of navLinks"
-       [routerLink]="link.href"
-       routerLinkActive #rla="routerLinkActive"
-       [active]="rla.isActive">
-      {{link.label}}
+    <a mat-tab-link *ngFor="let link of navLinks" [routerLink]="link.href" routerLinkActive #rla="routerLinkActive" [active]="rla.isActive">
+      {{ link.label }}
     </a>
   </nav>
   <div class="client-registration-content">

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {TagService} from "../../../services/tag.service";
-import {SnackbarService} from "../../../services/snackbar.service";
-import {DialogService} from "../../../services/dialog.service";
-import {ActivatedRoute, Router} from "@angular/router";
+import {TagService} from '../../../services/tag.service';
+import {SnackbarService} from '../../../services/snackbar.service';
+import {DialogService} from '../../../services/dialog.service';
+import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-tags',
@@ -32,7 +32,7 @@ export class TagsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.tags = this.route.snapshot.data['tags'];
+    this.tags = this.route.snapshot.data.tags;
   }
 
   get isEmpty() {
@@ -50,7 +50,7 @@ export class TagsComponent implements OnInit {
       .subscribe(res => {
         if (res) {
           this.tagService.delete(id).subscribe(response => {
-            this.snackbarService.open("Sharding tag deleted");
+            this.snackbarService.open('Sharding tag deleted');
             this.loadTags();
           });
         }

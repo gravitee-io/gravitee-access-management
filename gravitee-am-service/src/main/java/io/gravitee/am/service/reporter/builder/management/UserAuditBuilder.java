@@ -17,8 +17,8 @@ package io.gravitee.am.service.reporter.builder.management;
 
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,9 +31,11 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
     }
 
     public UserAuditBuilder user(User user) {
-        if (EventType.USER_CREATED.equals(getType())
-                || EventType.USER_UPDATED.equals(getType())
-                || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
+        if (
+            EventType.USER_CREATED.equals(getType()) ||
+            EventType.USER_UPDATED.equals(getType()) ||
+            EventType.USER_ROLES_ASSIGNED.equals(getType())
+        ) {
             setNewValue(user);
         }
 
@@ -45,8 +47,10 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
     }
 
     private String getDisplayName(User user) {
-        return user.getDisplayName() != null ? user.getDisplayName() :
-                user.getFirstName() != null ? user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : "") :
-                        user.getUsername();
+        return user.getDisplayName() != null
+            ? user.getDisplayName()
+            : user.getFirstName() != null
+                ? user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : "")
+                : user.getUsername();
     }
 }

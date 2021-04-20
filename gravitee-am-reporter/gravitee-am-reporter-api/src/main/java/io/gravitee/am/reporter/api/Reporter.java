@@ -22,7 +22,6 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
  * @author GraviteeSource Team
  */
 public interface Reporter {
-
     Class<? extends ReporterConfiguration> configuration();
 
     Class<? extends AuditReporter> auditReporter();

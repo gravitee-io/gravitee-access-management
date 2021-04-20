@@ -20,7 +20,6 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.List;
 import java.util.Set;
 
@@ -50,12 +49,14 @@ public class TokenRequestParseHandler implements Handler<RoutingContext> {
         // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
         MultiMap requestParameters = context.request().params();
         Set<String> requestParametersNames = requestParameters.names();
-        requestParametersNames.forEach(requestParameterName -> {
-            List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
-            if (requestParameterValue.size() > 1) {
-                throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+        requestParametersNames.forEach(
+            requestParameterName -> {
+                List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
+                if (requestParameterValue.size() > 1) {
+                    throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
+                }
             }
-        });
+        );
     }
 
     private void parseGrantTypeParameter(RoutingContext context) {

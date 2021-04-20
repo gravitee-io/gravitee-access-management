@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.am.model.oidc.Client;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
-import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -132,7 +131,6 @@ public class DynamicClientRegistrationResponse {
     @JsonProperty("request_uris")
     private List<String> requestUris;
 
-
     /*******************************************************************************
      * Oauth2 metadata in addition to RFC specification
      * https://tools.ietf.org/html/rfc7591#section-2
@@ -151,7 +149,6 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("software_statement")
     private String softwareStatement; //Should be JWT
-
 
     /*******************************************************************************
      * Additional metadata for the response
@@ -537,7 +534,7 @@ public class DynamicClientRegistrationResponse {
      * https://openid.net/specs/openid-connect-registration-1_0.html#RegistrationResponse
      */
     public void setClientSecretExpiresAt(Date clientSecretExpiresAt) {
-        this.clientSecretExpiresAt=clientSecretExpiresAt!=null?clientSecretExpiresAt.getTime():0;
+        this.clientSecretExpiresAt = clientSecretExpiresAt != null ? clientSecretExpiresAt.getTime() : 0;
     }
 
     public String getDomain() {
@@ -637,7 +634,7 @@ public class DynamicClientRegistrationResponse {
         response.setDefaultACRvalues(client.getDefaultACRvalues());
         response.setInitiateLoginUri(client.getInitiateLoginUri());
         response.setRequestUris(client.getRequestUris());
-        response.setScope(client.getScopes()!=null?String.join(SCOPE_DELIMITER,client.getScopes()):null);
+        response.setScope(client.getScopes() != null ? String.join(SCOPE_DELIMITER, client.getScopes()) : null);
         response.setSoftwareId(client.getSoftwareId());
         response.setSoftwareVersion(client.getSoftwareVersion());
         response.setSoftwareStatement(client.getSoftwareStatement());

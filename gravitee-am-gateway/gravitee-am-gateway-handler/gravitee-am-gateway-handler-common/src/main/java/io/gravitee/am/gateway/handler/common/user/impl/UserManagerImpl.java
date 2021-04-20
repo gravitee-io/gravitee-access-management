@@ -28,11 +28,10 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.Objects;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -98,19 +97,21 @@ public class UserManagerImpl extends AbstractService implements UserManager, Eve
     private void updateUser(String userId, UserEvent userEvent) {
         final String eventType = userEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} user event for {}", domain.getName(), eventType, userId);
-        userService.findById(userId)
-                .subscribe(
-                        user -> {
-                            // if registration process is not completed, no need to add the user
-                            if (user.isPreRegistration() && !user.isRegistrationCompleted()) {
-                                logger.debug("User {} is still not registered, continue", userId);
-                            } else {
-                                userStore.add(user);
-                            }
-                            logger.info("User {} {}d for domain {}", userId, eventType, domain.getName());
-                        },
-                        error -> logger.error("Unable to {} user for domain {}", eventType, domain.getName(), error),
-                        () -> logger.error("No user found with id {}", userId));
+        userService
+            .findById(userId)
+            .subscribe(
+                user -> {
+                    // if registration process is not completed, no need to add the user
+                    if (user.isPreRegistration() && !user.isRegistrationCompleted()) {
+                        logger.debug("User {} is still not registered, continue", userId);
+                    } else {
+                        userStore.add(user);
+                    }
+                    logger.info("User {} {}d for domain {}", userId, eventType, domain.getName());
+                },
+                error -> logger.error("Unable to {} user for domain {}", eventType, domain.getName(), error),
+                () -> logger.error("No user found with id {}", userId)
+            );
     }
 
     private void removeUser(String userId) {

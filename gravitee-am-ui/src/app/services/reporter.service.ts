@@ -14,34 +14,33 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from "@angular/common/http";
-import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
-import {OrganizationService} from "./organization.service";
+import { HttpClient } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
+import { Observable } from 'rxjs';
+import { OrganizationService } from './organization.service';
 
 @Injectable()
 export class ReporterService {
   private reportersURL = AppConfig.settings.domainBaseURL;
 
-  constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+  constructor(private http: HttpClient, private organizationService: OrganizationService) {}
 
   findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.reportersURL + domainId + "/reporters");
+    return this.http.get<any>(this.reportersURL + domainId + '/reporters');
   }
 
   get(domainId, id): Observable<any> {
-    return this.http.get<any>(this.reportersURL + domainId + "/reporters/" + id);
+    return this.http.get<any>(this.reportersURL + domainId + '/reporters/' + id);
   }
 
   update(domainId, id, reporter, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.updateReporter(id, reporter);
     }
-    return this.http.put<any>(this.reportersURL + domainId + "/reporters/" + id, {
-      'name' : reporter.name,
-      'enabled': reporter.enabled,
-      'configuration' : reporter.configuration
+    return this.http.put<any>(this.reportersURL + domainId + '/reporters/' + id, {
+      name: reporter.name,
+      enabled: reporter.enabled,
+      configuration: reporter.configuration,
     });
   }
 }

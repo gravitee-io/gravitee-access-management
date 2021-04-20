@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Directive, ElementRef, Input, TemplateRef, ViewContainerRef} from '@angular/core';
-import {AuthService} from '../services/auth.service';
-import {forEach} from "angular7-json-schema-form";
+import { Directive, ElementRef, Input, TemplateRef, ViewContainerRef } from '@angular/core';
+import { AuthService } from '../services/auth.service';
+import { forEach } from 'angular7-json-schema-form';
 
 @Directive({
-  selector: '[hasAnyPermission]'
+  selector: '[hasAnyPermission]',
 })
 export class HasAnyPermissionDirective {
   private permissions = [];
 
-  constructor(private element: ElementRef,
-              private templateRef: TemplateRef<any>,
-              private viewContainer: ViewContainerRef,
-              private authService: AuthService) {
-  }
+  constructor(
+    private element: ElementRef,
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef,
+    private authService: AuthService,
+  ) {}
 
   @Input()
   set hasAnyPermission(val) {
@@ -36,7 +37,6 @@ export class HasAnyPermissionDirective {
   }
 
   private updateView() {
-
     if (this.authService.hasAnyPermissions(this.permissions) === true) {
       this.viewContainer.createEmbeddedView(this.templateRef);
     } else {

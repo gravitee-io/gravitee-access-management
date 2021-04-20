@@ -22,7 +22,7 @@ import java.util.List;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class Environment implements Resource{
+public class Environment implements Resource {
 
     public static final String DEFAULT = "DEFAULT";
 

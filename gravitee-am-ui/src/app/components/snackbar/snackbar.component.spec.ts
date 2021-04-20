@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {async, ComponentFixture, TestBed} from "@angular/core/testing";
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import {SnackbarComponent} from "./snackbar.component";
+import { SnackbarComponent } from './snackbar.component';
 
 describe('SnackbarComponent', () => {
   let component: SnackbarComponent;
@@ -23,9 +23,8 @@ describe('SnackbarComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ SnackbarComponent ]
-    })
-    .compileComponents();
+      declarations: [SnackbarComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

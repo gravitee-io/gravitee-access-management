@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {MatStepper} from '@angular/material';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ApplicationService} from '../../../services/application.service';
-import {SnackbarService} from '../../../services/snackbar.service';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatStepper } from '@angular/material';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ApplicationService } from '../../../services/application.service';
+import { SnackbarService } from '../../../services/snackbar.service';
 
 @Component({
   selector: 'app-creation',
   templateUrl: './application-creation.component.html',
-  styleUrls: ['./application-creation.component.scss']
+  styleUrls: ['./application-creation.component.scss'],
 })
 export class ApplicationCreationComponent implements OnInit {
   public application: any = {};
   private domainId: string;
-  @ViewChild ('stepper') stepper: MatStepper;
+  @ViewChild('stepper') stepper: MatStepper;
 
-  constructor(private applicationService: ApplicationService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private route: ActivatedRoute) { }
+  constructor(
+    private applicationService: ApplicationService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {}
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.parent.params['domainId'];
+    this.domainId = this.route.snapshot.parent.params.domainId;
     this.application.domain = this.domainId;
   }
 
@@ -48,19 +50,22 @@ export class ApplicationCreationComponent implements OnInit {
     app.clientSecret = this.application.clientSecret;
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
 
-    this.applicationService.create(this.application.domain, app).subscribe(data => {
+    this.applicationService.create(this.application.domain, app).subscribe((data) => {
       this.snackbarService.open('Application ' + data.name + ' created');
       // needed to trick reuse route strategy, skipLocationChange to avoid /dummy to go into history
-      this.router.navigateByUrl('/dummy', { skipLocationChange: true })
+      this.router
+        .navigateByUrl('/dummy', { skipLocationChange: true })
         .then(() => this.router.navigate(['/domains', this.application.domain, 'applications', data.id]));
     });
   }
 
   stepperValid() {
-    return this.application &&
+    return (
+      this.application &&
       this.application.type &&
       this.application.domain &&
       this.application.name &&
-      (this.application.type !== 'SERVICE' ? this.application.redirectUri : true);
+      (this.application.type !== 'SERVICE' ? this.application.redirectUri : true)
+    );
   }
 }

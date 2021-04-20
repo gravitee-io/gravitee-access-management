@@ -22,16 +22,18 @@ import { BreadcrumbService } from '../../services/breadcrumb.service';
 @Component({
   selector: 'app-creation',
   templateUrl: './domain-creation.component.html',
-  styleUrls: ['./domain-creation.component.scss']
+  styleUrls: ['./domain-creation.component.scss'],
 })
 export class DomainCreationComponent implements OnInit {
   domain: any = {};
   displayNavLink: boolean;
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private router: Router,
-              private breadcrumbService: BreadcrumbService) { }
+  constructor(
+    private domainService: DomainService,
+    private snackbarService: SnackbarService,
+    private router: Router,
+    private breadcrumbService: BreadcrumbService,
+  ) {}
 
   ngOnInit() {
     this.breadcrumbService.addFriendlyNameForRoute('/domains', 'Domains');
@@ -39,9 +41,9 @@ export class DomainCreationComponent implements OnInit {
   }
 
   create() {
-    this.domainService.create(this.domain).subscribe(data => {
+    this.domainService.create(this.domain).subscribe((data) => {
       this.snackbarService.open('Domain ' + data.name + ' created');
-      this.router.navigate(['/domains', data.id])
+      this.router.navigate(['/domains', data.id]);
     });
   }
 }

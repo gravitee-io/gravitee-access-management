@@ -20,7 +20,6 @@ package io.gravitee.am.common.event;
  * @author GraviteeSource Team
  */
 public enum GroupEvent {
-
     DEPLOY,
     UPDATE,
     UNDEPLOY;

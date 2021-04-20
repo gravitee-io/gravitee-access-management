@@ -64,5 +64,7 @@ public class ReactorConfiguration {
     }
 
     @Bean
-    public EntityManager clientManager() { return new DefaultClientManager(); }
+    public EntityManager clientManager() {
+        return new DefaultClientManager();
+    }
 }

@@ -27,7 +27,6 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public interface Claims {
-
     /**
      * The "iss" (issuer) claim identifies the principal that issued the JWT.
      */
@@ -94,8 +93,6 @@ public interface Claims {
     String scope = "scope";
 
     static List<String> claims() {
-        return Arrays.asList(iss, sub, aud, exp, nbf, iat,
-                jti, domain, claims, ip_address, user_agent, scope);
+        return Arrays.asList(iss, sub, aud, exp, nbf, iat, jti, domain, claims, ip_address, user_agent, scope);
     }
-
 }

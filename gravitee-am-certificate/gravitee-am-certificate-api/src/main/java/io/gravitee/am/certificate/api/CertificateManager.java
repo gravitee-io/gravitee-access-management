@@ -20,6 +20,5 @@ package io.gravitee.am.certificate.api;
  * @author GraviteeSource Team
  */
 public interface CertificateManager {
-
     CertificateProvider getCertificate(String id);
 }

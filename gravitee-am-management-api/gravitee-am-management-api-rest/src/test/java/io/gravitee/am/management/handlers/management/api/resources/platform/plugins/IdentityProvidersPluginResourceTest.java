@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.doReturn;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,11 +41,7 @@ public class IdentityProvidersPluginResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(Collections.singletonList(identityProviderPlugin))).when(identityProviderPluginService).findAll(false);
 
-        final Response response = target("platform")
-                .path("plugins")
-                .path("identities")
-                .queryParam("external", false)
-                .request().get();
+        final Response response = target("platform").path("plugins").path("identities").queryParam("external", false).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
     }
 
@@ -54,11 +49,7 @@ public class IdentityProvidersPluginResourceTest extends JerseySpringTest {
     public void shouldList_technicalManagementException() {
         doReturn(Single.error(new TechnicalManagementException("Error occurs"))).when(identityProviderPluginService).findAll(false);
 
-        final Response response = target("platform")
-                .path("plugins")
-                .path("identities")
-                .queryParam("external", false)
-                .request().get();
+        final Response response = target("platform").path("plugins").path("identities").queryParam("external", false).request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 }

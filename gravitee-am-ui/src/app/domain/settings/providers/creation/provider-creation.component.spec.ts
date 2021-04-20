@@ -23,9 +23,8 @@ describe('ProviderCreationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProviderCreationComponent ]
-    })
-    .compileComponents();
+      declarations: [ProviderCreationComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {

@@ -27,17 +27,16 @@ import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the Authorization Code Grant Flow
@@ -59,7 +58,12 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         super(GrantType.AUTHORIZATION_CODE);
     }
 
-    public AuthorizationCodeTokenGranter(TokenRequestResolver tokenRequestResolver, TokenService tokenService, AuthorizationCodeService authorizationCodeService, UserAuthenticationManager userAuthenticationManager) {
+    public AuthorizationCodeTokenGranter(
+        TokenRequestResolver tokenRequestResolver,
+        TokenService tokenService,
+        AuthorizationCodeService authorizationCodeService,
+        UserAuthenticationManager userAuthenticationManager
+    ) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
@@ -76,32 +80,47 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
             return Single.error(new InvalidRequestException("Missing parameter: code"));
         }
 
-        return super.parseRequest(tokenRequest, client)
-                .flatMap(tokenRequest1 -> authorizationCodeService.remove(code, client)
-                        .map(authorizationCode -> {
-                            checkRedirectUris(tokenRequest1, authorizationCode);
-                            checkPCE(tokenRequest1, authorizationCode);
-                            // set resource owner
-                            tokenRequest1.setSubject(authorizationCode.getSubject());
-                            // set original scopes
-                            tokenRequest1.setScopes(authorizationCode.getScopes());
-                            // set authorization code initial request parameters (step1 of authorization code flow)
-                            if (authorizationCode.getRequestParameters() != null) {
-                                authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.parameters().putIfAbsent(key, value));
+        return super
+            .parseRequest(tokenRequest, client)
+            .flatMap(
+                tokenRequest1 ->
+                    authorizationCodeService
+                        .remove(code, client)
+                        .map(
+                            authorizationCode -> {
+                                checkRedirectUris(tokenRequest1, authorizationCode);
+                                checkPCE(tokenRequest1, authorizationCode);
+                                // set resource owner
+                                tokenRequest1.setSubject(authorizationCode.getSubject());
+                                // set original scopes
+                                tokenRequest1.setScopes(authorizationCode.getScopes());
+                                // set authorization code initial request parameters (step1 of authorization code flow)
+                                if (authorizationCode.getRequestParameters() != null) {
+                                    authorizationCode
+                                        .getRequestParameters()
+                                        .forEach((key, value) -> tokenRequest1.parameters().putIfAbsent(key, value));
+                                }
+                                // set decoded authorization code to the current request
+                                Map<String, Object> decodedAuthorizationCode = new HashMap<>();
+                                decodedAuthorizationCode.put("code", authorizationCode.getCode());
+                                decodedAuthorizationCode.put("transactionId", authorizationCode.getTransactionId());
+                                tokenRequest1.setAuthorizationCode(decodedAuthorizationCode);
+                                return tokenRequest1;
                             }
-                            // set decoded authorization code to the current request
-                            Map<String, Object> decodedAuthorizationCode = new HashMap<>();
-                            decodedAuthorizationCode.put("code", authorizationCode.getCode());
-                            decodedAuthorizationCode.put("transactionId", authorizationCode.getTransactionId());
-                            tokenRequest1.setAuthorizationCode(decodedAuthorizationCode);
-                            return tokenRequest1;
-                        }).toSingle());
+                        )
+                        .toSingle()
+            );
     }
 
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
-        return userAuthenticationManager.loadUserByUsername(tokenRequest.getSubject())
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+        return userAuthenticationManager
+            .loadUserByUsername(tokenRequest.getSubject())
+            .onErrorResumeNext(
+                ex -> {
+                    return Maybe.error(new InvalidGrantException());
+                }
+            );
     }
 
     @Override
@@ -164,7 +183,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                 }
             }
 
-            if (! codeChallenge.equals(encodedCodeVerifier)) {
+            if (!codeChallenge.equals(encodedCodeVerifier)) {
                 throw new InvalidGrantException("Invalid code_verifier");
             }
         }

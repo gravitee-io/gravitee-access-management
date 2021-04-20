@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
+import static io.gravitee.am.common.oidc.SubjectType.PUBLIC;
+
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.common.oidc.SubjectType.PUBLIC;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -26,9 +26,7 @@ import static io.gravitee.am.common.oidc.SubjectType.PUBLIC;
  */
 public class SubjectTypeUtils {
 
-    private static final Set<String> SUPPORTED_SUBJECT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            PUBLIC
-    )));
+    private static final Set<String> SUPPORTED_SUBJECT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(PUBLIC)));
 
     /**
      * Return the supported list of subject types.

@@ -24,7 +24,6 @@ import io.gravitee.common.service.Service;
  * @author GraviteeSource Team
  */
 public interface FactorManager extends Service {
-
     FactorProvider get(String factorId);
 
     Factor getFactor(String factorId);

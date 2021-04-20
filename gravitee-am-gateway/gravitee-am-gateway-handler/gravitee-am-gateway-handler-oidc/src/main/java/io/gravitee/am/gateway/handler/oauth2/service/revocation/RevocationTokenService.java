@@ -23,6 +23,5 @@ import io.reactivex.Completable;
  * @author GraviteeSource Team
  */
 public interface RevocationTokenService {
-
     Completable revoke(RevocationTokenRequest request, Client client);
 }
