@@ -42,7 +42,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
               private providerService: ProviderService) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.initDateValues();
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;

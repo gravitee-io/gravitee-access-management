@@ -59,7 +59,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.rawTemplate = this.route.snapshot.queryParams['template'];
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.appId = this.route.snapshot.params['appId'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;

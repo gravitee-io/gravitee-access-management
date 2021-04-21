@@ -45,7 +45,7 @@ export class ScopeComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.scope = this.route.snapshot.data['scope'];
     this.editMode = this.authService.hasPermissions(['domain_scope_update']);
     this.deleteMode = this.authService.hasPermissions(['domain_scope_delete']);

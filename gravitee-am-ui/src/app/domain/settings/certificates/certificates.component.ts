@@ -41,7 +41,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
               private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.certificates = this.route.snapshot.data['certificates'];
   }
 

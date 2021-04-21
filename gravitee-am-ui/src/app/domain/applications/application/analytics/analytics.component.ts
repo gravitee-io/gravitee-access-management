@@ -82,7 +82,7 @@ export class ApplicationAnalyticsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.applicationId = this.route.snapshot.params['appId'];
   }
 

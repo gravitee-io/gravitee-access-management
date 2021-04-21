@@ -46,7 +46,7 @@ export class GroupRolesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.group = this.route.snapshot.data['group'];
     this.groupRoles = this.route.snapshot.data['roles'];
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {

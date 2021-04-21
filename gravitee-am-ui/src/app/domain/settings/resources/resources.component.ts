@@ -33,7 +33,7 @@ export class DomainSettingsResourcesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.resources = this.route.snapshot.data['resources'];
   }
 

@@ -34,7 +34,7 @@ export class DomainSettingsEmailComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.rawTemplate = this.route.snapshot.queryParams['template'];
     this.template = this.rawTemplate.toLowerCase().replace(/_/g, ' ');
     this.createMode = this.authService.hasPermissions(['domain_email_template_create']);

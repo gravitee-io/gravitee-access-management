@@ -44,7 +44,7 @@ export class ApplicationComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.logoUrl = 'assets/application-type-icons/' + this.application.type.toLowerCase() + '.png';
 
