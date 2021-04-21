@@ -52,7 +52,7 @@ export class ReporterComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
 
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
@@ -61,7 +61,7 @@ export class ReporterComponent implements OnInit {
     if (this.router.routerState.snapshot.url.endsWith('/new')) {
       this.createMode = true;
     }
-    
+
     // filter default reporter type (mongo & jdbc) only additional reporters can be added
     this.plugins = this.route.snapshot.data['reporterPlugins'].filter(plugin => plugin.id !== 'mongodb' && plugin.id !== 'reporter-am-jdbc');
 
@@ -86,7 +86,7 @@ export class ReporterComponent implements OnInit {
       this.validateName();
     }
 
-    this.getSchemaFor(this.reporter.type); 
+    this.getSchemaFor(this.reporter.type);
   }
 
   getSchemaFor(type) {

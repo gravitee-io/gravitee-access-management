@@ -42,7 +42,7 @@ export class CertificateComponent implements OnInit {
               private dialogService: DialogService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.certificate = this.route.snapshot.data['certificate'];
     this.certificateConfiguration = JSON.parse(this.certificate.configuration);
     this.updateCertificateConfiguration = this.certificateConfiguration;

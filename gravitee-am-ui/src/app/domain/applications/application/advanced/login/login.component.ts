@@ -37,7 +37,7 @@ export class ApplicationLoginSettingsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.loginSettings = this.application.settings.login || { 'inherited' : true };
     this.readonly = !this.authService.hasPermissions(['application_settings_update']);

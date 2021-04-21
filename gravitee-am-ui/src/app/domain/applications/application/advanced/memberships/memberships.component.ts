@@ -44,7 +44,7 @@ export class ApplicationMembershipsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.appId = this.application.id;
     this.members = this.route.snapshot.data['members'];

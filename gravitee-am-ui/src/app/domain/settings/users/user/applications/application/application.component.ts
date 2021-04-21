@@ -44,7 +44,7 @@ export class UserApplicationComponent implements OnInit {
 
   ngOnInit() {
     this.application = this.route.snapshot.data['application'];
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.userId = this.route.snapshot.params['userId'];
     this.consents = this.route.snapshot.data['consents'];
     this.clientId = this.route.snapshot.queryParamMap.get('clientId');
