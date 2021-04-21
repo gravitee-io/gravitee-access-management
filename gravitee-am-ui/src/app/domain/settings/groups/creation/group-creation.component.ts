@@ -36,7 +36,7 @@ export class GroupCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
     }

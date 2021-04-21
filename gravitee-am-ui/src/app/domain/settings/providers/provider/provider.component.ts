@@ -31,7 +31,7 @@ export class ProviderComponent implements OnInit {
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.provider = this.route.snapshot.data['provider'];
   }
 }

@@ -47,7 +47,7 @@ export class UserProfileComponent implements OnInit {
               private factoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
       this.canEdit = this.authService.hasPermissions(['organization_user_update']);

@@ -27,7 +27,7 @@ import {AuthService} from '../../../../../services/auth.service';
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
-  
+
   private factorTypes: any = {
     'TOTP' : 'OTP',
     'SMS' : 'SMS',
@@ -39,7 +39,7 @@ export class ApplicationFactorsComponent implements OnInit {
     'SMS' : 'sms',
     'EMAIL' : 'email'
   };
-  
+
   application: any;
   formChanged = false;
   factors: any[];
@@ -52,7 +52,7 @@ export class ApplicationFactorsComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);

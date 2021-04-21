@@ -36,7 +36,7 @@ export class CertificateCreationComponent {
               private route: ActivatedRoute) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
   }
 
   create() {

@@ -42,7 +42,7 @@ export class DomainSettingsFlowsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.policies = this.route.snapshot.data['policies'] || [];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
     this.definition.flows = this.route.snapshot.data['flows'] || [];

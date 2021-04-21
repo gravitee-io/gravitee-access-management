@@ -49,7 +49,7 @@ export class FactorComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.factor = this.route.snapshot.data['factor'];
     this.factorConfiguration = JSON.parse(this.factor.configuration);
     this.updateFactorConfiguration = this.factorConfiguration;
@@ -70,10 +70,10 @@ export class FactorComponent implements OnInit {
         const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
         const factorCategory = factorPluginTypeToCategories[this.factor.type];
         // filter resources with category compatible with the Factor Plugin one
-        const filteredResources = this.resources.filter(r => 
+        const filteredResources = this.resources.filter(r =>
           resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
         );
-        
+
         this.factorSchema.properties.graviteeResource['x-schema-form'] = { 'type' : 'select' };
         if (filteredResources.length > 0) {
           this.factorSchema.properties.graviteeResource.enum = filteredResources.map(r => r.id);

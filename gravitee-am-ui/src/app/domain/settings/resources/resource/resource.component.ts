@@ -46,7 +46,7 @@ export class ResourceComponent implements OnInit {
               private authService: AuthService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.resource = this.route.snapshot.data['resource'];
     this.resourceConfiguration = JSON.parse(this.resource.configuration);
     this.updateResourceConfiguration = this.resourceConfiguration;

@@ -36,7 +36,7 @@ export class ScopeCreationComponent implements OnInit {
               private snackbarService: SnackbarService) { }
 
   ngOnInit() {
-    this.domainId = this.route.snapshot.data['domain'].id;
+    this.domainId = this.route.snapshot.data['domain']?.id;
   }
 
   create() {
