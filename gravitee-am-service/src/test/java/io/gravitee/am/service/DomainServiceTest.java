@@ -17,6 +17,8 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.common.event.Event;
@@ -31,6 +33,7 @@ import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.model.NewDomain;
@@ -387,6 +390,103 @@ public class DomainServiceTest {
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldPatch_NoResetPasswordMultiFields() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        final AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setResetPasswordCustomForm(false);
+        domain.setAccountSettings(accountSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldPatch_ResetPasswordMultiFields_ValidFields() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        final AccountSettings accountSettings = new AccountSettings();
+        final FormField formField = new FormField();
+        formField.setKey("username");
+        accountSettings.setResetPasswordCustomFormFields(Arrays.asList(formField));
+        accountSettings.setResetPasswordCustomForm(true);
+        domain.setAccountSettings(accountSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNoPatch_ResetPasswordMultiFields_InvalidFields() {
+        PatchDomain patchDomain = Mockito.mock(PatchDomain.class);
+        Domain domain = new Domain();
+        domain.setId("my-domain");
+        domain.setHrid("my-domain");
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName("my-domain");
+        domain.setPath("/test");
+        final AccountSettings accountSettings = new AccountSettings();
+        final FormField formField = new FormField();
+        formField.setKey("unknown");
+        accountSettings.setResetPasswordCustomFormFields(Arrays.asList(formField));
+        accountSettings.setResetPasswordCustomForm(true);
+        domain.setAccountSettings(accountSettings);
+        when(patchDomain.patch(any())).thenReturn(domain);
+        when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+
+        TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidParameterException.class);
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, never()).update(any(Domain.class));
+        verify(eventService, never()).create(any());
     }
 
     @Test

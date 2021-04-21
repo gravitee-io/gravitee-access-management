@@ -41,7 +41,9 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String password;
     private String selectUserByUsernameQuery;
     private String selectUserByMultipleFieldsQuery;
+    private String selectUserByEmailQuery;
     private String identifierAttribute = FIELD_ID;
+    private String emailAttribute = FIELD_EMAIL;
     private String usernameAttribute = FIELD_USERNAME;
     private String passwordAttribute = FIELD_PASSWORD;
     private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
@@ -125,6 +127,14 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
         this.selectUserByMultipleFieldsQuery = selectUserByMultipleFieldsQuery;
     }
 
+    public String getSelectUserByEmailQuery() {
+        return selectUserByEmailQuery;
+    }
+
+    public void setSelectUserByEmailQuery(String selectUserByEmailQuery) {
+        this.selectUserByEmailQuery = selectUserByEmailQuery;
+    }
+
     public String getIdentifierAttribute() {
         return identifierAttribute;
     }
@@ -166,7 +176,11 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     }
 
     public String getEmailAttribute() {
-        return FIELD_EMAIL;
+        return emailAttribute;
+    }
+
+    public void setEmailAttribute(String emailAttribute) {
+        this.emailAttribute = emailAttribute;
     }
 
     public String getMetadataAttribute() {

@@ -28,6 +28,8 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -36,11 +38,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -775,6 +773,92 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).findById(anyString());
         verify(identityProviderService, times(2)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldPatch_Application_ResetPassword_ValidField() {
+        Application client = new Application();
+        client.setId("my-client");
+        client.setDomain(DOMAIN);
+
+        IdentityProvider idp1 = new IdentityProvider();
+        idp1.setId("idp1");
+        IdentityProvider idp2 = new IdentityProvider();
+        idp2.setId("idp2");
+
+        PatchApplication patchClient = new PatchApplication();
+        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
+        patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
+        final AccountSettings accountSettings = new AccountSettings();
+        final FormField formField = new FormField();
+        formField.setKey("username");
+        accountSettings.setResetPasswordCustomFormFields(Arrays.asList(formField));
+        accountSettings.setResetPasswordCustomForm(true);
+        patchApplicationSettings.setAccount(Optional.of(accountSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
+        when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
+        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(identityProviderService, times(2)).findById(anyString());
+        verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldNoPatch_Application_ResetPassword_InvalidField() {
+        Application client = new Application();
+        client.setId("my-client");
+        client.setDomain(DOMAIN);
+
+        IdentityProvider idp1 = new IdentityProvider();
+        idp1.setId("idp1");
+        IdentityProvider idp2 = new IdentityProvider();
+        idp2.setId("idp2");
+
+        PatchApplication patchClient = new PatchApplication();
+        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
+        patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
+        final AccountSettings accountSettings = new AccountSettings();
+        final FormField formField = new FormField();
+        formField.setKey("unknown");
+        accountSettings.setResetPasswordCustomFormFields(Arrays.asList(formField));
+        accountSettings.setResetPasswordCustomForm(true);
+        patchApplicationSettings.setAccount(Optional.of(accountSettings));
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidParameterException.class);
+
+        verify(applicationRepository, times(1)).findById(anyString());
+        verify(identityProviderService, never()).findById(anyString());
+        verify(applicationRepository, never()).update(any(Application.class));
     }
 
     @Test

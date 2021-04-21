@@ -327,9 +327,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
-                .handler(new ForgotPasswordSubmissionRequestParseHandler())
+                .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));

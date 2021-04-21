@@ -17,10 +17,11 @@ package io.gravitee.am.gateway.handler.root.service.user;
 
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
+import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.User;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -39,7 +40,7 @@ public interface UserService {
 
     Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal);
+    Completable forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> addFactor(String userId, EnrolledFactor enrolledFactor);
 
@@ -52,7 +53,8 @@ public interface UserService {
     }
 
     default Completable forgotPassword(String email, Client client) {
-        return forgotPassword(email, client, null);
+        ForgotPasswordParameters params = new ForgotPasswordParameters(email, false, false);
+        return forgotPassword(params, client, null);
     }
 
     default Single<RegistrationResponse> confirmRegistration(Client client, User user) {

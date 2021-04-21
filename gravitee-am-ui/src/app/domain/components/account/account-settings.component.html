@@ -170,6 +170,66 @@
           </mat-form-field>
         </div>
       </div>
+      <div fxLayout="column">
+        <mat-slide-toggle
+          (change)="enableResetPasswordCustomForm($event)"
+          [checked]="isResetPasswordCustomFormEnabled()" [disabled]="readonly">
+          Allow Forgot Password form with custom fields
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Allow to define a custom Forgot Password form.</mat-hint>
+      </div>
+
+      <div fxLayout="column" *ngIf="isResetPasswordCustomFormEnabled()" style="margin-top: 10px;">
+        <div fxLayout="row">
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-select placeholder="Field key" name="fieldKey" [(ngModel)]="newField.key" (selectionChange)="onFieldSelected($event)">
+              <mat-option *ngFor="let field of availableFields" [disabled]="isFieldSelected(field.key)" [value]="field.key">{{field.label}}</mat-option>
+            </mat-select>
+            <mat-hint>Field identifier</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" floatLabel="always" style="margin-left: 20px;" >
+            <input matInput placeholder="Field Label" name="fieldLabel" [(ngModel)]="newField.label">
+            <mat-hint>Label used when the form is rendered.</mat-hint>
+          </mat-form-field>
+          <div>
+            <button style="margin-top: 7px; margin-left: 10px;" mat-stroked-button [disabled]="false" type="button" (click)="addField()" [disabled]="!(newField.key && newField.label)">+ ADD</button>
+          </div>
+        </div>
+        <div *ngIf="selectedFields.length > 0">
+          <ngx-datatable class="material"
+                         [columnMode]="'flex'"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="50"
+                         [rows]='selectedFields'>
+            <ngx-datatable-column name="Key" [flexGrow]="2">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{row.key}}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Label" [flexGrow]="4">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                {{row.label}}
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <button mat-icon-button (click)="removeField(row.key)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableResetPasswordConfirmIdentity($event)"
+            [checked]="isResetPasswordConfirmIdentityEnabled()" [disabled]="readonly">
+            Allow confirm user identity
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Use the user email as search criteria for forgot password form and fallback to custom form if multiple users are found.</mat-hint>
+        </div>
+      </div>
     </div>
   </div>
 

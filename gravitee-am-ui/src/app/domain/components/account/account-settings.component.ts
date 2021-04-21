@@ -17,6 +17,7 @@ import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges
 import {ActivatedRoute} from '@angular/router';
 import {ProviderService} from '../../../services/provider.service';
 import moment from 'moment';
+import { filter } from 'lodash';
 
 @Component({
   selector: 'app-account-settings',
@@ -38,12 +39,22 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   private defaultAccountBlockedDuration = 2;
   private defaultAccountBlockedDurationUnit = 'hours';
 
+  availableFields = [
+    {"key" : "email", "label" : "Email", "type" : "email"},
+    {"key" : "username", "label" : "Username", "type" : "text"},
+  ];
+
+  newField = {};
+
+  selectedFields = [];
+
   constructor(private route: ActivatedRoute,
               private providerService: ProviderService) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.initDateValues();
+    this.initSelectedFields();
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
@@ -53,6 +64,7 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     if (changes.accountSettings.previousValue && changes.accountSettings.currentValue) {
       this.accountSettings = changes.accountSettings.currentValue;
       this.initDateValues();
+      this.initSelectedFields();
     }
   }
 
@@ -66,10 +78,42 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       accountSettings.accountBlockedDuration = this.getDuration(accountSettings.accountBlockedDuration, accountSettings.accountBlockedDurationUnitTime);
       delete accountSettings.loginAttemptsResetTimeUnitTime;
       delete accountSettings.accountBlockedDurationUnitTime;
+
+      // set list of fields that will be used by the ForgotPassword Form
+      if (accountSettings.resetPasswordCustomForm) {
+        accountSettings['resetPasswordCustomFormFields'] = this.selectedFields;
+      } else {
+        delete accountSettings.resetPasswordCustomFormFields;
+        delete accountSettings.resetPasswordConfirmIdentity;
+      }
     }
 
     this.onSavedAccountSettings.emit(accountSettings);
     this.formChanged = false;
+  }
+
+  onFieldSelected(event) {
+    this.newField = {...this.availableFields.filter(f=> f.key === event.value)[0]};
+  }
+
+  addField() {
+    this.selectedFields.push({...this.newField});
+    this.selectedFields = [...this.selectedFields];
+    this.newField = {};
+    this.formChanged = true;
+  }
+
+  removeField(key) {
+    let idx = this.selectedFields.findIndex(item => item.key === key);
+    if (idx >= 0) {
+        this.selectedFields.splice(idx, 1);
+        this.selectedFields = [...this.selectedFields];
+        this.formChanged = true;
+    }
+  }
+
+  isFieldSelected(key) {
+    return this.selectedFields.findIndex(item => item.key === key) >= 0;
   }
 
   enableInheritMode(event) {
@@ -151,6 +195,24 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     return this.accountSettings && this.accountSettings.deletePasswordlessDevicesAfterResetPassword;
   }
 
+  enableResetPasswordCustomForm(event) {
+    this.accountSettings.resetPasswordCustomForm = event.checked;
+    this.formChanged = true;
+  }
+
+  isResetPasswordCustomFormEnabled() {
+    return this.accountSettings && this.accountSettings.resetPasswordCustomForm;
+  }
+
+  enableResetPasswordConfirmIdentity(event) {
+    this.accountSettings.resetPasswordConfirmIdentity = event.checked;
+    this.formChanged = true;
+  }
+
+  isResetPasswordConfirmIdentityEnabled() {
+    return this.accountSettings && this.accountSettings.resetPasswordConfirmIdentity;
+  }
+
   updateModel() {
     this.formChanged = true;
   }
@@ -171,6 +233,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
         return false;
       }
     }
+
+    if (this.accountSettings.resetPasswordCustomForm) {
+      return this.selectedFields && this.selectedFields.length > 0;
+    }
+
     return true;
   }
 
@@ -185,6 +252,12 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       const accountBlockedDuration = this.getHumanizeDuration(this.accountSettings.accountBlockedDuration);
       this.accountSettings.accountBlockedDuration = accountBlockedDuration[0];
       this.accountSettings.accountBlockedDurationUnitTime = accountBlockedDuration[1];
+    }
+  }
+
+  private initSelectedFields() {
+    if (this.accountSettings.resetPasswordCustomForm) {
+      this.selectedFields = this.accountSettings.resetPasswordCustomFormFields || [];
     }
   }
 

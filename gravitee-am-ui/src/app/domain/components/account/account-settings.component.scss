@@ -1,0 +1,9 @@
+ngx-datatable {
+  button {
+    top: -7px;
+  }
+}
+
+:host ::ng-deep.ngx-datatable.material .datatable-footer {
+  display: none;
+}

@@ -17,6 +17,9 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.account.AccountSettings;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -37,6 +40,9 @@ public class AccountSettingsMongo {
     private boolean autoLoginAfterResetPassword;
     private String redirectUriAfterResetPassword;
     private boolean deletePasswordlessDevicesAfterResetPassword;
+    private boolean resetPasswordCustomForm;
+    private List<FormFieldMongo> resetPasswordCustomFormFields;
+    private boolean resetPasswordConfirmIdentity;
 
     public boolean isInherited() {
         return inherited;
@@ -150,6 +156,30 @@ public class AccountSettingsMongo {
         this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
     }
 
+    public boolean isResetPasswordCustomForm() {
+        return resetPasswordCustomForm;
+    }
+
+    public void setResetPasswordCustomForm(boolean resetPasswordCustomForm) {
+        this.resetPasswordCustomForm = resetPasswordCustomForm;
+    }
+
+    public List<FormFieldMongo> getResetPasswordCustomFormFields() {
+        return resetPasswordCustomFormFields;
+    }
+
+    public void setResetPasswordCustomFormFields(List<FormFieldMongo> resetPasswordCustomFormFields) {
+        this.resetPasswordCustomFormFields = resetPasswordCustomFormFields;
+    }
+
+    public boolean isResetPasswordConfirmIdentity() {
+        return resetPasswordConfirmIdentity;
+    }
+
+    public void setResetPasswordConfirmIdentity(boolean resetPasswordConfirmIdentity) {
+        this.resetPasswordConfirmIdentity = resetPasswordConfirmIdentity;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -166,6 +196,13 @@ public class AccountSettingsMongo {
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
         accountSettings.setSendRecoverAccountEmail(isSendRecoverAccountEmail());
         accountSettings.setDeletePasswordlessDevicesAfterResetPassword(isDeletePasswordlessDevicesAfterResetPassword());
+        accountSettings.setResetPasswordConfirmIdentity(isResetPasswordConfirmIdentity());
+        accountSettings.setResetPasswordCustomForm(isResetPasswordCustomForm());
+        if (this.resetPasswordCustomFormFields != null) {
+            accountSettings.setResetPasswordCustomFormFields(this.resetPasswordCustomFormFields.stream().map(FormFieldMongo::convert).collect(Collectors.toList()));
+        } else {
+            accountSettings.setResetPasswordCustomFormFields(null);
+        }
         return accountSettings;
     }
 
@@ -188,6 +225,14 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
         accountSettingsMongo.setDeletePasswordlessDevicesAfterResetPassword(accountSettings.isDeletePasswordlessDevicesAfterResetPassword());
+        accountSettingsMongo.setResetPasswordConfirmIdentity(accountSettings.isResetPasswordConfirmIdentity());
+        accountSettingsMongo.setResetPasswordCustomForm(accountSettings.isResetPasswordCustomForm());
+        if (accountSettings.getResetPasswordCustomFormFields() != null) {
+            accountSettingsMongo.setResetPasswordCustomFormFields(accountSettings.getResetPasswordCustomFormFields().stream().map(FormFieldMongo::convert).collect(Collectors.toList()));
+        } else {
+            accountSettingsMongo.setResetPasswordCustomFormFields(null);
+        }
+
         return accountSettingsMongo;
     }
 }

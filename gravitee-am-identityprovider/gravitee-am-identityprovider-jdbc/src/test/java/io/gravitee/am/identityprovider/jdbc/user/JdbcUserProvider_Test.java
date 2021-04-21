@@ -46,8 +46,27 @@ public abstract class JdbcUserProvider_Test {
     }
 
     @Test
+    public void shouldSelectUserByEmail() {
+        TestObserver<User> testObserver = userProvider.findByEmail("user01@acme.com").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user01".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldNotSelectUserByUsername_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByUsername("unknown").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+    }
+
+    @Test
+    public void shouldNotSelectUserByEmail_userNotFound() {
+        TestObserver<User> testObserver = userProvider.findByEmail("unknown@acme.com").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

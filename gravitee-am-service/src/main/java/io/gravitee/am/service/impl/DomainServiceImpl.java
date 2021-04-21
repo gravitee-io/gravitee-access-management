@@ -18,10 +18,12 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
@@ -38,6 +40,7 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
+import io.gravitee.am.service.validators.AccountSettingsValidator;
 import io.gravitee.am.service.validators.DomainValidator;
 import io.gravitee.am.service.validators.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
@@ -314,6 +317,10 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
+                    final AccountSettings accountSettings = toPatch.getAccountSettings();
+                    if (AccountSettingsValidator.hasInvalidResetPasswordFields(accountSettings)) {
+                       return Single.error(new InvalidParameterException("Unexpected forgot password field"));
+                    }
                     toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
                     toPatch.setUpdatedAt(new Date());
                     return validateDomain(toPatch)

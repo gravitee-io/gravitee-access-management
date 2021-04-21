@@ -18,10 +18,12 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,6 +53,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
         return userService.findByDomainAndEmail(domain, email, strict);
+    }
+
+    @Override
+    public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
+        return userService.search(ReferenceType.DOMAIN, domain, criteria, 0, 2).map(p -> new ArrayList<>(p.getData()));
     }
 
     @Override

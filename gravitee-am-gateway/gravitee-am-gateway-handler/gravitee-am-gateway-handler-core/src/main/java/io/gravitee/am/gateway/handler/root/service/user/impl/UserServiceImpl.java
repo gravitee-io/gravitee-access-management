@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.jwt.JWTParser;
@@ -50,8 +51,10 @@ import io.reactivex.Observable;
 import io.reactivex.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -284,30 +287,38 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable forgotPassword(String email, Client client, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
 
-        if (!EmailValidator.isValid(email)) {
+        final String email = params.getEmail();
+        if (email != null && !EmailValidator.isValid(email)) {
             return Completable.error(new EmailFormatInvalidException(email));
         }
 
-        return userService.findByDomainAndEmail(domain.getId(), email, true)
+        return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
                 .flatMap(users -> {
-                    Optional<User> optionalUser = users
+                    final List<User> foundUsers = users
                             .stream()
-                            .filter(user -> user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase()))
-                            .findFirst();
-                    if (optionalUser.isPresent()) {
-                        User user = optionalUser.get();
+                            .filter(user -> email == null || (user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase())))
+                            .collect(Collectors.toList());
+
+                    if (foundUsers.size() == 1 ||
+                            // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
+                            (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
+                        User user = foundUsers.get(0);
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                 .map(__ -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ]needs to complete the activation process");
+                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process");
                                     }
                                     return user;
                                 });
+                    }
+
+                    if (foundUsers.size() > 1) {
+                        throw new EnforceUserIdentityException();
                     }
 
                     // if user has no email or email is unknown
@@ -316,11 +327,21 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new UserNotFoundException(email));
                     }
 
+                    if (StringUtils.isEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
+                        // no user found using criteria. email & username are missing, unable to search the user through UserProvider
+                        return Single.error(new UserNotFoundException(email));
+                    }
+
+                    // Single field search using email or username with IdP linked to the clientApp
+                    // email used in priority for backward compatibility
                     return Observable.fromIterable(client.getIdentities())
                             .flatMapMaybe(authProvider -> {
                                 return identityProviderManager.getUserProvider(authProvider)
                                         .flatMap(userProvider -> {
-                                            return userProvider.findByEmail(email)
+                                            final String username = params.getUsername();
+                                            final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
+                                                    userProvider.findByUsername(username) : userProvider.findByEmail(email) ;
+                                            return findQuery
                                                     .map(user -> Optional.of(user))
                                                     .defaultIfEmpty(Optional.empty())
                                                     .onErrorReturnItem(Optional.empty());

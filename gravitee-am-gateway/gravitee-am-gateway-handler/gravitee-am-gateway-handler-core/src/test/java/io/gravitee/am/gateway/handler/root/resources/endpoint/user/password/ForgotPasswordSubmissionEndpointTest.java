@@ -20,8 +20,10 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
@@ -35,8 +37,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 /**
@@ -50,12 +52,16 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
     private UserService userService;
 
     @Mock
+    private AccountSettings accountSettings;
+
+    @Mock
     private Domain domain;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        reset(accountSettings);
+        when(domain.getAccountSettings()).thenReturn(accountSettings);
         ForgotPasswordSubmissionEndpoint forgotPasswordSubmissionEndpoint = new ForgotPasswordSubmissionEndpoint(userService, domain);
         router.route(HttpMethod.POST, "/forgotPassword")
                 .handler(BodyHandler.create())
@@ -74,7 +80,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.forgotPassword(eq("email@test.com"), eq(client), any(User.class))).thenReturn(Completable.complete());
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.complete());
 
         testRequest(
                 HttpMethod.POST, "/forgotPassword?client_id=client-id",
@@ -99,7 +105,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.forgotPassword(eq("email@test.com"), eq(client), any(User.class))).thenReturn(Completable.error(new UserNotFoundException("email@test.com")));
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new UserNotFoundException("email@test.com")));
 
         testRequest(
                 HttpMethod.POST, "/forgotPassword?client_id=client-id",
@@ -123,7 +129,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
             routingContext.next();
         });
 
-        when(userService.forgotPassword(eq("email.test.com"), eq(client), any(User.class))).thenReturn(Completable.error(new EmailFormatInvalidException("email.test.com")));
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email.test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new EmailFormatInvalidException("email.test.com")));
 
         testRequest(
                 HttpMethod.POST, "/forgotPassword?client_id=client-id",
@@ -132,6 +138,57 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.endsWith("/forgotPassword?client_id=client-id&error=forgot_password_failed"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldCompleteWithWarningWhen_EnforceIdentityException_TooManyResult() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(accountSettings.isResetPasswordConfirmIdentity()).thenReturn(true);
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new EnforceUserIdentityException()));
+
+        testRequest(
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email@test.com"),
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&warning=forgot_password_confirm"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldCompleteWithSuccessWhen_EnforceIdentityException_ConfirmIdentityNotEnabled() throws Exception {
+        Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
+        });
+
+        when(accountSettings.isResetPasswordConfirmIdentity()).thenReturn(false);
+        when(userService.forgotPassword(argThat(p -> p.getEmail().equals("email@test.com")), eq(client), any(User.class))).thenReturn(Completable.error(new EnforceUserIdentityException()));
+
+        testRequest(
+                HttpMethod.POST, "/forgotPassword?client_id=client-id",
+                req -> postEmail(req, "email@test.com"),
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

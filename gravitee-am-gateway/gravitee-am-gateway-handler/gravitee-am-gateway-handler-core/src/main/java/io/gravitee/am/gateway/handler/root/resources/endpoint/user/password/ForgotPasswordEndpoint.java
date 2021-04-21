@@ -20,6 +20,9 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -31,9 +34,11 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -46,8 +51,11 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
 
     private final ThymeleafTemplateEngine engine;
 
-    public ForgotPasswordEndpoint(ThymeleafTemplateEngine engine) {
+    private final Domain domain;
+
+    public ForgotPasswordEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
         this.engine = engine;
+        this.domain = domain;
     }
 
     @Override
@@ -59,6 +67,7 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
         final String warning = request.getParam(ConstantKeys.WARNING_PARAM_KEY);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final String clientId = request.getParam(Parameters.CLIENT_ID);
+
         // add query params to context
         routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
         routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
@@ -75,6 +84,20 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
         routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
+
+        AccountSettings settings = AccountSettings.getInstance(domain, client);
+        if (settings.isResetPasswordCustomForm()) {
+            // custom form is enabled
+            // display Email form if ConfirmIdentity is enable & warning parameter is missing
+            // otherwise display custom form (ConfirmIdentity is disabled or an identity confirmation is required)
+            if (settings.isResetPasswordConfirmIdentity() && !FORGOT_PASSWORD_CONFIRM.equals(warning)) {
+                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
+            }  else {
+                routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, settings.getResetPasswordCustomFormFields());
+            }
+        } else {
+            routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
+        }
 
         // render the forgot password page
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {

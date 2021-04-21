@@ -27,6 +27,7 @@ import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
@@ -37,20 +38,14 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
-import io.gravitee.am.service.exception.InvalidRoleException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
+import io.gravitee.am.service.validators.AccountSettingsValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -327,6 +322,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .flatMapSingle(existingApplication -> {
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
+                    final AccountSettings accountSettings = toPatch.getSettings().getAccount();
+                    if (AccountSettingsValidator.hasInvalidResetPasswordFields(accountSettings)) {
+                        return Single.error(new InvalidParameterException("Unexpected forgot password field"));
+                    }
                     return update0(domain, existingApplication, toPatch, principal);
                 })
                 .onErrorResumeNext(ex -> {

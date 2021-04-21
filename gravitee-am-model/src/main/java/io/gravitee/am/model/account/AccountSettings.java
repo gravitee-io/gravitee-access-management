@@ -19,6 +19,8 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 
+import java.util.*;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -95,6 +97,21 @@ public class AccountSettings {
      */
     private boolean deletePasswordlessDevicesAfterResetPassword;
 
+    /**
+     * Used a custom form to generate ForgotPassword page
+     */
+    private boolean resetPasswordCustomForm;
+
+    /**
+     * Fields used to generate the custom form of ForgotPassword page
+     */
+    private List<FormField> resetPasswordCustomFormFields;
+
+    /**
+     * If true, display the legacy form for "forgot password" page and If multiple user are found, then the customForm will be displayed
+     */
+    private boolean resetPasswordConfirmIdentity;
+
     public AccountSettings() {
     }
 
@@ -112,6 +129,9 @@ public class AccountSettings {
         this.autoLoginAfterResetPassword = other.autoLoginAfterResetPassword;
         this.redirectUriAfterResetPassword = other.redirectUriAfterResetPassword;
         this.deletePasswordlessDevicesAfterResetPassword = other.deletePasswordlessDevicesAfterResetPassword;
+        this.resetPasswordConfirmIdentity = other.resetPasswordConfirmIdentity;
+        this.resetPasswordCustomForm = other.resetPasswordCustomForm;
+        this.resetPasswordCustomFormFields = other.resetPasswordCustomFormFields;
     }
 
     public boolean isInherited() {
@@ -224,6 +244,30 @@ public class AccountSettings {
 
     public void setDeletePasswordlessDevicesAfterResetPassword(boolean deletePasswordlessDevicesAfterResetPassword) {
         this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
+    }
+
+    public boolean isResetPasswordCustomForm() {
+        return resetPasswordCustomForm;
+    }
+
+    public void setResetPasswordCustomForm(boolean resetPasswordCustomForm) {
+        this.resetPasswordCustomForm = resetPasswordCustomForm;
+    }
+
+    public List<FormField> getResetPasswordCustomFormFields() {
+        return resetPasswordCustomFormFields;
+    }
+
+    public void setResetPasswordCustomFormFields(List<FormField> resetPasswordCustomFormFields) {
+        this.resetPasswordCustomFormFields = resetPasswordCustomFormFields;
+    }
+
+    public boolean isResetPasswordConfirmIdentity() {
+        return resetPasswordConfirmIdentity;
+    }
+
+    public void setResetPasswordConfirmIdentity(boolean resetPasswordConfirmIdentity) {
+        this.resetPasswordConfirmIdentity = resetPasswordConfirmIdentity;
     }
 
     public static AccountSettings getInstance(Domain domain, Client client) {
