@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/377?closed=1[AM - 3.8.1 (2021-04-21)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- Domain is undefined for organization resources https://github.com/gravitee-io/issues/issues/5465[#5465]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/250?closed=1[AM - 3.8.0 (2021-04-20)]
 
 === Bug fixes
