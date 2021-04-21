@@ -41,11 +41,12 @@ export class DomainSettingsAccountComponent implements OnInit {
     this.accountSettings = Object.assign({}, this.domain.accountSettings);
     this.readonly = !this.authService.hasPermissions(['domain_settings_create']) && !this.authService.hasPermissions(['domain_settings_update'])
   }
+
   updateAccountSettings(accountSettings) {
     // force inherit false
     accountSettings.inherited = false;
     this.domainService.patchAccountSettings(this.domainId, accountSettings).subscribe(data => {
-      this.domain = data;
+      this.domain['accountSettings'] = {... data.accountSettings};
       this.route.snapshot.data['domain'] = this.domain;
       this.snackbarService.open("User Accounts Settings updated");
     });

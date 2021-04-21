@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
+import io.gravitee.am.service.validators.AccountSettingsValidator;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -86,4 +88,8 @@ public interface ConstantKeys {
     String AUTH_NEGOTIATE_KEY = "Negotiate";
     String ASK_FOR_NEGOTIATE_KEY = "ask-negotiate";
     String NEGOTIATE_CONTINUE_TOKEN_KEY = "negotiate-continue-token";
+
+    // Forgot Password
+    String FORGOT_PASSWORD_FIELDS_KEY = "forgotPwdFormFields";
+    String FORGOT_PASSWORD_CONFIRM = "forgot_password_confirm";
 }

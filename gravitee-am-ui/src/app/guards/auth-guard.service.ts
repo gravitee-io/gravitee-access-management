@@ -57,7 +57,7 @@ export class AuthGuard implements CanActivate {
           .pipe(mergeMap(domain => this.domainService.permissions(domain.id)
             .pipe(mergeMap(__ => {
               if (appId && !this.authService.applicationPermissionsLoaded()) {
-                return this.applicationService.permissions(domainHrid, appId)
+                return this.applicationService.permissions(domain.id, appId)
               } else {
                 return of([]);
               }

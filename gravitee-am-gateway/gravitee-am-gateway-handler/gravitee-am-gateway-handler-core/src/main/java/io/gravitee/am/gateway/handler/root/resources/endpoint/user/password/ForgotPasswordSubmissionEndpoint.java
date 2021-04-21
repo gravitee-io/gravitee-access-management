@@ -21,16 +21,21 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,10 +54,14 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
     @Override
     public void handle(RoutingContext context) {
         final String email = context.request().getParam(ConstantKeys.EMAIL_PARAM_KEY);
+        final String username = context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY);
         final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
 
-        userService.forgotPassword(email, client, getAuthenticatedUser(context))
+        AccountSettings settings = AccountSettings.getInstance(domain, client);
+
+        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings.isResetPasswordCustomForm(), settings.isResetPasswordConfirmIdentity());
+        userService.forgotPassword(parameters, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {
                             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
@@ -63,6 +72,13 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
                             // the actual error continue to be stored in the audit logs
                             if (error instanceof UserNotFoundException || error instanceof AccountStatusException) {
                                 queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
+                                redirectToPage(context, queryParams);
+                            } else if (error instanceof EnforceUserIdentityException) {
+                                if (settings.isResetPasswordConfirmIdentity()) {
+                                    queryParams.set(ConstantKeys.WARNING_PARAM_KEY, FORGOT_PASSWORD_CONFIRM);
+                                } else {
+                                    queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "forgot_password_completed");
+                                }
                                 redirectToPage(context, queryParams);
                             } else {
                                 queryParams.set(ConstantKeys.ERROR_PARAM_KEY, "forgot_password_failed");

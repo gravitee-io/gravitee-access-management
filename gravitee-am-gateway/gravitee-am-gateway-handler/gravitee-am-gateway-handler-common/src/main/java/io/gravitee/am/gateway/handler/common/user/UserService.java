@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.user;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -60,6 +61,14 @@ public interface UserService {
      * @return
      */
     Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
+
+    /**
+     * Find users by security domain and email
+     * @param domain user security domain
+     * @param criteria search criteria
+     * @return
+     */
+    Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria);
 
     /**
      * Create a new user

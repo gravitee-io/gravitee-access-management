@@ -114,6 +114,19 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     @Override
+    public Maybe<User> findByEmail(String email) {
+        return selectUserByEmail(email)
+                .map(result -> createUser(result));
+    }
+
+    private Maybe<Map<String, Object>> selectUserByEmail(String email) {
+        final String sql = String.format(configuration.getSelectUserByEmailQuery(), getIndexParameter(1, "email"));
+        return query(sql, email)
+                .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
+                .firstElement();
+    }
+
+    @Override
     public Maybe<User> findByUsername(String username) {
         return selectUserByUsername(username)
                 .map(result -> createUser(result));

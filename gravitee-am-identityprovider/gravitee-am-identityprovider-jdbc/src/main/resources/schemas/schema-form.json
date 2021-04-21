@@ -48,10 +48,17 @@
       "description": "The query which is executed to search for an user using its identifier (username)."
     },
     "selectUserByMultipleFieldsQuery" : {
-      "type" : "string",
+      "type": "string",
       "widget": "textarea",
       "title": "Query to find for a user using multiple fields (username or email)",
       "description": "The query which is executed to search for an user using its identifier (username) or another field (email). If this field isn't specified, the findUserByUsernameQuery is used"
+    },
+    "selectUserByEmailQuery" : {
+      "type" : "string",
+      "default": "SELECT * FROM users WHERE email = %s",
+      "widget": "textarea",
+      "title": "Query to find for a user using its email (email)",
+      "description": "The query which is executed to search for an user using its email (email)."
     },
     "identifierAttribute": {
       "type": "string",
@@ -64,6 +71,12 @@
       "default": "username",
       "title": "User username attribute",
       "description": "Username field of your users"
+    },
+    "emailAttribute" : {
+      "type" : "string",
+      "default": "email",
+      "title": "User email attribute",
+      "description": "Email field of your users"
     },
     "passwordAttribute" : {
       "type" : "string",

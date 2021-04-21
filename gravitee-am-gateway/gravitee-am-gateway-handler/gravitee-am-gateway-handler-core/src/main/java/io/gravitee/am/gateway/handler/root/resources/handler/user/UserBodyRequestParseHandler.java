@@ -53,14 +53,7 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
             }
             // check required parameters
             MultiMap params = req.formAttributes();
-            Optional<String> missingParameter = requiredParams.stream().filter(param -> {
-                String paramValue = params.get(param);
-                if (paramValue == null) {
-                    logger.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
-                    return true;
-                }
-                return false;
-            }).findFirst();
+            Optional<String> missingParameter = lookForMissingParameters(context, params, this.requiredParams);
 
             if (missingParameter.isPresent()) {
                 MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
@@ -70,6 +63,18 @@ public class UserBodyRequestParseHandler extends UserRequestHandler {
                 context.next();
             }
         }
-
     }
+
+    protected Optional<String> lookForMissingParameters(RoutingContext context, MultiMap params, List<String> requiredParams) {
+        Optional<String> missingParameter = requiredParams.stream().filter(param -> {
+            String paramValue = params.get(param);
+            if (paramValue == null) {
+                logger.warn("No {} provided in form - did you forget to include a BodyHandler?", param);
+                return true;
+            }
+            return false;
+        }).findFirst();
+        return missingParameter;
+    }
+
 }
