@@ -13,17 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.service.authentication.crypto.password;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordEncoder {
+public class SHAPasswordEncoder extends MessageDigestPasswordEncoder {
 
-    String NONE = "None";
-    String BCRYPT = "BCrypt";
-    String SHA = "SHA";
-    String MD5 = "MD5";
+    public SHAPasswordEncoder(){
+        super("SHA");
+    }
+
+    public SHAPasswordEncoder(String algorithm) {
+        super(algorithm);
+    }
+
+    public SHAPasswordEncoder(int strength) {
+        super("SHA-" + strength);
+    }
+
+    public void setStrength(int strength) {
+        setAlgorithm("SHA-" + strength);
+    }
 }
-

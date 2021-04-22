@@ -60,7 +60,7 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
         configuration.setFindUserByUsernameQuery("{username: ?}");
         configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         configuration.setPasswordField("password");
-        configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
+        configuration.setPasswordEncoder(PasswordEncoder.NONE);
 
         return configuration;
     }

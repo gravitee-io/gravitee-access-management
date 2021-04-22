@@ -19,18 +19,10 @@ package io.gravitee.am.identityprovider.mongo.utils;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum PasswordEncoder {
+public interface PasswordEncoder {
 
-    NONE("None"),
-    BCRYPT("BCrypt");
-
-    private final String value;
-
-    PasswordEncoder(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
+    String NONE = "None";
+    String BCRYPT = "BCrypt";
+    String SHA = "SHA";
+    String MD5 = "MD5";
 }

@@ -21,14 +21,18 @@ import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
+import io.gravitee.am.identityprovider.api.encoding.Base64Encoder;
+import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
+import io.gravitee.am.identityprovider.api.encoding.HexEncoder;
+import io.gravitee.am.identityprovider.api.encoding.NoneEncoder;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
-import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.*;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.*;
 import static java.util.Arrays.asList;
 
 /**
@@ -64,9 +68,41 @@ public class MongoAuthenticationProviderConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        if (configuration.getPasswordEncoder() != null && io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT.getValue().equals(configuration.getPasswordEncoder())) {
+        if (configuration.getPasswordEncoder() == null) {
+            return NoOpPasswordEncoder.getInstance();
+        }
+
+        if (BCRYPT.equals(configuration.getPasswordEncoder())) {
             return new BCryptPasswordEncoder();
         }
+
+        if (MD5.equals(configuration.getPasswordEncoder())) {
+            MessageDigestPasswordEncoder passwordEncoder = new MD5PasswordEncoder();
+            passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
+            passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
+            return passwordEncoder;
+        }
+
+        if (configuration.getPasswordEncoder().startsWith(SHA)) {
+            MessageDigestPasswordEncoder passwordEncoder =  new SHAPasswordEncoder(configuration.getPasswordEncoder());
+            passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
+            passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
+            return passwordEncoder;
+        }
+
         return NoOpPasswordEncoder.getInstance();
+    }
+
+    @Bean
+    public BinaryToTextEncoder binaryToTextEncoder() {
+        if (configuration.getPasswordEncoding() == null) {
+            return new NoneEncoder();
+        }
+
+        if ("Base64".equals(configuration.getPasswordEncoding())) {
+            return new Base64Encoder();
+        }
+
+        return new HexEncoder();
     }
 }

@@ -73,10 +73,31 @@
     },
     "passwordEncoder" : {
       "type": "string",
-      "enum": ["BCrypt", "None"],
+      "enum": ["BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "None"],
       "default": "BCrypt",
       "title": "Password encoder",
       "description": "The encoding mechanism used to store user password value."
+    },
+    "passwordEncoding" : {
+      "type": "string",
+      "title": "Password binary-to-text encoding",
+      "description": "This property will cause the encoded pass to be returned as encoding text representation",
+      "enum" : ["Base64", "Hex"]
+    },
+    "useDedicatedSalt" : {
+      "type": "boolean",
+      "title": "Separate salt from the password value ?"
+    },
+    "passwordSaltAttribute" : {
+      "type" : "string",
+      "title": "User password salt attribute",
+      "description": "Password salt field of your users if any (make sure the column exists in your datatable)"
+    },
+    "passwordSaltLength" : {
+      "type" : "number",
+      "default" : 32,
+      "title": "User password salt length in bytes",
+      "description": "Password salt length in bytes"
     },
     "options" : {
       "title": "Connection options",

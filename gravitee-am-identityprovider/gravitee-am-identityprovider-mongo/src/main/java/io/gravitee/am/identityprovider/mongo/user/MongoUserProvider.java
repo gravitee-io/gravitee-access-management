@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -37,6 +38,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -56,6 +58,9 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private BinaryToTextEncoder binaryToTextEncoder;
 
     @Autowired
     private MongoClient mongoClient;
@@ -102,7 +107,13 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                         document.put(configuration.getUsernameField(), username);
                         // set password
                         if (user.getCredentials() != null) {
-                            document.put(configuration.getPasswordField(), passwordEncoder.encode(user.getCredentials()));
+                            if (configuration.isUseDedicatedSalt()) {
+                                byte[] salt = createSalt();
+                                document.put(configuration.getPasswordField(), passwordEncoder.encode(user.getCredentials(), salt));
+                                document.put(configuration.getPasswordSaltAttribute(), binaryToTextEncoder.encode(salt));
+                            } else {
+                                document.put(configuration.getPasswordField(), passwordEncoder.encode(user.getCredentials()));
+                            }
                         }
                         // set additional information
                         if (user.getAdditionalInformation() != null) {
@@ -125,8 +136,17 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                     // set username (keep the original value)
                     document.put(configuration.getUsernameField(), oldUser.getUsername());
                     // set password
-                    String password = (updateUser.getCredentials() == null) ? oldUser.getCredentials() : passwordEncoder.encode(updateUser.getCredentials());
-                    document.put(configuration.getPasswordField(), password);
+                    if (updateUser.getCredentials() != null) {
+                        if (configuration.isUseDedicatedSalt()) {
+                            byte[] salt = createSalt();
+                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials(), salt));
+                            document.put(configuration.getPasswordSaltAttribute(), binaryToTextEncoder.encode(salt));
+                        } else {
+                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials()));
+                        }
+                    } else {
+                        document.put(configuration.getPasswordField(), oldUser.getCredentials());
+                    }
                     // set additional information
                     if (updateUser.getAdditionalInformation() != null) {
                         document.putAll(updateUser.getAdditionalInformation());
@@ -180,5 +200,12 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
     private String convertToJsonString(String rawString) {
         rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+","");
         return rawString;
+    }
+
+    private byte[] createSalt() {
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[configuration.getPasswordSaltLength()];
+        random.nextBytes(salt);
+        return salt;
     }
 }

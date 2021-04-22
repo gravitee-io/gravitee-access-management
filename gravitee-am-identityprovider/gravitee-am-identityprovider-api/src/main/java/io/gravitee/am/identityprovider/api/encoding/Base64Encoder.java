@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.identityprovider.api.encoding;
+
+import java.util.Base64;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordEncoder {
+public class Base64Encoder implements BinaryToTextEncoder {
 
-    String NONE = "None";
-    String BCRYPT = "BCrypt";
-    String SHA = "SHA";
-    String MD5 = "MD5";
+    private static final Base64.Encoder b64enc = Base64.getEncoder();
+
+    @Override
+    public String encode(byte[] value) {
+        return b64enc.encodeToString(value);
+    }
 }
-

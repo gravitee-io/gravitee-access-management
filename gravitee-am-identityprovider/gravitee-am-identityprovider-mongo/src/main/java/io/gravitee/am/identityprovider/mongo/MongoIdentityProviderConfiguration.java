@@ -41,7 +41,11 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private String findUserByEmailQuery = "{email: ?}";
     private String usernameField = FIELD_USERNAME;
     private String passwordField = FIELD_PASSWORD;
-    private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
+    private String passwordEncoder = PasswordEncoder.BCRYPT;
+    private String passwordEncoding = "Base64";
+    private boolean useDedicatedSalt;
+    private String passwordSaltAttribute = "salt";
+    private Integer passwordSaltLength = 32;
 
     @Override
     public boolean userProvider() {
@@ -166,5 +170,37 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setPasswordEncoder(String passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public String getPasswordEncoding() {
+        return passwordEncoding;
+    }
+
+    public void setPasswordEncoding(String passwordEncoding) {
+        this.passwordEncoding = passwordEncoding;
+    }
+
+    public boolean isUseDedicatedSalt() {
+        return useDedicatedSalt;
+    }
+
+    public void setUseDedicatedSalt(boolean useDedicatedSalt) {
+        this.useDedicatedSalt = useDedicatedSalt;
+    }
+
+    public String getPasswordSaltAttribute() {
+        return passwordSaltAttribute;
+    }
+
+    public void setPasswordSaltAttribute(String passwordSaltAttribute) {
+        this.passwordSaltAttribute = passwordSaltAttribute;
+    }
+
+    public Integer getPasswordSaltLength() {
+        return passwordSaltLength;
+    }
+
+    public void setPasswordSaltLength(Integer passwordSaltLength) {
+        this.passwordSaltLength = passwordSaltLength;
     }
 }
