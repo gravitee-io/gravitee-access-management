@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.identityprovider.api.encoding;
+
+import org.apache.commons.codec.binary.Hex;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordEncoder {
+public class HexEncoder implements BinaryToTextEncoder {
 
-    String NONE = "None";
-    String BCRYPT = "BCrypt";
-    String SHA = "SHA";
-    String MD5 = "MD5";
+    @Override
+    public String encode(byte[] value) {
+        return Hex.encodeHexString(value);
+    }
 }
-

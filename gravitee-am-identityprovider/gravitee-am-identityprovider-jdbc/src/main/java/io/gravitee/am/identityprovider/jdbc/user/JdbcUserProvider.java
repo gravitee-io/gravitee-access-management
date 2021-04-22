@@ -20,6 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
 import io.gravitee.am.identityprovider.jdbc.user.spring.JdbcUserProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
@@ -35,11 +36,11 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.env.Environment;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     private final Pattern pattern = Pattern.compile("idp_users___");
 
     @Autowired
-    private Environment environment;
+    private BinaryToTextEncoder binaryToTextEncoder;
 
     @Override
     protected void doStart() throws Exception {
@@ -145,25 +146,53 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                                 if (!isEmpty) {
                                     return Single.error(new UserAlreadyExistsException(user.getUsername()));
                                 } else {
-                                    final String sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s)",
-                                            configuration.getUsersTable(),
-                                            configuration.getIdentifierAttribute(),
-                                            configuration.getUsernameAttribute(),
-                                            configuration.getPasswordAttribute(),
-                                            configuration.getEmailAttribute(),
-                                            configuration.getMetadataAttribute(),
-                                            getIndexParameter(1, "id"),
-                                            getIndexParameter(2, "username"),
-                                            getIndexParameter(3, "password"),
-                                            getIndexParameter(4, "email"),
-                                            getIndexParameter(5, "metadata"));
+                                    String sql;
+                                    Object[] args;
+                                    if (configuration.isUseDedicatedSalt()) {
+                                        sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s, %s)",
+                                                configuration.getUsersTable(),
+                                                configuration.getIdentifierAttribute(),
+                                                configuration.getUsernameAttribute(),
+                                                configuration.getPasswordAttribute(),
+                                                configuration.getPasswordSaltAttribute(),
+                                                configuration.getEmailAttribute(),
+                                                configuration.getMetadataAttribute(),
+                                                getIndexParameter(1, "id"),
+                                                getIndexParameter(2, "username"),
+                                                getIndexParameter(3, "password"),
+                                                getIndexParameter(4, "salt"),
+                                                getIndexParameter(5, "email"),
+                                                getIndexParameter(6, "metadata"));
 
-                                    Object[] args = new Object[5];
-                                    args[0] = user.getId();
-                                    args[1] = user.getUsername();
-                                    args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials()) : null;
-                                    args[3] = user.getEmail();
-                                    args[4] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
+                                        args = new Object[6];
+                                        byte[] salt = createSalt();
+                                        args[0] = user.getId();
+                                        args[1] = user.getUsername();
+                                        args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials(), salt) : null;
+                                        args[3] = user.getCredentials() != null ? binaryToTextEncoder.encode(salt) : null;
+                                        args[4] = user.getEmail();
+                                        args[5] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
+                                    } else {
+                                        sql = String.format("INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %s, %s, %s, %s)",
+                                                configuration.getUsersTable(),
+                                                configuration.getIdentifierAttribute(),
+                                                configuration.getUsernameAttribute(),
+                                                configuration.getPasswordAttribute(),
+                                                configuration.getEmailAttribute(),
+                                                configuration.getMetadataAttribute(),
+                                                getIndexParameter(1, "id"),
+                                                getIndexParameter(2, "username"),
+                                                getIndexParameter(3, "password"),
+                                                getIndexParameter(4, "email"),
+                                                getIndexParameter(5, "metadata"));
+
+                                        args = new Object[5];
+                                        args[0] = user.getId();
+                                        args[1] = user.getUsername();
+                                        args[2] = user.getCredentials() != null ? passwordEncoder.encode(user.getCredentials()) : null;
+                                        args[3] = user.getEmail();
+                                        args[4] = user.getAdditionalInformation() != null ? objectMapper.writeValueAsString(user.getAdditionalInformation()) : null;
+                                    }
 
                                     return query(cnx, sql, args)
                                             .flatMap(Result::getRowsUpdated)
@@ -188,17 +217,35 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
         final String metadata = convert(updateUser.getAdditionalInformation());
 
         if (updateUser.getCredentials() != null) {
-            args = new Object[3];
-            sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE id = %s",
-                    configuration.getUsersTable(),
-                    configuration.getPasswordAttribute(),
-                    getIndexParameter(1, "password"),
-                    configuration.getMetadataAttribute(),
-                    getIndexParameter(2, "metadata"),
-                    getIndexParameter(3, "id"));
-            args[0] = passwordEncoder.encode(updateUser.getCredentials());
-            args[1] = metadata;
-            args[2] = id;
+            if (configuration.isUseDedicatedSalt()) {
+                args = new Object[4];
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s WHERE id = %s",
+                        configuration.getUsersTable(),
+                        configuration.getPasswordAttribute(),
+                        getIndexParameter(1, "password"),
+                        configuration.getPasswordSaltAttribute(),
+                        getIndexParameter(2, "salt"),
+                        configuration.getMetadataAttribute(),
+                        getIndexParameter(3, "metadata"),
+                        getIndexParameter(4, "id"));
+                byte[] salt = createSalt();
+                args[0] = passwordEncoder.encode(updateUser.getCredentials(), salt);
+                args[1] = binaryToTextEncoder.encode(salt);
+                args[2] = metadata;
+                args[3] = id;
+            } else {
+                args = new Object[3];
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE id = %s",
+                        configuration.getUsersTable(),
+                        configuration.getPasswordAttribute(),
+                        getIndexParameter(1, "password"),
+                        configuration.getMetadataAttribute(),
+                        getIndexParameter(2, "metadata"),
+                        getIndexParameter(3, "id"));
+                args[0] = passwordEncoder.encode(updateUser.getCredentials());
+                args[1] = metadata;
+                args[2] = id;
+            }
         } else {
             args = new Object[2];
             sql = String.format("UPDATE %s SET %s = %s WHERE id = %s",
@@ -284,6 +331,9 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
         additionalInformation.remove(configuration.getUsernameAttribute());
         additionalInformation.remove(configuration.getPasswordAttribute());
         additionalInformation.remove(configuration.getMetadataAttribute());
+        if (configuration.isUseDedicatedSalt()) {
+            additionalInformation.remove(configuration.getPasswordSaltAttribute());
+        }
         user.setAdditionalInformation(additionalInformation);
 
         return user;
@@ -310,5 +360,12 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private byte[] createSalt() {
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[configuration.getPasswordSaltLength()];
+        random.nextBytes(salt);
+        return salt;
     }
 }

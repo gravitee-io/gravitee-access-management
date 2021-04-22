@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.authentication.crypto.password;
+package io.gravitee.am.service.validators;
 
 import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.service.validators.PasswordValidator;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;

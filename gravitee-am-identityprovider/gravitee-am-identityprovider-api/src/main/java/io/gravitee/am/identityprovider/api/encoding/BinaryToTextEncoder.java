@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.jdbc.utils;
+package io.gravitee.am.identityprovider.api.encoding;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PasswordEncoder {
+public interface BinaryToTextEncoder {
 
-    String NONE = "None";
-    String BCRYPT = "BCrypt";
-    String SHA = "SHA";
-    String MD5 = "MD5";
+    String encode(byte[] value);
 }
-

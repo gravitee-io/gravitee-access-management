@@ -58,15 +58,23 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         return selectUserByMultipleField(username)
                 .filter(result -> {
                     // check password
-                    String password = result.get(configuration.getPasswordAttribute()).toString();
+                    String password = String.valueOf(result.get(configuration.getPasswordAttribute()));
                     if (password == null) {
                         LOGGER.debug("Authentication failed: password is null");
                         return false;
                     }
 
-                    if (!passwordEncoder.matches(presentedPassword, password)) {
-                        LOGGER.debug("Authentication failed: password does not match stored value");
-                        return false;
+                    if (configuration.isUseDedicatedSalt()) {
+                        String hash = String.valueOf(result.get(configuration.getPasswordSaltAttribute()));
+                        if (!passwordEncoder.matches(presentedPassword, password, hash)) {
+                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            return false;
+                        }
+                    } else {
+                        if (!passwordEncoder.matches(presentedPassword, password)) {
+                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            return false;
+                        }
                     }
 
                     return true;
@@ -158,6 +166,9 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         additionalInformation.remove(configuration.getUsernameAttribute());
         additionalInformation.remove(configuration.getPasswordAttribute());
         additionalInformation.remove(configuration.getMetadataAttribute());
+        if (configuration.isUseDedicatedSalt()) {
+            additionalInformation.remove(configuration.getPasswordSaltAttribute());
+        }
         user.setAdditionalInformation(additionalInformation);
 
         return user;

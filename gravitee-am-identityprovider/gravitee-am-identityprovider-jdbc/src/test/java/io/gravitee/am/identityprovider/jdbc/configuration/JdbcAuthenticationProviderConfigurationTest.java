@@ -96,7 +96,7 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
         configuration.setSelectUserByUsernameQuery("select * from users where username = %s");
         configuration.setSelectUserByEmailQuery("select * from users where email = %s");
         configuration.setSelectUserByMultipleFieldsQuery("select * from users where username = %s or email = %s ");
-        configuration.setPasswordEncoder(PasswordEncoder.NONE.getValue());
+        configuration.setPasswordEncoder(PasswordEncoder.NONE);
 
         return configuration;
     }

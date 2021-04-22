@@ -18,7 +18,6 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -83,9 +82,17 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
                         return false;
                     }
 
-                    if (!passwordEncoder.matches(presentedPassword, password)) {
-                        LOGGER.debug("Authentication failed: password does not match stored value");
-                        return false;
+                    if (configuration.isUseDedicatedSalt()) {
+                        String hash = user.getString(configuration.getPasswordSaltAttribute());
+                        if (!passwordEncoder.matches(presentedPassword, password, hash)) {
+                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            return false;
+                        }
+                    } else {
+                        if (!passwordEncoder.matches(presentedPassword, password)) {
+                            LOGGER.debug("Authentication failed: password does not match stored value");
+                            return false;
+                        }
                     }
 
                     return true;
@@ -151,6 +158,9 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
             document.remove(FIELD_ID);
             document.remove(FIELD_USERNAME);
             document.remove(configuration.getPasswordField());
+            if (configuration.isUseDedicatedSalt()) {
+                document.remove(configuration.getPasswordSaltAttribute());
+            }
             document.remove(FIELD_CREATED_AT);
             if (document.containsKey(FIELD_UPDATED_AT)) {
                 document.put(StandardClaims.UPDATED_AT, document.get(FIELD_UPDATED_AT));

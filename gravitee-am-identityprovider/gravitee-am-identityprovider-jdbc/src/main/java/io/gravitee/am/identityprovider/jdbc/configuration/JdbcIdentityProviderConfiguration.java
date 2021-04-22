@@ -46,7 +46,11 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
     private String emailAttribute = FIELD_EMAIL;
     private String usernameAttribute = FIELD_USERNAME;
     private String passwordAttribute = FIELD_PASSWORD;
-    private String passwordEncoder = PasswordEncoder.BCRYPT.getValue();
+    private String passwordEncoder = PasswordEncoder.BCRYPT;
+    private String passwordEncoding = "Base64";
+    private boolean useDedicatedSalt;
+    private String passwordSaltAttribute = "salt";
+    private Integer passwordSaltLength = 32;
     private List<Map<String, String>> options;
     private boolean autoProvisioning = false;
 
@@ -165,6 +169,38 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setPasswordEncoder(String passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public String getPasswordEncoding() {
+        return passwordEncoding;
+    }
+
+    public void setPasswordEncoding(String passwordEncoding) {
+        this.passwordEncoding = passwordEncoding;
+    }
+
+    public boolean isUseDedicatedSalt() {
+        return useDedicatedSalt;
+    }
+
+    public void setUseDedicatedSalt(boolean useDedicatedSalt) {
+        this.useDedicatedSalt = useDedicatedSalt;
+    }
+
+    public String getPasswordSaltAttribute() {
+        return passwordSaltAttribute;
+    }
+
+    public void setPasswordSaltAttribute(String passwordSaltAttribute) {
+        this.passwordSaltAttribute = passwordSaltAttribute;
+    }
+
+    public Integer getPasswordSaltLength() {
+        return passwordSaltLength;
+    }
+
+    public void setPasswordSaltLength(Integer passwordSaltLength) {
+        this.passwordSaltLength = passwordSaltLength;
     }
 
     public List<Map<String, String>> getOptions() {
