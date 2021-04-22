@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/367?closed=1[AM - 3.5.5 (2021-04-22)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Handle RelayState for POST Binding SAML flow https://github.com/gravitee-io/issues/issues/5447[#5447]
+
+=== Features
+
+*_Management_*
+
+- Add proxy exclusion in the system proxy configuration of gravitee.yml https://github.com/gravitee-io/issues/issues/5337[#5337]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/377?closed=1[AM - 3.8.1 (2021-04-21)]
 
 === Bug fixes
