@@ -50,6 +50,8 @@
             <exclude>LICENSE.txt</exclude>
             <exclude>node/**</exclude>
             <exclude>src/libraries/**</exclude>
+            <exclude>dist/**</exclude>
+            <exclude>node_modules/**</exclude>
           </excludes>
         </configuration>
       </plugin>
