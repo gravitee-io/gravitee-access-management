@@ -23,14 +23,14 @@
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
-        <version>3.5.5</version>
+        <version>3.5.6-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.repository</groupId>
     <artifactId>gravitee-am-repository</artifactId>
     <packaging>pom</packaging>
 
-    <version>3.5.5</version>
+    <version>3.5.6-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Repository</name>
 
     <modules>

@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-am-plugins-handlers</artifactId>
         <groupId>io.gravitee.am.plugins.handlers</groupId>
-        <version>3.5.5</version>
+        <version>3.5.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-plugins-handlers-identityprovider</artifactId>
