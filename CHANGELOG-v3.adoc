@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/379?closed=1[AM - 3.7.3 (2021-04-23)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.5.5 https://github.com/gravitee-io/issues/issues/5474[#5474]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/367?closed=1[AM - 3.5.5 (2021-04-22)]
 
 === Bug fixes
