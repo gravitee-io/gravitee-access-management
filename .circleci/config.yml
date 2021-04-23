@@ -119,7 +119,21 @@ workflows:
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
           ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
 
-
+  release_qa:
+    when:
+      equal: [ release, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - gravitee/d_am_release_secrets:
+          context: cicd-orchestrator
+          name: 'am_release_secrets'
+      - gravitee/d_am_release_qa:
+          requires:
+            - am_release_secrets
+          maven_profile_id: 'gio-release'
+          ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
+          ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
+          ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
+          ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
 
   docker_nightly:
     triggers:
