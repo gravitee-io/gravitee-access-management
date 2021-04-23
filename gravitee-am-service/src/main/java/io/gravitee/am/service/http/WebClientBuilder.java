@@ -15,14 +15,24 @@
  */
 package io.gravitee.am.service.http;
 
+import io.gravitee.common.util.EnvironmentUtils;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.core.net.ProxyType;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
 
+import java.net.URI;
 import java.net.URL;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -30,7 +40,9 @@ import java.net.URL;
  */
 public class WebClientBuilder {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebClientBuilder.class);
     private static final String HTTPS_SCHEME = "https";
+    private static final Pattern WILCARD_PATTERN = Pattern.compile("\\*\\.");
 
     @Value("${httpClient.timeout:10000}")
     private int httpClientTimeout;
@@ -65,6 +77,9 @@ public class WebClientBuilder {
     @Value("${httpClient.proxy.enabled:false}")
     private boolean isProxyConfigured;
 
+    @Autowired
+    private Environment environment;
+
     public WebClient createWebClient(Vertx vertx, URL url) {
 
         final int port = url.getPort() != -1 ? url.getPort() : (HTTPS_SCHEME.equals(url.getProtocol()) ? 443 : 80);
@@ -82,14 +97,17 @@ public class WebClientBuilder {
     }
 
     public WebClient createWebClient(Vertx vertx, WebClientOptions options) {
+        return createWebClient(vertx, options, null);
+    }
 
-        setProxySettings(options);
+    public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url) {
+        setProxySettings(options, url);
         return WebClient.create(vertx, options);
     }
 
-    private void setProxySettings(WebClientOptions options) {
+    private void setProxySettings(WebClientOptions options, String url) {
 
-        if (this.isProxyConfigured) {
+        if (this.isProxyConfigured && !isExcludedHost(url)) {
             ProxyOptions proxyOptions = new ProxyOptions();
             proxyOptions.setType(ProxyType.valueOf(httpClientProxyType));
             if (options.isSsl()) {
@@ -104,6 +122,34 @@ public class WebClientBuilder {
                 proxyOptions.setPassword(httpClientProxyHttpPassword);
             }
             options.setProxyOptions(proxyOptions);
+        }
+    }
+
+    private boolean isExcludedHost(String url) {
+        if (url == null) {
+            return false;
+        }
+
+        try {
+            final List<String> proxyExcludeHosts = EnvironmentUtils
+                    .getPropertiesStartingWith((ConfigurableEnvironment) environment, "httpClient.proxy.exclude-hosts")
+                    .values()
+                    .stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+
+            URL uri = URI.create(url).toURL();
+            String host = uri.getHost();
+            return proxyExcludeHosts.stream().anyMatch(excludedHost -> {
+                if (excludedHost.startsWith("*.")) {
+                    return host.endsWith(WILCARD_PATTERN.matcher(excludedHost).replaceFirst(""));
+                } else {
+                    return host.equals(excludedHost);
+                }
+            });
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred when calculating proxy excluded hosts", ex);
+            return false;
         }
     }
 }
