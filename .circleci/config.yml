@@ -9,6 +9,10 @@ parameters:
     type: boolean
     default: true
     description: "Run in dry run mode?"
+  prune_qa:
+    type: boolean
+    default: false
+    description: "Prune all previously published QA Reports ?"
   maven_profile_id:
     type: string
     default: "gravitee-dry-run"
@@ -130,6 +134,7 @@ workflows:
           requires:
             - am_release_secrets
           maven_profile_id: 'gio-release'
+          prune: << pipeline.parameters.prune >>
           ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
           ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
