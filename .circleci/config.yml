@@ -134,7 +134,7 @@ workflows:
           requires:
             - am_release_secrets
           maven_profile_id: 'gio-release'
-          prune: << pipeline.parameters.prune >>
+          prune: << pipeline.parameters.prune_qa >>
           ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
           ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
