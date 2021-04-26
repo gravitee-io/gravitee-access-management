@@ -39,7 +39,7 @@ public class FactorPluginHandler implements PluginHandler {
     private PluginClassLoaderFactory pluginClassLoaderFactory;
 
     @Autowired
-    private FactorPluginManager authenticatorPluginManager;
+    private FactorPluginManager pluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -58,7 +58,7 @@ public class FactorPluginHandler implements PluginHandler {
 
             Factor factor = createInstance((Class<Factor>) authenticatorClass);
 
-            authenticatorPluginManager.register(new FactorDefinition(factor, plugin));
+            pluginManager.register(new FactorDefinition(factor, plugin));
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create factor instance", iae);
         }

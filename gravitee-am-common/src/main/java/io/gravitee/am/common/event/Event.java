@@ -81,6 +81,9 @@ public abstract class Event {
             case RESOURCE:
                 event1 =  ResourceEvent.actionOf(action);
                 break;
+            case BOT_DETECTION:
+                event1 =  BotDetectionEvent.actionOf(action);
+                break;
         }
 
         return event1;

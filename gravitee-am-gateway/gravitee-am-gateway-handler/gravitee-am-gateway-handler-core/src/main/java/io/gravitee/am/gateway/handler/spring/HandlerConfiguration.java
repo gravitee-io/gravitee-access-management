@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.botdetection.impl.BotDetectionManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
 import io.gravitee.am.gateway.handler.factor.FactorManager;
 import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
@@ -83,6 +85,11 @@ public class HandlerConfiguration {
     @Bean
     public Router router() {
         return Router.router(vertx);
+    }
+
+    @Bean
+    public BotDetectionManager botDetectionManager() {
+        return new BotDetectionManagerImpl();
     }
 
 }

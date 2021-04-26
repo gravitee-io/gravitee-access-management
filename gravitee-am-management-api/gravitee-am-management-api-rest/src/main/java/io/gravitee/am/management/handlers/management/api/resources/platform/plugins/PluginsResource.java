@@ -70,4 +70,10 @@ public class PluginsResource {
     public NotifiersPluginResource getNotifiersPluginResource() {
         return resourceContext.getResource(NotifiersPluginResource.class);
     }
+
+    @Path("bot-detections")
+    public BotDetectionsPluginResource getBotDetectionsPlugins() {
+        return resourceContext.getResource(BotDetectionsPluginResource.class);
+    }
+
 }

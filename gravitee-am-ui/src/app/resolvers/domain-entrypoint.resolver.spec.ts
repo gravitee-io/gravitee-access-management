@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {inject, TestBed} from '@angular/core/testing';
+import { DomainEntrypointResolver } from './domain-entrypoint.resolver';
 
 describe('DomainEntrypointdResolver', () => {
   beforeEach(() => {

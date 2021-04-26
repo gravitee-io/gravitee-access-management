@@ -46,5 +46,6 @@ public interface EntityType {
     String ALERT_TRIGGER = "ALERT_TRIGGER";
     String ALERT_NOTIFIER = "ALERT_NOTIFIER";
     String RESOURCE = "RESOURCE";
+    String BOT_DETECTION = "BOT_DETECTION";
 
 }

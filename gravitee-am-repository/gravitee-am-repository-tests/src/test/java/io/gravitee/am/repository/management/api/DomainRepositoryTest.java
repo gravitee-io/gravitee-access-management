@@ -65,6 +65,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     private Domain initDomain(String name) {
         Domain domain = new Domain();
         domain.setName(name);
+        domain.setHrid(name);
         domain.setCreatedAt(new Date());
         domain.setUpdatedAt(domain.getCreatedAt());
         domain.setDescription(name + " description");

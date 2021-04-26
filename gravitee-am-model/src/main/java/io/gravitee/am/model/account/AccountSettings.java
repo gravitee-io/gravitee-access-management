@@ -98,6 +98,16 @@ public class AccountSettings {
     private boolean deletePasswordlessDevicesAfterResetPassword;
 
     /**
+     * true if BotDetection enabled
+     */
+    private boolean useBotDetection = false;
+
+    /**
+     * The bot detection plugin identifier used to protect pages
+     */
+    private String botDetectionPlugin;
+
+    /**
      * Used a custom form to generate ForgotPassword page
      */
     private boolean resetPasswordCustomForm;
@@ -132,6 +142,7 @@ public class AccountSettings {
         this.resetPasswordConfirmIdentity = other.resetPasswordConfirmIdentity;
         this.resetPasswordCustomForm = other.resetPasswordCustomForm;
         this.resetPasswordCustomFormFields = other.resetPasswordCustomFormFields;
+        this.useBotDetection = other.useBotDetection;
     }
 
     public boolean isInherited() {
@@ -244,6 +255,22 @@ public class AccountSettings {
 
     public void setDeletePasswordlessDevicesAfterResetPassword(boolean deletePasswordlessDevicesAfterResetPassword) {
         this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
+    }
+
+    public boolean isUseBotDetection() {
+        return useBotDetection;
+    }
+
+    public void setUseBotDetection(boolean useBotDetection) {
+        this.useBotDetection = useBotDetection;
+    }
+
+    public String getBotDetectionPlugin() {
+        return botDetectionPlugin;
+    }
+
+    public void setBotDetectionPlugin(String botDetectionPlugin) {
+        this.botDetectionPlugin = botDetectionPlugin;
     }
 
     public boolean isResetPasswordCustomForm() {

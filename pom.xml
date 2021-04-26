@@ -61,6 +61,7 @@
         <module>gravitee-am-management-api</module>
         <module>gravitee-am-ui</module>
         <module>gravitee-am-resource</module>
+        <module>gravitee-am-botdetection</module>
     </modules>
 
     <properties>
@@ -371,7 +372,6 @@
                 <additionalOptions>-Xdoclint:none</additionalOptions>
                 <source>8</source>
             </configuration>
-
         </plugin>
       </plugins>
     </build>

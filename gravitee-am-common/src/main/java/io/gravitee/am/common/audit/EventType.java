@@ -201,6 +201,15 @@ public interface EventType {
 
     /**
      * ----------
+     * Factor audit log actions
+     * ----------
+     */
+    String BOT_DETECTION_CREATED = "BOT_DETECTION_CREATED";
+    String BOT_DETECTION_UPDATED = "BOT_DETECTION_UPDATED";
+    String BOT_DETECTION_DELETED = "BOT_DETECTION_DELETED";
+
+    /**
+     * ----------
      * Resource audit log actions
      * ----------
      */

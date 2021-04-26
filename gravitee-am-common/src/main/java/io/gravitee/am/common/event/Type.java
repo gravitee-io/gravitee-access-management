@@ -41,4 +41,5 @@ public enum Type {
     FLOW,
     ALERT_TRIGGER,
     ALERT_NOTIFIER,
+    BOT_DETECTION,
 }

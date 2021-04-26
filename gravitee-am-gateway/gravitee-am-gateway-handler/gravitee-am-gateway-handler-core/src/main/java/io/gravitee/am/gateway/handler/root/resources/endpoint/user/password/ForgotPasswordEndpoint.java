@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -50,12 +51,13 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
 
     private final ThymeleafTemplateEngine engine;
-
     private final Domain domain;
+    private final BotDetectionManager botDetectionManager;
 
-    public ForgotPasswordEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
+    public ForgotPasswordEndpoint(ThymeleafTemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
         this.engine = engine;
         this.domain = domain;
+        this.botDetectionManager = botDetectionManager;
     }
 
     @Override
@@ -99,8 +101,12 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
             routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
         }
 
+        final Map<String, Object> data = new HashMap<>();
+        data.putAll(routingContext.data());
+        data.putAll(botDetectionManager.getTemplateVariables(domain, client));
+
         // render the forgot password page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+        engine.render(data, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());

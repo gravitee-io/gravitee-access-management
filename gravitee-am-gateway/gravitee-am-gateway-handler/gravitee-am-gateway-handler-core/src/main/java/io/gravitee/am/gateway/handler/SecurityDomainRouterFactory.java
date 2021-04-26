@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler;
 
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -102,6 +103,7 @@ public class SecurityDomainRouterFactory {
         components.add(AlertEventProcessor.class);
         components.add(FactorManager.class);
         components.add(ResourceManager.class);
+        components.add(BotDetectionManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
+import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
@@ -61,7 +62,8 @@ import org.springframework.context.annotation.Import;
         NotifierConfiguration.class,
         FactorConfiguration.class,
         ResourceConfiguration.class,
-        AlertPluginConfiguration.class
+        AlertPluginConfiguration.class,
+        BotDetectionConfiguration.class
 })
 public class StandaloneConfiguration {
 

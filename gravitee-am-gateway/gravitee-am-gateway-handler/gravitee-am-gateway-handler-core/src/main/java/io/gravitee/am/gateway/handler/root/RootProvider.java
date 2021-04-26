@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -50,6 +51,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
@@ -186,6 +188,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private BotDetectionManager botDetectionManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -213,6 +218,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, domain);
+        Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
 
         // Root policy chain handler
         rootRouter.route()
@@ -228,9 +234,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
-                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
@@ -299,10 +307,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(registerAccessHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
-                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
         rootRouter.route(HttpMethod.POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
+                .handler(botDetectionHandler)
                 .handler(registerAccessHandler)
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new RegisterProcessHandler(userService, domain))
@@ -327,10 +336,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
@@ -23,6 +24,7 @@ import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.form.FormManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -56,10 +58,12 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     private final ThymeleafTemplateEngine engine;
     private final Domain domain;
+    private final BotDetectionManager botDetectionManager;
 
-    public LoginEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain) {
+    public LoginEndpoint(ThymeleafTemplateEngine thymeleafTemplateEngine, Domain domain, BotDetectionManager botDetectionManager) {
         this.engine = thymeleafTemplateEngine;
         this.domain = domain;
+        this.botDetectionManager = botDetectionManager;
     }
 
     @Override
@@ -110,7 +114,11 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     private void renderLoginPage(RoutingContext routingContext, Client client) {
         // render the login page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+        final Map<String, Object> data = new HashMap<>();
+        data.putAll(routingContext.data());
+        data.putAll(botDetectionManager.getTemplateVariables(domain, client));
+
+        engine.render(data, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
