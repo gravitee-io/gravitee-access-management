@@ -16,6 +16,9 @@
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+
+    <script th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}" th:src="${'https://www.google.com/recaptcha/api.js?render=' + bot_detection_configuration.siteKey}"></script>
+
 </head>
 
 <body>
@@ -35,7 +38,7 @@
                 <p style="margin: 0;" th:case="*">Some information are missing or invalid.</p>
             </div>
 
-            <form role="form" th:action="${action}" method="post">
+            <form id="form" role="form" th:action="${action}" method="post">
                 <div class="register-form-content">
                     <div style="display: flex; flex-direction: row">
                         <div class="input-textfield" style="margin-right: 20px;">
@@ -78,6 +81,11 @@
 
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+
+                <input type="hidden" th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"
+                       th:id="${bot_detection_configuration.get('tokenParameterName')}"
+                       th:name="${bot_detection_configuration.get('tokenParameterName')}" />
+
                 <div style="display: flex; flex-direction: row;">
                     <a th:href="${loginAction}"><< Back to login</a>
                     <span style="display: flex; flex: 1;"></span>
@@ -117,10 +125,22 @@
             $(this).parent().addClass('is-invalid');
         }
     });
-    $(".mdl-button[type='submit']").click(function (event) {
+
+    $(".mdl-button").filter(":button").click(function (event){
+        /*[# th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"]*/
+            event.preventDefault();
+            grecaptcha.ready(function() {
+              grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
+                $("#"+ /*[[${bot_detection_configuration.get('tokenParameterName')}]]*/ "no-name").val(token);
+                $("#form").unbind('submit').submit();
+              });
+            });
+        /*[/]*/
+
         $(this).siblings(".mdl-textfield").addClass('is-invalid');
         $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
     });
+
     $("#changePasswordVisibility").click(function () {
         var inputType = $('input#password').attr('type');
         if (inputType === 'text') {

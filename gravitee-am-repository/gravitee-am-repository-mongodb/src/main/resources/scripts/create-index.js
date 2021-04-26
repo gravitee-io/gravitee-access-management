@@ -181,3 +181,8 @@ db.auth_flow_ctx.reIndex();
 db.domains.dropIndexes();
 db.domains.createIndex( { "referenceType" : 1, "referenceId": 1, "hrid": 1 } );
 db.domains.reIndex();
+
+// "bot_detections" collection
+db.bot_detections.dropIndexes();
+db.bot_detections.createIndex( { "referenceId": 1, "referenceType" : 1 } );
+db.bot_detections.reIndex();

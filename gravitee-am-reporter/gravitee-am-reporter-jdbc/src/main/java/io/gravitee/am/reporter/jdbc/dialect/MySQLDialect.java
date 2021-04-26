@@ -50,7 +50,7 @@ public class MySQLDialect extends AbstractDialect {
         processQuery(referenceType, referenceId, criteria, queryBuilder, whereClauseBuilder, bindings, false, true);
 
         // Sequence Generator exist only since MySQL 8.x
-        // process multiple queries to buld the result
+        // process multiple queries to build the result
         Map<Long, Long> intervals = intervals(criteria);
         return fluxToFlowable(Flux.fromIterable(intervals.keySet()).flatMap(slot -> {
             String beginSlot = dateTimeFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(slot), ZoneId.of(ZoneOffset.UTC.getId())));

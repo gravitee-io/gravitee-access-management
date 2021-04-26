@@ -1,0 +1,33 @@
+.gv-page-container {
+  .gv-page-content {
+    ngx-datatable {
+      .bot-header {
+        margin: 5px;
+        align-items: center;
+        .bot-icon {
+          margin: 0 12px 0 0;
+        }
+        .bot-information {
+          h3 {
+            font-size: 14px;
+            font-weight: normal;
+            margin: 0;
+          }
+          small {
+            color: rgba(0,0,0,.54);
+          }
+        }
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep.ngx-datatable.material .datatable-footer {
+    display: none;
+  }
+
+  ::ng-deep.bot-name-cell {
+    padding: 0 !important;
+  }
+}

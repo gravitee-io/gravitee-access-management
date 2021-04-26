@@ -40,6 +40,8 @@ public class AccountSettingsMongo {
     private boolean autoLoginAfterResetPassword;
     private String redirectUriAfterResetPassword;
     private boolean deletePasswordlessDevicesAfterResetPassword;
+    private boolean useBotDetection;
+    private String botDetectionPlugin;
     private boolean resetPasswordCustomForm;
     private List<FormFieldMongo> resetPasswordCustomFormFields;
     private boolean resetPasswordConfirmIdentity;
@@ -156,6 +158,22 @@ public class AccountSettingsMongo {
         this.deletePasswordlessDevicesAfterResetPassword = deletePasswordlessDevicesAfterResetPassword;
     }
 
+    public boolean isUseBotDetection() {
+        return useBotDetection;
+    }
+
+    public void setUseBotDetection(boolean useBotDetection) {
+        this.useBotDetection = useBotDetection;
+    }
+
+    public String getBotDetectionPlugin() {
+        return botDetectionPlugin;
+    }
+
+    public void setBotDetectionPlugin(String botDetectionPlugin) {
+        this.botDetectionPlugin = botDetectionPlugin;
+    }
+
     public boolean isResetPasswordCustomForm() {
         return resetPasswordCustomForm;
     }
@@ -196,6 +214,8 @@ public class AccountSettingsMongo {
         accountSettings.setRedirectUriAfterResetPassword(getRedirectUriAfterResetPassword());
         accountSettings.setSendRecoverAccountEmail(isSendRecoverAccountEmail());
         accountSettings.setDeletePasswordlessDevicesAfterResetPassword(isDeletePasswordlessDevicesAfterResetPassword());
+        accountSettings.setBotDetectionPlugin(getBotDetectionPlugin());
+        accountSettings.setUseBotDetection(isUseBotDetection());
         accountSettings.setResetPasswordConfirmIdentity(isResetPasswordConfirmIdentity());
         accountSettings.setResetPasswordCustomForm(isResetPasswordCustomForm());
         if (this.resetPasswordCustomFormFields != null) {
@@ -225,6 +245,8 @@ public class AccountSettingsMongo {
         accountSettingsMongo.setRedirectUriAfterResetPassword(accountSettings.getRedirectUriAfterResetPassword());
         accountSettingsMongo.setSendRecoverAccountEmail(accountSettings.isSendRecoverAccountEmail());
         accountSettingsMongo.setDeletePasswordlessDevicesAfterResetPassword(accountSettings.isDeletePasswordlessDevicesAfterResetPassword());
+        accountSettingsMongo.setBotDetectionPlugin(accountSettings.getBotDetectionPlugin());
+        accountSettingsMongo.setUseBotDetection(accountSettings.isUseBotDetection());
         accountSettingsMongo.setResetPasswordConfirmIdentity(accountSettings.isResetPasswordConfirmIdentity());
         accountSettingsMongo.setResetPasswordCustomForm(accountSettings.isResetPasswordCustomForm());
         if (accountSettings.getResetPasswordCustomFormFields() != null) {

@@ -356,6 +356,16 @@ import {DomainAlertNotifierCreationStep2Component} from "./domain/alerts/notifie
 import {AlertNotifierFormComponent} from "./domain/alerts/notifiers/notifier/form/form.component";
 import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
 import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
+import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
+import { BotDetectionService } from './services/bot-detection.service';
+import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
+import { BotDetectionCreationStep1Component } from './domain/settings/botdetections/creation/steps/step1/step1.component';
+import { BotDetectionCreationStep2Component } from './domain/settings/botdetections/creation/steps/step2/step2.component';
+import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
+import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
+import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-detection/form/form.component';
+import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 
 @NgModule({
   declarations: [
@@ -551,7 +561,13 @@ import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.res
     DomainAlertNotifierCreationStep1Component,
     DomainAlertNotifierCreationStep2Component,
     AlertNotifierFormComponent,
-    DomainAlertNotifierComponent
+    DomainAlertNotifierComponent,
+    DomainSettingsBotDetectionsComponent,
+    BotDetectionCreationComponent,
+    BotDetectionCreationStep1Component,
+    BotDetectionCreationStep2Component,
+    BotDetectionComponent,
+    BotDetectionFormComponent
   ],
   imports: [
     BrowserModule,
@@ -664,6 +680,10 @@ import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.res
     AlertNotifiersResolver,
     AlertNotifierResolver,
     PlatformAlertStatusResolver,
+    BotDetectionService,
+    BotDetectionsResolver,
+    BotDetectionResolver,
+    BotDetectionPluginsResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

@@ -199,6 +199,12 @@ import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/n
 import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
 import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
 import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
+import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
+import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
+import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
+import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
+import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
+import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1647,6 +1653,64 @@ export const routes: Routes = [
                               },
                               perms: {
                                 only: ['domain_certificate_read']
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        path: 'bot-detection',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Bot Detection',
+                            section: 'Security'
+                          },
+                          perms: {
+                            only: ['domain_bot_detection_list']
+                          }
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsBotDetectionsComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              detections: BotDetectionsResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_bot_detection_list']
+                              }
+                            }
+                          },
+                          {
+                            path: 'new',
+                            component: BotDetectionCreationComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              botDetectionPlugins: BotDetectionPluginsResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_bot_detection_create']
+                              }
+                            }
+                          },
+                          {
+                            path: ':botDetectionId',
+                            component: BotDetectionComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              botDetection: BotDetectionResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: "botDetection.name",
+                              },
+                              perms: {
+                                only: ['domain_bot_detection_read']
                               }
                             }
                           }

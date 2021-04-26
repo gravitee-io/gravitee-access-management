@@ -18,6 +18,7 @@ import {ActivatedRoute} from '@angular/router';
 import {ProviderService} from '../../../services/provider.service';
 import moment from 'moment';
 import { filter } from 'lodash';
+import { BotDetectionService } from 'app/services/bot-detection.service';
 
 @Component({
   selector: 'app-account-settings',
@@ -30,8 +31,11 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   @Input() inheritMode = false;
   @Input() readonly = false;
   @ViewChild('accountForm', { static: true }) form: any;
+
   formChanged = false;
   userProviders: any[];
+  botDetectionPlugins: any[];
+
   private domainId: string;
   private defaultMaxAttempts = 10;
   private defaultLoginAttemptsResetTime = 12;
@@ -49,7 +53,8 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
   selectedFields = [];
 
   constructor(private route: ActivatedRoute,
-              private providerService: ProviderService) {}
+              private providerService: ProviderService,
+              private botDetectionService: BotDetectionService) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -58,6 +63,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
       this.userProviders = response;
     });
+
+    this.botDetectionService.findByDomain(this.domainId).subscribe(response => {
+      this.botDetectionPlugins = response;
+    })
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -85,6 +94,10 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
       } else {
         delete accountSettings.resetPasswordCustomFormFields;
         delete accountSettings.resetPasswordConfirmIdentity;
+      }
+
+      if (!accountSettings.useBotDetection) {
+        delete accountSettings.botDetectionPlugin;
       }
     }
 
@@ -193,6 +206,19 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
 
   isDeletePasswordlessDevicesAfterResetPasswordEnabled() {
     return this.accountSettings && this.accountSettings.deletePasswordlessDevicesAfterResetPassword;
+  }
+
+  enableBotDetection(event) {
+    this.accountSettings.useBotDetection = event.checked;
+    this.formChanged = true;
+  }
+
+  isBotDetectionEnabled() {
+    return this.accountSettings && this.accountSettings.useBotDetection;
+  }
+
+  hasBotDetectionPlugins() {
+    return this.botDetectionPlugins && this.botDetectionPlugins.length > 0;
   }
 
   enableResetPasswordCustomForm(event) {

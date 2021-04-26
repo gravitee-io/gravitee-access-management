@@ -41,5 +41,6 @@
         <module>gravitee-am-plugins-handlers-factor</module>
         <module>gravitee-am-plugins-handlers-notifier</module>
         <module>gravitee-am-plugins-handlers-resource</module>
+        <module>gravitee-am-plugins-handlers-botdetection</module>
     </modules>
 </project>

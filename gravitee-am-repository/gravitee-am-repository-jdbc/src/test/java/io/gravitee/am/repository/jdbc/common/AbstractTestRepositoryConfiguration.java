@@ -15,15 +15,12 @@
  */
 package io.gravitee.am.repository.jdbc.common;
 
-import io.gravitee.am.repository.RepositoriesTestInitializer;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.jdbc.management.ManagementRepositoryConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
-import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,24 +28,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.*;
-import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractTestRepositoryConfiguration extends AbstractRepositoryConfiguration {
-    private final Logger LOGGER = LoggerFactory.getLogger(AbstractJdbcTest.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(AbstractTestRepositoryConfiguration.class);
 
     @Autowired
     protected DatabaseUrlProvider provider;

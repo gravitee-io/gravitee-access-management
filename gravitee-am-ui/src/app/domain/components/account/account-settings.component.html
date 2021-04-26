@@ -231,6 +231,31 @@
         </div>
       </div>
     </div>
+
+    <div class="gv-form-section">
+      <div class="gv-form-section-title">
+        <h5>Bot Detection</h5>
+        <mat-divider></mat-divider>
+      </div>
+      <div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableBotDetection($event)"
+            [checked]="isBotDetectionEnabled()" [disabled]="readonly || !hasBotDetectionPlugins()">
+            Protect pages against bots
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable protection against bots on Sign-In, Sign-Up and Forgot Password pages.</mat-hint>
+        </div>
+        <div fxLayout="column" style="margin-top: 10px;">
+          <mat-form-field appearance="outline">
+            <mat-select placeholder="Bot detection plugin" name="botDetectionPlugin" [disabled]="readonly || !hasBotDetectionPlugins()" [(ngModel)]="accountSettings.botDetectionPlugin" (ngModelChange)="updateModel()">
+              <mat-option *ngFor="let botDetectionPlugin of botDetectionPlugins" [value]="botDetectionPlugin.id">{{botDetectionPlugin.name}}</mat-option>
+            </mat-select>
+            <mat-hint>The bot detection plugin that will be used. If you made custom template, please look at the BotDetection configuration form to get code snippets to include into your pages</mat-hint>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div fxLayout="row" *ngIf="!readonly">

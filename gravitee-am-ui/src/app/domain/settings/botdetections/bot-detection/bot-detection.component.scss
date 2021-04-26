@@ -1,0 +1,16 @@
+.bot-protection-settings-description {
+  .bot-protection-settings-description-contextual-help {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+}
+
+div.code > textarea {
+		box-sizing: border-box;
+		width: 100%;
+		resize: none;
+		border: none;
+		background: inherit;
+		color: black;
+		overflow: scroll;
+}

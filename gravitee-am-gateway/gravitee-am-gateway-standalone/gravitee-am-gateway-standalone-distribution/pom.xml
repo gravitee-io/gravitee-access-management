@@ -329,6 +329,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- AM Bot Detection -->
+        <dependency>
+            <groupId>io.gravitee.am.botdetection</groupId>
+            <artifactId>gravitee-am-botdetection-recaptcha-v3</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- External Plugins -->
         <dependency>
             <groupId>io.gravitee.policy</groupId>
@@ -611,6 +620,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.resource</groupId>
                                     <artifactId>gravitee-am-resource-smtp</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- AM Bot Detection -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.botdetection</groupId>
+                                    <artifactId>gravitee-am-botdetection-recaptcha-v3</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

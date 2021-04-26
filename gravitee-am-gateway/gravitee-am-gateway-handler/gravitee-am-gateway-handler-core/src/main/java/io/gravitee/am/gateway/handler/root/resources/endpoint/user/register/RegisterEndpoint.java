@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -48,10 +49,12 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
     private final ThymeleafTemplateEngine engine;
     private final Domain domain;
+    private final BotDetectionManager botDetectionManager;
 
-    public RegisterEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
+    public RegisterEndpoint(ThymeleafTemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
         this.engine = engine;
         this.domain = domain;
+        this.botDetectionManager = botDetectionManager;
     }
 
     @Override
@@ -81,8 +84,12 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
         routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
 
+        final Map<String, Object> data = new HashMap<>();
+        data.putAll(routingContext.data());
+        data.putAll(botDetectionManager.getTemplateVariables(domain, client));
+
         // render the registration confirmation page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+        engine.render(data, getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
