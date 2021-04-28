@@ -15,16 +15,19 @@
  */
 package io.gravitee.am.gateway.handler;
 
-import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.factor.FactorManager;
-import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
+import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
@@ -104,6 +107,9 @@ public class SecurityDomainRouterFactory {
         components.add(FactorManager.class);
         components.add(ResourceManager.class);
         components.add(BotDetectionManager.class);
+        components.add(CrossDomainManager.class);
+        components.add(ClientManager.class);
+        components.add(CertificateManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

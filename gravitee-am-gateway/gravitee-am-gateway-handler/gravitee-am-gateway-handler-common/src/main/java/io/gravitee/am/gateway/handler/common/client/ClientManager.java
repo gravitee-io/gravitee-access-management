@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.core.manager;
+package io.gravitee.am.gateway.handler.common.client;
+
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.service.Service;
 
 import java.util.Collection;
 
@@ -21,37 +25,34 @@ import java.util.Collection;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EntityManager<T> {
+public interface ClientManager extends Service {
 
     /**
-     * Deploy an entity
-     * @param entity entity to deploy.
+     * Deploy an client
+     * @param client client to deploy.
      */
-    void deploy(T entity);
+    void deploy(Client client);
 
     /**
-     * Update a entity already registered.
-     * @param entity entity to update.
+     * Undeploy a client
+     * @param clientId The ID of the client to undeploy.
      */
-    void update(T entity);
+    void undeploy(String clientId);
 
     /**
-     * Undeploy a entity
-     * @param entityId The ID of the entity to undeploy.
+     * Returns a collection of deployed clients.
+     * @return A collection of deployed clients.
      */
-    void undeploy(String entityId);
+    Collection<Client> entities();
 
     /**
-     * Returns a collection of deployed {@link T}s.
-     * @return A collection of deployed  {@link T}s.
+     * Retrieve a deployed client using its ID.
+     * @param clientId The ID of the deployed client.
+     * @return A deployed client
      */
-    Collection<T> entities();
+    Client get(String clientId);
 
-    /**
-     * Retrieve a deployed {@link T} using its ID.
-     * @param entityId The ID of the deployed entity.
-     * @return A deployed {@link T}
-     */
-    T get(String entityId);
+    void deployCrossDomain(Domain domain);
 
+    void undeployCrossDomain(Domain domain);
 }

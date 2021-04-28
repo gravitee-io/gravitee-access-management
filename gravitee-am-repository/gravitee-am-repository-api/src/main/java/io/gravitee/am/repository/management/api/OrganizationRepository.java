@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -28,4 +29,6 @@ import java.util.List;
 public interface OrganizationRepository extends CrudRepository<Organization, String> {
 
     Single<Long> count();
+
+    Flowable<Organization> findByHrids(List<String> hrids);
 }

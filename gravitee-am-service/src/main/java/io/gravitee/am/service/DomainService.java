@@ -20,13 +20,13 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.PatchDomain;
-import io.gravitee.am.service.model.UpdateDomain;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -44,7 +44,7 @@ public interface DomainService {
 
     Single<Domain> findByHrid(String environmentId, String hrid);
 
-    Single<Set<Domain>> findAll();
+    Single<List<Domain>> findAll();
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 

@@ -188,9 +188,10 @@ public class DomainServiceImpl implements DomainService {
     }
 
     @Override
-    public Single<Set<Domain>> findAll() {
+    public Single<List<Domain>> findAll() {
         LOGGER.debug("Find all domains");
         return domainRepository.findAll()
+                .toList()
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all domains", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find all domains", ex));

@@ -87,7 +87,7 @@ public class ScopeUpgraderTest {
         role.setId("role-id");
         role.setOauthScopes(Collections.singletonList(roleScope.getKey()));
 
-        when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainService.findAll()).thenReturn(Single.just(Collections.singletonList(domain)));
         when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0 ,0)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(domainScope),0, 1)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
@@ -115,7 +115,7 @@ public class ScopeUpgraderTest {
         domain.setId(domainId);
         domain.setName(domainName);
 
-        when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainService.findAll()).thenReturn(Single.just(Collections.singletonList(domain)));
         when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, 1)));
 
         scopeUpgrader.upgrade();
@@ -141,7 +141,7 @@ public class ScopeUpgraderTest {
         domain.setId(domainId);
         domain.setName(domainName);
 
-        when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainService.findAll()).thenReturn(Single.just(Collections.singletonList(domain)));
         when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 0)))
                 .thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, 0)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()));
@@ -177,7 +177,7 @@ public class ScopeUpgraderTest {
         role.setId("role-id");
         role.setPermissionAcls(null);
 
-        when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainService.findAll()).thenReturn(Single.just(Collections.singletonList(domain)));
         when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0, Integer.MAX_VALUE))).thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, Integer.MAX_VALUE)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));

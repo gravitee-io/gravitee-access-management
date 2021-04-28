@@ -61,7 +61,7 @@ public class OpenIDScopeUpgraderTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(domainService.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
+        when(domainService.findAll()).thenReturn(Single.just(Arrays.asList(domain)));
     }
 
     @Test

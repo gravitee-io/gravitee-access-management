@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresource.ITemplateResource;

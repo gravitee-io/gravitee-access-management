@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "eab6a23c-219f-4cf6-b991-643743a55e97",
+		"_postman_id": "af6809bb-8992-48f8-ad99-87888fd2bbec",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -118,6 +118,58 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Patch domain - allow cross introspection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"master\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
 							]
 						}
 					},

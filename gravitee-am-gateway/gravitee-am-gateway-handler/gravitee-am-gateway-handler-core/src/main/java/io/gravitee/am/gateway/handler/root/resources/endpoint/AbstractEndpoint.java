@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;

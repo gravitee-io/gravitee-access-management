@@ -15,10 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.common.client.impl;
 
-import io.gravitee.am.gateway.core.manager.EntityManager;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     private Domain domain;
 
     @Autowired
-    private EntityManager<Client> clientManager;
+    private ClientManager clientManager;
 
     @Override
     public Maybe<Client> findById(String id) {

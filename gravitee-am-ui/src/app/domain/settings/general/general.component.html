@@ -29,6 +29,16 @@
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%;">Enable domain to handle incoming authentication and authorization requests.</mat-hint>
           </div>
+          <div fxLayout="column" style="margin-bottom: 10px;">
+            <mat-slide-toggle
+              (change)="setMaster($event)"
+              [checked]="domain.master" [disabled]="readonly">
+              Master domain
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">
+              A master security domain can introspect tokens from other domains. Useful if you want to dedicate a domain only to verify tokens.
+            </mat-hint>
+          </div>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Name</mat-label>
             <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="domain.name" required [readonly]="readonly">

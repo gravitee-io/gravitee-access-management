@@ -16,19 +16,14 @@
 package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.common.event.Action;
-import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
-import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,15 +33,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -62,19 +49,15 @@ public class SyncManager implements InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(SyncManager.class);
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
-    private static final String SHARDING_TAGS_SEPARATOR = ",";
+    private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
+    private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
+    private static final String SEPARATOR = ",";
 
     @Autowired
     private EventManager eventManager;
 
     @Autowired
     private SecurityDomainManager securityDomainManager;
-
-    @Autowired
-    private EntityManager<Client> clientManager;
-
-    @Autowired
-    private EntityManager<Certificate> certificateManager;
 
     @Autowired
     private Environment environment;
@@ -85,17 +68,23 @@ public class SyncManager implements InitializingBean {
 
     @Lazy
     @Autowired
+    private EnvironmentRepository environmentRepository;
+
+    @Lazy
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Lazy
+    @Autowired
     private EventRepository eventRepository;
 
-    @Lazy
-    @Autowired
-    private ApplicationRepository applicationRepository;
-
-    @Lazy
-    @Autowired
-    private CertificateRepository certificateRepository;
-
     private Optional<List<String>> shardingTags;
+
+    private Optional<List<String>> environments;
+
+    private Optional<List<String>> organizations;
+
+    private List<String> environmentIds;
 
     private long lastRefreshAt = -1;
 
@@ -103,7 +92,14 @@ public class SyncManager implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        logger.info("Starting gateway tags initialization ...");
         this.initShardingTags();
+        this.initEnvironments();
+        logger.info("Gateway has been loaded with the following information :");
+        logger.info("\t\t - Sharding tags : " + (shardingTags.isPresent() ? shardingTags.get() : "[]"));
+        logger.info("\t\t - Organizations : " + (organizations.isPresent() ? organizations.get() : "[]"));
+        logger.info("\t\t - Environments : " + (environments.isPresent() ? environments.get() : "[]"));
+        logger.info("\t\t - Environments loaded : " + (environmentIds != null ? environmentIds : "[]"));
     }
 
     public void refresh() {
@@ -114,8 +110,6 @@ public class SyncManager implements InitializingBean {
             if (lastRefreshAt == -1) {
                 logger.debug("Initial synchronization");
                 deployDomains();
-                deployClients();
-                deployCertificates();
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
@@ -136,49 +130,23 @@ public class SyncManager implements InitializingBean {
             lastRefreshAt = nextLastRefreshAt;
             lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
         } catch (Exception ex) {
-            logger.error("An error occurs while synchronizing the security domains", ex);
+            logger.error("An error has occurred during synchronization", ex);
         }
     }
 
     private void deployDomains() {
         logger.info("Starting security domains initialization ...");
-        Set<Domain> domains = domainRepository.findAll()
+        List<Domain> domains = domainRepository.findAll()
                 // remove disabled domains
-                .map(registeredDomains -> {
-                    if (registeredDomains != null) {
-                        return registeredDomains
-                                .stream()
-                                .filter(Domain::isEnabled)
-                                .collect(Collectors.toSet());
-                    }
-                    return Collections.<Domain>emptySet();
-                })
+                .filter(Domain::isEnabled)
+                // Can the security domain be deployed ?
+                .filter(this::canHandle)
+                .toList()
                 .blockingGet();
 
-        domains.stream()
-                .forEach(domain -> {
-                    // Does the security domain have a matching sharding tags ?
-                    if (hasMatchingTags(domain)) {
-                        securityDomainManager.deploy(domain);
-                    }
-                });
+        // deploy security domains
+        domains.stream().forEach(domain -> securityDomainManager.deploy(domain));
         logger.info("Security domains initialization done");
-    }
-
-    private void deployClients() {
-        logger.info("Starting clients initialization ...");
-        List<Application> applications = applicationRepository.findAll().blockingGet();
-        if (applications != null) {
-            ((DefaultClientManager) clientManager).init(applications.stream().map(Application::toClient).collect(Collectors.toList()));
-        }
-        logger.info("Clients initialization done");
-    }
-
-    private void deployCertificates() {
-        logger.info("Starting certificates initialization ...");
-        Set<Certificate> certificates = certificateRepository.findAll().blockingGet();
-        ((DefaultCertificateManager) certificateManager).init(certificates);
-        logger.info("Certificates initialization done");
     }
 
     private void computeEvents(Collection<Event> events) {
@@ -187,12 +155,6 @@ public class SyncManager implements InitializingBean {
             switch (event.getType()) {
                 case DOMAIN:
                     synchronizeDomain(event);
-                    break;
-                case APPLICATION:
-                    synchronizeApplication(event);
-                    break;
-                case CERTIFICATE:
-                    synchronizeCertificate(event);
                     break;
                 default:
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
@@ -210,8 +172,8 @@ public class SyncManager implements InitializingBean {
                 if (domain != null) {
                     // Get deployed domain
                     Domain deployedDomain = securityDomainManager.get(domain.getId());
-                    // Does the security domain have a matching sharding tags ?
-                    if (hasMatchingTags(domain)) {
+                    // Can the security domain be deployed ?
+                    if (canHandle(domain)) {
                         // domain is not yet deployed, so let's do it !
                         if (deployedDomain == null) {
                             securityDomainManager.deploy(domain);
@@ -233,112 +195,121 @@ public class SyncManager implements InitializingBean {
         }
     }
 
-    private void synchronizeApplication(Event event) {
-        final String applicationId = event.getPayload().getId();
-        final Action action = event.getPayload().getAction();
-        switch (action) {
-            case CREATE:
-            case UPDATE:
-                Application application = applicationRepository.findById(applicationId).blockingGet();
-                if (application != null) {
-                    // Get deployed client
-                    Client client = application.toClient();
-                    Client deployedClient = clientManager.get(application.getId());
-                    // client is not yet deployed, so let's do it !
-                    if (deployedClient == null) {
-                        clientManager.deploy(client);
-                    } else if (deployedClient.getUpdatedAt().before(application.getUpdatedAt())) {
-                        clientManager.update(client);
-                    }
-                }
-                break;
-            case DELETE:
-                clientManager.undeploy(applicationId);
-                break;
-        }
-    }
-
-    private void synchronizeCertificate(Event event) {
-        final String certificateId = event.getPayload().getId();
-        final Action action = event.getPayload().getAction();
-        switch (action) {
-            case CREATE:
-            case UPDATE:
-                Certificate certificate = certificateRepository.findById(certificateId).blockingGet();
-                if (certificate != null) {
-                    // Get deployed certificate
-                    Certificate deployedCertificate = certificateManager.get(certificate.getId());
-                    // certificate is not yet deployed, so let's do it !
-                    if (deployedCertificate == null) {
-                        certificateManager.deploy(certificate);
-                    } else if (deployedCertificate.getUpdatedAt().before(certificate.getUpdatedAt())) {
-                        certificateManager.update(certificate);
-                    }
-                }
-                break;
-            case DELETE:
-                certificateManager.undeploy(certificateId);
-                break;
-        }
-    }
-
-    private void initShardingTags() {
-        String systemPropertyTags = System.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY);
-        String tags = systemPropertyTags == null ?
-                environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY) : systemPropertyTags;
-        if (tags != null && !tags.isEmpty()) {
-            shardingTags = Optional.of(Arrays.asList(tags.split(SHARDING_TAGS_SEPARATOR)));
-        } else {
-            shardingTags = Optional.empty();
-        }
+    private boolean canHandle(Domain domain) {
+        return hasMatchingEnvironments(domain) && hasMatchingTags(domain);
     }
 
     private boolean hasMatchingTags(Domain domain) {
-        if (shardingTags.isPresent()) {
-            List<String> tagList = shardingTags.get();
-            if (domain.getTags() != null) {
-                final List<String> inclusionTags = tagList.stream()
-                        .map(String::trim)
-                        .filter(tag -> !tag.startsWith("!"))
-                        .collect(Collectors.toList());
+        if (!shardingTags.isPresent()) {
+            // no tags configured on this gateway instance
+            return true;
+        }
 
-                final List<String> exclusionTags = tagList.stream()
-                        .map(String::trim)
-                        .filter(tag -> tag.startsWith("!"))
-                        .map(tag -> tag.substring(1))
-                        .collect(Collectors.toList());
-
-                if (inclusionTags.stream().anyMatch(exclusionTags::contains)) {
-                    throw new IllegalArgumentException("You must not configure a tag to be included and excluded");
-                }
-
-                final boolean hasMatchingTags =
-                        inclusionTags.stream()
-                                .anyMatch(tag -> domain.getTags().stream()
-                                        .anyMatch(apiTag -> {
-                                            final Collator collator = Collator.getInstance();
-                                            collator.setStrength(Collator.NO_DECOMPOSITION);
-                                            return collator.compare(tag, apiTag) == 0;
-                                        })
-                                ) || (!exclusionTags.isEmpty() &&
-                                exclusionTags.stream()
-                                        .noneMatch(tag -> domain.getTags().stream()
-                                                .anyMatch(apiTag -> {
-                                                    final Collator collator = Collator.getInstance();
-                                                    collator.setStrength(Collator.NO_DECOMPOSITION);
-                                                    return collator.compare(tag, apiTag) == 0;
-                                                })
-                                        ));
-
-                if (!hasMatchingTags) {
-                    logger.debug("The security domain {} has been ignored because not in configured tags {}", domain.getName(), tagList);
-                }
-                return hasMatchingTags;
-            }
+        final List<String> tagList = shardingTags.get();
+        if (domain.getTags() == null || domain.getTags().isEmpty()) {
             logger.debug("Tags {} are configured on gateway instance but not found on the security domain {}", tagList, domain.getName());
             return false;
         }
-        // no tags configured on this gateway instance
-        return true;
+
+        final List<String> inclusionTags = getInclusionElements(tagList);
+        final List<String> exclusionTags = getExclusionElements(tagList);
+
+        if (inclusionTags.stream().anyMatch(exclusionTags::contains)) {
+            throw new IllegalArgumentException("You must not configure a tag to be included and excluded");
+        }
+
+        final boolean hasMatchingTags = hasMatchingElements(inclusionTags, exclusionTags, domain.getTags());
+        if (!hasMatchingTags) {
+            logger.debug("The security domain {} has been ignored because not in configured tags {}", domain.getName(), tagList);
+        }
+        return hasMatchingTags;
+    }
+
+    private boolean hasMatchingEnvironments(Domain domain) {
+        if (environmentIds == null || environmentIds.isEmpty()) {
+            // check if there is no environment because gravitee.yml is empty (OK)
+            // or no matching environment has been found in the database (KO)
+            return !organizations.isPresent() && !environments.isPresent();
+        }
+        return environmentIds.contains(domain.getReferenceId());
+    }
+
+    private void initShardingTags() {
+        shardingTags = getSystemValues(SHARDING_TAGS_SYSTEM_PROPERTY);
+    }
+
+    private void initEnvironments() {
+        environments = getSystemValues(ENVIRONMENTS_SYSTEM_PROPERTY);
+        organizations = getSystemValues(ORGANIZATIONS_SYSTEM_PROPERTY);
+        if (organizations.isPresent()) {
+            final List<Organization> foundOrgs = organizationRepository.findByHrids(this.organizations.get()).toList().blockingGet();
+            this.environmentIds = foundOrgs.stream().flatMap(org ->{
+                return environmentRepository.findAll(org.getId())
+                        .filter(environment1 -> {
+                            if (!environments.isPresent()) {
+                                return true;
+                            } else {
+                                return environment1.getHrids().stream().anyMatch(h -> environments.get().contains(h));
+                            }
+                        })
+                        .map(io.gravitee.am.model.Environment::getId).toList().blockingGet().stream();
+            }).distinct().collect(Collectors.toList());
+        } else if (environments.isPresent()) {
+            environmentIds = environmentRepository.findAll()
+                    .filter(environment1 -> environment1.getHrids().stream().anyMatch(h -> environments.get().contains(h)))
+                    .map(io.gravitee.am.model.Environment::getId)
+                    .toList()
+                    .blockingGet();
+        }
+    }
+
+    private Optional<List<String>> getSystemValues(String key) {
+        String systemPropertyEnvs = System.getProperty(key);
+        String envs = systemPropertyEnvs == null ? environment.getProperty(key) : systemPropertyEnvs;
+        if (envs != null && !envs.isEmpty()) {
+            return Optional.of(Arrays.asList(envs.split(SEPARATOR)));
+        }
+        return Optional.empty();
+    }
+
+    private static boolean hasMatchingElements(final List<String> inclusionElements,
+                                               final List<String> exclusionElements,
+                                               final Set<String> domainElements) {
+        final boolean hasMatchingElements =
+                inclusionElements
+                        .stream()
+                        .anyMatch(element ->
+                                domainElements
+                                        .stream()
+                                        .anyMatch(domainElement -> matchingString(element, domainElement))
+                        ) || (!exclusionElements.isEmpty() &&
+                        exclusionElements
+                                .stream()
+                                .noneMatch(element ->
+                                        domainElements
+                                                .stream()
+                                                .anyMatch(domainElement -> matchingString(element, domainElement))));
+        return hasMatchingElements;
+    }
+
+    private static List<String> getInclusionElements(final List<String> elements) {
+        return elements.stream()
+                .map(String::trim)
+                .filter(elt -> !elt.startsWith("!"))
+                .collect(Collectors.toList());
+    }
+
+    private static List<String> getExclusionElements(final List<String> elements) {
+        return elements.stream()
+                .map(String::trim)
+                .filter(elt -> elt.startsWith("!"))
+                .map(elt -> elt.substring(1))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean matchingString(final String a, final String b) {
+        final Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.NO_DECOMPOSITION);
+        return collator.compare(a, b) == 0;
     }
 }

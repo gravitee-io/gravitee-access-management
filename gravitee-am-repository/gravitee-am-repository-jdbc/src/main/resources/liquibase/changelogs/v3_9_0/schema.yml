@@ -45,3 +45,10 @@ databaseChangeLog:
         - sql:
             dbms: mssql
             sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_BOT_DETECTION', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        # domains
+        ########################
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: master, type: boolean, constraints: { nullable: true } }

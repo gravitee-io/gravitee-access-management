@@ -15,15 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
-import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
-import io.gravitee.am.gateway.handler.botdetection.impl.BotDetectionManagerImpl;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
-import io.gravitee.am.gateway.handler.factor.FactorManager;
-import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
-import io.gravitee.am.gateway.handler.form.FormManager;
-import io.gravitee.am.gateway.handler.form.impl.FormManagerImpl;
-import io.gravitee.am.gateway.handler.resource.ResourceManager;
-import io.gravitee.am.gateway.handler.resource.impl.ResourceManagerImpl;
+import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
+import io.gravitee.am.gateway.handler.manager.domain.impl.CrossDomainManagerImpl;
+import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.manager.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.impl.FormManagerImpl;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.resource.impl.ResourceManagerImpl;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
@@ -70,6 +72,11 @@ public class HandlerConfiguration {
     @Bean
     public ResourceManager resourceManager() {
         return new ResourceManagerImpl();
+    }
+
+    @Bean
+    public CrossDomainManager crossDomainManager() {
+        return new CrossDomainManagerImpl();
     }
 
     @Bean

@@ -154,6 +154,21 @@ public class EnvironmentRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(l -> l.stream().map(Environment::getId).distinct().count() == loop);
     }
 
+    @Test
+    public void testFindAll() {
+        final int loop = 10;
+        for (int i = 0; i < loop; i++) {
+            // random ref id
+            environmentRepository.create(buildEnv()).blockingGet();
+        }
+
+        TestObserver<List<Environment>> testObserver = environmentRepository.findAll().toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(l -> l.size() == loop);
+        testObserver.assertValue(l -> l.stream().map(Environment::getId).distinct().count() == loop);
+    }
+
     private Environment buildEnv() {
         Environment env = new Environment();
         env.setName("testName");

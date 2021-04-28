@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.form.impl;
+package io.gravitee.am.gateway.handler.manager.form.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FormEvent;
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.DomainBasedTemplateResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;

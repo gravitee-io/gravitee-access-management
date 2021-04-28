@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.botdetection.impl;
+package io.gravitee.am.gateway.handler.manager.botdetection.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +21,7 @@ import io.gravitee.am.botdetection.api.BotDetectionProvider;
 import io.gravitee.am.common.event.BotDetectionEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.botdetection.api.BotDetectionContext;
-import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;

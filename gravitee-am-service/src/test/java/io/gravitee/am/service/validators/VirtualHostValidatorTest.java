@@ -22,8 +22,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -237,7 +236,7 @@ public class VirtualHostValidatorTest {
         otherDomain.getVhosts().add(vhost1);
         otherDomain.getVhosts().add(vhost2);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
@@ -254,7 +253,7 @@ public class VirtualHostValidatorTest {
         otherDomain.setId("otherDomain");
         otherDomain.setVhostMode(true);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
         otherDomain.getVhosts().get(0).setPath("/"); // "/" path in vhost mode should not be considered as overlap.
 
@@ -280,7 +279,7 @@ public class VirtualHostValidatorTest {
         otherDomain.getVhosts().add(vhost1);
         otherDomain.getVhosts().add(vhost2);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
@@ -297,7 +296,7 @@ public class VirtualHostValidatorTest {
         otherDomain.setId("otherDomain");
         otherDomain.setVhostMode(true);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
@@ -316,7 +315,7 @@ public class VirtualHostValidatorTest {
         otherDomain.setId("otherDomain");
         otherDomain.setVhostMode(true);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
@@ -336,7 +335,7 @@ public class VirtualHostValidatorTest {
         otherDomain.setId("otherDomain");
         otherDomain.setVhostMode(true);
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();
@@ -356,7 +355,7 @@ public class VirtualHostValidatorTest {
         otherDomain.setVhostMode(true);
         otherDomain.getVhosts().get(0).setPath("/"); // same host, "/" path overlap.
 
-        Set<Domain> otherDomains = new HashSet<>();
+        List<Domain> otherDomains = new ArrayList<>();
         otherDomains.add(otherDomain);
 
         Throwable throwable = VirtualHostValidator.validateDomainVhosts(domain, otherDomains).blockingGet();

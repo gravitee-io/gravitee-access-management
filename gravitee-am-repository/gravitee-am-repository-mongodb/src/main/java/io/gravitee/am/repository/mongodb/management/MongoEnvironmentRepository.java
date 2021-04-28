@@ -46,11 +46,9 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Maybe<Environment> findById(String id, String organizationId) {
+    public Flowable<Environment> findAll() {
 
-        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first())
-                .firstElement()
-                .map(this::convert);
+        return Flowable.fromPublisher(collection.find()).map(this::convert);
     }
 
     @Override
@@ -59,6 +57,15 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
         return Flowable.fromPublisher(collection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))
                 .map(this::convert);
     }
+
+    @Override
+    public Maybe<Environment> findById(String id, String organizationId) {
+
+        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first())
+                .firstElement()
+                .map(this::convert);
+    }
+
 
     @Override
     public Maybe<Environment> findById(String id) {

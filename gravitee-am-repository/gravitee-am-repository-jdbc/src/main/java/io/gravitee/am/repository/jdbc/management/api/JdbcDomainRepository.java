@@ -77,12 +77,12 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     }
 
     @Override
-    public Single<Set<Domain>> findAll() {
+    public Flowable<Domain> findAll() {
         LOGGER.debug("findAll()");
         Flowable<Domain> domains = domainRepository.findAll().map(this::toDomain);
-        return domains.flatMap(this::completeDomain)
-                .doOnError((error) -> LOGGER.error("unable to retrieve all domain", error))
-                .toList().map(HashSet::new);
+        return domains
+                .flatMap(this::completeDomain)
+                .doOnError((error) -> LOGGER.error("unable to retrieve all domain", error));
     }
 
     @Override

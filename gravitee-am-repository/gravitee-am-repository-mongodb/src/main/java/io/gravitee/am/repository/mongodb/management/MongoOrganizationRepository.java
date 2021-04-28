@@ -20,16 +20,16 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+import java.util.List;
+
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -39,11 +39,17 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoOrganizationRepository extends AbstractManagementMongoRepository implements OrganizationRepository {
 
     private MongoCollection<OrganizationMongo> collection;
+    private static final String HRID_KEY = "hrids";
 
     @PostConstruct
     public void init() {
         collection = mongoOperations.getCollection("organizations", OrganizationMongo.class);
         super.init(collection);
+    }
+
+    @Override
+    public Flowable<Organization> findByHrids(List<String> hrids) {
+        return Flowable.fromPublisher(collection.find(in(HRID_KEY, hrids))).map(this::convert);
     }
 
     @Override

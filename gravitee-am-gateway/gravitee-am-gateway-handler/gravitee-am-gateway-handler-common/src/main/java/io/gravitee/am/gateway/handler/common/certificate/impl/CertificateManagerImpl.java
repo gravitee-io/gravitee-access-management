@@ -18,16 +18,25 @@ package io.gravitee.am.gateway.handler.common.certificate.impl;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Keys;
+import io.gravitee.am.common.event.CertificateEvent;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.repository.management.api.CertificateRepository;
+import io.gravitee.common.event.Event;
+import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,13 +48,15 @@ import java.security.Key;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateManagerImpl extends AbstractService implements CertificateManager, InitializingBean {
+public class CertificateManagerImpl extends AbstractService implements CertificateManager, EventListener<CertificateEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(CertificateManagerImpl.class);
 
@@ -59,11 +70,76 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private Domain domain;
 
     @Autowired
+    private CertificateRepository certificateRepository;
+
+    @Autowired
+    private EventManager eventManager;
+
+    @Autowired
     private CertificateProviderManager certificateProviderManager;
 
     private CertificateProvider defaultCertificateProvider;
 
     private CertificateProvider noneAlgorithmCertificateProvider;
+
+    private final ConcurrentMap<String, Certificate> certificates = new ConcurrentHashMap<>();
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        logger.info("Initializing default certificate provider for domain {}", domain.getName());
+        initDefaultCertificateProvider();
+        logger.info("Default certificate loaded for domain {}", domain.getName());
+
+        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
+        initNoneAlgorithmCertificateProvider();
+        logger.info("None algorithm certificate loaded for domain {}", domain.getName());
+
+        logger.info("Initializing certificates for domain {}", domain.getName());
+        certificateRepository.findByDomain(domain.getId())
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        entities -> {
+                            entities.forEach(certificate -> {
+                                certificateProviderManager.create(certificate);
+                                certificates.put(certificate.getId(), certificate);
+                            });
+                            logger.info("Certificates loaded for domain {}", domain.getName());
+                        },
+                        error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
+                );
+    }
+
+    @Override
+    public void onEvent(Event<CertificateEvent, Payload> event) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
+                domain.getId().equals(event.content().getReferenceId())) {
+            switch (event.type()) {
+                case DEPLOY:
+                case UPDATE:
+                    deployCertificate(event.content().getId());
+                    break;
+                case UNDEPLOY:
+                    removeCertificate(event.content().getId());
+                    break;
+            }
+        }
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+        super.doStart();
+
+        logger.info("Register event listener for certificate events for domain {}", domain.getName());
+        eventManager.subscribeForEvents(this, CertificateEvent.class, domain.getId());
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+        super.doStop();
+
+        logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
+        eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
+    }
 
     @Override
     public Maybe<CertificateProvider> get(String id) {
@@ -121,13 +197,34 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         return noneAlgorithmCertificateProvider;
     }
 
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        logger.info("Initializing default certificate provider for domain {}", domain.getName());
-        initDefaultCertificateProvider();
+    private void deployCertificate(String certificateId) {
+        logger.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
+        certificateRepository.findById(certificateId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        certificate -> {
+                            try {
+                                certificateProviderManager.create(certificate);
+                                certificates.put(certificateId, certificate);
+                                logger.info("Certificate {} loaded for domain {}", certificateId, domain.getName());
+                            } catch (Exception ex) {
+                                logger.error("Unable to load certificate {} for domain {}", certificate.getName(), certificate.getDomain(), ex);
+                                certificates.remove(certificateId, certificate);
+                            }
+                        },
+                        error -> logger.error("An error has occurred when loading certificate {} for domain {}", certificateId, domain.getName(), error),
+                        () -> logger.error("No certificate found with id {}", certificateId));
+    }
 
-        logger.info("Initializing none algorithm certificate provider for domain {}", domain.getName());
-        initNoneAlgorithmCertificateProvider();
+    private void removeCertificate(String certificateId) {
+        logger.info("Removing certificate {} for domain {}", certificateId, domain.getName());
+        Certificate deletedCertificate = certificates.remove(certificateId);
+        certificateProviderManager.delete(certificateId);
+        if (deletedCertificate != null) {
+            logger.info("Certificate {} has been removed for domain {}", certificateId, domain.getName());
+        } else {
+            logger.info("Certificate {} was not loaded for domain {}", certificateId, domain.getName());
+        }
     }
 
     private void initDefaultCertificateProvider() throws InvalidKeyException {
@@ -138,10 +235,6 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
 
         // create default certificate provider
-        setDefaultCertificateProvider(certificateKey, signatureAlgorithm);
-    }
-
-    private void setDefaultCertificateProvider(io.gravitee.am.certificate.api.Key key, SignatureAlgorithm signatureAlgorithm) {
         CertificateMetadata certificateMetadata = new CertificateMetadata();
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, signatureAlgorithm.getDigestName()));
 
@@ -149,7 +242,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
-                return Single.just(key);
+                return Single.just(certificateKey);
             }
 
             @Override

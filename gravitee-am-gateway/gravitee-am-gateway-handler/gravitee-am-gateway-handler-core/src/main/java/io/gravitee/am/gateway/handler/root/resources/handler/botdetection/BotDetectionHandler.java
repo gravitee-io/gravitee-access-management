@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.botdetection;
 
 import io.gravitee.am.botdetection.api.BotDetectionContext;
-import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;

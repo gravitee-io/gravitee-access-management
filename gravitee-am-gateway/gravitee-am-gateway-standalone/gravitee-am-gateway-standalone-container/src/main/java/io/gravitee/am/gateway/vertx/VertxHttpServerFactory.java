@@ -110,6 +110,7 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
         options.setCompressionSupported(httpServerConfiguration.isCompressionSupported());
         options.setIdleTimeout(httpServerConfiguration.getIdleTimeout());
         options.setTcpKeepAlive(httpServerConfiguration.isTcpKeepAlive());
+        options.setMaxFormAttributeSize(-1);
 
         return vertx.createHttpServer(options);
     }

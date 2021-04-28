@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;

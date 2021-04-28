@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.botdetection;
+package io.gravitee.am.gateway.handler.manager.factor;
 
-import io.gravitee.am.botdetection.api.BotDetectionContext;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.common.event.FactorEvent;
+import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.model.Factor;
 import io.gravitee.common.service.Service;
-import io.reactivex.Single;
-
-import java.util.Map;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BotDetectionManager extends Service {
+public interface FactorManager extends Service {
 
-    Map<String, Object> getTemplateVariables(Domain domain, Client client);
+    FactorProvider get(String factorId);
 
-    Single<Boolean> validate(BotDetectionContext context);
+    Factor getFactor(String factorId);
+
+    void updateFactor(String factorId);
 }

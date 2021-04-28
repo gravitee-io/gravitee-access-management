@@ -16,8 +16,13 @@
 package io.gravitee.am.repository.jdbc.management.api.spring.organization;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
+import io.reactivex.Flowable;
+import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -25,4 +30,7 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface SpringOrganizationRepository extends RxJava2CrudRepository<JdbcOrganization, String> {
+
+    @Query("select * from organizations o INNER JOIN organization_hrids oh ON o.id = oh.organization_id where oh.hrid in (:hrids)")
+    Flowable<JdbcOrganization> findByHrids(@Param("hrids") List<String> hrids);
 }

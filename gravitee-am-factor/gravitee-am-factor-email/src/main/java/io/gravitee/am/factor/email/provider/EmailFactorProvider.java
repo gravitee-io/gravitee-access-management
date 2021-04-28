@@ -24,7 +24,7 @@ import io.gravitee.am.factor.email.EmailFactorConfiguration;
 import io.gravitee.am.factor.email.utils.HOTP;
 import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
-import io.gravitee.am.gateway.handler.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.factor.EnrolledFactor;

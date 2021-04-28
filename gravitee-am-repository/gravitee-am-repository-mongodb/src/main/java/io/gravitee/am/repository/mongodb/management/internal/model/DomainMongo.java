@@ -72,6 +72,8 @@ public class DomainMongo extends Auditable {
 
     private Set<String> identities;
 
+    private boolean master;
+
     public String getId() {
         return id;
     }
@@ -184,21 +186,6 @@ public class DomainMongo extends Auditable {
         this.identities = identities;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DomainMongo that = (DomainMongo) o;
-
-        return id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
     public ReferenceType getReferenceType() {
         return referenceType;
     }
@@ -245,5 +232,28 @@ public class DomainMongo extends Auditable {
 
     public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
         this.passwordSettings = passwordSettings;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DomainMongo that = (DomainMongo) o;
+
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
     }
 }

@@ -22,7 +22,7 @@ import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.sms.SMSFactorConfiguration;
-import io.gravitee.am.gateway.handler.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.repository.exceptions.TechnicalException;

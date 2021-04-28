@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.gateway.handler.common.client;
 
-import io.gravitee.am.gateway.core.manager.EntityManager;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -51,7 +50,7 @@ public class ClientSyncServiceTest {
     private Domain domain;
 
     @Mock
-    private EntityManager<Client> clientManager;
+    private ClientManager clientManager;
 
     @BeforeClass
     public static void initializeClients() {

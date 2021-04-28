@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.factor;
+package io.gravitee.am.gateway.handler.manager.domain;
 
-import io.gravitee.am.common.event.FactorEvent;
-import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.am.model.Factor;
 import io.gravitee.common.service.Service;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorManager extends Service {
-
-    FactorProvider get(String factorId);
-
-    Factor getFactor(String factorId);
-
-    void updateFactor(String factorId);
+public interface CrossDomainManager extends Service {
 }
