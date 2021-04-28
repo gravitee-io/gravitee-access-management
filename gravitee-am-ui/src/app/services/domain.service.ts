@@ -80,7 +80,8 @@ export class DomainService {
       'path': domain.path,
       'enabled': domain.enabled,
       'tags': domain.tags,
-      'oidc': domain.oidc
+      'oidc': domain.oidc,
+      'master': domain.master
     });
   }
 

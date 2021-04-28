@@ -34,6 +34,9 @@ public interface SpringApplicationRepository extends RxJava2CrudRepository<JdbcA
     @Query("select count(a.id) from applications a where a.domain = :domain")
     Single<Long> countByDomain(@Param("domain") String domain);
 
+    @Query("select * from applications a where a.domain = :domain")
+    Flowable<JdbcApplication> findByDomain(@Param("domain") String domain);
+
     @Query("select * from applications a where a.certificate = :cert")
     Flowable<JdbcApplication> findByCertificate(@Param("cert") String certificate);
 

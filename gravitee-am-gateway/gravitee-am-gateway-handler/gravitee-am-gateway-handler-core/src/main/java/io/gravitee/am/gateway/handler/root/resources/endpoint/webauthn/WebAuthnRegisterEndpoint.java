@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.provider.UserProperties;
-import io.gravitee.am.gateway.handler.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;

@@ -237,6 +237,11 @@ gateway:
 #      username: user
 #      password: secret
 
+# Organizations and Environments configuration
+# Associate this gateway to a list of environments and their organizations. Use hrids to define these values.
+#organizations: mycompany
+#environments: dev,qa
+
 # Sharding tags configuration
 # Allows to define inclusion/exclusion sharding tags to only deploy a part of security domains. To exclude just prefix the tag with '!'.
 #tags: public,private,!partner

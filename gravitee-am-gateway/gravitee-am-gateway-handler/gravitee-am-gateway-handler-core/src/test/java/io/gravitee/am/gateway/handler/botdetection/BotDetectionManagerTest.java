@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.botdetection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.gateway.handler.botdetection.impl.BotDetectionManagerImpl;
+import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
@@ -30,7 +30,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.botdetection.impl.BotDetectionManagerImpl.*;
+import static io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl.*;
 import static org.junit.Assert.*;
 
 /**

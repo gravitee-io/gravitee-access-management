@@ -229,8 +229,8 @@ public class DomainServiceTest {
 
     @Test
     public void shouldFindAll() {
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.singleton(new Domain())));
-        TestObserver<Set<Domain>> testObserver = domainService.findAll().test();
+        when(domainRepository.findAll()).thenReturn(Flowable.just(new Domain()));
+        TestObserver<List<Domain>> testObserver = domainService.findAll().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -240,7 +240,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldFindAll_technicalException() {
-        when(domainRepository.findAll()).thenReturn(Single.error(TechnicalException::new));
+        when(domainRepository.findAll()).thenReturn(Flowable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         domainService.findAll().subscribe(testObserver);
@@ -276,7 +276,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
         domain.setReferenceId(ENVIRONMENT_ID);
@@ -324,7 +324,7 @@ public class DomainServiceTest {
         when(newDomain.getName()).thenReturn("my-domain");
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when((domainRepository.findAll())).thenReturn(Single.just(Collections.emptySet()));
+        when((domainRepository.findAll())).thenReturn(Flowable.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -378,7 +378,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -410,7 +410,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -445,7 +445,7 @@ public class DomainServiceTest {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(domain));
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

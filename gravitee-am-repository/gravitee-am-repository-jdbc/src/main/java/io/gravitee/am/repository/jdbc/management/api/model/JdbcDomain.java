@@ -56,6 +56,7 @@ public class JdbcDomain {
     private String referenceType;
     @Column("reference_id")
     private String referenceId;
+    private boolean master = false;
 
     public String getId() {
         return id;
@@ -207,6 +208,14 @@ public class JdbcDomain {
 
     public void setAlertEnabled(boolean alertEnabled) {
         this.alertEnabled = alertEnabled;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
     }
 
     /**

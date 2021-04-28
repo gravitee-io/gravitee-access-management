@@ -51,7 +51,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domainRepository.create(domain).blockingGet();
 
         // fetch domains
-        TestObserver<Set<Domain>> testObserver1 = domainRepository.findAll().test();
+        TestObserver<List<Domain>> testObserver1 = domainRepository.findAll().toList().test();
         testObserver1.awaitTerminalEvent();
 
         testObserver1.assertComplete();

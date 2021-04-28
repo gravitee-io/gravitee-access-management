@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
@@ -25,6 +26,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringO
 import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringOrganizationRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +64,16 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
 
     protected JdbcOrganization toJdbcOrganization(Organization entity) {
         return mapper.map(entity, JdbcOrganization.class);
+    }
+
+    @Override
+    public Flowable<Organization> findByHrids(List<String> hrids) {
+        LOGGER.debug("findByHrids({})", hrids);
+
+        final Flowable<Organization> result = organizationRepository.findByHrids(hrids)
+                .map(this::toOrganization);
+
+        return result.doOnError((error) -> LOGGER.error("unable to retrieve organizations with hrids {}", hrids, error));
     }
 
     @Override

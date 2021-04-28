@@ -122,6 +122,11 @@ public class Domain implements Resource {
      */
     private Set<String> identities;
 
+    /**
+     * If domain is master, it can do cross domains token introspection
+     */
+    private boolean master;
+
     public Domain() {
     }
 
@@ -147,6 +152,7 @@ public class Domain implements Resource {
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
         this.passwordSettings = other.passwordSettings;
+        this.master = other.master;
     }
 
     public String getId() {
@@ -285,6 +291,54 @@ public class Domain implements Resource {
         this.tags = tags;
     }
 
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
+    }
+
+    public PasswordSettings getPasswordSettings() {
+        return passwordSettings;
+    }
+
+    public void setPasswordSettings(PasswordSettings passwordSettings) {
+        this.passwordSettings = passwordSettings;
+    }
+
+    public Boolean isAlertEnabled() {
+        return alertEnabled;
+    }
+
+    public void setAlertEnabled(Boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
+    }
+
     public boolean isDynamicClientRegistrationEnabled() {
         return this.getOidc()!=null &&
                 this.getOidc().getClientRegistrationSettings()!=null &&
@@ -326,38 +380,6 @@ public class Domain implements Resource {
         return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
     }
 
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
-    }
-
-    public PasswordSettings getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(PasswordSettings passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -373,11 +395,4 @@ public class Domain implements Resource {
         return id.hashCode();
     }
 
-    public Boolean isAlertEnabled() {
-        return alertEnabled;
-    }
-
-    public void setAlertEnabled(Boolean alertEnabled) {
-        this.alertEnabled = alertEnabled;
-    }
 }

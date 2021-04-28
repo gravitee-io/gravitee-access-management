@@ -70,8 +70,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Set<Domain>> findAll() {
-        return Observable.fromPublisher(domainsCollection.find()).map(MongoDomainRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Domain> findAll() {
+        return Flowable.fromPublisher(domainsCollection.find()).map(MongoDomainRepository::convert);
     }
 
     @Override
@@ -179,6 +179,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
         domain.setIdentities(domainMongo.getIdentities());
+        domain.setMaster(domainMongo.isMaster());
         return domain;
     }
 
@@ -210,6 +211,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
         domainMongo.setIdentities(domain.getIdentities());
+        domainMongo.setMaster(domain.isMaster());
         return domainMongo;
     }
 

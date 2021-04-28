@@ -69,6 +69,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setReferenceType(domain.getReferenceType());
             filteredDomain.setReferenceId(domain.getReferenceId());
             filteredDomain.setPasswordSettings(domain.getPasswordSettings());
+            filteredDomain.setMaster(domain.isMaster());
         }
 
         if(hasAnyPermission(userPermissions, Permission.DOMAIN_ALERT, Acl.READ)) {

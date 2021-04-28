@@ -35,6 +35,8 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
 
     Single<Page<Application>> findAll(int page, int size);
 
+    Single<List<Application>> findByDomain(String domain);
+
     Single<Page<Application>> findByDomain(String domain, int page, int size);
 
     Single<Page<Application>> search(String domain, String query, int page, int size);

@@ -113,6 +113,16 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Single<List<Application>> findByDomain(String domain) {
+        LOGGER.debug("findByDomain({})",domain);
+        return applicationRepository.findByDomain(domain)
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {}", domain, error))
+                .toList();
+    }
+
+    @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         return fluxToFlowable(dbClient.select()

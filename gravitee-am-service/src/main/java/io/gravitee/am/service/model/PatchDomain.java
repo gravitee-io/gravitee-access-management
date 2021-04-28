@@ -58,6 +58,7 @@ public class PatchDomain {
     private Optional<AccountSettings> accountSettings;
     private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<Set<String>> tags;
+    private Optional<Boolean> master;
 
     public Optional<String> getName() {
         return name;
@@ -155,6 +156,14 @@ public class PatchDomain {
         this.passwordSettings = passwordSettings;
     }
 
+    public Optional<Boolean> getMaster() {
+        return master;
+    }
+
+    public void setMaster(Optional<Boolean> master) {
+        this.master = master;
+    }
+
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
         Domain toPatch = new Domain(_toPatch);
@@ -172,6 +181,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setWebAuthnSettings, this.getWebAuthnSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
+        SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {
@@ -210,7 +220,8 @@ public class PatchDomain {
                 || webAuthnSettings != null && webAuthnSettings.isPresent()
                 || accountSettings != null && accountSettings.isPresent()
                 || passwordSettings != null && passwordSettings.isPresent()
-                || tags != null && tags.isPresent()) {
+                || tags != null && tags.isPresent()
+                || master != null && master.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }

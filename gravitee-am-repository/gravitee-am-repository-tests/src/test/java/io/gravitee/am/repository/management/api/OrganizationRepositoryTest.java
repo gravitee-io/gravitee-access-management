@@ -22,7 +22,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -31,7 +33,7 @@ import static org.junit.Assert.assertNull;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class OrganisationRepositoryTest extends AbstractManagementTest {
+public class OrganizationRepositoryTest extends AbstractManagementTest {
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -136,5 +138,37 @@ public class OrganisationRepositoryTest extends AbstractManagementTest {
         obs.assertNoValues();
 
         assertNull(organizationRepository.findById(organizationCreated.getId()).blockingGet());
+    }
+
+    @Test
+    public void testFindByHrids() {
+        Organization organization = new Organization();
+        organization.setName("testName");
+        organization.setDescription("testDescription");
+        organization.setCreatedAt(new Date());
+        organization.setUpdatedAt(organization.getUpdatedAt());
+        organization.setIdentities(Arrays.asList("ValueIdp1", "ValueIdp2"));
+        organization.setDomainRestrictions(Arrays.asList("ValueDom1", "ValueDom2"));
+        organization.setHrids(Arrays.asList("Hrid1", "Hrid2"));
+
+        Organization organization2 = new Organization();
+        organization2.setName("testName2");
+        organization2.setDescription("testDescription2");
+        organization2.setCreatedAt(new Date());
+        organization2.setUpdatedAt(organization.getUpdatedAt());
+        organization2.setIdentities(Arrays.asList("ValueIdp3", "ValueIdp4"));
+        organization2.setDomainRestrictions(Arrays.asList("ValueDom3", "ValueDom4"));
+        organization2.setHrids(Arrays.asList("Hrid3", "Hrid4"));
+
+        Organization organizationCreated = organizationRepository.create(organization).blockingGet();
+        Organization organizationCreated2 = organizationRepository.create(organization2).blockingGet();
+
+        TestObserver<List<Organization>> obs = organizationRepository.findByHrids(Collections.singletonList("Hrid1")).toList().test();
+        obs.awaitTerminalEvent();
+
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(o -> o.size() == 1);
+        obs.assertValue(o -> o.get(0).getName().equals(organizationCreated.getName()));
     }
 }

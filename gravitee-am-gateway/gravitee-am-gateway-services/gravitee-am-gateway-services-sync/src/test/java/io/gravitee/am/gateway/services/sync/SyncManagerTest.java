@@ -17,21 +17,18 @@ package io.gravitee.am.gateway.services.sync;
 
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
-import io.gravitee.am.gateway.reactor.impl.DefaultClientManager;
-import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.management.api.DomainRepository;
+import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
+import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Before;
@@ -58,6 +55,8 @@ import static org.mockito.Mockito.*;
 public class SyncManagerTest {
 
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
+    private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
+    private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
 
     @InjectMocks
     private SyncManager syncManager = new SyncManager();
@@ -78,16 +77,10 @@ public class SyncManagerTest {
     private EventRepository eventRepository;
 
     @Mock
-    private ApplicationRepository applicationRepository;
+    private EnvironmentRepository environmentRepository;
 
     @Mock
-    private CertificateRepository certificateRepository;
-
-    @Mock
-    private DefaultClientManager clientManager;
-
-    @Mock
-    private DefaultCertificateManager certificateManager;
+    private OrganizationRepository organizationRepository;
 
     @Before
     public void before() throws Exception {
@@ -96,9 +89,7 @@ public class SyncManagerTest {
 
     @Test
     public void init_test_empty_domains() {
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
 
         syncManager.refresh();
 
@@ -111,10 +102,9 @@ public class SyncManagerTest {
     public void init_test_one_domain() {
         final Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
 
@@ -127,13 +117,13 @@ public class SyncManagerTest {
     public void init_test_two_domains() {
         final Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain, domain2))));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.refresh();
 
@@ -146,16 +136,17 @@ public class SyncManagerTest {
     public void init_test_multiple_domains_oneDisabled() {
         final Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
+        domain3.setReferenceId("env-3");
         domain3.setEnabled(false);
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain, domain2, domain3))));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3));
 
         syncManager.refresh();
 
@@ -168,11 +159,9 @@ public class SyncManagerTest {
     public void test_twiceWithTwoDomains_domainToRemove() throws Exception {
         final Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
-        when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        doNothing().when(clientManager).init(anyCollection());
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
 
@@ -193,12 +182,10 @@ public class SyncManagerTest {
     public void test_twiceWithTwoDomains_domainToUpdate() throws Exception {
         final Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
         domain.setUpdatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
-        when(domainRepository.findAll()).thenReturn(Single.just(new HashSet<>(Arrays.asList(domain))));
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        doNothing().when(clientManager).init(anyCollection());
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
 
@@ -208,6 +195,7 @@ public class SyncManagerTest {
 
         final Domain domainToUpdate = new Domain();
         domainToUpdate.setId("domain-1");
+        domainToUpdate.setReferenceId("env-1");
         domainToUpdate.setEnabled(true);
         domainToUpdate.setUpdatedAt(new Date());
 
@@ -224,10 +212,7 @@ public class SyncManagerTest {
 
     @Test
     public void shouldPropagateEvents() {
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        doNothing().when(clientManager).init(anyCollection());
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
         syncManager.refresh();
 
         Event event = new Event();
@@ -242,50 +227,6 @@ public class SyncManagerTest {
         verify(securityDomainManager, never()).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));
-    }
-
-    @Test
-    public void shouldDeployApplication() {
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationRepository.findById("client-1")).thenReturn(Maybe.just(new Application()));
-        doNothing().when(clientManager).init(anyCollection());
-        syncManager.refresh();
-
-        Event event = new Event();
-        event.setType(Type.APPLICATION);
-        event.setPayload(new Payload("client-1", ReferenceType.DOMAIN, "domain-1", Action.CREATE));
-
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
-
-        syncManager.refresh();
-
-        verify(clientManager, times(1)).deploy(any(Client.class));
-        verify(clientManager, never()).update(any(Client.class));
-        verify(clientManager, never()).undeploy(any(String.class));
-    }
-
-    @Test
-    public void shouldDeployCertificate() {
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(certificateRepository.findById("certificate-1")).thenReturn(Maybe.just(new Certificate()));
-        doNothing().when(certificateManager).init(anyCollection());
-        syncManager.refresh();
-
-        Event event = new Event();
-        event.setType(Type.CERTIFICATE);
-        event.setPayload(new Payload("certificate-1", ReferenceType.DOMAIN, "domain-1", Action.CREATE));
-
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
-
-        syncManager.refresh();
-
-        verify(certificateManager, times(1)).deploy(any(Certificate.class));
-        verify(certificateManager, never()).update(any(Certificate.class));
-        verify(certificateManager, never()).undeploy(any(String.class));
     }
 
     @Test
@@ -328,18 +269,348 @@ public class SyncManagerTest {
         shouldDeployDomainWithTags(" test,!toto", new String[]{"test"});
     }
 
-    public void shouldDeployDomainWithTags(final String tags, final String[] domainTags) throws Exception {
+    @Test
+    public void init_test_one_env_one_domain() throws Exception {
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+
+        Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
+        when(environmentRepository.findAll()).thenReturn(Flowable.just(env));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(organizationRepository, never()).findByHrids(any());
+    }
+
+    @Test
+    public void init_test_one_env_two_domains() throws Exception {
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+
+        Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+
+        Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
+        when(environmentRepository.findAll()).thenReturn(Flowable.just(env));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(organizationRepository, never()).findByHrids(any());
+    }
+
+    @Test
+    public void init_test_two_env() throws Exception {
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setHrids(Arrays.asList("prod"));
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
+        when(environmentRepository.findAll()).thenReturn(Flowable.just(env, env2));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(organizationRepository, never()).findByHrids(any());
+    }
+
+    @Test
+    public void init_test_two_env_only_one_deployed() throws Exception {
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setHrids(Arrays.asList("prod"));
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
+        when(environmentRepository.findAll()).thenReturn(Flowable.just(env, env2));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+        verify(organizationRepository, never()).findByHrids(any());
+    }
+
+    @Test
+    public void init_test_one_org() throws Exception {
+        Organization organization = new Organization();
+        organization.setId("org-1");
+        organization.setHrids(Arrays.asList("gravitee"));
+
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setOrganizationId("org-1");
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setOrganizationId("org-1");
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee");
+        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization));
+        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+
+    @Test
+    public void init_test_two_org() throws Exception {
+        Organization organization = new Organization();
+        organization.setId("org-1");
+        organization.setHrids(Arrays.asList("gravitee"));
+
+        Organization organization2 = new Organization();
+        organization2.setId("org-2");
+        organization2.setHrids(Arrays.asList("gravitee2"));
+
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setOrganizationId("org-1");
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setOrganizationId("org-1");
+
+        io.gravitee.am.model.Environment env3 = new io.gravitee.am.model.Environment();
+        env3.setId("env-3");
+        env3.setOrganizationId("org-2");
+        io.gravitee.am.model.Environment env4 = new io.gravitee.am.model.Environment();
+        env4.setId("env-4");
+        env4.setOrganizationId("org-2");
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        final Domain domain3 = new Domain();
+        domain3.setId("domain-3");
+        domain3.setReferenceId("env-3");
+        domain3.setEnabled(true);
+        final Domain domain4 = new Domain();
+        domain4.setId("domain-4");
+        domain4.setReferenceId("env-4");
+        domain4.setEnabled(true);
+
+        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
+        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
+        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
+        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(4)).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void init_test_two_org_and_env() throws Exception {
+        Organization organization = new Organization();
+        organization.setId("org-1");
+        organization.setHrids(Arrays.asList("gravitee"));
+
+        Organization organization2 = new Organization();
+        organization2.setId("org-2");
+        organization2.setHrids(Arrays.asList("gravitee2"));
+
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+        env.setOrganizationId("org-1");
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setHrids(Arrays.asList("prod"));
+        env2.setOrganizationId("org-1");
+
+        io.gravitee.am.model.Environment env3 = new io.gravitee.am.model.Environment();
+        env3.setId("env-3");
+        env3.setHrids(Arrays.asList("prod"));
+        env3.setOrganizationId("org-2");
+        io.gravitee.am.model.Environment env4 = new io.gravitee.am.model.Environment();
+        env4.setId("env-4");
+        env4.setHrids(Arrays.asList("dev"));
+        env4.setOrganizationId("org-2");
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        final Domain domain3 = new Domain();
+        domain3.setId("domain-3");
+        domain3.setReferenceId("env-3");
+        domain3.setEnabled(true);
+        final Domain domain4 = new Domain();
+        domain4.setId("domain-4");
+        domain4.setReferenceId("env-4");
+        domain4.setEnabled(true);
+
+        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
+        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
+        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
+        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(2)).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void init_test_two_org_and_env_and_sharding_tags() throws Exception {
+        Organization organization = new Organization();
+        organization.setId("org-1");
+        organization.setHrids(Arrays.asList("gravitee"));
+
+        Organization organization2 = new Organization();
+        organization2.setId("org-2");
+        organization2.setHrids(Arrays.asList("gravitee2"));
+
+        io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
+        env.setId("env-1");
+        env.setHrids(Arrays.asList("dev"));
+        env.setOrganizationId("org-1");
+        io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
+        env2.setId("env-2");
+        env2.setHrids(Arrays.asList("prod"));
+        env2.setOrganizationId("org-1");
+
+        io.gravitee.am.model.Environment env3 = new io.gravitee.am.model.Environment();
+        env3.setId("env-3");
+        env3.setHrids(Arrays.asList("prod"));
+        env3.setOrganizationId("org-2");
+        io.gravitee.am.model.Environment env4 = new io.gravitee.am.model.Environment();
+        env4.setId("env-4");
+        env4.setHrids(Arrays.asList("dev"));
+        env4.setOrganizationId("org-2");
+
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+
+        final Domain domain3 = new Domain();
+        domain3.setId("domain-3");
+        domain3.setReferenceId("env-3");
+        domain3.setEnabled(true);
+        final Domain domain4 = new Domain();
+        domain4.setId("domain-4");
+        domain4.setTags(Collections.singleton("private"));
+        domain4.setReferenceId("env-4");
+        domain4.setEnabled(true);
+
+        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
+        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
+        when(environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY)).thenReturn("private");
+        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
+        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
+        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
+
+        syncManager.afterPropertiesSet();
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(1)).deploy(any());
+        verify(securityDomainManager, never()).update(any());
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    private void shouldDeployDomainWithTags(final String tags, final String[] domainTags) throws Exception {
         when(environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY)).thenReturn(tags);
         syncManager.afterPropertiesSet();
 
         Domain domain = new Domain();
         domain.setId("domain-1");
+        domain.setReferenceId("env-1");
         domain.setEnabled(true);
         domain.setTags(new HashSet<>(Arrays.asList(domainTags)));
 
-        when(applicationRepository.findAll()).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateRepository.findAll()).thenReturn(Single.just(Collections.emptySet()));
-        when(domainRepository.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
 

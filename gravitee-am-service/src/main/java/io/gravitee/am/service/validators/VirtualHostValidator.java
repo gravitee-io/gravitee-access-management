@@ -71,7 +71,7 @@ public class VirtualHostValidator {
         return PathValidator.validate(vhost.getPath());
     }
 
-    public static Completable validateDomainVhosts(Domain domain, Set<Domain> domains) {
+    public static Completable validateDomainVhosts(Domain domain, List<Domain> domains) {
 
         List<VirtualHost> otherVhosts = domains.stream()
                 .filter(d -> !d.getId().equals(domain.getId()))

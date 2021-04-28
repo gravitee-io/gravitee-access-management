@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * Override default event manager to enable concurrent access
@@ -45,10 +46,12 @@ public class EventManagerImpl implements EventManager {
 
     private ConcurrentMap<ComparableEventType, List<EventListenerWrapper>> listenersMap = new ConcurrentHashMap<>();
 
+    @Override
     public void publishEvent(Enum type, Object content) {
         this.publishEvent(new SimpleEvent(type, content));
     }
 
+    @Override
     public void publishEvent(Event event) {
         LOGGER.debug("Publish event {} - {}", event.type(), event.content());
 
@@ -71,14 +74,38 @@ public class EventManagerImpl implements EventManager {
         }
     }
 
+    @Override
     public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, T... events) {
         for( T event : events) {
             addEventListener(eventListener, (Class<T>) event.getClass(), Arrays.asList(events), null);
         }
     }
 
+    @Override
     public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events) {
         addEventListener(eventListener, events, EnumSet.allOf(events), null);
+    }
+
+    @Override
+    public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
+        addEventListener(eventListener, events, EnumSet.allOf(events), domain);
+    }
+
+    @Override
+    public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
+        this.listenersMap.remove(new ComparableEventType(events, domain));
+    }
+
+    @Override
+    public <T extends Enum> void unsubscribeForCrossEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
+        List<EventListenerWrapper> listeners = this.listenersMap.get(new ComparableEventType(events, domain));
+        if (listeners != null) {
+            List<EventListenerWrapper> filteredList = listeners
+                    .stream()
+                    .filter(listenerWrapper -> !eventListener.equals(listenerWrapper.eventListener()))
+                    .collect(Collectors.toList());
+            this.listenersMap.put(new ComparableEventType(events, domain), filteredList);
+        }
     }
 
     private <T extends Enum> void addEventListener(EventListener<T, ?> eventListener, Class<T> enumClass, Collection<T> events, String domain) {
@@ -103,16 +130,6 @@ public class EventManagerImpl implements EventManager {
         }
 
         return listeners;
-    }
-
-    @Override
-    public <T extends Enum> void subscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
-        addEventListener(eventListener, events, EnumSet.allOf(events), domain);
-    }
-
-    @Override
-    public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
-        this.listenersMap.remove(new ComparableEventType(events, domain));
     }
 
     private class EventListenerWrapper<T extends Enum> {

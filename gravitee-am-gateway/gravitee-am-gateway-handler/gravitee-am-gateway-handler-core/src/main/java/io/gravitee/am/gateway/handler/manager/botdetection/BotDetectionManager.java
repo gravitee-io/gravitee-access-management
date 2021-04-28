@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.gateway.handler.manager.botdetection;
 
-import io.gravitee.am.model.Environment;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.gravitee.am.botdetection.api.BotDetectionContext;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.service.Service;
 import io.reactivex.Single;
 
+import java.util.Map;
+
 /**
- * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EnvironmentRepository extends CrudRepository<Environment, String> {
+public interface BotDetectionManager extends Service {
 
-    Flowable<Environment> findAll();
+    Map<String, Object> getTemplateVariables(Domain domain, Client client);
 
-    Flowable<Environment> findAll(String organizationId);
-
-    Maybe<Environment> findById(String id, String organizationId);
-
-    Single<Long> count();
+    Single<Boolean> validate(BotDetectionContext context);
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.resource;
+package io.gravitee.am.gateway.handler.manager.resource;
 
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.common.service.Service;

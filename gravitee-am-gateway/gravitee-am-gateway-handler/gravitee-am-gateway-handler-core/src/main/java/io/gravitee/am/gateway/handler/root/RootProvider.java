@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -30,7 +30,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlo
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
-import io.gravitee.am.gateway.handler.factor.FactorManager;
+import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;

@@ -16,9 +16,7 @@
 package io.gravitee.am.gateway.certificate.spring;
 
 import io.gravitee.am.gateway.certificate.CertificateProviderManager;
-import io.gravitee.am.gateway.certificate.DefaultCertificateManager;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
-import io.gravitee.am.gateway.core.manager.EntityManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -32,10 +30,5 @@ public class CertificateConfiguration {
     @Bean
     public CertificateProviderManager certificateProviderManager() {
         return new CertificateProviderManagerImpl();
-    }
-
-    @Bean
-    public EntityManager certificateManager() {
-        return new DefaultCertificateManager();
     }
 }

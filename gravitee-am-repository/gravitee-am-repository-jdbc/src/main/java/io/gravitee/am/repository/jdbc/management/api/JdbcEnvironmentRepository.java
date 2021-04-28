@@ -17,14 +17,11 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEnvironment;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentDomainRestrictionRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentHridsRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentRepository;
-import io.gravitee.am.repository.jdbc.management.api.spring.organization.SpringOrganizationHridsRepository;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -66,13 +63,15 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Maybe<Environment> findById(String id, String organizationId) {
-        LOGGER.debug("findById({},{})", id, organizationId);
+    public Flowable<Environment> findAll() {
+        LOGGER.debug("findAll()");
 
-        return environmentRepository.findByIdAndOrganization(id, organizationId)
+        final Flowable<Environment> result = environmentRepository.findAll()
                 .map(this::toEnvironment)
-                .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
-                .flatMap(environment -> retrieveHrids(environment).toMaybe());
+                .flatMapSingle(this::retrieveDomainRestrictions)
+                .flatMapSingle(this::retrieveHrids);
+
+        return result.doOnError((error) -> LOGGER.error("unable to retrieve all environments", error));
     }
 
     @Override
@@ -86,6 +85,17 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
 
         return result.doOnError((error) -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
     }
+
+    @Override
+    public Maybe<Environment> findById(String id, String organizationId) {
+        LOGGER.debug("findById({},{})", id, organizationId);
+
+        return environmentRepository.findByIdAndOrganization(id, organizationId)
+                .map(this::toEnvironment)
+                .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
+                .flatMap(environment -> retrieveHrids(environment).toMaybe());
+    }
+
 
     @Override
     public Single<Long> count() {

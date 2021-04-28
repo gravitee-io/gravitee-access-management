@@ -27,7 +27,9 @@ import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationMa
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.certificate.impl.CertificateManagerImpl;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.client.impl.ClientManagerImpl;
 import io.gravitee.am.gateway.handler.common.client.impl.ClientSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
@@ -113,6 +115,11 @@ public class CommonConfiguration {
     @Bean
     public JWTService jwtService() {
         return new JWTServiceImpl();
+    }
+
+    @Bean
+    public ClientManager clientManager() {
+        return new ClientManagerImpl();
     }
 
     @Bean

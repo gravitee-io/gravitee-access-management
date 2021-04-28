@@ -94,6 +94,11 @@ export class DomainSettingsGeneralComponent implements OnInit {
     this.formChanged = true;
   }
 
+  setMaster(event) {
+    this.domain.master = event.checked;
+    this.formChanged = true;
+  }
+
   addLogoutRedirectUris(event) {
     event.preventDefault();
     if (this.logoutRedirectUri) {

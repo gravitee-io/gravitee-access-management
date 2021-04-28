@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.resource.impl;
+package io.gravitee.am.gateway.handler.manager.resource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ResourceEvent;
-import io.gravitee.am.gateway.handler.factor.FactorManager;
-import io.gravitee.am.gateway.handler.factor.impl.FactorManagerImpl;
-import io.gravitee.am.gateway.handler.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.manager.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -31,14 +31,12 @@ import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
