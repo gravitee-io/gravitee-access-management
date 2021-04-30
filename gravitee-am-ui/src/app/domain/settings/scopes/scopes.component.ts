@@ -27,6 +27,8 @@ import {AuthService} from "../../../services/auth.service";
   styleUrls: ['./scopes.component.scss']
 })
 export class DomainSettingsScopesComponent implements OnInit {
+  private searchValue: string;
+  page: any = {};
   private scopes: any[];
   domainId: string;
   canDelete: boolean;
@@ -37,21 +39,39 @@ export class DomainSettingsScopesComponent implements OnInit {
               private snackbarService: SnackbarService,
               private authService: AuthService,
               private route: ActivatedRoute) {
+    this.page.pageNumber = 0;
+    this.page.size = 10;
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.scopes = this.route.snapshot.data['scopes'];
+    const pagedScopes = this.route.snapshot.data['scopes'];
+    this.scopes = pagedScopes.data;
+    this.page.totalElements = pagedScopes.totalCount
     this.canDelete = this.authService.hasPermissions(['domain_scope_delete']);
     this.canEdit = this.authService.hasPermissions(['domain_scope_update']);
   }
 
+  onSearch(event) {
+    this.page.pageNumber = 0;
+    this.searchValue = event.target.value;
+    this.loadScopes();
+  }
+
   loadScopes() {
-    this.scopeService.findByDomain(this.domainId).subscribe(response => this.scopes = response);
+    const findScopes = (this.searchValue) ?
+      this.scopeService.search('*' + this.searchValue + '*',this.domainId, this.page.pageNumber, this.page.size) :
+      this.scopeService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+
+
+    findScopes.subscribe(pagedScopes => {
+      this.page.totalElements = pagedScopes.totalCount;
+      this.scopes = pagedScopes.data;
+    });
   }
 
   get isEmpty() {
-    return !this.scopes || this.scopes.length === 0;
+    return !this.scopes || this.scopes.length === 0 && !this.searchValue;
   }
 
   delete(id, event) {
@@ -66,6 +86,11 @@ export class DomainSettingsScopesComponent implements OnInit {
           });
         }
       });
+  }
+
+  setPage(pageInfo) {
+    this.page.pageNumber = pageInfo.offset;
+    this.loadScopes();
   }
 
   getScopeExpiry(expiresIn) {

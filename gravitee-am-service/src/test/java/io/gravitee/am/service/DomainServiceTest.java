@@ -21,6 +21,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.oauth2.Scope;
@@ -577,7 +578,7 @@ public class DomainServiceTest {
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(user)));
         when(userService.delete(anyString())).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
-        when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(scope)));
+        when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope),0,1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
         when(group.getId()).thenReturn(GROUP_ID);
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(group)));
@@ -641,7 +642,7 @@ public class DomainServiceTest {
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(scopeService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0,1)));
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
         when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));

@@ -18,7 +18,6 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
@@ -399,9 +398,9 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             // delete scopes
-                            .andThen(scopeService.findByDomain(domainId)
+                            .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
                                     .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
+                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
                                         return Completable.concat(deleteScopesCompletable);
                                     })
                             )

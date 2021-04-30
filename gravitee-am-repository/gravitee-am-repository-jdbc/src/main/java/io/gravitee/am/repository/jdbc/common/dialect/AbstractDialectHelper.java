@@ -277,6 +277,27 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .toString();
     }
 
+    @Override
+    public String buildCountScopeQuery(boolean wildcardSearch){
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT s."+toSql(SqlIdentifier.quoted("key"))+") FROM scopes s WHERE ");
+        return buildSearchScope(wildcardSearch, builder)
+                .toString();
+    }
+
+    @Override
+    public String buildSearchScopeQuery(boolean wildcardSearch, int page, int size){
+        StringBuilder builder = new StringBuilder("SELECT * FROM scopes s WHERE ");
+        return buildSearchScope(wildcardSearch, builder)
+                .append(buildPagingClause("s."+toSql(SqlIdentifier.quoted("key")), page, size))
+                .toString();
+    }
+
+    private StringBuilder buildSearchScope(boolean wildcardSearch, StringBuilder builder) {
+        return builder.append("domain = :domain ")
+                .append(" AND upper(s."+toSql(SqlIdentifier.quoted("key"))+") " + (wildcardSearch ? "LIKE" : "="))
+                .append(" :value");
+    }
+
     protected StringBuilder buildSearchUser(boolean wildcard, StringBuilder builder) {
         return builder.append("u.reference_id = :refId")
                 .append(" AND u.reference_type = :refType")
@@ -327,9 +348,9 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
         return builder.append("a.domain = :domain")
                 .append(" AND (")
-                .append(" a.name ").append(wildcard ? "LIKE " : "= ")
+                .append(" upper(a.name) ").append(wildcard ? "LIKE " : "= ")
                 .append(":value")
-                .append(" OR a.settings_client_id ").append(wildcard ? "LIKE " : "= ")
+                .append(" OR upper(a.settings_client_id) ").append(wildcard ? "LIKE " : "= ")
                 .append(":value")
                 .append(" ) ");
     }

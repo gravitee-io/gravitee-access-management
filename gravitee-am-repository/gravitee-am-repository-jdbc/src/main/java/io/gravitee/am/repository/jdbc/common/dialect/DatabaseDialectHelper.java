@@ -50,4 +50,8 @@ public interface DatabaseDialectHelper {
     String buildCountApplicationsQuery(boolean wildcard);
 
     String buildFindApplicationByDomainAndClient();
+
+    String buildSearchScopeQuery(boolean wildcardSearch, int page, int size);
+
+    String buildCountScopeQuery(boolean wildcardSearch);
 }

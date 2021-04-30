@@ -17,13 +17,10 @@ package io.gravitee.am.repository.jdbc.management.api.spring.scope;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcScope;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,9 +32,4 @@ public interface SpringScopeRepository extends RxJava2CrudRepository<JdbcScope, 
     @Query("select * from scopes s where s.domain = :domain")
     Flowable<JdbcScope> findByDomain(@Param("domain")String domain);
 
-    @Query("select * from scopes s where s.domain = :domain and s.key = :key")
-    Maybe<JdbcScope> findByDomainAndKey(@Param("domain")String domain, @Param("key")String key);
-
-    @Query("select * from scopes s where s.domain = :domain and s.key in (:keys)")
-    Flowable<JdbcScope> findByDomainAndKeyIn(@Param("domain")String domain, @Param("keys") List<String> keys);
 }

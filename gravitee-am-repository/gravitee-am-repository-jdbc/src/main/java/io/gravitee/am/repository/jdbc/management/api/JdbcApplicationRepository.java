@@ -140,7 +140,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
         return fluxToFlowable(dbClient.execute(search)
                 .bind("domain", domain)
-                .bind("value", wildcardMatch ? wildcardQuery : query)
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .as(JdbcApplication.class)
                 .fetch()
                 .all())
@@ -149,7 +149,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .toList()
                 .flatMap(data -> monoToSingle(dbClient.execute(count)
                         .bind("domain", domain)
-                        .bind("value", wildcardMatch ? wildcardQuery : query)
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .as(Long.class)
                         .fetch()
                         .first())

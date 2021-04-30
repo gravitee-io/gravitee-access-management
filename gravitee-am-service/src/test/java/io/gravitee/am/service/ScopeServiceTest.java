@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -106,21 +107,21 @@ public class ScopeServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope())));
-        TestObserver<Set<Scope>> testObserver = scopeService.findByDomain(DOMAIN).test();
+        when(scopeRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Scope()),0,1)));
+        TestObserver<Page<Scope>> testObserver = scopeService.findByDomain(DOMAIN, 0, Integer.MAX_VALUE).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(scopes -> scopes.size() == 1);
+        testObserver.assertValue(scopes -> scopes.getData().size() == 1);
     }
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(scopeRepository.findByDomain(DOMAIN, 0, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.findByDomain(DOMAIN).subscribe(testObserver);
+        scopeService.findByDomain(DOMAIN, 0, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -688,15 +689,15 @@ public class ScopeServiceTest {
 
     @Test
     public void validateScope_unknownScope() {
-        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope("valid"))));
+        when(scopeRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Scope("valid")),0,1)));
         TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN,Arrays.asList("unknown")).test();
         testObserver.assertError(InvalidClientMetadataException.class);
     }
 
     @Test
     public void validateScope_validScope() {
-        when(scopeRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Scope("valid"))));
-        TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN,Arrays.asList("valid")).test();
+        when(scopeRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Scope("valid")),0,1)));
+        TestObserver<Boolean> testObserver = scopeService.validateScope(DOMAIN, Arrays.asList("valid")).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(isValid -> isValid);
