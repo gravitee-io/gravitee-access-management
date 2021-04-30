@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.*;
 import io.reactivex.Completable;
@@ -23,7 +24,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -39,7 +39,7 @@ public interface ScopeService {
 
     Single<Scope> create(String domain, NewSystemScope scope);
 
-    Single<Set<Scope>> findByDomain(String domain);
+    Single<Page<Scope>> findByDomain(String domain, int page, int size);
 
     Maybe<Scope> findByDomainAndKey(String domain, String scopeKey);
 
@@ -52,6 +52,8 @@ public interface ScopeService {
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
 
     Completable delete(String scopeId, boolean force, User principal);
+
+    Single<Page<Scope>> search(String domain, String query, int page, int size);
 
     /**
      * Throw InvalidClientMetadataException if null or empty, or contains unknown scope.
@@ -74,5 +76,4 @@ public interface ScopeService {
     default Completable delete(String scopeId, boolean force) {
         return delete(scopeId, force, null);
     }
-
 }

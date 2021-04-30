@@ -17,19 +17,21 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewScope;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -61,19 +63,19 @@ public class ScopesResourceTest extends JerseySpringTest {
 
         final Set<Scope> scopes = new HashSet<>(Arrays.asList(mockScope, mockScope2));
 
-        doReturn(Single.just(scopes)).when(scopeService).findByDomain(domainId);
+        doReturn(Single.just(new Page<>(scopes,0, 2))).when(scopeService).findByDomain(domainId, 0, 50);
 
         final Response response = target("domains").path(domainId).path("scopes").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-
-        final List<Scope> responseEntity = readEntity(response, List.class);
-        assertTrue(responseEntity.size() == 2);
+        String body = response.readEntity(String.class);
+        JsonArray data = new JsonObject(body).getJsonArray("data");
+        assertTrue(data.size() == 2);
     }
 
     @Test
     public void shouldGetScopes_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(scopeService).findByDomain(domainId);
+        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(scopeService).findByDomain(domainId, 0, 50);
 
         final Response response = target("domains").path(domainId).path("scopes").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

@@ -24,8 +24,12 @@ export class ScopeService {
 
   constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.scopes + domainId + "/scopes");
+  findByDomain(domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.scopes + domainId + "/scopes" + '?page=' + page + '&size=' + size);
+  }
+
+  search(searchTerm, domainId,page, size): Observable<any> {
+    return this.http.get<any>(this.scopes + domainId + "/scopes" + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
   get(domainId, id): Observable<any> {

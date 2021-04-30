@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -39,15 +40,17 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         Scope scope = new Scope();
         scope.setName("testName");
         scope.setDomain("testDomain");
+        scope.setClaims(Arrays.asList("claim1", "claim2"));
         scopeRepository.create(scope).blockingGet();
 
         // fetch scopes
-        TestObserver<Set<Scope>> testObserver = scopeRepository.findByDomain("testDomain").test();
+        TestObserver<Page<Scope>> testObserver = scopeRepository.findByDomain("testDomain", 0, Integer.MAX_VALUE).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(scopes -> scopes.size() == 1);
+        testObserver.assertValue(scopes -> scopes.getData().size() == 1);
+        testObserver.assertValue(scopes -> scopes.getData().iterator().next().getClaims().size() == 2);
     }
 
     @Test
@@ -211,4 +214,22 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         scopeRepository.findById(scopeCreated.getId()).test().assertEmpty();
     }
 
+    @Test
+    public void testSearch_wildcard() {
+        String scopeName = "testName";
+        Scope scope = new Scope();
+        scope.setDomain("mydomain");
+        scope.setName("testName");
+        scope.setKey("testName");
+        scope.setClaims(Arrays.asList("claim1", "claim2"));
+        Scope scopeCreated = scopeRepository.create(scope).blockingGet();
+
+        TestObserver<Page<Scope>> testObserver = scopeRepository.search(scopeCreated.getDomain(), "*" + scopeName + "*", 0, Integer.MAX_VALUE).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(s -> s.getData().size() == 1);
+        testObserver.assertValue(scopes -> scopes.getData().iterator().next().getClaims().size() == 2);
+
+    }
 }

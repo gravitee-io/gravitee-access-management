@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.Scope;
@@ -89,6 +90,17 @@ public class ScopeServiceImpl implements ScopeService {
                     LOGGER.error("An error occurs while trying to find a scope using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a scope using its ID: %s", id), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Scope>> search(String domain, String query, int page, int size) {
+        LOGGER.debug("Search scopes by domain and query: {} {}", domain, query);
+        return scopeRepository.search(domain, query, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find scopes by domain and query : {} {}", domain, query, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find scopes by domain and query: %s %s", domain, query), ex));
                 });
     }
 
@@ -334,9 +346,9 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Set<Scope>> findByDomain(String domain) {
+    public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("Find scopes by domain: {}", domain);
-        return scopeRepository.findByDomain(domain)
+        return scopeRepository.findByDomain(domain, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find scopes by domain: {}", domain, ex);
                     return Single.error(new TechnicalManagementException(
@@ -380,8 +392,8 @@ public class ScopeServiceImpl implements ScopeService {
             return Single.just(true);//nothing to do...
         }
 
-        return findByDomain(domain)
-                .map(domainSet -> domainSet.stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
+        return findByDomain(domain, 0, Integer.MAX_VALUE)
+                .map(domainSet -> domainSet.getData().stream().map(scope -> scope.getKey()).collect(Collectors.toSet()))
                 .flatMap(domainScopes -> this.validateScope(domainScopes, scopes));
     }
 

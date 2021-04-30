@@ -25,6 +25,6 @@ export class ScopesResolver implements Resolve<any> {
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
     const domainId = route.parent.data['domain'].id;
-    return this.scopeService.findByDomain(domainId);
+    return this.scopeService.findByDomain(domainId, 0, 10);
   }
 }

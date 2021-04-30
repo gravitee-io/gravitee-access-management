@@ -21,6 +21,7 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -65,6 +66,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     private Domain initDomain(String name) {
         Domain domain = new Domain();
         domain.setName(name);
+        domain.setHrid(name);
         domain.setCreatedAt(new Date());
         domain.setUpdatedAt(domain.getCreatedAt());
         domain.setDescription(name + " description");
@@ -284,6 +286,24 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
         testObserver1.assertValue(domain -> domain.getId().equals(domainUpdated.getId()));
+
+    }
+
+    @Test
+    public void testSearch_wildcard() {
+        // create domain
+        Domain domain = initDomain();
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId("environment#1");
+        domainRepository.create(domain).blockingGet();
+
+        // fetch domains
+        TestSubscriber<Domain> testObserver1 = domainRepository.search("environment#1", "testName").test();
+        testObserver1.awaitTerminalEvent();
+
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertValueCount(1);
 
     }
 }

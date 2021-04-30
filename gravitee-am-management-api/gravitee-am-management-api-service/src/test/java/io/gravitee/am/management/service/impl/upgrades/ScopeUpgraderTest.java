@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.impl.upgrades.ScopeUpgrader;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ClientService;
@@ -88,8 +88,8 @@ public class ScopeUpgraderTest {
         role.setOauthScopes(Collections.singletonList(roleScope.getKey()));
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
-        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()))
-                .thenReturn(Single.just(Collections.singleton(domainScope)));
+        when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0 ,0)))
+                .thenReturn(Single.just(new Page<>(Collections.singleton(domainScope),0, 1)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));
         when(scopeService.create(any(String.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));
@@ -97,7 +97,7 @@ public class ScopeUpgraderTest {
         scopeUpgrader.upgrade();
 
         verify(domainService, times(1)).findAll();
-        verify(scopeService, times(3)).findByDomain(domain.getId());
+        verify(scopeService, times(3)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(clientService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
         verify(scopeService, times(2)).create(any(String.class), any(NewScope.class));
@@ -116,12 +116,12 @@ public class ScopeUpgraderTest {
         domain.setName(domainName);
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
-        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(domainScope)));
+        when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, 1)));
 
         scopeUpgrader.upgrade();
 
         verify(domainService, times(1)).findAll();
-        verify(scopeService, times(1)).findByDomain(domain.getId());
+        verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(clientService, never()).findByDomain(domain.getId());
         verify(roleService, never()).findByDomain(domain.getId());
         verify(scopeService, never()).create(any(String.class), any(NewScope.class));
@@ -142,14 +142,15 @@ public class ScopeUpgraderTest {
         domain.setName(domainName);
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
-        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));
+        when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 0)))
+                .thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, 0)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet()));
 
         scopeUpgrader.upgrade();
 
         verify(domainService, times(1)).findAll();
-        verify(scopeService, times(1)).findByDomain(domain.getId());
+        verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(clientService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
         verify(scopeService, never()).create(any(String.class), any(NewScope.class));
@@ -177,14 +178,14 @@ public class ScopeUpgraderTest {
         role.setPermissionAcls(null);
 
         when(domainService.findAll()).thenReturn(Single.just(Collections.singleton(domain)));
-        when(scopeService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.emptySet())).thenReturn(Single.just(Collections.singleton(domainScope)));
+        when(scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0, Integer.MAX_VALUE))).thenReturn(Single.just(new Page<>(Collections.singleton(domainScope), 0, Integer.MAX_VALUE)));
         when(clientService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(client)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));
 
         scopeUpgrader.upgrade();
 
         verify(domainService, times(1)).findAll();
-        verify(scopeService, times(1)).findByDomain(domain.getId());
+        verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(clientService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
         verify(scopeService, never()).create(any(String.class), any(NewScope.class));

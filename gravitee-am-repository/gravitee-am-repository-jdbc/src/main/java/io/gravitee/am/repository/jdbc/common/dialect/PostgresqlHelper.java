@@ -115,9 +115,9 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
         return builder.append("a.domain = :domain")
                 .append(" AND (")
-                .append(" a.name ").append(wildcard ? "LIKE " : "= ")
+                .append(" upper(a.name) ").append(wildcard ? "LIKE " : "= ")
                 .append(":value")
-                .append(" OR a.settings->'oauth'->>'clientId' ").append(wildcard ? "LIKE " : "= ")
+                .append(" OR upper(a.settings->'oauth'->>'clientId') ").append(wildcard ? "LIKE " : "= ")
                 .append(":value")
                 .append(" ) ");
     }

@@ -71,15 +71,15 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     private Single<List<Scope>> upgradeDomain(Domain domain) {
         logger.info("Looking for scopes for domain id[{}] name[{}]", domain.getId(), domain.getName());
-        return scopeService.findByDomain(domain.getId())
+        return scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .flatMap(scopes -> {
-                    if (scopes.isEmpty()) {
+                    if (scopes.getData().isEmpty()) {
                         logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
                         return createClientScopes(domain)
                                 .flatMap(irrelevant -> createRoleScopes(domain));
                     }
                     logger.info("No scope to update, skip upgrade");
-                    return Single.just(new ArrayList<>(scopes));
+                    return Single.just(new ArrayList<>(scopes.getData()));
                 });
     }
 
@@ -104,9 +104,9 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     }
 
     private Single<Scope> createScope(String domain, String scopeKey) {
-        return scopeService.findByDomain(domain)
+        return scopeService.findByDomain(domain, 0, Integer.MAX_VALUE)
                 .flatMap(scopes -> {
-                    Optional<Scope> optScope = scopes.stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
+                    Optional<Scope> optScope = scopes.getData().stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
                     if (!optScope.isPresent()) {
                         logger.info("Create a new scope key[{}] for domain[{}]", scopeKey, domain);
                         NewScope scope = new NewScope();

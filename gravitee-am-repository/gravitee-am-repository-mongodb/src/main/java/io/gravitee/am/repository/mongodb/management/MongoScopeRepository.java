@@ -15,22 +15,25 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -77,8 +80,31 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<Set<Scope>> findByDomain(String domain) {
-        return Observable.fromPublisher(scopesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
+        Bson mongoQuery = eq(FIELD_DOMAIN, domain);
+        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery)).first(0l);
+        Single<Set<Scope>> scopesOperation = Observable.fromPublisher(scopesCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        return Single.zip(countOperation, scopesOperation, (count, scope) -> new Page<Scope>(scope, page, count));
+    }
+
+    @Override
+    public Single<Page<Scope>> search(String domain, String query, int page, int size) {
+        Bson searchQuery = eq(FIELD_KEY, query);
+
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = new BasicDBObject(FIELD_KEY, pattern);
+        }
+
+        Bson mongoQuery = and(
+                eq(FIELD_DOMAIN, domain), searchQuery);
+
+        Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery)).first(0l);
+        Single<Set<Scope>> scopesOperation = Observable.fromPublisher(scopesCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        return Single.zip(countOperation, scopesOperation, (count, scopes) -> new Page<>(scopes, page, count));
     }
 
     @Override

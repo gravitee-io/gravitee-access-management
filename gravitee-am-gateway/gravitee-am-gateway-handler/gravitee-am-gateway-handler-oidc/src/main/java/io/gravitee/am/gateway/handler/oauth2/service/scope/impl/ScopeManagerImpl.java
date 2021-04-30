@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.ScopeEvent;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.ScopeService;
@@ -58,7 +59,7 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing scopes for domain {}", domain.getName());
-        scopeService.findByDomain(domain.getId())
+        scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .subscribe(
                         scopes -> {
                             updateScopes(scopes);
@@ -106,6 +107,15 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     private void updateScopes(Set<Scope> scopes) {
         scopes
+                .stream()
+                .forEach(scope -> {
+                    this.scopes.put(scope.getKey(), scope);
+                    logger.info("Scope {} loaded for domain {}", scope.getKey(), domain.getName());
+                });
+    }
+
+    private void updateScopes(Page<Scope> scopes) {
+        scopes.getData()
                 .stream()
                 .forEach(scope -> {
                     this.scopes.put(scope.getKey(), scope);

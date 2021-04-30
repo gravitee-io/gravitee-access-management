@@ -43,6 +43,7 @@ export class DomainsComponent implements OnInit {
   }
 
   onSearch(event) {
+    this.page.pageNumber = 0;
     this.searchValue = event.target.value;
     this.loadDomains();
   }
