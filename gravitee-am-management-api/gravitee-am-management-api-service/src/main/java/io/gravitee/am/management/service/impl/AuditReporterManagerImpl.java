@@ -47,13 +47,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -143,10 +143,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         logger.info("Initializing audit reporters");
         List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
+
         reporters.forEach(reporter -> {
             logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
             try {
-                AuditReporterLauncher launcher = new AuditReporterLauncher(reporter, false);
+                AuditReporterLauncher launcher = new AuditReporterLauncher(reporter);
                 domainService
                         .findById(reporter.getDomain())
                         .flatMapSingle(domain -> {
@@ -165,12 +166,8 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
             }
         });
 
-        // deploy verticle
-        List<Reporter> allReporters = new ArrayList<>(auditReporters.values());
-        if (internalReporter != null) {
-            allReporters.add(new EventBusReporterWrapper(vertx, internalReporter));
-        }
-        deployReporterVerticle(allReporters);
+        // deploy internal reporter verticle
+        deployReporterVerticle(asList(new EventBusReporterWrapper(vertx, internalReporter)));
     }
 
     protected boolean useMongoReporter() {
@@ -314,7 +311,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     private void loadReporter(io.gravitee.am.model.Reporter reporter) {
-        AuditReporterLauncher launcher = new AuditReporterLauncher(reporter, true);
+        AuditReporterLauncher launcher = new AuditReporterLauncher(reporter);
         domainService
                 .findById(reporter.getDomain())
                 .flatMapSingle(domain -> {
@@ -330,42 +327,33 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
     }
 
     public class AuditReporterLauncher implements BiConsumer<GraviteeContext, Throwable> {
-        private boolean startEventBus;
         private io.gravitee.am.model.Reporter reporter;
 
-        private CountDownLatch countDownLatch = new CountDownLatch(1);
         private Throwable error;
 
-        public AuditReporterLauncher(io.gravitee.am.model.Reporter reporter, boolean startEventBus) {
-            this.startEventBus = startEventBus;
+        public AuditReporterLauncher(io.gravitee.am.model.Reporter reporter) {
             this.reporter = reporter;
         }
 
         @Override
         public void accept(GraviteeContext graviteeContext, Throwable throwable) throws Exception {
-            try {
-                if (graviteeContext != null) {
-                    Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
-                    if (auditReporter != null) {
-                        logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
-                        Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
-                        auditReporters.put(reporter, eventBusReporter);
-                        try {
-                            if (startEventBus) {
-                                eventBusReporter.start();
-                            }
-                        } catch (Exception e) {
-                            logger.error("Unexpected error while loading reporter", e);
-                        }
+            if (graviteeContext != null) {
+                Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
+                if (auditReporter != null) {
+                    logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                    Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
+                    auditReporters.put(reporter, eventBusReporter);
+                    try {
+                        eventBusReporter.start();
+                    } catch (Exception e) {
+                        logger.error("Unexpected error while loading reporter", e);
                     }
                 }
+            }
 
-                if (throwable != null) {
-                    logger.error("Unable to load reporter '{}'", reporter.getId(), throwable);
-                    this.error = throwable;
-                }
-            } finally {
-                this.countDownLatch.countDown();
+            if (throwable != null) {
+                logger.error("Unable to load reporter '{}'", reporter.getId(), throwable);
+                this.error = throwable;
             }
         }
 
