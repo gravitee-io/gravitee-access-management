@@ -36,7 +36,7 @@ public class LoginPostEndpoint implements Handler<RoutingContext> {
         // the login process is done
         // redirect the user to the original request
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
-        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
         doRedirect(context.response(), redirectUri);
     }
 

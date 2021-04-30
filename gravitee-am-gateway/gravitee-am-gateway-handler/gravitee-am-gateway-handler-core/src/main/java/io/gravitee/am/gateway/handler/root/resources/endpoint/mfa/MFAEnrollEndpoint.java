@@ -84,7 +84,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
             // Create post action url.
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
 
             // load factor providers
             load(factors, endUser, h -> {
@@ -139,7 +139,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         }
 
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
         doRedirect(routingContext.response(), returnURL);
     }
 
