@@ -68,7 +68,7 @@ public class UserConsentFailureHandler implements Handler<RoutingContext> {
             }
 
             // go back to login page
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

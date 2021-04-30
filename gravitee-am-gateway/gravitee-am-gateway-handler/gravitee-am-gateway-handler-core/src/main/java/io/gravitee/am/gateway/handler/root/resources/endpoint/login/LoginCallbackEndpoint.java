@@ -37,7 +37,7 @@ public class LoginCallbackEndpoint implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
 
         Session session = routingContext.session();
-        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", (MultiMap) routingContext.get(PARAM_CONTEXT_KEY));
+        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", (MultiMap) routingContext.get(PARAM_CONTEXT_KEY), true);
 
         // if we have an id_token, put in the session context for post step (mainly the user consent step)
         if (session != null && routingContext.data().containsKey(ID_TOKEN_KEY)) {

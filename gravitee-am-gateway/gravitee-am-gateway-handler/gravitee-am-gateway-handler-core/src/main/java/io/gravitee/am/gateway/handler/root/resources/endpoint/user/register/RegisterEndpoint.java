@@ -78,8 +78,8 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
-        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
+        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
 
         // render the registration confirmation page
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {
