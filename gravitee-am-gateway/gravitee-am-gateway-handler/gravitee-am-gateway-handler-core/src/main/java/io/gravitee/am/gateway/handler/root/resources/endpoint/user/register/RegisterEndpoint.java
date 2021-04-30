@@ -72,9 +72,9 @@ public class RegisterEndpoint implements Handler<RoutingContext> {
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams));
-        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams));
+        MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
+        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
 
         // render the registration confirmation page
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {

@@ -54,7 +54,7 @@
             <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_authorize);">
               <mat-icon>content_copy</mat-icon>
             </button>
-            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{redirectUri}}{{getCodeChallenge()}}</pre>
+            <pre #pre_authorize>{{baseUrl}}/oauth/authorize?client_id={{clientId}}&response_type={{getAuthorizationFlowResponseType()}}&redirect_uri={{encodedRedirectUri}}{{getCodeChallenge()}}</pre>
           </div>
 
           <p>Users will be redirected to the login page and will start the Authentication Flow.</p>
