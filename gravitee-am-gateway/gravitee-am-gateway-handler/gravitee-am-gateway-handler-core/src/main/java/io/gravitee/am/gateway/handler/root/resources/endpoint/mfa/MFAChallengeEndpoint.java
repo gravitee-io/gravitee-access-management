@@ -102,7 +102,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
 
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             routingContext.put(ConstantKeys.FACTOR_KEY, factor);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
@@ -164,7 +164,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
             }
             // save enrolled factor if needed and redirect to the original url
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+            final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
 
             if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
@@ -318,7 +318,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.putAll(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put("error", "mfa_challenge_failed");
-        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters);
+        String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
         doRedirect(resp, uri);
     }
 }

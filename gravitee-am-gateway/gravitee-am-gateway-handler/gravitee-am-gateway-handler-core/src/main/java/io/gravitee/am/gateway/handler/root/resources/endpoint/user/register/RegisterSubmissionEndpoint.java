@@ -40,7 +40,7 @@ public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
         // no redirect uri has been set, redirect to the default page
         if (registrationResponse.getRedirectUri() == null || registrationResponse.getRedirectUri().isEmpty()) {
             queryParams.set(ConstantKeys.SUCCESS_PARAM_KEY, "registration_succeed");
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
             doRedirect(context.response(), uri);
             return;
         }

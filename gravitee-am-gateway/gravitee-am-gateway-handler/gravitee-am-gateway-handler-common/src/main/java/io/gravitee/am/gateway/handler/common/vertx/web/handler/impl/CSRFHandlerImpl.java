@@ -149,7 +149,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
         queryParams.set("error", "session_expired");
         queryParams.set("error_description", "Your session expired, please try again.");
 
-        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams);
+        final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true);
 
         ctx.response()
                 .putHeader(HttpHeaders.LOCATION, uri)
