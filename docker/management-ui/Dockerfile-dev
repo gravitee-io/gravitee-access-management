@@ -25,8 +25,8 @@ ENV CONFD_URL="https://github.com/kelseyhightower/confd/releases/download"
 
 RUN apk add --update zip unzip
 
-ADD gravitee-am-webui.zip /tmp/
-RUN unzip /tmp/gravitee-am-webui.zip -d /tmp/
+ADD gravitee-am-webui-${GRAVITEEAM_VERSION}.zip /tmp/
+RUN unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/
 
 RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION} ${WWW_TARGET}
 

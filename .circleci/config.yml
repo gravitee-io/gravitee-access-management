@@ -152,7 +152,7 @@ jobs:
             cp -fr docker/management-ui/run.sh /tmp/
 
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            export IMAGE_TAG=graviteeio.azurecr.io/management-ui:${TAG}
+            export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
