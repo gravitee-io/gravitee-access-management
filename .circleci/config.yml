@@ -99,7 +99,7 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            mvn -s /tmp/.circleci.settings.xml install -DskipTests -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
