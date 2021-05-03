@@ -273,11 +273,11 @@ workflows:
                 var-name: AZURE_DOCKER_REGISTRY_PASSWORD
           requires:
             - build
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
 
   release:
