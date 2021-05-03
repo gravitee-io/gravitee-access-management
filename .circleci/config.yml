@@ -159,6 +159,68 @@ jobs:
             - ./docker-tag.txt
 
 
+  deploy-on-aks:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Read tag of Docker images to deploy
+          command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Will deploy Docker images with tag: ${TAG}"
+      - run:
+          name: Install Helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            helm version
+      - run:
+          name: Install Kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client=true
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Setup Git config and clone cloud-am repo
+          command: |
+            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Add SSH Key
+            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
+            ssh-add -D
+            ssh-add "${LOCAL_SSH_PRVIKEY}"
+
+            git clone git@github.com:gravitee-io/cloud-am.git
+            git checkout azure
+      - run:
+          name: Helm upgrade and 🚀
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az aks get-credentials --resource-group am-hprod --name am-hprod
+            helm upgrade --repo https://helm.gravitee.io \
+                        --install gravitee-am \
+                        -n nightly \
+                        -f ./cloud-am/am/nightly/k8s/values.yaml cockpit \
+                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                        --set "api.image.tag=${TAG}" \
+                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                        --set "gateway.image.tag=${TAG}" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-webui" \
+                        --set "ui.image.tag=${TAG}"
+      - slack/notify:
+          branch_pattern: master
+          event: fail
+          template: basic_fail_1
+
 
 workflows:
   version: 2.1
