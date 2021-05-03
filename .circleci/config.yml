@@ -124,6 +124,7 @@ jobs:
           name: Get AM version
           command: |
             export GRAVITEEAM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            echo "Gravitee AM version: ${GRAVITEEAM_VERSION}"
       - run:
           name: Compute Tag for Docker images
           command: |
