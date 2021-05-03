@@ -203,21 +203,21 @@ jobs:
             ssh-add "${LOCAL_SSH_PRVIKEY}"
 
             git clone git@github.com:gravitee-io/cloud-am.git
-            git checkout azure
+            git checkout hprod
       - run:
           name: Helm upgrade and 🚀
           command: |
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
             az aks get-credentials --resource-group am-hprod --name am-hprod
             helm upgrade --repo https://helm.gravitee.io \
-                        --install gravitee-am \
+                        --install am \
                         -n nightly \
                         -f ./cloud-am/am/nightly/k8s/values.yaml am \
                         --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                         --set "api.image.tag=${TAG}" \
                         --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
                         --set "gateway.image.tag=${TAG}" \
-                        --set "ui.image.repository=graviteeio.azurecr.io/am-webui" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                         --set "ui.image.tag=${TAG}"
 
 
