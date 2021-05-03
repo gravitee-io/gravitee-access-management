@@ -50,6 +50,67 @@ orbs:
 # jobs:
 
 
+jobs:
+  secrethub:
+    docker:
+      - image: 'cimg/base:stable'
+    environment:
+      DEV_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.dev.xml'
+      RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.non.dry.run.xml'
+      DRY_RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.xml'
+      GIO_GPG_PUB_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_pub_key'
+      GIO_GPG_PRV_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_private_key'
+      GIT_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/git/user/name'
+      GIT_USER_EMAIL: 'secrethub://graviteeio/cicd/graviteebot/git/user/email'
+      DOCKERHUB_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-name'
+      DOCKERHUB_USER_TOKEN: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-token'
+    steps:
+      - secrethub/exec:
+          command: |
+            echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
+            mkdir -p /tmp/gravit33bot/.secrets/.gungpg
+            echo $RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/release.settings.xml
+            echo $DRY_RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/dry.release.settings.xml
+            echo $GIO_GPG_PUB_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
+            echo $GIO_GPG_PRV_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
+            echo $GIT_USER_NAME > /tmp/gravit33bot/git_user_name
+            echo $GIT_USER_EMAIL > /tmp/gravit33bot/git_user_email
+            mkdir -p /tmp/gravit33bot/.secrets/dockerhub
+            echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
+            echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
+      - secrethub/install
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - .circleci.settings.xml
+            - gravit33bot
+  build:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Maven Package
+          command: |
+            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-ui/target/*.zip ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - .m2
+            - ./gravitee-am-gateway-standalone-*.zip
+            - ./gravitee-am-management-api-standalone-*.zip
+            - ./gravitee-am-webui-*.zip
+
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -78,6 +139,18 @@ workflows:
               ignore:
                 - master
                 # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
+
+  build_branch:
+    when:
+      or:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - secrethub:
+          context:
+            - cicd-orchestrator
+      - build:
+          requires:
+            - secrethub
 
 
 
