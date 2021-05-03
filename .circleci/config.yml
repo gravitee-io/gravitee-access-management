@@ -251,9 +251,6 @@ workflows:
                 # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
 
   build_branch:
-    when:
-      or:
-        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
     jobs:
       - secrethub:
           context:
