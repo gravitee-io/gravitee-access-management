@@ -17,7 +17,7 @@
 FROM nginx:1.19-alpine
 LABEL maintainer="contact@graviteesource.com"
 
-ARG GRAVITEE_AM_VERSION=0
+ARG GRAVITEEAM_VERSION=0
 
 ENV WWW_TARGET /usr/share/nginx/html
 ENV CONFD_VERSION="0.16.0"
@@ -28,7 +28,7 @@ RUN apk add --update zip unzip
 ADD gravitee-am-webui.zip /tmp/
 RUN unzip /tmp/gravitee-am-webui.zip -d /tmp/
 
-RUN mv /tmp/gravitee-am-webui-${GRAVITEE_AM_VERSION} ${WWW_TARGET}
+RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION} ${WWW_TARGET}
 
 RUN wget -T 5 ${CONFD_URL}/v${CONFD_VERSION}/confd-${CONFD_VERSION}-linux-amd64 -O /bin/confd \
       && chmod +x /bin/confd \

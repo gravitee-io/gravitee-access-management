@@ -121,6 +121,10 @@ jobs:
           at: /tmp
       - setup_remote_docker
       - run:
+          name: Get AM version
+          command: |
+            export GRAVITEEAM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+      - run:
           name: Compute Tag for Docker images
           command: |
             # Compute tag with branch name, commmit SHA and timestamp. Then slugify it to be sure it can be handled by Docker
@@ -133,14 +137,14 @@ jobs:
           name: Build & Publish Management API Docker Image to Azure Registry
           command: |
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
-            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEE_COCKPIT_VERSION=* -t ${IMAGE_TAG} /tmp
+            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${GRAVITEEAM_VERSION} -t ${IMAGE_TAG} /tmp
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
           command: |
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
-            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEE_COCKPIT_VERSION=* -t ${IMAGE_TAG} /tmp
+            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${GRAVITEEAM_VERSION} -t ${IMAGE_TAG} /tmp
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
@@ -150,7 +154,7 @@ jobs:
             cp -fr docker/management-ui/run.sh /tmp/
 
             export IMAGE_TAG=graviteeio.azurecr.io/management-ui:${TAG}
-            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEE_COCKPIT_VERSION=* -t ${IMAGE_TAG} /tmp
+            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${GRAVITEEAM_VERSION} -t ${IMAGE_TAG} /tmp
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - persist_to_workspace:
