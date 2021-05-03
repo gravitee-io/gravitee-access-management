@@ -14,29 +14,31 @@
 # limitations under the License.
 #
 
-FROM alpine:3.9 AS build-env
-MAINTAINER Gravitee Team <http://gravitee.io>
+FROM alpine:3 AS build-env
+LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 
 RUN apk add --update zip unzip
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
+
 RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
 
+FROM adoptopenjdk/openjdk11:alpine-jre
+LABEL maintainer="contact@graviteesource.com"
 
-FROM graviteeio/java:8
-MAINTAINER Gravitee Team <http://gravitee.io>
-
-ENV GRAVITEEAM_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
 
 COPY --from=build-env /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 
-RUN chgrp -R 0 ${GRAVITEEAM_HOME} && \
-    chmod -R g=u ${GRAVITEEAM_HOME}
+RUN chgrp -R 0 ${GRAVITEE_AM_HOME} && \
+    chmod -R g=u ${GRAVITEE_AM_HOME}
 
-WORKDIR ${GRAVITEEAM_HOME}
+WORKDIR ${GRAVITEE_AM_HOME}
 
 EXPOSE 8092
-VOLUME ["/opt/gravitee-am-gateway/logs"]
+
+VOLUME ["/opt/graviteeio-am-gateway/logs"]
+
 CMD ["./bin/gravitee"]

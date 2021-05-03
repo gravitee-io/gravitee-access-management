@@ -28,7 +28,7 @@ RUN apk add --update zip unzip
 ADD gravitee-am-webui-${GRAVITEEAM_VERSION}.zip /tmp/
 RUN unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/
 
-RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION} ${WWW_TARGET}
+RUN mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET}
 
 RUN wget -T 5 ${CONFD_URL}/v${CONFD_VERSION}/confd-${CONFD_VERSION}-linux-amd64 -O /bin/confd \
       && chmod +x /bin/confd \
