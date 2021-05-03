@@ -209,17 +209,13 @@ jobs:
             helm upgrade --repo https://helm.gravitee.io \
                         --install gravitee-am \
                         -n nightly \
-                        -f ./cloud-am/am/nightly/k8s/values.yaml cockpit \
+                        -f ./cloud-am/am/nightly/k8s/values.yaml am \
                         --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                         --set "api.image.tag=${TAG}" \
                         --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
                         --set "gateway.image.tag=${TAG}" \
                         --set "ui.image.repository=graviteeio.azurecr.io/am-webui" \
                         --set "ui.image.tag=${TAG}"
-      - slack/notify:
-          branch_pattern: master
-          event: fail
-          template: basic_fail_1
 
 
 workflows:
