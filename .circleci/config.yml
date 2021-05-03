@@ -211,7 +211,7 @@ jobs:
             helm upgrade --repo https://helm.gravitee.io \
                         --install am \
                         -n nightly \
-                        -f ./cloud-am/am/nightly/k8s/values.yaml am \
+                        -f ./cloud-am/hprod/nightly/values.yaml am \
                         --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                         --set "api.image.tag=${TAG}" \
                         --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
