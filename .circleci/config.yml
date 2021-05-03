@@ -203,7 +203,6 @@ jobs:
             ssh-add "${LOCAL_SSH_PRVIKEY}"
 
             git clone --branch cloud-am  git@github.com:gravitee-io/cloud-am.git
-            git checkout hprod
       - run:
           name: Helm upgrade and 🚀
           command: |
