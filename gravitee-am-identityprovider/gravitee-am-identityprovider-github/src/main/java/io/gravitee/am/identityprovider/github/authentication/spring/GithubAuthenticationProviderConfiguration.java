@@ -55,6 +55,6 @@ public class GithubAuthenticationProviderConfiguration {
                 .setMaxPoolSize(configuration.getMaxPoolSize())
                 .setSsl(true); // TLS is mandatory for GitHub IdP.
 
-        return webClientBuilder.createWebClient(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 }
