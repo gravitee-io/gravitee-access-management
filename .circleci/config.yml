@@ -46,10 +46,6 @@ orbs:
   gravitee: gravitee-io/gravitee@dev:1.0.4
   secrethub: secrethub/cli@1.1.0
 
-# --- Jobs to perform all workflows
-# jobs:
-
-
 jobs:
   secrethub:
     docker:
@@ -99,7 +95,7 @@ jobs:
       - run:
           name: Maven Package
           command: |
-            mvn -s /tmp/.circleci.settings.xml install -DskipTests -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
@@ -160,7 +156,6 @@ jobs:
           root: /tmp
           paths:
             - ./docker-tag.txt
-
 
   deploy-on-aks:
     docker:
@@ -257,6 +252,11 @@ workflows:
       - build:
           requires:
             - secrethub
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - publish-images-azure-registry:
           context: cicd-orchestrator
           pre-steps:
@@ -268,11 +268,11 @@ workflows:
                 var-name: AZURE_DOCKER_REGISTRY_PASSWORD
           requires:
             - build
-#          filters:
-#            branches:
-#              only:
-#                - master
-#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - deploy-on-aks:
           context: cicd-orchestrator
           pre-steps:
@@ -287,10 +287,9 @@ workflows:
                 var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
-#          filters:
-#            branches:
-#              only: master
-
+          filters:
+            branches:
+              only: master
 
   release:
     when:
