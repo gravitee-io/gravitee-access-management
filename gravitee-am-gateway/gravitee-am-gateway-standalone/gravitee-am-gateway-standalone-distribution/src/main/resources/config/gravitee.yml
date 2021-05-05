@@ -34,6 +34,10 @@
 #  idleTimeout: 0
 #  tcpKeepAlive: true
 #  compressionSupported: false
+#  maxHeaderSize: 8192
+#  maxChunkSize: 8192
+#  maxInitialLineLength: 4096
+#  maxFormAttributeSize: 2048
 #  instances: 0
 #  secured: false
 #  alpn: false
