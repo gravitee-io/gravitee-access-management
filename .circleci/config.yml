@@ -329,28 +329,6 @@ workflows:
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
           ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
 
-
-
-  docker_nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-                - /^[0-999].[0-999].x/
-                - cicd/circleci-release
-    jobs:
-      - gravitee/d_am_nightly_secrets:
-          context: cicd-orchestrator
-          name: nightly_secrets_resolution
-      - gravitee/d_am_nightly:
-          name: docker_nightly
-          requires:
-            - nightly_secrets_resolution
-          container_size: 'xlarge'
-#
   publish_rpms:
     when:
       equal: [ publish_rpms, << pipeline.parameters.gio_action >> ]
