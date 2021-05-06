@@ -150,7 +150,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
             String tableSuffix = lowerCaseId.replaceAll("-", "_");
@@ -175,6 +175,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                     "\"password\":"+ (jdbcPassword == null ? null : "\"" + jdbcPassword + "\"") + "," +
                     "\"autoProvisioning\":"+ idpProvisioning +"," +
                     "\"selectUserByUsernameQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE username = %s\"," +
+                    "\"selectUserByEmailQuery\":\"SELECT * FROM idp_users_"+ tableSuffix +" WHERE email = %s\"," +
                     "\"identifierAttribute\":\"id\"," +
                     "\"usernameAttribute\":\"username\"," +
                     "\"passwordAttribute\":\"password\"," +

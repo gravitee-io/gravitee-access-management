@@ -139,6 +139,7 @@
     "usersTable",
     "user",
     "selectUserByUsernameQuery",
+    "selectUserByEmailQuery",
     "identifierAttribute",
     "usernameAttribute",
     "passwordAttribute",
