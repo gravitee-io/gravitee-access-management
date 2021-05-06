@@ -1,6 +1,31 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/380?closed=1[AM - 3.8.2 (2021-05-06)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Redirect_uri with multiple parameters only keeps the first parameter https://github.com/gravitee-io/issues/issues/5508[#5508]
+
+*_General_*
+
+- Merge 3.7.3 https://github.com/gravitee-io/issues/issues/5488[#5488]
+
+*_Reporter_*
+
+- Audit are not persisted for domain https://github.com/gravitee-io/issues/issues/5510[#5510]
+
+=== Improvements
+
+*_Gateway_*
+
+- Allow to configure the size of form attributes (SAMLResponse) https://github.com/gravitee-io/issues/issues/5506[#5506]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/379?closed=1[AM - 3.7.3 (2021-04-23)]
 
 === Bug fixes
