@@ -27,6 +27,7 @@ public class ApplicationAdvancedSettings {
 
     private boolean skipConsent;
     private boolean flowsInherited = true;
+    private String mfaSelectionRule;
 
     public ApplicationAdvancedSettings() {
     }
@@ -34,6 +35,7 @@ public class ApplicationAdvancedSettings {
     public ApplicationAdvancedSettings(ApplicationAdvancedSettings other) {
         this.skipConsent = other.skipConsent;
         this.flowsInherited = other.flowsInherited;
+        this.mfaSelectionRule = other.mfaSelectionRule;
     }
 
     public boolean isSkipConsent() {
@@ -52,8 +54,17 @@ public class ApplicationAdvancedSettings {
         this.flowsInherited = flowsInherited;
     }
 
+    public String getMfaSelectionRule() {
+        return mfaSelectionRule;
+    }
+
+    public void setMfaSelectionRule(String mfaSelectionRule) {
+        this.mfaSelectionRule = mfaSelectionRule;
+    }
+
     public void copyTo(Client client) {
         client.setAutoApproveScopes(this.skipConsent ? Collections.singletonList("true") : null);
         client.setFlowsInherited(this.flowsInherited);
+        client.setMfaSelectionRule(this.mfaSelectionRule);
     }
 }

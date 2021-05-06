@@ -183,6 +183,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String certificate;
 
+    private String mfaSelectionRule;
+
     private Set<String> factors;
 
     private boolean enhanceScopesWithUserPermissions;
@@ -261,6 +263,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.identities = other.identities != null ? new HashSet<>(other.identities) : null;
+        this.mfaSelectionRule = other.mfaSelectionRule;
         this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
@@ -674,6 +677,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setIdentities(Set<String> identities) {
         this.identities = identities;
+    }
+
+    public String getMfaSelectionRule() {
+        return mfaSelectionRule;
+    }
+
+    public void setMfaSelectionRule(String mfaSelectionRule) {
+        this.mfaSelectionRule = mfaSelectionRule;
     }
 
     public Set<String> getFactors() {

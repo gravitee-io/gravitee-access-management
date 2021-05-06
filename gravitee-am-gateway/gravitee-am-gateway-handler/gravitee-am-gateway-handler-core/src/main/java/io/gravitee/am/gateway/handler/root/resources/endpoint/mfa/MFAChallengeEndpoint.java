@@ -183,11 +183,13 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
 
                     // update user strong auth status
                     routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+                    routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
                     doRedirect(routingContext.request().response(), returnURL);
                 });
             } else {
                 // update user strong auth status
                 routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+                routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
                 doRedirect(routingContext.request().response(), returnURL);
             }
         });

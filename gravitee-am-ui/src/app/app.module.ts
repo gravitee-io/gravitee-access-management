@@ -277,7 +277,10 @@ import {
   ApplicationMembershipsComponent,
   ApplicationMembershipsDialog
 } from './domain/applications/application/advanced/memberships/memberships.component';
-import {ApplicationFactorsComponent} from './domain/applications/application/advanced/factors/factors.component';
+import {
+  ApplicationFactorsComponent,
+  MfaStepUpDialog
+} from './domain/applications/application/advanced/factors/factors.component';
 import {ManagementRolesComponent} from './settings/management/roles/roles.component';
 import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
 import {MembershipsResolver} from './resolvers/memberships.resolver';
@@ -567,7 +570,8 @@ import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
     BotDetectionCreationStep1Component,
     BotDetectionCreationStep2Component,
     BotDetectionComponent,
-    BotDetectionFormComponent
+    BotDetectionFormComponent,
+    MfaStepUpDialog
   ],
   imports: [
     BrowserModule,

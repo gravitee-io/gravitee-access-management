@@ -23,13 +23,18 @@ import java.util.Map;
  */
 public class EvaluableExecutionContext {
 
-    private final ReactableExecutionContext executionContext;
+    private ReactableExecutionContext executionContext;
+    private Map<String, Object> attributes;
 
     EvaluableExecutionContext(ReactableExecutionContext executionContext) {
         this.executionContext = executionContext;
     }
 
+    public EvaluableExecutionContext(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
+
     public Map<String, Object> getAttributes() {
-        return executionContext.getAttributes();
+        return executionContext != null ? executionContext.getAttributes() : attributes;
     }
 }
