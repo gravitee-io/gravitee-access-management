@@ -23,6 +23,7 @@ public class ApplicationAdvancedSettingsMongo {
 
     private boolean skipConsent;
     private boolean flowsInherited;
+    private String mfaSelectionRule;
 
     public boolean isSkipConsent() {
         return skipConsent;
@@ -38,5 +39,13 @@ public class ApplicationAdvancedSettingsMongo {
 
     public void setFlowsInherited(boolean flowsInherited) {
         this.flowsInherited = flowsInherited;
+    }
+
+    public String getMfaSelectionRule() {
+        return mfaSelectionRule;
+    }
+
+    public void setMfaSelectionRule(String mfaSelectionRule) {
+        this.mfaSelectionRule = mfaSelectionRule;
     }
 }

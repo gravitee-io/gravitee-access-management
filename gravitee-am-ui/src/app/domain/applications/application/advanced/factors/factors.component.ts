@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
+import {MatDialog, MatDialogRef} from "@angular/material/dialog";
+import {ActivatedRoute, Router} from '@angular/router';
 import {ApplicationService} from '../../../../../services/application.service';
 import {SnackbarService} from '../../../../../services/snackbar.service';
 import {FactorService} from '../../../../../services/factor.service';
@@ -44,26 +45,37 @@ export class ApplicationFactorsComponent implements OnInit {
   formChanged = false;
   factors: any[];
   editMode: boolean;
+  mfaSelectionRule: string;
 
   constructor(private route: ActivatedRoute,
+              private router: Router,
               private applicationService: ApplicationService,
               private factorService: FactorService,
               private authService: AuthService,
-              private snackbarService: SnackbarService) { }
+              private snackbarService: SnackbarService,
+              public dialog: MatDialog) { }
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
+    const applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
+    this.mfaSelectionRule = applicationAdvancedSettings.mfaSelectionRule;
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
   }
 
   patch(): void {
-    this.applicationService.patch(this.domainId, this.application.id, { 'factors': this.application.factors }).subscribe(data => {
+    const data: any = {};
+    data.factors = this.application.factors;
+    if (this.mfaSelectionRule) {
+      data.settings = {};
+      data.settings.advanced = { 'mfaSelectionRule': this.mfaSelectionRule };
+    }
+    this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
-      this.route.snapshot.data['application'] = this.application;
       this.formChanged = false;
       this.snackbarService.open('Application updated');
+      this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
     });
   }
 
@@ -97,4 +109,17 @@ export class ApplicationFactorsComponent implements OnInit {
     }
     return 'Custom';
   }
+
+  openDialog(event) {
+    event.preventDefault();
+    this.dialog.open(MfaStepUpDialog, { width : '700px' });
+  }
+}
+
+@Component({
+  selector: 'mfa-step-up-dialog',
+  templateUrl: './dialog/mfa-step-up-info.component.html',
+})
+export class MfaStepUpDialog {
+  constructor(public dialogRef: MatDialogRef<MfaStepUpDialog>) {}
 }

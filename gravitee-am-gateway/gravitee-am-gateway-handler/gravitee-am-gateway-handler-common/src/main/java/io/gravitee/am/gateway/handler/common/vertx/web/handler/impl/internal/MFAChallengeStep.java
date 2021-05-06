@@ -16,16 +16,24 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
+import org.springframework.expression.EvaluationException;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ParseException;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAChallengeStep extends AuthenticationFlowStep {
+public class MFAChallengeStep extends MFAStep {
 
     public MFAChallengeStep(Handler<RoutingContext> wrapper) {
         super(wrapper);
@@ -44,15 +52,30 @@ public class MFAChallengeStep extends AuthenticationFlowStep {
             flow.doNext(routingContext);
             return;
         }
-        // check if user is already authenticated with strong auth
-        if (session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY) != null && session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY).equals(true)) {
+        // check if user is coming from the challenge step
+        if (session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY) != null && session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY).equals(true)) {
             flow.doNext(routingContext);
             return;
         }
-        // check if user has skipped enrollment step
-        if (session.get(ConstantKeys.MFA_SKIPPED_KEY) != null && session.get(ConstantKeys.MFA_SKIPPED_KEY).equals(true)) {
-            flow.doNext(routingContext);
-            return;
+        // check if mfa selection rule is set
+        if (client.getMfaSelectionRule() != null && !client.getMfaSelectionRule().isEmpty()) {
+            // if requirements are not met, just continue
+            if (!isStepUpAuthentication(routingContext, client.getMfaSelectionRule()) &&
+                    (isUserStronglyAuth(routingContext) || isMfaSkipped(routingContext))) {
+                flow.doNext(routingContext);
+                return;
+            }
+        } else {
+            // check if user is currently authenticated with strong auth
+            if (isUserStronglyAuth(routingContext)) {
+                flow.doNext(routingContext);
+                return;
+            }
+            // check if user has skipped enrollment step
+            if (isMfaSkipped(routingContext)) {
+                flow.doNext(routingContext);
+                return;
+            }
         }
         // else go to the MFA challenge page
         flow.exit(this);
