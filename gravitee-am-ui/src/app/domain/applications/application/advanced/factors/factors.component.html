@@ -73,7 +73,7 @@
           </div>
           <div fxLayout="column">
             <mat-form-field appearance="outline" floatLabel="always">
-              <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="mfaSelectionRule" (ngModelChange)="formChanged = true;">
+              <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="mfaStepUpRule" (ngModelChange)="formChanged = true;">
               <mat-hint>MFA challenge page will be displayed if the conditions are met in addition of the login step.</mat-hint>
             </mat-form-field>
           </div>

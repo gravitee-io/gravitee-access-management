@@ -28,7 +28,6 @@ public class PatchApplicationAdvancedSettings {
 
     private Optional<Boolean> skipConsent;
     private Optional<Boolean> flowsInherited;
-    private Optional<String> mfaSelectionRule;
 
     public Optional<Boolean> getSkipConsent() {
         return skipConsent;
@@ -46,20 +45,11 @@ public class PatchApplicationAdvancedSettings {
         this.flowsInherited = flowsInherited;
     }
 
-    public Optional<String> getMfaSelectionRule() {
-        return mfaSelectionRule;
-    }
-
-    public void setMfaSelectionRule(Optional<String> mfaSelectionRule) {
-        this.mfaSelectionRule = mfaSelectionRule;
-    }
-
     public ApplicationAdvancedSettings patch(ApplicationAdvancedSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationAdvancedSettings toPatch = _toPatch == null ? new ApplicationAdvancedSettings() : new ApplicationAdvancedSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setSkipConsent, this.getSkipConsent(), boolean.class);
         SetterUtils.safeSet(toPatch::setFlowsInherited, this.getFlowsInherited(), boolean.class);
-        SetterUtils.safeSet(toPatch::setMfaSelectionRule, this.getMfaSelectionRule());
 
         return toPatch;
     }

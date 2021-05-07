@@ -57,10 +57,11 @@ public class MFAChallengeStep extends MFAStep {
             flow.doNext(routingContext);
             return;
         }
-        // check if mfa selection rule is set
-        if (client.getMfaSelectionRule() != null && !client.getMfaSelectionRule().isEmpty()) {
+        // check if mfa step up rule is set
+        String mfaStepUpRule = client.getMfaSettings() != null ? client.getMfaSettings().getStepUpAuthenticationRule() : null;
+        if (mfaStepUpRule != null && !mfaStepUpRule.isEmpty()) {
             // if requirements are not met, just continue
-            if (!isStepUpAuthentication(routingContext, client.getMfaSelectionRule()) &&
+            if (!isStepUpAuthentication(routingContext, mfaStepUpRule) &&
                     (isUserStronglyAuth(routingContext) || isMfaSkipped(routingContext))) {
                 flow.doNext(routingContext);
                 return;

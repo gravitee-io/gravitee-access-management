@@ -19,10 +19,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.model.PasswordSettingsAware;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.Resource;
-import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 
@@ -183,8 +180,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String certificate;
 
-    private String mfaSelectionRule;
-
     private Set<String> factors;
 
     private boolean enhanceScopesWithUserPermissions;
@@ -208,6 +203,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     private List<String> postLogoutRedirectUris;
 
     private boolean flowsInherited;
+
+    private MFASettings mfaSettings;
 
     public Client() {
     }
@@ -263,7 +260,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.identities = other.identities != null ? new HashSet<>(other.identities) : null;
-        this.mfaSelectionRule = other.mfaSelectionRule;
         this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
@@ -280,6 +276,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.forcePKCE = other.forcePKCE;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.flowsInherited = other.flowsInherited;
+        this.mfaSettings = other.mfaSettings;
     }
 
     public String getId() {
@@ -679,14 +676,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.identities = identities;
     }
 
-    public String getMfaSelectionRule() {
-        return mfaSelectionRule;
-    }
-
-    public void setMfaSelectionRule(String mfaSelectionRule) {
-        this.mfaSelectionRule = mfaSelectionRule;
-    }
-
     public Set<String> getFactors() {
         return factors;
     }
@@ -861,6 +850,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setFlowsInherited(boolean flowsInherited) {
         this.flowsInherited = flowsInherited;
+    }
+
+    public MFASettings getMfaSettings() {
+        return mfaSettings;
+    }
+
+    public void setMfaSettings(MFASettings mfaSettings) {
+        this.mfaSettings = mfaSettings;
     }
 
     @Override

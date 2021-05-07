@@ -36,6 +36,7 @@ public class PatchApplicationSettings {
     private Optional<PatchApplicationOAuthSettings> oauth;
     private Optional<PatchApplicationAdvancedSettings> advanced;
     private Optional<PatchPasswordSettings> passwordSettings;
+    private Optional<PatchMFASettings> mfa;
 
     public Optional<AccountSettings> getAccount() {
         return account;
@@ -65,6 +66,10 @@ public class PatchApplicationSettings {
         return advanced;
     }
 
+    public void setAdvanced(Optional<PatchApplicationAdvancedSettings> advanced) {
+        this.advanced = advanced;
+    }
+
     public Optional<PatchPasswordSettings> getPasswordSettings() {
         return passwordSettings;
     }
@@ -73,8 +78,12 @@ public class PatchApplicationSettings {
         this.passwordSettings = passwordSettings;
     }
 
-    public void setAdvanced(Optional<PatchApplicationAdvancedSettings> advanced) {
-        this.advanced = advanced;
+    public Optional<PatchMFASettings> getMfa() {
+        return mfa;
+    }
+
+    public void setMfa(Optional<PatchMFASettings> mfa) {
+        this.mfa = mfa;
     }
 
     public ApplicationSettings patch(ApplicationSettings _toPatch) {
@@ -90,8 +99,11 @@ public class PatchApplicationSettings {
         if (this.getAdvanced() != null && this.getAdvanced().isPresent()) {
             toPatch.setAdvanced(this.getAdvanced().get().patch(toPatch.getAdvanced()));
         }
-        if (this.passwordSettings != null) {
-            this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        if (this.getPasswordSettings() != null && this.getPasswordSettings().isPresent()) {
+            toPatch.setPasswordSettings(this.getPasswordSettings().get().patch(toPatch.getPasswordSettings()));
+        }
+        if (this.getMfa() != null && this.getMfa().isPresent()) {
+            toPatch.setMfa(this.getMfa().get().patch(toPatch.getMfa()));
         }
         return toPatch;
     }
@@ -103,7 +115,8 @@ public class PatchApplicationSettings {
         if (account != null && account.isPresent()
                 || login != null && login.isPresent()
                 || advanced != null && advanced.isPresent()
-                || passwordSettings != null && passwordSettings.isPresent()) {
+                || passwordSettings != null && passwordSettings.isPresent()
+                || mfa != null && mfa.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 

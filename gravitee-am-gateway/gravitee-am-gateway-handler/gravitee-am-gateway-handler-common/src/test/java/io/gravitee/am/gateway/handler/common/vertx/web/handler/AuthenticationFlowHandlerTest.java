@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.MFAEnrollStep;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
@@ -185,7 +186,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            client.setMfaSelectionRule("{#request.params['scope'][0] == 'write'}");
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
+            client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId("factor-1");
@@ -214,7 +217,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            client.setMfaSelectionRule("{#request.params['scope'][0].contains('write')}");
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
+            client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId("factor-1");
@@ -243,7 +248,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            client.setMfaSelectionRule("{#request.params['scope'][0] == 'write'}");
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
+            client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId("factor-1");
