@@ -40,7 +40,7 @@
           <div fxLayout="column">
             <mat-slide-toggle
               (change)="enableScopeDiscovery($event)"
-              [checked]="isDiscovery()" [disabled]="!editMode">
+              [checked]="isDiscovery()" [disabled]="scope.system || !editMode">
               Display scope into openid discovery endpoint
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>/:domain/oidc/.well-known/openid-configuration</i></mat-hint>
