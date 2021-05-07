@@ -1,3 +1,18 @@
+h1 {
+  margin-bottom: 0px;
+}
+
+.scopes-search {
+  text-align: center;
+  mat-form-field {
+    width: 70%;
+  }
+  mat-icon {
+    vertical-align: middle;
+    padding-bottom: 4px;
+  }
+}
+
 p {
   font-size: smaller;
   margin: 5px 0;
