@@ -45,7 +45,7 @@ export class ApplicationFactorsComponent implements OnInit {
   formChanged = false;
   factors: any[];
   editMode: boolean;
-  mfaSelectionRule: string;
+  mfaStepUpRule: string;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -58,8 +58,8 @@ export class ApplicationFactorsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    const applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
-    this.mfaSelectionRule = applicationAdvancedSettings.mfaSelectionRule;
+    const applicationMfaSettings = this.application.settings == null ? {} : this.application.settings.mfa || {};
+    this.mfaStepUpRule = applicationMfaSettings.stepUpAuthenticationRule;
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
   }
@@ -67,10 +67,8 @@ export class ApplicationFactorsComponent implements OnInit {
   patch(): void {
     const data: any = {};
     data.factors = this.application.factors;
-    if (this.mfaSelectionRule) {
-      data.settings = {};
-      data.settings.advanced = { 'mfaSelectionRule': this.mfaSelectionRule };
-    }
+    data.settings = {};
+    data.settings.mfa = { 'stepUpAuthenticationRule': this.mfaStepUpRule };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
       this.formChanged = false;

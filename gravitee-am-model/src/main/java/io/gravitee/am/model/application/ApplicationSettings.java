@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.application;
 
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -49,6 +50,11 @@ public class ApplicationSettings {
      */
     private PasswordSettings passwordSettings;
 
+    /**
+     * MFA settings
+     */
+    private MFASettings mfa;
+
     public ApplicationSettings() {
     }
 
@@ -58,6 +64,7 @@ public class ApplicationSettings {
         this.login = other.login != null ? new LoginSettings(other.login) : null;
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
         this.passwordSettings = Optional.ofNullable(other.passwordSettings).map(PasswordSettings::new).orElse(null);
+        this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
     }
 
     public ApplicationOAuthSettings getOauth() {
@@ -100,11 +107,20 @@ public class ApplicationSettings {
         this.passwordSettings = passwordSettings;
     }
 
-    public void copyTo(Client client ){
+    public MFASettings getMfa() {
+        return mfa;
+    }
+
+    public void setMfa(MFASettings mfa) {
+        this.mfa = mfa;
+    }
+
+    public void copyTo(Client client) {
         client.setAccountSettings(this.account);
         client.setLoginSettings(this.login);
         client.setPasswordSettings(this.passwordSettings);
         Optional.ofNullable(this.oauth).ifPresent(o->o.copyTo(client));
         Optional.ofNullable(getAdvanced()).ifPresent(a->a.copyTo(client));
+        client.setMfaSettings(this.mfa);
     }
 }

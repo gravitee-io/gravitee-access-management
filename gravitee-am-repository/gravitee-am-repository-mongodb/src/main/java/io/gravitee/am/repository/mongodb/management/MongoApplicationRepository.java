@@ -20,6 +20,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
@@ -247,6 +248,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
         applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
+        applicationSettingsMongo.setMfa(convert(other.getMfa()));
         return applicationSettingsMongo;
     }
 
@@ -261,6 +263,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
         applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
+        applicationSettings.setMfa(convert(other.getMfa()));
         return applicationSettings;
     }
 
@@ -427,7 +430,6 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettings applicationAdvancedSettings = new ApplicationAdvancedSettings();
         applicationAdvancedSettings.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettings.setFlowsInherited(other.isFlowsInherited());
-        applicationAdvancedSettings.setMfaSelectionRule(other.getMfaSelectionRule());
         return applicationAdvancedSettings;
     }
 
@@ -439,8 +441,15 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         ApplicationAdvancedSettingsMongo applicationAdvancedSettingsMongo = new ApplicationAdvancedSettingsMongo();
         applicationAdvancedSettingsMongo.setSkipConsent(other.isSkipConsent());
         applicationAdvancedSettingsMongo.setFlowsInherited(other.isFlowsInherited());
-        applicationAdvancedSettingsMongo.setMfaSelectionRule(other.getMfaSelectionRule());
         return applicationAdvancedSettingsMongo;
+    }
+
+    private static MFASettings convert(MFASettingsMongo mfaSettingsMongo) {
+        return mfaSettingsMongo != null ? mfaSettingsMongo.convert() : null;
+    }
+
+    private static MFASettingsMongo convert(MFASettings mfaSettings) {
+        return MFASettingsMongo.convert(mfaSettings);
     }
 
     private static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {
