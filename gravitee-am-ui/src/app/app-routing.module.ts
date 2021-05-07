@@ -49,7 +49,6 @@ import {DomainsResolver} from './resolvers/domains.resolver';
 import {DomainResolver} from './resolvers/domain.resolver';
 import {DomainEntrypointResolver} from './resolvers/domain-entrypoint.resolver';
 import {DomainFlowsResolver} from './resolvers/domain-flows.resolver';
-import {DomainPermissionsResolver} from './resolvers/domain-permissions.resolver';
 import {ProvidersResolver} from './resolvers/providers.resolver';
 import {ProviderResolver} from './resolvers/provider.resolver';
 import {ProviderRolesComponent} from './domain/settings/providers/provider/roles/roles.component';
@@ -205,6 +204,7 @@ import { BotDetectionCreationComponent } from './domain/settings/botdetections/c
 import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
+import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -991,7 +991,10 @@ export const routes: Routes = [
                                 path: 'oauth2',
                                 component: ApplicationOAuth2Component,
                                 canActivate: [AuthGuard],
-                                resolve: {domainGrantTypes: ExtensionGrantsResolver, scopes: ScopesResolver},
+                                resolve: {
+                                  domainGrantTypes: ExtensionGrantsResolver,
+                                  scopes: ScopesAllResolver
+                                },
                                 data: {
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
@@ -1979,7 +1982,7 @@ export const routes: Routes = [
                             component: RoleCreationComponent,
                             canActivate: [AuthGuard],
                             resolve: {
-                              scopes: ScopesResolver
+                              scopes: ScopesAllResolver
                             },
                             data: {
                               perms: {
@@ -1993,7 +1996,7 @@ export const routes: Routes = [
                             canActivate: [AuthGuard],
                             resolve: {
                               role: RoleResolver,
-                              scopes: ScopesResolver
+                              scopes: ScopesAllResolver
                             },
                             data: {
                               breadcrumb: {
@@ -2144,12 +2147,12 @@ export const routes: Routes = [
                           {
                             path: 'default-scope',
                             component: ClientRegistrationDefaultScopeComponent,
-                            resolve: {scopes: ScopesResolver}
+                            resolve: {scopes: ScopesAllResolver}
                           },
                           {
                             path: 'allowed-scope',
                             component: ClientRegistrationAllowedScopeComponent,
-                            resolve: {scopes: ScopesResolver}
+                            resolve: {scopes: ScopesAllResolver}
                           },
                           {
                             path: 'templates',

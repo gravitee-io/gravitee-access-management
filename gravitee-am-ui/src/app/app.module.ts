@@ -369,6 +369,7 @@ import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.r
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
 import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-detection/form/form.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
+import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
 
 @NgModule({
   declarations: [
@@ -688,6 +689,7 @@ import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
     BotDetectionsResolver,
     BotDetectionResolver,
     BotDetectionPluginsResolver,
+    ScopesAllResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
