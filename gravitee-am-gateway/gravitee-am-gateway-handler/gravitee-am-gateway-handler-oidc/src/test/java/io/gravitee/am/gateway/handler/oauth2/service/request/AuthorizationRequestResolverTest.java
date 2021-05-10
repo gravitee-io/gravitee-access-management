@@ -172,10 +172,8 @@ public class AuthorizationRequestResolverTest {
         testObserver.assertNoErrors();
         
         // Request should have been enhanced with all of user's permissions, even though only one has been requested
-        List<String> expectedScopes = new ArrayList<>();
-        expectedScopes.add(scope);
-        expectedScopes.addAll(userScopes);
-        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+        List<String> expectedScopes = new ArrayList<>(authScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 2);
     }
     
     @Test
@@ -204,9 +202,8 @@ public class AuthorizationRequestResolverTest {
         
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
-        expectedScopes.addAll(userScopes);
-        
+
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
-        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 1);
     }
 }

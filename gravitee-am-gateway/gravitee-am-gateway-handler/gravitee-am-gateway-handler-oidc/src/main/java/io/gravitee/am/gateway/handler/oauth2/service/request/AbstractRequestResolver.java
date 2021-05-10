@@ -100,8 +100,10 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
         }
 
-        // set resolved scopes
-        request.setScopes(resolvedScopes);
+        // only put default values if there is no requested scopes
+        if (requestScopes == null || requestScopes.isEmpty()) {
+            request.setScopes(resolvedScopes);
+        }
 
         return Single.just(request);
     }
