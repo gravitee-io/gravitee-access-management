@@ -37,6 +37,8 @@ public class JdbcFlow {
     private boolean enabled;
     private String type;
     private String condition;
+    @Column("application_id")
+    private String application;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -94,6 +96,14 @@ public class JdbcFlow {
 
     public void setCondition(String condition) {
         this.condition = condition;
+    }
+
+    public String getApplication() {
+        return application;
+    }
+
+    public void setApplication(String application) {
+        this.application = application;
     }
 
     public LocalDateTime getCreatedAt() {
