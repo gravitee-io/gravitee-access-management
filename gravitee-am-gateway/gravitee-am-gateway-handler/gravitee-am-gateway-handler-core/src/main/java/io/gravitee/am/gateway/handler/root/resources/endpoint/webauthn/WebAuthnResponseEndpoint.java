@@ -151,7 +151,7 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
 
                                     // Now redirect back to authorization endpoint.
                                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                    final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+                                    final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
                                     ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
                                 });
                             });

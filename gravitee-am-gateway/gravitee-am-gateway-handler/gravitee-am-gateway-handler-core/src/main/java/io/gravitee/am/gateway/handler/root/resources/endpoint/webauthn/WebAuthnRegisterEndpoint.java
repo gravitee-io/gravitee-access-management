@@ -103,7 +103,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             final HttpServerRequest request = routingContext.request();
             if (Boolean.parseBoolean(request.getParam(SKIP_WEBAUTHN_PARAM_KEY))) {
                 queryParams.remove(SKIP_WEBAUTHN_PARAM_KEY);
-                String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+                String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
                 routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 doRedirect(routingContext.response(), returnURL);
@@ -115,8 +115,8 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final UserProperties userProperties = new UserProperties(user);
 
-            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams);
-            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"));
+            final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
+            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
 
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
@@ -167,7 +167,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             }
 
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-            final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams);
+            final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
             final Boolean skipEnrollment = webauthnRegister.getBoolean("skip_user_webauthn_registration", false);
             if (skipEnrollment) {
                 ctx.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);

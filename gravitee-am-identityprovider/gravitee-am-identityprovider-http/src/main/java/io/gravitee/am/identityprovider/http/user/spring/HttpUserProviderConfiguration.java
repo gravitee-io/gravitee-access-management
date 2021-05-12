@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.http.user.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -40,8 +41,13 @@ public class HttpUserProviderConfiguration {
     private HttpIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("idpHttpUsersWebClient")
-    public WebClient httpClient() {
+    public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
@@ -54,6 +60,6 @@ public class HttpUserProviderConfiguration {
             httpClientOptions.setTrustAll(true);
         }
 
-        return WebClient.create(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUsersResource().getBaseURL());
     }
 }

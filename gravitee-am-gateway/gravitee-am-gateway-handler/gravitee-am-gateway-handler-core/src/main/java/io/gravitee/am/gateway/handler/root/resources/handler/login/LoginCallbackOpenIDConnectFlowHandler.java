@@ -41,6 +41,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackOpenIDConnectFlowHandler.class);
     private static final String HASH_VALUE_PARAMETER = "urlHash";
+    private static final String RELAY_STATE_PARAM_KEY = "RelayState";
     private final ThymeleafTemplateEngine engine;
 
     public LoginCallbackOpenIDConnectFlowHandler(ThymeleafTemplateEngine engine) {
@@ -58,8 +59,17 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
             return;
         }
 
-        // if method is post, the OpenID Connect implicit flow response hash url must be present, add it to the execution context
+        // if method is post
+        // either SAML 2.0 protocol is used and RelayState must be present
+        // or the OpenID Connect implicit flow response hash url must be present
         if (request.method().equals(HttpMethod.POST)) {
+            final String relayState = request.getParam(RELAY_STATE_PARAM_KEY);
+            // if SAML 2.0 is used, continue
+            if (relayState != null) {
+                context.next();
+                return;
+            }
+            // else check OpenID Connect flow validity
             final String hashValue = request.getParam(HASH_VALUE_PARAMETER);
             if (hashValue == null) {
                 context.fail(new InternalAuthenticationServiceException("No URL hash value found"));

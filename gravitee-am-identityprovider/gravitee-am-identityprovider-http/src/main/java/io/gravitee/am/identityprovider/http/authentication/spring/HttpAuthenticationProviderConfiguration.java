@@ -61,7 +61,6 @@ public class HttpAuthenticationProviderConfiguration {
             httpClientOptions.setTrustAll(true);
         }
 
-
-        return webClientBuilder.createWebClient(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getAuthenticationResource().getBaseURL());
     }
 }

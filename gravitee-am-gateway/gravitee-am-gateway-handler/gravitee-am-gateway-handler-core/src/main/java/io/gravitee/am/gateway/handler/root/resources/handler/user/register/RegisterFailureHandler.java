@@ -62,7 +62,7 @@ public class RegisterFailureHandler implements Handler<RoutingContext> {
             if (exceptions != null && exceptions.length > 0) {
                 logger.debug("Error user actions : " + queryParams.get(ERROR_PARAM_KEY), exceptions[0]);
             }
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams);
+            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error occurs while redirecting to {}", context.request().absoluteURI(), ex);

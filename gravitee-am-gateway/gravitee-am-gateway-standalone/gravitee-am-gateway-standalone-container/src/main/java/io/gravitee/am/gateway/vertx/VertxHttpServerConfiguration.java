@@ -72,6 +72,18 @@ public class VertxHttpServerConfiguration implements InitializingBean {
     @Value("${http.tcpKeepAlive:true}")
     private boolean tcpKeepAlive;
 
+    @Value("${http.maxHeaderSize:8192}")
+    private int maxHeaderSize;
+
+    @Value("${http.maxChunkSize:8192}")
+    private int maxChunkSize;
+
+    @Value("${http.maxInitialLineLength:4096}")
+    private int maxInitialLineLength;
+
+    @Value("${http.maxFormAttributeSize:2048}")
+    private int maxFormAttributeSize;
+
     private ClientAuthMode clientAuth;
 
     public int getPort() {
@@ -192,6 +204,38 @@ public class VertxHttpServerConfiguration implements InitializingBean {
 
     public void setTlsProtocols(String tlsProtocols) {
         this.tlsProtocols = tlsProtocols;
+    }
+
+    public int getMaxHeaderSize() {
+        return maxHeaderSize;
+    }
+
+    public void setMaxHeaderSize(int maxHeaderSize) {
+        this.maxHeaderSize = maxHeaderSize;
+    }
+
+    public int getMaxChunkSize() {
+        return maxChunkSize;
+    }
+
+    public void setMaxChunkSize(int maxChunkSize) {
+        this.maxChunkSize = maxChunkSize;
+    }
+
+    public int getMaxInitialLineLength() {
+        return maxInitialLineLength;
+    }
+
+    public void setMaxInitialLineLength(int maxInitialLineLength) {
+        this.maxInitialLineLength = maxInitialLineLength;
+    }
+
+    public int getMaxFormAttributeSize() {
+        return maxFormAttributeSize;
+    }
+
+    public void setMaxFormAttributeSize(int maxFormAttributeSize) {
+        this.maxFormAttributeSize = maxFormAttributeSize;
     }
 
     @Override

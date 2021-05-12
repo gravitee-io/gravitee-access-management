@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.facebook.authentication.spring;
 
 import io.gravitee.am.identityprovider.facebook.FacebookIdentityProviderConfiguration;
+import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.client.WebClient;
@@ -40,14 +41,19 @@ public class FacebookAuthenticationProviderConfiguration {
     private FacebookIdentityProviderConfiguration configuration;
 
     @Bean
+    public WebClientBuilder webClientBuilder() {
+        return new WebClientBuilder();
+    }
+
+    @Bean
     @Qualifier("facebookWebClient")
-    public WebClient httpClient() {
+    public WebClient httpClient(WebClientBuilder webClientBuilder) {
         WebClientOptions httpClientOptions = new WebClientOptions();
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
-        return WebClient.create(vertx, httpClientOptions);
+        return webClientBuilder.createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());
     }
 }

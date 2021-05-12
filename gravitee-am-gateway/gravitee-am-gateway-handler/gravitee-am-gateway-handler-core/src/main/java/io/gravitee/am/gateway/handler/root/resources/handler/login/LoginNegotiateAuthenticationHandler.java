@@ -82,7 +82,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request())
                                 .add(ASK_FOR_NEGOTIATE_KEY, "true")
                                 .add(NEGOTIATE_CONTINUE_TOKEN_KEY, ((NegotiateContinueException) res.cause()).getToken());
-                        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams);
+                        final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
                         context.response().putHeader(HttpHeaders.LOCATION, redirectUri)
                                 .setStatusCode(302)
                                 .end();
@@ -105,7 +105,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
 
             // create post action url.
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request()).add(ASK_FOR_NEGOTIATE_KEY, "true");
-            context.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams));
+            context.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true));
 
             // Render login SSO SPNEGO form.
             // Responds with an 401 response with the "WWW-Authenticate: Negotiate" HTTP Response Header.
