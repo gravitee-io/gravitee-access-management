@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcRole;
 import io.gravitee.am.repository.jdbc.management.api.spring.role.SpringRoleOauthScopeRepository;
@@ -28,6 +29,8 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
@@ -42,8 +45,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -76,25 +78,50 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         referenceId, referenceType, error));
     }
 
-    private Maybe<Role> completeWithScopes(Maybe<Role> maybeRole, String id) {
-        Maybe<List<String>> scopes = oauthScopeRepository.findAllByRole(id)
-                .map(JdbcRole.OAuthScope::getScope)
+    @Override
+    public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
+        return fluxToFlowable(dbClient.select()
+                .from(JdbcRole.class)
+                .matching(from(where("reference_id").is(referenceId)
+                        .and(where("reference_type").is(referenceType.name()))))
+                .orderBy(Sort.Order.asc("name"))
+                .page(PageRequest.of(page, size))
+                .as(JdbcRole.class).all())
+                .map(this::toEntity)
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
-                .toMaybe();
-
-        return maybeRole.zipWith(scopes, (role, scope) -> {
-            LOGGER.debug("findById({}) fetch {} oauth scopes", id, scope == null ? 0 : scope.size());
-            role.setOauthScopes(scope);
-            return role;
-        });
+                .flatMap(content -> roleRepository.countByReference(referenceType.name(), referenceId)
+                        .map((count) -> new Page<Role>(content, page, count)));
     }
 
     @Override
-    public Single<Set<Role>> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return this.findAll(ReferenceType.DOMAIN, domain)
+    public Single<Page<Role>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, query, page, size);
+
+        boolean wildcardSearch = query.contains("*");
+        String wildcardValue = query.replaceAll("\\*+", "%");
+
+        String search = this.databaseDialectHelper.buildSearchRoleQuery(wildcardSearch, page, size);
+        String count = this.databaseDialectHelper.buildCountRoleQuery(wildcardSearch);
+
+        return fluxToFlowable(dbClient.execute(search)
+                .bind("value", wildcardSearch ? wildcardValue : query)
+                .bind("refId", referenceId)
+                .bind("refType", referenceType.name())
+                .as(JdbcRole.class)
+                .fetch().all())
+                .map(this::toEntity)
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()));
+                .flatMap(data -> monoToSingle(dbClient.execute(count)
+                        .bind("value", wildcardSearch ? wildcardValue : query)
+                        .bind("refId", referenceId)
+                        .bind("refType", referenceType.name())
+                        .as(Long.class)
+                        .fetch().first())
+                        .map(total -> new Page<Role>(data, page, total)))
+                .doOnError((error) -> LOGGER.error("Unable to search roles with referenceType {} and referenceId {} (page={}/size={})", referenceType, referenceId, page, size, error));
     }
 
     @Override
@@ -229,5 +256,18 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
 
         return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)))
                 .doOnError(error -> LOGGER.error("Unable to delete Role with id {}", id, error));
+    }
+
+    private Maybe<Role> completeWithScopes(Maybe<Role> maybeRole, String id) {
+        Maybe<List<String>> scopes = oauthScopeRepository.findAllByRole(id)
+                .map(JdbcRole.OAuthScope::getScope)
+                .toList()
+                .toMaybe();
+
+        return maybeRole.zipWith(scopes, (role, scope) -> {
+            LOGGER.debug("findById({}) fetch {} oauth scopes", id, scope == null ? 0 : scope.size());
+            role.setOauthScopes(scope);
+            return role;
+        });
     }
 }

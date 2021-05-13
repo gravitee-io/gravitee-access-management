@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "62acc630-e305-4aa3-9f9b-353d30ba0e42",
+		"_postman_id": "fd859148-c29f-46a6-9fdf-20bfb5e65843",
 		"name": "Gravitee.io - AM - User Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -767,7 +767,7 @@
 													"",
 													"pm.test(\"UM - list roles\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.length).to.eql(2);",
+													"    pm.expect(jsonData.data.length).to.eql(2);",
 													"});"
 												],
 												"type": "text/javascript"

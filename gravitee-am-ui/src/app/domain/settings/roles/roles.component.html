@@ -18,12 +18,23 @@
 <div class="gv-page-container">
   <h1 *ngIf="!isEmpty">Roles</h1>
   <div *ngIf="!isEmpty">
+    <div class="roles-search">
+      <mat-form-field>
+        <mat-icon matPrefix="">search</mat-icon>
+        <input type="text" matInput placeholder="Search" (input)="onSearch($event)">
+      </mat-form-field>
+    </div>
     <ngx-datatable class="material"
                    [columnMode]="'flex'"
                    [headerHeight]="40"
                    [footerHeight]="40"
                    [rowHeight]="50"
-                   [rows]='roles'>
+                   [rows]='roles'
+                   [externalPaging]="true"
+                   [count]="page.totalElements"
+                   [offset]="page.pageNumber"
+                   [limit]="page.size"
+                   (page)='setPage($event)'>
       <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'role-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="role-header" fxLayout="row">

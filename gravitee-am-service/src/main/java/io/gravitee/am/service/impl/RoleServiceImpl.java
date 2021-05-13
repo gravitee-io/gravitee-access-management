@@ -24,6 +24,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.permissions.DefaultRole;
@@ -86,6 +87,16 @@ public class RoleServiceImpl implements RoleService {
     public Single<Set<Role>> findByDomain(String domain) {
         return roleRepository.findAll(ReferenceType.DOMAIN, domain)
                 .collect(HashSet::new, Set::add);
+    }
+
+    @Override
+    public Single<Page<Role>> findByDomain(String domain, int page, int size) {
+        return roleRepository.findAll(ReferenceType.DOMAIN, domain, page, size);
+    }
+
+    @Override
+    public Single<Page<Role>> searchByDomain(String domain, String query, int page, int size) {
+        return roleRepository.search(ReferenceType.DOMAIN, domain, query, page, size);
     }
 
     @Override
@@ -364,7 +375,6 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private Flowable<Role> findAllSystem(ReferenceType assignableType) {
-
         LOGGER.debug("Find all global system roles");
 
         // Exclude roles internal only and non assignable roles.

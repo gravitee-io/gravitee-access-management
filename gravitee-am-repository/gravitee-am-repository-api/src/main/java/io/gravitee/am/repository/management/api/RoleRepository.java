@@ -15,8 +15,9 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -33,7 +34,9 @@ public interface RoleRepository extends CrudRepository<Role, String> {
 
     Flowable<Role> findAll(ReferenceType referenceType, String referenceId);
 
-    Single<Set<Role>> findByDomain(String domain);
+    Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
+    Single<Page<Role>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
     Single<Set<Role>> findByIdIn(List<String> ids);
 

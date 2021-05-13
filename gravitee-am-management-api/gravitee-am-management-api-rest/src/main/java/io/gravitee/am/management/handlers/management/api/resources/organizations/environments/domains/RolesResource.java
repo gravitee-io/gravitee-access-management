@@ -18,8 +18,8 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.RoleService;
@@ -27,6 +27,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewRole;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -39,11 +40,9 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,6 +50,8 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
  */
 @Api(tags = {"role"})
 public class RolesResource extends AbstractResource {
+    private static final String MAX_ROLES_SIZE_PER_PAGE_STRING = "50";
+    private static final int MAX_ROLES_SIZE_PER_PAGE = 50;
 
     @Context
     private ResourceContext resourceContext;
@@ -75,19 +76,22 @@ public class RolesResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue(MAX_ROLES_SIZE_PER_PAGE_STRING) int size,
+            @QueryParam("q") String query,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_ROLE, Acl.LIST)
                 .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> roleService.findByDomain(domain)
-                                .map(roles -> {
-                                    List<Role> sortedRoles = roles.stream()
-                                            .map(this::filterRoleInfos)
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedRoles).build();
-                                })))
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain))))
+                        .flatMapSingle(__ -> searchRoles(domain, query, page, size))
+                        .map(pagedRoles -> {
+                            List<Role> roles = pagedRoles.getData().stream()
+                                    .map(this::filterRoleInfos)
+                                    .sorted(Comparator.comparing(Role::getName))
+                                    .collect(Collectors.toList());
+                            return new Page<>(roles, pagedRoles.getCurrentPage(), pagedRoles.getTotalCount());
+                        })
                 .subscribe(response::resume, response::resume);
     }
 
@@ -124,6 +128,13 @@ public class RolesResource extends AbstractResource {
     @Path("{role}")
     public RoleResource getRoleResource() {
         return resourceContext.getResource(RoleResource.class);
+    }
+
+    private Single<Page<Role>> searchRoles(String domain, String query, int page, int size) {
+        if (query == null) {
+            return roleService.findByDomain(domain, page, Math.min(MAX_ROLES_SIZE_PER_PAGE, size));
+        }
+        return roleService.searchByDomain(domain, query, page, Math.min(MAX_ROLES_SIZE_PER_PAGE, size));
     }
 
     private Role filterRoleInfos(Role role) {

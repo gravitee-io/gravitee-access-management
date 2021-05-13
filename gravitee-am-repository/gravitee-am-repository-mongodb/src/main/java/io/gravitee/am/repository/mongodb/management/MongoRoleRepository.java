@@ -15,25 +15,28 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.RoleRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
-import io.reactivex.*;
 import io.reactivex.Observable;
+import io.reactivex.*;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -60,8 +63,32 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Set<Role>> findByDomain(String domain) {
-        return findAll(DOMAIN, domain).collect(HashSet::new, Set::add);
+    public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(size * page).limit(size)).map(this::convert).toList();
+        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, page, count));
+    }
+
+    @Override
+    public Single<Page<Role>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
+        Bson searchQuery = new BasicDBObject(FIELD_NAME, query);
+
+        // if query contains wildcard, use the regex query
+        if (query.contains("*")) {
+            String compactQuery = query.replaceAll("\\*+", ".*");
+            String regex = "^" + compactQuery;
+            Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+            searchQuery = new BasicDBObject(FIELD_NAME, pattern);
+        }
+
+        Bson mongoQuery = and(
+                eq(FIELD_REFERENCE_TYPE, referenceType.name()),
+                eq(FIELD_REFERENCE_ID, referenceId),
+                searchQuery);
+
+        Single<Long> countOperation = Observable.fromPublisher(rolesCollection.countDocuments(mongoQuery)).first(0l);
+        Single<List<Role>> rolesOperation = Observable.fromPublisher(rolesCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).toList();
+        return Single.zip(countOperation, rolesOperation, (count, roles) -> new Page<>(roles, 0, count));
     }
 
     @Override

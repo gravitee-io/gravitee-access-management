@@ -1,3 +1,14 @@
+.roles-search {
+  text-align: center;
+  mat-form-field {
+    width: 70%;
+  }
+  mat-icon {
+    vertical-align: middle;
+    padding-bottom: 4px;
+  }
+}
+
 ngx-datatable {
   .role-header {
     margin: 5px;

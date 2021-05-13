@@ -19,8 +19,8 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
@@ -51,7 +51,7 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         roleRepository.create(role).blockingGet();
 
         // fetch roles
-        TestObserver<Set<Role>> testObserver = roleRepository.findByDomain("testDomain").test();
+        TestObserver<List<Role>> testObserver = roleRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

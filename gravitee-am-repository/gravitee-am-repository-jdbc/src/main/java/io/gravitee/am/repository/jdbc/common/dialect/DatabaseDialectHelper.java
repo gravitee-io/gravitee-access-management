@@ -54,4 +54,9 @@ public interface DatabaseDialectHelper {
     String buildSearchScopeQuery(boolean wildcardSearch, int page, int size);
 
     String buildCountScopeQuery(boolean wildcardSearch);
+
+    String buildSearchRoleQuery(boolean wildcard, int page, int size);
+
+    String buildCountRoleQuery(boolean wildcard);
+
 }

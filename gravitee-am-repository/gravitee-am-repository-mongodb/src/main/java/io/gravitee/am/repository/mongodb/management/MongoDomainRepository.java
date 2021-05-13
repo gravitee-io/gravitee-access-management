@@ -98,7 +98,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> findAllByReferenceId(String environmentId) {
-        Bson mongoQuery =and(
+        Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId));
         return Flowable.fromPublisher(domainsCollection.find(mongoQuery)).map(MongoDomainRepository::convert);
@@ -106,17 +106,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> search(String environmentId, String query) {
-        // currently search on client_id field
-        Bson searchQuery = eq(FIELD_NAME, query);
+        // currently search on hrid field
+        Bson searchQuery = eq(FIELD_HRID, query);
         // if query contains wildcard, use the regex query
         if (query.contains("*")) {
             String compactQuery = query.replaceAll("\\*+", ".*");
             String regex = "^" + compactQuery;
             Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            searchQuery = new BasicDBObject(FIELD_NAME, pattern);
+            searchQuery = new BasicDBObject(FIELD_HRID, pattern);
         }
 
-        Bson mongoQuery =and(
+        Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId), searchQuery);
 
