@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management.api.spring.role;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcRole;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
@@ -31,6 +32,9 @@ import java.util.List;
  */
 @Repository
 public interface SpringRoleRepository extends RxJava2CrudRepository<JdbcRole, String> {
+
+    @Query("select count(r.id) from roles r where r.reference_type = :refType and r.reference_id = :refId")
+    Single<Long> countByReference(@Param("refType")String refType, @Param("refId") String refId);
 
     @Query("select * from roles r where r.reference_type = :refType and r.reference_id = :refId")
     Flowable<JdbcRole> findByReference(@Param("refType") String refType, @Param("refId") String refId);

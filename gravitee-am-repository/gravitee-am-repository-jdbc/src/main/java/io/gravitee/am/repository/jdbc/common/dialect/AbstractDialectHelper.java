@@ -361,4 +361,28 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                 .append(" a.domain = :domain ")
                 .append(" AND a.settings_client_id = :clientId").toString();
     }
+
+    @Override
+    public String buildSearchRoleQuery(boolean wildcard, int page, int size) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM roles r WHERE ");
+        return buildSearchRole(wildcard, builder)
+                .append(buildPagingClause("name", page, size))
+                .toString();
+    }
+
+    @Override
+    public String buildCountRoleQuery(boolean wildcard) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT r.id) FROM roles r WHERE ");
+        return buildSearchRole(wildcard, builder)
+                .toString();
+    }
+
+    protected StringBuilder buildSearchRole(boolean wildcard, StringBuilder builder) {
+        return builder.append("r.reference_id = :refId")
+                .append(" AND r.reference_type = :refType")
+                .append(" AND")
+                .append(wildcard ? " UPPER(r.name)" : " r.name")
+                .append(wildcard ? " LIKE " : " =")
+                .append(wildcard ? " UPPER(:value) " : " :value ");
+    }
 }

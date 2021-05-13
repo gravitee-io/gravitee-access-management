@@ -16,7 +16,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from "@angular/common/http";
 import { AppConfig } from "../../config/app.config";
-import { Observable } from "rxjs";
+import { merge, Observable, of } from "rxjs";
+import { mergeMap, toArray } from "rxjs/operators";
 
 @Injectable()
 export class RoleService {
@@ -24,8 +25,29 @@ export class RoleService {
 
   constructor(private http: HttpClient) { }
 
-  findByDomain(domainId): Observable<any> {
-    return this.http.get<any>(this.rolesURL + domainId + "/roles");
+  findAllByDomain(domainId): Observable<any> {
+    const PAGE_SIZE = 50; // probably enough to get all roles at once, but just in case iterate on pages
+    return this.findByDomain(domainId, 0, PAGE_SIZE).pipe(mergeMap((p) => {
+      let iterations = Math.floor(p.totalCount / PAGE_SIZE) + (p.totalCount % PAGE_SIZE == 0 ? 0 : 1);
+      let pageRequests = [];
+      pageRequests[0] = of(... p.data);
+      for (let i = 1; i < iterations; ++i) {
+        pageRequests[i] = this.findByDomain(domainId, i, PAGE_SIZE)
+          .pipe(mergeMap((p) => {
+            return of(... p.data);
+          }));
+      }
+
+      return merge (...pageRequests);
+    })).pipe(toArray())
+  }
+
+  findByDomain(domainId, page, size): Observable<any> {
+    return this.http.get<any>(this.rolesURL + domainId + "/roles?page=" + page + "&=size" + size);
+  }
+
+  search(searchTerm, domainId,page, size): Observable<any> {
+    return this.http.get<any>(this.rolesURL + domainId + "/roles" + '?q=' + searchTerm + '&page=' + page + '&size=' + size);
   }
 
   get(domainId, id): Observable<any> {

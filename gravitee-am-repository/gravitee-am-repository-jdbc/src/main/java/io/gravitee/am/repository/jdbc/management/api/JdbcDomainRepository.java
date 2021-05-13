@@ -200,14 +200,14 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         String search = new StringBuilder("SELECT * FROM domains d WHERE")
 
-                .append(" d.reference_type = :referenceType AND d.reference_id = :referenceId")
-                .append(" AND upper(d.name) " + (wildcardMatch ? "LIKE" : "="))
+                .append(" d.reference_type = :refType AND d.reference_id = :refId")
+                .append(" AND UPPER(d.hrid) " + (wildcardMatch ? "LIKE" : "="))
                 .append(" :value")
                 .toString();
 
         return fluxToFlowable(dbClient.execute(search)
-                .bind("referenceType", ReferenceType.ENVIRONMENT.name())
-                .bind("referenceId", environmentId)
+                .bind("refType", ReferenceType.ENVIRONMENT.name())
+                .bind("refId", environmentId)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .as(JdbcDomain.class)
                 .fetch()

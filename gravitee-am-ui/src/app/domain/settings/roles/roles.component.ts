@@ -25,25 +25,46 @@ import {SnackbarService} from '../../../services/snackbar.service';
   styleUrls: ['./roles.component.scss']
 })
 export class DomainSettingsRolesComponent implements OnInit {
+  private searchValue: string;
   roles: any[];
   domainId: string;
+  page: any = {};
 
   constructor(private roleService: RoleService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
-              private route: ActivatedRoute) { }
+              private route: ActivatedRoute) {
+    this.page.pageNumber = 0;
+    this.page.size = 10;
+  }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.roles = this.route.snapshot.data['roles'];
+    const pagedRoles = this.route.snapshot.data['roles'];
+    this.roles = pagedRoles.data;
+    this.page.totalElements = pagedRoles.totalCount;
   }
 
   get isEmpty() {
-    return !this.roles || this.roles.length === 0;
+    return !this.roles || this.roles.length === 0 && !this.searchValue;
   }
 
   loadRoles() {
-    this.roleService.findByDomain(this.domainId).subscribe(response => this.roles = response);
+    const findRoles = (this.searchValue) ?
+      this.roleService.search('*' + this.searchValue + '*',this.domainId, this.page.pageNumber, this.page.size) :
+      this.roleService.findByDomain(this.domainId, this.page.pageNumber, this.page.size);
+
+
+    findRoles.subscribe(pagedScopes => {
+      this.page.totalElements = pagedScopes.totalCount;
+      this.roles = pagedScopes.data;
+    });
+  }
+
+  onSearch(event) {
+    this.page.pageNumber = 0;
+    this.searchValue = event.target.value;
+    this.loadRoles();
   }
 
   delete(id, event) {
@@ -58,6 +79,11 @@ export class DomainSettingsRolesComponent implements OnInit {
           });
         }
       });
+  }
+
+  setPage(pageInfo) {
+    this.page.pageNumber = pageInfo.offset;
+    this.loadRoles();
   }
 
 }

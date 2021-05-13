@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.model.NewRole;
@@ -39,6 +40,10 @@ public interface RoleService {
     Flowable<Role> findAllAssignable(ReferenceType referenceType, String referenceId, ReferenceType assignableType);
 
     Single<Set<Role>> findByDomain(String domain);
+
+    Single<Page<Role>> findByDomain(String domain, int page, int size);
+
+    Single<Page<Role>> searchByDomain(String domain, String query, int page, int size);
 
     Single<Role> findById(ReferenceType referenceType, String referenceId, String id);
 

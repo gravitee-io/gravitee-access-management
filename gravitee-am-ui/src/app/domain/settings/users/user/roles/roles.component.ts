@@ -130,7 +130,7 @@ export class AddUserRolesComponent implements OnInit {
         this.roles = roles;
       })
     } else {
-      this.roleService.findByDomain(this.domainId).subscribe(roles => {
+      this.roleService.findAllByDomain(this.domainId).subscribe(roles => {
         this.roles = roles;
       });
     }
