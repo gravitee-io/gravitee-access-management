@@ -139,9 +139,11 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     public Map<String, Object> getTemplateVariables(Domain domain, Client client) {
         Map<String, Object> variables = new HashMap<>();
         AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-        variables.put(TEMPLATE_KEY_BOT_DETECTION_ENABLED, accountSettings != null && accountSettings.isUseBotDetection());
-        if (accountSettings != null) {
-            if (accountSettings.isUseBotDetection()) {
+        variables.put(TEMPLATE_KEY_BOT_DETECTION_ENABLED, accountSettings != null && accountSettings.isUseBotDetection() && accountSettings.getBotDetectionPlugin() != null);
+        if (accountSettings != null && accountSettings.isUseBotDetection()) {
+            if (accountSettings.getBotDetectionPlugin() == null) {
+                LOGGER.warn("Bot Detection enabled but plugin reference isn't defined in settings");
+            } else {
                 final BotDetection botDetection = this.botDetections.get(accountSettings.getBotDetectionPlugin());
                 variables.put(TEMPLATE_KEY_BOT_DETECTION_PLUGIN, botDetection.getType());
                 try {
