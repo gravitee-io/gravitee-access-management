@@ -772,10 +772,10 @@
 									"    pm.response.to.be.header('Content-Type', 'application/json');",
 									"    var body = pm.response.json();",
 									"",
-									"    pm.expect(body[0].key).to.eql('address');",
-									"    pm.expect(body[0].system).to.eql(true);",
+									"    pm.expect(body.data[0].key).to.eql('address');",
+									"    pm.expect(body.data[0].system).to.eql(true);",
 									"    ",
-									"    pm.environment.set('addressScopeId', body[0].id);",
+									"    pm.environment.set('addressScopeId', body.data[0].id);",
 									"});"
 								],
 								"type": "text/javascript"

@@ -661,7 +661,7 @@
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
 									"",
-									"    tests['Redirect to login'] = location.includes('/login?response_type=code&client_id='+ pm.environment.get('clientId') + '&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
+									"    tests['Redirect to login'] = location.includes('/login?response_type=code&client_id='+ pm.environment.get('clientId') + '&redirect_uri=https%3A%2F%2Fauth-nightly.gravitee.io%2FmyApp%2Fcallback&state=1234-5678-9876&scope=openid&error=user_consent_failed&error_code=CALLOUT_EXIT_ON_ERROR&error_description=pre-consent-failed');",
 									"});"
 								],
 								"type": "text/javascript"
