@@ -52,7 +52,7 @@ public class MariaDBDialect extends AbstractDialect {
         // Use sequence generator to create Virtual table
         final long intervalInSeconds = criteria.interval() / 1000;
         String query = "WITH time_buckets AS (\n" +
-             "SELECT (seq * "+ intervalInSeconds +" + " + (bucketStartDate * 1000) + ") slot, " +
+             "SELECT (seq * "+ criteria.interval() +" + " + (bucketStartDate * 1000) + ") slot, " +
                 " FROM_UNIXTIME(seq * "+ intervalInSeconds +" + " + bucketStartDate + ") startDate, " +
                 " FROM_UNIXTIME( ( seq + 1 ) * "+ intervalInSeconds +" + " + bucketStartDate + ") endDate FROM seq_0_to_" + (intervals.size() - 1) + " "
                 + ")\n" +
