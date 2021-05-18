@@ -85,7 +85,7 @@ public class ScopesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.LIST)
-                .andThen(query != null ? scopeService.search(domain, query, page, size) : scopeService.findByDomain(domain, page, size)
+                .andThen(query != null ? scopeService.search(domain, query, page, Math.min(size, MAX_SCOPES_SIZE_PER_PAGE)) : scopeService.findByDomain(domain, page, Math.min(size, MAX_SCOPES_SIZE_PER_PAGE))
                 ).map(searchPage -> new Page(
                     searchPage.getData().stream().map(this::filterScopeInfos).collect(Collectors.toList()),
                     searchPage.getCurrentPage(),
