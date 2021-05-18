@@ -59,6 +59,7 @@ import {CertificateCreationComponent} from './domain/settings/certificates/creat
 import {CertificateComponent} from './domain/settings/certificates/certificate/certificate.component';
 import {CertificateResolver} from './resolvers/certificate.resolver';
 import {RolesResolver} from './resolvers/roles.resolver';
+import {PageRolesResolver} from './resolvers/page-roles.resolver';
 import {RoleCreationComponent} from './domain/settings/roles/creation/role-creation.component';
 import {RoleComponent} from './domain/settings/roles/role/role.component';
 import {RoleResolver} from './resolvers/role.resolver';
@@ -1974,7 +1975,7 @@ export const routes: Routes = [
                             pathMatch: 'full',
                             component: DomainSettingsRolesComponent,
                             resolve: {
-                              roles: RolesResolver
+                              roles: PageRolesResolver
                             }
                           },
                           {
