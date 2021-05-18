@@ -20,23 +20,14 @@ import { RoleService } from "../services/role.service";
 import { OrganizationService } from "../services/organization.service";
 
 @Injectable()
-export class RolesResolver implements Resolve<any> {
+export class PageRolesResolver implements Resolve<any> {
 
   constructor(private roleService: RoleService,
               private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-
-    if (state.url.startsWith('/settings/providers')) {
-      return this.organizationService.roles('ORGANIZATION');
-    }
-
-    if (state.url.startsWith('/settings')) {
-      return this.organizationService.roles();
-    }
-
     const domainId = route.parent.data['domain'].id;
-    return this.roleService.findAllByDomain(domainId);
+    return this.roleService.findByDomain(domainId, 0, 10);
   }
 
 }

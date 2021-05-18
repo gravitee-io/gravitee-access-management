@@ -147,6 +147,7 @@ import {CertificateFormComponent} from './domain/settings/certificates/certifica
 import {CertificateResolver} from './resolvers/certificate.resolver';
 import {RoleService} from './services/role.service';
 import {RolesResolver} from './resolvers/roles.resolver';
+import {PageRolesResolver} from './resolvers/page-roles.resolver';
 import {RoleResolver} from './resolvers/role.resolver';
 import {RoleCreationComponent} from './domain/settings/roles/creation/role-creation.component';
 import {RoleComponent} from './domain/settings/roles/role/role.component';
@@ -619,6 +620,7 @@ import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
     CertificateResolver,
     EnvironmentResolver,
     RolesResolver,
+    PageRolesResolver,
     RoleResolver,
     UsersResolver,
     UserResolver,
