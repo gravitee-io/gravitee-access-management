@@ -17,9 +17,8 @@ package io.gravitee.am.identityprovider.salesforce.authentication;
 
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
@@ -27,12 +26,11 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProces
 import io.gravitee.am.identityprovider.salesforce.SalesForceIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.salesforce.authentication.spring.SalesForceAuthenticationProviderConfiguration;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -46,10 +44,10 @@ public class SalesForceAuthenticationProvider extends AbstractOpenIDConnectAuthe
     private WebClient client;
 
     @Autowired
-    private DefaultIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private SalesForceIdentityProviderConfiguration configuration;
@@ -82,9 +80,6 @@ public class SalesForceAuthenticationProvider extends AbstractOpenIDConnectAuthe
         if (configuration.getScopes() == null) {
             configuration.setScopes(new HashSet<>());
         }
-/*        configuration.getScopes().add(Scope.OPENID.getKey());
-        configuration.getScopes().add(Scope.PROFILE.getKey());
-        configuration.getScopes().add(Scope.EMAIL.getKey());*/
     }
 
     @Override

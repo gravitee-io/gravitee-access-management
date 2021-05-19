@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.identityprovider.inline;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.inline.authentication.InlineAuthenticationProvider;
 
 /**
@@ -37,14 +34,4 @@ public class InlineIdentityProvider implements IdentityProvider {
         return InlineAuthenticationProvider.class;
     }
 
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return InlineIdentityProviderMapper.class;
-    }
-
-
-    @Override
-    public Class<? extends InlineIdentityProviderRoleMapper> roleMapper() {
-        return InlineIdentityProviderRoleMapper.class;
-    }
 }

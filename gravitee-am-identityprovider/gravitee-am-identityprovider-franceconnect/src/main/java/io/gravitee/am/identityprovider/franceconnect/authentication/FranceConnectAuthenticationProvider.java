@@ -182,11 +182,11 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
-                    return createUser(httpClientResponse.bodyAsJsonObject().getMap());
+                    return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
 
-    private User createUser(Map<String, Object> attributes) {
+    private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
         String username = (String) attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB));
 
         // Looks like the preferred_username can be empty
@@ -222,7 +222,7 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
         ((DefaultUser) user).setAdditionalInformation(additionalInformation);
 
         // set user roles
-        ((DefaultUser) user).setRoles(applyRoleMapping(attributes));
+        ((DefaultUser) user).setRoles(applyRoleMapping(authContext, attributes));
         return user;
     }
 

@@ -15,9 +15,7 @@
  */
 package io.gravitee.am.identityprovider.http.authentication;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderMapper;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
@@ -71,13 +69,13 @@ public class HttpAuthenticationProviderTestConfiguration {
     }
 
     @Bean
-    public HttpIdentityProviderMapper mapper() {
-        return new HttpIdentityProviderMapper();
+    public IdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 
     @Bean
-    public HttpIdentityProviderRoleMapper roleMapper() {
-        return new HttpIdentityProviderRoleMapper();
+    public IdentityProviderRoleMapper roleMapper() {
+        return new DefaultIdentityProviderRoleMapper();
     }
 
     @Bean

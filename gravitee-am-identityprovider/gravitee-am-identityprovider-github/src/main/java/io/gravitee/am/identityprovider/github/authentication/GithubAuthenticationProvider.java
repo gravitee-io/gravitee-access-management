@@ -129,11 +129,11 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
-                    return createUser(httpClientResponse.bodyAsJsonObject().getMap());
+                    return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
 
-    private User createUser(Map<String, Object> attributes) {
+    private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
         User user = new DefaultUser(String.valueOf(attributes.get(GithubUser.LOGIN)));
         ((DefaultUser) user).setId(String.valueOf(attributes.get(GithubUser.ID)));
         // set additional information
@@ -150,7 +150,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
         }
         ((DefaultUser) user).setAdditionalInformation(additionalInformation);
         // set user roles
-        ((DefaultUser) user).setRoles(applyRoleMapping(attributes));
+        ((DefaultUser) user).setRoles(applyRoleMapping(authContext, attributes));
         return user;
     }
 

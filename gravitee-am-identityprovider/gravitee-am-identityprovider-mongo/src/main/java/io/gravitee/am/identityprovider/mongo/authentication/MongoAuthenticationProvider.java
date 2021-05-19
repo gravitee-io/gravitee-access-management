@@ -19,13 +19,8 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.reactivex.Flowable;
@@ -39,7 +34,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -56,10 +54,10 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
     @Autowired
-    private MongoIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private MongoIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -97,7 +95,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
 
                     return true;
                 })
-                .map(this::createUser)
+                .map(doc -> this.createUser(authentication.getContext(), doc))
                 .toList()
                 .flatMapMaybe(users -> {
                     if (users.isEmpty()) {
@@ -122,7 +120,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     public Maybe<User> loadUserByUsername(String username) {
         final String encodedUsername = username.toLowerCase();
         return findUserByUsername(encodedUsername)
-                .map(document -> createUser(document));
+                .map(document -> createUser(new SimpleAuthenticationContext(), document));
     }
 
     private Maybe<Document> findUserByUsername(String username) {
@@ -133,7 +131,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 
-    private User createUser(Document document) {
+    private User createUser(AuthenticationContext authContext, Document document) {
         String username = document.getString(FIELD_USERNAME);
         DefaultUser user = new DefaultUser(username);
         Map<String, Object> claims = new HashMap<>();
@@ -145,7 +143,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         user.setId(sub);
 
         // set user roles
-        user.setRoles(getUserRoles(document));
+        user.setRoles(getUserRoles(authContext, document));
 
         // set claims
         claims.put(StandardClaims.SUB, sub);
@@ -178,21 +176,12 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         return rawString;
     }
 
-    private List<String> getUserRoles(Document document) {
-        Set<String> roles = new HashSet();
-        if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=", 2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
-                    if (document.containsKey(userAttribute) && document.getString(userAttribute).equals(userValue)) {
-                        roles.add(role);
-                    }
-                });
-            });
+    private List<String> getUserRoles(AuthenticationContext context, Document document) {
+        if (roleMapper != null) {
+            Map<String, Object> profile = new HashMap<>();
+            document.forEach((key, value) -> profile.put(key, value));
+            return roleMapper.apply(context, profile);
         }
-        return new ArrayList<>(roles);
+        return new ArrayList<>();
     }
 }

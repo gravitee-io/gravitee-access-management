@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.identityprovider.jdbc;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.jdbc.authentication.JdbcAuthenticationProvider;
 import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider;
@@ -41,13 +44,4 @@ public class JdbcIdentityProvider implements IdentityProvider {
         return JdbcUserProvider.class;
     }
 
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return JdbcIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return JdbcIdentityProviderRoleMapper.class;
-    }
 }

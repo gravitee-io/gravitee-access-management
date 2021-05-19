@@ -15,13 +15,8 @@
  */
 package io.gravitee.am.identityprovider.ldap.authentication;
 
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
@@ -96,13 +91,13 @@ public class LdapBindAuthenticationProviderTest extends LdapAuthenticationProvid
         }
 
         @Bean
-        public LdapIdentityProviderMapper mapper() {
-            return new LdapIdentityProviderMapper();
+        public DefaultIdentityProviderMapper mapper() {
+            return new DefaultIdentityProviderMapper();
         }
 
         @Bean
-        public LdapIdentityProviderRoleMapper roleMapper() {
-            return new LdapIdentityProviderRoleMapper();
+        public DefaultIdentityProviderRoleMapper roleMapper() {
+            return new DefaultIdentityProviderRoleMapper();
         }
     }
 }

@@ -19,7 +19,6 @@ import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
@@ -50,7 +49,7 @@ public class AzureADAuthenticationProvider extends AbstractOpenIDConnectAuthenti
     private DefaultIdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private AzureADIdentityProviderConfiguration configuration;

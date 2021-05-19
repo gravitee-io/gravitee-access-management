@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.identityprovider.http;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.authentication.HttpAuthenticationProvider;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.user.HttpUserProvider;
@@ -41,13 +44,4 @@ public class HttpIdentityProvider implements IdentityProvider {
         return HttpUserProvider.class;
     }
 
-    @Override
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return HttpIdentityProviderMapper.class;
-    }
-
-    @Override
-    public Class<? extends IdentityProviderRoleMapper> roleMapper() {
-        return HttpIdentityProviderRoleMapper.class;
-    }
 }

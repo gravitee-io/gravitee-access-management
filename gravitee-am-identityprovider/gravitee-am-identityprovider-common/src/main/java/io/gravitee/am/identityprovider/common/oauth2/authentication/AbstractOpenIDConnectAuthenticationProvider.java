@@ -27,6 +27,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.common.Request;
@@ -84,12 +85,12 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 .collect(Collectors.toMap(claimName -> claimName, claimName -> attributes.get(claimName)));
     }
 
-    protected Maybe<User> retrieveUserFromIdToken(String idToken) {
+    protected Maybe<User> retrieveUserFromIdToken(AuthenticationContext authContext, String idToken) {
         return Maybe.fromCallable(() -> jwtProcessor.process(idToken, null))
                 .onErrorResumeNext(ex -> {
                     return Maybe.error(new BadCredentialsException(ex.getMessage()));
                 })
-                .map(jwtClaimsSet -> createUser(jwtClaimsSet.getClaims()));
+                .map(jwtClaimsSet -> createUser(authContext, jwtClaimsSet.getClaims()));
     }
 
     @Override
@@ -186,14 +187,14 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     protected Maybe<User> profile(Token token, Authentication authentication) {
         // we only have the id_token, try to decode it and create the end-user
         if (TokenTypeHint.ID_TOKEN.equals(token.getTypeHint())) {
-            return retrieveUserFromIdToken(token.getValue());
+            return retrieveUserFromIdToken(authentication.getContext(), token.getValue());
         }
 
         // if it's an access token but user ask for id token verification, try to decode it and create the end-user
         if (TokenTypeHint.ACCESS_TOKEN.equals(token.getTypeHint()) && getConfiguration().isUseIdTokenForUserInfo()) {
             if (authentication.getContext().get(ID_TOKEN_PARAMETER) != null) {
                 String idToken = String.valueOf(authentication.getContext().get(ID_TOKEN_PARAMETER));
-                return retrieveUserFromIdToken(idToken);
+                return retrieveUserFromIdToken(authentication.getContext(), idToken);
             } else {
                 // no suitable value to retrieve user
                 return Maybe.error(new BadCredentialsException("No suitable value to retrieve user information"));
@@ -210,11 +211,11 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
-                    return createUser(httpClientResponse.bodyAsJsonObject().getMap());
+                    return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
 
-    protected User createUser(Map<String, Object> attributes) {
+    protected User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
         String username = String.valueOf(attributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB)));
         DefaultUser user = new DefaultUser(username);
         user.setId(String.valueOf(attributes.get(StandardClaims.SUB)));
@@ -231,7 +232,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         }
         user.setAdditionalInformation(additionalInformation);
         // set user roles
-        user.setRoles(applyRoleMapping(attributes));
+        user.setRoles(applyRoleMapping(authContext, attributes));
         return user;
     }
 

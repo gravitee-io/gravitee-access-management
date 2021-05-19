@@ -133,11 +133,11 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
                        return Maybe.error(new BadCredentialsException(httpResponse.bodyAsString()));
                     }
 
-                    return Maybe.just(convert(httpResponse.bodyAsJsonObject()));
+                    return Maybe.just(convert(auth.getContext(), httpResponse.bodyAsJsonObject()));
                 });
     }
 
-    private User convert(JsonObject facebookUser) {
+    private User convert(AuthenticationContext authContext, JsonObject facebookUser) {
 
         DefaultUser user = new DefaultUser(String.valueOf(facebookUser.getString(FacebookUser.ID)));
         user.setId(facebookUser.getString(FacebookUser.ID));
@@ -163,7 +163,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
         user.setAdditionalInformation(additionalInformation);
 
         // Set user roles.
-        user.setRoles(applyRoleMapping(facebookUser.getMap()));
+        user.setRoles(applyRoleMapping(authContext, facebookUser.getMap()));
 
         return user;
     }

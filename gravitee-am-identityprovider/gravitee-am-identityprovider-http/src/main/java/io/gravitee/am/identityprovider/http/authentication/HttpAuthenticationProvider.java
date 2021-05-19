@@ -18,13 +18,8 @@ package io.gravitee.am.identityprovider.http.authentication;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.http.HttpIdentityProviderResponse;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
@@ -71,10 +66,10 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     private HttpIdentityProviderConfiguration configuration;
 
     @Autowired
-    private HttpIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private HttpIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -165,7 +160,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
                             throw new InternalAuthenticationServiceException("Unable to find user information");
                         }
                         // else connect the user
-                        return createUser( new JsonObject(responseBody).getMap());
+                        return createUser(authentication.getContext(), new JsonObject(responseBody).getMap());
                     })
                     .onErrorResumeNext(ex -> {
                         if (ex instanceof AuthenticationException) {
@@ -185,7 +180,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         return Maybe.empty();
     }
 
-    private User createUser(Map<String, Object> attributes) {
+    private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
         // apply user mapping
         Map<String, Object> mappedAttributes = applyUserMapping(attributes);
 
@@ -195,7 +190,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         }
 
         // apply role mapping
-        List<String> roles = applyRoleMapping(attributes);
+        List<String> roles = applyRoleMapping(authContext, attributes);
 
         // create the user
         String username = mappedAttributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB)).toString();
@@ -228,31 +223,11 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         return claims;
     }
 
-    private List<String> applyRoleMapping(Map<String, Object> attributes) {
+    private List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!roleMappingEnabled()) {
             return Collections.emptyList();
         }
-
-        Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
-                }
-            });
-        });
-
-        return new ArrayList<>(roles);
+        return this.roleMapper.apply(authContext, attributes);
     }
 
     private boolean mappingEnabled() {
@@ -260,7 +235,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     }
 
     private boolean roleMappingEnabled() {
-        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
+        return this.roleMapper != null;
     }
 
     private static Map<String, String> format(String query) {

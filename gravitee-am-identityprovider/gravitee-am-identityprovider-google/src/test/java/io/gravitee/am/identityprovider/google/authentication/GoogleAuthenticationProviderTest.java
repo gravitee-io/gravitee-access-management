@@ -27,6 +27,7 @@ import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.el.TemplateEngine;
 import io.reactivex.observers.TestObserver;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
@@ -213,11 +214,13 @@ public class GoogleAuthenticationProviderTest {
         Map<String, String[]> roles = new HashMap<>();
         roles.put("admin", new String[] { "preferred_username=john.doe@graviteesource.com"});
         when(roleMapper.getRoles()).thenReturn(roles);
+        when(roleMapper.apply(any(), anyMap())).thenCallRealMethod();
 
         Authentication authentication = mock(Authentication.class);
         AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
         when(authentication.getContext()).thenReturn(authenticationContext);
         when(authenticationContext.get("id_token")).thenReturn(jwt);
+        when(authenticationContext.getTemplateEngine()).thenReturn(TemplateEngine.templateEngine());
 
         io.gravitee.gateway.api.Request request = mock(io.gravitee.gateway.api.Request.class);
         when(authenticationContext.request()).thenReturn(request);

@@ -17,13 +17,8 @@ package io.gravitee.am.identityprovider.inline.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.inline.InlineIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.inline.InlineIdentityProviderMapper;
-import io.gravitee.am.identityprovider.inline.InlineIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.inline.authentication.provisioning.InlineInMemoryUserDetailsManager;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.reactivex.Maybe;
@@ -33,7 +28,10 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -44,7 +42,6 @@ import java.util.*;
 public class InlineAuthenticationProvider implements AuthenticationProvider, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InlineAuthenticationProvider.class);
-    private static final String USERNAME = "username";
 
     @Autowired
     private InlineIdentityProviderConfiguration configuration;
@@ -56,10 +53,10 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
     private InlineInMemoryUserDetailsManager userDetailsService;
 
     @Autowired
-    private InlineIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
-    private InlineIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Override
     public void afterPropertiesSet() {
@@ -78,37 +75,24 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
                         LOGGER.debug("Authentication failed: password does not match stored value");
                         throw new BadCredentialsException("Bad credentials");
                     }
-                    return createUser(user);
+                    return createUser(authentication.getContext(), user);
                 });
     }
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
         return userDetailsService.loadUserByUsername(username)
-                .map(user -> createUser(user));
+                .map(user -> createUser(new SimpleAuthenticationContext(), user));
     }
 
-    private List<String> getUserRoles(io.gravitee.am.identityprovider.inline.model.User inlineUser) {
-        Set<String> roles = new HashSet();
-        if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=", 2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
-
-                    // for inline provider we only find by username
-                    if (USERNAME.equals(userAttribute) && inlineUser.getUsername().equals(userValue)) {
-                        roles.add(role);
-                    }
-                });
-            });
+    private List<String> getUserRoles(AuthenticationContext authContext, io.gravitee.am.identityprovider.inline.model.User inlineUser) {
+        if (roleMapper != null) {
+            return roleMapper.apply(authContext, inlineUser.toMap());
         }
-        return new ArrayList<>(roles);
+        return Collections.emptyList();
     }
 
-    private User createUser(io.gravitee.am.identityprovider.inline.model.User inlineUser) {
+    private User createUser(AuthenticationContext authContext, io.gravitee.am.identityprovider.inline.model.User inlineUser) {
         DefaultUser user = new DefaultUser(inlineUser.getUsername());
         user.setId(inlineUser.getUsername());
 
@@ -136,7 +120,7 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         user.setAdditionalInformation(claims);
 
         // set user roles
-        user.setRoles(getUserRoles(inlineUser));
+        user.setRoles(getUserRoles(authContext, inlineUser));
 
         return user;
     }
