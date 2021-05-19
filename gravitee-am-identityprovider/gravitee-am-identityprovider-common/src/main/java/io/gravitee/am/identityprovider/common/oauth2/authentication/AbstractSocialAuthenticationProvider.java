@@ -18,10 +18,7 @@ package io.gravitee.am.identityprovider.common.oauth2.authentication;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
@@ -100,31 +97,11 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
         return claims;
     }
 
-    protected List<String> applyRoleMapping(Map<String, Object> attributes) {
+    protected List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!roleMappingEnabled()) {
             return Collections.emptyList();
         }
-
-        Set<String> roles = new HashSet<>();
-        getIdentityProviderRoleMapper().getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=",2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
-                }
-            });
-        });
-
-        return new ArrayList<>(roles);
+        return this.getIdentityProviderRoleMapper().apply(authContext, attributes);
     }
 
     protected abstract Maybe<Token> authenticate(Authentication authentication);
@@ -140,9 +117,7 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
     }
 
     private boolean roleMappingEnabled() {
-        return this.getIdentityProviderRoleMapper() != null
-                && this.getIdentityProviderRoleMapper().getRoles() != null
-                && !this.getIdentityProviderRoleMapper().getRoles().isEmpty();
+        return this.getIdentityProviderRoleMapper() != null;
     }
 
 

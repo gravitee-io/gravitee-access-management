@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
-import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
@@ -47,10 +45,10 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     private WebClient client;
 
     @Autowired
-    private DefaultIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private OAuth2GenericIdentityProviderConfiguration configuration;

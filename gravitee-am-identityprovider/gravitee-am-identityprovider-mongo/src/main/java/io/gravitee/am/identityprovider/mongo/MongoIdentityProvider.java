@@ -37,11 +37,4 @@ public class MongoIdentityProvider implements IdentityProvider {
         return MongoUserProvider.class;
     }
 
-    public Class<? extends IdentityProviderMapper> mapper() {
-        return MongoIdentityProviderMapper.class;
-    }
-
-    public Class<? extends MongoIdentityProviderRoleMapper> roleMapper() {
-        return MongoIdentityProviderRoleMapper.class;
-    }
 }

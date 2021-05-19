@@ -80,7 +80,7 @@ public class DummyAuthenticationContext implements AuthenticationContext {
 
     @Override
     public TemplateEngine getTemplateEngine() {
-        throw new IllegalStateException();
+        return TemplateEngine.templateEngine();
     }
 
 }

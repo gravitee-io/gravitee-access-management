@@ -15,12 +15,8 @@
  */
 package io.gravitee.am.identityprovider.jdbc.configuration;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderMapper;
-import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.jdbc.authentication.JdbcAuthenticationProvider;
-import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.user.JdbcUserProvider;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
 import io.r2dbc.pool.ConnectionPool;
@@ -29,12 +25,10 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.reactivex.Completable;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -102,12 +96,12 @@ public abstract class JdbcAuthenticationProviderConfigurationTest implements Ini
     }
 
     @Bean
-    public JdbcIdentityProviderMapper mapper() {
-        return new JdbcIdentityProviderMapper();
+    public IdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 
     @Bean
-    public JdbcIdentityProviderRoleMapper roleMapper() {
-        return new JdbcIdentityProviderRoleMapper();
+    public IdentityProviderRoleMapper roleMapper() {
+        return new DefaultIdentityProviderRoleMapper();
     }
 }

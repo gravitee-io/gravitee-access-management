@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,4 +28,9 @@ public interface IdentityProviderRoleMapper {
     Map<String, String[]> getRoles();
 
     void setRoles(Map<String, String[]> roles);
+
+    default List<String> apply(AuthenticationContext context, Map<String, Object> userInfo) {
+        // default implementation is used to avoid breaking plugins not provided by Gravitee.
+        return Collections.emptyList();
+    }
 }

@@ -19,13 +19,8 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderMapper;
-import io.gravitee.am.identityprovider.ldap.LdapIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.ldap.authentication.spring.LdapAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.ldap.common.utils.LdapUtils;
 import io.gravitee.common.service.AbstractService;
@@ -57,10 +52,10 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
     private static final String MEMBEROF_ATTRIBUTE = "memberOf";
 
     @Autowired
-    private LdapIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private LdapIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private LdapIdentityProviderConfiguration configuration;
@@ -146,7 +141,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
                 throw new InternalAuthenticationServiceException(e.getMessage(), e);
             }
         })
-        .map(this::createUser);
+        .map(ldapUser -> createUser(authentication.getContext(), ldapUser));
     }
 
     @Override
@@ -167,11 +162,11 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
                 throw new InternalAuthenticationServiceException(e.getMessage(), e);
             }
         })
-        .map(this::createUser);
+        .map(ldapUser -> createUser(new SimpleAuthenticationContext(), ldapUser));
 
     }
 
-    private User createUser(LdapEntry ldapEntry) {
+    private User createUser(AuthenticationContext authContext, LdapEntry ldapEntry) {
         DefaultUser user = new DefaultUser(ldapEntry.getAttribute(identifierAttribute).getStringValue());
         user.setId(user.getUsername());
         // add additional information
@@ -202,7 +197,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         user.setAdditionalInformation(claims);
 
         // set user roles
-        user.setRoles(getUserRoles(ldapEntry));
+        user.setRoles(getUserRoles(authContext, ldapEntry));
 
         return user;
     }
@@ -214,32 +209,21 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         return claims;
     }
 
-    private List<String> getUserRoles(LdapEntry ldapEntry) {
-        Set<String> roles = new HashSet();
+    private List<String> getUserRoles(AuthenticationContext authContext, LdapEntry ldapEntry) {
         if (roleMapper != null && roleMapper.getRoles() != null) {
-            roleMapper.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).forEach(u -> {
-                    // user/group have the following syntax userAttribute=userValue
-                    String[] attributes = u.split("=",2);
-                    String userAttribute = attributes[0];
-                    String userValue = attributes[1];
 
-                    // group
-                    if (MEMBEROF_ATTRIBUTE.equals(userAttribute) && ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE) != null) {
-                        if (ldapEntry.getAttribute(MEMBEROF_ATTRIBUTE).getStringValues().contains(userValue)) {
-                            roles.add(role);
-                        }
-                    // user
-                    } else {
-                        if (ldapEntry.getAttribute(userAttribute) != null &&
-                                ldapEntry.getAttribute(userAttribute).getStringValue().equals(userValue)) {
-                            roles.add(role);
-                        }
-                    }
-                });
+            Map<String, Object> attributes = new HashMap<>();
+            ldapEntry.getAttributes().forEach(attr -> {
+                if (MEMBEROF_ATTRIBUTE.equals(attr.getName())) {
+                    attributes.put(attr.getName(), attr.getStringValues());
+                } else {
+                    attributes.put(attr.getName(), attr.getStringValue());
+                }
             });
+
+            return this.roleMapper.apply(authContext, attributes);
         }
-        return new ArrayList<>(roles);
+        return Collections.emptyList();
     }
 
     /**

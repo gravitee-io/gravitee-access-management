@@ -53,14 +53,14 @@
         This mapping occurs during user authentication.
       </p>
       <small>
-        To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code>
-        and choose the corresponding roles.
+        To specify users and groups roles, you can use the following syntax <code>attributeName=attributeValue</code> or use the Expression Language syntax.
+        For example :
       </small>
       <small>
-        For example :
         <pre fxLayout="column">
         <code>- uid=sampleuser => ROLE_USER</code>
         <code>- memberOf=administrators => ROLE_ADMIN</code>
+        <code>- &#123;#profile['my-claim'] == 'default' &#125; => ROLE_USER</code>
       </pre>
       </small>
     </div>

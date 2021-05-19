@@ -19,8 +19,6 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.identityprovider.api.*;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderMapper;
-import io.gravitee.am.identityprovider.http.HttpIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
 import io.reactivex.observers.TestObserver;
 import org.junit.Rule;
@@ -49,10 +47,10 @@ public class HttpAuthenticationProviderTest {
     private AuthenticationProvider authenticationProvider;
 
     @Autowired
-    private HttpIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @Autowired
-    private HttpIdentityProviderMapper mapper;
+    private DefaultIdentityProviderMapper mapper;
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));

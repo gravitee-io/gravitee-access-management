@@ -79,10 +79,10 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
     private WebClient client;
 
     @Autowired
-    private DefaultIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private TwitterIdentityProviderConfiguration configuration;
@@ -277,7 +277,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                     Map<String, Object> additionalInfos = new HashMap<>();
                     additionalInfos.putAll(applyUserMapping(jsonObject.getMap()));
                     user.setAdditionalInformation(additionalInfos);
-                    user.setRoles(applyRoleMapping(jsonObject.getMap()));
+                    user.setRoles(applyRoleMapping(authentication.getContext(), jsonObject.getMap()));
 
                     return Maybe.just(user);
                 });

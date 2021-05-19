@@ -17,13 +17,8 @@ package io.gravitee.am.identityprovider.jdbc.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
-import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderMapper;
-import io.gravitee.am.identityprovider.jdbc.JdbcIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.jdbc.authentication.spring.JdbcAuthenticationProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
@@ -35,7 +30,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,10 +43,10 @@ import java.util.*;
 public class JdbcAuthenticationProvider extends JdbcAbstractProvider<AuthenticationProvider> implements AuthenticationProvider {
 
     @Autowired
-    private JdbcIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private JdbcIdentityProviderRoleMapper roleMapper;
+    private DefaultIdentityProviderRoleMapper roleMapper;
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -79,7 +77,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
 
                     return true;
                 })
-                .map(this::createUser)
+                .map(attributes -> createUser(authentication.getContext(), attributes))
                 .toList()
                 .flatMapMaybe(users -> {
                     if (users.isEmpty()) {
@@ -120,7 +118,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     @Override
     public Maybe<User> loadUserByUsername(String username) {
         return selectUserByUsername(username)
-                .map(this::createUser);
+                .map(attributes -> createUser(new SimpleAuthenticationContext(), attributes));
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
@@ -132,7 +130,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                 .firstElement();
     }
 
-    private User createUser(Map<String, Object> claims) {
+    private User createUser(AuthenticationContext authContext, Map<String, Object> claims) {
         // get username
         String username = claims.get(configuration.getUsernameAttribute()).toString();
         // get sub
@@ -145,7 +143,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         // set technical id
         user.setId(sub);
         // set user roles
-        user.setRoles(applyRoleMapping(claims));
+        user.setRoles(applyRoleMapping(authContext, claims));
         // set additional information
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, sub);
@@ -188,30 +186,11 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         return claims;
     }
 
-    private List<String> applyRoleMapping(Map<String, Object> attributes) {
+    private List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!roleMappingEnabled()) {
             return Collections.emptyList();
         }
-
-        Set<String> roles = new HashSet<>();
-        roleMapper.getRoles().forEach((role, users) -> {
-            Arrays.asList(users).forEach(u -> {
-                // role mapping have the following syntax userAttribute=userValue
-                String[] roleMapping = u.split("=", 2);
-                String userAttribute = roleMapping[0];
-                String userValue = roleMapping[1];
-                if (attributes.containsKey(userAttribute)) {
-                    Object attribute = attributes.get(userAttribute);
-                    // attribute is a list
-                    if (attribute instanceof Collection && ((Collection) attribute).contains(userValue)) {
-                        roles.add(role);
-                    } else if (userValue.equals(attributes.get(userAttribute))) {
-                        roles.add(role);
-                    }
-                }
-            });
-        });
-        return new ArrayList<>(roles);
+        return roleMapper.apply(authContext, attributes);
     }
 
     private boolean mappingEnabled() {

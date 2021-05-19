@@ -15,7 +15,11 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,5 +34,10 @@ public class NoIdentityProviderRoleMapper implements IdentityProviderRoleMapper 
     @Override
     public void setRoles(Map<String, String[]> roles) {
         // nothing to do
+    }
+
+    @Override
+    public List<String> apply(AuthenticationContext context, Map<String, Object> userInfo) {
+        return emptyList();
     }
 }

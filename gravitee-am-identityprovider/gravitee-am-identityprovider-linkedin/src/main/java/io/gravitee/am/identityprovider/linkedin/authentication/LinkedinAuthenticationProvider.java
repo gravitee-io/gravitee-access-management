@@ -137,7 +137,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
 
-                    return createUser(httpClientResponse.bodyAsJsonObject());
+                    return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject());
                 })
                 .flatMap(user -> requestEmailAddress(accessToken).map(address -> {
                     // ask the emailAddress and complete User description using the value
@@ -183,7 +183,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         }
     }
 
-    private User createUser(JsonObject profileInfo) {
+    private User createUser(AuthenticationContext authContext, JsonObject profileInfo) {
         String userId = profileInfo.getString(LinkedinUser.ID);
         DefaultUser user = new DefaultUser(userId);
         user.setId(userId);
@@ -191,7 +191,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         user.setLastName(profileInfo.getString(LinkedinUser.LASTNAME));
 
         user.setAdditionalInformation(applyUserMapping(profileInfo.getMap()));
-        user.setRoles(applyRoleMapping(profileInfo.getMap()));
+        user.setRoles(applyRoleMapping(authContext, profileInfo.getMap()));
 
         return user;
     }

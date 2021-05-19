@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.inline.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -94,5 +97,14 @@ public class User {
             default:
                 return null;
         }
+    }
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put(FIRSTNAME, getFirstname());
+        attributes.put(LASTNAME, getLastname());
+        attributes.put(USERNAME, getUsername());
+        attributes.put(EMAIL, getEmail());
+        return attributes;
     }
 }

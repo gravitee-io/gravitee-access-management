@@ -17,10 +17,8 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderMapper;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.reactivex.Observable;
 import org.bson.Document;
@@ -71,13 +69,13 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     }
 
     @Bean
-    public MongoIdentityProviderMapper mapper() {
-        return new MongoIdentityProviderMapper();
+    public IdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 
     @Bean
-    public MongoIdentityProviderRoleMapper roleMapper() {
-        return new MongoIdentityProviderRoleMapper();
+    public IdentityProviderRoleMapper roleMapper() {
+        return new DefaultIdentityProviderRoleMapper();
     }
 
     @Bean
