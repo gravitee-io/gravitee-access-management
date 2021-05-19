@@ -1,6 +1,50 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/251?closed=1[AM - 3.9.0 (2021-05-19)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] Enhance scopes returns all user scopes even when not requested https://github.com/gravitee-io/issues/issues/3839[#3839]
+
+*_General_*
+
+- Merge 3.8.1 https://github.com/gravitee-io/issues/issues/5469[#5469]
+- Merge 3.8.2 https://github.com/gravitee-io/issues/issues/5547[#5547]
+- Merge 3.8.3 https://github.com/gravitee-io/issues/issues/5603[#5603]
+
+*_Reporter_*
+
+- Fix interval unit for MariaDB https://github.com/gravitee-io/issues/issues/5596[#5596]
+
+=== Features
+
+*_Gateway_*
+
+- Add CAPTCHA feature https://github.com/gravitee-io/issues/issues/5307[#5307]
+- Allow to associate a gateway to specific environments https://github.com/gravitee-io/issues/issues/5499[#5499]
+- Reset password multiple accounts https://github.com/gravitee-io/issues/issues/5361[#5361]
+- [idp] support new password encoder https://github.com/gravitee-io/issues/issues/5470[#5470]
+- [login] secondary login https://github.com/gravitee-io/issues/issues/5306[#5306]
+
+*_Management_*
+
+- [mfa] selection rule https://github.com/gravitee-io/issues/issues/5168[#5168]
+
+=== Improvements
+
+*_Management_*
+
+- Improve scope page https://github.com/gravitee-io/issues/issues/5516[#5516]
+- Roles resource pagination https://github.com/gravitee-io/issues/issues/5514[#5514]
+- Scopes pagination https://github.com/gravitee-io/issues/issues/5213[#5213]
+- Security domains pagination https://github.com/gravitee-io/issues/issues/5212[#5212]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/385?closed=1[AM - 3.8.3 (2021-05-19)]
 
 === Bug fixes
