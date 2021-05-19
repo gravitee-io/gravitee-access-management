@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/385?closed=1[AM - 3.8.3 (2021-05-19)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Missing application field for flows with JDBC https://github.com/gravitee-io/issues/issues/5566[#5566]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/380?closed=1[AM - 3.8.2 (2021-05-06)]
 
 === Bug fixes
