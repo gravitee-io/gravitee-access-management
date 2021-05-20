@@ -70,10 +70,8 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
     public Flowable<Organization> findByHrids(List<String> hrids) {
         LOGGER.debug("findByHrids({})", hrids);
 
-        final Flowable<Organization> result = organizationRepository.findByHrids(hrids)
+        return organizationRepository.findByHrids(hrids)
                 .map(this::toOrganization);
-
-        return result.doOnError((error) -> LOGGER.error("unable to retrieve organizations with hrids {}", hrids, error));
     }
 
     @Override

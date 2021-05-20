@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -64,8 +63,7 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
         eventManager.subscribeForEvents(this, CertificateEvent.class);
 
         logger.info("Initializing certificate providers");
-        List<Certificate> certificates = certificateService.findAll().blockingGet();
-        certificates.forEach(certificate -> {
+        certificateService.findAll().blockingIterable().forEach(certificate -> {
             logger.info("\tInitializing certificate: {} [{}]", certificate.getName(), certificate.getType());
             loadCertificate(certificate);
         });

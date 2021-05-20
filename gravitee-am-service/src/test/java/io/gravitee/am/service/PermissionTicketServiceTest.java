@@ -23,8 +23,10 @@ import io.gravitee.am.service.exception.InvalidPermissionRequestException;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.gravitee.am.service.impl.PermissionTicketServiceImpl;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import io.reactivex.internal.operators.flowable.FlowableRange;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,8 +36,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -65,7 +69,7 @@ public class PermissionTicketServiceTest {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(Collections.emptyList()));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.empty());
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -77,9 +81,8 @@ public class PermissionTicketServiceTest {
     public void create_errorSingleResource_missingScope() {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
-        List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same")));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same"))));
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -91,9 +94,8 @@ public class PermissionTicketServiceTest {
     public void create_successSingleResource() {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
-        List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("a","b"))));
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
@@ -111,9 +113,9 @@ public class PermissionTicketServiceTest {
         );
 
         // Prepare Resource
-        List<Resource> found = Arrays.asList(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same")));
+        Flowable<Resource> found = FlowableRange.just(new Resource().setId("one").setResourceScopes(Arrays.asList("not", "same")));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -130,11 +132,10 @@ public class PermissionTicketServiceTest {
         );
 
         // Prepare Resource
-        List<Resource> found = request.stream()
-                .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()).setUserId("user_"+s.getResourceId()))
-                .collect(Collectors.toList());
+        Flowable<Resource> found = Flowable.fromIterable(request)
+                .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()).setUserId("user_"+s.getResourceId()));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -151,12 +152,12 @@ public class PermissionTicketServiceTest {
         );
 
         // Prepare Resource
-        List<Resource> found = Arrays.asList(
+        Flowable<Resource> found = Flowable.just(
                 new Resource().setId("one").setResourceScopes(Arrays.asList("a","b")),
                 new Resource().setId("two").setResourceScopes(Arrays.asList("not","same"))
         );
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID,Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID,Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -173,11 +174,10 @@ public class PermissionTicketServiceTest {
         );
 
         // Prepare Resource
-        List<Resource> found = request.stream()
-                .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()))
-                .collect(Collectors.toList());
+        Flowable<Resource> found = Flowable.fromIterable(request)
+                .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()));
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();
@@ -196,14 +196,14 @@ public class PermissionTicketServiceTest {
         );
 
         // Prepare Resource
-        List<Resource> found = Arrays.asList(
+        Flowable<Resource> found = Flowable.just(
                 new Resource().setId("one").setResourceScopes(Arrays.asList("a","b","c")),
                 new Resource().setId("two").setResourceScopes(Arrays.asList("c","d"))
         );
 
         ArgumentCaptor<PermissionTicket> permissionTicketArgumentCaptor = ArgumentCaptor.forClass(PermissionTicket.class);
 
-        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(Single.just(found));
+        when(resourceService.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         when(repository.create(permissionTicketArgumentCaptor.capture())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, DOMAIN_ID, CLIENT_ID).test();

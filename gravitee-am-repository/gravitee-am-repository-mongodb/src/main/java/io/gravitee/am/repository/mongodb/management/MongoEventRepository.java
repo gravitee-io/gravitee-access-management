@@ -53,13 +53,13 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<List<Event>> findByTimeFrame(long from, long to) {
+    public Flowable<Event> findByTimeFrame(long from, long to) {
         List<Bson> filters = new ArrayList<>();
         filters.add(gte(FIELD_UPDATED_AT, new Date(from)));
         if (to > from) {
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
-        return Flowable.fromPublisher(eventsCollection.find(and(filters))).map(this::convert).toList();
+        return Flowable.fromPublisher(eventsCollection.find(and(filters))).map(this::convert);
     }
 
     @Override

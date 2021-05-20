@@ -17,7 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Maybe;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.Set;
@@ -28,9 +28,8 @@ import java.util.Set;
  */
 public interface FactorRepository extends CrudRepository<Factor, String> {
 
-    Single<Set<Factor>> findAll();
+    Flowable<Factor> findAll();
 
-    Single<Set<Factor>> findByDomain(String domain);
+    Flowable<Factor> findByDomain(String domain);
 
-    Maybe<Factor> findByDomainAndFactorType(String domain, String factorType);
 }

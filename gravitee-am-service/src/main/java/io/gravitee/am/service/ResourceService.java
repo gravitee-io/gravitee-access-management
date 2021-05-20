@@ -20,6 +20,7 @@ import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -34,9 +35,9 @@ public interface ResourceService {
 
     Single<Page<Resource>> findByDomain(String domain, int page, int size);
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
-    Single<List<Resource>> findByResources(List<String> resourceIds);
-    Single<List<Resource>> listByDomainAndClientAndUser(String domain, String client, String userId);
-    Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds);
+    Flowable<Resource> findByResources(List<String> resourceIds);
+    Flowable<Resource> listByDomainAndClientAndUser(String domain, String client, String userId);
+    Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId);
     Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId);
     Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources);
@@ -45,8 +46,8 @@ public interface ResourceService {
     Single<Resource> update(Resource resource);
     Completable delete(String domain, String client, String userId, String resourceId);
     Completable delete(Resource resource);
-    Single<List<AccessPolicy>> findAccessPolicies(String domain, String client, String user, String resource);
-    Single<List<AccessPolicy>> findAccessPoliciesByResources(List<String> resourceIds);
+    Flowable<AccessPolicy> findAccessPolicies(String domain, String client, String user, String resource);
+    Flowable<AccessPolicy> findAccessPoliciesByResources(List<String> resourceIds);
     Single<Long> countAccessPolicyByResource(String resourceId);
     Maybe<AccessPolicy> findAccessPolicy(String domain, String client, String user, String resource, String accessPolicy);
     Maybe<AccessPolicy> findAccessPolicy(String accessPolicy);

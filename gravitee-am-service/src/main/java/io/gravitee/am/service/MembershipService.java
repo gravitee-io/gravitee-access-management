@@ -39,9 +39,9 @@ public interface MembershipService {
 
     Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);
 
-    Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
+    Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType);
 
-    Single<List<Membership>> findByMember(String memberId, MemberType memberType);
+    Flowable<Membership> findByMember(String memberId, MemberType memberType);
 
     Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal);
 

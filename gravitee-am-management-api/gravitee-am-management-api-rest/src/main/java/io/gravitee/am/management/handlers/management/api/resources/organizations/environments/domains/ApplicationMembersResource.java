@@ -93,7 +93,7 @@ public class ApplicationMembersResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION))
+                        .flatMapSingle(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION).toList())
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }

@@ -19,6 +19,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -29,11 +30,11 @@ import java.util.List;
  */
 public interface CredentialRepository extends CrudRepository<Credential, String> {
 
-    Single<List<Credential>> findByUserId(ReferenceType referenceType, String referenceId, String userId);
+    Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId);
 
-    Single<List<Credential>> findByUsername(ReferenceType referenceType, String referenceId, String username);
+    Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username);
 
-    Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
+    Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
 
     Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
 

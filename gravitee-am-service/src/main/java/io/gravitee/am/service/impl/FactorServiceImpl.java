@@ -35,6 +35,7 @@ import io.gravitee.am.service.model.UpdateFactor;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FactorAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.Json;
@@ -76,17 +77,6 @@ public class FactorServiceImpl implements FactorService {
     private AuditService auditService;
 
     @Override
-    public Single<List<Factor>> findAll() {
-        LOGGER.debug("Find all factors");
-        return factorRepository.findAll()
-                .map(factors -> (List<Factor>) new ArrayList<>(factors))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all factors", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all factors", ex));
-                });
-    }
-
-    @Override
     public Maybe<Factor> findById(String id) {
         LOGGER.debug("Find factor by ID: {}", id);
         return factorRepository.findById(id)
@@ -98,13 +88,12 @@ public class FactorServiceImpl implements FactorService {
     }
 
     @Override
-    public Single<List<Factor>> findByDomain(String domain) {
+    public Flowable<Factor> findByDomain(String domain) {
         LOGGER.debug("Find factors by domain: {}", domain);
         return factorRepository.findByDomain(domain)
-                .map(factors -> (List<Factor>) new ArrayList<>(factors))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find factors by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find factors by domain", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find factors by domain", ex));
                 });
     }
 
@@ -193,9 +182,9 @@ public class FactorServiceImpl implements FactorService {
 
         return factorRepository.findById(factorId)
                 .switchIfEmpty(Maybe.error(new FactorNotFoundException(factorId)))
-                .flatMapSingle(factor -> applicationService.findByFactor(factorId)
+                .flatMapSingle(factor -> applicationService.findByFactor(factorId).count()
                         .flatMap(applications -> {
-                            if (applications.size() > 0) {
+                            if (applications > 0) {
                                 throw new FactorWithApplicationsException();
                             }
                             return Single.just(factor);

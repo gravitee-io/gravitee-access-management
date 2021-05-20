@@ -82,12 +82,12 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Form> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("Find form by {} {}", referenceType, referenceId);
         return formRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its %s %s", referenceType, referenceId), ex));
                 });
     }
@@ -99,23 +99,23 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public Single<List<Form>> findByDomain(String domain) {
+    public Flowable<Form> findByDomain(String domain) {
         return findAll(ReferenceType.DOMAIN, domain);
     }
 
     @Override
-    public Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client) {
+    public Flowable<Form> findByClient(ReferenceType referenceType, String referenceId, String client) {
         LOGGER.debug("Find form by {} {} and client {}", referenceType, referenceId, client);
         return formRepository.findByClient(referenceType, referenceId, client)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a form using its {} {} and its client {}", referenceType, referenceId, client, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a form using its %s %s and client %s", referenceType, referenceId, client), ex));
                 });
     }
 
     @Override
-    public Single<List<Form>> findByDomainAndClient(String domain, String client) {
+    public Flowable<Form> findByDomainAndClient(String domain, String client) {
         LOGGER.debug("Find form by domain {} and client", domain, client);
         return findByClient(ReferenceType.DOMAIN, domain, client);
     }
@@ -157,7 +157,6 @@ public class FormServiceImpl implements FormService {
     @Override
     public Single<List<Form>> copyFromClient(String domain, String clientSource, String clientTarget) {
         return findByDomainAndClient(domain, clientSource)
-                .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(source -> {
                     NewForm form = new NewForm();
                     form.setEnabled(source.isEnabled());

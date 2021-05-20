@@ -40,7 +40,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +71,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     }
 
     @Override
-    public Single<List<Group>> findByMember(String memberId) {
+    public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("findByMember({})", memberId);
 
         Flowable<JdbcGroup> flow = fluxToFlowable(dbClient.execute("SELECT * FROM " +
@@ -84,13 +83,11 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve groups by memberId '{}'", memberId, error));
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
     }
 
     @Override
-    public Single<List<Group>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         Flowable<JdbcGroup> flow = fluxToFlowable(dbClient.execute("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
@@ -102,15 +99,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve groups by referenceId '{}' and referenceType '{}'", referenceId, referenceType, error));
-    }
-
-    @Override
-    public Single<List<Group>> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return findAll(ReferenceType.DOMAIN, domain);
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
     }
 
     @Override
@@ -140,16 +129,10 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     }
 
     @Override
-    public Single<Page<Group>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return findAll(ReferenceType.DOMAIN, domain, page, size);
-    }
-
-    @Override
-    public Single<List<Group>> findByIdIn(List<String> ids) {
+    public Flowable<Group> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn with ids {}", ids);
         if (ids == null || ids.isEmpty()) {
-            return Single.just(Collections.emptyList());
+            return Flowable.empty();
         }
         Flowable<JdbcGroup> flow = fluxToFlowable(dbClient.execute("SELECT * FROM " +
                 databaseDialectHelper.toSql(quoted("groups")) +
@@ -159,9 +142,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .fetch()
                 .all());
 
-        return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve groups with the ids '{}'", ids, error));
+        return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), CONCURRENT_FLATMAP);
     }
 
     @Override
@@ -178,15 +159,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .first());
 
         return maybe.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve group with referenceId {}, referenceType {} and groupName {}",
-                        referenceId, referenceType, groupName, error));
-    }
-
-    @Override
-    public Maybe<Group> findByDomainAndName(String domain, String groupName) {
-        LOGGER.debug("findByDomainAndName({}, {})", domain, groupName);
-        return findByName(ReferenceType.DOMAIN, domain, groupName);
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()));
     }
 
     @Override
@@ -202,9 +175,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .fetch()
                 .first());
 
-        return completeWithMembersAndRole(maybe.map(this::toEntity), id)
-                .doOnError(error -> LOGGER.error("Unable to retrieve group with referenceId {}, referenceType {} and id {}",
-                        referenceId, referenceType, id, error));
+        return completeWithMembersAndRole(maybe.map(this::toEntity), id);
     }
 
     @Override
@@ -218,8 +189,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .fetch()
                 .first());
 
-        return completeWithMembersAndRole(maybe.map(this::toEntity), id)
-                .doOnError((error) -> LOGGER.error("unable to retrieve Group with id {}", id, error));
+        return completeWithMembersAndRole(maybe.map(this::toEntity), id);
     }
 
     private Maybe<Group> completeWithMembersAndRole(Maybe<Group> maybeGroup, String id) {
@@ -265,8 +235,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create group with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Group item) {
@@ -317,8 +286,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to delete group with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Integer> deleteChildEntities(String groupId) {
@@ -332,7 +300,6 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("delete Group with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Integer> delete = dbClient.delete().from(databaseDialectHelper.toSql(quoted("groups"))).matching(from(where("id").is(id))).fetch().rowsUpdated();
-        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
-                .doOnError((error) -> LOGGER.error("unable to delete Group with id {}", id, error));
+        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 }

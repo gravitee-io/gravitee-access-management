@@ -98,7 +98,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         Scope scopeCreated2 = scopeRepository.create(scope).blockingGet();
 
         // fetch scopes
-        TestObserver<List<Scope>> testObserver = scopeRepository.findByDomainAndKeys("testDomain", Arrays.asList("one","two","three")).test();
+        TestObserver<List<Scope>> testObserver = scopeRepository.findByDomainAndKeys("testDomain", Arrays.asList("one","two","three")).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

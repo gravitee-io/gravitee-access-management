@@ -56,15 +56,6 @@ public interface UserService {
     /**
      * Find users by security domain and email
      * @param domain user security domain
-     * @param email user email
-     * @param strict strict or wild card search
-     * @return
-     */
-    Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
-
-    /**
-     * Find users by security domain and email
-     * @param domain user security domain
      * @param criteria search criteria
      * @return
      */
@@ -91,7 +82,4 @@ public interface UserService {
      */
     Single<User> enhance(User user);
 
-    default Single<List<User>> findByDomainAndEmail(String domain, String email) {
-        return findByDomainAndEmail(domain, email, true);
-    }
 }

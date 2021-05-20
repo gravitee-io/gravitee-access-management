@@ -82,7 +82,7 @@ public class FormServiceTest {
         when(formRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.empty());
         when(formRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "error")).thenReturn(Maybe.empty());
         when(formRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
-        when(formRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(formOne, formTwo)));
+        when(formRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Flowable.just(formOne, formTwo));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
@@ -110,7 +110,7 @@ public class FormServiceTest {
         formOne.setAssets("formAsset");
 
         when(formRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.just(new Form()));
-        when(formRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(formOne)));
+        when(formRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Flowable.just(formOne));
 
         TestObserver<List<Form>> testObserver = formService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
         testObserver.assertNotComplete();

@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,11 +32,11 @@ public interface CredentialService {
 
     Maybe<Credential> findById(String id);
 
-    Single<List<Credential>> findByUserId(ReferenceType referenceType, String referenceId, String userId);
+    Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId);
 
-    Single<List<Credential>> findByUsername(ReferenceType referenceType, String referenceId, String username);
+    Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username);
 
-    Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
+    Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId);
 
     Single<Credential> create(Credential credential);
 

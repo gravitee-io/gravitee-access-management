@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -57,7 +59,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractOAuthTest {
         scopeApprovalRepository.create(scope1).test().awaitTerminalEvent();
         scopeApprovalRepository.create(scope2).test().awaitTerminalEvent();
 
-        TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").test();
+        TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);
@@ -67,7 +69,7 @@ public class ScopeApprovalRepositoryPurgeTest extends AbstractOAuthTest {
         testPurge.awaitTerminalEvent();
         testPurge.assertNoErrors();
 
-        testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").test();
+        testObserver = scopeApprovalRepository.findByDomainAndUser("domain", "user").collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue(s -> s.size() == 1);

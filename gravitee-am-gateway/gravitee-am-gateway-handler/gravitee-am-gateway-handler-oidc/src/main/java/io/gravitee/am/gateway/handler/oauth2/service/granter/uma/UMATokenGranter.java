@@ -209,6 +209,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 .flatMap(permissionRequests -> {
                     List<String> resourceIds = permissionRequests.stream().map(PermissionRequest::getResourceId).collect(Collectors.toList());
                     return resourceService.findByResources(resourceIds)
+                            .toList()
                             .flatMap(resourceSet -> this.checkRequestedScopesMatchResource(tokenRequest, resourceSet))
                             .flatMap(resourceMap -> this.resolveScopeRequestAssessment(tokenRequest, permissionRequests, resourceMap))
                             .flatMap(resolvedPermissionRequests -> this.extendPermissionWithRPT(tokenRequest, client, endUser, resolvedPermissionRequests))
@@ -363,20 +364,18 @@ public class UMATokenGranter extends AbstractTokenGranter {
         // find access policies for the given resources
         return resourceService.findAccessPoliciesByResources(resourceIds)
                 // map to rules
-                .map(accessPolicies -> accessPolicies
-                        .stream()
-                        .map(accessPolicy -> {
-                            Rule rule = new DefaultRule(accessPolicy);
-                            Optional<PermissionRequest> permission = permissionRequests
-                                    .stream()
-                                    .filter(permissionRequest -> permissionRequest.getResourceId().equals(accessPolicy.getResource()))
-                                    .findFirst();
-                            if (permission.isPresent()) {
-                                ((DefaultRule) rule).setMetadata(Collections.singletonMap("permissionRequest", permission.get()));
-                            }
-                            return rule;
-                        })
-                        .collect(Collectors.toList()))
+                .map(accessPolicy -> {
+                    Rule rule = new DefaultRule(accessPolicy);
+                    Optional<PermissionRequest> permission = permissionRequests
+                            .stream()
+                            .filter(permissionRequest -> permissionRequest.getResourceId().equals(accessPolicy.getResource()))
+                            .findFirst();
+                    if (permission.isPresent()) {
+                        ((DefaultRule) rule).setMetadata(Collections.singletonMap("permissionRequest", permission.get()));
+                    }
+                    return rule;
+                })
+                .toList()
                 .flatMap(rules -> {
                     // no policy registered, continue
                     if (rules.isEmpty()) {

@@ -27,7 +27,7 @@ import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Single;
+import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +35,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,14 +62,14 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Initializing applications for domain {}", domain.getName());
-        Single<List<Application>> applicationsSource = domain.isMaster() ? applicationRepository.findAll() : applicationRepository.findByDomain(domain.getId());
+        Flowable<Application> applicationsSource = domain.isMaster() ? applicationRepository.findAll() : applicationRepository.findByDomain(domain.getId());
         applicationsSource
-                .map(applications -> applications.stream().map(Application::toClient).collect(Collectors.toList()))
+                .map(Application::toClient)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        entities -> {
-                            entities.forEach(client -> clients.put(client.getId(), client));
-                            logger.info("Applications loaded for domain {}", domain.getName());
+                        client -> {
+                            clients.put(client.getId(), client);
+                            logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
                         },
                         error -> logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error)
                 );

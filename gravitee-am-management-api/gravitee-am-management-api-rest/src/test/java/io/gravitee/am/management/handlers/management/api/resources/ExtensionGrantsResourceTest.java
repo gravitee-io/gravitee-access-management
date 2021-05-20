@@ -21,6 +21,7 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -58,10 +59,9 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
         mockExtensionGrant2.setName("extensionGrant-2-name");
         mockExtensionGrant2.setDomain(domainId);
 
-        final List<ExtensionGrant> extensionGrants = Arrays.asList(mockExtensionGrant, mockExtensionGrant2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(extensionGrants)).when(extensionGrantService).findByDomain(domainId);
+        doReturn(Flowable.just(mockExtensionGrant, mockExtensionGrant2)).when(extensionGrantService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -73,7 +73,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetExtensionGrants_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(extensionGrantService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(extensionGrantService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("extensionGrants").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

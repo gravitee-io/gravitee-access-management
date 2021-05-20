@@ -30,6 +30,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,6 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
@@ -95,14 +95,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
-    public Single<Set<User>> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return userRepository.findByReference(ReferenceType.DOMAIN.name(), domain)
+    public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("findByReference({})", referenceId);
+        return userRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable())
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve users with domain {}", domain, error));
+                .flatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
@@ -120,12 +117,6 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
                         .map((count) -> new Page<User>(content, page, count)));
-    }
-
-    @Override
-    public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        LOGGER.debug("findByDomain({},{},{})", domain, page, size);
-        return findAll(ReferenceType.DOMAIN, domain, page, size);
     }
 
     @Override
@@ -153,8 +144,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .bind("refType", referenceType.name())
                         .as(Long.class)
                         .fetch().first())
-                        .map(total -> new Page<User>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with referenceType {} and referenceId {} (page={}/size={})", referenceType, referenceId, page, size, error));
+                        .map(total -> new Page<User>(data, page, total)));
     }
 
     @Override
@@ -186,13 +176,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to search users using SCIM with referenceId {} and referenceType {} ",
-                        referenceId, referenceType, error));
+                .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
     }
 
     @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
+    public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
         boolean ignoreCase = !strict;
         return fluxToFlowable(dbClient.execute(databaseDialectHelper.buildFindUserByDomainAndEmail(DOMAIN, domain, email, strict))
                 .bind("refId", domain)
@@ -202,8 +190,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .fetch()
                 .all())
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable())
-                .toList();
+                .flatMap(user -> completeUser(user).toFlowable());
     }
 
     @Override
@@ -211,9 +198,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByUsernameAndDomain({},{},{})", domain, username);
         return userRepository.findByUsername(ReferenceType.DOMAIN.name(), domain, username)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve user with domain {} and username {}",
-                        domain, username, error));
+                .flatMap(user -> completeUser(user).toMaybe());
     }
 
     @Override
@@ -221,15 +206,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByUsernameAndSource({},{},{},{})", referenceType, referenceId, username, source);
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve user with referenceType {}, referenceId {}, username {} and source {}",
-                        referenceType, referenceId, username, source, error));
-    }
-
-    @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        LOGGER.debug("findByDomainAndUsernameAndSource({},{},{})", domain, username, source);
-        return findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source);
+                .flatMap(user -> completeUser(user).toMaybe());
     }
 
     @Override
@@ -237,22 +214,18 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByExternalIdAndSource({},{},{},{})", referenceType, referenceId, externalId, source);
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve user with referenceType {}, referenceId {}, externalId {} and source {}",
-                        referenceType, referenceId, externalId, source, error));
+                .flatMap(user -> completeUser(user).toMaybe());
     }
 
     @Override
-    public Single<List<User>> findByIdIn(List<String> ids) {
+    public Flowable<User> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
-            return Single.just(Collections.emptyList());
+            return Flowable.empty();
         }
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve users with ids {}", ids, error));
+                .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP);
     }
 
     @Override
@@ -260,13 +233,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, userId);
         return userRepository.findById(referenceType.name(), referenceId, userId)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve user with referenceType {}, referenceId {} and id {}", referenceType, referenceId, userId, error));
+                .flatMap(user -> completeUser(user).toMaybe());
     }
 
     @Override
-    public Single<Long> countByDomain(String domain) {
-        return userRepository.countByReference(ReferenceType.DOMAIN.name(), domain);
+    public Single<Long> countByReference(ReferenceType refType, String domain) {
+        return userRepository.countByReference(refType.name(), domain);
     }
 
     @Override
@@ -344,8 +316,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findById({})", id);
         return userRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve user with id {}", id, error));
+                .flatMap(user -> completeUser(user).toMaybe());
     }
 
     @Override
@@ -397,8 +368,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create user with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -450,8 +420,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         updateAction = persistChildEntities(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update user with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -460,8 +429,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Integer> delete = dbClient.delete().from(JdbcUser.class).matching(from(where("id").is(id))).fetch().rowsUpdated();
 
-        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
-                .doOnError(error -> LOGGER.error("Unable to delete user with id {}", id));
+        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, User item) {

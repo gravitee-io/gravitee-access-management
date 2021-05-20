@@ -49,6 +49,7 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -161,12 +162,12 @@ public class UmaTokenGranterTest {
         when(jwtService.decodeAndVerify(RPT_OLD_TOKEN, client)).thenReturn(Single.just(rpt));
         when(userAuthenticationManager.loadPreAuthenticatedUser(USER_ID)).thenReturn(Maybe.just(user));
         when(permissionTicketService.remove(TICKET_ID)).thenReturn(Single.just(new PermissionTicket().setId(TICKET_ID).setPermissionRequest(permissions)));
-        when(resourceService.findByResources(Arrays.asList(RS_ONE, RS_TWO))).thenReturn(Single.just(Arrays.asList(
+        when(resourceService.findByResources(Arrays.asList(RS_ONE, RS_TWO))).thenReturn(Flowable.just(
                 new Resource().setId(RS_ONE).setResourceScopes(Arrays.asList("scopeA", "scopeB", "scopeC")),
                 new Resource().setId(RS_TWO).setResourceScopes(Arrays.asList("scopeA", "scopeB", "scopeD"))
-        )));
+        ));
         when(tokenService.create(oauth2RequestCaptor.capture(), eq(client), any())).thenReturn(Single.just(new AccessToken("success")));
-        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.emptyList()));
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Flowable.empty());
     }
 
     @Test
@@ -369,7 +370,7 @@ public class UmaTokenGranterTest {
         AccessPolicy policy = mock(AccessPolicy.class);
         when(policy.getType()).thenReturn(AccessPolicyType.GROOVY);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Flowable.just(policy));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         when(rulesEngine.fire(any(), any())).thenReturn(Completable.error(new PolicyChainException("Policy requirements have failed")));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
@@ -381,7 +382,7 @@ public class UmaTokenGranterTest {
         AccessPolicy policy = mock(AccessPolicy.class);
         when(policy.getType()).thenReturn(AccessPolicyType.GROOVY);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(resourceService.findAccessPoliciesByResources(anyList())).thenReturn(Flowable.just(policy));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         when(rulesEngine.fire(any(), any())).thenReturn(Completable.complete());
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();

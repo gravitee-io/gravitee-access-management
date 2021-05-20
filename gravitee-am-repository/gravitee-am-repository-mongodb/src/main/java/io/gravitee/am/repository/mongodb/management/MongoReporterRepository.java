@@ -20,10 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -50,13 +47,13 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     }
 
     @Override
-    public Single<List<Reporter>> findAll() {
-        return Observable.fromPublisher(reportersCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Reporter> findAll() {
+        return Flowable.fromPublisher(reportersCollection.find()).map(this::convert);
     }
 
     @Override
-    public Single<List<Reporter>> findByDomain(String domain) {
-        return Observable.fromPublisher(reportersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Reporter> findByDomain(String domain) {
+        return Flowable.fromPublisher(reportersCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
     }
 
     @Override

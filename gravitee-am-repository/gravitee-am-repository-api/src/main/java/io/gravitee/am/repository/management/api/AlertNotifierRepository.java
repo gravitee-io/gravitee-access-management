@@ -41,15 +41,6 @@ public interface AlertNotifierRepository extends CrudRepository<AlertNotifier, S
     Maybe<AlertNotifier> findById(String id);
 
     /**
-     * Find all alert notifiers for a given domain id.
-     *
-     * @param domainId the domain identifier.
-     * @return the list of alert notifiers.
-     */
-    Flowable<AlertNotifier> findByDomain(String domainId);
-
-
-    /**
      * Find all the alert notifier attached to the specified reference.
      *
      * @param referenceType the type of the reference.

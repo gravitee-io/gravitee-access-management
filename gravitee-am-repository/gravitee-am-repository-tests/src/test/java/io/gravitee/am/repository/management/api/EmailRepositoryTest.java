@@ -19,12 +19,15 @@ import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -143,64 +146,71 @@ public class EmailRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldFindAllEmails() {
-        TestObserver<List<Email>> testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.isEmpty());
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
 
         final int loop = 10;
-        for (int i = 0; i < loop; i++) {
-            repository.create(buildEmail()).blockingGet();
-        }
+        List<Email> emails = IntStream.range(0, loop).mapToObj(__ -> buildEmail()).collect(Collectors.toList());
+        emails.forEach(email -> repository.create(email).map(e -> {
+            email.setId(e.getId());
+            return e;
+        }).blockingGet());
 
-        testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.size() == loop);
-        testObserver.assertValue(l -> l.stream().map(Email::getId).distinct().count() == loop);
+        TestSubscriber<String> testIdSubscriber = repository.findAll().map(Email::getId).test();
+        testIdSubscriber.awaitTerminalEvent();
+        testIdSubscriber.assertNoErrors();
+        testIdSubscriber.assertValueCount(loop);
+        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
     }
 
     @Test
     public void shouldFindAllByReference() {
-        TestObserver<List<Email>> testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.isEmpty());
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
 
         final int loop = 10;
-        for (int i = 0; i < loop; i++) {
+        List<Email> emails = IntStream.range(0, loop).mapToObj(__ -> {
             final Email email = buildEmail();
             email.setReferenceId(FIXED_REF_ID);
-            repository.create(email).blockingGet();
-        }
+            return email;
+        }).collect(Collectors.toList());
+        emails.forEach(email -> repository.create(email).map(e -> {
+            email.setId(e.getId());
+            return e;
+        }).blockingGet());
 
-        for (int i = 0; i < loop; i++) {
-            // random ref id
-            repository.create(buildEmail()).blockingGet();
-        }
+        // random refId
+        IntStream.range(0, loop).forEach(email -> repository.create(buildEmail()).blockingGet());
 
-        testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.size() == loop);
-        testObserver.assertValue(l -> l.stream().map(Email::getId).distinct().count() == loop);
+        TestSubscriber<String> testIdSubscriber = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).map(Email::getId).test();
+        testIdSubscriber.awaitTerminalEvent();
+        testIdSubscriber.assertNoErrors();
+        testIdSubscriber.assertValueCount(loop);
+        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
     }
-
 
     @Test
     public void shouldFindByClient() {
-        TestObserver<List<Email>> testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.isEmpty());
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
 
         final int loop = 10;
-        for (int i = 0; i < loop; i++) {
+        List<Email> emails = IntStream.range(0, loop).mapToObj(__ -> {
             final Email email = buildEmail();
             email.setReferenceId(FIXED_REF_ID);
             email.setClient(FIXED_CLI_ID);
-            repository.create(email).blockingGet();
-        }
+            return email;
+        }).collect(Collectors.toList());
+        emails.forEach(email -> repository.create(email).map(e -> {
+            email.setId(e.getId());
+            return e;
+        }).blockingGet());
 
         for (int i = 0; i < loop; i++) {
             final Email email = buildEmail();
@@ -208,19 +218,19 @@ public class EmailRepositoryTest extends AbstractManagementTest {
             repository.create(email).blockingGet();
         }
 
-        testObserver = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.size() == loop);
-        testObserver.assertValue(l -> l.stream().map(Email::getId).distinct().count() == loop);
+        TestSubscriber<String> testIdSubscriber = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).map(Email::getId).test();
+        testIdSubscriber.awaitTerminalEvent();
+        testIdSubscriber.assertNoErrors();
+        testIdSubscriber.assertValueCount(loop);
+        testIdSubscriber.assertValueSet(emails.stream().map(Email::getId).collect(Collectors.toList()));
     }
 
     @Test
     public void shouldFindByTemplate() {
-        TestObserver<List<Email>> testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.isEmpty());
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
 
         final int loop = 10;
         for (int i = 0; i < loop; i++) {
@@ -243,10 +253,10 @@ public class EmailRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldFindByClientAndTemplate() {
-        TestObserver<List<Email>> testObserver = repository.findAll().test();
-        testObserver.awaitTerminalEvent();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(l -> l.isEmpty());
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
 
         final int loop = 10;
         for (int i = 0; i < loop; i++) {

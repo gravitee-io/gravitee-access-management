@@ -23,6 +23,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 public interface UserService {
 
-    Single<Set<User>> findByDomain(String domain);
+    Flowable<User> findByDomain(String domain);
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
@@ -47,9 +48,7 @@ public interface UserService {
 
     Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
 
-    Single<List<User>> findByIdIn(List<String> ids);
-
-    Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict);
+    Flowable<User> findByIdIn(List<String> ids);
 
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
@@ -85,7 +84,4 @@ public interface UserService {
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
-    default Single<List<User>> findByDomainAndEmail(String domain, String email) {
-        return findByDomainAndEmail(domain, email, true);
-    }
 }

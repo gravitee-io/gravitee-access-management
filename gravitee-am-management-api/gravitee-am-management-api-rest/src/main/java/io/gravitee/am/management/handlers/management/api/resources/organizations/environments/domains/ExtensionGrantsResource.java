@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -39,11 +38,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -81,13 +75,9 @@ public class ExtensionGrantsResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> extensionGrantService.findByDomain(domain)
-                                .map(extensionGrants -> {
-                                    List<ExtensionGrant> sortedExtensionGrants = extensionGrants.stream()
-                                            .map(this::filterExtensionGrantInfos)
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedExtensionGrants).build();
-                                })))
+                                .map(this::filterExtensionGrantInfos)
+                                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName())).toList())
+                        .map(sortedExtensionGrants -> Response.ok(sortedExtensionGrants).build()))
                 .subscribe(response::resume, response::resume);
     }
 

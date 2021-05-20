@@ -29,6 +29,7 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -88,13 +89,12 @@ public class UserConsentsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> {
+                        .flatMapPublisher(__ -> {
                             if (clientId == null || clientId.isEmpty()) {
                                 return scopeApprovalService.findByDomainAndUser(domain, user);
                             }
                             return scopeApprovalService.findByDomainAndUserAndClient(domain, user, clientId);
                         })
-                        .flatMapObservable(Observable::fromIterable)
                         .flatMapSingle(scopeApproval ->
                                 getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
                                         .zipWith(getScope(scopeApproval.getDomain(), scopeApproval.getScope()), ((clientEntity, scopeEntity) -> {

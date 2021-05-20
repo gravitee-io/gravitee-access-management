@@ -20,10 +20,10 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAccessPolicy;
-import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringAccessPolicyRepository;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,17 +80,15 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
     }
 
     @Override
-    public Single<List<AccessPolicy>> findByDomainAndResource(String domain, String resource) {
+    public Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource) {
         LOGGER.debug("findByDomainAndResource(domain:{}, resources:{})", domain, resource);
-        return accessPolicyRepository.findByDomainAndResource(domain, resource).map(this::toAccessPolicy).toList()
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all AccessPolicy with domain {} and resource id {}", domain, resource, error));
+        return accessPolicyRepository.findByDomainAndResource(domain, resource).map(this::toAccessPolicy);
     }
 
     @Override
-    public Single<List<AccessPolicy>> findByResources(List<String> resources) {
+    public Flowable<AccessPolicy> findByResources(List<String> resources) {
         LOGGER.debug("findByResources({})", resources);
-        return accessPolicyRepository.findByResourceIn(resources).map(this::toAccessPolicy).toList()
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all AccessPolicy with resource ids {}", resources, error));
+        return accessPolicyRepository.findByResourceIn(resources).map(this::toAccessPolicy);
     }
 
     @Override
@@ -103,8 +101,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
     public Maybe<AccessPolicy> findById(String id) {
         LOGGER.debug("findById({})", id);
         return accessPolicyRepository.findById(id)
-                .map(this::toAccessPolicy)
-                .doOnError((error) -> LOGGER.error("Unable to retrieve AccessPolicy with id {}", id, error));
+                .map(this::toAccessPolicy);
     }
 
     @Override
@@ -128,8 +125,7 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create AccessPolicy with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -152,14 +148,12 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update AccessPolicy with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete AccessPolicy with id {}", id);
-        return accessPolicyRepository.deleteById(id)
-                .doOnError((error) -> LOGGER.error("unable to delete AccessPolicy with id {}", id, error));
+        return accessPolicyRepository.deleteById(id);
     }
 }

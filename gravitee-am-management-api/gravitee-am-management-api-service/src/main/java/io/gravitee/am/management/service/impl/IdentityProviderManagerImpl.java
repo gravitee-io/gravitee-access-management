@@ -39,7 +39,6 @@ import org.springframework.stereotype.Component;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -112,8 +111,8 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         eventManager.subscribeForEvents(this, IdentityProviderEvent.class);
 
         logger.info("Initializing user providers");
-        List<IdentityProvider> identities = identityProviderService.findAll().blockingGet();
-        identities.forEach(identityProvider -> {
+
+        identityProviderService.findAll().blockingForEach(identityProvider -> {
             logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
             loadUserProvider(identityProvider);
         });

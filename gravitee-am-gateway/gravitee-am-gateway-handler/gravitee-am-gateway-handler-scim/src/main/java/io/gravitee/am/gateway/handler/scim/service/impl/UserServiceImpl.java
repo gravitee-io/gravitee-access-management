@@ -88,7 +88,7 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Find users by domain: {}", domain.getId());
         Single<Page<io.gravitee.am.model.User>> findUsers = filter != null ?
                 userRepository.search(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), page, size) :
-                userRepository.findByDomain(domain.getId(), page, size);
+                userRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size);
 
         return findUsers
                 .flatMap(userPage -> {
@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // check if user is unique
-        return userRepository.findByDomainAndUsernameAndSource(domain.getId(), user.getUserName(), source)
+        return userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source)
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -347,16 +347,14 @@ public class UserServiceImpl implements UserService {
     private Single<User> setGroups(User scimUser) {
         // fetch groups
         return groupService.findByMember(scimUser.getId())
-                .map(groups -> {
-                    if (!groups.isEmpty()) {
-                        List<Member> scimGroups = groups
-                                .stream()
-                                .map(group -> {
-                                    Member member = new Member();
-                                    member.setValue(group.getId());
-                                    member.setDisplay(group.getDisplayName());
-                                    return member;
-                                }).collect(Collectors.toList());
+                .map(group -> {
+                    Member member = new Member();
+                    member.setValue(group.getId());
+                    member.setDisplay(group.getDisplayName());
+                    return member;
+                }).toList()
+                .map(scimGroups -> {
+                    if (!scimGroups.isEmpty()) {
                         scimUser.setGroups(scimGroups);
                         return scimUser;
                     } else {

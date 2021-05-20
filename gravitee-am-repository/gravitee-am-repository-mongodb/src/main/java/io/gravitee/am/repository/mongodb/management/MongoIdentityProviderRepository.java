@@ -22,12 +22,14 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
 import io.reactivex.*;
-import io.reactivex.Observable;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -50,9 +52,9 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
-    public Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
-                .map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+                .map(this::convert);
     }
 
     @Override
@@ -62,13 +64,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     @Override
-    public Single<Set<IdentityProvider>> findAll() {
-        return Observable.fromPublisher(identitiesCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Single<Set<IdentityProvider>> findByDomain(String domain) {
-        return findAll(ReferenceType.DOMAIN, domain);
+    public Flowable<IdentityProvider> findAll() {
+        return Flowable.fromPublisher(identitiesCollection.find()).map(this::convert);
     }
 
     @Override

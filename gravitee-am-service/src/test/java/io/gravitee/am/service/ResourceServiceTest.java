@@ -27,9 +27,11 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ResourceServiceImpl;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import io.vertx.core.json.JsonObject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -79,7 +81,7 @@ public class ResourceServiceTest {
 
     @Before
     public void setUp() {
-        when(repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Single.just(Arrays.asList(new Resource().setId(RESOURCE_ID))));
+        when(repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
         when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.just(new Resource().setId(RESOURCE_ID)));
         when(scopeService.findByDomainAndKeys(DOMAIN_ID, Arrays.asList("scope"))).thenReturn(Single.just(Arrays.asList(new Scope("scope"))));
     }
@@ -162,8 +164,11 @@ public class ResourceServiceTest {
 
     @Test
     public void list() {
-        TestObserver<List<Resource>> testObserver = service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID).test();
-        testObserver.assertNoErrors().assertComplete().assertValue(resourceSet -> resourceSet.get(0).getId().equals(RESOURCE_ID));
+        TestSubscriber<Resource> testSubscriber = service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        testSubscriber
+                .assertNoErrors()
+                .assertComplete()
+                .assertValue(resourceSet -> resourceSet.getId().equals(RESOURCE_ID));
     }
 
     @Test
@@ -196,8 +201,8 @@ public class ResourceServiceTest {
     //Testing straightforward CRUD methods
     @Test
     public void findByResources() {
-        when(repository.findByResources(anyList())).thenReturn(Single.just(Collections.emptyList()));
-        TestObserver testObserver = service.findByResources(Collections.emptyList()).test();
+        when(repository.findByResources(anyList())).thenReturn(Flowable.empty());
+        TestSubscriber testObserver = service.findByResources(Collections.emptyList()).test();
         testObserver.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByResources(Collections.emptyList());
     }
@@ -220,15 +225,15 @@ public class ResourceServiceTest {
 
     @Test
     public void findByDomainAndClientAndResources() {
-        when(repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList())).thenReturn(Single.just(Collections.emptyList()));
-        TestObserver testObserver = service.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList()).test();
-        testObserver.assertComplete().assertNoErrors();
+        when(repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList())).thenReturn(Flowable.empty());
+        TestSubscriber testSubscriber = service.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList()).test();
+        testSubscriber.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByDomainAndClientAndResources(anyString(), anyString(), anyList());
     }
 
     @Test
     public void findByDomainAndClientResource() {
-        when(repository.findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList())).thenReturn(Single.just(Collections.emptyList()));
+        when(repository.findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList())).thenReturn(Flowable.empty());
         TestObserver testObserver = service.findByDomainAndClientResource(DOMAIN_ID, CLIENT_ID, RESOURCE_ID).test();
         testObserver.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList());
@@ -249,7 +254,7 @@ public class ResourceServiceTest {
     @Test
     public void delete() {
         Resource toDelete = new Resource().setId(RESOURCE_ID).setDomain(DOMAIN_ID);
-        when(accessPolicyRepository.findByDomainAndResource(toDelete.getDomain(), toDelete.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(accessPolicyRepository.findByDomainAndResource(toDelete.getDomain(), toDelete.getId())).thenReturn(Flowable.empty());
         when(repository.delete(RESOURCE_ID)).thenReturn(Completable.complete());
         TestObserver testObserver = service.delete(toDelete).test();
         testObserver.assertComplete().assertNoErrors();
@@ -262,8 +267,8 @@ public class ResourceServiceTest {
         accessPolicy.setId("policy-id");
         accessPolicy.setResource(RESOURCE_ID);
         accessPolicy.setDomain(DOMAIN_ID);
-        when(accessPolicyRepository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID)).thenReturn(Single.just(Collections.singletonList(accessPolicy)));
-        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        when(accessPolicyRepository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID)).thenReturn(Flowable.just(accessPolicy));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).toList().test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(accessPolicies -> accessPolicies.size() == 1);
         verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
@@ -273,8 +278,8 @@ public class ResourceServiceTest {
     @Test
     public void findAccessPolicies_resourceNotFound() {
         when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
-        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
-        testObserver.assertNotComplete().assertError(ResourceNotFoundException.class);
+        TestSubscriber<AccessPolicy> testSubscriber = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testSubscriber.assertNotComplete().assertError(ResourceNotFoundException.class);
         verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
         verify(accessPolicyRepository, never()).findByDomainAndResource(DOMAIN_ID, RESOURCE_ID);
     }
@@ -282,8 +287,8 @@ public class ResourceServiceTest {
     @Test
     public void findAccessPolicies_technicalFailure() {
         when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.error(RuntimeException::new));
-        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
-        testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
+        TestSubscriber<AccessPolicy> testSubscriber = service.findAccessPolicies(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID).test();
+        testSubscriber.assertNotComplete().assertError(TechnicalManagementException.class);
         verify(repository, times(1)).findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID);
         verify(accessPolicyRepository, never()).findByDomainAndResource(DOMAIN_ID, RESOURCE_ID);
     }
@@ -295,8 +300,8 @@ public class ResourceServiceTest {
         accessPolicy.setResource(RESOURCE_ID);
         accessPolicy.setDomain(DOMAIN_ID);
         List<String> resourceIds = Collections.singletonList(RESOURCE_ID);
-        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Single.just(Collections.singletonList(accessPolicy)));
-        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPoliciesByResources(resourceIds).test();
+        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Flowable.just(accessPolicy));
+        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPoliciesByResources(resourceIds).toList().test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(accessPolicies -> accessPolicies.size() == 1);
         verify(accessPolicyRepository, times(1)).findByResources(resourceIds);
@@ -305,8 +310,8 @@ public class ResourceServiceTest {
     @Test
     public void findAccessPoliciesByResources_technicalFailure() {
         List<String> resourceIds = Collections.singletonList(RESOURCE_ID);
-        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Single.error(RuntimeException::new));
-        TestObserver<List<AccessPolicy>> testObserver = service.findAccessPoliciesByResources(resourceIds).test();
+        when(accessPolicyRepository.findByResources(resourceIds)).thenReturn(Flowable.error(RuntimeException::new));
+        TestSubscriber<AccessPolicy> testObserver = service.findAccessPoliciesByResources(resourceIds).test();
         testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
         verify(accessPolicyRepository, times(1)).findByResources(resourceIds);
     }
@@ -492,8 +497,8 @@ public class ResourceServiceTest {
         resource.setUserId(USER_ID);
         List<Resource> resources = Collections.singletonList(resource);
 
-        when(userService.findByIdIn(anyList())).thenReturn(Single.just(Collections.singletonList(new User())));
-        when(applicationService.findByIdIn(anyList())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(userService.findByIdIn(anyList())).thenReturn(Flowable.just(new User()));
+        when(applicationService.findByIdIn(anyList())).thenReturn(Flowable.just(new Application()));
         TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(resources).test();
         testObserver.assertComplete().assertNoErrors();
     }

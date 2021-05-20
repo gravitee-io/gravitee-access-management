@@ -19,6 +19,7 @@ import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.springframework.stereotype.Repository;
 
@@ -33,8 +34,8 @@ import java.util.List;
 public class JdbcPolicyRepository extends AbstractJdbcRepository implements PolicyRepository {
 
     @Override
-    public Single<List<Policy>> findAll() {
-        return Single.just(Collections.emptyList());
+    public Flowable<Policy> findAll() {
+        return Flowable.empty();
     }
 
     @Override

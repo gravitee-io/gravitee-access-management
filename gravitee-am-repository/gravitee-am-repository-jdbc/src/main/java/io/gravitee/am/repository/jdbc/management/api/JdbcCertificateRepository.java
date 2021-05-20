@@ -22,6 +22,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcCertificate;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringCertificateRepository;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,6 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -70,21 +69,17 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Set<Certificate>> findAll() {
+    public Flowable<Certificate> findAll() {
         LOGGER.debug("findAll()");
         return this.certificateRepository.findAll()
-                .map(this::toEntity).toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all Certificates", error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<Set<Certificate>> findByDomain(String domain) {
+    public Flowable<Certificate> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return this.certificateRepository.findByDomain(domain)
-                .map(this::toEntity).toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all Certificates with domain {}", domain, error));
+                .map(this::toEntity);
     }
 
     @Override

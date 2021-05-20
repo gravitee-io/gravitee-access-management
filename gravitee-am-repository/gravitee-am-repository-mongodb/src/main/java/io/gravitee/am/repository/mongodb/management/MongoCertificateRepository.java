@@ -20,18 +20,13 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.CertificateMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -53,13 +48,13 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Set<Certificate>> findByDomain(String domain) {
-        return Observable.fromPublisher(certificatesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Certificate> findByDomain(String domain) {
+        return Flowable.fromPublisher(certificatesCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
     }
 
     @Override
-    public Single<Set<Certificate>> findAll() {
-        return Observable.fromPublisher(certificatesCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Certificate> findAll() {
+        return Flowable.fromPublisher(certificatesCollection.find()).map(this::convert);
     }
 
     @Override

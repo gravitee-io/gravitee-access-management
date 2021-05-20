@@ -20,6 +20,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -33,9 +34,9 @@ public interface CertificateService {
 
     Maybe<Certificate> findById(String id);
 
-    Single<List<Certificate>> findAll();
+    Flowable<Certificate> findAll();
 
-    Single<List<Certificate>> findByDomain(String domain);
+    Flowable<Certificate> findByDomain(String domain);
 
     /**
      * This method is used to create a default certificate (mainly used when creating a new domain).

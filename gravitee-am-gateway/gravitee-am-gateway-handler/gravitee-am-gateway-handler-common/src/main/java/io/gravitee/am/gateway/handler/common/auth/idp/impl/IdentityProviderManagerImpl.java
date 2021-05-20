@@ -19,7 +19,6 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
-import io.gravitee.am.gateway.handler.context.provider.UserProperties;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
@@ -37,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -91,8 +89,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
         try {
-            Set<IdentityProvider> identityProviders = identityProviderRepository.findByDomain(domain.getId()).blockingGet();
-            identityProviders.forEach(identityProvider -> updateAuthenticationProvider(identityProvider));
+            identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId()).blockingForEach(this::updateAuthenticationProvider);
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);

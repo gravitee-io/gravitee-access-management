@@ -71,7 +71,7 @@ public class MembersResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.LIST)
                 .andThen(organizationService.findById(organizationId)
-                        .flatMap(organization -> membershipService.findByReference(organization.getId(), ReferenceType.ORGANIZATION))
+                        .flatMap(organization -> membershipService.findByReference(organization.getId(), ReferenceType.ORGANIZATION).toList())
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }

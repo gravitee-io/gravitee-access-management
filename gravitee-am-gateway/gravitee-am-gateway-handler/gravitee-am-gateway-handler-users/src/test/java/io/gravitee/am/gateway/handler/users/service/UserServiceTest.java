@@ -21,8 +21,8 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.ScopeApprovalNotFoundException;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Collections;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -59,9 +58,12 @@ public class UserServiceTest {
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
+        scopeApproval.setUserId(userId);
+        scopeApproval.setClientId("");
+        scopeApproval.setScope("");
 
         when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.findByDomainAndUser(domainId, userId)).thenReturn(Single.just(Collections.singleton(scopeApproval)));
+        when(scopeApprovalService.findByDomainAndUser(domainId, userId)).thenReturn(Flowable.just(scopeApproval));
 
         TestObserver<Set<ScopeApproval>> testObserver = userService.consents(userId).test();
 

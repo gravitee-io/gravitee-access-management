@@ -59,6 +59,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
         List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().collect(Collectors.toList());
         //Compare with current registered resource set and return permission ticket if everything's correct.
         return resourceService.findByDomainAndClientAndResources(domain, client, requestedResourcesIds)
+                .toList()
                 .flatMap(fetchedResourceSet ->
                     this.validatePermissionRequest(requestedPermission, fetchedResourceSet, requestedResourcesIds)
                             .map(permissionRequests -> {

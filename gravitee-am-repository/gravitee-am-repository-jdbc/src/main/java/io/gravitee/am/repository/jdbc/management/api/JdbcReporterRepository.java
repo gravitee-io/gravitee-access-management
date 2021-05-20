@@ -22,13 +22,12 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringReporterRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -51,29 +50,24 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     }
 
     @Override
-    public Single<List<Reporter>> findAll() {
+    public Flowable<Reporter> findAll() {
         LOGGER.debug("findAll()");
         return reporterRepository.findAll()
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve all reporters", error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Reporter>> findByDomain(String domain) {
+    public Flowable<Reporter> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return reporterRepository.findByDomain(domain)
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve all reporters for domain {}", domain, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Reporter> findById(String id) {
         LOGGER.debug("findById({})", id);
         return reporterRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve the reporter with id {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -86,23 +80,20 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(insertResult).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create reporter with id {}", item.getId(), error));
+        return monoToSingle(insertResult).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         LOGGER.debug("Update reporter with id '{}'", item.getId());
         return reporterRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to update reporter with id {}", item.getId()));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return reporterRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete the reporter with id {}", id, error));
+        return reporterRepository.deleteById(id);
     }
 
 }

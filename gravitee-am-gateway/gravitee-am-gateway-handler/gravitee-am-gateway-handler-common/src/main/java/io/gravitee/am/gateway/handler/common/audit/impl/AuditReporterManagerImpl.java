@@ -84,7 +84,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
             deploymentId = id;
 
             // Start reporters
-            reporterRepository.findByDomain(domain.getId())
+            reporterRepository.findByDomain(domain.getId()).toList()
                     .flatMap(reporters ->
                             environmentService
                                     .findById(domain.getReferenceId())

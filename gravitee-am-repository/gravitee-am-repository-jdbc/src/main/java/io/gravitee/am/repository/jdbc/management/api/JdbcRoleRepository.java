@@ -40,8 +40,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -73,9 +74,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return roleRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
-                .doOnError(error -> LOGGER.error("Unable to retrieve role with referenceId {} and referenceType {}",
-                        referenceId, referenceType, error));
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable());
     }
 
     @Override
@@ -120,31 +119,25 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         .bind("refType", referenceType.name())
                         .as(Long.class)
                         .fetch().first())
-                        .map(total -> new Page<Role>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to search roles with referenceType {} and referenceId {} (page={}/size={})", referenceType, referenceId, page, size, error));
+                        .map(total -> new Page<Role>(data, page, total)));
     }
 
     @Override
-    public Single<Set<Role>> findByIdIn(List<String> ids) {
+    public Flowable<Role> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
-            return Single.just(Collections.emptySet());
+            return Flowable.empty();
         }
         return roleRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve role with id in {} ", ids, error));
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable());
     }
 
     @Override
     public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role) {
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, role);
         return completeWithScopes(roleRepository.findById(referenceType.name(), referenceId, role)
-                .map(this::toEntity), role)
-                .doOnError(error -> LOGGER.error("Unable to retrieve role with referenceId {}, referenceType {} and id {} ",
-                        referenceId, referenceType, role, error));
+                .map(this::toEntity), role);
     }
 
     @Override
@@ -152,17 +145,14 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("findByNameAndAssignableType({},{},{},{})", referenceType, referenceId, name, assignableType);
         return roleRepository.findByNameAndAssignableType(referenceType.name(), referenceId, name, assignableType.name())
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve role with referenceId {}, referenceType {}, name {} and assignableType {} ",
-                        referenceId, referenceType, name, assignableType, error));
+                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()));
     }
 
     @Override
     public Maybe<Role> findById(String id) {
         LOGGER.debug("findById({})", id);
         return completeWithScopes(roleRepository.findById(id)
-                .map(this::toEntity), id)
-                .doOnError(error -> LOGGER.error("Unable to retrieve role with id {} ", id, error));
+                .map(this::toEntity), id);
     }
 
     @Override
@@ -199,8 +189,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create Role with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -239,8 +228,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to update Role with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -254,8 +242,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         Mono<Integer> delete = dbClient.delete().from(JdbcRole.class)
                 .matching(from(where("id").is(id))).fetch().rowsUpdated();
 
-        return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)))
-                .doOnError(error -> LOGGER.error("Unable to delete Role with id {}", id, error));
+        return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));
     }
 
     private Maybe<Role> completeWithScopes(Maybe<Role> maybeRole, String id) {

@@ -23,6 +23,7 @@ import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.TopApplication;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -43,15 +44,15 @@ public interface ApplicationService {
 
     Single<Page<Application>> search(String domain, String query, int page, int size);
 
-    Single<Set<Application>> findByCertificate(String certificate);
+    Flowable<Application> findByCertificate(String certificate);
 
-    Single<Set<Application>> findByIdentityProvider(String identityProvider);
+    Flowable<Application> findByIdentityProvider(String identityProvider);
 
-    Single<Set<Application>> findByFactor(String factor);
+    Flowable<Application> findByFactor(String factor);
 
     Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
 
-    Single<Set<Application>> findByIdIn(List<String> ids);
+    Flowable<Application> findByIdIn(List<String> ids);
 
     Maybe<Application> findById(String id);
 

@@ -195,13 +195,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // update membership if necessary
         return membershipService.findByMember(existingUser.getId(), MemberType.USER)
-                .flatMapCompletable(memberships -> {
-                    boolean mustChangeOrganizationRole = memberships
-                            .stream()
-                            .filter(membership -> ReferenceType.ORGANIZATION == membership.getReferenceType())
-                            .findFirst()
-                            .map(membership -> !membership.getRoleId().equals(roleId))
-                            .orElse(false);
+                .filter(membership -> ReferenceType.ORGANIZATION == membership.getReferenceType())
+                .firstElement()
+                .map(membership -> !membership.getRoleId().equals(roleId))
+                .switchIfEmpty(Maybe.just(false))
+                .flatMapCompletable(mustChangeOrganizationRole -> {
 
                     if (!mustChangeOrganizationRole) {
                         return Completable.complete();

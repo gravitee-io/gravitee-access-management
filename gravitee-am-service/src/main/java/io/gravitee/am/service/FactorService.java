@@ -20,6 +20,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,11 +32,9 @@ import java.util.List;
  */
 public interface FactorService {
 
-    Single<List<Factor>> findAll();
-
     Maybe<Factor> findById(String id);
 
-    Single<List<Factor>> findByDomain(String domain);
+    Flowable<Factor> findByDomain(String domain);
 
     Single<Factor> create(String domain, NewFactor factor, User principal);
 

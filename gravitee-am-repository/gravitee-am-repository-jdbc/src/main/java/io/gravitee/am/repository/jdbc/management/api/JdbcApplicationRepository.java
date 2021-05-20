@@ -27,6 +27,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringAp
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationRepository;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -88,13 +88,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<List<Application>> findAll() {
+    public Flowable<Application> findAll() {
         LOGGER.debug("findAll()");
         return applicationRepository.findAll()
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications", error))
-                .toList();
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
@@ -113,13 +111,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<List<Application>> findByDomain(String domain) {
+    public Flowable<Application> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})",domain);
         return applicationRepository.findByDomain(domain)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {}", domain, error))
-                .toList();
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
@@ -168,17 +164,15 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     @Override
-    public Single<Set<Application>> findByCertificate(String certificate) {
+    public Flowable<Application> findByCertificate(String certificate) {
         LOGGER.debug("findByCertificate({})", certificate);
         return applicationRepository.findByCertificate(certificate)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with certificate {}", certificate, error))
-                .toList().map(list -> list.stream().collect(Collectors.toSet()));
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
-    public Single<Set<Application>> findByIdentityProvider(String identityProvider) {
+    public Flowable<Application> findByIdentityProvider(String identityProvider) {
         LOGGER.debug("findByIdentityProvider({})", identityProvider);
 
         // identity is a keyword with mssql
@@ -186,43 +180,34 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 databaseDialectHelper.toSql(SqlIdentifier.quoted("identity")) + " = :identity")
                 .bind("identity", identityProvider).as(JdbcApplication.class).fetch().all())
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with identityProvider {}", identityProvider, error))
-                .toList().map(list -> list.stream().collect(Collectors.toSet()));
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
-    public Single<Set<Application>> findByFactor(String factor) {
+    public Flowable<Application> findByFactor(String factor) {
         LOGGER.debug("findByFactor({})", factor);
         return applicationRepository.findAllByFactor(factor)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with factor {}", factor, error))
-                .toList().map(list -> list.stream().collect(Collectors.toSet()));
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
-    public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
+    public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         LOGGER.debug("findByDomainAndExtensionGrant({}, {})", domain, extensionGrant);
         return applicationRepository.findAllByDomainAndGrant(domain, extensionGrant)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {})", domain, error));
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
-    public Single<Set<Application>> findByIdIn(List<String> ids) {
+    public Flowable<Application> findByIdIn(List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
-            return Single.just(Collections.emptySet());
+            return Flowable.empty();
         }
         return applicationRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable())
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with ids {}", ids, error))
-                .toList().map(list -> list.stream().collect(Collectors.toSet()));
+                .flatMap(app -> completeApplication(app).toFlowable());
     }
 
     @Override
@@ -246,8 +231,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
-                .firstElement()
-                .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {})", domain, error));
+                .firstElement();
     }
 
     @Override
@@ -255,8 +239,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findById({}", id);
         return applicationRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve application with id {}", id, error));
+                .flatMap(app -> completeApplication(app).toMaybe());
     }
 
     @Override
@@ -286,8 +269,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create application with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -318,8 +300,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         updateAction = persistChildEntities(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update application with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -328,8 +309,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Integer> delete = dbClient.delete().from(JdbcApplication.class).matching(from(where("id").is(id))).fetch().rowsUpdated();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
-                .andThen(applicationRepository.deleteById(id))
-                .doOnError(error -> LOGGER.error("Unable to delete Application with id {}", id, error));
+                .andThen(applicationRepository.deleteById(id));
     }
 
     private Mono<Integer> deleteChildEntities(String appId) {

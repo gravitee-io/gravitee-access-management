@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.Set;
@@ -28,8 +29,8 @@ import java.util.Set;
  */
 public interface BotDetectionRepository extends CrudRepository<BotDetection, String> {
 
-    Single<Set<BotDetection>> findAll();
+    Flowable<BotDetection> findAll();
 
-    Single<Set<BotDetection>> findByReference(ReferenceType referenceType, String referenceId);
+    Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId);
 
 }

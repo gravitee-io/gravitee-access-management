@@ -30,7 +30,4 @@ import org.springframework.stereotype.Repository;
 public interface SpringFactorRepository extends RxJava2CrudRepository<JdbcFactor, String> {
     @Query("select * from factors f where f.domain = :domain")
     Flowable<JdbcFactor> findByDomain(String domain);
-
-    @Query("select * from factors f where f.domain = :domain and f.factor_type = :factorType")
-    Maybe<JdbcFactor> findByDomainAndFactorType(String domain, String factorType);
 }

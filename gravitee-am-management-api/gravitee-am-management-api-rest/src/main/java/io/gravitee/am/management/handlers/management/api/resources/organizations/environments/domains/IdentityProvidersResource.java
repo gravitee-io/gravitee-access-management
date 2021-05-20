@@ -20,7 +20,6 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.IdentityProviderService;
@@ -28,7 +27,6 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -41,9 +39,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -85,8 +80,7 @@ public class IdentityProvidersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> identityProviderService.findByDomain(domain))
-                        .flatMapObservable(Observable::fromIterable)
+                        .flatMapPublisher(__ -> identityProviderService.findByDomain(domain))
                         .filter(identityProvider -> {
                             if (userProvider) {
                                 return identityProviderManager.userProviderExists(identityProvider.getId());

@@ -22,6 +22,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -39,17 +40,15 @@ public interface GroupService {
 
     Single<Page<User>> findMembers(ReferenceType referenceType, String referenceId, String groupId, int page, int size);
 
-    Single<List<Group>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Group> findAll(ReferenceType referenceType, String referenceId);
 
-    Single<List<Group>> findByDomain(String domain);
+    Flowable<Group> findByDomain(String domain);
 
-    Single<List<Group>> findByMember(String userId);
+    Flowable<Group> findByMember(String userId);
 
-    Single<List<Group>> findByIdIn(List<String> ids);
+    Flowable<Group> findByIdIn(List<String> ids);
 
     Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName);
-
-    Maybe<Group> findByDomainAndName(String domain, String groupName);
 
     Single<Group> findById(ReferenceType referenceType, String referenceId, String id);
 

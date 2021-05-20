@@ -36,15 +36,15 @@ public interface FormService {
 
     Maybe<Form> findById(String id);
 
-    Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Form> findAll(ReferenceType referenceType, String referenceId);
 
     Flowable<Form> findAll(ReferenceType referenceType);
 
-    Single<List<Form>> findByDomain(String domain);
+    Flowable<Form> findByDomain(String domain);
 
-    Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);
+    Flowable<Form> findByClient(ReferenceType referenceType, String referenceId, String client);
 
-    Single<List<Form>> findByDomainAndClient(String domain, String client);
+    Flowable<Form> findByDomainAndClient(String domain, String client);
 
     Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 

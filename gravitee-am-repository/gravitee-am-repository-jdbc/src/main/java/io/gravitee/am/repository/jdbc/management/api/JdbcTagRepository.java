@@ -53,24 +53,21 @@ public class JdbcTagRepository extends AbstractJdbcRepository implements TagRepo
     public Maybe<Tag> findById(String id, String organizationId) {
         LOGGER.debug("findById({}, {})", id, organizationId);
         return tagRepository.findById(id, organizationId)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Tag with id {} and organization {}", id, organizationId, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
         LOGGER.debug("findAll({})", organizationId);
         return tagRepository.findByOrganization(organizationId)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Tag with organization {}", organizationId, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Tag> findById(String id) {
         LOGGER.debug("findById({})", id);
         return tagRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Tag with id {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -83,22 +80,19 @@ public class JdbcTagRepository extends AbstractJdbcRepository implements TagRepo
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create tag with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<Tag> update(Tag item) {
         LOGGER.debug("Update tag with id {}", item.getId());
         return tagRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("Unable to update tag with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return tagRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete Tag with id {}", id, error));
+        return tagRepository.deleteById(id);
     }
 }

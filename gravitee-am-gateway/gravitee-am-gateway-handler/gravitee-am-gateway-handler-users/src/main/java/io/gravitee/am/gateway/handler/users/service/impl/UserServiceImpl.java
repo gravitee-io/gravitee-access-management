@@ -26,6 +26,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -50,12 +51,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<Set<ScopeApproval>> consents(String userId) {
-        return scopeApprovalService.findByDomainAndUser(domain.getId(), userId);
+        return scopeApprovalService.findByDomainAndUser(domain.getId(), userId).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<ScopeApproval>> consents(String userId, String clientId) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId);
+        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId).collect(HashSet::new, Set::add);
     }
 
     @Override

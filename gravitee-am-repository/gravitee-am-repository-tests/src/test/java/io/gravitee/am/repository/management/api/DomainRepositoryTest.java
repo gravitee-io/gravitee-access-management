@@ -21,12 +21,11 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
@@ -131,12 +130,12 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         Domain domainCreated = domainRepository.create(domain).blockingGet();
 
         // fetch domains
-        TestObserver<Set<Domain>> testObserver1 = domainRepository.findByIdIn(Collections.singleton(domainCreated.getId())).test();
-        testObserver1.awaitTerminalEvent();
+        TestSubscriber<Domain> testSubscriber = domainRepository.findByIdIn(Collections.singleton(domainCreated.getId())).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver1.assertComplete();
-        testObserver1.assertNoErrors();
-        testObserver1.assertValue(domains -> domains.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test

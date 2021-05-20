@@ -23,6 +23,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -66,13 +67,13 @@ public class EventRepositoryTest extends AbstractManagementTest {
         eventRepository.create(eventAfter).blockingGet();
 
         // fetch events
-        TestObserver<List<Event>> testObserver1 = eventRepository.findByTimeFrame(from, to).test();
-        testObserver1.awaitTerminalEvent();
+        TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrame(from, to).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver1.assertComplete();
-        testObserver1.assertNoErrors();
-        testObserver1.assertValue(events -> events.size() == 1);
-        testObserver1.assertValue(events -> events.get(0).getId().equals(expectedEvent.getId()));
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(evt -> evt.getId().equals(expectedEvent.getId()));
     }
 
     @Test

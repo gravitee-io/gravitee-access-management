@@ -78,13 +78,11 @@ public class ApplicationFlowsResource extends AbstractResource {
         User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.LIST)
-                .andThen(flowService.findByApplication(ReferenceType.DOMAIN, domain, application)
-                        .flatMap(flows ->
-                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
-                                        .map(hasPermission -> flows.stream().map(flow -> filterFlowInfos(hasPermission, flow))
-                                                .collect(Collectors.toList())))
-                )
-                .subscribe(response::resume, response::resume);
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION_FLOW, Acl.READ)
+                        .flatMapPublisher(hasPermission ->
+                                flowService.findByApplication(ReferenceType.DOMAIN, domain, application).map(flow -> filterFlowInfos(hasPermission, flow)))
+                        .toList())
+                        .subscribe(response::resume, response::resume);
     }
 
     @PUT

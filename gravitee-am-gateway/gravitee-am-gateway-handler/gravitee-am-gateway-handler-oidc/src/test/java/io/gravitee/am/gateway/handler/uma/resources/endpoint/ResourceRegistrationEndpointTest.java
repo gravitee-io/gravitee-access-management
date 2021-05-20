@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.Json;
@@ -41,9 +42,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -105,7 +103,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_anyError() {
-        when(service.listByDomainAndClientAndUser(anyString(), anyString(), anyString())).thenReturn(Single.error(new RuntimeException()));
+        when(service.listByDomainAndClientAndUser(anyString(), anyString(), anyString())).thenReturn(Flowable.error(new RuntimeException()));
         endpoint.handle(context);
         verify(context, times(1)).fail(errCaptor.capture());
         Assert.assertTrue("Error must be propagated", errCaptor.getValue() instanceof RuntimeException);
@@ -113,7 +111,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_noResources() {
-        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.empty());
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
@@ -122,7 +120,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_withResources() {
-        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Single.just(Arrays.asList(new Resource().setId(RESOURCE_ID))));
+        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());

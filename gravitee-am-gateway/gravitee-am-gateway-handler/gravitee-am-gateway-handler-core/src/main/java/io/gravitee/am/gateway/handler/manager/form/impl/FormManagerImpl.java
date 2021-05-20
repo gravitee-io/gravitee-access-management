@@ -33,8 +33,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -62,12 +60,9 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing forms for domain {}", domain.getName());
-        formRepository.findByDomain(domain.getId())
+        formRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
-                        forms -> {
-                            updateForms(forms);
-                            logger.info("Forms loaded for domain {}", domain.getName());
-                        },
+                        form -> updateForm(form),
                         error -> logger.error("Unable to initialize forms for domain {}", domain.getName(), error));
     }
 
@@ -112,7 +107,7 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
                             if (forms.containsKey(formId) && !form.isEnabled()) {
                                 removeForm(formId);
                             } else {
-                                updateForms(Collections.singletonList(form));
+                                updateForm(form);
                             }
                             logger.info("Form {} {}d for domain {}", formId, eventType, domain.getName());
                         },
@@ -128,15 +123,12 @@ public class FormManagerImpl extends AbstractService implements FormManager, Ini
         }
     }
 
-    private void updateForms(List<Form> forms) {
-        forms
-                .stream()
-                .filter(Form::isEnabled)
-                .forEach(form -> {
-                    this.forms.put(form.getId(), form);
-                    ((DomainBasedTemplateResolver) templateResolver).addForm(getTemplateName(form), form.getContent());
-                    logger.info("Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), domain.getName(), form.getClient());
-                });
+    private void updateForm(Form form) {
+        if (form.isEnabled()){
+            this.forms.put(form.getId(), form);
+            ((DomainBasedTemplateResolver) templateResolver).addForm(getTemplateName(form), form.getContent());
+            logger.info("Form {} loaded for domain {} " + (form.getClient() != null ? "and client {}" : ""), form.getTemplate(), domain.getName(), form.getClient());
+        }
     }
 
     private String getTemplateName(Form form) {

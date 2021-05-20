@@ -51,11 +51,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
-        return userService.findByDomainAndEmail(domain, email, strict);
-    }
-
-    @Override
     public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
         return userService.search(ReferenceType.DOMAIN, domain, criteria, 0, 2).map(p -> new ArrayList<>(p.getData()));
     }

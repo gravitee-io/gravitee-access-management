@@ -33,8 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -65,10 +63,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         logger.info("Initializing factors for domain {}", domain.getName());
         factorService.findByDomain(domain.getId())
                 .subscribe(
-                        factors -> {
-                            updateFactors(factors);
-                            logger.info("Factors loaded for domain {}", domain.getName());
-                        },
+                        factor -> updateFactor(factor),
                         error -> logger.error("Unable to initialize factors for domain {}", domain.getName(), error));
     }
 
@@ -123,7 +118,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
         factorService.findById(factorId)
                 .subscribe(
-                        factor -> updateFactors(Collections.singletonList(factor)),
+                        factor -> updateFactor(factor),
                         error -> logger.error("Unable to load factor for domain {}", domain.getName(), error),
                         () -> logger.error("No factor found with id {}", factorId));
     }
@@ -134,19 +129,15 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         factors.remove(factorId);
     }
 
-    private void updateFactors(List<Factor> factors) {
-        factors
-                .stream()
-                .forEach(factor -> {
-                    try {
-                        FactorProvider factorProvider = factorPluginManager.create(factor.getType(), factor.getConfiguration());
-                        this.factorProviders.put(factor.getId(), factorProvider);
-                        this.factors.put(factor.getId(), factor);
-                        logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
-                    } catch (Exception ex) {
-                        this.factorProviders.remove(factor.getId());
-                        logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
-                    }
-                });
+    private void updateFactor(Factor factor) {
+        try {
+            FactorProvider factorProvider = factorPluginManager.create(factor.getType(), factor.getConfiguration());
+            this.factorProviders.put(factor.getId(), factorProvider);
+            this.factors.put(factor.getId(), factor);
+            logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());
+        } catch (Exception ex) {
+            this.factorProviders.remove(factor.getId());
+            logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
+        }
     }
 }

@@ -107,7 +107,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
             repository.create(reporter).blockingGet();
         }
 
-        TestObserver<List<Reporter>> testObserver = repository.findAll().test();
+        TestObserver<List<Reporter>> testObserver = repository.findAll().toList().test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop);
@@ -124,7 +124,7 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
             repository.create(reporter).blockingGet();
         }
 
-        TestObserver<List<Reporter>> testObserver = repository.findByDomain(domain).test();
+        TestObserver<List<Reporter>> testObserver = repository.findByDomain(domain).toList().test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop/2);

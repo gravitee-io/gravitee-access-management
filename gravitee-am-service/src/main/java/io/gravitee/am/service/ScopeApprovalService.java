@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -33,9 +34,9 @@ public interface ScopeApprovalService {
 
     Maybe<ScopeApproval> findById(String id);
 
-    Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user);
+    Flowable<ScopeApproval> findByDomainAndUser(String domain, String user);
 
-    Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String user, String client);
+    Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String user, String client);
 
     Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal);
 

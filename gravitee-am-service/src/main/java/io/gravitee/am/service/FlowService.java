@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -30,9 +31,9 @@ import java.util.List;
  */
 public interface FlowService {
 
-    Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps);
+    Flowable<Flow> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps);
 
-    Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application);
+    Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application);
 
     List<Flow> defaultFlows(ReferenceType referenceType, String referenceId);
 
@@ -54,7 +55,7 @@ public interface FlowService {
 
     Single<String> getSchema();
 
-    default Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId) {
+    default Flowable<Flow> findAll(ReferenceType referenceType, String referenceId) {
         return findAll(referenceType, referenceId, false);
     }
 

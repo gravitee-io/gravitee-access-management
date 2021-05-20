@@ -169,7 +169,7 @@ public class SyncManagerTest {
         event.setType(Type.DOMAIN);
         event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.DELETE));
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
 
         syncManager.refresh();
 
@@ -199,7 +199,7 @@ public class SyncManagerTest {
         domainToUpdate.setEnabled(true);
         domainToUpdate.setUpdatedAt(new Date());
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
         when(domainRepository.findById(domainToUpdate.getId())).thenReturn(Maybe.just(domainToUpdate));
         when(securityDomainManager.get(domainToUpdate.getId())).thenReturn(domain);
 
@@ -219,7 +219,7 @@ public class SyncManagerTest {
         event.setType(Type.IDENTITY_PROVIDER);
         event.setPayload(new Payload("idp-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Single.just(Collections.singletonList(event)));
+        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
 
         syncManager.refresh();
 

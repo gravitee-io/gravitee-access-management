@@ -53,7 +53,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
         Flow flow2Created = flowRepository.create(flow2).blockingGet();
 
-        TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").test();
+        TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").toList().test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
@@ -76,7 +76,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         Flow flowCreated = flowRepository.create(flow).blockingGet();
         Flow flow2Created = flowRepository.create(flow2).blockingGet();
 
-        TestObserver<List<Flow>> obs = flowRepository.findByApplication(ReferenceType.DOMAIN, "DOMAIN1", "APP1").test();
+        TestObserver<List<Flow>> obs = flowRepository.findByApplication(ReferenceType.DOMAIN, "DOMAIN1", "APP1").toList().test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();

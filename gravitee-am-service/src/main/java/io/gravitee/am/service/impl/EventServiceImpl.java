@@ -63,6 +63,7 @@ public class EventServiceImpl implements EventService {
     public Single<List<Event>> findByTimeFrame(long from, long to) {
         LOGGER.debug("Find events with time frame {} and {}", from, to);
         return eventRepository.findByTimeFrame(from, to)
+                .toList()
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

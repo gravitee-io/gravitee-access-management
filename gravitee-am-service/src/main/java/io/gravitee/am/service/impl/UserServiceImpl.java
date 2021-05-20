@@ -37,6 +37,7 @@ import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserFactorUpdater;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -78,12 +79,12 @@ public class UserServiceImpl implements UserService {
     private UserValidator userValidator;
 
     @Override
-    public Single<Set<User>> findByDomain(String domain) {
+    public Flowable<User> findByDomain(String domain) {
         LOGGER.debug("Find users by domain: {}", domain);
-        return userRepository.findByDomain(domain)
+        return userRepository.findAll(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s", domain), ex));
                 });
     }
 
@@ -123,23 +124,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<List<User>> findByIdIn(List<String> ids) {
+    public Flowable<User> findByIdIn(List<String> ids) {
         String userIds = String.join(",", ids);
         LOGGER.debug("Find users by ids: {}", userIds);
         return userRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by ids {}", userIds, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by ids %s", userIds), ex));
-                });
-    }
-
-    @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
-        LOGGER.debug("Find users by domain : {} and email: {}", domain, email);
-        return userRepository.findByDomainAndEmail(domain, email, strict)
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find users by domain : {} and email : {} ", domain, email, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by domain %s and email %s", domain, email), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by ids %s", userIds), ex));
                 });
     }
 
@@ -346,6 +337,7 @@ public class UserServiceImpl implements UserService {
 
         // fetch user groups
         return groupService.findByMember(user.getId())
+                .toList()
                 .flatMap(groups -> {
                     Set<String> roles = new HashSet<>();
                     if (groups != null && !groups.isEmpty()) {
@@ -393,10 +385,7 @@ public class UserServiceImpl implements UserService {
                     Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
                     /// delete WebAuthn credentials
                     return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
-                            .flatMapCompletable(credentials -> {
-                                List<Completable> deleteCredentialsCompletable = credentials.stream().map(c -> credentialService.delete(c.getId())).collect(Collectors.toList());
-                                return Completable.concat(deleteCredentialsCompletable);
-                            })
+                            .flatMapCompletable(credential -> credentialService.delete(credential.getId()))
                             .andThen(userRepository.delete(userId))
                             .andThen(eventService.create(event).ignoreElement());
                 })
@@ -415,7 +404,7 @@ public class UserServiceImpl implements UserService {
     public Single<Long> countByDomain(String domain) {
         LOGGER.debug("Count user by domain {}", domain);
 
-        return userRepository.countByDomain(domain)
+        return userRepository.countByReference(ReferenceType.DOMAIN, domain)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);

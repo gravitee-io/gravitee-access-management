@@ -75,8 +75,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         from = from.matching(from(whereClause));
 
         return monoToMaybe(from.as(JdbcLoginAttempt.class).first())
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve LoginAttempt with criteria {}", criteria, error));
+                .map(this::toEntity);
     }
 
     private Criteria buildWhereClause(LoginAttemptCriteria criteria) {
@@ -107,8 +106,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(from(whereClause)).then())
-                    .doOnError(error -> LOGGER.error("Unable to retrieve LoginAttempt with criteria {}", criteria, error));
+            return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(from(whereClause)).then());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from LoginAttempt without criteria");
@@ -120,8 +118,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         LocalDateTime now = LocalDateTime.now(UTC);
         return loginAttemptRepository.findById(id)
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve loginAttempt with id '{}'", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -134,28 +131,25 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> loginAttemptRepository.findById(item.getId()).map(this::toEntity).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create loginAttempt with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> loginAttemptRepository.findById(item.getId()).map(this::toEntity).toSingle());
     }
 
     @Override
     public Single<LoginAttempt> update(LoginAttempt item) {
         LOGGER.debug("update loginAttempt with id '{}'", item.getId());
         return loginAttemptRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to update loginAttempt with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return loginAttemptRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete loginAttempt with id '{}'", id, error));
+        return loginAttemptRepository.deleteById(id);
     }
 
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge loginAttempts", error));
+        return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(where("expire_at").lessThan(now)).then());
     }
 }

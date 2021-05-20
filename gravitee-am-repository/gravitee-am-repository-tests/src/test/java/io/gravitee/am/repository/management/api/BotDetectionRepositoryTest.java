@@ -21,11 +21,11 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -43,12 +43,12 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
         botDetection.setReferenceType(ReferenceType.DOMAIN);
         repository.create(botDetection).blockingGet();
 
-        TestObserver<Set<BotDetection>> testObserver = repository.findByReference(ReferenceType.DOMAIN,"testDomain").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<BotDetection> testSubscriber = repository.findByReference(ReferenceType.DOMAIN,"testDomain").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(bds -> bds.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     private BotDetection buildBotDetection() {

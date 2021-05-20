@@ -66,7 +66,6 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
                     if (collectionExists) {
                         LOGGER.info("Policies collection exists, upgrading policies to flows");
                         return policyRepository.findAll()
-                                .flatMapObservable(policy -> Observable.fromIterable(policy))
                                 .groupBy(Policy::getDomain)
                                 .flatMapCompletable(policiesPerDomain -> {
                                     final String domain = policiesPerDomain.getKey();

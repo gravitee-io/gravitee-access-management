@@ -34,8 +34,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
@@ -79,10 +77,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
         logger.info("Initializing emails for domain {}", domain.getName());
         emailRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
-                        emails -> {
-                            updateEmails(emails);
-                            logger.info("Emails loaded for domain {}", domain.getName());
-                        },
+                        email -> updateEmail(email),
                         error -> logger.error("Unable to initialize emails for domain {}", domain.getName(), error));
     }
 
@@ -156,7 +151,7 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
                             if (emails.containsKey(emailId) && !email.isEnabled()) {
                                 removeEmail(emailId);
                             } else {
-                                updateEmails(Collections.singletonList(email));
+                                updateEmail(email);
                             }
                             logger.info("Email {} {}d for domain {}", emailId, eventType, domain.getName());
                         },
@@ -173,17 +168,14 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
         }
     }
 
-    private void updateEmails(List<Email> emails) {
-        emails
-                .stream()
-                .filter(Email::isEnabled)
-                .forEach(email -> {
-                    String templateName = getTemplateName(email);
-                    this.emails.put(email.getId(), email);
-                    this.emailTemplates.put(templateName, email);
-                    reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
-                    logger.info("Email {} loaded for domain {}", templateName, domain.getName());
-                });
+    private void updateEmail(Email email) {
+        if (email != null && email.isEnabled()) {
+            String templateName = getTemplateName(email);
+            this.emails.put(email.getId(), email);
+            this.emailTemplates.put(templateName, email);
+            reloadTemplate(templateName + TEMPLATE_SUFFIX, email.getContent());
+            logger.info("Email {} loaded for domain {}", templateName, domain.getName());
+        }
     }
 
     private void reloadTemplate(String templateName, String content) {

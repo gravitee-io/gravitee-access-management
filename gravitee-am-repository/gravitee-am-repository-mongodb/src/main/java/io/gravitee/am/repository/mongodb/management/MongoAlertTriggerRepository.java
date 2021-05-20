@@ -56,11 +56,6 @@ public class MongoAlertTriggerRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Flowable<AlertTrigger> findByDomain(String domainId) {
-        return findAll(ReferenceType.DOMAIN, domainId);
-    }
-
-    @Override
     public Flowable<AlertTrigger> findAll(ReferenceType referenceType, String referenceId) {
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
 

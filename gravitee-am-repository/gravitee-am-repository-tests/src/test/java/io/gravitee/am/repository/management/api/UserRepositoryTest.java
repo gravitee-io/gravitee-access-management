@@ -27,10 +27,11 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -62,12 +63,12 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user).blockingGet();
 
         // fetch users
-        TestObserver<Set<User>> testObserver = userRepository.findByDomain("testDomain").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<User> testSubscriber = userRepository.findAll(ReferenceType.DOMAIN, "testDomain").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(users -> users.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test
@@ -143,12 +144,12 @@ public class UserRepositoryTest extends AbstractManagementTest {
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
-        TestObserver<List<User>> testObserver = userRepository.findByIdIn(Arrays.asList(userCreated.getId())).test();
+        TestSubscriber<User> testObserver = userRepository.findByIdIn(Arrays.asList(userCreated.getId())).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(u -> u.size() == 1);
+        testObserver.assertValueCount(1);
     }
 
     @Test
@@ -699,12 +700,12 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<List<User>> testObserver = userRepository.findByDomainAndEmail(domain, "test@test.com", true).test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<User> testSubscriber = userRepository.findByDomainAndEmail(domain, "test@test.com", true).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(users -> users.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test
@@ -724,12 +725,12 @@ public class UserRepositoryTest extends AbstractManagementTest {
         userRepository.create(user2).blockingGet();
 
         // fetch user
-        TestObserver<List<User>> testObserver = userRepository.findByDomainAndEmail(domain, "test@test.com", false).test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<User> testSubscriber = userRepository.findByDomainAndEmail(domain, "test@test.com", false).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(users -> users.size() == 2);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
     }
 
     private void testSearch_strict(String query) {

@@ -235,7 +235,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private Single<User> enhance(User user, JWT accessToken) {
         return Single.zip(
                 loadRoles(user, accessToken) ? roleService.findByIdIn(user.getRoles()).map(Optional::of) : Single.just(Optional.<Set<Role>>empty()),
-                loadGroups(accessToken) ? groupService.findByMember(user.getId()).map(Optional::of) : Single.just(Optional.<List<Group>>empty()),
+                loadGroups(accessToken) ? groupService.findByMember(user.getId()).toList().map(Optional::of) : Single.just(Optional.<List<Group>>empty()),
                 (optionalRoles, optionalGroups) -> {
                     Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     if (optionalRoles.isPresent() && !optionalRoles.get().isEmpty()) {

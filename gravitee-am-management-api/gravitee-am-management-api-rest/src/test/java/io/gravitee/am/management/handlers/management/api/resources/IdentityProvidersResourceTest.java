@@ -22,6 +22,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -61,10 +62,8 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         mockIdentityProvider2.setReferenceType(ReferenceType.DOMAIN);
         mockIdentityProvider2.setReferenceId(domainId);
 
-        final List<IdentityProvider> identityProviders = Arrays.asList(mockIdentityProvider, mockIdentityProvider2);
-
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(identityProviders)).when(identityProviderService).findByDomain(domainId);
+        doReturn(Flowable.just(mockIdentityProvider, mockIdentityProvider2)).when(identityProviderService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("identities").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -76,7 +75,7 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetIdentityProviders_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(identityProviderService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(identityProviderService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("identities").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

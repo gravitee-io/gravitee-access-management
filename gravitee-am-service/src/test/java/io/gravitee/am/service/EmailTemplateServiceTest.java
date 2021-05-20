@@ -28,9 +28,11 @@ import io.gravitee.am.service.impl.EmailTemplateServiceImpl;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -39,7 +41,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -68,8 +69,8 @@ public class EmailTemplateServiceTest {
 
     @Test
     public void shouldFindAll() {
-        when(emailRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Email())));
-        TestObserver testObserver = emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
+        when(emailRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Email()));
+        TestSubscriber testObserver = emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
@@ -268,13 +269,13 @@ public class EmailTemplateServiceTest {
         mailTwo.setTemplate("error");
         mailTwo.setExpiresAfter(1000);
 
-        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne, mailTwo)));
+        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Flowable.just(mailOne, mailTwo));
         when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.empty());
         when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "error")).thenReturn(Maybe.empty());
         when(emailRepository.create(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
+        TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).toList().test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(emails -> emails != null && emails.size() == 2 && emails.stream().filter(
                 email -> email.getReferenceType().equals(ReferenceType.DOMAIN) &&
@@ -308,10 +309,10 @@ public class EmailTemplateServiceTest {
         mailOne.setExpiresAfter(0);
 
         when(emailRepository.findByClientAndTemplate(ReferenceType.DOMAIN, DOMAIN, targetUid, "login")).thenReturn(Maybe.just(new Email()));
-        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Single.just(Arrays.asList(mailOne)));
+        when(emailRepository.findByClient(ReferenceType.DOMAIN, DOMAIN, sourceUid)).thenReturn(Flowable.just(mailOne));
 
-        TestObserver<List<Email>> testObserver = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
-        testObserver.assertNotComplete();
-        testObserver.assertError(EmailAlreadyExistsException.class);
+        TestSubscriber<Email> testSubscriber = emailTemplateService.copyFromClient(DOMAIN, sourceUid, targetUid).test();
+        testSubscriber.assertNotComplete();
+        testSubscriber.assertError(EmailAlreadyExistsException.class);
     }
 }

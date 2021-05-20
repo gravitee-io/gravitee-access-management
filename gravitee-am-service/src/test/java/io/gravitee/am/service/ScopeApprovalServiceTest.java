@@ -27,17 +27,16 @@ import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.ScopeApprovalServiceImpl;
 import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -103,8 +102,12 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUser() {
-        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
-        TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").test();
+        ScopeApproval dummyScopeApproval = new ScopeApproval();
+        dummyScopeApproval.setUserId("");
+        dummyScopeApproval.setClientId("");
+        dummyScopeApproval.setScope("");
+        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Flowable.just(dummyScopeApproval));
+        TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -114,19 +117,22 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUser_technicalException() {
-        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Single.error(TechnicalException::new));
+        when(scopeApprovalRepository.findByDomainAndUser(DOMAIN, "userId")).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").subscribe(testObserver);
+        TestSubscriber<ScopeApproval> testSubscriber = scopeApprovalService.findByDomainAndUser(DOMAIN, "userId").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
     public void shouldFindByDomainAndUserAndClient() {
-        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Single.just(Collections.singleton(new ScopeApproval())));
-        TestObserver<Set<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").test();
+        ScopeApproval dummyScopeApproval = new ScopeApproval();
+        dummyScopeApproval.setUserId("");
+        dummyScopeApproval.setClientId("");
+        dummyScopeApproval.setScope("");
+        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Flowable.just(dummyScopeApproval));
+        TestObserver<HashSet<ScopeApproval>> testObserver = scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").collect(HashSet<ScopeApproval>::new, Set::add).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -136,13 +142,12 @@ public class ScopeApprovalServiceTest {
 
     @Test
     public void shouldFindByDomainAndUserAndClient_technicalException() {
-        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Single.error(TechnicalException::new));
+        when(scopeApprovalRepository.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId")).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").subscribe(testObserver);
+        TestSubscriber testSubscriber = scopeApprovalService.findByDomainAndUserAndClient(DOMAIN, "userId", "clientId").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
@@ -187,7 +192,7 @@ public class ScopeApprovalServiceTest {
         scopeApproval.setUserId("user-id");
 
         when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
-        when(scopeApprovalRepository.findByDomainAndUser("my-domain", "user-id")).thenReturn(Single.just(new HashSet<>(Arrays.asList(scopeApproval))));
+        when(scopeApprovalRepository.findByDomainAndUser("my-domain", "user-id")).thenReturn(Flowable.just(scopeApproval));
         when(scopeApprovalRepository.deleteByDomainAndUser("my-domain", "user-id")).thenReturn(Completable.complete());
         when(accessTokenRepository.deleteByDomainIdAndUserId("my-domain", "user-id")).thenReturn(Completable.complete());
         when(refreshTokenRepository.deleteByDomainIdAndUserId("my-domain", "user-id")).thenReturn(Completable.complete());
@@ -219,7 +224,7 @@ public class ScopeApprovalServiceTest {
         scopeApproval.setUserId("user-id");
 
         when(userService.findById("user-id")).thenReturn(Maybe.just(new User()));
-        when(scopeApprovalRepository.findByDomainAndUserAndClient("my-domain", "user-id", "client-id")).thenReturn(Single.just(new HashSet<>(Arrays.asList(scopeApproval))));
+        when(scopeApprovalRepository.findByDomainAndUserAndClient("my-domain", "user-id", "client-id")).thenReturn(Flowable.just(scopeApproval));
         when(scopeApprovalRepository.deleteByDomainAndUserAndClient("my-domain", "user-id", "client-id")).thenReturn(Completable.complete());
         when(accessTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());
         when(refreshTokenRepository.deleteByDomainIdClientIdAndUserId("my-domain", "client-id", "user-id")).thenReturn(Completable.complete());

@@ -20,6 +20,7 @@ import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,7 +138,7 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         Resource rsCreated2 = repository.create(resource2).blockingGet();
 
         // fetch scope
-        TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID).test();
+        TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -205,12 +206,12 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         Resource rsCreated2 = repository.create(resource2).blockingGet();
 
         // fetch applications
-        TestObserver<List<Resource>> testObserver = repository.findByResources(Arrays.asList(rsCreated1.getId(),rsCreated2.getId(),"notMatching")).test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<Resource> testSubscriber = repository.findByResources(Arrays.asList(rsCreated1.getId(),rsCreated2.getId(),"notMatching")).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(resources -> resources.size() == 2);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
     }
 
     @Test
@@ -229,13 +230,13 @@ public class ResourceRepositoryTest extends AbstractManagementTest {
         Resource rsCreated5 = repository.create(resource5).blockingGet();
 
         // fetch applications
-        TestObserver<List<Resource>> testObserver = repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList(
+        TestSubscriber<Resource> testSubscriber = repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Arrays.asList(
                 rsCreated1.getId(),rsCreated2.getId(),rsCreated3.getId(),rsCreated4.getId(),rsCreated5.getId(),"unknown"
         )).test();
-        testObserver.awaitTerminalEvent();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(resources -> resources.size() == 3);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(3);
     }
 }

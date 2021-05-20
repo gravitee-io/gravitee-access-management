@@ -26,9 +26,11 @@ import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CertificateServiceImpl;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,9 +38,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.mockito.Mockito.*;
 
@@ -104,21 +103,20 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Certificate())));
-        TestObserver<List<Certificate>> testObserver = certificateService.findByDomain(DOMAIN).test();
-        testObserver.awaitTerminalEvent();
+        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new Certificate()));
+        TestSubscriber<Certificate> testSubscriber = certificateService.findByDomain(DOMAIN).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(extensionGrants -> extensionGrants.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        certificateService.findByDomain(DOMAIN).subscribe(testObserver);
+        TestSubscriber testObserver = certificateService.findByDomain(DOMAIN).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -131,7 +129,7 @@ public class CertificateServiceTest {
         when(certificate.getDomain()).thenReturn(DOMAIN);
 
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -178,7 +176,7 @@ public class CertificateServiceTest {
     @Test
     public void shouldDelete_certificateWithClients() {
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(new Certificate()));
-        when(applicationService.findByCertificate("my-certificate")).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.just(new Application()));
 
         TestObserver testObserver = certificateService.delete("my-certificate").test();
 

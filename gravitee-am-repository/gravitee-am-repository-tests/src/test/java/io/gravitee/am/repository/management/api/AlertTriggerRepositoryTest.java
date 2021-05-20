@@ -152,20 +152,6 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
         testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated.getId()));
     }
 
-
-    @Test
-    public void findByDomain() {
-        AlertTrigger alertTriggerToCreate = buildAlertTrigger();
-        AlertTrigger alertTriggerCreated = alertTriggerRepository.create(alertTriggerToCreate).blockingGet();
-
-        TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findByDomain(DOMAIN_ID).test();
-
-        testObserver1.awaitTerminalEvent();
-        testObserver1.assertComplete();
-        testObserver1.assertNoErrors();
-        testObserver1.assertValue(alertTrigger -> alertTrigger.getId().equals(alertTriggerCreated.getId()));
-    }
-
     @Test
     public void findAll() {
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();

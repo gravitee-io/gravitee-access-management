@@ -113,7 +113,8 @@ public class SyncManager implements InitializingBean {
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
-                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).blockingGet();
+
+                List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
 
                 if (events != null && !events.isEmpty()) {
                     // Extract only the latest events by type and id

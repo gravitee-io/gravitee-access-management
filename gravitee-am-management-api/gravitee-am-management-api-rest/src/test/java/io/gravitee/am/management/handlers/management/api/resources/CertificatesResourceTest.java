@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -57,10 +58,8 @@ public class CertificatesResourceTest extends JerseySpringTest {
         mockCertificate2.setName("certificate-2-name");
         mockCertificate2.setDomain(domainId);
 
-        final List<Certificate> certificates = Arrays.asList(mockCertificate, mockCertificate2);
-
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(certificates)).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.just(mockCertificate, mockCertificate2)).when(certificateService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -72,7 +71,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
     @Test
     public void shouldGetCertificates_technicalManagementException() {
         final String domainId = "domain-1";
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomain(domainId);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(certificateService).findByDomain(domainId);
 
         final Response response = target("domains").path(domainId).path("certificates").request().get();
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());

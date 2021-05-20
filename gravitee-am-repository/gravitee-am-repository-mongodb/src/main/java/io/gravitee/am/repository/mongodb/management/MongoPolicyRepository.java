@@ -21,6 +21,7 @@ import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.PolicyMongo;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
@@ -38,9 +39,9 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     public static final String COLLECTION_NAME = "policies";
 
     @Override
-    public Single<List<Policy>> findAll() {
+    public Flowable<Policy> findAll() {
         MongoCollection<PolicyMongo> policiesCollection = mongoOperations.getCollection(COLLECTION_NAME, PolicyMongo.class);
-        return Observable.fromPublisher(policiesCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
+        return Flowable.fromPublisher(policiesCollection.find()).map(this::convert);
     }
 
     @Override

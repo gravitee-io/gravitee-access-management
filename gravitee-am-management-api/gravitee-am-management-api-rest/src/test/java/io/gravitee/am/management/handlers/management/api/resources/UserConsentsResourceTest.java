@@ -24,6 +24,7 @@ import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -59,6 +60,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         mockScope.setKey("scope");
 
         final ScopeApproval scopeApproval = new ScopeApproval();
+        scopeApproval.setUserId("user-id-1");
         scopeApproval.setClientId("clientId");
         scopeApproval.setScope("scope");
         scopeApproval.setDomain(domainId);
@@ -67,7 +69,7 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Single.just(Collections.singleton(scopeApproval))).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getId());
+        doReturn(Flowable.just(scopeApproval)).when(scopeApprovalService).findByDomainAndUser(domainId, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)

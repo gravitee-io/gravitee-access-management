@@ -20,6 +20,7 @@ import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,11 +32,9 @@ import java.util.List;
  */
 public interface BotDetectionService {
 
-    Single<List<BotDetection>> findAll();
-
     Maybe<BotDetection> findById(String id);
 
-    Single<List<BotDetection>> findByDomain(String domain);
+    Flowable<BotDetection> findByDomain(String domain);
 
     Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal);
 

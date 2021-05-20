@@ -70,7 +70,6 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.LIST)
                 .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
-                        .flatMapObservable(Observable::fromIterable)
                         .filter(identityProvider -> {
                             if (userProvider) {
                                 return identityProviderManager.userProviderExists(identityProvider.getId());

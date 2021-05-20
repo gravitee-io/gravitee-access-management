@@ -40,8 +40,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.UUID;
 
@@ -218,7 +216,7 @@ public class ServiceResourceServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
         when(resourceRepository.delete(record.getId())).thenReturn(Completable.complete());
-        when(factorService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
+        when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
         testObserver.awaitTerminalEvent();
@@ -240,7 +238,7 @@ public class ServiceResourceServiceTest {
         Factor factor = new Factor();
         factor.setName("Factor");
         factor.setConfiguration("{\"ref\": \"" + record.getId() + "\"}");
-        when(factorService.findByDomain(DOMAIN)).thenReturn(Single.just(Arrays.asList(factor)));
+        when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.just(factor));
 
         TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
         testObserver.awaitTerminalEvent();

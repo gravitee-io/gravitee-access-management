@@ -21,16 +21,11 @@ import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.BotDetectionMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -53,13 +48,13 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Single<Set<BotDetection>> findAll() {
-        return Observable.fromPublisher(botDetectionMongoCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<BotDetection> findAll() {
+        return Flowable.fromPublisher(botDetectionMongoCollection.find()).map(this::convert);
     }
 
     @Override
-    public Single<Set<BotDetection>> findByReference(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(botDetectionMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(botDetectionMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
     }
 
     @Override

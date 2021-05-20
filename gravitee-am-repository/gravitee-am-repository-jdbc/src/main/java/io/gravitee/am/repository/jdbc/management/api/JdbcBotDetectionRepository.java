@@ -22,13 +22,11 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcBotDetection;
 import io.gravitee.am.repository.management.api.BotDetectionRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -54,34 +52,24 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     }
 
     @Override
-    public Single<Set<BotDetection>> findAll() {
+    public Flowable<BotDetection> findAll() {
         LOGGER.debug("findAll()");
         return fluxToFlowable(dbClient.select()
                 .from(JdbcBotDetection.class)
                 .fetch()
                 .all())
-                .map(this::toEntity)
-                .toList()
-                .map(list -> {
-                    Set<BotDetection> set = new HashSet<>(list);
-                    return set;
-                });
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<Set<BotDetection>> findByReference(ReferenceType referenceType, String referenceId) {
+    public Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return fluxToFlowable(dbClient.select()
                 .from(JdbcBotDetection.class)
                 .matching(from(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .fetch()
                 .all())
-                .map(this::toEntity)
-                .toList()
-                .map(list -> {
-                    Set<BotDetection> set = new HashSet<>(list);
-                    return set;
-                });
+                .map(this::toEntity);
     }
 
     @Override

@@ -27,7 +27,7 @@ import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
-import io.reactivex.Single;
+import io.reactivex.Flowable;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +36,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class FlowManagerTest {
     @Test
     public void shouldNoFindByExtensionPoint_noFlows() {
         when(domain.getId()).thenReturn("domain-id");
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.empty());
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -85,7 +84,7 @@ public class FlowManagerTest {
         when(flow.getType()).thenReturn(Type.CONSENT);
         when(flow.isEnabled()).thenReturn(false);
         when(domain.getId()).thenReturn("domain-id");
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -103,7 +102,7 @@ public class FlowManagerTest {
         when(flow.getType()).thenReturn(Type.CONSENT);
         when(flow.isEnabled()).thenReturn(true);
         when(domain.getId()).thenReturn("domain-id");
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -125,7 +124,7 @@ public class FlowManagerTest {
         when(flow.isEnabled()).thenReturn(true);
         when(flow.getPre()).thenReturn(Collections.singletonList(step));
         when(domain.getId()).thenReturn("domain-id");
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -153,7 +152,7 @@ public class FlowManagerTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -181,7 +180,7 @@ public class FlowManagerTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -210,7 +209,7 @@ public class FlowManagerTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT).test();
         obs.awaitTerminalEvent();
@@ -241,7 +240,7 @@ public class FlowManagerTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client).test();
         obs.awaitTerminalEvent();
@@ -272,7 +271,7 @@ public class FlowManagerTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client).test();
         obs.awaitTerminalEvent();
@@ -317,7 +316,7 @@ public class FlowManagerTest {
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getConfiguration())).thenReturn(domainPolicy);
         when(policyPluginManager.create(appStep.getPolicy(), appStep.getConfiguration())).thenReturn(appPolicy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Arrays.asList(domainFlow, appFlow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client).test();
         obs.awaitTerminalEvent();
@@ -365,7 +364,7 @@ public class FlowManagerTest {
         when(domain.getId()).thenReturn("domain-id");
         when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getConfiguration())).thenReturn(domainPolicy);
         when(policyPluginManager.create(appStep.getPolicy(), appStep.getConfiguration())).thenReturn(appPolicy);
-        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Single.just(Arrays.asList(domainFlow, appFlow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client).test();
         obs.awaitTerminalEvent();

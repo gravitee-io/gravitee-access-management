@@ -22,10 +22,7 @@ import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FlowMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -56,20 +53,20 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(
+    public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(
                 flowsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId)
                         )
                 )
-        ).map(this::convert).collect(ArrayList::new, List::add);
+        ).map(this::convert);
     }
 
     @Override
-    public Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application) {
-        return Observable.fromPublisher(
+    public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
+        return Flowable.fromPublisher(
                 flowsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -77,7 +74,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_APPLICATION, application)
                         )
                 )
-        ).map(this::convert).collect(ArrayList::new, List::add);
+        ).map(this::convert);
     }
 
     @Override

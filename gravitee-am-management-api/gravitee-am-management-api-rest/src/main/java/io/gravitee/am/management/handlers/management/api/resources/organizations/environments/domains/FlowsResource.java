@@ -75,11 +75,9 @@ public class FlowsResource extends AbstractResource {
         User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.LIST)
-                .andThen(flowService.findAll(ReferenceType.DOMAIN, domain, true)
-                        .flatMap(flows ->
-                                hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.READ)
-                                        .map(hasPermission -> flows.stream().map(flow -> filterFlowInfos(hasPermission, flow))
-                                                .collect(Collectors.toList())))
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_FLOW, Acl.READ)
+                        .flatMapPublisher(hasPermission -> flowService.findAll(ReferenceType.DOMAIN, domain, true)
+                                        .map(flow ->  filterFlowInfos(hasPermission, flow))).toList()
                 )
                 .subscribe(response::resume, response::resume);
     }

@@ -26,11 +26,13 @@ import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -96,7 +98,7 @@ public class UserServiceTest {
         when(newUser.getUserName()).thenReturn("username");
 
         when(domain.getId()).thenReturn(domainId);
-        when(userRepository.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
         TestObserver<User> testObserver = userService.create(newUser, "/").test();
@@ -114,7 +116,7 @@ public class UserServiceTest {
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-wrong-1", "role-wrong-2"));
 
         when(domain.getId()).thenReturn(domainId);
-        when(userRepository.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(Collections.emptySet()));
 
         TestObserver<User> testObserver = userService.create(newUser, "/").test();
@@ -147,7 +149,7 @@ public class UserServiceTest {
         roles.add(role2);
 
         when(domain.getId()).thenReturn(domainId);
-        when(userRepository.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(userRepository.create(any())).thenReturn(Single.just(createdUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(roles));
@@ -185,7 +187,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
-        when(groupService.findByMember(existingUser.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
         when(passwordValidator.isValid("user-password")).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, "/").test();
@@ -231,7 +233,7 @@ public class UserServiceTest {
         when(domain.getName()).thenReturn(domainName);
         when(objectMapper.convertValue(any(), eq(ObjectNode.class))).thenReturn(userNode);
         when(objectMapper.treeToValue(userNode, User.class)).thenReturn(patchUser);
-        when(groupService.findByMember(userId)).thenReturn(Single.just(Collections.emptyList()));
+        when(groupService.findByMember(userId)).thenReturn(Flowable.empty());
         when(userRepository.findById(userId)).thenReturn(Maybe.just(patchedUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         doAnswer(invocation -> {

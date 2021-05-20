@@ -19,7 +19,6 @@ import io.gravitee.am.common.event.FormEvent;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.FormManager;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.service.FormService;
@@ -30,10 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thymeleaf.templateresolver.ITemplateResolver;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -63,10 +59,9 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
         logger.info("Initializing forms");
 
         formService.findAll(ReferenceType.ORGANIZATION)
-                .toList()
                 .subscribe(
-                        forms -> {
-                            updateForms(forms);
+                        form -> {
+                            updateForm(form);
                             logger.info("Forms loaded");
                         },
                         error -> logger.error("Unable to initialize forms", error));
@@ -98,7 +93,7 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
                             if (forms.containsKey(formId) && !form.isEnabled()) {
                                 removeForm(formId);
                             } else {
-                                updateForms(Collections.singletonList(form));
+                                updateForm(form);
                             }
                             logger.info("Form {} {}d", formId, eventType);
                         },
@@ -114,14 +109,11 @@ public class FormManagerImpl implements FormManager, InitializingBean, EventList
         }
     }
 
-    private void updateForms(List<Form> forms) {
-        forms
-                .stream()
-                .filter(form -> form.getReferenceType() == ReferenceType.ORGANIZATION && form.isEnabled())
-                .forEach(form -> {
-                    this.forms.put(form.getId(), form);
-                    templateResolver.addForm(form);
-                    logger.info("Form {} loaded", form.getId());
-                });
+    private void updateForm(Form form) {
+        if (form.getReferenceType() == ReferenceType.ORGANIZATION && form.isEnabled()) {
+            this.forms.put(form.getId(), form);
+            templateResolver.addForm(form);
+            logger.info("Form {} loaded", form.getId());
+        }
     }
 }

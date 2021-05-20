@@ -128,19 +128,6 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void findByDomain() {
-        AlertNotifier alertNotifierToCreate = buildAlertNotifier();
-        AlertNotifier alertNotifierCreated = alertNotifierRepository.create(alertNotifierToCreate).blockingGet();
-
-        TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findByDomain(DOMAIN_ID).test();
-
-        testObserver1.awaitTerminalEvent();
-        testObserver1.assertComplete();
-        testObserver1.assertNoErrors();
-        testObserver1.assertValue(alertNotifier -> alertNotifier.getId().equals(alertNotifierCreated.getId()));
-    }
-
-    @Test
     public void findAll() {
         TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 

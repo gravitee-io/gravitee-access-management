@@ -19,7 +19,6 @@ import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
@@ -33,7 +32,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -75,8 +73,7 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
         logger.info("Initializing identity providers for all organizations");
         try {
-            List<IdentityProvider> identityProviders = identityProviderService.findAll(ReferenceType.ORGANIZATION).toList().blockingGet();
-            identityProviders.forEach(this::updateAuthenticationProvider);
+            identityProviderService.findAll(ReferenceType.ORGANIZATION).blockingForEach(this::updateAuthenticationProvider);
             logger.info("Identity providers loaded for all organizations");
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers", e);

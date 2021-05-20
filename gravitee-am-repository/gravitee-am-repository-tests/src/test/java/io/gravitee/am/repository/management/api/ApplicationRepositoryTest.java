@@ -24,6 +24,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,12 +71,12 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         applicationRepository.create(application).blockingGet();
 
         // fetch applications
-        TestObserver<Set<Application>> testObserver = applicationRepository.findByDomainAndExtensionGrant("testDomain", "test-grant").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<Application> testSubscriber = applicationRepository.findByDomainAndExtensionGrant("testDomain", "test-grant").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(applicationPage -> applicationPage.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
 
@@ -146,13 +147,13 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         Application appCreated = applicationRepository.create(app).blockingGet();
 
         // fetch app
-        TestObserver<Set<Application>> testObserver = applicationRepository.findByIdentityProvider(appCreated.getIdentities().iterator().next()).test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<Application> testSubscriber = applicationRepository.findByIdentityProvider(appCreated.getIdentities().iterator().next()).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(s -> s.size() == 1);
-        testObserver.assertValue(s -> s.iterator().next().getId().equals(appCreated.getId()));
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(s -> s.getId().equals(appCreated.getId()));
     }
 
     private void assertEqualsTo(Application app, TestObserver<Application> testObserver) {

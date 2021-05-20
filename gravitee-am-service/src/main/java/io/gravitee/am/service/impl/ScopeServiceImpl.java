@@ -373,7 +373,7 @@ public class ScopeServiceImpl implements ScopeService {
         if(scopeKeys==null || scopeKeys.isEmpty()) {
             return Single.just(Collections.emptyList());
         }
-        return scopeRepository.findByDomainAndKeys(domain, scopeKeys)
+        return scopeRepository.findByDomainAndKeys(domain, scopeKeys).toList()
                 .onErrorResumeNext(ex -> {
                     String keys = scopeKeys!=null?String.join(",",scopeKeys):null;
                     LOGGER.error("An error occurs while trying to find scopes by domain: {} and scope keys: {}", domain, keys, ex);

@@ -20,7 +20,6 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -49,7 +48,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.Optional;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -166,14 +164,13 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                 .switchIfEmpty(Maybe.error(new ServiceResourceNotFoundException(resourceId)))
                 .flatMapSingle(resource ->
                     factorService.findByDomain(domain)
+                            .filter(factor -> factor.getConfiguration() != null && factor.getConfiguration().contains("\""+resourceId+"\""))
+                            .toList()
                             .flatMap(factors -> {
-                                        Optional<Factor> isUsed = factors.stream()
-                                                .filter(factor -> factor.getConfiguration() != null && factor.getConfiguration().contains("\""+resourceId+"\""))
-                                                .findFirst();
-                                        if (!isUsed.isPresent()) {
+                                        if (factors.isEmpty()) {
                                             return Single.just(resource);
                                         } else {
-                                            return Single.error(new ServiceResourceCurrentlyUsedException(resourceId, isUsed.get().getName(), "MultiFactor Authentication"));
+                                            return Single.error(new ServiceResourceCurrentlyUsedException(resourceId, factors.get(0).getName(), "MultiFactor Authentication"));
                                         }
                                     }
                             )

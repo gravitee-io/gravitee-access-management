@@ -92,8 +92,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
-        return Observable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(MongoDomainRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Domain> findByIdIn(Collection<String> ids) {
+        return Flowable.fromPublisher(domainsCollection.find(in(FIELD_ID, ids))).map(MongoDomainRepository::convert);
     }
 
     @Override
