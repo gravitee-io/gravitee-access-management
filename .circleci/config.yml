@@ -157,6 +157,27 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
+  run_testcontainer_tests:
+    executor:
+      name: gravitee/cicdmachine
+      os_name: "ubuntu"
+      os_version: "2004"
+      os_patch: "202101-01"
+      machine_size: "large"
+
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Build
+          command: |
+            echo "Run only repositories and reporters tests, other JUnit tests have been run by the 'pull_request' job"
+            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.circleci.settings.xml
 
   publish-images-azure-registry:
     docker:
@@ -318,11 +339,39 @@ workflows:
                 - master
                 # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
 
+  testcontainer_tests:
+    when:
+      and:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - secrethub:
+          context:
+            - cicd-orchestrator
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - run_testcontainer_tests:
+          context: cicd-orchestrator
+          requires:
+            - secrethub
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
   build_branch:
     jobs:
       - secrethub:
           context:
             - cicd-orchestrator
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - build:
           requires:
             - secrethub
