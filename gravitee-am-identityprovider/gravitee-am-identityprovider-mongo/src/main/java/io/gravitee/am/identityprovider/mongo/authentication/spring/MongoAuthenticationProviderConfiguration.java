@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication.spring;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -53,7 +53,7 @@ public class MongoAuthenticationProviderConfiguration {
         } else {
             ServerAddress serverAddress = new ServerAddress(this.configuration.getHost(), this.configuration.getPort());
             ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(serverAddress)).build();
-            MongoClientSettings.Builder settings = MongoClientSettings.builder().clusterSettings(clusterSettings);
+            MongoClientSettings.Builder settings = MongoClientSettings.builder().applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings));
             if (this.configuration.isEnableCredentials()) {
                 MongoCredential credential = MongoCredential.createCredential(this.configuration
                         .getUsernameCredentials(), this.configuration

@@ -80,8 +80,10 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         if (criteria.getIds().isPresent() && !criteria.getIds().get().isEmpty()) {
             filters.add(in("_id", criteria.getIds().get()));
         }
-
-        Bson query = criteria.isLogicalOR() ? or(filters) : and(filters);
+        Bson query = eqReference;
+        if (!filters.isEmpty()) {
+            query = and(eqReference, criteria.isLogicalOR() ? or(filters) : and(filters));
+        }
         return Flowable.fromPublisher(collection.find(and(eqReference, query))).map(this::convert);
     }
 

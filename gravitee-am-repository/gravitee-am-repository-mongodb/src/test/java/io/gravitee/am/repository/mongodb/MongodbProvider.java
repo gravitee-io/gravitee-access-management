@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.repository.mongodb;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
@@ -62,7 +62,12 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
         CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
-        MongoClientSettings settings = MongoClientSettings.builder().clusterSettings(clusterSettings).codecRegistry(pojoCodecRegistry).writeConcern(WriteConcern.ACKNOWLEDGED).build();
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))
+                .codecRegistry(pojoCodecRegistry)
+                .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .build();
+
         mongoClient = MongoClients.create(settings);
         mongoDatabase = mongoClient.getDatabase(databaseName);
     }

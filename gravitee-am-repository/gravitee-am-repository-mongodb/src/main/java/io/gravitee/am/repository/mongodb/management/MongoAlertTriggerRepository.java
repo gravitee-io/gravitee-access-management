@@ -85,9 +85,11 @@ public class MongoAlertTriggerRepository extends AbstractManagementMongoReposito
             filters.add(in("alertNotifiers", criteria.getAlertNotifierIds().get()));
         }
 
-        Bson query = criteria.isLogicalOR() ? or(filters) : and(filters);
-
-        return Flowable.fromPublisher(collection.find(and(eqReference, query))).map(this::convert);
+        Bson query = eqReference;
+        if (!filters.isEmpty()) {
+            query = and(eqReference, criteria.isLogicalOR() ? or(filters) : and(filters));
+        }
+        return Flowable.fromPublisher(collection.find(query)).map(this::convert);
     }
 
     @Override

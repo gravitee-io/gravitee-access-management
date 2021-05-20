@@ -284,7 +284,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
                                 Accumulators.sum("locked", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$and", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$accountNonLocked", false)), new BasicDBObject("$gte", Arrays.asList("$accountLockedUntil", new Date())))), 1, 0))),
                                 Accumulators.sum("inactive", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$lte", Arrays.asList("$loggedAt", new Date(Instant.now().minus(90, ChronoUnit.DAYS).toEpochMilli()))), 1, 0)))
                         )
-                )))
+                ), Document.class))
                 .map(doc -> {
                     Long nonActiveUsers = ((Number) doc.get("disabled")).longValue() + ((Number) doc.get("locked")).longValue() + ((Number) doc.get("inactive")).longValue();
                     Long activeUsers = ((Number) doc.get("total")).longValue() - nonActiveUsers;
@@ -306,7 +306,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
                         Aggregates.group(new BasicDBObject("_id", query.getField()),
                                 Accumulators.sum("total", 1),
                                 Accumulators.sum("completed", new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$registrationCompleted", true)), 1, 0))))
-                )))
+                ), Document.class))
                 .map(doc -> {
                     Map<Object, Object> registrations = new HashMap<>();
                     registrations.putAll(doc.entrySet()
