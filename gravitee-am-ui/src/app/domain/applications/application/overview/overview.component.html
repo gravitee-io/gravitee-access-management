@@ -163,7 +163,7 @@ window.crypto.subtle.digest('SHA-256', data)
 // generate the code_verifier
 SecureRandom secureRandom = new SecureRandom();
 byte[] code = new byte[32];
-secureRandom.nextBytes(codeVerifier);
+secureRandom.nextBytes(code);
 String codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);</pre>
           </div>
 

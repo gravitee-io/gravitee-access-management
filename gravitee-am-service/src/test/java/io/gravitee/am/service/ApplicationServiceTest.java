@@ -20,14 +20,7 @@ import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.Form;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -45,9 +38,11 @@ import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.service.model.PatchApplicationSettings;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,20 +52,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -229,51 +214,49 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByIdentityProvider() {
-        when(applicationRepository.findByIdentityProvider("client-idp")).thenReturn(Single.just(Collections.singleton(new Application())));
-        TestObserver<Set<Application>> testObserver = applicationService.findByIdentityProvider("client-idp").test();
-        testObserver.awaitTerminalEvent();
+        when(applicationRepository.findByIdentityProvider("client-idp")).thenReturn(Flowable.just(new Application()));
+        TestSubscriber<Application> testSubscriber = applicationService.findByIdentityProvider("client-idp").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(extensionGrants -> extensionGrants.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByIdentityProvider_technicalException() {
-        when(applicationRepository.findByIdentityProvider("client-idp")).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByIdentityProvider("client-idp")).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        applicationService.findByIdentityProvider("client-idp").subscribe(testObserver);
+        TestSubscriber testSubscriber = applicationService.findByIdentityProvider("client-idp").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
     public void shouldFindByCertificate() {
-        when(applicationRepository.findByCertificate("client-certificate")).thenReturn(Single.just(Collections.singleton(new Application())));
-        TestObserver<Set<Application>> testObserver = applicationService.findByCertificate("client-certificate").test();
+        when(applicationRepository.findByCertificate("client-certificate")).thenReturn(Flowable.just(new Application()));
+        TestSubscriber<Application> testObserver = applicationService.findByCertificate("client-certificate").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(certificates -> certificates.size() == 1);
+        testObserver.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByCertificate_technicalException() {
-        when(applicationRepository.findByCertificate("client-certificate")).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByCertificate("client-certificate")).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        applicationService.findByCertificate("client-certificate").subscribe(testObserver);
+        TestSubscriber testSub = applicationService.findByCertificate("client-certificate").test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSub.assertError(TechnicalManagementException.class);
+        testSub.assertNotComplete();
     }
 
     @Test
     public void shouldFindByExtensionGrant() {
-        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Flowable.just(new Application()));
         TestObserver<Set<Application>> testObserver = applicationService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").test();
         testObserver.awaitTerminalEvent();
 
@@ -284,7 +267,7 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByExtensionGrant_technicalException() {
-        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Flowable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         applicationService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").subscribe(testObserver);
@@ -402,7 +385,7 @@ public class ApplicationServiceTest {
         }).when(applicationTemplateManager).apply(any());
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.organization, ORGANIZATION_ID));
@@ -446,7 +429,7 @@ public class ApplicationServiceTest {
         }).when(applicationTemplateManager).apply(any());
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
         when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.error(TechnicalException::new));
 
@@ -520,7 +503,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient).test();
         testObserver.awaitTerminalEvent();
@@ -931,15 +914,15 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         Form form = new Form();
         form.setId("form-id");
-        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(form)));
+        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.just(form));
         when(formService.delete(eq("my-domain"), eq(form.getId()))).thenReturn(Completable.complete());
         Email email = new Email();
         email.setId("email-id");
-        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.just(email));
         when(emailTemplateService.delete(email.getId())).thenReturn(Completable.complete());
         Membership membership = new Membership();
         membership.setId("membership-id");
-        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Single.just(Collections.singletonList(membership)));
+        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.just(membership));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
 
         TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
@@ -962,9 +945,9 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Single.just(Collections.emptyList()));
-        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Single.just(Collections.emptyList()));
+        when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
+        when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
+        when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.empty());
 
         TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
         testObserver.awaitTerminalEvent();

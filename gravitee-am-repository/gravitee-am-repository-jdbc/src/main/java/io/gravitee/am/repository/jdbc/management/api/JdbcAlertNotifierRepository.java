@@ -91,11 +91,6 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
-    public Flowable<AlertNotifier> findByDomain(String domainId) {
-        return findAll(ReferenceType.DOMAIN, domainId);
-    }
-
-    @Override
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         return findByCriteria(referenceType, referenceId, new AlertNotifierCriteria());
     }

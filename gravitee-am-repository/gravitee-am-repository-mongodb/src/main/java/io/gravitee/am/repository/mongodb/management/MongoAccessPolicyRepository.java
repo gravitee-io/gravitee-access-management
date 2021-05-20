@@ -23,10 +23,7 @@ import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.AccessPolicyMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -64,13 +61,13 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Single<List<AccessPolicy>> findByDomainAndResource(String domain, String resource) {
-        return Observable.fromPublisher(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource)))).map(this::convert).toList();
+    public Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource) {
+        return Flowable.fromPublisher(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource)))).map(this::convert);
     }
 
     @Override
-    public Single<List<AccessPolicy>> findByResources(List<String> resources) {
-        return Observable.fromPublisher(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources))).map(this::convert).toList();
+    public Flowable<AccessPolicy> findByResources(List<String> resources) {
+        return Flowable.fromPublisher(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources))).map(this::convert);
     }
 
     @Override

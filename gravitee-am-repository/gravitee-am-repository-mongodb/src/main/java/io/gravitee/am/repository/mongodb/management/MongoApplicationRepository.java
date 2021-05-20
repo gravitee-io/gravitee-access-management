@@ -29,26 +29,17 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.model.jose.ECKey;
-import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.model.jose.KeyType;
-import io.gravitee.am.model.jose.OCTKey;
-import io.gravitee.am.model.jose.OKPKey;
-import io.gravitee.am.model.jose.RSAKey;
+import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +47,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.in;
-import static com.mongodb.client.model.Filters.or;
+import static com.mongodb.client.model.Filters.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -89,8 +77,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<List<Application>> findAll() {
-        return Observable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
+    public Flowable<Application> findAll() {
+        return Flowable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert);
     }
 
     @Override
@@ -101,8 +89,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<List<Application>> findByDomain(String domain) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain))).map(MongoApplicationRepository::convert).collect(ArrayList::new, List::add);
+    public Flowable<Application> findByDomain(String domain) {
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_DOMAIN, domain))).map(MongoApplicationRepository::convert);
     }
 
     @Override
@@ -134,18 +122,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Set<Application>> findByCertificate(String certificate) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Application> findByCertificate(String certificate) {
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert);
     }
 
     @Override
-    public Single<Set<Application>> findByIdentityProvider(String identityProvider) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_IDENTITIES, identityProvider))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Application> findByIdentityProvider(String identityProvider) {
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_IDENTITIES, identityProvider))).map(MongoApplicationRepository::convert);
     }
 
     @Override
-    public Single<Set<Application>> findByFactor(String factor) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Application> findByFactor(String factor) {
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert);
     }
 
     @Override
@@ -160,13 +148,13 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
+        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert);
     }
 
     @Override
-    public Single<Set<Application>> findByIdIn(List<String> ids) {
-        return Observable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
+    public Flowable<Application> findByIdIn(List<String> ids) {
+        return Flowable.fromPublisher(applicationsCollection.find(in(FIELD_ID, ids))).map(MongoApplicationRepository::convert);
     }
 
     @Override

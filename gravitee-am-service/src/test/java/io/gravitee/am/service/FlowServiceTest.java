@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.FlowNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FlowServiceImpl;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -37,7 +38,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.*;
@@ -65,8 +65,8 @@ public class FlowServiceTest {
 
     @Test
     public void shouldFindAll() {
-        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Flow())));
-        TestObserver testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Flow()));
+        TestObserver testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).toList().test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
@@ -76,9 +76,9 @@ public class FlowServiceTest {
 
     @Test
     public void shouldNotFindAll_technicalException() {
-        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
-        flowService.findAll(ReferenceType.DOMAIN, DOMAIN).subscribe(testObserver);
+        flowService.findAll(ReferenceType.DOMAIN, DOMAIN).toList().subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

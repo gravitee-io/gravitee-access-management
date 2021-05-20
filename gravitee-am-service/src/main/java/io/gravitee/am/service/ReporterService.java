@@ -20,6 +20,7 @@ import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,9 +32,9 @@ import java.util.List;
  */
 public interface ReporterService {
 
-    Single<List<Reporter>> findAll();
+    Flowable<Reporter> findAll();
 
-    Single<List<Reporter>> findByDomain(String domain);
+    Flowable<Reporter> findByDomain(String domain);
 
     Maybe<Reporter> findById(String id);
 

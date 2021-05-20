@@ -34,17 +34,17 @@ import java.util.List;
  */
 public interface IdentityProviderService {
 
-    Single<List<IdentityProvider>> findAll();
+    Flowable<IdentityProvider> findAll();
 
     Single<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<IdentityProvider> findById(String id);
 
-    Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId);
 
     Flowable<IdentityProvider> findAll(ReferenceType referenceType);
 
-    Single<List<IdentityProvider>> findByDomain(String domain);
+    Flowable<IdentityProvider> findByDomain(String domain);
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
 

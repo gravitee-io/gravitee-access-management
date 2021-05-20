@@ -58,8 +58,8 @@ public class RepositoryCredentialStore {
         Promise<List<Authenticator>> promise = Promise.promise();
 
         Single<List<Credential>> fetchCredentials = query.getUserName() != null ?
-                credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()) :
-                credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID());
+                credentialService.findByUsername(ReferenceType.DOMAIN, domain.getId(), query.getUserName()).toList() :
+                credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), query.getCredID()).toList();
 
         fetchCredentials
                 .flatMap(credentials -> {
@@ -126,6 +126,7 @@ public class RepositoryCredentialStore {
         Promise<Void> promise = Promise.promise();
 
         credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), authenticator.getCredID())
+                .toList()
                 .flatMapCompletable(credentials -> {
                     if (credentials.isEmpty()) {
                         // no credential found, create it

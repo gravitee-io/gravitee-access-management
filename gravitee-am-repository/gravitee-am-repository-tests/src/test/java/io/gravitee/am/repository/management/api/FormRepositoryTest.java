@@ -151,7 +151,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
             repository.create(buildForm()).blockingGet();
         }
 
-        TestObserver<List<Form>> testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).test();
+        TestObserver<List<Form>> testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).toList().test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);
@@ -175,7 +175,7 @@ public class FormRepositoryTest extends AbstractManagementTest {
             repository.create(form).blockingGet();
         }
 
-        TestObserver<List<Form>> testObserver = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).test();
+        TestObserver<List<Form>> testObserver = repository.findByClient(ReferenceType.DOMAIN, FIXED_REF_ID, FIXED_CLI_ID).toList().test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue(l -> l.size() == loop);

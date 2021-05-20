@@ -29,10 +29,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +64,7 @@ public class GroupServiceImpl implements GroupService {
     public Single<ListResponse<Group>> list(int page, int size, String baseUrl) {
         LOGGER.debug("Find groups by domain : {}", domain.getId());
 
-        return groupRepository.findByDomain(domain.getId(), page, size)
+        return groupRepository.findAll(ReferenceType.DOMAIN, domain.getId(), page, size)
                 .flatMap(groupPage -> {
                     // A negative value SHALL be interpreted as "0".
                     // A value of "0" indicates that no resource results are to be returned except for "totalResults".
@@ -90,13 +87,13 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<List<Group>> findByMember(String memberId) {
+    public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("Find groups by member : {}", memberId);
         return groupRepository.findByMember(memberId)
-                .map(groups -> groups.stream().map(group -> convert(group, null, true)).collect(Collectors.toList()))
+                .map(group -> convert(group, null, true))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a groups using member ", memberId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using member: %s", memberId), ex));
                 });
     }
@@ -120,7 +117,7 @@ public class GroupServiceImpl implements GroupService {
         LOGGER.debug("Create a new group {} for domain {}", group.getDisplayName(), domain.getName());
 
         // check if user is unique
-        return groupRepository.findByDomainAndName(domain.getId(), group.getDisplayName())
+        return groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
                 .isEmpty()
                 .map(isEmpty -> {
                     if (!isEmpty) {
@@ -158,7 +155,7 @@ public class GroupServiceImpl implements GroupService {
         LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapSingle(existingGroup -> groupRepository.findByDomainAndName(domain.getId(), group.getDisplayName())
+                .flatMapSingle(existingGroup -> groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
                         .map(group1 -> {
                             // if display name has changed check uniqueness
                             if (!existingGroup.getId().equals(group1.getId())) {
@@ -235,18 +232,19 @@ public class GroupServiceImpl implements GroupService {
         if (members != null && !members.isEmpty()) {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
             return userRepository.findByIdIn(memberIds)
-                    .map(users -> {
-                        List<Member> existingMembers = users.stream().map(user -> {
-                            String display = (user.getDisplayName() != null) ? user.getDisplayName()
-                                    : (user.getFirstName() != null) ? user.getFirstName() + " " + (user.getLastName() != null ? user.getLastName() : "")
-                                    : user.getUsername();
-                            String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
-                            Member member = new Member();
-                            member.setValue(user.getId());
-                            member.setDisplay(display);
-                            member.setRef(usersBaseUrl + "/" + user.getId());
-                            return member;
-                        }).collect(Collectors.toList());
+                    .map(user -> {
+                        String display = (user.getDisplayName() != null) ? user.getDisplayName()
+                                : (user.getFirstName() != null) ? user.getFirstName() + " " + (user.getLastName() != null ? user.getLastName() : "")
+                                : user.getUsername();
+                        String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");
+                        Member member = new Member();
+                        member.setValue(user.getId());
+                        member.setDisplay(display);
+                        member.setRef(usersBaseUrl + "/" + user.getId());
+                        return member;
+                    })
+                    .toList()
+                    .map(existingMembers -> {
                         group.setMembers(existingMembers);
                         return group;
                     });

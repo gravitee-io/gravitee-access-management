@@ -39,6 +39,7 @@ import io.gravitee.am.service.model.UpdateReporter;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.json.Json;
@@ -53,7 +54,6 @@ import org.springframework.stereotype.Component;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -85,22 +85,22 @@ public class ReporterServiceImpl implements ReporterService {
     private DomainService domainService;
 
     @Override
-    public Single<List<Reporter>> findAll() {
+    public Flowable<Reporter> findAll() {
         LOGGER.debug("Find all reporters");
         return reporterRepository.findAll()
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all reporter", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all reporters", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all reporters", ex));
                 });
     }
 
     @Override
-    public Single<List<Reporter>> findByDomain(String domain) {
+    public Flowable<Reporter> findByDomain(String domain) {
         LOGGER.debug("Find reporters by domain: {}", domain);
         return reporterRepository.findByDomain(domain)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find reporters by domain: {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", domain), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find reporters by domain: %s", domain), ex));
                 });
     }
 
@@ -247,23 +247,22 @@ public class ReporterServiceImpl implements ReporterService {
             final JsonObject configuration = (JsonObject) Json.decodeValue(reporter.getConfiguration());
             final String reporterId = reporter.getId();
 
-            result = reporterRepository.findByDomain(reporter.getDomain()).flatMap(reporters -> {
-                long count = reporters.stream()
-                        .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
-                        .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
-                        .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
-                        .filter(cfg ->
-                                cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
-                                        cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
-                        .count();
-
-                if (count > 0) {
-                    // more than one reporter use the same filename
-                    return Single.error(new ReporterConfigurationException("Filename already defined"));
-                } else {
-                    return Single.just(reporter);
-                }
-            });
+            result = reporterRepository.findByDomain(reporter.getDomain())
+                    .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
+                    .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
+                    .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
+                    .filter(cfg ->
+                            cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
+                                    cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
+                    .count()
+                    .flatMap(reporters -> {
+                        if (reporters > 0) {
+                            // more than one reporter use the same filename
+                            return Single.error(new ReporterConfigurationException("Filename already defined"));
+                        } else {
+                            return Single.just(reporter);
+                        }
+                    });
         }
 
         return result;

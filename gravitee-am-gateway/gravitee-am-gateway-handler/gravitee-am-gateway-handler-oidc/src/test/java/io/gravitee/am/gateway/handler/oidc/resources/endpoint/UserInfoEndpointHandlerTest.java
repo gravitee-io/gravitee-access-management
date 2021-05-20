@@ -20,7 +20,6 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
@@ -30,16 +29,18 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
@@ -551,7 +552,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(groupService.findByMember(user.getId())).thenReturn(Single.just(Collections.emptyList()));
+        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
 
         testRequest(
                 HttpMethod.GET,
@@ -590,7 +591,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
+        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
 
         testRequest(
                 HttpMethod.GET,
@@ -640,7 +641,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setRoles(Arrays.asList("role1", "role2"));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
-        when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
+        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
 
         testRequest(
                 HttpMethod.GET,
@@ -692,7 +693,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         user.setRoles(Arrays.asList("role1", "role2"));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
-        when(groupService.findByMember(user.getId())).thenReturn(Single.just(Arrays.asList(group1, group2)));
+        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
 
         testRequest(
                 HttpMethod.GET,

@@ -80,8 +80,10 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
         eventManager.subscribeForEvents(this, EmailEvent.class);
 
         logger.info("Initializing emails");
-        List<Email> emails = emailTemplateService.findAll().blockingGet();
-        emails.stream().filter(Email::isEnabled).forEach(this::loadEmail);
+        emailTemplateService.findAll()
+                .filter(Email::isEnabled)
+                .blockingIterable()
+                .forEach(this::loadEmail);
     }
 
     @Override

@@ -25,6 +25,7 @@ import io.gravitee.am.repository.management.api.PolicyRepository;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.model.plugin.PolicyPlugin;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -39,7 +40,6 @@ import java.util.stream.Collectors;
 
 import static io.reactivex.Single.just;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -70,7 +70,7 @@ public class PoliciesToFlowsUpgraderTest {
     public void testMigration_NoPolicies() throws Exception {
         when(policyRepository.collectionExists()).thenReturn(just(true));
         when(policyRepository.deleteCollection()).thenReturn(Completable.complete());
-        when(policyRepository.findAll()).thenReturn(just(emptyList()));
+        when(policyRepository.findAll()).thenReturn(Flowable.empty());
 
         assertTrue(upgrader.upgrade());
 
@@ -121,7 +121,7 @@ public class PoliciesToFlowsUpgraderTest {
         postConsent2.setOrder(1);
         postConsent2.setConfiguration("POST CONSENT CONFIG");
 
-        when(policyRepository.findAll()).thenReturn(just(asList(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent))); // rootPolicy2 first to test ordering
+        when(policyRepository.findAll()).thenReturn(Flowable.just(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent)); // rootPolicy2 first to test ordering
         when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
         when(flowService.create(any(), anyString(), any())).thenReturn(Single.just(new Flow()));
         when(policyPluginService.findById(null)).thenReturn(Maybe.just(new PolicyPlugin()));
@@ -199,7 +199,7 @@ public class PoliciesToFlowsUpgraderTest {
         postConsent2.setOrder(1);
         postConsent2.setConfiguration("POST CONSENT CONFIG");
 
-        when(policyRepository.findAll()).thenReturn(just(asList(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent))); // rootPolicy2 first to test ordering
+        when(policyRepository.findAll()).thenReturn(Flowable.just(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent)); // rootPolicy2 first to test ordering
         when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
         when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID2)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID2)).collect(Collectors.toList()));
         when(flowService.create(any(), anyString(), any())).thenReturn(Single.just(new Flow()));

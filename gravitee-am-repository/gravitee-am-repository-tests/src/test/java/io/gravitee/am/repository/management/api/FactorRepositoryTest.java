@@ -16,15 +16,15 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -42,12 +42,12 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         factorRepository.create(factor).blockingGet();
 
         // fetch factors
-        TestObserver<Set<Factor>> testObserver = factorRepository.findByDomain("testDomain").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<Factor> testSubscriber = factorRepository.findByDomain("testDomain").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(factors -> factors.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     private Factor buildFactor() {

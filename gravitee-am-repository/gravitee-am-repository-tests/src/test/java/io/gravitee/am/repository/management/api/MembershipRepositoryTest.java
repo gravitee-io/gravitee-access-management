@@ -73,7 +73,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
 
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
-        TestObserver<List<Membership>> obs = membershipRepository.findByReference(ORGANIZATION_ID, ReferenceType.ORGANIZATION).test();
+        TestObserver<List<Membership>> obs = membershipRepository.findByReference(ORGANIZATION_ID, ReferenceType.ORGANIZATION).toList().test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();
@@ -92,7 +92,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
 
         Membership createdMembership = membershipRepository.create(membership).blockingGet();
 
-        TestObserver<List<Membership>> obs = membershipRepository.findByMember("user#1", MemberType.USER).test();
+        TestObserver<List<Membership>> obs = membershipRepository.findByMember("user#1", MemberType.USER).toList().test();
         obs.awaitTerminalEvent();
 
         obs.assertComplete();

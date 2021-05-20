@@ -50,21 +50,12 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Override
     public Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user) {
         return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getId(), client.getClientId())
-                .map(userApprovals -> {
-                    Set<String> approvedConsent = new HashSet<>();
-                    // Look at the user consent and see if they have expired
-                    if (userApprovals != null) {
-                        Date today = new Date();
-                        for (ScopeApproval approval : userApprovals) {
-                            if (approval.getExpiresAt().after(today)) {
-                                if (approval.getStatus() == ScopeApproval.ApprovalStatus.APPROVED) {
-                                    approvedConsent.add(approval.getScope());
-                                }
-                            }
-                        }
-                    }
-                    return approvedConsent;
-                });
+                .filter(approval -> {
+                    Date today = new Date();
+                    return (approval.getExpiresAt().after(today) && approval.getStatus() == ScopeApproval.ApprovalStatus.APPROVED);
+                })
+                .map(ScopeApproval::getScope)
+                .collect(HashSet::new, Set::add);
     }
 
     @Override

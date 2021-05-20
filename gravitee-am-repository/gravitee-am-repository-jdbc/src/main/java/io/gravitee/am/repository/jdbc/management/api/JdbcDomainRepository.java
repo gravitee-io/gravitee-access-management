@@ -38,7 +38,10 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -80,9 +83,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     public Flowable<Domain> findAll() {
         LOGGER.debug("findAll()");
         Flowable<Domain> domains = domainRepository.findAll().map(this::toDomain);
-        return domains
-                .flatMap(this::completeDomain)
-                .doOnError((error) -> LOGGER.error("unable to retrieve all domain", error));
+        return domains.flatMap(this::completeDomain);
     }
 
     @Override
@@ -103,42 +104,38 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .as(JdbcDomain.class)
                 .all())
                 .map(this::toDomain)
-                .flatMap(this::completeDomain)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Domain with criteria {}", criteria, error));
+                .flatMap(this::completeDomain);
     }
 
     @Override
-    public Single<Set<Domain>> findByIdIn(Collection<String> ids) {
+    public Flowable<Domain> findByIdIn(Collection<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
-            return Single.just(Collections.emptySet());
+            return Flowable.empty();
         }
         Flowable<Domain> domains = domainRepository.findAllById(ids).map(this::toDomain);
-        return domains.flatMap(this::completeDomain)
-                .doOnError((error) -> LOGGER.error("unable to retrieve all domain by ids {}", ids, error))
-                .toList().map(HashSet::new);
+        return domains.flatMap(this::completeDomain);
     }
 
     @Override
     public Flowable<Domain> findAllByReferenceId(String environmentId) {
         LOGGER.debug("findAllByReferenceId({})", environmentId);
         Flowable<Domain> domains = domainRepository.findAllByReferenceId(environmentId, ReferenceType.ENVIRONMENT.name()).map(this::toDomain);
-        return domains.flatMap(this::completeDomain)
-                .doOnError((error) -> LOGGER.error("unable to retrieve all domain with environment {}", environmentId, error));
+        return domains.flatMap(this::completeDomain);
     }
 
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("findById({})", id);
         Flowable<Domain> domains = domainRepository.findById(id).map(this::toDomain).toFlowable();
-        return domains.flatMap(this::completeDomain).doOnError((error) -> LOGGER.error("unable to retrieve domain with id {}", id, error)).firstElement();
+        return domains.flatMap(this::completeDomain).firstElement();
     }
 
     @Override
     public Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid) {
         LOGGER.debug("findByHrid({})", hrid);
         Flowable<Domain> domains = domainRepository.findByHrid(referenceId, referenceType.name(), hrid).map(this::toDomain).toFlowable();
-        return domains.flatMap(this::completeDomain).doOnError((error) -> LOGGER.error("unable to retrieve domain with hrid {}", hrid, error)).firstElement();
+        return domains.flatMap(this::completeDomain).firstElement();
     }
 
     @Override
@@ -155,8 +152,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         return monoToSingle(insertAction
                 .as(trx::transactional)
-                .then(maybeToMono(findById(item.getId()))))
-                .doOnError((error) -> LOGGER.error("unable to create domain with id {}", item.getId(), error));
+                .then(maybeToMono(findById(item.getId()))));
     }
 
     @Override
@@ -174,8 +170,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         return monoToSingle(updateAction
                 .as(trx::transactional)
-                .then(maybeToMono(findById(item.getId()))))
-                .doOnError((error) -> LOGGER.error("unable to update domain with id {}", item.getId(), error));
+                .then(maybeToMono(findById(item.getId()))));
     }
 
     @Override
@@ -213,8 +208,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .fetch()
                 .all())
                 .map(this::toDomain)
-                .flatMap(this::completeDomain)
-                .doOnError((error) -> LOGGER.error("Unable to search domains with referenceId {}", environmentId, error));
+                .flatMap(this::completeDomain);
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {

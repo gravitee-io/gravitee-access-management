@@ -86,9 +86,9 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         LOGGER.info("Initializing bot detections for domain {}", domain.getName());
         botDetectionService.findByDomain(domain.getId())
                 .subscribe(
-                        detections -> {
-                            updateBotDetections(detections);
-                            LOGGER.info("Bot detections loaded for domain {}", domain.getName());
+                        detection -> {
+                            updateBotDetection(detection);
+                            LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
                         },
                         error -> LOGGER.error("Unable to initialize bot detections for domain {}", domain.getName(), error));
     }
@@ -162,7 +162,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         LOGGER.info("Domain {} has received {} bot detection event for {}", domain.getName(), eventType, pluginId);
         botDetectionService.findById(pluginId)
                 .subscribe(
-                        detectionPlugin -> updateBotDetections(Collections.singletonList(detectionPlugin)),
+                        detectionPlugin -> updateBotDetection(detectionPlugin),
                         error -> LOGGER.error("Unable to load bot detection for domain {}", domain.getName(), error),
                         () -> LOGGER.error("No bot detection found with id {}", pluginId));
     }
@@ -174,22 +174,18 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         stopBotDetectionProvider(previousProvider);
     }
 
-    private void updateBotDetections(List<BotDetection> plugins) {
-        plugins
-                .stream()
-                .forEach(detection -> {
-                    try {
-                        BotDetectionProvider botDetectionProvider = botDetectionPluginManager.create(detection.getType(), detection.getConfiguration());
-                        final BotDetectionProvider previousProvider = this.providers.put(detection.getId(), botDetectionProvider);
-                        stopBotDetectionProvider(previousProvider);
-                        this.botDetections.put(detection.getId(), detection);
+    private void updateBotDetection(BotDetection detection) {
+        try {
+            BotDetectionProvider botDetectionProvider = botDetectionPluginManager.create(detection.getType(), detection.getConfiguration());
+            final BotDetectionProvider previousProvider = this.providers.put(detection.getId(), botDetectionProvider);
+            stopBotDetectionProvider(previousProvider);
+            this.botDetections.put(detection.getId(), detection);
 
-                        LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
-                    } catch (Exception ex) {
-                        this.providers.remove(detection.getId());
-                        LOGGER.error("Unable to create bot detection provider for domain {}", domain.getName(), ex);
-                    }
-                });
+            LOGGER.info("Bot detection {} loaded for domain {}", detection.getName(), domain.getName());
+        } catch (Exception ex) {
+            this.providers.remove(detection.getId());
+            LOGGER.error("Unable to create bot detection provider for domain {}", domain.getName(), ex);
+        }
     }
 
     private void stopBotDetectionProvider(BotDetectionProvider previousProvider) {

@@ -28,14 +28,6 @@ import io.reactivex.Flowable;
 public interface AlertTriggerRepository extends CrudRepository<AlertTrigger, String> {
 
     /**
-     * Find all alert triggers for a given domain id.
-     *
-     * @param domainId the domain identifier.
-     * @return the list of alert triggers.
-     */
-    Flowable<AlertTrigger> findByDomain(String domainId);
-
-    /**
      * Find all alert triggers for a given reference type and id.
      *
      * @param referenceType the reference type.

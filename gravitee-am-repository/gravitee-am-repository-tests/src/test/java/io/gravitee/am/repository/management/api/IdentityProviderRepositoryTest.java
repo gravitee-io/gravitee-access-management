@@ -51,7 +51,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProviderRepository.create(identityProvider3).blockingGet();
 
         // fetch idps
-        TestObserver<Set<IdentityProvider>> testObserver = identityProviderRepository.findByDomain("testDomain").test();
+        TestObserver<List<IdentityProvider>> testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

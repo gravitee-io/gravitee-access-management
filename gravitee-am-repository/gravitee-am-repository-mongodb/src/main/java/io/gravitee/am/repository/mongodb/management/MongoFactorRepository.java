@@ -20,16 +20,11 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.FactorMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -52,18 +47,13 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     }
 
     @Override
-    public Single<Set<Factor>> findAll() {
-        return Observable.fromPublisher(factorsCollection.find()).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Factor> findAll() {
+        return Flowable.fromPublisher(factorsCollection.find()).map(this::convert);
     }
 
     @Override
-    public Single<Set<Factor>> findByDomain(String domain) {
-        return Observable.fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
-    }
-
-    @Override
-    public Maybe<Factor> findByDomainAndFactorType(String domain, String factorType) {
-        return Observable.fromPublisher(factorsCollection.find(new Document(FIELD_DOMAIN, domain).append(FIELD_FACTOR_TYPE, factorType)).first()).firstElement().map(this::convert);
+    public Flowable<Factor> findByDomain(String domain) {
+        return Flowable.fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
     }
 
     @Override

@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,8 +32,8 @@ public interface ResourceRepository extends CrudRepository<Resource, String> {
 
     Single<Page<Resource>> findByDomain(String domain, int page, int size);
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
-    Single<List<Resource>> findByResources(List<String> resources);
-    Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String userId);
-    Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resource);
+    Flowable<Resource> findByResources(List<String> resources);
+    Flowable<Resource> findByDomainAndClientAndUser(String domain, String client, String userId);
+    Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resource);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resource);
 }

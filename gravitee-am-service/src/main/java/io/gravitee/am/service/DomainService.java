@@ -48,7 +48,7 @@ public interface DomainService {
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 
-    Single<Set<Domain>> findByIdIn(Collection<String> ids);
+    Flowable<Domain> findByIdIn(Collection<String> ids);
 
     Single<Domain> create(String organizationId, String environmentId, NewDomain domain, User principal);
 

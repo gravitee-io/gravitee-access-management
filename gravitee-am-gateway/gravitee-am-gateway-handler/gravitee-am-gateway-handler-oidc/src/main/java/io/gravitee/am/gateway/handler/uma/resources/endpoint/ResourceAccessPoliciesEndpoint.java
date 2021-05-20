@@ -68,7 +68,8 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
 
         resourceService.findAccessPolicies(domain.getId(), client.getId(), accessToken.getSub(), resource)
-                .map(accessPolicies -> accessPolicies.stream().map(AccessPolicy::getId).collect(Collectors.toList()))
+                .map(AccessPolicy::getId)
+                .toList()
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

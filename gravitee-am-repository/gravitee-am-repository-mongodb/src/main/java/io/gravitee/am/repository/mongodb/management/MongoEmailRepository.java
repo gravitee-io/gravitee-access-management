@@ -21,16 +21,11 @@ import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EmailMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -54,30 +49,25 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<List<Email>> findAll() {
-        return Observable.fromPublisher(emailsCollection.find()).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Email> findAll() {
+        return Flowable.fromPublisher(emailsCollection.find()).map(this::convert);
     }
 
     @Override
-    public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
-                .map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
+                .map(this::convert);
     }
 
     @Override
-    public Single<List<Email>> findByDomain(String domain) {
-        return Observable.fromPublisher(emailsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(ArrayList::new, List::add);
-    }
-
-    @Override
-    public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        return Observable.fromPublisher(
+    public Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client) {
+        return Flowable.fromPublisher(
                 emailsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                )).map(this::convert).collect(ArrayList::new, List::add);
+                )).map(this::convert);
     }
 
     @Override

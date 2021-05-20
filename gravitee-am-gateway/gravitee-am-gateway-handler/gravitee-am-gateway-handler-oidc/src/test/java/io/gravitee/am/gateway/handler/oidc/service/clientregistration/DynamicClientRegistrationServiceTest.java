@@ -18,11 +18,11 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 import com.nimbusds.jose.JWSAlgorithm;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -34,6 +34,7 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.impl.ClientServiceImpl;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -109,8 +110,8 @@ public class DynamicClientRegistrationServiceTest {
     @Before
     public void setUp() {
         when(domain.getId()).thenReturn(DOMAIN_ID);
-        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(openIDProviderMetadata.getRegistrationEndpoint()).thenReturn("https://issuer/register");
         when(openIDDiscoveryService.getConfiguration(BASE_PATH)).thenReturn(openIDProviderMetadata);
         when(openIDProviderMetadata.getIssuer()).thenReturn("https://issuer");
@@ -178,7 +179,7 @@ public class DynamicClientRegistrationServiceTest {
     public void create_applyDefaultIdentiyProvider() {
         IdentityProvider identityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProvider.getId()).thenReturn("identity-provider-id-123");
-        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Arrays.asList(identityProvider)));
+        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(identityProvider));
 
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.empty());
@@ -193,7 +194,7 @@ public class DynamicClientRegistrationServiceTest {
     public void create_applyDefaultCertificateProvider() {
         Certificate certificate = Mockito.mock(Certificate.class);
         when(certificate.getId()).thenReturn("certificate-id-123");
-        when(certificateService.findByDomain(any())).thenReturn(Single.just(Arrays.asList(certificate)));
+        when(certificateService.findByDomain(any())).thenReturn(Flowable.just(certificate));
 
         DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
         request.setRedirectUris(Optional.empty());
@@ -846,7 +847,7 @@ public class DynamicClientRegistrationServiceTest {
         request.setApplicationType(Optional.of("app"));
 
         when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
+        when(emailTemplateService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Flowable.empty());
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("123")).thenReturn(Maybe.just(template));
 

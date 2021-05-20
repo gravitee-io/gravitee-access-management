@@ -66,8 +66,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         LocalDateTime now = LocalDateTime.now(UTC);
         return permissionTicketRepository.findById(id)
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve PermissionTicket with id {}", id));
+                .map(this::toEntity);
     }
 
     @Override
@@ -88,8 +87,7 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create PermissionTicket with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle());
     }
 
     @Override
@@ -109,20 +107,18 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
 
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update PermissionTicket with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return permissionTicketRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete PermissionTicket with id {}", id));
+        return permissionTicketRepository.deleteById(id);
     }
 
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcPermissionTicket.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge PermissionTickets", error));
+        return monoToCompletable(dbClient.delete().from(JdbcPermissionTicket.class).matching(where("expire_at").lessThan(now)).then());
     }
 }

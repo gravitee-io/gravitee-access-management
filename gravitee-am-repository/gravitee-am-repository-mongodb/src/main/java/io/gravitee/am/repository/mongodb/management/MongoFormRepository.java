@@ -26,11 +26,8 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -52,8 +49,8 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<Form>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Form> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
     }
 
     @Override
@@ -62,17 +59,12 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<Form>> findByDomain(String domain) {
-        return findAll(ReferenceType.DOMAIN, domain);
-    }
-
-    @Override
-    public Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client) {
-        return Observable.fromPublisher(
+    public Flowable<Form> findByClient(ReferenceType referenceType, String referenceId, String client) {
+        return Flowable.fromPublisher(
                 formsCollection.find(
                         and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                )).map(this::convert).collect(ArrayList::new, List::add);
+                )).map(this::convert);
     }
 
     @Override

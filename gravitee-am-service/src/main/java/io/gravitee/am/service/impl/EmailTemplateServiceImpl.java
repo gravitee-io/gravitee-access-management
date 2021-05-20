@@ -48,7 +48,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,32 +70,32 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     private AuditService auditService;
 
     @Override
-    public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("Find all emails for {} {}", referenceType, referenceId);
         return emailRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all emails for {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find a all emails for %s %s", referenceType, referenceId), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find a all emails for %s %s", referenceType, referenceId), ex));
                 });
     }
 
     @Override
-    public Single<List<Email>> findAll() {
+    public Flowable<Email> findAll() {
         LOGGER.debug("Find all emails");
         return emailRepository.findAll()
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all emails", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find a all emails", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find a all emails", ex));
                 });
     }
 
     @Override
-    public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
+    public Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client) {
         LOGGER.debug("Find email by {} {} and client {}", referenceType, referenceId, client);
         return emailRepository.findByClient(referenceType, referenceId, client)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a email using its {} {} and its client {}", referenceType, referenceId, client, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a email using its %s %s and its client %s", referenceType, referenceId, client), ex));
                 });
     }
@@ -146,9 +145,8 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
-    public Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget) {
+    public Flowable<Email> copyFromClient(String domain, String clientSource, String clientTarget) {
         return findByClient(ReferenceType.DOMAIN, domain, clientSource)
-                .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(source -> {
                     NewEmail email = new NewEmail();
                     email.setEnabled(source.isEnabled());
@@ -159,8 +157,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     email.setContent(source.getContent());
                     email.setExpiresAfter(source.getExpiresAfter());
                     return this.create(domain, clientTarget, email);
-                })
-                .toList();
+                });
     }
 
     @Override

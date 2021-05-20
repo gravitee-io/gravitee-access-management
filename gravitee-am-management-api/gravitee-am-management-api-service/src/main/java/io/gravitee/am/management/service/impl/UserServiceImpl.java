@@ -382,10 +382,7 @@ public class UserServiceImpl implements UserService {
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
                                 membershipService.findByMember(userId, MemberType.USER)
-                                        .flatMapCompletable(memberships -> {
-                                            List<Completable> deleteMembershipsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
-                                            return Completable.concat(deleteMembershipsCompletable);
-                                        }))
+                                        .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
                 );

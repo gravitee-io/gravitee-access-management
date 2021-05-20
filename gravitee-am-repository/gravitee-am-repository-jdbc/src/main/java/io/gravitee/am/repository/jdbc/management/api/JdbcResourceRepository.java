@@ -24,6 +24,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.resources.SpringReso
 import io.gravitee.am.repository.jdbc.management.api.spring.resources.SpringResourceScopeRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,6 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -68,8 +68,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         CriteriaDefinition whereClause = from(where("domain").is(domain));
-        return findResourcePage(domain, page, size, whereClause)
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources with domain {} (page={} / size={})", domain, page, size, error));
+        return findResourcePage(domain, page, size, whereClause);
     }
 
     private Single<Page<Resource>> findResourcePage(String domain, int page, int size, CriteriaDefinition whereClause) {
@@ -103,60 +102,47 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
         LOGGER.debug("findByDomainAndClient({}, {}, {}, {})", domain, client, page, size);
         CriteriaDefinition whereClause = from(where("domain").is(domain).and(where("client_id").is(client)));
-        return findResourcePage(domain, page, size, whereClause)
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources with domain {} and client {} (page={} / size={})",
-                        domain, client, page, size, error));
+        return findResourcePage(domain, page, size, whereClause);
     }
 
     @Override
-    public Single<List<Resource>> findByResources(List<String> resources) {
+    public Flowable<Resource> findByResources(List<String> resources) {
         LOGGER.debug("findByResources({})", resources);
         if (resources == null || resources.isEmpty()) {
-            return Single.just(Collections.emptyList());
+            return Flowable.empty();
         }
         return resourceRepository.findByIdIn(resources)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources using the list of ids {}", resources, error));
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String userId) {
+    public Flowable<Resource> findByDomainAndClientAndUser(String domain, String client, String userId) {
         LOGGER.debug("findByDomainAndClientAndUser({},{},{})", domain, client, userId);
         return resourceRepository.findByDomainAndClientAndUser(domain, client, userId)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources with domain {}, client {} and userId {}",
-                        domain, client, userId, error));
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
+    public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
         LOGGER.debug("findByDomainAndClientAndUser({},{},{})", domain, client, resources);
         return resourceRepository.findByDomainAndClientAndResources(domain, client, resources)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources with domain {}, client {} and resources {}",
-                        domain, client, resources, error));
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resource) {
         LOGGER.debug("findByDomainAndClientAndUserAndResource({},{},{},{})", domain, client, userId, resource);
         return completeWithScopes(resourceRepository.findByDomainAndClientAndUserIdAndResource(domain, client, userId, resource)
-                .map(this::toEntity), resource)
-                .doOnError(error -> LOGGER.error("Unable to retrieve resources with domain {}, client {}, userId {} and resources {}",
-                        domain, client, userId, resource, error));
+                .map(this::toEntity), resource);
     }
 
     @Override
     public Maybe<Resource> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return completeWithScopes(resourceRepository.findById(id).map(this::toEntity), id)
-                .doOnError((error) -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
+        return completeWithScopes(resourceRepository.findById(id).map(this::toEntity), id);
     }
 
     @Override
@@ -181,8 +167,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
 
         return monoToSingle(insertResult.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create Resource with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -210,8 +195,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
 
         return monoToSingle(deleteScopes.then(updateResource).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update Resource with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -225,7 +209,6 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         Mono<Integer> delete = dbClient.delete().from(JdbcResource.class)
                 .matching(from(where("id").is(id))).fetch().rowsUpdated();
 
-        return monoToCompletable(delete.then(deleteScopes).as(trx::transactional))
-                .doOnError(error -> LOGGER.error("Unable to delete Resource with {}", id, error));
+        return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));
     }
 }

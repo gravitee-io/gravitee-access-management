@@ -22,14 +22,12 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcFactor;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFactorRepository;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -52,43 +50,24 @@ public class JdbcFactorRepository extends AbstractJdbcRepository implements Fact
     }
 
     @Override
-    public Single<Set<Factor>> findAll() {
+    public Flowable<Factor> findAll() {
         LOGGER.debug("findAll()");
         return factorRepository.findAll()
-                .map(this::toEntity)
-                .toList()
-                .map(list -> {
-            Set<Factor> set = new HashSet<>(list);
-            return set;
-        }).doOnError(error -> LOGGER.error("Unable to retrieve all factors", error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<Set<Factor>> findByDomain(String domain) {
+    public Flowable<Factor> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return factorRepository.findByDomain(domain)
-                .map(this::toEntity)
-                .toList()
-                .map(list -> {
-            Set<Factor> set = new HashSet<>(list);
-            return set;
-        }).doOnError(error -> LOGGER.error("Unable to retrieve all factors with domain '{}'", domain , error));
-    }
-
-    @Override
-    public Maybe<Factor> findByDomainAndFactorType(String domain, String factorType) {
-        LOGGER.debug("findByDomainAndFactorType({}, {})", domain, factorType);
-        return factorRepository.findByDomainAndFactorType(domain, factorType)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve factor with domain '{}' and factorType '{}'", domain, factorType , error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Factor> findById(String id) {
         LOGGER.debug("findById({})", id);
         return factorRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve factor with id '{}'", id , error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -101,23 +80,19 @@ public class JdbcFactorRepository extends AbstractJdbcRepository implements Fact
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create factor with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<Factor> update(Factor item) {
         LOGGER.debug("update factor with id {}", item.getId());
         return this.factorRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("unable to update factor with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return factorRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete factor with id '{}'", id , error));
-
+        return factorRepository.deleteById(id);
     }
 }

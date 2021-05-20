@@ -22,10 +22,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ScopeMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
@@ -112,8 +109,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<List<Scope>> findByDomainAndKeys(String domain, List<String> keys) {
-        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), in(FIELD_KEY, keys)))).map(this::convert).toList();
+    public Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys) {
+        return Flowable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), in(FIELD_KEY, keys)))).map(this::convert);
     }
 
     private Scope convert(ScopeMongo scopeMongo) {

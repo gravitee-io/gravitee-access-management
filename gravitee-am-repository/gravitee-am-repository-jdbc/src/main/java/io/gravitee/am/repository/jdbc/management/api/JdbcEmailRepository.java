@@ -24,6 +24,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConve
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringEmailRepository;
 import io.gravitee.am.repository.management.api.EmailRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -63,47 +62,31 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     }
 
     @Override
-    public Single<List<Email>> findAll() {
+    public Flowable<Email> findAll() {
         LOGGER.debug("findAll()");
         return emailRepository.findAll()
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to list all Emails", error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Email>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({},{})", referenceType, referenceId);
         return emailRepository.findAllByReference(referenceId, referenceType.name())
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to list all Emails with refId={} and refType={}",
-                        referenceId, referenceType, error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Email>> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return findAll(ReferenceType.DOMAIN, domain);
-    }
-
-    @Override
-    public Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client) {
+    public Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client) {
         LOGGER.debug("findByClient({}, {}, {})", referenceType, referenceId, client);
         return emailRepository.findAllByReferenceAndClient(referenceId, referenceType.name(), client)
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to list all Emails with refId={}, refType={}, client={}",
-                        referenceId, referenceType, client, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
         LOGGER.debug("findByTemplate({}, {}, {})", referenceType, referenceId, template);
         return emailRepository.findByTemplate(referenceId, referenceType.name(), template)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to get email with refId={}, refType={}, template={}",
-                        referenceId, referenceType, template, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -116,9 +99,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
         LOGGER.debug("findByClientAndTemplate({}, {}, {}, {})", referenceType, referenceId, client, template);
         return emailRepository.findByClientAndTemplate(referenceId, referenceType.name(), client, template)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to get email with refId={}, refType={}, client={}, template={}",
-                        referenceId, referenceType, client, template, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -130,16 +111,13 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     @Override
     public Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
-        return emailRepository.findById(referenceId, referenceType.name(), id).map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve email with refId={}, refType={}, id={}",
-                        referenceId, referenceType, id, error));
+        return emailRepository.findById(referenceId, referenceType.name(), id).map(this::toEntity);
     }
 
     @Override
     public Maybe<Email> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return emailRepository.findById(id).map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve email with id={}", id, error));
+        return emailRepository.findById(id).map(this::toEntity);
     }
 
     @Override
@@ -164,8 +142,7 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create email with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -192,15 +169,13 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
 
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update email with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
 
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return emailRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("unable to delete email with id={}", id, error));
+        return emailRepository.deleteById(id);
     }
 }

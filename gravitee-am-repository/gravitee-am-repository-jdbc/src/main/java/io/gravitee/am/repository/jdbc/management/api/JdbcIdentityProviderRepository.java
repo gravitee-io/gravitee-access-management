@@ -36,8 +36,6 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -69,55 +67,38 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     }
 
     @Override
-    public Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {}", referenceType, referenceId);
         return this.identityProviderRepository.findAll(referenceType.name(), referenceId)
-                .map(this::toEntity)
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all IdentityProvider for referenceId '{}' and referenceType '{}'",
-                        referenceId, referenceType, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
         LOGGER.debug("findAll()");
         return this.identityProviderRepository.findAll(referenceType.name())
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve all IdentityProviders", error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<Set<IdentityProvider>> findAll() {
+    public Flowable<IdentityProvider> findAll() {
         LOGGER.debug("findAll()");
         return this.identityProviderRepository.findAll()
-                .map(this::toEntity)
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all IdentityProviders", error));
-    }
-
-    @Override
-    public Single<Set<IdentityProvider>> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})", domain);
-        return this.findAll(ReferenceType.DOMAIN, domain);
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId) {
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, identityProviderId);
         return this.identityProviderRepository.findById(referenceType.name(), referenceId, identityProviderId)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve IdentityProvider with referenceId {}, referenceType {} and id {}",
-                        referenceId, referenceType, identityProviderId, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<IdentityProvider> findById(String id) {
         LOGGER.debug("findById({})", id);
         return this.identityProviderRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve IdentityProvider with id {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -142,8 +123,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create identityProvider with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -167,14 +147,12 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update identityProvider with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.identityProviderRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete IdentityProvider with id {}", id, error));
+        return this.identityProviderRepository.deleteById(id);
     }
 }

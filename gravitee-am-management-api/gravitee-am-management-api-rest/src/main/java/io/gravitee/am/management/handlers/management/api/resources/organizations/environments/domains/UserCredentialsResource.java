@@ -73,7 +73,8 @@ public class UserCredentialsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> credentialService.findByUserId(ReferenceType.DOMAIN, domain, user)))
+                        .flatMapPublisher(__ -> credentialService.findByUserId(ReferenceType.DOMAIN, domain, user)))
+                        .toList()
                 .subscribe(response::resume, response::resume);
     }
 

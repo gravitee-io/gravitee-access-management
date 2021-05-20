@@ -34,10 +34,8 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +44,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.emptyList;
@@ -72,46 +69,31 @@ public class FlowServiceImpl implements FlowService {
     private AuditService auditService;
 
     @Override
-    public Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps) {
+    public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps) {
         LOGGER.debug("Find all flows for {} {}", referenceType, referenceId);
         return flowRepository.findAll(referenceType, referenceId)
-            .map(flows -> {
-                List<Flow> filteredFlows = flows
-                        .stream()
-                        .filter(f -> (!excludeApps) ? true : f.getApplication() == null)
-                        .sorted(getFlowComparator())
-                        .collect(Collectors.toList());
-
-                if (filteredFlows.isEmpty()) {
-                    return defaultFlows(referenceType, referenceId);
-                }
-                return filteredFlows;
-            })
+                .filter(f -> (!excludeApps) ? true : f.getApplication() == null)
+                .sorted(getFlowComparator())
+                .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId)))
             .onErrorResumeNext(ex -> {
                 LOGGER.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
-                return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s", referenceType, referenceId), ex));
+                return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s", referenceType, referenceId), ex));
             });
     }
 
     @Override
-    public Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application) {
+    public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
         LOGGER.debug("Find all flows for {} {} and application {}", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType, referenceId, application)
-                .map(flows -> {
-                    if (flows == null || flows.isEmpty()) {
-                        return defaultFlows(referenceType, referenceId)
-                                .stream()
-                                .map(flow -> {
-                                    flow.setApplication(application);
-                                    return flow;
-                                }).collect(Collectors.toList());
-                    }
-                    flows.sort(getFlowComparator());
-                    return flows;
-                })
+                .sorted(getFlowComparator())
+                .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId))
+                        .map(flow -> {
+                            flow.setApplication(application);
+                            return flow;
+                        }))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred while trying to find all flows for {} {} and application {}", referenceType, referenceId, application, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s and application %s", referenceType, referenceId, application), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s and application %s", referenceType, referenceId, application), ex));
                 });
     }
 
@@ -266,6 +248,7 @@ public class FlowServiceImpl implements FlowService {
 
     private Single<List<Flow>> createOrUpdate0(ReferenceType referenceType, String referenceId, String application, List<Flow> flows, User principal) {
         return flowRepository.findAll(referenceType, referenceId)
+                .toList()
                 .flatMap(existingFlows -> {
                     return Observable.fromIterable(flows)
                             .flatMapSingle(flowToCreateOrUpdate -> {

@@ -35,6 +35,7 @@ import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ExtensionGrantAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -43,7 +44,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -83,13 +86,12 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
-    public Single<List<ExtensionGrant>> findByDomain(String domain) {
+    public Flowable<ExtensionGrant> findByDomain(String domain) {
         LOGGER.debug("Find extension grants by domain: {}", domain);
         return extensionGrantRepository.findByDomain(domain)
-                .map(extensionGrants -> (List<ExtensionGrant>) new ArrayList<>(extensionGrants))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find extension grants by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find extension grants by domain", ex));
                 });
     }
 
@@ -197,7 +199,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             // backward compatibility, check for old clients configuration
                             return Single.zip(
                                     applicationService.findByDomainAndExtensionGrant(domain, extensionGrant.getGrantType()),
-                                    findByDomain(domain),
+                                    findByDomain(domain).toList(),
                                     (clients1, extensionGrants) -> {
                                         if (clients1.size() == 0) {
                                             return extensionGrant;

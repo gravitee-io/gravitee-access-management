@@ -16,16 +16,15 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcScope;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.spring.scope.SpringScopeClaimRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.scope.SpringScopeRepository;
 import io.gravitee.am.repository.management.api.ScopeRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,15 +33,15 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -117,8 +116,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                         .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                         .as(Long.class)
                         .fetch().first())
-                        .map(total -> new Page<>(data, page, total)))
-                .doOnError((error) -> LOGGER.error("Unable to search scopes with key and domain {}, {}", query,domain, error));
+                        .map(total -> new Page<>(data, page, total)));
     }
 
     private Maybe<Scope> completeWithClaims(Maybe<Scope> maybeScope, String id) {
@@ -143,12 +141,11 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                         .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))).is(key))))
                 .as(JdbcScope.class)
                 .first()).map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve scope from domain {} and key {}", domain, key, error));
+                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()));
     }
 
     @Override
-    public Single<List<Scope>> findByDomainAndKeys(String domain, List<String> keys) {
+    public Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys) {
         LOGGER.debug("findByDomainAndKeys({}, {})", domain, keys);
         return fluxToFlowable(dbClient.select().from(JdbcScope.class)
                 .project("*")
@@ -156,9 +153,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                         .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))).in(keys))))
                 .as(JdbcScope.class)
                 .all()).map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve scope from domain {} and keys {}", domain, keys, error));
+                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable());
     }
 
     @Override
@@ -166,8 +161,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("findById({})", id);
         return scopeRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve scope with id {}", id, error));
+                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()));
     }
 
     @Override
@@ -202,8 +196,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
             }).reduce(Integer::sum));
         }
 
-        return monoToSingle(action.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create Resource with id {}", item.getId(), error));
+        return monoToSingle(action.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -242,8 +235,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         }
 
         return monoToSingle(deleteClaims.then(action).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to update Resource with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -257,8 +249,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         Mono<Integer> delete = dbClient.delete().from(JdbcScope.class)
                 .matching(from(where("id").is(id))).fetch().rowsUpdated();
 
-        return monoToCompletable(deleteClaim.then(delete).as(trx::transactional))
-                .doOnError(error -> LOGGER.error("Unable to delete scope with id {}", id, error));
+        return monoToCompletable(deleteClaim.then(delete).as(trx::transactional));
     }
 
 }

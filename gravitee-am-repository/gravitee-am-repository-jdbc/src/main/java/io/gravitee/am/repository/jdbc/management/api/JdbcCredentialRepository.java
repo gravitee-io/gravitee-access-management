@@ -23,13 +23,12 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcCredential;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringCredentialRepository;
 import io.gravitee.am.repository.management.api.CredentialRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -54,33 +53,24 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
-    public Single<List<Credential>> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
+    public Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("findByUserId({},{},{})", referenceType, referenceId, userId);
         return credentialRepository.findByUserId(referenceType.name(), referenceId, userId)
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve credentials for refId={}, refType={}, userId={}",
-                        referenceId, referenceType, userId, error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Credential>> findByUsername(ReferenceType referenceType, String referenceId, String username) {
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
         LOGGER.debug("findByUsername({},{},{})", referenceType, referenceId, username);
         return credentialRepository.findByUsername(referenceType.name(), referenceId, username)
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve credentials for refId={}, refType={}, username={}",
-                        referenceId, referenceType, username, error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
+    public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
         LOGGER.debug("findByCredentialId({},{},{})", referenceType, referenceId, credentialId);
         return credentialRepository.findByCredentialId(referenceType.name(), referenceId, credentialId)
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to retrieve credentials for refId={}, refType={}, credential={}",
-                        referenceId, referenceType, credentialId, error));
+                .map(this::toEntity);
 
     }
 

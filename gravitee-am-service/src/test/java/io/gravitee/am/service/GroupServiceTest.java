@@ -16,10 +16,10 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.service.exception.GroupAlreadyExistsException;
@@ -30,9 +30,11 @@ import io.gravitee.am.service.impl.GroupServiceImpl;
 import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.am.service.model.UpdateGroup;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -102,8 +104,8 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.just(Collections.singletonList(new Group())));
-        TestObserver<List<Group>> testObserver = groupService.findByDomain(DOMAIN).test();
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Group()));
+        TestObserver<List<Group>> testObserver = groupService.findByDomain(DOMAIN).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -113,13 +115,12 @@ public class GroupServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(groupRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        groupService.findByDomain(DOMAIN).subscribe(testObserver);
+        TestSubscriber testSubscriber = groupService.findByDomain(DOMAIN).test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test

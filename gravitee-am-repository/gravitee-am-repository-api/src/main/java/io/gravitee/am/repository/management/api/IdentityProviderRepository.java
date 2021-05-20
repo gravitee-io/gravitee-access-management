@@ -30,13 +30,11 @@ import java.util.Set;
  */
 public interface IdentityProviderRepository extends CrudRepository<IdentityProvider, String> {
 
-    Single<Set<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId);
 
     Flowable<IdentityProvider> findAll(ReferenceType referenceType);
 
-    Single<Set<IdentityProvider>> findAll();
-
-    Single<Set<IdentityProvider>> findByDomain(String domain);
+    Flowable<IdentityProvider> findAll();
 
     Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId);
 }

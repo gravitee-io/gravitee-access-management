@@ -22,10 +22,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.ResourceMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -87,8 +84,8 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndUser(String domain, String client, String user) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user)))).map(this::convert).toList();
+    public Flowable<Resource> findByDomainAndClientAndUser(String domain, String client, String user) {
+        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user)))).map(this::convert);
     }
 
     @Override
@@ -99,13 +96,13 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     }
 
     @Override
-    public Single<List<Resource>> findByResources(List<String> resources) {
-        return Observable.fromPublisher(resourceCollection.find(in(FIELD_ID, resources))).map(this::convert).toList();
+    public Flowable<Resource> findByResources(List<String> resources) {
+        return Flowable.fromPublisher(resourceCollection.find(in(FIELD_ID, resources))).map(this::convert);
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), in(FIELD_ID, resources)))).map(this::convert).toList();
+    public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
+        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), in(FIELD_ID, resources)))).map(this::convert);
     }
 
     @Override

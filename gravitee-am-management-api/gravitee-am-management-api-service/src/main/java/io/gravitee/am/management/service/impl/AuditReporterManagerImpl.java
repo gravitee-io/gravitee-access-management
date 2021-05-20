@@ -142,9 +142,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         }
 
         logger.info("Initializing audit reporters");
-        List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
-
-        reporters.forEach(reporter -> {
+        reporterService.findAll().blockingForEach(reporter -> {
             logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
             try {
                 AuditReporterLauncher launcher = new AuditReporterLauncher(reporter);
@@ -251,7 +249,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         // to propagate across the cluster so if there are at least one reporter for the domain, return the NoOpReporter to avoid
         // too long waiting time that may lead to unexpected even on the UI.
         try {
-            List<io.gravitee.am.model.Reporter> reporters = reporterService.findByDomain(domain).blockingGet();
+            List<io.gravitee.am.model.Reporter> reporters = reporterService.findByDomain(domain).toList().blockingGet();
             if (reporters.isEmpty()) {
                 throw new ReporterNotFoundForDomainException(domain);
             }

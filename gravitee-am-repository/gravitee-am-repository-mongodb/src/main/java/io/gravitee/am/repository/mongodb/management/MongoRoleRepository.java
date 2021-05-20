@@ -92,8 +92,8 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Set<Role>> findByIdIn(List<String> ids) {
-        return Observable.fromPublisher(rolesCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<Role> findByIdIn(List<String> ids) {
+        return Flowable.fromPublisher(rolesCollection.find(in(FIELD_ID, ids))).map(this::convert);
     }
 
     @Override

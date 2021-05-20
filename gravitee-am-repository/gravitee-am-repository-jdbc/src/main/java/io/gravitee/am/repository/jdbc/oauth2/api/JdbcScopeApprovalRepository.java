@@ -18,11 +18,11 @@ package io.gravitee.am.repository.jdbc.oauth2.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcScopeApproval;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.ScopeApprovalRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,27 +60,21 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
-    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String userId, String clientId) {
         LOGGER.debug("findByDomainAndUserAndClient({}, {}, {})", domain, userId, clientId);
         LocalDateTime now = LocalDateTime.now(UTC);
         return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, clientId)
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity)
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve ScopeApprovals with domain {}, user {} and client {}", domain, userId, clientId, error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user) {
+    public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
         LOGGER.debug("findByDomainAndUser({}, {}, {})", domain, user);
         LocalDateTime now = LocalDateTime.now(UTC);
         return scopeApprovalRepository.findByDomainAndUser(domain, user)
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity)
-                .toList()
-                .map(list -> list.stream().collect(Collectors.toSet()))
-                .doOnError(error -> LOGGER.error("Unable to retrieve ScopeApprovals with domain {} and user {}", domain, user, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -112,8 +106,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .from(JdbcScopeApproval.class)
                 .matching(from(where("domain").is(domain)
                         .and(where("scope").is(scope))))
-                .fetch().rowsUpdated())
-                .doOnError(error -> LOGGER.error("Unable to delete ScopeApproval with domain {} and scope {}", domain, scope, error));
+                .fetch().rowsUpdated());
     }
 
     @Override
@@ -124,8 +117,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .matching(from(where("domain").is(domain)
                         .and(where("user_id").is(user)
                         .and(where("client_id").is(client)))))
-                .fetch().rowsUpdated())
-                .doOnError(error -> LOGGER.error("Unable to delete ScopeApproval with domain {}, user {} and client {}", domain, user, client, error));
+                .fetch().rowsUpdated());
     }
 
     @Override
@@ -135,8 +127,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .from(JdbcScopeApproval.class)
                 .matching(from(where("domain").is(domain)
                         .and(where("user_id").is(user))))
-                .fetch().rowsUpdated())
-                .doOnError(error -> LOGGER.error("Unable to delete ScopeApproval with domain {} and user {}", domain, user, error));
+                .fetch().rowsUpdated());
     }
 
     @Override
@@ -145,8 +136,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LocalDateTime now = LocalDateTime.now(UTC);
         return scopeApprovalRepository.findById(id)
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve ScopeApproval with id {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -160,28 +150,25 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .fetch().rowsUpdated();
 
         return monoToSingle(action)
-                .flatMap((i) -> scopeApprovalRepository.findById(item.getId()).map(this::toEntity).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create ScopeApproval with id {}", item.getId(), error));
+                .flatMap((i) -> scopeApprovalRepository.findById(item.getId()).map(this::toEntity).toSingle());
     }
 
     @Override
     public Single<ScopeApproval> update(ScopeApproval item) {
         LOGGER.debug("Update ScopeApproval with id {}", item.getId());
         return scopeApprovalRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("Unable to update ScopeApproval with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("Delete ScopeApproval with id {}", id);
-        return scopeApprovalRepository.deleteById(id)
-                .doOnError((error) -> LOGGER.error("Unable to delete ScopeApproval with id {}", id, error));
+        return scopeApprovalRepository.deleteById(id);
     }
 
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcScopeApproval.class).matching(where("expires_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge ScopeApproval", error));
+        return monoToCompletable(dbClient.delete().from(JdbcScopeApproval.class).matching(where("expires_at").lessThan(now)).then());
     }
 }

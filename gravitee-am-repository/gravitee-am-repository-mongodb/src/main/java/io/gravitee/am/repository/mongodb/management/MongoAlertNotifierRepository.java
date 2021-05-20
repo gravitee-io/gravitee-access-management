@@ -54,12 +54,6 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
                 .map(this::convert);
     }
 
-
-    @Override
-    public Flowable<AlertNotifier> findByDomain(String domainId) {
-        return findAll(ReferenceType.DOMAIN, domainId);
-    }
-
     @Override
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));

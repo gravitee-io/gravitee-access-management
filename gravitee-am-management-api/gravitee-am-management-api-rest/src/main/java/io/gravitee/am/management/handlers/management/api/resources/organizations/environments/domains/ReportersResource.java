@@ -85,7 +85,7 @@ public class ReportersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> reporterService.findByDomain(domain)))
+                        .flatMapSingle(irrelevant -> reporterService.findByDomain(domain).toList()))
                 .flatMap(reporters ->
                         hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
                                 .map(hasPermission -> {

@@ -22,14 +22,12 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcExtensionGrant;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringExtensionGrantRepository;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
-
-import java.util.HashSet;
-import java.util.Set;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -52,32 +50,24 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
     }
 
     @Override
-    public Single<Set<ExtensionGrant>> findByDomain(String domain) {
+    public Flowable<ExtensionGrant> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return extensionGrantRepository.findByDomain(domain)
-                .map(this::toEntity)
-                .toList()
-                .map(list -> {
-                    Set<ExtensionGrant> set = new HashSet(list);
-                    return set;
-                })
-                .doOnError(error -> LOGGER.error("unable to retrieve extension grants with domain = {}", domain, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
         LOGGER.debug("findByDomainAndName({}, {})", domain, name);
         return extensionGrantRepository.findByDomainAndName(domain, name)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve extension grants with domain = {} and name = {}", domain, name, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<ExtensionGrant> findById(String id) {
         LOGGER.debug("findByDomainAndName({}, {})", id);
         return extensionGrantRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve extension grants with id = {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -90,23 +80,19 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create extension grants  with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<ExtensionGrant> update(ExtensionGrant item) {
         LOGGER.debug("update extension grants  with id {}", item.getId());
         return this.extensionGrantRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("unable to update extension grants  with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return extensionGrantRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("unable to delete extension grants with id = {}", id, error));
-
+        return extensionGrantRepository.deleteById(id);
     }
 }

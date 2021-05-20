@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -29,13 +30,11 @@ import java.util.List;
  */
 public interface EmailRepository extends CrudRepository<Email, String> {
 
-    Single<List<Email>> findAll();
+    Flowable<Email> findAll();
 
-    Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Email> findAll(ReferenceType referenceType, String referenceId);
 
-    Single<List<Email>> findByDomain(String domain);
-
-    Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client);
+    Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client);
 
     Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 

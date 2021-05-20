@@ -22,12 +22,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -51,7 +50,7 @@ public class UserCredentialsResourceTest extends JerseySpringTest {
         mockCredential.setId("credential-id");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(Collections.singletonList(mockCredential))).when(credentialService).findByUserId(ReferenceType.DOMAIN, domainId, mockUser.getId());
+        doReturn(Flowable.just(mockCredential)).when(credentialService).findByUserId(ReferenceType.DOMAIN, domainId, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)

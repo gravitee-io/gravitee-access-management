@@ -40,7 +40,7 @@ public interface DomainRepository extends CrudRepository<Domain, String> {
 
     Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid);
 
-    Single<Set<Domain>> findByIdIn(Collection<String> ids);
+    Flowable<Domain> findByIdIn(Collection<String> ids);
 
     Flowable<Domain> findAllByCriteria(DomainCriteria criteria);
 }

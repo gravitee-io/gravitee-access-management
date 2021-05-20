@@ -78,13 +78,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private AuditService auditService;
 
     @Override
-    public Single<List<IdentityProvider>> findAll() {
+    public Flowable<IdentityProvider> findAll() {
         LOGGER.debug("Find all identity providers");
         return identityProviderRepository.findAll()
-                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all identity providers", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all identity providers", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all identity providers", ex));
                 });
     }
 
@@ -112,13 +111,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<List<IdentityProvider>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("Find identity providers by {}: {}", referenceType, referenceId);
         return identityProviderRepository.findAll(referenceType, referenceId)
-                .map(identityProviders -> (List<IdentityProvider>) new ArrayList<>(identityProviders))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find identity providers by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find identity providers by " + referenceType.name(), ex));
                 });
     }
 
@@ -129,7 +127,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<List<IdentityProvider>> findByDomain(String domain) {
+    public Flowable<IdentityProvider> findByDomain(String domain) {
         return findAll(ReferenceType.DOMAIN, domain);
     }
 
@@ -213,9 +211,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
         return identityProviderRepository.findById(referenceType, referenceId, identityProviderId)
                 .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProviderId)))
-                .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId)
+                .flatMapSingle(identityProvider -> applicationService.findByIdentityProvider(identityProviderId).count()
                         .flatMap(applications -> {
-                            if (applications.size() > 0) {
+                            if (applications > 0) {
                                 throw new IdentityProviderWithApplicationsException();
                             }
                             return Single.just(identityProvider);

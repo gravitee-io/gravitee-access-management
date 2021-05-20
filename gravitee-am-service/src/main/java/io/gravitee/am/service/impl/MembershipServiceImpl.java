@@ -39,7 +39,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,23 +95,23 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
-    public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
+    public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
         LOGGER.debug("Find memberships by reference id {} and reference type {}", referenceId, referenceType);
         return membershipRepository.findByReference(referenceId, referenceType)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find memberships by reference id {} and reference type {}", referenceId, referenceType, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find memberships by reference id %s and reference type %s", referenceId, referenceType), ex));
                 });
     }
 
     @Override
-    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+    public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
         LOGGER.debug("Find memberships by member id {} and member type {}", memberId, memberType);
         return membershipRepository.findByMember(memberId, memberType)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find memberships by member id {} and member type {}", memberId, memberType, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find memberships by member id %s and member type %s", memberId, memberType), ex));
                 });
     }
@@ -201,10 +200,12 @@ public class MembershipServiceImpl implements MembershipService {
         List<String> groupIds = memberships.stream().filter(membership -> MemberType.GROUP.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
-        return Single.zip(userService.findByIdIn(userIds), groupService.findByIdIn(groupIds), roleService.findByIdIn(roleIds), (users, groups, roles) -> {
+        return Single.zip(userService.findByIdIn(userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
+                groupService.findByIdIn(groupIds).toMap(Group::getId, g -> this.convert(g)),
+                roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
-            metadata.put("users", users.stream().collect(Collectors.toMap(io.gravitee.am.model.User::getId, this::convert)));
-            metadata.put("groups", groups.stream().collect(Collectors.toMap(Group::getId, this::convert)));
+            metadata.put("users", (Map)users);
+            metadata.put("groups", (Map)groups);
             metadata.put("roles", roles.stream().collect(Collectors.toMap(Role::getId, this::filter)));
             return metadata;
         });

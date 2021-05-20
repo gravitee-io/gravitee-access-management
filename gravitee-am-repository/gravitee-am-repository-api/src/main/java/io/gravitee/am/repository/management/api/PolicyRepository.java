@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -29,9 +30,10 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Deprecated
 public interface PolicyRepository {
 
-    Single<List<Policy>> findAll();
+    Flowable<Policy> findAll();
 
     Single<Boolean> collectionExists();
 

@@ -24,6 +24,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFlowRepository;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,8 +70,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({})", id);
         return flowRepository.findById(id)
                 .map(this::toEntity)
-                .flatMapSingleElement(flow ->  completeFlow(flow))
-                .doOnError((error) -> LOGGER.error("unable to retrieve domain with id {}", id, error));
+                .flatMapSingleElement(flow ->  completeFlow(flow));
     }
 
     @Override
@@ -97,8 +97,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create flow with id {}", item.getId(), error));
+                .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Flow item) {
@@ -178,8 +177,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
 
-        return monoToSingle(updateAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to update flow with id {}", item.getId(), error));
+        return monoToSingle(updateAction.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Integer> deleteChildEntities(String flowId) {
@@ -195,8 +193,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
                 .matching(from(where("id").is(id)))
                 .fetch().rowsUpdated()
                 .then(deleteChildEntities(id))
-                .as(trx::transactional))
-                .doOnError((error) -> LOGGER.error("Unable to delete Flow with id {}", id, error));
+                .as(trx::transactional));
     }
 
     @Override
@@ -204,31 +201,23 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
         return flowRepository.findById(referenceType.name(), referenceId, id)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to find flow with referenceType '{}', referenceId '{}' and id '{}'",
-                        referenceType, referenceId, id));
+                .flatMap(flow -> completeFlow(flow).toMaybe());
     }
 
     @Override
-    public Single<List<Flow>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return flowRepository.findAll(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to findAll flows with referenceType '{}' and referenceId '{}'",
-                        referenceType, referenceId));
+                .flatMap(flow -> completeFlow(flow).toFlowable());
     }
 
     @Override
-    public Single<List<Flow>> findByApplication(ReferenceType referenceType, String referenceId, String application) {
+    public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
         LOGGER.debug("findByApplication({}, {}, {})", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType.name(), referenceId, application)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toFlowable())
-                .toList()
-                .doOnError(error -> LOGGER.error("Unable to find flows with referenceType '{}' and referenceId '{}' and application '{}'",
-                        referenceType, referenceId, application));
+                .flatMap(flow -> completeFlow(flow).toFlowable());
     }
 
     protected Single<Flow> completeFlow(Flow flow) {

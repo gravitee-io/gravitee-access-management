@@ -21,6 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.junit.Test;
 
@@ -41,7 +42,7 @@ public class FlowsResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetFlows() {
-        doReturn(Single.just(Arrays.asList(new Flow(), new Flow()))).when(flowService).findAll(ReferenceType.DOMAIN, DOMAIN_ID, true);
+        doReturn(Flowable.just(new Flow(), new Flow())).when(flowService).findAll(ReferenceType.DOMAIN, DOMAIN_ID, true);
 
         final Response response = target("domains")
                 .path(DOMAIN_ID)
@@ -56,7 +57,7 @@ public class FlowsResourceTest extends JerseySpringTest {
 
     @Test
     public void shouldGetFlows_technicalManagementException() {
-        doReturn(Single.error(new TechnicalManagementException("error occurs"))).when(flowService).findAll(ReferenceType.DOMAIN, DOMAIN_ID, true);
+        doReturn(Flowable.error(new TechnicalManagementException("error occurs"))).when(flowService).findAll(ReferenceType.DOMAIN, DOMAIN_ID, true);
 
         final Response response = target("domains")
                 .path(DOMAIN_ID)

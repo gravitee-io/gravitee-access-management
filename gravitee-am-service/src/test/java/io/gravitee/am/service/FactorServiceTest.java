@@ -21,14 +21,19 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FactorRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.FactorConfigurationException;
+import io.gravitee.am.service.exception.FactorNotFoundException;
+import io.gravitee.am.service.exception.FactorWithApplicationsException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FactorServiceImpl;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -98,24 +103,23 @@ public class FactorServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(factorRepository.findByDomain(DOMAIN)).thenReturn(Single.just(Collections.singleton(new Factor())));
-        TestObserver<List<Factor>> testObserver = factorService.findByDomain(DOMAIN).test();
+        when(factorRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new Factor()));
+        TestSubscriber<Factor> testObserver = factorService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(factors -> factors.size() == 1);
+        testObserver.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(factorRepository.findByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(factorRepository.findByDomain(DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        factorService.findByDomain(DOMAIN).subscribe(testObserver);
+        TestSubscriber testSubscriber = factorService.findByDomain(DOMAIN).test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
@@ -264,7 +268,7 @@ public class FactorServiceTest {
         Factor factor = new Factor();
         factor.setId("factor-id");
         when(factorRepository.findById(factor.getId())).thenReturn(Maybe.just(factor));
-        when(applicationService.findByFactor(factor.getId())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.just(new Application()));
 
         TestObserver testObserver = factorService.delete(DOMAIN, factor.getId()).test();
 
@@ -289,7 +293,7 @@ public class FactorServiceTest {
         Factor factor = new Factor();
         factor.setId("factor-id");
         when(factorRepository.findById(factor.getId())).thenReturn(Maybe.just(factor));
-        when(applicationService.findByFactor(factor.getId())).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByFactor(factor.getId())).thenReturn(Flowable.empty());
         when(factorRepository.delete(factor.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 

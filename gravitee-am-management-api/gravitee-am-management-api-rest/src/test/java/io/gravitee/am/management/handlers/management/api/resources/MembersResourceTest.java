@@ -23,6 +23,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.exception.OrganizationNotFoundException;
 import io.gravitee.am.service.model.NewMembership;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.junit.Test;
 
@@ -118,7 +119,7 @@ public class MembersResourceTest extends JerseySpringTest {
         membership.setId("membership#1");
 
         doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
-        doReturn(Single.just(Arrays.asList(membership))).when(membershipService).findByReference(organization.getId(), ReferenceType.ORGANIZATION);
+        doReturn(Flowable.just(Arrays.asList(membership))).when(membershipService).findByReference(organization.getId(), ReferenceType.ORGANIZATION);
         doReturn(Single.just(new HashMap<>())).when(membershipService).getMetadata(anyList());
 
         final Response response = target("organizations")

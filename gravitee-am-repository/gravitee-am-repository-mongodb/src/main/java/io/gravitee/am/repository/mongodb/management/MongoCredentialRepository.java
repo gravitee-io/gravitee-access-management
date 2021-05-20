@@ -21,15 +21,11 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.CredentialRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.CredentialMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -57,8 +53,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     }
 
     @Override
-    public Single<List<Credential>> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
-        return Observable.fromPublisher(
+    public Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        return Flowable.fromPublisher(
                 credentialsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -66,12 +62,12 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_USER_ID, userId)
                         )
                 ))
-                .map(this::convert).toList();
+                .map(this::convert);
     }
 
     @Override
-    public Single<List<Credential>> findByUsername(ReferenceType referenceType, String referenceId, String username) {
-        return Observable.fromPublisher(
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
+        return Flowable.fromPublisher(
                 credentialsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -79,12 +75,12 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_USERNAME, username)
                         )
                 ))
-                .map(this::convert).toList();
+                .map(this::convert);
     }
 
     @Override
-    public Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
-        return Observable.fromPublisher(
+    public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
+        return Flowable.fromPublisher(
                 credentialsCollection.find(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -92,7 +88,7 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_CREDENTIAL_ID, credentialId)
                         )
                 ))
-                .map(this::convert).toList();
+                .map(this::convert);
     }
 
     @Override

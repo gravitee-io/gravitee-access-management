@@ -30,13 +30,11 @@ import java.util.List;
  */
 public interface FormRepository extends CrudRepository<Form, String> {
 
-    Single<List<Form>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Form> findAll(ReferenceType referenceType, String referenceId);
 
     Flowable<Form> findAll(ReferenceType referenceType);
 
-    Single<List<Form>> findByDomain(String domain);
-
-    Single<List<Form>> findByClient(ReferenceType referenceType, String referenceId, String client);
+    Flowable<Form> findByClient(ReferenceType referenceType, String referenceId, String client);
 
     Maybe<Form> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 

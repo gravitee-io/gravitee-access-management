@@ -46,10 +46,8 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.AccountSettingsValidator;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,12 +58,7 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -151,32 +144,32 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Set<Application>> findByCertificate(String certificate) {
+    public Flowable<Application> findByCertificate(String certificate) {
         LOGGER.debug("Find applications by certificate : {}", certificate);
         return applicationRepository.findByCertificate(certificate)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by certificate", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by certificate", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by certificate", ex));
                 });
     }
 
     @Override
-    public Single<Set<Application>> findByIdentityProvider(String identityProvider) {
+    public Flowable<Application> findByIdentityProvider(String identityProvider) {
         LOGGER.debug("Find applications by identity provider : {}", identityProvider);
         return applicationRepository.findByIdentityProvider(identityProvider)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by identity provider", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by identity provider", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by identity provider", ex));
                 });
     }
 
     @Override
-    public Single<Set<Application>> findByFactor(String factor) {
+    public Flowable<Application> findByFactor(String factor) {
         LOGGER.debug("Find applications by factor : {}", factor);
         return applicationRepository.findByFactor(factor)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by factor", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by factor", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by factor", ex));
                 });
     }
 
@@ -184,6 +177,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         LOGGER.debug("Find applications by domain {} and extension grant : {}", domain, extensionGrant);
         return applicationRepository.findByDomainAndExtensionGrant(domain, extensionGrant)
+                .collect(() -> (Set<Application>)new HashSet(), Set::add) // TODO CHECK IF FLOWABLE is useful...
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by extension grant", ex));
@@ -191,12 +185,12 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Set<Application>> findByIdIn(List<String> ids) {
+    public Flowable<Application> findByIdIn(List<String> ids) {
         LOGGER.debug("Find applications by ids : {}", ids);
         return applicationRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by ids {}", ids, ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by ids", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find applications by ids", ex));
                 });
     }
 
@@ -384,24 +378,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .andThen(eventService.create(event).toCompletable())
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
-                                    .flatMapCompletable(emails -> {
-                                        List<Completable> deleteEmailsCompletable = emails.stream().map(e -> emailTemplateService.delete(e.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteEmailsCompletable);
-                                    })
+                                    .flatMapCompletable(email -> emailTemplateService.delete(email.getId()))
                             )
                             // delete form templates
                             .andThen(formService.findByDomainAndClient(application.getDomain(), application.getId())
-                                    .flatMapCompletable(forms -> {
-                                        List<Completable> deleteFormsCompletable = forms.stream().map(f -> formService.delete(application.getDomain(), f.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteFormsCompletable);
-                                    })
+                                    .flatMapCompletable(form -> formService.delete(application.getDomain(), form.getId()))
                             )
                             // delete memberships
                             .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
-                                    .flatMapCompletable(memberships -> {
-                                        List<Completable> deleteFormsCompletable = memberships.stream().map(m -> membershipService.delete(m.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteFormsCompletable);
-                                    })
+                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
@@ -563,6 +548,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return certificateService
                 .findByDomain(application.getDomain())
+                .toList()
                 .map(certificates -> {
                     if (certificates == null || certificates.isEmpty()) {
                         return application;

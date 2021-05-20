@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -31,6 +30,7 @@ import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewResource;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -94,19 +94,19 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Single<List<Resource>> findByResources(List<String> resourceIds) {
+    public Flowable<Resource> findByResources(List<String> resourceIds) {
         LOGGER.debug("Listing resources by ids {}", resourceIds);
         return repository.findByResources(resourceIds);
     }
 
     @Override
-    public Single<List<Resource>> listByDomainAndClientAndUser(String domain, String client, String userId) {
+    public Flowable<Resource> listByDomainAndClientAndUser(String domain, String client, String userId) {
         LOGGER.debug("Listing resource for resource owner {} and client {}", userId, client);
         return repository.findByDomainAndClientAndUser(domain, client, userId);
     }
 
     @Override
-    public Single<List<Resource>> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds) {
+    public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds) {
         LOGGER.debug("Getting resource {} for  client {} and resources {}", resourceIds, client, resourceIds);
         return repository.findByDomainAndClientAndResources(domain, client, resourceIds);
     }
@@ -121,7 +121,7 @@ public class ResourceServiceImpl implements ResourceService {
     public Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId) {
         LOGGER.debug("Getting resource by domain {} client {} and resource {}", domain, client, resourceId);
         return this.findByDomainAndClientAndResources(domain, client, Arrays.asList(resourceId))
-                .flatMapMaybe(resources -> resources.isEmpty() ? Maybe.empty() : Maybe.just(resources.get(0)));
+                .firstElement();
     }
 
     @Override
@@ -132,11 +132,11 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<String> userIds = resources.stream().filter(resource -> resource.getUserId() != null).map(Resource::getUserId).distinct().collect(Collectors.toList());
         List<String> appIds = resources.stream().filter(resource -> resource.getClientId() != null).map(Resource::getClientId).distinct().collect(Collectors.toList());
-
-        return Single.zip(userService.findByIdIn(userIds), applicationService.findByIdIn(appIds), (users, apps) -> {
+        return Single.zip(userService.findByIdIn(userIds).toMap(User::getId, this::filter),
+                applicationService.findByIdIn(appIds).toMap(Application::getId, this::filter), (users, apps) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
-            metadata.put("users", users.stream().collect(Collectors.toMap(User::getId, this::filter)));
-            metadata.put("applications", apps.stream().collect(Collectors.toMap(Application::getId, this::filter)));
+            metadata.put("users", (Map) users);
+            metadata.put("applications", (Map) apps);
             return metadata;
         });
     }
@@ -206,35 +206,32 @@ public class ResourceServiceImpl implements ResourceService {
         LOGGER.debug("Deleting resource id {} on domain {}", resource.getId(), resource.getDomain());
         // delete policies and then the resource
         return accessPolicyRepository.findByDomainAndResource(resource.getDomain(), resource.getId())
-                .flatMapCompletable(accessPolicies -> {
-                    List<Completable> deleteAccessPoliciesCompletable = accessPolicies.stream().map(a -> accessPolicyRepository.delete(a.getId())).collect(Collectors.toList());
-                    return Completable.concat(deleteAccessPoliciesCompletable);
-                })
+                .flatMapCompletable(accessPolicy -> accessPolicyRepository.delete(accessPolicy.getId()))
                 .andThen(repository.delete(resource.getId()));
     }
 
     @Override
-    public Single<List<AccessPolicy>> findAccessPolicies(String domain, String client, String user, String resource) {
+    public Flowable<AccessPolicy> findAccessPolicies(String domain, String client, String user, String resource) {
         LOGGER.debug("Find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource);
         return findByDomainAndClientAndUserAndResource(domain, client, user, resource)
                 .switchIfEmpty(Single.error(new ResourceNotFoundException(resource)))
-                .flatMap(r -> accessPolicyRepository.findByDomainAndResource(domain, r.getId()))
+                .flatMapPublisher(r -> accessPolicyRepository.findByDomainAndResource(domain, r.getId()))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
+                        return Flowable.error(ex);
                     }
                     LOGGER.error("An error has occurred while trying to find access policies by domain {}, client {}, resource owner {} and resource id {}", domain, client, user, resource, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by domain %s, client %s, resource owner %s and resource id %s", domain, client, user, resource), ex));
                 });
     }
 
     @Override
-    public Single<List<AccessPolicy>> findAccessPoliciesByResources(List<String> resourceIds) {
+    public Flowable<AccessPolicy> findAccessPoliciesByResources(List<String> resourceIds) {
         LOGGER.debug("Find access policies by resources {}", resourceIds);
         return accessPolicyRepository.findByResources(resourceIds)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred while trying to find access policies by resource ids {}", resourceIds, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by resource ids %s", resourceIds), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find access policies by resource ids %s", resourceIds), ex));
                 });
     }
 

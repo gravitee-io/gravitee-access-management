@@ -29,6 +29,7 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ScopeServiceImpl;
 import io.gravitee.am.service.model.*;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -156,7 +157,7 @@ public class ScopeServiceTest {
     @Test
     public void shouldFindByDomainAndKeys_technicalException() {
         List<String> searchingScopes = Arrays.asList("a","b");
-        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Single.error(TechnicalException::new));
+        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Flowable.error(TechnicalException::new));
         TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, searchingScopes).test();
         testObserver.assertNotComplete().assertError(TechnicalManagementException.class);
     }
@@ -164,7 +165,7 @@ public class ScopeServiceTest {
     @Test
     public void shouldFindByDomainAndKeys() {
         List<String> searchingScopes = Arrays.asList("a","b");
-        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Single.just(Arrays.asList(new Scope())));
+        when(scopeRepository.findByDomainAndKeys(DOMAIN, searchingScopes)).thenReturn(Flowable.just(new Scope()));
         TestObserver<List<Scope>> testObserver = scopeService.findByDomainAndKeys(DOMAIN, searchingScopes).test();
         testObserver.assertComplete().assertNoErrors().assertValue(scopes -> scopes.size()==1);
     }

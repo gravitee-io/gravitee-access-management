@@ -32,6 +32,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import io.reactivex.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -92,9 +93,17 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     @Override
     public void afterPropertiesSet() throws Exception {
         // load all known resource for the domain on startup
-        resourceService.findByDomain(this.domain.getId()).forEach(resource -> {
-            loadResource(resource.getId());
-        });
+        resourceService.findByDomain(this.domain.getId())
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        res -> {
+                            ResourceProvider provider = resourcePluginManager.create(res.getType(), res.getConfiguration());
+                            provider.start();
+                            resourceProviders.put(res.getId(), provider);
+                            logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
+                        },
+                        error -> logger.error("Unable to initialize resources for domain {}", domain.getName(), error)
+                );
     }
 
     public ResourceProvider getResourceProvider(String resourceId) {

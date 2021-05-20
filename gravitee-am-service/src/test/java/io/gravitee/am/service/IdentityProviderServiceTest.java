@@ -16,10 +16,9 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -40,9 +39,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -104,24 +100,23 @@ public class IdentityProviderServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Single.just(Collections.singleton(new IdentityProvider())));
-        TestObserver<List<IdentityProvider>> testObserver = identityProviderService.findByDomain(DOMAIN).test();
+        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Flowable.just(new IdentityProvider()));
+        TestSubscriber<IdentityProvider> testObserver = identityProviderService.findByDomain(DOMAIN).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(identityProviders -> identityProviders.size() == 1);
+        testObserver.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Single.error(TechnicalException::new));
+        when(identityProviderRepository.findAll(eq(ReferenceType.DOMAIN), eq(DOMAIN))).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver();
-        identityProviderService.findByDomain(DOMAIN).subscribe(testObserver);
+        TestSubscriber testSubscriber = identityProviderService.findByDomain(DOMAIN).test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
@@ -241,7 +236,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldDelete_identitiesWithClients() {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
-        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.just(new Application()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 
@@ -267,7 +262,7 @@ public class IdentityProviderServiceTest {
         IdentityProvider existingIdentityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(existingIdentityProvider));
         when(identityProviderRepository.delete("my-identity-provider")).thenReturn(Completable.complete());
-        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByIdentityProvider("my-identity-provider")).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();

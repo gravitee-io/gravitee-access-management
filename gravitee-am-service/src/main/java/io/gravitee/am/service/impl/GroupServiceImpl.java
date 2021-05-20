@@ -34,6 +34,7 @@ import io.gravitee.am.service.model.UpdateGroup;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -89,17 +90,17 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<List<Group>> findAll(ReferenceType referenceType, String referenceId) {
+    public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("Find groups by {}: {}", referenceType, referenceId);
         return groupRepository.findAll(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find groups by {} {}", referenceType, referenceId, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by %s %s", referenceType, referenceId), ex));
                 });
     }
 
     @Override
-    public Single<List<Group>> findByDomain(String domain) {
+    public Flowable<Group> findByDomain(String domain) {
         return findAll(ReferenceType.DOMAIN, domain);
     }
 
@@ -115,17 +116,12 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Maybe<Group> findByDomainAndName(String domain, String groupName) {
-        return findByName(ReferenceType.DOMAIN, domain, groupName);
-    }
-
-    @Override
-    public Single<List<Group>> findByMember(String memberId) {
+    public Flowable<Group> findByMember(String memberId) {
         LOGGER.debug("Find groups by member : {}", memberId);
         return groupRepository.findByMember(memberId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a groups using member ", memberId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a user using member: %s", memberId), ex));
                 });
     }
@@ -167,18 +163,18 @@ public class GroupServiceImpl implements GroupService {
                         // get members
                         List<String> sortedMembers = group.getMembers().stream().sorted().collect(Collectors.toList());
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), page), Math.min(sortedMembers.size(), page + size));
-                        return userService.findByIdIn(pagedMemberIds).map(users -> new Page<>(users, page, pagedMemberIds.size()));
+                        return userService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, pagedMemberIds.size()));
                     }
                 });
     }
 
     @Override
-    public Single<List<Group>> findByIdIn(List<String> ids) {
+    public Flowable<Group> findByIdIn(List<String> ids) {
         LOGGER.debug("Find groups for ids : {}", ids);
         return groupRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a group using ids {}", ids, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a group using ids: %s", ids), ex));
                 });
     }
@@ -337,8 +333,9 @@ public class GroupServiceImpl implements GroupService {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
             return userService.findByIdIn(userMembers)
-                    .map(users -> {
-                        List<String> userIds = users.stream().map(User::getId).collect(Collectors.toList());
+                    .map(User::getId)
+                    .toList()
+                    .map(userIds -> {
                         group.setMembers(userIds);
                         return group;
                     });

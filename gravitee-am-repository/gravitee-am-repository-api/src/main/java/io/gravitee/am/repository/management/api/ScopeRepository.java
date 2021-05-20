@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -36,5 +37,5 @@ public interface ScopeRepository extends CrudRepository<Scope, String> {
 
     Maybe<Scope> findByDomainAndKey(String domain, String key);
 
-    Single<List<Scope>> findByDomainAndKeys(String domain, List<String> keys);
+    Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys);
 }

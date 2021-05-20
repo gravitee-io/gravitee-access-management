@@ -34,10 +34,7 @@ import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.BotDetectionAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.SingleSource;
+import io.reactivex.*;
 import io.reactivex.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -77,17 +72,6 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     private AuditService auditService;
 
     @Override
-    public Single<List<BotDetection>> findAll() {
-        LOGGER.debug("Find all Bot Detections instances");
-        return botDetectionRepository.findAll()
-                .map(botDetections -> (List<BotDetection>) new ArrayList<>(botDetections))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all Bot Detections instances", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all Bot Detections instances", ex));
-                });
-    }
-
-    @Override
     public Maybe<BotDetection> findById(String id) {
         LOGGER.debug("Find bot detection by ID: {}", id);
         return botDetectionRepository.findById(id)
@@ -99,13 +83,12 @@ public class BotDetectionServiceImpl implements BotDetectionService {
     }
 
     @Override
-    public Single<List<BotDetection>> findByDomain(String domain) {
+    public Flowable<BotDetection> findByDomain(String domain) {
         LOGGER.debug("Find bot detections by domain: {}", domain);
         return botDetectionRepository.findByReference(ReferenceType.DOMAIN, domain)
-                .map(botDetections -> (List<BotDetection>) new ArrayList<>(botDetections))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find bot detections by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find bot detections by domain", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find bot detections by domain", ex));
                 });
     }
 

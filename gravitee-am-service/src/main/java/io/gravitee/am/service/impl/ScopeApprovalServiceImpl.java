@@ -31,10 +31,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.UserConsentAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +39,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -84,23 +82,23 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Single<Set<ScopeApproval>> findByDomainAndUser(String domain, String user) {
+    public Flowable<ScopeApproval> findByDomainAndUser(String domain, String user) {
         LOGGER.debug("Find scope approvals by domain: {} and user: {}", domain, user);
         return scopeApprovalRepository.findByDomainAndUser(domain, user)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a scope approval for domain: {} and user: {}", domain, user);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a scope approval for domain: %s and user: %s", domain, user), ex));
                 });
     }
 
     @Override
-    public Single<Set<ScopeApproval>> findByDomainAndUserAndClient(String domain, String user, String client) {
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, String user, String client) {
         LOGGER.debug("Find scope approvals by domain: {} and user: {} and client: {}", domain, user);
         return scopeApprovalRepository.findByDomainAndUserAndClient(domain, user, client)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a scope approval for domain: {}, user: {} and client: {}", domain, user, client);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a scope approval for domain: %s, user: %s and client: %s", domain, user, client), ex));
                 });
     }
@@ -149,7 +147,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         LOGGER.debug("Revoke approvals for domain: {} and user: {}", domain, user);
         return userService.findById(user)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                .flatMapCompletable(user1 -> scopeApprovalRepository.findByDomainAndUser(domain, user)
+                .flatMapCompletable(user1 -> scopeApprovalRepository.findByDomainAndUser(domain, user).collect(HashSet<ScopeApproval>::new, Set::add)
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain, user)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))
@@ -172,6 +170,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
         return userService.findById(user)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                 .flatMapCompletable(user1 -> scopeApprovalRepository.findByDomainAndUserAndClient(domain, user, clientId)
+                        .collect(HashSet<ScopeApproval>::new, Set::add)
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain, user, clientId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class).type(EventType.USER_CONSENT_REVOKED).domain(domain).principal(principal).user(user1).throwable(throwable))))

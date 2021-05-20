@@ -21,6 +21,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewEmail;
 import io.gravitee.am.service.model.UpdateEmail;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -33,11 +34,11 @@ import java.util.List;
  */
 public interface EmailTemplateService {
 
-    Single<List<Email>> findAll();
+    Flowable<Email> findAll();
 
-    Single<List<Email>> findAll(ReferenceType referenceType, String referenceId);
+    Flowable<Email> findAll(ReferenceType referenceType, String referenceId);
 
-    Single<List<Email>> findByClient(ReferenceType referenceType, String referenceId, String client);
+    Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client);
 
     Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template);
 
@@ -49,7 +50,7 @@ public interface EmailTemplateService {
 
     Maybe<Email> findById(String id);
 
-    Single<List<Email>> copyFromClient(String domain, String clientSource, String clientTarget);
+    Flowable<Email> copyFromClient(String domain, String clientSource, String clientTarget);
 
     Single<Email> create(ReferenceType referenceType, String referenceId, NewEmail newEmail, User principal);
 

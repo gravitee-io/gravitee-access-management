@@ -38,7 +38,7 @@ public interface RoleRepository extends CrudRepository<Role, String> {
 
     Single<Page<Role>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
 
-    Single<Set<Role>> findByIdIn(List<String> ids);
+    Flowable<Role> findByIdIn(List<String> ids);
 
     Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role);
 

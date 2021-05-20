@@ -98,12 +98,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateRepository.findByDomain(domain.getId())
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        entities -> {
-                            entities.forEach(certificate -> {
-                                certificateProviderManager.create(certificate);
-                                certificates.put(certificate.getId(), certificate);
-                            });
-                            logger.info("Certificates loaded for domain {}", domain.getName());
+                        certificate -> {
+                            certificateProviderManager.create(certificate);
+                            certificates.put(certificate.getId(), certificate);
+                            logger.info("Certificate {} loaded for domain {}", certificate.getName(), domain.getName());
                         },
                         error -> logger.error("An error has occurred when loading certificates for domain {}", domain.getName(), error)
                 );

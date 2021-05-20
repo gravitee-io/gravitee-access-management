@@ -150,7 +150,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Single<Set<Role>> findByIdIn(List<String> ids) {
         LOGGER.debug("Find roles by ids: {}", ids);
-        return roleRepository.findByIdIn(ids)
+        return roleRepository.findByIdIn(ids).collect(() -> (Set<Role>)new HashSet<Role>(), Set::add)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find roles by ids", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find roles by ids", ex));

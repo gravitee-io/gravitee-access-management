@@ -169,7 +169,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         group2.getMembers().add(member1);
         Group createdGroup2 = repository.create(group2).blockingGet();
 
-        TestObserver<List<Group>> testObserver = repository.findByMember(member1).test();
+        TestObserver<List<Group>> testObserver = repository.findByMember(member1).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -177,7 +177,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.size() == 2);
         testObserver.assertValue(g -> g.stream().map(Group::getId).collect(Collectors.toSet()).containsAll(Arrays.asList(createdGroup1.getId(), createdGroup2.getId())));
 
-        testObserver = repository.findByMember(member2).test();
+        testObserver = repository.findByMember(member2).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -188,7 +188,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldFindAll() {
-        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).blockingGet();
+        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
         assertNotNull(emptyList);
         assertTrue(emptyList.isEmpty());
 
@@ -205,37 +205,12 @@ public class GroupRepositoryTest extends AbstractManagementTest {
             repository.create(item).blockingGet();
         }
 
-        List<Group> groupOfDomain = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).blockingGet();
+        List<Group> groupOfDomain = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
         assertNotNull(groupOfDomain);
         assertEquals(loop, groupOfDomain.size());
         assertEquals(loop, groupOfDomain.stream().filter(g -> g.getReferenceId().equals(DOMAIN_ID) && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
 
-        groupOfDomain = repository.findByDomain(DOMAIN_ID).blockingGet();
-        assertNotNull(groupOfDomain);
-        assertEquals(loop, groupOfDomain.size());
-        assertEquals(loop, groupOfDomain.stream().filter(g -> g.getReferenceId().equals(DOMAIN_ID) && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
-    }
-
-    @Test
-    public void shouldFindByDomain() {
-        List<Group> emptyList = repository.findByDomain(DOMAIN_ID).blockingGet();
-        assertNotNull(emptyList);
-        assertTrue(emptyList.isEmpty());
-
-        final int loop = 10;
-        for (int i = 0; i < loop; ++i) {
-            // build 10 group with random domain
-            repository.create(buildGroup()).blockingGet();
-        }
-
-        for (int i = 0; i < loop; ++i) {
-            // build 10 group with DOMAIN_ID
-            final Group item = buildGroup();
-            item.setReferenceId(DOMAIN_ID);
-            repository.create(item).blockingGet();
-        }
-
-        List<Group> groupOfDomain = repository.findByDomain(DOMAIN_ID).blockingGet();
+        groupOfDomain = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
         assertNotNull(groupOfDomain);
         assertEquals(loop, groupOfDomain.size());
         assertEquals(loop, groupOfDomain.stream().filter(g -> g.getReferenceId().equals(DOMAIN_ID) && g.getReferenceType().equals(ReferenceType.DOMAIN)).count());
@@ -243,7 +218,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldFindAll_WithPage() {
-        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).blockingGet();
+        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
         assertNotNull(emptyList);
         assertTrue(emptyList.isEmpty());
 
@@ -309,7 +284,7 @@ public class GroupRepositoryTest extends AbstractManagementTest {
             }
         }
 
-        final TestObserver<List<Group>> testObserver = repository.findByIdIn(ids).test();
+        final TestObserver<List<Group>> testObserver = repository.findByIdIn(ids).toList().test();
         testObserver.awaitTerminalEvent();
         testObserver.assertNoErrors();
         testObserver.assertValue(lg -> lg.size() == ids.size());

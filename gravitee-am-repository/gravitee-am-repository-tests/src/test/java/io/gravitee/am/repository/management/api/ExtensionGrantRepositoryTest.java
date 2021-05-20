@@ -16,14 +16,14 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ExtensionGrant;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -46,13 +46,13 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
         extensionGrantRepository.create(excludedElement).blockingGet();
 
         // fetch extension grants
-        TestObserver<Set<ExtensionGrant>> testObserver = extensionGrantRepository.findByDomain("testDomain").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<ExtensionGrant> testSubscriber = extensionGrantRepository.findByDomain("testDomain").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(extensionGrants -> extensionGrants.size() == 1);
-        testObserver.assertValue(extensionGrants -> extensionGrants.iterator().next().getId().equals(createdGrant.getId()));
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(grant -> grant.getId().equals(createdGrant.getId()));
     }
 
     @Test

@@ -16,7 +16,6 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.event.Event;
@@ -33,7 +32,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -124,7 +122,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByIdsIn() {
-        when(roleRepository.findByIdIn(Arrays.asList("my-role"))).thenReturn(Single.just(Collections.singleton(new Role())));
+        when(roleRepository.findByIdIn(Arrays.asList("my-role"))).thenReturn(Flowable.just(new Role()));
         TestObserver<Set<Role>> testObserver = roleService.findByIdIn(Arrays.asList("my-role")).test();
         testObserver.awaitTerminalEvent();
 
@@ -135,7 +133,7 @@ public class RoleServiceTest {
 
     @Test
     public void shouldFindByIdsIn_technicalException() {
-        when(roleRepository.findByIdIn(anyList())).thenReturn(Single.error(TechnicalException::new));
+        when(roleRepository.findByIdIn(anyList())).thenReturn(Flowable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
         roleService.findByIdIn(Arrays.asList("my-role")).subscribe(testObserver);

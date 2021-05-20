@@ -88,12 +88,10 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
         logger.info("Initializing extension grants for domain {}", domain.getName());
         extensionGrantRepository.findByDomain(domain.getId())
                 .subscribe(
-                        extensionGrants -> {
-                            if (extensionGrants != null && !extensionGrants.isEmpty()) {
-                                // backward compatibility, get the oldest extension grant to set the good one for the old clients
-                                minDate = Collections.min(extensionGrants.stream().map(ExtensionGrant::getCreatedAt).collect(Collectors.toList()));
-                                extensionGrants.forEach(extensionGrant -> updateExtensionGrantProvider(extensionGrant));
-                            }
+                        extensionGrant -> {
+                            // backward compatibility, get the oldest extension grant to set the good one for the old clients
+                            minDate = minDate == null ? extensionGrant.getCreatedAt() : minDate.after(extensionGrant.getCreatedAt()) ? extensionGrant.getCreatedAt() : minDate;
+                            updateExtensionGrantProvider(extensionGrant);
                             logger.info("Extension grants loaded for domain {}", domain.getName());
                         },
                         error -> logger.error("Unable to initialize extension grants for domain {}", domain.getName(), error));

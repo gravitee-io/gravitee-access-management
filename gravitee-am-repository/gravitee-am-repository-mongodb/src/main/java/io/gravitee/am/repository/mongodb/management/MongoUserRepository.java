@@ -36,10 +36,8 @@ import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -93,8 +91,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Set<User>> findByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
     }
 
     @Override
@@ -102,11 +100,6 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
-    }
-
-    @Override
-    public Single<Page<User>> findByDomain(String domain, int page, int size) {
-       return findAll(DOMAIN, domain, page, size);
     }
 
     @Override
@@ -164,7 +157,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<User>> findByDomainAndEmail(String domain, String email, boolean strict) {
+    public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
         BasicDBObject emailQuery = new BasicDBObject(FIELD_EMAIL, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
         BasicDBObject emailClaimQuery = new BasicDBObject(FIELD_EMAIL_CLAIM, (strict) ? email : Pattern.compile(email, Pattern.CASE_INSENSITIVE));
         Bson mongoQuery = and(
@@ -172,7 +165,7 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
                 eq(FIELD_REFERENCE_ID, domain),
                 or(emailQuery, emailClaimQuery));
 
-        return Observable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert).collect(ArrayList::new, List::add);
+        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert);
     }
 
     @Override
@@ -198,11 +191,6 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return findByUsernameAndSource(DOMAIN, domain, username, source);
-    }
-
-    @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
         return Observable.fromPublisher(
                 usersCollection
@@ -214,8 +202,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<List<User>> findByIdIn(List<String> ids) {
-        return Observable.fromPublisher(usersCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<User> findByIdIn(List<String> ids) {
+        return Flowable.fromPublisher(usersCollection.find(in(FIELD_ID, ids))).map(this::convert);
     }
 
     @Override
@@ -247,8 +235,8 @@ public class MongoUserRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
-    public Single<Long> countByDomain(String domain) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain)))).first(0l);
+    public Single<Long> countByReference(ReferenceType referenceType, String referenceId) {
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).first(0l);
     }
 
     @Override

@@ -22,6 +22,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringEventRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,6 @@ import reactor.core.publisher.Mono;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
@@ -61,21 +61,18 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
     }
 
     @Override
-    public Single<List<Event>> findByTimeFrame(long from, long to) {
+    public Flowable<Event> findByTimeFrame(long from, long to) {
         LOGGER.debug("findByTimeFrame({}, {})", from, to);
         return eventRepository.findByTimeFrame(
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(from), UTC),
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(to), UTC))
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to retrieve the events with time frame [{} - {}]", from, to, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Event> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return eventRepository.findById(id).map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve the event with id={}", id, error));
+        return eventRepository.findById(id).map(this::toEntity);
     }
 
     @Override
@@ -94,8 +91,7 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create event with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
@@ -111,14 +107,12 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to update event with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return eventRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("unable to delete the event with id={}", id, error));
+        return eventRepository.deleteById(id);
     }
 }

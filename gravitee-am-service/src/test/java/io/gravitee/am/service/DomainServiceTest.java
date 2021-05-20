@@ -251,24 +251,23 @@ public class DomainServiceTest {
 
     @Test
     public void shouldFindByIdsIn() {
-        when(domainRepository.findByIdIn(Arrays.asList("1", "2"))).thenReturn(Single.just(Collections.singleton(new Domain())));
-        TestObserver<Set<Domain>> testObserver = domainService.findByIdIn(Arrays.asList("1", "2")).test();
-        testObserver.awaitTerminalEvent();
+        when(domainRepository.findByIdIn(Arrays.asList("1", "2"))).thenReturn(Flowable.just(new Domain()));
+        TestSubscriber<Domain> testSubscriber = domainService.findByIdIn(Arrays.asList("1", "2")).test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(domains -> domains.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     @Test
     public void shouldFindByIdsIn_technicalException() {
-        when(domainRepository.findByIdIn(Arrays.asList("1", "2"))).thenReturn(Single.error(TechnicalException::new));
+        when(domainRepository.findByIdIn(Arrays.asList("1", "2"))).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestObserver testObserver = new TestObserver<>();
-        domainService.findByIdIn(Arrays.asList("1", "2")).subscribe(testObserver);
+        TestSubscriber testSubscriber = domainService.findByIdIn(Arrays.asList("1", "2")).test();
 
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
+        testSubscriber.assertError(TechnicalManagementException.class);
+        testSubscriber.assertNotComplete();
     }
 
     @Test
@@ -563,43 +562,43 @@ public class DomainServiceTest {
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
         when(applicationService.delete(anyString())).thenReturn(Completable.complete());
         when(certificate.getId()).thenReturn(CERTIFICATE_ID);
-        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(certificate)));
+        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(certificate));
         when(certificateService.delete(anyString())).thenReturn(Completable.complete());
         when(identityProvider.getId()).thenReturn(IDP_ID);
-        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(identityProvider)));
+        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(identityProvider));
         when(identityProviderService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(extensionGrant.getId()).thenReturn(EXTENSION_GRANT_ID);
-        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(extensionGrant)));
+        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(extensionGrant));
         when(extensionGrantService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(user.getId()).thenReturn(USER_ID);
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(user)));
+        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(user));
         when(userService.delete(anyString())).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope),0,1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
         when(group.getId()).thenReturn(GROUP_ID);
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(group)));
+        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(group));
         when(groupService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(form.getId()).thenReturn(FORM_ID);
-        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(form)));
+        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(form));
         when(formService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(email.getId()).thenReturn(EMAIL_ID);
-        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(email)));
+        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(email));
         when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
         when(reporter.getId()).thenReturn(REPORTER_ID);
-        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(reporter)));
+        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(reporter));
         when(reporterService.delete(anyString())).thenReturn(Completable.complete());
         when(flow.getId()).thenReturn(FLOW_ID);
-        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(flow)));
+        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(flow));
         when(flowService.delete(anyString())).thenReturn(Completable.complete());
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
-        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.singletonList(membership)));
+        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Flowable.just(membership));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
         when(factor.getId()).thenReturn(FACTOR_ID);
-        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singletonList(factor)));
+        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(Completable.complete());
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(new HashSet<>(Collections.singletonList(resource))));
         when(resourceService.delete(resource)).thenReturn(Completable.complete());
@@ -637,19 +636,19 @@ public class DomainServiceTest {
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(Completable.complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0,1)));
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
-        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Single.just(Collections.emptyList()));
-        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptyList()));
+        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Flowable.empty());
+        when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());

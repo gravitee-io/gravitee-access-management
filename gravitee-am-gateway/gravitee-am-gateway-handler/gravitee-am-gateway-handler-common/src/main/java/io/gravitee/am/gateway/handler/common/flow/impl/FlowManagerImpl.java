@@ -170,15 +170,12 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private void loadFlows() {
         flowService.findAll(ReferenceType.DOMAIN, domain.getId())
                 .subscribe(
-                        flows1 -> {
-                            flows1.forEach(flow -> {
-                                // flow id can be null if it comes from the default_flows method
-                                if (flow != null && flow.getId() != null) {
-                                    loadFlow(flow);
-                                    flows.put(flow.getId(), flow);
-                                }
-                            });
-                            logger.info("Flows loaded for domain {}", domain.getName());
+                        flow -> {
+                            if (flow != null && flow.getId() != null) {
+                                loadFlow(flow);
+                                flows.put(flow.getId(), flow);
+                                logger.info("Flow {} loaded for domain {}", flow.getType(), domain.getName());
+                            }
                         },
                         error -> logger.error("Unable to initialize flows for domain {}", domain.getName(), error)
                 );

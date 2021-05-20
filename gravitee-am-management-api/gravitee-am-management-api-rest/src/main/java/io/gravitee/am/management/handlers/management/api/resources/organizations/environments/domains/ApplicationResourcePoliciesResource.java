@@ -19,8 +19,6 @@ import io.gravitee.am.management.handlers.management.api.model.AccessPolicyListI
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.model.uma.Resource;
-import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ResourceService;
@@ -43,7 +41,6 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -87,7 +84,7 @@ public class ApplicationResourcePoliciesResource extends AbstractResource {
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                         .flatMap(application1 -> resourceService.findAccessPoliciesByResources(Collections.singletonList(resource))
-                                .map(accessPolicies -> accessPolicies.stream().map(AccessPolicyListItem::new).collect(Collectors.toList()))))
+                                .map(AccessPolicyListItem::new).toList()))
                 .subscribe(response::resume, response::resume);
     }
 

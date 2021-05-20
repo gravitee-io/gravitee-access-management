@@ -20,10 +20,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ExtensionGrantMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -52,8 +49,8 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
     }
 
     @Override
-    public Single<Set<ExtensionGrant>> findByDomain(String domain) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert).collect(HashSet::new, Set::add);
+    public Flowable<ExtensionGrant> findByDomain(String domain) {
+        return Flowable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
     }
 
     @Override

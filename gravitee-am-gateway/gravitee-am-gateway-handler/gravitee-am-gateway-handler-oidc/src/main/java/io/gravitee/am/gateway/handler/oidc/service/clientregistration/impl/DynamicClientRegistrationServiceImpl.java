@@ -194,6 +194,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     private Single<Client> copyEmails(String sourceId, Client client) {
         return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId())
+                .toList()
                 .flatMap(irrelevant -> Single.just(client));
     }
 
@@ -204,7 +205,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return
      */
     private Single<Client> applyDefaultIdentityProvider(Client client) {
-        return identityProviderService.findByDomain(client.getDomain())
+        return identityProviderService.findByDomain(client.getDomain()).toList()
             .map(identityProviders -> {
                 if(identityProviders!=null && !identityProviders.isEmpty()) {
                     client.setIdentities(Collections.singleton(identityProviders.get(0).getId()));
@@ -221,6 +222,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      */
     private Single<Client> applyDefaultCertificateProvider(Client client) {
         return certificateService.findByDomain(client.getDomain())
+                .toList()
                 .map(certificates -> {
                     if(certificates!=null && !certificates.isEmpty()) {
                         client.setCertificate(certificates.get(0).getId());

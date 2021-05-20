@@ -124,7 +124,6 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
             final List<String> identities = organization.getIdentities();
 
             IdentityProvider inlineIdp = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
-                    .flattenAsFlowable(identityProviders -> identityProviders)
                     .filter(identityProvider -> identityProvider.getType().equals("inline-am-idp")
                             && !identityProvider.isExternal()
                             && identities.contains(identityProvider.getId()))

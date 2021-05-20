@@ -24,6 +24,7 @@ import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Before;
@@ -98,7 +99,7 @@ public class DefaultOrganizationUpgraderTest {
         when(domainService.findById("admin")).thenReturn(Maybe.empty());
         doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(organization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.empty());
 
         assertTrue(cut.upgrade());
         verify(membershipHelper, times(1)).setPlatformAdminRole();
@@ -116,7 +117,7 @@ public class DefaultOrganizationUpgraderTest {
         defaultOrganization.setIdentities(Arrays.asList("test"));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.just(idp));
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
@@ -138,7 +139,7 @@ public class DefaultOrganizationUpgraderTest {
         defaultOrganization.setIdentities(Arrays.asList("inlineIdpId"));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.just(idp));
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
@@ -163,7 +164,7 @@ public class DefaultOrganizationUpgraderTest {
         defaultOrganization.setIdentities(Arrays.asList("inlineIdpId"));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.just(idp));
 
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
         assertTrue(cut.upgrade());
@@ -188,7 +189,7 @@ public class DefaultOrganizationUpgraderTest {
         defaultOrganization.setIdentities(Arrays.asList("inlineIdpId"));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.just(idp));
         when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.empty());
         when(userService.create(any(User.class))).thenReturn(Single.just(adminUser));
         doNothing().when(membershipHelper).setOrganizationPrimaryOwnerRole(argThat(user -> user.getId().equals(adminUser.getId())));
@@ -219,7 +220,7 @@ public class DefaultOrganizationUpgraderTest {
         defaultOrganization.setIdentities(Arrays.asList("inlineIdpId"));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(defaultOrganization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.singletonList(idp)));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.just(idp));
         when(userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, "admin", idp.getId())).thenReturn(Maybe.just(adminUser)); // Admin already exists.
         when(organizationService.createDefault()).thenReturn(Maybe.empty());
 
@@ -272,7 +273,7 @@ public class DefaultOrganizationUpgraderTest {
         doNothing().when(membershipHelper).setOrganizationRole(eq(user), eq(adminRole));
 
         when(organizationService.findById(Organization.DEFAULT)).thenReturn(Single.just(organization));
-        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Single.just(Collections.emptyList()));
+        when(identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)).thenReturn(Flowable.empty());
 
         cut.upgrade();
 

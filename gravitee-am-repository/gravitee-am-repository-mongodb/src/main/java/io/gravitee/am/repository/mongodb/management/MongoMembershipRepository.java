@@ -18,8 +18,8 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.MembershipMongo;
@@ -29,8 +29,6 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -56,15 +54,15 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     }
 
     @Override
-    public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
-        return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
-                .map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
+        return Flowable.fromPublisher(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
+                .map(this::convert);
     }
 
     @Override
-    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
-        return Observable.fromPublisher(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name()))))
-                .map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
+        return Flowable.fromPublisher(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name()))))
+                .map(this::convert);
     }
 
     @Override

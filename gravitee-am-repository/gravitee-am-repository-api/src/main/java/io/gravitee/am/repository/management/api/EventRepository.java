@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -27,6 +28,6 @@ import java.util.List;
  */
 public interface EventRepository extends CrudRepository<Event, String> {
 
-    Single<List<Event>> findByTimeFrame(long from, long to);
+    Flowable<Event> findByTimeFrame(long from, long to);
 
 }

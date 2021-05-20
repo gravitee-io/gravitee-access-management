@@ -66,7 +66,6 @@ public class ResourceRegistrationEndpoint implements Handler<RoutingContext> {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
         this.resourceService.listByDomainAndClientAndUser(domain.getId(), client.getId(), accessToken.getSub())
-                .flatMapPublisher(Flowable::fromIterable)
                 .map(Resource::getId)
                 .collect(JsonArray::new, JsonArray::add)
                 .subscribe(

@@ -58,21 +58,17 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
-    public Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType) {
+    public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
         LOGGER.debug("findByReference({},{})", referenceId, referenceType);
         return this.membershipRepository.findByReference(referenceId, referenceType.name())
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to retrieve Membership with referenceId {} and referenceType {}", referenceId, referenceType, error));
+                .map(this::toEntity);
     }
 
     @Override
-    public Single<List<Membership>> findByMember(String memberId, MemberType memberType) {
+    public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
         LOGGER.debug("findByMember({},{})", memberId, memberType);
         return this.membershipRepository.findByMember(memberId, memberType.name())
-                .map(this::toEntity)
-                .toList()
-                .doOnError(error -> LOGGER.error("unable to retrieve Membership with memberId {} and memberType {}", memberId, memberType, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -103,26 +99,21 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
                 .matching(from(whereClause))
                 .as(JdbcMembership.class)
                 .all())
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Membership with referenceId {}, referenceType {} and criteria {}",
-                        referenceId, referenceType, criteria, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId) {
         LOGGER.debug("findByReferenceAndMember({},{},{},{})", referenceType,referenceId,memberType,memberId);
         return this.membershipRepository.findByReferenceAndMember(referenceId, referenceType.name(), memberId, memberType.name())
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to retrieve Membership with referenceId {}, referenceType {}, memberId {} and memberType {}",
-                        referenceId, referenceType, memberId, memberType, error));
+                .map(this::toEntity);
     }
 
     @Override
     public Maybe<Membership> findById(String id) {
         LOGGER.debug("findById({})", id);
         return membershipRepository.findById(id)
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve Membership with id {}", id, error));
+                .map(this::toEntity);
     }
 
     @Override
@@ -135,22 +126,19 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
                 .using(toJdbcEntity(item))
                 .fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create Membership with id {}", item.getId(), error));
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<Membership> update(Membership item) {
         LOGGER.debug("update membership with id {}", item.getId());
         return membershipRepository.save(toJdbcEntity(item))
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to update Membership with id {}", item.getId(), error));
+                .map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return membershipRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete Membership with id {}", id, error));
+        return membershipRepository.deleteById(id);
     }
 }

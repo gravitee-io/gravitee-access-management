@@ -25,6 +25,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.model.NewUser;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -134,7 +135,7 @@ public class AuthenticationServiceTest {
 
         when(roleServiceMock.findById(ReferenceType.ORGANIZATION, "organization-id", "organization-owner-role-id")).thenReturn(Single.just(new Role()));
 
-        when(membershipServiceMock.findByMember("user-id", MemberType.USER)).thenReturn(Single.just(Collections.singletonList(membershipMock)));
+        when(membershipServiceMock.findByMember("user-id", MemberType.USER)).thenReturn(Flowable.just(membershipMock));
         when(membershipServiceMock.addOrUpdate(anyString(), any(Membership.class))).thenReturn(Single.just(new Membership()));
 
         authenticationService.onAuthenticationSuccess(authenticationMock);

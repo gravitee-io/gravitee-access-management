@@ -55,6 +55,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
 
     private Completable updateDefaultReporter(Domain domain) {
         return reporterService.findByDomain(domain.getId())
+                .toList()
                 .flatMapCompletable(reporters -> {
                     if (reporters == null || reporters.isEmpty()) {
                         logger.info("No default reporter found for domain {}, update domain", domain.getName());

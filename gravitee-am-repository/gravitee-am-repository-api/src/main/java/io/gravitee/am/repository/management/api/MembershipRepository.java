@@ -32,9 +32,9 @@ import java.util.List;
  */
 public interface MembershipRepository extends CrudRepository<Membership, String> {
 
-    Single<List<Membership>> findByReference(String referenceId, ReferenceType referenceType);
+    Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType);
 
-    Single<List<Membership>> findByMember(String memberId, MemberType memberType);
+    Flowable<Membership> findByMember(String memberId, MemberType memberType);
 
     Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria);
 

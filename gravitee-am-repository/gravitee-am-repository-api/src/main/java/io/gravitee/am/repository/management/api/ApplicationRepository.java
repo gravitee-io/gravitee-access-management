@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -31,25 +32,25 @@ import java.util.Set;
  */
 public interface ApplicationRepository extends CrudRepository<Application, String> {
 
-    Single<List<Application>> findAll();
+    Flowable<Application> findAll();
 
     Single<Page<Application>> findAll(int page, int size);
 
-    Single<List<Application>> findByDomain(String domain);
+    Flowable<Application> findByDomain(String domain);
 
     Single<Page<Application>> findByDomain(String domain, int page, int size);
 
     Single<Page<Application>> search(String domain, String query, int page, int size);
 
-    Single<Set<Application>> findByCertificate(String certificate);
+    Flowable<Application> findByCertificate(String certificate);
 
-    Single<Set<Application>> findByIdentityProvider(String identityProvider);
+    Flowable<Application> findByIdentityProvider(String identityProvider);
 
-    Single<Set<Application>> findByFactor(String factor);
+    Flowable<Application> findByFactor(String factor);
 
-    Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant);
+    Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant);
 
-    Single<Set<Application>> findByIdIn(List<String> ids);
+    Flowable<Application> findByIdIn(List<String> ids);
 
     Single<Long> count();
 

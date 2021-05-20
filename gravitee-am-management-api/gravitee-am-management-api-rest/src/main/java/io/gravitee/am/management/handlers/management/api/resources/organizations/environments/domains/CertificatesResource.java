@@ -38,8 +38,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,14 +74,11 @@ public class CertificatesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> certificateService.findByDomain(domain)
-                                .map(certificates -> {
-                                    List<Certificate> sortedCertificates = certificates.stream()
-                                            .map(this::filterCertificateInfos)
-                                            .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
-                                            .collect(Collectors.toList());
-                                    return Response.ok(sortedCertificates).build();
-                                })))
+                        .flatMapPublisher(__ -> certificateService.findByDomain(domain))
+                        .map(this::filterCertificateInfos)
+                        .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                        .toList()
+                        .map(sortedCertificates -> Response.ok(sortedCertificates).build()))
                 .subscribe(response::resume, response::resume);
     }
 

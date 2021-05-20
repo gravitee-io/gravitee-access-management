@@ -133,11 +133,6 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
     }
 
     @Override
-    public Flowable<AlertTrigger> findByDomain(String domainId) {
-        return findAll(ReferenceType.DOMAIN, domainId);
-    }
-
-    @Override
     public Flowable<AlertTrigger> findAll(ReferenceType referenceType, String referenceId) {
         return findByCriteria(referenceType, referenceId, new AlertTriggerCriteria());
     }

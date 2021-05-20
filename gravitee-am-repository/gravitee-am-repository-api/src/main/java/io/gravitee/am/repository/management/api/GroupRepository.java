@@ -16,9 +16,10 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -30,21 +31,15 @@ import java.util.List;
  */
 public interface GroupRepository extends CrudRepository<Group, String> {
 
-    Single<List<Group>> findByMember(String memberId);
+    Flowable<Group> findByMember(String memberId);
 
-    Single<List<Group>> findAll(ReferenceType referenceType, String referenceId);
-
-    Single<List<Group>> findByDomain(String domain);
+    Flowable<Group> findAll(ReferenceType referenceType, String referenceId);
 
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 
-    Single<Page<Group>> findByDomain(String domain, int page, int size);
-
-    Single<List<Group>> findByIdIn(List<String> ids);
+    Flowable<Group> findByIdIn(List<String> ids);
 
     Maybe<Group> findByName(ReferenceType referenceType, String referenceId, String groupName);
-
-    Maybe<Group> findByDomainAndName(String domain, String groupName);
 
     Maybe<Group> findById(ReferenceType referenceType, String referenceId, String group);
 }

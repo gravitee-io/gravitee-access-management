@@ -19,19 +19,15 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.GroupMongo;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -57,18 +53,13 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<List<Group>> findByMember(String memberId) {
-        return Observable.fromPublisher(groupsCollection.find(eq(FIELD_MEMBERS, memberId))).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Group> findByMember(String memberId) {
+        return Flowable.fromPublisher(groupsCollection.find(eq(FIELD_MEMBERS, memberId))).map(this::convert);
     }
 
     @Override
-    public Single<List<Group>> findAll(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert).collect(ArrayList::new, List::add);
-    }
-
-    @Override
-    public Single<List<Group>> findByDomain(String domain) {
-        return findAll(DOMAIN, domain);
+    public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
+        return Flowable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
     }
 
     @Override
@@ -79,13 +70,8 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
-    public Single<Page<Group>> findByDomain(String domain, int page, int size) {
-       return findAll(DOMAIN, domain, page, size);
-    }
-
-    @Override
-    public Single<List<Group>> findByIdIn(List<String> ids) {
-        return Observable.fromPublisher(groupsCollection.find(in(FIELD_ID, ids))).map(this::convert).collect(ArrayList::new, List::add);
+    public Flowable<Group> findByIdIn(List<String> ids) {
+        return Flowable.fromPublisher(groupsCollection.find(in(FIELD_ID, ids))).map(this::convert);
     }
 
     @Override
@@ -97,11 +83,6 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
                         .first())
                 .firstElement()
                 .map(this::convert);
-    }
-
-    @Override
-    public Maybe<Group> findByDomainAndName(String domain, String groupName) {
-        return findByName(DOMAIN, domain, groupName);
     }
 
     @Override

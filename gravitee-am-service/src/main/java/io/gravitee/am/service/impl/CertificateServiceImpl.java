@@ -40,10 +40,7 @@ import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-import io.reactivex.SingleSource;
+import io.reactivex.*;
 import io.reactivex.functions.Function;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -118,24 +115,22 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<List<Certificate>> findByDomain(String domain) {
+    public Flowable<Certificate> findByDomain(String domain) {
         LOGGER.debug("Find certificates by domain: {}", domain);
         return certificateRepository.findByDomain(domain)
-                .flatMap(certificates -> Single.just((List<Certificate>) new ArrayList<>(certificates)))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find certificates by domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find certificates by domain", ex));
                 });
     }
 
     @Override
-    public Single<List<Certificate>> findAll() {
+    public Flowable<Certificate> findAll() {
         LOGGER.debug("Find all certificates");
         return certificateRepository.findAll()
-                .flatMap(certificates -> Single.just((List<Certificate>) new ArrayList<>(certificates)))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find all certificates", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all certificates by domain", ex));
+                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find all certificates by domain", ex));
                 });
     }
 
@@ -335,9 +330,9 @@ public class CertificateServiceImpl implements CertificateService {
         LOGGER.debug("Delete certificate {}", certificateId);
         return certificateRepository.findById(certificateId)
                 .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificateId)))
-                .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId)
+                .flatMapSingle(certificate -> applicationService.findByCertificate(certificateId).count()
                         .flatMap(applications -> {
-                            if (applications.size() > 0) {
+                            if (applications > 0) {
                                 throw new CertificateWithApplicationsException();
                             }
                             return Single.just(certificate);

@@ -22,10 +22,7 @@ import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.Completable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,34 +57,34 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Single<List<Credential>> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
+    public Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("Find credentials by {} {} and user id: {}", referenceType, referenceId, userId);
         return credentialRepository.findByUserId(referenceType, referenceId, userId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a credential using {} {} and user id: {}", referenceType, referenceId, userId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using %s %s and user id: %s", referenceType, referenceId, userId), ex));
                 });
     }
 
     @Override
-    public Single<List<Credential>> findByUsername(ReferenceType referenceType, String referenceId, String username) {
+    public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
         LOGGER.debug("Find credentials by {} {} and username: {}", referenceType, referenceId, username);
         return credentialRepository.findByUsername(referenceType, referenceId, username)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a credential using {} {} and username: {}", referenceType, referenceId, username, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using %s %s and username: %s", referenceType, referenceId, username), ex));
                 });
     }
 
     @Override
-    public Single<List<Credential>> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
+    public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
         LOGGER.debug("Find credentials by {} {} and credential ID: {}", referenceType, referenceId, credentialId);
         return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a credential using {} {} and credential ID: {}", referenceType, referenceId, credentialId, ex);
-                    return Single.error(new TechnicalManagementException(
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find a credential using %s %s and credential ID: %s", referenceType, referenceId, credentialId), ex));
                 });
     }
@@ -124,7 +121,6 @@ public class CredentialServiceImpl implements CredentialService {
     public Completable update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential) {
         LOGGER.debug("Update a credential {}", credentialId);
         return credentialRepository.findByCredentialId(referenceType, referenceId, credentialId)
-                .flatMapObservable(credentials -> Observable.fromIterable(credentials))
                 .flatMapSingle(credentialToUpdate -> {
                     // update only business values (i.e not set via the vert.x authenticator object)
                     credentialToUpdate.setUserId(credential.getUserId());

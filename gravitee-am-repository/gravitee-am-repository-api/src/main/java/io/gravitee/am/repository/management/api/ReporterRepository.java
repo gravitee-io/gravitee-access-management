@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
  */
 public interface ReporterRepository extends CrudRepository<Reporter, String> {
 
-    Single<List<Reporter>> findAll();
+    Flowable<Reporter> findAll();
 
-    Single<List<Reporter>> findByDomain(String domain);
+    Flowable<Reporter> findByDomain(String domain);
 }

@@ -23,11 +23,8 @@ import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -181,7 +178,6 @@ public class PermissionService {
         }
 
         return groupService.findByMember(user.getId())
-                .flattenAsFlowable(groups -> groups)
                 .map(Group::getId)
                 .toList()
                 .flatMap(userGroupIds -> {

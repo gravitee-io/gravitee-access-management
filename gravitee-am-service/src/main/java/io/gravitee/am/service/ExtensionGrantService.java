@@ -20,10 +20,9 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -33,7 +32,7 @@ public interface ExtensionGrantService {
 
     Maybe<ExtensionGrant> findById(String id);
 
-    Single<List<ExtensionGrant>> findByDomain(String tokenGranter);
+    Flowable<ExtensionGrant> findByDomain(String tokenGranter);
 
     Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant, User principal);
 

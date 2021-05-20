@@ -197,7 +197,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         accessPolicy3.setResource(RESOURCE_ID+"-other");
         repository.create(accessPolicy3).blockingGet();
 
-        TestObserver<List<AccessPolicy>> testObserver = repository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID).test();
+        TestObserver<List<AccessPolicy>> testObserver = repository.findByDomainAndResource(DOMAIN_ID, RESOURCE_ID).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -226,7 +226,7 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
         accessPolicy3.setResource(RESOURCE_ID+"-other");
         repository.create(accessPolicy3).blockingGet();
 
-        TestObserver<List<AccessPolicy>> testObserver = repository.findByResources(Arrays.asList(RESOURCE_ID, RESOURCE_ID+"2")).test();
+        TestObserver<List<AccessPolicy>> testObserver = repository.findByResources(Arrays.asList(RESOURCE_ID, RESOURCE_ID+"2")).toList().test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

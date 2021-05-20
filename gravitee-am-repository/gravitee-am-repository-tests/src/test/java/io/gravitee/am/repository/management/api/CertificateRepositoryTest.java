@@ -19,6 +19,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -45,12 +46,12 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         certificateRepository.create(certificate).blockingGet();
 
         // fetch certificates
-        TestObserver<Set<Certificate>> testObserver = certificateRepository.findByDomain("DomainTestFindByDomain").test();
-        testObserver.awaitTerminalEvent();
+        TestSubscriber<Certificate> testSubscriber = certificateRepository.findByDomain("DomainTestFindByDomain").test();
+        testSubscriber.awaitTerminalEvent();
 
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-        testObserver.assertValue(certificates -> certificates.size() == 1);
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
     }
 
     private Certificate  buildCertificate() {
