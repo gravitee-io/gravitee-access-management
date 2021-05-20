@@ -41,7 +41,6 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Observable.fromPublisher(mongoDatabase.createCollection("users")).blockingFirst();
         MongoCollection<Document> collection = mongoDatabase.getCollection("users");
         Document doc = new Document("username", "bob").append("password", "bobspassword");
         Observable.fromPublisher(collection.insertOne(doc)).blockingFirst();
@@ -53,7 +52,7 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     public MongoIdentityProviderConfiguration mongoIdentityProviderConfiguration() {
         MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();
 
-        String host = embeddedClient().getMongoClient().getSettings().getClusterSettings().getHosts().get(0).toString();
+        String host = embeddedClient().getMongoClient().getClusterDescription().getClusterSettings().getHosts().get(0).toString();
         configuration.setUri("mongodb://" + host);
         configuration.setDatabase("test-idp-mongo");
         configuration.setUsersCollection("users");

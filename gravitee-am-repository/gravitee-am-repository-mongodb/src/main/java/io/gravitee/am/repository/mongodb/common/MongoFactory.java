@@ -90,7 +90,6 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             Integer connectTimeout = readPropertyValue(propertyPrefix + "connectTimeout", Integer.class, 1000);
             Integer maxWaitTime = readPropertyValue(propertyPrefix + "maxWaitTime", Integer.class);
             Integer socketTimeout = readPropertyValue(propertyPrefix + "socketTimeout", Integer.class, 1000);
-            Boolean socketKeepAlive = readPropertyValue(propertyPrefix + "socketKeepAlive", Boolean.class, true);
             Integer maxConnectionLifeTime = readPropertyValue(propertyPrefix + "maxConnectionLifeTime", Integer.class);
             Integer maxConnectionIdleTime = readPropertyValue(propertyPrefix + "maxConnectionIdleTime", Integer.class);
 
@@ -110,8 +109,6 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 socketBuilder.connectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
             if (socketTimeout != null)
                 socketBuilder.readTimeout(socketTimeout, TimeUnit.MILLISECONDS);
-            if (socketKeepAlive != null)
-                socketBuilder.keepAlive(socketKeepAlive);
             if (maxConnectionLifeTime != null)
                 connectionPoolBuilder.maxConnectionLifeTime(maxConnectionLifeTime, TimeUnit.MILLISECONDS);
             if (maxConnectionIdleTime != null)
@@ -119,7 +116,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             if (minHeartbeatFrequency != null)
                 serverBuilder.minHeartbeatFrequency(minHeartbeatFrequency, TimeUnit.MILLISECONDS);
             if (description != null)
-                clusterBuilder.description(description);
+                builder.applicationName(description);
             if (heartbeatFrequency != null)
                 serverBuilder.heartbeatFrequency(heartbeatFrequency, TimeUnit.MILLISECONDS);
             if (sslEnabled != null)

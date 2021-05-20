@@ -187,7 +187,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                                                 new BasicDBObject("$mod", Arrays.asList(new BasicDBObject("$subtract", Arrays.asList("$timestamp", new Date(0))), criteria.interval()))
                                         ))),
                         Accumulators.sum(fieldSuccess, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.SUCCESS)), 1, 0))),
-                        Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0)))))))
+                        Accumulators.sum(fieldFailure, new BasicDBObject("$cond", Arrays.asList(new BasicDBObject("$eq", Arrays.asList("$outcome.status", Status.FAILURE)), 1, 0))))), Document.class))
                 .toList()
                 .map(docs -> {
                     Map<Long, Long> successResult = new HashMap<>();
@@ -218,7 +218,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                 Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(new BasicDBObject("_id", "$" + criteria.field()), Accumulators.sum("count", 1)),
-                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50))
+                        Aggregates.limit(criteria.size() != null ? criteria.size() : 50)), Document.class
         ))
                 .toList()
                 .map(docs -> docs.stream().collect(Collectors.toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
