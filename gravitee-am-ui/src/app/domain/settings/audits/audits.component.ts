@@ -67,7 +67,7 @@ export class AuditsComponent implements OnInit {
     this.page.size = 10;
     this.filteredUsers$ = this.userCtrl.valueChanges.pipe(
       filter(searchTerm => typeof searchTerm === 'string'),
-      switchMap(searchTerm => this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.organizationContext)),
+      switchMap(searchTerm => this.userService.search(this.domainId, 'q=' + searchTerm + '*', 0, 30, this.organizationContext)),
       map(response => response.data)
     )
   }
