@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "37845475-431f-4496-b7b8-dcaf09af5cf1",
+		"_postman_id": "0622de57-a286-4aa7-87ac-f09b044668b7",
 		"name": "Gravitee.io - AM - Openid JARM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -652,10 +652,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"clientId\": \"dcr-client\",\n  \"clientSecret\": \"dcr-client-secret\",\n  \"clientName\": \"dcr-client-public-name\"\n}"
+							"raw": "{\n    \"clientId\": \"dcr-client\",\n    \"clientSecret\": \"dcr-client-secret\",\n    \"name\": \"dcr-client-public-name\",\n    \"type\": \"WEB\"\n}"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
 							"host": [
 								"{{management_url}}"
 							],
@@ -667,7 +667,7 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}",
-								"clients"
+								"applications"
 							]
 						}
 					},
@@ -708,10 +708,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"authorizedGrantTypes\": [\"client_credentials\"],\n  \"responseTypes\": [],\n  \"applicationType\": \"server\",\n  \"scopes\": [\"dcr_admin\"]\n}"
+							"raw": "{\n  \"settings\": { \n      \"oauth\": {\n          \"grantTypes\": [\"client_credentials\"],\n          \"responseTypes\": [],\n          \"applicationType\": \"server\",\n          \"scopes\": [\"dcr_admin\"]\n        }\n    }\n}"
 						},
 						"url": {
-							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{clientDCR}}",
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientDCR}}",
 							"host": [
 								"{{management_url}}"
 							],
@@ -723,7 +723,7 @@
 								"{{defaultEnvironmentId}}",
 								"domains",
 								"{{domain}}",
-								"clients",
+								"applications",
 								"{{clientDCR}}"
 							]
 						}

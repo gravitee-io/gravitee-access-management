@@ -192,27 +192,18 @@ reset: stop deleteData start ## Stop containers, delete mongodb data and restart
 
 postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-openid-discovery-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-oauth2-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-oauth2-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-openid-core-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-core-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-core-request-object-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-openid-dcr-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-dcr-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-jarm-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-openid-fapi-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-scim-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-scim-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-scope-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-client-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-client-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-flows-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-flows-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-login-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-login-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-logout-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-logout-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-	@newman run postman/collections/graviteeio-am-user-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-user-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-api-management-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-uma2-app-version-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail

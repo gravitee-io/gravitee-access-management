@@ -3710,10 +3710,10 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"scopes\": [\"scope1\"],\n\t\"scopeApprovals\": {}\n}"
+											"raw": "{\n\t\"settings\": { \"oauth\": {\"scopes\": [\"scope1\"],\n\t\"scopeApprovals\": {}\n}}}}"
 										},
 										"url": {
-											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{client2}}",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client2}}",
 											"host": [
 												"{{management_url}}"
 											],
@@ -3725,7 +3725,7 @@
 												"{{defaultEnvironmentId}}",
 												"domains",
 												"{{domain}}",
-												"clients",
+												"applications",
 												"{{client2}}"
 											]
 										}
@@ -12122,8 +12122,7 @@
 									"raw": ""
 								},
 								"url": {
-									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/clients/{{templateId}}",
-									"host": [
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{templateId}}",									"host": [
 										"{{management_url}}"
 									],
 									"path": [
@@ -12134,7 +12133,7 @@
 										"{{defaultEnvironmentId}}",
 										"domains",
 										"{{domain}}",
-										"clients",
+										"applications",
 										"{{templateId}}"
 									]
 								}

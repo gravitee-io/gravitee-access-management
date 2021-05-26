@@ -123,7 +123,7 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public ClientSyncService clientService() {
+    public ClientSyncService clientSyncService() {
         return new ClientSyncServiceImpl();
     }
 
