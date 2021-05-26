@@ -13,27 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationService;
 import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.Set;
-
 /**
- * NOTE: only use for the ClientsToApplications Upgrader
- * Use the {@link io.gravitee.am.repository.management.api.ApplicationRepository} for the application management
+ * NOTE : this service must only be used in an OpenID Connect context
+ * Use the {@link ApplicationService} for management purpose
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public interface ClientRepository {
+public interface ClientService {
 
-    Single<Set<Client>> findAll();
+    Maybe<Client> findById(String id);
 
-    Single<Boolean> collectionExists();
+    Single<Client> create(Client client);
 
-    Completable deleteCollection();
+    Single<Client> renewClientSecret(String domain, String id, User principal);
+
+    Completable delete(String clientId, User principal);
+
+    Single<Client> update(Client client);
+
+    default Single<Client> renewClientSecret(String domain, String id) {
+        return renewClientSecret(domain, id, null);
+    }
+
+    default Completable delete(String clientId) {
+        return delete(clientId, null);
+    }
 
 }

@@ -100,9 +100,6 @@ public class UserServiceTest {
     @Mock
     private MembershipService membershipService;
 
-    @Mock
-    private ClientService clientService;
-
     @Spy
     private UserValidator userValidator = new UserValidator();
 

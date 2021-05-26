@@ -162,11 +162,6 @@ public class DomainResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    @Path("clients")
-    public ClientsResource getClientsResource() {
-        return resourceContext.getResource(ClientsResource.class);
-    }
-
     @Path("applications")
     public ApplicationsResource getApplicationsResource() {
         return resourceContext.getResource(ApplicationsResource.class);

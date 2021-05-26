@@ -17,10 +17,7 @@ package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.service.ClientService;
-import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewScope;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -54,7 +51,7 @@ public class ScopeUpgrader implements Upgrader, Ordered {
     private ScopeService scopeService;
 
     @Autowired
-    private ClientService clientService;
+    private ApplicationService applicationService;
 
     @Autowired
     private RoleService roleService;
@@ -75,7 +72,7 @@ public class ScopeUpgrader implements Upgrader, Ordered {
                 .flatMap(scopes -> {
                     if (scopes.getData().isEmpty()) {
                         logger.info("No scope found for domain id[{}] name[{}]. Upgrading...", domain.getId(), domain.getName());
-                        return createClientScopes(domain)
+                        return createAppScopes(domain)
                                 .flatMap(irrelevant -> createRoleScopes(domain));
                     }
                     logger.info("No scope to update, skip upgrade");
@@ -83,12 +80,12 @@ public class ScopeUpgrader implements Upgrader, Ordered {
                 });
     }
 
-    private Single<List<Scope>> createClientScopes(Domain domain) {
-        return clientService.findByDomain(domain.getId())
-                .filter(clients -> clients != null)
-                .flatMapObservable(clients -> Observable.fromIterable(clients))
-                .filter(client -> client.getScopes() != null)
-                .flatMap(client -> Observable.fromIterable(client.getScopes()))
+    private Single<List<Scope>> createAppScopes(Domain domain) {
+        return applicationService.findByDomain(domain.getId())
+                .filter(applications -> applications != null)
+                .flatMapObservable(applications -> Observable.fromIterable(applications))
+                .filter(app -> app.getSettings() != null && app.getSettings().getOauth() != null)
+                .flatMap(app -> Observable.fromIterable(app.getSettings().getOauth().getScopes()))
                 .flatMapSingle(scope -> createScope(domain.getId(), scope))
                 .toList();
     }

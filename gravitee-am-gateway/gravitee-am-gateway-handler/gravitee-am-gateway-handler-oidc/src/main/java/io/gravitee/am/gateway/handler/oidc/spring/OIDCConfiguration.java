@@ -17,7 +17,9 @@ package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
@@ -59,6 +61,11 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public DynamicClientRegistrationService dcrService() {
         return new DynamicClientRegistrationServiceImpl();
+    }
+
+    @Bean
+    public ClientService clientService() {
+        return new ClientServiceImpl();
     }
 
     @Bean

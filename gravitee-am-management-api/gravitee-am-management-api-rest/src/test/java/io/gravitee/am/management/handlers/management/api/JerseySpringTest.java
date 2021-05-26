@@ -93,9 +93,6 @@ public abstract class JerseySpringTest {
     protected CertificateService certificateService;
 
     @Autowired
-    protected ClientService clientService;
-
-    @Autowired
     protected CertificatePluginService certificatePluginService;
 
     @Autowired
@@ -228,11 +225,6 @@ public abstract class JerseySpringTest {
         @Bean
         public CertificateService certificateService() {
             return mock(CertificateService.class);
-        }
-
-        @Bean
-        public ClientService clientService() {
-            return mock(ClientService.class);
         }
 
         @Bean
