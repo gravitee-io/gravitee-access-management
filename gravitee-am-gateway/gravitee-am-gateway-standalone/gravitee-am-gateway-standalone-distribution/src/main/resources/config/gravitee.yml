@@ -283,3 +283,7 @@ ds:
     host: localhost
     port: 27017
 
+# For AM GATEWAY, liquibase updates are disabled by default.
+liquibase:
+  enabled: false
+
