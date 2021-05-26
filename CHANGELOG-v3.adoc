@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/390?closed=1[AM - 3.8.4 (2021-05-26)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- User additional information are not available during login flow https://github.com/gravitee-io/issues/issues/5608[#5608]
+
+*_Management-ui_*
+
+- The username filter (while adding users in group) is not working in Access Management https://github.com/gravitee-io/issues/issues/5612[#5612]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/251?closed=1[AM - 3.9.0 (2021-05-19)]
 
 === Bug fixes
