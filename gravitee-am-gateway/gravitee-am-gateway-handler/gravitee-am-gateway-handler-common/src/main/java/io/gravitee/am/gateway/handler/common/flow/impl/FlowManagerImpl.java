@@ -267,7 +267,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                                               FlowPredicate filter) {
         return executionFlows.stream()
                 .filter(executionFlow -> (excludeApps) ? executionFlow.getApplication() == null : client.getId().equals(executionFlow.getApplication()))
-                .filter(executionFlow -> filter.evaluate(executionFlow.getCondition()))
+                .filter(executionFlow -> filter.evaluate(executionFlow.condition))
                 .map(ExecutionFlow::getPolicies)
                 .filter(executionPolicies -> executionPolicies != null)
                 .flatMap(Collection::stream)
