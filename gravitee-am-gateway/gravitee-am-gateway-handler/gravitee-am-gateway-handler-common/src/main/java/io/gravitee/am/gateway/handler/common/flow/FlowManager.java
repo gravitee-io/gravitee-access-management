@@ -22,6 +22,7 @@ import io.gravitee.common.service.Service;
 import io.reactivex.Single;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,9 +30,6 @@ import java.util.List;
  */
 public interface FlowManager extends Service {
 
-    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client);
+    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, FlowPredicate filter);
 
-    default Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint) {
-        return findByExtensionPoint(extensionPoint, null);
-    }
 }

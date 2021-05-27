@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.flow.FlowPredicate;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
@@ -25,6 +26,7 @@ import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.gravitee.am.model.AuthenticationFlowContext;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
@@ -80,39 +82,41 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
             return;
         }
 
-        // resolve policies
-        resolve(context, handler -> {
-            if (handler.failed()) {
-                logger.error("An error occurs while resolving policies", handler.cause());
-                context.fail(handler.cause());
+        // prepare execution context
+        prepareContext(context, contextHandler -> {
+
+            if (contextHandler.failed()) {
+                logger.error("An error occurs while preparing execution context", contextHandler.cause());
+                context.fail(contextHandler.cause());
                 return;
             }
 
-            List<Policy> policies = handler.result();
-            // if no policies continue
-            if (policies.isEmpty()) {
-                context.next();
-                return;
-            }
+            // resolve policies
+            ExecutionContext executionContext = contextHandler.result();
+            resolve(executionContext, handler -> {
+                if (handler.failed()) {
+                    logger.error("An error occurs while resolving policies", handler.cause());
+                    context.fail(handler.cause());
+                    return;
+                }
 
-            // prepare execution context
-            prepareContext(context, contextHandler -> {
-                if (contextHandler.failed()) {
-                    logger.error("An error occurs while preparing execution context", contextHandler.cause());
-                    context.fail(contextHandler.cause());
+                List<Policy> policies = handler.result();
+                // if no policies continue
+                if (policies.isEmpty()) {
+                    context.next();
                     return;
                 }
 
                 // call the policy chain
-                executePolicyChain(policies, contextHandler.result(), policyChainHandler -> {
+                executePolicyChain(policies, executionContext, policyChainHandler -> {
                     if (policyChainHandler.failed()) {
                         logger.debug("An error occurs while executing the policy chain", policyChainHandler.cause());
                         context.fail(policyChainHandler.cause());
                         return;
                     }
                     // update context attributes
-                    ExecutionContext executionContext = policyChainHandler.result();
-                    executionContext.getAttributes().forEach((k, v) -> {
+                    ExecutionContext processedExecutionContext = policyChainHandler.result();
+                    processedExecutionContext.getAttributes().forEach((k, v) -> {
                         if (ConstantKeys.AUTH_FLOW_CONTEXT_KEY.equals(k)) {
                             final AuthenticationFlowContext authFlowContext = (AuthenticationFlowContext) v;
                             if (authFlowContext != null) {
@@ -129,8 +133,8 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         });
     }
 
-    private void resolve(RoutingContext routingContext, Handler<AsyncResult<List<Policy>>> handler) {
-        flowManager.findByExtensionPoint(extensionPoint, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY))
+    private void resolve(ExecutionContext executionContext, Handler<AsyncResult<List<Policy>>> handler) {
+        flowManager.findByExtensionPoint(extensionPoint, (Client)executionContext.getAttribute(ConstantKeys.CLIENT_CONTEXT_KEY), FlowPredicate.from(executionContext))
                 .subscribe(
                         policies -> handler.handle(Future.succeededFuture(policies)),
                         error -> handler.handle(Future.failedFuture(error)));
