@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FlowEvent;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.flow.FlowPredicate;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -43,6 +44,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.gravitee.am.gateway.handler.common.flow.FlowPredicate.alwaysTrue;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -115,7 +118,11 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     }
 
     @Override
-    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client) {
+    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, FlowPredicate filter) {
+        if (filter == null) {
+            filter = alwaysTrue();
+        }
+
         Set<ExecutionFlow> executionFlows = policies.get(extensionPoint);
         // if no flow, returns empty list
         if (executionFlows == null) {
@@ -123,7 +130,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         }
 
         // get domain policies
-        List<Policy> domainExecutionPolicies = getExecutionPolicies(executionFlows, client, true);
+        List<Policy> domainExecutionPolicies = getExecutionPolicies(executionFlows, client, true, filter);
 
         // if client is null, executes only security domain flows
         if (client == null) {
@@ -131,7 +138,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         }
 
         // get application policies
-        List<Policy> applicationExecutionPolicies = getExecutionPolicies(executionFlows, client, false);
+        List<Policy> applicationExecutionPolicies = getExecutionPolicies(executionFlows, client, false, filter);
 
         // if client does not inherit domain flows, executes only application flows
         if (!client.isFlowsInherited()) {
@@ -256,9 +263,11 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     private List<Policy> getExecutionPolicies(Set<ExecutionFlow> executionFlows,
                                               Client client,
-                                              boolean excludeApps) {
+                                              boolean excludeApps,
+                                              FlowPredicate filter) {
         return executionFlows.stream()
                 .filter(executionFlow -> (excludeApps) ? executionFlow.getApplication() == null : client.getId().equals(executionFlow.getApplication()))
+                .filter(executionFlow -> filter.evaluate(executionFlow.getCondition()))
                 .map(ExecutionFlow::getPolicies)
                 .filter(executionPolicies -> executionPolicies != null)
                 .flatMap(Collection::stream)
@@ -269,11 +278,13 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         private String flowId;
         private List<Policy> policies;
         private String application;
+        private String condition;
 
         public ExecutionFlow(Flow flow, List<Policy> policies) {
             this.flowId = flow.getId();
             this.policies = policies;
             this.application = flow.getApplication();
+            this.condition = flow.getCondition();
         }
 
         public String getFlowId() {
@@ -286,6 +297,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
         public String getApplication() {
             return application;
+        }
+
+        public String getCondition() {
+            return condition;
         }
 
         @Override
