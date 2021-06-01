@@ -91,6 +91,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
         insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,"flow_order", item.getOrder(), Integer.class);
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
 
@@ -171,6 +172,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
         updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields,"flow_order", item.getOrder(), Integer.class);
 
         Mono<Integer> updateAction = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 

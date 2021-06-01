@@ -86,7 +86,7 @@ export class ApplicationFlowsComponent implements OnInit {
 
     this.applicationService.updateFlows(this.domainId, this.application.id, flows).subscribe((updatedFlows) => {
       this.studio.nativeElement.saved();
-      this.definition = { ...this.definition, flows:  updatedFlows};
+      this.definition = { ...this.definition, flows: updatedFlows};
       this.snackbarService.open('Flows updated');
     });
 

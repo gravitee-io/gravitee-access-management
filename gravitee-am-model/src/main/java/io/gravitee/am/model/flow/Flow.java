@@ -48,6 +48,10 @@ public class Flow {
      */
     private String name;
     /**
+     * execution order of the flow if multiple flows with the same 'type' exist
+     */
+    private Integer order;
+    /**
      * Flow pre steps
      */
     private List<Step> pre = new ArrayList<>();
@@ -76,6 +80,14 @@ public class Flow {
      */
     private Date updatedAt;
 
+    public Integer getOrder() {
+        return order;
+    }
+
+    public void setOrder(Integer order) {
+        this.order = order;
+    }
+
     public Flow() {
     }
 
@@ -89,6 +101,7 @@ public class Flow {
         this.post = other.post;
         this.enabled = other.enabled;
         this.type = other.type;
+        this.order = other.getOrder();
         this.condition = other.condition;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;

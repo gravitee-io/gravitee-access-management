@@ -30,6 +30,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.FlowNotFoundException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
@@ -44,6 +45,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.emptyList;
@@ -156,6 +159,11 @@ public class FlowServiceImpl implements FlowService {
         return flowRepository.findById(referenceType, referenceId, id)
             .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
             .flatMapSingle(oldFlow -> {
+
+                if (!oldFlow.getType().equals(flow.getType())) {
+                    throw new InvalidParameterException("Type of flow '" + flow.getName() +"' can't be updated");
+                }
+
                 Flow flowToUpdate = new Flow(oldFlow);
                 flowToUpdate.setName(flow.getName());
                 flowToUpdate.setEnabled(flow.isEnabled());
@@ -163,6 +171,10 @@ public class FlowServiceImpl implements FlowService {
                 flowToUpdate.setPre(flow.getPre());
                 flowToUpdate.setPost(flow.getPost());
                 flowToUpdate.setUpdatedAt(new Date());
+                if (flow.getOrder() != null) {
+                    flowToUpdate.setOrder(flow.getOrder());
+                }
+
                 if (Type.ROOT.equals(flowToUpdate.getType())) {
                     // Pre or Post steps are not supposed to be null in the UI-Component
                     // force the ROOT post with emptyList to avoid UI issue
@@ -247,31 +259,49 @@ public class FlowServiceImpl implements FlowService {
     }
 
     private Single<List<Flow>> createOrUpdate0(ReferenceType referenceType, String referenceId, String application, List<Flow> flows, User principal) {
+
+        computeFlowOrders(flows);
+
         return flowRepository.findAll(referenceType, referenceId)
                 .toList()
                 .flatMap(existingFlows -> {
+
+                    final Map<String, Flow> mapOfExistingFlows = existingFlows.stream()
+                            .filter(f -> (application == null && f.getApplication() == null) || (application != null && application.equals(f.getApplication())))
+                            .filter(f -> f.getId() != null)
+                            .distinct()
+                            .collect(Collectors.toMap(Flow::getId, Function.identity()));
+
+                    flows.forEach(flow -> {
+                        if (flow.getId() != null && mapOfExistingFlows.containsKey(flow.getId()) && !mapOfExistingFlows.get(flow.getId()).getType().equals(flow.getType())) {
+                            throw new InvalidParameterException("Type of flow '" + flow.getName() +"' can't be updated");
+                        }
+                    });
+
+                    // preserve the list of flow id to identify flow that must be deleted
+                    final List<String> flowIdsToDelete = new ArrayList<>(mapOfExistingFlows.keySet());
+
                     return Observable.fromIterable(flows)
                             .flatMapSingle(flowToCreateOrUpdate -> {
+                                // remove new flow or updated flow from the flowIdsToDelete
+                                if (flowToCreateOrUpdate.getId() != null) {
+                                    flowIdsToDelete.remove(flowToCreateOrUpdate.getId());
+                                }
+
                                 // if no flow exists, just insert a new one
                                 if (existingFlows == null || existingFlows.isEmpty()) {
                                     return create0(referenceType, referenceId, application, flowToCreateOrUpdate, principal);
                                 }
 
                                 // find existing flow
-                                Optional<Flow> optFlow = existingFlows.stream().filter(existingFlow -> {
-                                    if (application != null) {
-                                        return application.equals(existingFlow.getApplication()) &&
-                                                existingFlow.getType().equals(flowToCreateOrUpdate.getType());
-                                    }
-                                    return existingFlow.getType().equals(flowToCreateOrUpdate.getType());
-                                }).findAny();
-
-                                return optFlow.isPresent() ?
-                                        update(referenceType, referenceId, optFlow.get().getId(), flowToCreateOrUpdate) :
+                                boolean updateRequired = flowToCreateOrUpdate.getId() != null && mapOfExistingFlows.containsKey(flowToCreateOrUpdate.getId());
+                                return updateRequired ?
+                                        update(referenceType, referenceId, flowToCreateOrUpdate.getId(), flowToCreateOrUpdate) :
                                         create0(referenceType, referenceId, application, flowToCreateOrUpdate, principal);
                             })
                             .sorted(getFlowComparator())
-                            .toList();
+                            .toList()
+                            .flatMap(persistedFlows -> Observable.fromIterable(flowIdsToDelete).flatMapCompletable(this::delete).toSingleDefault(persistedFlows));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -282,7 +312,29 @@ public class FlowServiceImpl implements FlowService {
                 });
     }
 
+    /**
+     * Set value for the order attribute of each flow (regarding the flow type)
+     * Assumption: incoming flows are in the right order
+     * @param flows
+     */
+    private void computeFlowOrders(List<Flow> flows) {
+        Map<Type, Integer> typedCounters = new HashMap<>();
+        for (Flow flow : flows) {
+            Integer order = typedCounters.get(flow.getType());
+            if (order == null) {
+                order = 0;
+            } else {
+                order++;
+            }
+            typedCounters.put(flow.getType(), order);
+            flow.setOrder(order);
+        }
+    }
+
     private Single<Flow> create0(ReferenceType referenceType, String referenceId, String application, Flow flow, User principal) {
+        if (flow.getOrder() == null) {
+            flow.setOrder(Integer.MAX_VALUE); // if order is null put at the end
+        }
         flow.setId(flow.getId() == null ? RandomString.generate() : flow.getId());
         flow.setReferenceType(referenceType);
         flow.setReferenceId(referenceId);
@@ -315,6 +367,7 @@ public class FlowServiceImpl implements FlowService {
         flow.setReferenceType(referenceType);
         flow.setReferenceId(referenceId);
         flow.setEnabled(true);
+        flow.setOrder(0);
         return flow;
     }
 
@@ -326,7 +379,7 @@ public class FlowServiceImpl implements FlowService {
             } else if (types.indexOf(f1.getType()) > types.indexOf(f2.getType())) {
                 return 1;
             }
-            return 0;
+            return f1.getOrder() - f2.getOrder();
         };
     }
 }

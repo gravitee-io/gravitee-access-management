@@ -16,7 +16,25 @@
         "login",
         "consent",
         "register"
-      ]
+      ],
+      "default": "root",
+      "x-schema-form": {
+        "titleMap": {
+          "root": "ALL",
+          "login": "LOGIN",
+          "consent": "CONSENT",
+          "register": "REGISTER"
+        },
+        "disabled" : [
+          {"$def":  "id"},
+          {
+            "$neq" : { "id" :  ""}
+          }
+        ]
+      },
+      "x-disable-condition": {
+        "id" : "$notEmpty"
+      }
     },
     "condition": {
       "title": "Condition",
@@ -24,8 +42,5 @@
       "type": "string"
     }
   },
-  "required": [],
-  "disabled": [
-    "type"
-  ]
+  "required": ["name"]
 }

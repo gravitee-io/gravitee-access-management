@@ -23,6 +23,7 @@ import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FlowRepository;
 import io.gravitee.am.service.exception.FlowNotFoundException;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FlowServiceImpl;
 import io.reactivex.Completable;
@@ -117,7 +118,10 @@ public class FlowServiceTest {
     @Test
     public void shouldUpdate() {
         Flow updateFlow = Mockito.mock(Flow.class);
-        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.just(new Flow()));
+        when(updateFlow.getType()).thenReturn(Type.ROOT);
+        Flow existingFlow = new Flow();
+        existingFlow.setType(Type.ROOT);
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.just(existingFlow));
         when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -130,6 +134,22 @@ public class FlowServiceTest {
         verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-flow");
         verify(flowRepository, times(1)).update(any(Flow.class));
         verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdate_TypeChange() {
+        Flow updateFlow = Mockito.mock(Flow.class);
+        when(updateFlow.getType()).thenReturn(Type.ROOT);
+        Flow existingFlow = new Flow();
+        existingFlow.setType(Type.LOGIN);
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.just(existingFlow));
+
+        TestObserver testObserver = flowService.update(ReferenceType.DOMAIN, DOMAIN, "my-flow", updateFlow).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidParameterException.class);
+
+        verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, "my-flow");
+        verify(flowRepository, never()).update(any(Flow.class));
     }
 
     @Test
@@ -231,4 +251,156 @@ public class FlowServiceTest {
         verify(flowRepository, times(1)).delete("my-flow");
         verify(eventService, times(1)).create(any());
     }
+
+    @Test
+    public void shouldCreateAllFlows() {
+        Flow newFlow = new Flow();
+        newFlow.setOrder(0);
+        Flow newFlow2 = new Flow();
+        newFlow2.setOrder(0);
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
+        when(flowRepository.create(any(Flow.class))).thenReturn(Single.just(newFlow), Single.just(newFlow2));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(newFlow, newFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(flowRepository, times(2)).create(any(Flow.class));
+        verify(flowRepository, never()).update(any(Flow.class));
+        verify(eventService, times(2)).create(any());
+    }
+
+    @Test
+    public void shouldUpdateAllFlows() {
+        Flow updateFlow = new Flow();
+        updateFlow.setType(Type.ROOT);
+        updateFlow.setId("flow1");
+        updateFlow.setOrder(0);
+        Flow existingFlow = new Flow();
+        existingFlow.setId("flow1");
+        existingFlow.setType(Type.ROOT);
+        existingFlow.setOrder(0);
+
+        Flow updateFlow2 = new Flow();
+        updateFlow2.setType(Type.ROOT);
+        updateFlow2.setId("flow2");
+        updateFlow2.setOrder(0);
+        Flow existingFlow2 = new Flow();
+        existingFlow2.setId("flow2");
+        existingFlow2.setType(Type.ROOT);
+        existingFlow2.setOrder(0);
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, updateFlow.getId())).thenReturn(Maybe.just(existingFlow));
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, updateFlow2.getId())).thenReturn(Maybe.just(existingFlow2));
+        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(updateFlow), Single.just(updateFlow2));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(flowRepository, times(2)).update(any(Flow.class));
+        verify(flowRepository, never()).create(any(Flow.class));
+        verify(eventService, times(2)).create(any());
+    }
+
+    @Test
+    public void shouldUpdateOneAndCreateOne() {
+        Flow updateFlow = new Flow();
+        updateFlow.setType(Type.ROOT);
+        updateFlow.setId("flow1");
+        updateFlow.setOrder(0);
+        Flow existingFlow = new Flow();
+        existingFlow.setId("flow1");
+        existingFlow.setType(Type.ROOT);
+        existingFlow.setOrder(0);
+
+        Flow updateFlow2 = new Flow();
+        updateFlow2.setType(Type.ROOT);
+        updateFlow2.setOrder(0);
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow));
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, updateFlow.getId())).thenReturn(Maybe.just(existingFlow));
+        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(updateFlow2));
+        when(flowRepository.create(any(Flow.class))).thenReturn(Single.just(updateFlow));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(flowRepository, times(1)).update(any(Flow.class));
+        verify(flowRepository, times(1)).create(any(Flow.class));
+        verify(eventService, times(2)).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdateAllFlows_TypeMismatch() {
+        Flow updateFlow = new Flow();
+        updateFlow.setType(Type.LOGIN);
+        updateFlow.setId("flow1");
+        Flow existingFlow = new Flow();
+        existingFlow.setId("flow1");
+        existingFlow.setType(Type.ROOT);
+
+        Flow updateFlow2 = new Flow();
+        updateFlow2.setType(Type.ROOT);
+        updateFlow2.setId("flow2");
+        Flow existingFlow2 = new Flow();
+        existingFlow2.setId("flow2");
+        existingFlow2.setType(Type.ROOT);
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(InvalidParameterException.class);
+
+        verify(flowRepository, never()).update(any(Flow.class));
+        verify(flowRepository, never()).create(any(Flow.class));
+    }
+
+
+    @Test
+    public void shouldUpdateAllFlows_WithDelete() {
+        Flow existingFlow = new Flow();
+        existingFlow.setId("flow1");
+        existingFlow.setType(Type.ROOT);
+
+        Flow updateFlow2 = new Flow();
+        updateFlow2.setType(Type.ROOT);
+        updateFlow2.setId("flow2");
+        Flow existingFlow2 = new Flow();
+        existingFlow2.setId("flow2");
+        existingFlow2.setType(Type.ROOT);
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, existingFlow2.getId())).thenReturn(Maybe.just(existingFlow2));
+        when(flowRepository.findById(existingFlow.getId())).thenReturn(Maybe.just(existingFlow));
+        when(flowRepository.update(any(Flow.class))).thenReturn(Single.just(new Flow()));
+        when(flowRepository.delete(any())).thenReturn(Completable.complete());
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(flowRepository, times(1)).update(any(Flow.class));
+        verify(flowRepository, times(1)).delete(eq(existingFlow.getId()));
+        verify(flowRepository, never()).create(any(Flow.class));
+        verify(eventService, times(2)).create(any());
+    }
+
 }
