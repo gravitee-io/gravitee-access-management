@@ -36,6 +36,8 @@ public class JdbcFlow {
     private String name;
     private boolean enabled;
     private String type;
+    @Column("flow_order")
+    private int order;
     private String condition;
     @Column("application_id")
     private String application;
@@ -120,6 +122,14 @@ public class JdbcFlow {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 
     @Table("flow_steps")

@@ -34,6 +34,7 @@ public class FlowMongo extends Auditable {
     private String referenceId;
     private String application;
     private String name;
+    private int order;
     private List<Step> pre = new ArrayList<>();
     private List<Step> post = new ArrayList<>();
     private boolean enabled;
@@ -118,5 +119,13 @@ public class FlowMongo extends Auditable {
 
     public void setCondition(String condition) {
         this.condition = condition;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
     }
 }

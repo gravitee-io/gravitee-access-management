@@ -106,6 +106,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         obs.assertValue(o -> o.getName().equals(flow.getName()));
         obs.assertValue(o -> o.getType().equals(flow.getType()));
         obs.assertValue(o -> o.getCondition().equals(flow.getCondition()));
+        obs.assertValue(o -> o.getOrder().equals(flow.getOrder()));
         obs.assertValue(o -> o.getReferenceId().equals(flow.getReferenceId()));
         obs.assertValue(o -> o.getReferenceType().equals(flow.getReferenceType()));
         obs.assertValue(o -> o.isEnabled() == flow.isEnabled());
@@ -167,6 +168,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     public void testFindById() {
         Flow flow = new Flow();
         flow.setName("ROOT");
+        flow.setOrder(5);
 
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
@@ -187,6 +189,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     public void testCreate() {
         Flow flow = new Flow();
         flow.setName("ROOT");
+        flow.setOrder(5);
 
         TestObserver<Flow> obs = flowRepository.create(flow).test();
         obs.awaitTerminalEvent();
@@ -237,6 +240,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     public void testDelete() {
         Flow flow = new Flow();
         flow.setName("ROOT");
+        flow.setOrder(5);
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
         assertNotNull(flowRepository.findById(flowCreated.getId()).blockingGet());
@@ -256,6 +260,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
         flow.setUpdatedAt(new Date());
         flow.setCondition("condition"+rand);
         flow.setEnabled(true);
+        flow.setOrder(5);
         flow.setReferenceId("refId"+rand);
         flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setType(Type.REGISTER);

@@ -34,7 +34,7 @@ public class Flow {
     private String name;
     private List<Step> pre;
     private List<Step> post;
-    private boolean enabled;
+    private boolean enabled = true;
     @NotNull
     private Type type;
     private String condition;

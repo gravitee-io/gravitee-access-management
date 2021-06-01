@@ -123,6 +123,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         flowMongo.setReferenceId(flow.getReferenceId());
         flowMongo.setApplication(flow.getApplication());
         flowMongo.setName(flow.getName());
+        flowMongo.setOrder(flow.getOrder());
         flowMongo.setPre(flow.getPre());
         flowMongo.setPost(flow.getPost());
         flowMongo.setEnabled(flow.isEnabled());
@@ -144,6 +145,7 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         flow.setReferenceId(flowMongo.getReferenceId());
         flow.setApplication(flowMongo.getApplication());
         flow.setName(flowMongo.getName());
+        flow.setOrder(flowMongo.getOrder());
         flow.setPre(flowMongo.getPre());
         flow.setPost(flowMongo.getPost());
         flow.setEnabled(flowMongo.isEnabled());
