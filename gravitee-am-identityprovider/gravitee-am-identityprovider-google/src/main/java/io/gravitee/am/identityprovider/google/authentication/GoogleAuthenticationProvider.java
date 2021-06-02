@@ -47,10 +47,10 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
     private WebClient client;
 
     @Autowired
-    private DefaultIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Autowired
     private GoogleIdentityProviderConfiguration configuration;

@@ -37,7 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -172,20 +175,8 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         // add additional information
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, user.getUsername());
-        if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
-            mapper.getMappers().forEach((k, v) -> {
-                LdapAttribute ldapAttribute = ldapEntry.getAttribute(v);
-                if (ldapAttribute != null) {
-                    Collection<String> ldapValues = ldapAttribute.getStringValues();
-                    if (ldapValues != null) {
-                        if (ldapValues.size() == 1) {
-                            claims.put(k, ldapValues.iterator().next());
-                        } else {
-                            claims.put(k, ldapValues);
-                        }
-                    }
-                }
-            });
+        if (mapper.getMappers() != null) {
+            claims.putAll(this.mapper.apply(authContext, toMap(ldapEntry)));
         } else {
             // default values
             addClaim(claims, ldapEntry, StandardClaims.NAME, "displayname");
@@ -211,19 +202,21 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
 
     private List<String> getUserRoles(AuthenticationContext authContext, LdapEntry ldapEntry) {
         if (roleMapper != null && roleMapper.getRoles() != null) {
-
-            Map<String, Object> attributes = new HashMap<>();
-            ldapEntry.getAttributes().forEach(attr -> {
-                if (MEMBEROF_ATTRIBUTE.equals(attr.getName())) {
-                    attributes.put(attr.getName(), attr.getStringValues());
-                } else {
-                    attributes.put(attr.getName(), attr.getStringValue());
-                }
-            });
-
-            return this.roleMapper.apply(authContext, attributes);
+            return this.roleMapper.apply(authContext, toMap(ldapEntry));
         }
         return Collections.emptyList();
+    }
+
+    private Map<String, Object> toMap(LdapEntry ldapEntry) {
+        Map<String, Object> attributes = new HashMap<>();
+        ldapEntry.getAttributes().forEach(attr -> {
+            if (MEMBEROF_ATTRIBUTE.equals(attr.getName())) {
+                attributes.put(attr.getName(), attr.getStringValues());
+            } else {
+                attributes.put(attr.getName(), attr.getStringValue());
+            }
+        });
+        return attributes;
     }
 
     /**

@@ -78,6 +78,17 @@
       <p>
         This mapping occurs during user authentication.
       </p>
+      <small>
+        For simple assignement, you can specify the identity provider attribute. Expression Language is also supported in order to allow concat or jsonPath extraction.
+        For example :
+      </small>
+      <small>
+        <pre fxLayout="column">
+        <code>- &#123;#profile['my-attr']&#125;</code>
+        <code>- &#123;#profile['my-attr'] + ' ' + #profile['my-attr2']&#125;</code>
+        <code>- &#123;#jsonPath(#profile, '$.additional-info.attr')&#125;</code>
+      </pre>
+      </small>
     </div>
   </div>
 </div>

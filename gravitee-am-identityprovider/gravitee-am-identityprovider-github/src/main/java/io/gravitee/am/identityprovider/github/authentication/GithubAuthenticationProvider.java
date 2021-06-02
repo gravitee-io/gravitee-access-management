@@ -143,7 +143,7 @@ public class GithubAuthenticationProvider extends AbstractSocialAuthenticationPr
         additionalInformation.put(StandardClaims.NAME, attributes.get(GithubUser.NAME));
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, attributes.get(GithubUser.LOGIN));
         // apply user mapping
-        additionalInformation.putAll(applyUserMapping(attributes));
+        additionalInformation.putAll(applyUserMapping(authContext, attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
             ((DefaultUser) user).setUsername((String) additionalInformation.get(StandardClaims.PREFERRED_USERNAME));

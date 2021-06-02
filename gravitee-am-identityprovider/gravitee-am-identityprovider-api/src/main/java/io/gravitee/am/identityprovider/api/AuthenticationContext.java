@@ -26,6 +26,8 @@ import java.util.Map;
  */
 public interface AuthenticationContext extends ExecutionContext {
 
+    String CONTEXT_KEY_PROFILE = "profile";
+
     /**
      * Stores an attribute in this context.
      *

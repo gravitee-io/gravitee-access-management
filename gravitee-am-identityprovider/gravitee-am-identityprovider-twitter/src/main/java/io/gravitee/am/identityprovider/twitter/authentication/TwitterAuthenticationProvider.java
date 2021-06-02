@@ -275,7 +275,7 @@ public class TwitterAuthenticationProvider extends AbstractSocialAuthenticationP
                     user.setId(jsonObject.getString(TWITTER_ID));
 
                     Map<String, Object> additionalInfos = new HashMap<>();
-                    additionalInfos.putAll(applyUserMapping(jsonObject.getMap()));
+                    additionalInfos.putAll(applyUserMapping(authentication.getContext(), jsonObject.getMap()));
                     user.setAdditionalInformation(additionalInfos);
                     user.setRoles(applyRoleMapping(authentication.getContext(), jsonObject.getMap()));
 

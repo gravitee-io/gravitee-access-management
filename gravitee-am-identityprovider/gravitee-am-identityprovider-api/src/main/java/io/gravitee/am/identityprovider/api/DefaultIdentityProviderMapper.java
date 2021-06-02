@@ -15,15 +15,23 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.el.TemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_KEY_PROFILE;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class DefaultIdentityProviderMapper implements IdentityProviderMapper {
+    public static final Logger LOGGER = LoggerFactory.getLogger(DefaultIdentityProviderMapper.class);
+
     private Map<String, String> mappers;
 
     public Map<String, String> getMappers() {
@@ -32,5 +40,36 @@ public class DefaultIdentityProviderMapper implements IdentityProviderMapper {
 
     public void setMappers(Map<String, String> mappers) {
         this.mappers = mappers;
+    }
+
+    public Map<String, Object> apply(AuthenticationContext context, Map<String, Object> userInfo) {
+        if (this.mappers == null || this.mappers.isEmpty()) {
+            return userInfo;
+        }
+
+        Map<String, Object> additionalInformation = new HashMap<>();
+
+        TemplateEngine templateEngine = context.getTemplateEngine();
+        if (templateEngine != null) {
+            templateEngine.getTemplateContext().setVariable(CONTEXT_KEY_PROFILE, userInfo);
+        }
+
+        this.mappers.forEach((userClaim, attribute) -> {
+            // if attribute uses the EL syntax, evaluate the expression
+            String sanitizedAttr = StringUtils.isEmpty(attribute) ? attribute : attribute.trim();
+            if (sanitizedAttr.startsWith("{") && sanitizedAttr.endsWith("}") && templateEngine != null) {
+                try {
+                    additionalInformation.put(userClaim, templateEngine.getValue(sanitizedAttr, String.class));
+                } catch (Exception e) {
+                    LOGGER.warn("User mapper can't evaluate the expression [{}] as String", userClaim);
+                }
+            } else {
+                // attribute is a 'simple' key used to get value from the userInfo
+                if (userInfo.containsKey(attribute)) {
+                    additionalInformation.put(userClaim, userInfo.get(attribute));
+                }
+            }
+        });
+        return additionalInformation;
     }
 }

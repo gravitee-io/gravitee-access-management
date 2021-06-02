@@ -23,6 +23,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 
+import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_KEY_PROFILE;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -30,7 +32,6 @@ import java.util.*;
 public class DefaultIdentityProviderRoleMapper implements IdentityProviderRoleMapper {
     public static final Logger LOGGER = LoggerFactory.getLogger(DefaultIdentityProviderRoleMapper.class);
 
-    public static final String CONTEXT_KEY_PROFILE = "profile";
     private Map<String, String[]> roles;
 
     public Map<String, String[]> getRoles() {
