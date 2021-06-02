@@ -153,7 +153,7 @@ public class FacebookAuthenticationProvider extends AbstractSocialAuthentication
         convertClaim(FacebookUser.ID, facebookUser, StandardClaims.PREFERRED_USERNAME, additionalInformation);
 
         // Apply user mapping.
-        additionalInformation.putAll(applyUserMapping(facebookUser.getMap()));
+        additionalInformation.putAll(applyUserMapping(authContext, facebookUser.getMap()));
 
         // Update username if user mapping has changed.
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {

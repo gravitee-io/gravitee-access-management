@@ -182,7 +182,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
 
     private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {
         // apply user mapping
-        Map<String, Object> mappedAttributes = applyUserMapping(attributes);
+        Map<String, Object> mappedAttributes = applyUserMapping(authContext, attributes);
 
         // sub claim is required
         if (mappedAttributes.isEmpty() || mappedAttributes.get(StandardClaims.SUB) == null) {
@@ -193,7 +193,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         List<String> roles = applyRoleMapping(authContext, attributes);
 
         // create the user
-        String username = mappedAttributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.SUB)).toString();
+        String username = mappedAttributes.getOrDefault(StandardClaims.PREFERRED_USERNAME, mappedAttributes.get(StandardClaims.SUB)).toString();
         DefaultUser user = new DefaultUser(username);
         user.setId(mappedAttributes.get(StandardClaims.SUB).toString());
         // set additional information
@@ -209,18 +209,11 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
         return user;
     }
 
-    private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
+    private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!mappingEnabled()) {
             return attributes;
         }
-
-        Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
-        return claims;
+        return this.mapper.apply(authContext, attributes);
     }
 
     private List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
@@ -231,7 +224,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     }
 
     private boolean mappingEnabled() {
-        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
+        return this.mapper != null;
     }
 
     private boolean roleMappingEnabled() {

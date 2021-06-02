@@ -190,7 +190,7 @@ public class LinkedinAuthenticationProvider extends AbstractSocialAuthentication
         user.setFirstName(profileInfo.getString(LinkedinUser.FIRSTNAME));
         user.setLastName(profileInfo.getString(LinkedinUser.LASTNAME));
 
-        user.setAdditionalInformation(applyUserMapping(profileInfo.getMap()));
+        user.setAdditionalInformation(applyUserMapping(authContext, profileInfo.getMap()));
         user.setRoles(applyRoleMapping(authContext, profileInfo.getMap()));
 
         return user;

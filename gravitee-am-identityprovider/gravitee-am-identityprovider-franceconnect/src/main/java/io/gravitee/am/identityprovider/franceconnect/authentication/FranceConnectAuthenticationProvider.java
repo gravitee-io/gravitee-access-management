@@ -213,7 +213,7 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, attributes.get(StandardClaims.PREFERRED_USERNAME));
 
         // apply user mapping
-        additionalInformation.putAll(applyUserMapping(attributes));
+        additionalInformation.putAll(applyUserMapping(authContext, attributes));
 
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {

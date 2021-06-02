@@ -223,7 +223,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, attributes.get(StandardClaims.SUB));
         // apply user mapping
-        additionalInformation.putAll(applyUserMapping(attributes));
+        additionalInformation.putAll(applyUserMapping(authContext, attributes));
         // update username if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
             user.setUsername(String.valueOf(additionalInformation.get(StandardClaims.PREFERRED_USERNAME)));

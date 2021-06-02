@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -26,5 +27,9 @@ public interface IdentityProviderMapper {
     Map<String, String> getMappers();
 
     void setMappers(Map<String, String> mappers);
+
+    default Map<String, Object> apply(AuthenticationContext context, Map<String, Object> userInfo) {
+        return Collections.emptyMap();
+    }
 
 }

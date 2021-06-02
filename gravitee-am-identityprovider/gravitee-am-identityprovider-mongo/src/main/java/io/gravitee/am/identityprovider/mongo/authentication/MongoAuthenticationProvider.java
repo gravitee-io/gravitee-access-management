@@ -148,8 +148,8 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
         // set claims
         claims.put(StandardClaims.SUB, sub);
         claims.put(StandardClaims.PREFERRED_USERNAME, username);
-        if (this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty()) {
-            this.mapper.getMappers().forEach((k, v) -> claims.put(k, document.get(v)));
+        if (this.mapper.getMappers() != null) {
+            claims.putAll(this.mapper.apply(authContext, document));
         } else {
             // default claims
             // remove reserved claims

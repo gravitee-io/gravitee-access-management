@@ -46,7 +46,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     private IdentityProviderMapper mapper;
 
     @Autowired
-    private DefaultIdentityProviderRoleMapper roleMapper;
+    private IdentityProviderRoleMapper roleMapper;
 
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
@@ -149,7 +149,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         additionalInformation.put(StandardClaims.SUB, sub);
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
         // apply user mapping
-        Map<String, Object> mappedAttributes = applyUserMapping(claims);
+        Map<String, Object> mappedAttributes = applyUserMapping(authContext, claims);
         additionalInformation.putAll(mappedAttributes);
         // update sub if user mapping has been changed
         if (additionalInformation.containsKey(StandardClaims.SUB)) {
@@ -172,18 +172,11 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         return user;
     }
 
-    private Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
+    private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!mappingEnabled()) {
             return attributes;
         }
-
-        Map<String, Object> claims = new HashMap<>();
-        this.mapper.getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
-        return claims;
+        return this.mapper.apply(authContext, attributes);
     }
 
     private List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
@@ -194,11 +187,11 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     }
 
     private boolean mappingEnabled() {
-        return this.mapper != null && this.mapper.getMappers() != null && !this.mapper.getMappers().isEmpty();
+        return this.mapper != null;
     }
 
     private boolean roleMappingEnabled() {
-        return this.roleMapper != null && this.roleMapper.getRoles() != null && !this.roleMapper.getRoles().isEmpty();
+        return this.roleMapper != null;
     }
 
     private String getIndexParameter(String field) {

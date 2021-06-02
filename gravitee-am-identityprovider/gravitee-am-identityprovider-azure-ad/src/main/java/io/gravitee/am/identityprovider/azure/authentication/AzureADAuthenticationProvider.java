@@ -46,7 +46,7 @@ public class AzureADAuthenticationProvider extends AbstractOpenIDConnectAuthenti
     private WebClient client;
 
     @Autowired
-    private DefaultIdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
     private IdentityProviderRoleMapper roleMapper;

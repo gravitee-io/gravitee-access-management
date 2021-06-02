@@ -100,13 +100,14 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, inlineUser.getUsername());
 
-        if (mapper != null && mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
+        if (mapper != null ) {
             mapper.getMappers().forEach((k, v) -> {
                 Object attributeValue = inlineUser.getAttributeValue(v);
                 if (attributeValue != null) {
                     claims.put(k, attributeValue);
                 }
             });
+            claims.putAll(this.mapper.apply(authContext, inlineUser.toMap()));
         } else {
             // default values
             claims.put(StandardClaims.NAME, inlineUser.getFirstname() + " " + inlineUser.getLastname());

@@ -29,7 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -83,18 +85,11 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
     }
 
 
-    protected Map<String, Object> applyUserMapping(Map<String, Object> attributes) {
+    protected Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
         if (!mappingEnabled()) {
             return defaultClaims(attributes);
         }
-
-        Map<String, Object> claims = new HashMap<>();
-        this.getIdentityProviderMapper().getMappers().forEach((k, v) -> {
-            if (attributes.containsKey(v)) {
-                claims.put(k, attributes.get(v));
-            }
-        });
-        return claims;
+        return this.getIdentityProviderMapper().apply(authContext, attributes);
     }
 
     protected List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
