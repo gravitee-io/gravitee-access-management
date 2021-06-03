@@ -33,7 +33,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,10 +101,10 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                         // redirect user to the error page with error code and description
                         doRedirect(routingContext, h.result());
                     });
-                } else if (throwable instanceof HttpStatusException) {
+                } else if (throwable instanceof HttpException) {
                     // in case of http status exception, go to the default error page
                     request.setRedirectUri(defaultErrorURL);
-                    HttpStatusException httpStatusException = (HttpStatusException) throwable;
+                    HttpException httpStatusException = (HttpException) throwable;
                     doRedirect(routingContext, buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request, routingContext));
                 } else {
                     logger.error("An exception has occurred while handling authorization request", throwable);

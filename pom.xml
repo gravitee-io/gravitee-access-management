@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>19.2.3</version>
+        <version>20.0</version>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -65,16 +65,17 @@
     </modules>
 
     <properties>
-        <gravitee-parent.version>19.2.3</gravitee-parent.version>
+        <gravitee-bom.version>1.0</gravitee-bom.version>
         <gravitee-common.version>1.16.2</gravitee-common.version>
         <gravitee-plugin.version>1.17.1</gravitee-plugin.version>
-        <gravitee-node.version>1.13.0</gravitee-node.version>
+        <gravitee-node.version>1.15.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>1.20.0</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>1.26.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.5.0</gravitee-cockpit-api.version>
         <spring-security.version>5.3.9.RELEASE</spring-security.version>
+        <spring-integration.version>5.2.6.RELEASE</spring-integration.version>
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.5.0</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
@@ -102,24 +103,24 @@
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
-        <gravitee-policy-callout-http.version>1.10.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>1.11.1</gravitee-policy-groovy.version>
-        <gravitee-policy-ipfiltering.version>1.5.0</gravitee-policy-ipfiltering.version>
-        <gravitee-policy-request-validation.version>1.10.0</gravitee-policy-request-validation.version>
+        <gravitee-policy-callout-http.version>1.13.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-groovy.version>1.14.1</gravitee-policy-groovy.version>
+        <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
+        <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
         <gravitee-license-node.version>1.1.0</gravitee-license-node.version>
-        <gravitee-cockpit-connectors.version>1.4.0</gravitee-cockpit-connectors.version>
-        <gravitee-notifier-webhook.version>1.0.6</gravitee-notifier-webhook.version>
-        <gravitee-notifier-email.version>1.2.8</gravitee-notifier-email.version>
+        <gravitee-cockpit-connectors.version>2.0.0-SNAPSHOT</gravitee-cockpit-connectors.version>
+        <gravitee-notifier-webhook.version>1.1.0</gravitee-notifier-webhook.version>
+        <gravitee-notifier-email.version>1.3.0</gravitee-notifier-email.version>
         <gravitee-alert-api.version>1.7.0</gravitee-alert-api.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Import parent to properly inherit all dependencies -->
+            <!-- Import bom to properly inherit all dependencies -->
             <dependency>
                 <groupId>io.gravitee</groupId>
-                <artifactId>gravitee-parent</artifactId>
-                <version>${gravitee-parent.version}</version>
+                <artifactId>gravitee-bom</artifactId>
+                <version>${gravitee-bom.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -134,7 +135,7 @@
             <dependency>
                 <groupId>org.springframework.integration</groupId>
                 <artifactId>spring-integration-bom</artifactId>
-                <version>${spring.version}</version>
+                <version>${spring-integration.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -173,6 +174,11 @@
                 <groupId>io.gravitee.alert</groupId>
                 <artifactId>gravitee-alert-api</artifactId>
                 <version>${gravitee-alert-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.gravitee.gateway</groupId>
+                <artifactId>gravitee-gateway-api</artifactId>
+                <version>${gravitee-gateway-api.version}</version>
             </dependency>
 
             <!-- Nimbus jose+jwt -->
@@ -319,13 +325,6 @@
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-web</artifactId>
-                <version>${vertx.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>io.gravitee.cockpit</groupId>
                 <artifactId>gravitee-cockpit-api</artifactId>
                 <version>${gravitee-cockpit-api.version}</version>
@@ -367,10 +366,10 @@
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.8</version>
+            <version>3.2.0</version>
             <configuration>
-                <additionalOptions>-Xdoclint:none</additionalOptions>
-                <source>8</source>
+                <doclint>none</doclint>
+                <source>11</source>
             </configuration>
         </plugin>
       </plugins>

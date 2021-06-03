@@ -48,6 +48,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.PRNG;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authorization.Authorization;
 import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.impl.CBOR;
 import io.vertx.ext.auth.webauthn.impl.attestation.AttestationException;
@@ -643,12 +644,12 @@ public class WebAuthnImpl implements WebAuthn {
         }
 
         @Override
-        public User isAuthorized(String authority, Handler<AsyncResult<Boolean>> resultHandler) {
+        public JsonObject attributes() {
             return null;
         }
 
         @Override
-        public User clearCache() {
+        public User isAuthorized(Authorization authority, Handler<AsyncResult<Boolean>> resultHandler) {
             return null;
         }
 

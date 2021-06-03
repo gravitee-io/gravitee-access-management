@@ -141,7 +141,7 @@ oauth2:
 # Configuration of additional reporters
 #reporters:
 #  file:
-#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/reporter-logs/
+#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
 
 # JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails

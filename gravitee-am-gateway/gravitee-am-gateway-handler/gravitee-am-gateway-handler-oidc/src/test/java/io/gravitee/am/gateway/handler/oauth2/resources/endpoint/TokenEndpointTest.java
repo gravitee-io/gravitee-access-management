@@ -34,6 +34,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AbstractUser;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.authorization.Authorization;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
@@ -94,6 +95,16 @@ public class TokenEndpointTest extends RxWebTestBase {
                     @Override
                     protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {
 
+                    }
+
+                    @Override
+                    public JsonObject attributes() {
+                        return null;
+                    }
+
+                    @Override
+                    public io.vertx.ext.auth.User isAuthorized(Authorization authority, Handler<AsyncResult<Boolean>> resultHandler) {
+                        return null;
                     }
 
                     @Override

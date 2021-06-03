@@ -31,7 +31,7 @@ import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -82,7 +82,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                     context.clearUser();
                     context.session().destroy();
                 } else if (cause instanceof InvalidRequestException) {
-                    context.fail(new HttpStatusException(403, "Invalid request for the current SSO context"));
+                    context.fail(new HttpException(403, "Invalid request for the current SSO context"));
                     return;
                 }
             }

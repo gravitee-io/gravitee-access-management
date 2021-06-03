@@ -102,6 +102,7 @@ public class FlowResource extends AbstractResource {
 
     private static Flow convert(io.gravitee.am.service.model.Flow flow) {
         Flow flowToUpdate = new Flow();
+        flowToUpdate.setType(flow.getType());
         flowToUpdate.setName(flow.getName());
         flowToUpdate.setEnabled(flow.isEnabled());
         flowToUpdate.setCondition(flow.getCondition());

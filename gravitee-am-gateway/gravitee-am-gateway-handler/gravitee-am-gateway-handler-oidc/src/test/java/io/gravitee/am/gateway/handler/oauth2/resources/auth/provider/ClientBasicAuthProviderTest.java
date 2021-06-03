@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.core.http.impl.headers.VertxHttpHeaders;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -26,7 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +57,7 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecret()).thenReturn("my-client-secret");
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        VertxHttpHeaders vertxHttpHeaders = new VertxHttpHeaders();
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LWNsaWVudC1zZWNyZXQ=");
         when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
 
@@ -81,7 +81,7 @@ public class ClientBasicAuthProviderTest {
         when(client.getClientSecret()).thenReturn("my-client-secret");
 
         HttpServerRequest httpServerRequest = mock(HttpServerRequest.class);
-        VertxHttpHeaders vertxHttpHeaders = new VertxHttpHeaders();
+        HeadersMultiMap vertxHttpHeaders = new HeadersMultiMap();
         vertxHttpHeaders.add(HttpHeaders.AUTHORIZATION, "Basic bXktY2xpZW50LWlkOm15LW90aGVyLWNsaWVudC1zZWNyZXQ=");
         when(httpServerRequest.headers()).thenReturn(MultiMap.newInstance(vertxHttpHeaders));
 

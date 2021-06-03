@@ -82,11 +82,11 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         HttpServerRequest req = routingContext.request();
-        switch (req.method()) {
-            case GET:
+        switch (req.method().name()) {
+            case "GET":
                 renderMFAPage(routingContext);
                 break;
-            case POST:
+            case "POST":
                 verifyCode(routingContext);
                 break;
             default:

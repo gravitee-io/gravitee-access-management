@@ -20,6 +20,7 @@ import io.gravitee.am.model.VirtualHost;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.ext.web.AllowForwardHeaders;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -308,13 +309,8 @@ public class VHostRouter implements Router {
     }
 
     @Override
-    public Router mountSubRouter(String mountPoint, Router subRouter) {
+    public Route mountSubRouter(String mountPoint, Router subRouter) {
         return delegate.mountSubRouter(mountPoint, subRouter);
-    }
-
-    @Override
-    public Router exceptionHandler(Handler<Throwable> exceptionHandler) {
-        return delegate.exceptionHandler(exceptionHandler);
     }
 
     @Override
@@ -325,6 +321,11 @@ public class VHostRouter implements Router {
     @Override
     public Router modifiedHandler(Handler<Router> handler) {
         return delegate.modifiedHandler(handler);
+    }
+
+    @Override
+    public Router allowForward(AllowForwardHeaders allowForwardHeaders) {
+        return delegate.allowForward(allowForwardHeaders);
     }
 
     @Override

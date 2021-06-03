@@ -24,6 +24,7 @@ import io.gravitee.common.utils.UUID;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http2.HttpFrame;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
@@ -47,6 +48,7 @@ public class JettyHttpServerRequest implements Request {
     private final HttpServletRequest httpServerRequest;
     private MultiValueMap<String, String> queryParameters = null;
     private HttpHeaders headers = null;
+    private MultiValueMap<String, String> pathParameters = null;
 
     public JettyHttpServerRequest(HttpServletRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -97,6 +99,15 @@ public class JettyHttpServerRequest implements Request {
     }
 
     @Override
+    public MultiValueMap<String, String> pathParameters() {
+        if (pathParameters == null) {
+            pathParameters = new LinkedMultiValueMap<>();
+        }
+
+        return pathParameters;
+    }
+
+    @Override
     public HttpHeaders headers() {
         if (headers == null) {
             Enumeration<String> headerNames = httpServerRequest.getHeaderNames();
@@ -120,11 +131,6 @@ public class JettyHttpServerRequest implements Request {
     @Override
     public String scheme() {
         return httpServerRequest.getScheme();
-    }
-
-    @Override
-    public String rawMethod() {
-        return httpServerRequest.getMethod();
     }
 
     @Override
@@ -180,6 +186,11 @@ public class JettyHttpServerRequest implements Request {
     @Override
     public WebSocket websocket() {
         return null;
+    }
+
+    @Override
+    public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
+        return this;
     }
 
     @Override

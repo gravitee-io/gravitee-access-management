@@ -66,7 +66,6 @@ public final class TokenRequestFactory {
         tokenRequest.setSslSession(request.sslSession());
         tokenRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
         tokenRequest.setScheme(request.scheme());
-        tokenRequest.setRawMethod(request.rawMethod());
         tokenRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         tokenRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         tokenRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);

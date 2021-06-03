@@ -41,6 +41,7 @@ import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -88,7 +89,7 @@ public class StandaloneConfiguration {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         //Enable ObjectMapper to manage Optional type.
-        Json.mapper.registerModule(new Jdk8Module());//Manage Optional java type
+        DatabindCodec.mapper().registerModule(new Jdk8Module());//Manage Optional java type
         //Json.mapper.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);//Reject duplicated keys
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper;

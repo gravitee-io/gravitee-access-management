@@ -26,7 +26,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,10 +82,10 @@ public class ExceptionHandler implements Handler<RoutingContext> {
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
                         .setStatusCode(policyChainException.statusCode())
                         .end(Json.encodePrettily(oAuth2ErrorResponse));
-            } else if (throwable instanceof HttpStatusException) {
+            } else if (throwable instanceof HttpException) {
                 routingContext
                         .response()
-                        .setStatusCode(((HttpStatusException) throwable).getStatusCode())
+                        .setStatusCode(((HttpException) throwable).getStatusCode())
                         .end();
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);

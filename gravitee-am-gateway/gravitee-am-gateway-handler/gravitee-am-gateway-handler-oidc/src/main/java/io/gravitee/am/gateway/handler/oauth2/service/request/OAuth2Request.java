@@ -18,6 +18,11 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.oidc.ResponseType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.model.uma.PermissionRequest;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http2.HttpFrame;
 
 import java.util.*;
 
@@ -109,6 +114,8 @@ public class OAuth2Request extends BaseRequest {
      * UMA 2.0 permissions
      */
     private List<PermissionRequest> permissions;
+
+    private MultiValueMap<String, String> pathParameters = null;
 
     public String getClientId() {
         return clientId;
@@ -229,5 +236,19 @@ public class OAuth2Request extends BaseRequest {
         return getResponseType() != null
                 && (ResponseType.ID_TOKEN_TOKEN.equals(getResponseType())
                 || ResponseType.CODE_ID_TOKEN_TOKEN.equals(getResponseType()));
+    }
+
+    @Override
+    public MultiValueMap<String, String> pathParameters() {
+        if (pathParameters == null) {
+            pathParameters = new LinkedMultiValueMap<>();
+        }
+
+        return pathParameters;
+    }
+
+    @Override
+    public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
+        return this;
     }
 }

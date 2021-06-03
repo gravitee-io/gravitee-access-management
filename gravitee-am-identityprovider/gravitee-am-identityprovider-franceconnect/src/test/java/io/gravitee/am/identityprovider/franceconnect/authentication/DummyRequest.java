@@ -23,6 +23,7 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http2.HttpFrame;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
@@ -74,6 +75,11 @@ public class DummyRequest implements Request {
        return queryParameters;
     }
 
+    @Override
+    public MultiValueMap<String, String> pathParameters() {
+        return null;
+    }
+
     public void setParameters(Map<String, List<String>> parameters) {
         queryParameters = new LinkedMultiValueMap(parameters);
     }
@@ -90,11 +96,6 @@ public class DummyRequest implements Request {
 
     @Override
     public String scheme() {
-        return null;
-    }
-
-    @Override
-    public String rawMethod() {
         return null;
     }
 
@@ -150,6 +151,11 @@ public class DummyRequest implements Request {
 
     @Override
     public WebSocket websocket() {
+        return null;
+    }
+
+    @Override
+    public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
         return null;
     }
 

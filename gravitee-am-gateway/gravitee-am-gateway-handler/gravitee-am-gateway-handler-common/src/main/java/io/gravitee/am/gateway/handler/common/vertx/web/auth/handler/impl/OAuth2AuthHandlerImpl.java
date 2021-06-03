@@ -28,7 +28,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
@@ -185,7 +185,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
                 }
 
                 if (!BEARER.equalsIgnoreCase(authorization.substring(0, idx))) {
-                    handler.handle(Future.failedFuture(new HttpStatusException(401)));
+                    handler.handle(Future.failedFuture(new HttpException(401)));
                     return;
                 }
                 authToken = authorization.substring(idx + 1);
@@ -195,7 +195,7 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
             }
 
             if (authToken == null) {
-                handler.handle(Future.failedFuture(new HttpStatusException(401)));
+                handler.handle(Future.failedFuture(new HttpException(401)));
                 return;
             }
 
@@ -207,8 +207,8 @@ public class OAuth2AuthHandlerImpl implements OAuth2AuthHandler {
 
     private void processException(RoutingContext context, Throwable exception) {
         int statusCode = -1;
-        if (exception instanceof HttpStatusException) {
-            statusCode = ((HttpStatusException) exception).getStatusCode();
+        if (exception instanceof HttpException) {
+            statusCode = ((HttpException) exception).getStatusCode();
         } else if (exception instanceof OAuth2Exception) {
             statusCode = ((OAuth2Exception) exception).getHttpStatusCode();
         }

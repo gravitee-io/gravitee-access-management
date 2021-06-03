@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthent
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
@@ -76,7 +76,7 @@ public class SocialAuthHandlerImpl implements SocialAuthHandler {
                 ctx.next();
             } else {
                 // to allow further processing if needed
-                processException(ctx, new HttpStatusException(401, authN.cause()));
+                processException(ctx, new HttpException(401, authN.cause()));
             }
         });
     }

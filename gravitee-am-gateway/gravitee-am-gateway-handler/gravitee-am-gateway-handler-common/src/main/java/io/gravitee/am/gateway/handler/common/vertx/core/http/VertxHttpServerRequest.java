@@ -24,6 +24,7 @@ import io.gravitee.common.utils.UUID;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http2.HttpFrame;
 import io.gravitee.gateway.api.ws.WebSocket;
 import io.gravitee.reporter.api.http.Metrics;
 import io.vertx.core.MultiMap;
@@ -54,6 +55,7 @@ public class VertxHttpServerRequest implements Request {
     protected final Metrics metrics;
     private Handler<Long> timeoutHandler;
     private boolean decoded;
+    private MultiValueMap<String, String> pathParameters = null;
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
@@ -138,6 +140,15 @@ public class VertxHttpServerRequest implements Request {
     }
 
     @Override
+    public MultiValueMap<String, String> pathParameters() {
+        if (pathParameters == null) {
+            pathParameters = new LinkedMultiValueMap<>();
+        }
+
+        return pathParameters;
+    }
+
+    @Override
     public HttpHeaders headers() {
         if (headers == null) {
             MultiMap vertxHeaders = httpServerRequest.headers();
@@ -158,11 +169,6 @@ public class VertxHttpServerRequest implements Request {
     @Override
     public String scheme() {
         return httpServerRequest.scheme();
-    }
-
-    @Override
-    public String rawMethod() {
-        return httpServerRequest.rawMethod();
     }
 
     @Override
@@ -251,4 +257,9 @@ public class VertxHttpServerRequest implements Request {
     public WebSocket websocket() {
         throw new IllegalStateException();
     }
+
+    public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
+        return this;
+    }
+
 }

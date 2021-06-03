@@ -69,11 +69,11 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
     @Override
     public void handle(RoutingContext routingContext) {
         HttpServerRequest req = routingContext.request();
-        switch (req.method()) {
-            case GET:
+        switch (req.method().name()) {
+            case "GET":
                 renderPage(routingContext);
                 break;
-            case POST:
+            case "POST":
                 saveEnrollment(routingContext);
                 break;
             default:

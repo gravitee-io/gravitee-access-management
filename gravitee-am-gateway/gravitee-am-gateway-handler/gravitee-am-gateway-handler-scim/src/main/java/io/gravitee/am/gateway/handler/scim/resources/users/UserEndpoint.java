@@ -91,6 +91,10 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void update(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final User user = Json.decodeValue(context.getBodyAsString(), User.class);
             final String userId = context.request().getParam("id");
 
@@ -149,6 +153,10 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void patch(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
             final String userId = context.request().getParam("id");
 

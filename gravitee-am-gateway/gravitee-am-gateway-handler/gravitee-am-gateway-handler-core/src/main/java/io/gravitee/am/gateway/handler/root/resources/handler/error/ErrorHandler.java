@@ -24,7 +24,7 @@ import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -65,8 +65,8 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
-            } else if (throwable instanceof HttpStatusException) {
-                HttpStatusException httpStatusException = (HttpStatusException) throwable;
+            } else if (throwable instanceof HttpException) {
+                HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getMessage(), httpStatusException.getPayload());
             } else {
                 logger.error("An exception occurs while handling incoming request", throwable);

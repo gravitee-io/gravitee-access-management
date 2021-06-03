@@ -27,7 +27,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,8 +76,8 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof SCIMException) {
                 SCIMException scimException = (SCIMException) throwable;
                 handleException(routingContext, scimException.getHttpStatusCode(), scimException.getMessage(), scimException.getScimType());
-            } else if (throwable instanceof HttpStatusException) {
-                if (401 == ((HttpStatusException) throwable).getStatusCode()) {
+            } else if (throwable instanceof HttpException) {
+                if (401 == ((HttpException) throwable).getStatusCode()) {
                     UnauthorizedException unauthorizedException = new UnauthorizedException();
                     handleException(routingContext, unauthorizedException.getHttpStatusCode(), unauthorizedException.getMessage(), null);
                 }
