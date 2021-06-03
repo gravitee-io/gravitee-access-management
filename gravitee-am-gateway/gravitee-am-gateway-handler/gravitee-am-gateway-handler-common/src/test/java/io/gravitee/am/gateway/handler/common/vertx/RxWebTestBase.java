@@ -63,7 +63,7 @@ public class RxWebTestBase extends RxVertxTestBase {
         server = vertx.createHttpServer(getHttpServerOptions());
         client = vertx.createHttpClient(getHttpClientOptions());
         CountDownLatch latch = new CountDownLatch(1);
-        server.requestHandler(router::accept).listen(onSuccess(res -> latch.countDown()));
+        server.requestHandler(router).listen(onSuccess(res -> latch.countDown()));
         awaitLatch(latch);
     }
 
@@ -169,28 +169,40 @@ public class RxWebTestBase extends RxVertxTestBase {
                                      int statusCode, String statusMessage,
                                      Buffer responseBodyBuffer, boolean normalizeLineEndings) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        HttpClientRequest req = client.request(method, port, "localhost", path, resp -> {
-            assertEquals(statusCode, resp.statusCode());
-            assertEquals(statusMessage, resp.statusMessage());
-            if (responseAction != null) {
-                responseAction.accept(resp);
-            }
-            if (responseBodyBuffer == null) {
-                latch.countDown();
-            } else {
-                resp.bodyHandler(buff -> {
-                    if (normalizeLineEndings) {
-                        buff = normalizeLineEndingsFor(buff);
+
+        client.request(method, port, "localhost", path, asyncReq -> {
+            if (asyncReq.succeeded()) {
+                HttpClientRequest request = asyncReq.result();
+
+                if(requestAction != null) {
+                    requestAction.accept(request);
+                }
+
+                request.send(asyncResp -> {
+
+                    assertTrue(asyncResp.succeeded());
+
+                    final HttpClientResponse response = asyncResp.result();
+                    assertEquals(statusCode, response.statusCode());
+                    assertEquals(statusMessage, response.statusMessage());
+                    if (responseAction != null) {
+                        responseAction.accept(response);
                     }
-                    assertEquals(responseBodyBuffer, buff);
-                    latch.countDown();
+                    if (responseBodyBuffer == null) {
+                        latch.countDown();
+                    } else {
+                        response.bodyHandler(buff -> {
+                            if (normalizeLineEndings) {
+                                buff = normalizeLineEndingsFor(buff);
+                            }
+                            assertEquals(responseBodyBuffer, buff);
+                            latch.countDown();
+                        });
+                    }
                 });
             }
         });
-        if (requestAction != null) {
-            requestAction.accept(req);
-        }
-        req.end();
+
         awaitLatch(latch);
     }
 

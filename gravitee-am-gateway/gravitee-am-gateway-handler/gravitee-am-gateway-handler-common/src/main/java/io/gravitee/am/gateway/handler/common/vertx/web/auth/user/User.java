@@ -19,6 +19,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
+import io.vertx.ext.auth.authorization.Authorization;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,12 +40,12 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
-    public io.vertx.ext.auth.User isAuthorized(String authority, Handler<AsyncResult<Boolean>> resultHandler) {
+    public JsonObject attributes() {
         return null;
     }
 
     @Override
-    public io.vertx.ext.auth.User clearCache() {
+    public io.vertx.ext.auth.User isAuthorized(Authorization authorization, Handler<AsyncResult<Boolean>> handler) {
         return null;
     }
 

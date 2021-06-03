@@ -24,7 +24,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
-import io.vertx.ext.web.handler.impl.HttpStatusException;
+import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,8 +54,8 @@ public class ErrorHandler implements Handler<RoutingContext> {
             } else if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(routingContext, policyChainException.statusCode(), policyChainException.key() + " : " + policyChainException.getMessage());
-            } else if (throwable instanceof HttpStatusException) {
-                HttpStatusException httpStatusException = (HttpStatusException) throwable;
+            } else if (throwable instanceof HttpException) {
+                HttpException httpStatusException = (HttpException) throwable;
                 handleException(routingContext, httpStatusException.getStatusCode(), httpStatusException.getPayload());
             } else {
                 logger.error(throwable.getMessage(), throwable);

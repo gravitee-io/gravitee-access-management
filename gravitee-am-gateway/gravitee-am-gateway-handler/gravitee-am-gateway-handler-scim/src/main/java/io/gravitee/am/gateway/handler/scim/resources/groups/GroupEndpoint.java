@@ -89,6 +89,10 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      */
     public void update(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final Group group = Json.decodeValue(context.getBodyAsString(), Group.class);
             final String groupId = context.request().getParam("id");
 
@@ -147,6 +151,10 @@ public class GroupEndpoint extends AbstractGroupEndpoint {
      */
     public void patch(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final PatchOp patchOp = Json.decodeValue(context.getBodyAsString(), PatchOp.class);
             final String groupId = context.request().getParam("id");
 

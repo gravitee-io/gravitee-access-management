@@ -146,15 +146,6 @@ public abstract class BaseRequest implements Request {
     }
 
     @Override
-    public String rawMethod() {
-        return rawMethod;
-    }
-
-    public void setRawMethod(String rawMethod) {
-        this.rawMethod = rawMethod;
-    }
-
-    @Override
     public HttpVersion version() {
         return version;
     }

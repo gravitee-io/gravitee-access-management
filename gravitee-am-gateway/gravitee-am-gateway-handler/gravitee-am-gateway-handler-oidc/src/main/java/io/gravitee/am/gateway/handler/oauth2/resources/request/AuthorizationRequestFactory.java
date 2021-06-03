@@ -72,7 +72,6 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setSslSession(request.sslSession());
         authorizationRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
         authorizationRequest.setScheme(request.scheme());
-        authorizationRequest.setRawMethod(request.rawMethod());
         authorizationRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
         authorizationRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         authorizationRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);

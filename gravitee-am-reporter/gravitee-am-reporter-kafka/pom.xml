@@ -132,7 +132,6 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>${vertx.version}</version>
             <scope>provided</scope>
             <!-- exclude all Jackson data-binding dependencies as their are provided by the main container -->
             <exclusions>
@@ -150,7 +149,6 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-kafka-client</artifactId>
-            <version>${vertx.version}</version>
         </dependency>
 
         <dependency>

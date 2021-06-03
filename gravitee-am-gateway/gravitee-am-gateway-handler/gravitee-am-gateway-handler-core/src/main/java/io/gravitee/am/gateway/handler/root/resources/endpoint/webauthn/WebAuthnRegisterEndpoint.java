@@ -70,11 +70,11 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
     @Override
     public void handle(RoutingContext routingContext) {
         HttpServerRequest req = routingContext.request();
-        switch (req.method()) {
-            case GET:
+        switch (req.method().name()) {
+            case "GET":
                 renderPage(routingContext);
                 break;
-            case POST:
+            case "POST":
                 createCredentials(routingContext);
                 break;
             default:

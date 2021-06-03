@@ -41,6 +41,8 @@ public class VertxHttpServerResponse implements Response {
 
     private final HttpVersion version;
 
+    private HttpHeaders trailers;
+
     public VertxHttpServerResponse(final HttpServerRequest httpServerRequest, final Metrics metrics) {
         this.httpServerResponse = httpServerRequest.response();
         version = httpServerRequest.version();
@@ -79,6 +81,14 @@ public class VertxHttpServerResponse implements Response {
     @Override
     public boolean ended() {
         return httpServerResponse.ended();
+    }
+
+    @Override
+    public HttpHeaders trailers() {
+        if (trailers == null) {
+            trailers = new HttpHeaders();
+        }
+        return trailers;
     }
 
     @Override

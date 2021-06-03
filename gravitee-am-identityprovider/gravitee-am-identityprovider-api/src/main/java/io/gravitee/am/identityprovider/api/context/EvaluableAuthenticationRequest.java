@@ -52,7 +52,7 @@ public class EvaluableAuthenticationRequest {
     }
 
     public String getMethod() {
-        return request.rawMethod();
+        return request.method().name();
     }
 
     public String getLocalAddress() {

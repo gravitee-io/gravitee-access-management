@@ -122,7 +122,7 @@ oauth2:
 # Configuration of additional reporters
 #reporters:
 #  file:
-#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/reporter-logs/
+#    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
 
 # Management API AM service configurations. Provided values are default values.

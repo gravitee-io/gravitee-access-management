@@ -116,6 +116,10 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
      */
     public void create(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final Group group = Json.decodeValue(context.getBodyAsString(), Group.class);
 
             // displayName is required

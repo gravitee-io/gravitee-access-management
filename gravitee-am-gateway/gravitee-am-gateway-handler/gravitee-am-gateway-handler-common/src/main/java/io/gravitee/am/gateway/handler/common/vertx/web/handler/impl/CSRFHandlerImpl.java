@@ -38,6 +38,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import static io.vertx.core.http.HttpMethod.*;
+
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
  *
@@ -57,8 +59,9 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private String cookieName = DEFAULT_COOKIE_NAME;
     private String cookiePath = DEFAULT_COOKIE_PATH;
     private String headerName = DEFAULT_HEADER_NAME;
-    private String responseBody = DEFAULT_RESPONSE_BODY;
     private long timeout = SessionHandler.DEFAULT_SESSION_TIMEOUT;
+    private String origin;
+    private boolean httpOnly;
 
     public CSRFHandlerImpl(final String secret) {
         try {
@@ -70,6 +73,12 @@ public class CSRFHandlerImpl implements CSRFHandler {
     }
 
     @Override
+    public CSRFHandler setOrigin(String origin) {
+        this.origin = origin;
+        return this;
+    }
+
+    @Override
     public CSRFHandler setCookieName(String cookieName) {
         this.cookieName = cookieName;
         return this;
@@ -78,6 +87,12 @@ public class CSRFHandlerImpl implements CSRFHandler {
     @Override
     public CSRFHandler setCookiePath(String cookiePath) {
         this.cookiePath = cookiePath;
+        return this;
+    }
+
+    @Override
+    public CSRFHandler setCookieHttpOnly(boolean httpOnly) {
+        this.httpOnly = httpOnly;
         return this;
     }
 
@@ -96,12 +111,6 @@ public class CSRFHandlerImpl implements CSRFHandler {
     @Override
     public CSRFHandler setNagHttps(boolean nag) {
         this.nagHttps = nag;
-        return this;
-    }
-
-    @Override
-    public CSRFHandler setResponseBody(String responseBody) {
-        this.responseBody = responseBody;
         return this;
     }
 
@@ -169,8 +178,8 @@ public class CSRFHandlerImpl implements CSRFHandler {
 
         HttpMethod method = ctx.request().method();
 
-        switch (method) {
-            case GET:
+        switch (method.name()) {
+            case "GET":
                 final String token = generateToken();
                 // put the token in the context for users who prefer to render the token directly on the HTML
                 ctx.put(headerName, token);
@@ -178,10 +187,10 @@ public class CSRFHandlerImpl implements CSRFHandler {
                 enhanceContext(ctx);
                 ctx.next();
                 break;
-            case POST:
-            case PUT:
-            case DELETE:
-            case PATCH:
+            case "POST":
+            case "PUT":
+            case "DELETE":
+            case "PATCH":
                 final String header = ctx.request().getHeader(headerName);
                 final Cookie cookie = ctx.getCookie(cookieName);
                 if (validateToken(header == null ? ctx.request().getFormAttribute(headerName) : header, cookie)) {

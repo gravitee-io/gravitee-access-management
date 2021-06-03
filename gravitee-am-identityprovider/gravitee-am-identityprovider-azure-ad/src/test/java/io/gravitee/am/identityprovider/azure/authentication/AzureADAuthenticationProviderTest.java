@@ -101,7 +101,7 @@ public class AzureADAuthenticationProviderTest {
     public void init() {
         ((WebClientInternal) client.getDelegate()).addInterceptor(event -> {
 
-            if (event.phase() == ClientPhase.SEND_REQUEST) {
+            if (event.phase() == ClientPhase.PREPARE_REQUEST) {
                 // By pass send request and jump directly to dispatch phase with the mocked http response.
                 event.dispatchResponse(httpResponse);
             }

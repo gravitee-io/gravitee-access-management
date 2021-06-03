@@ -129,6 +129,10 @@ public class UsersEndpoint extends AbstractUserEndpoint {
      */
     public void create(RoutingContext context) {
         try {
+            if(context.getBodyAsString() == null) {
+                context.fail(new InvalidSyntaxException("Unable to parse body message"));
+                return;
+            }
             final User user = Json.decodeValue(context.getBodyAsString(), User.class);
 
             // username is required
