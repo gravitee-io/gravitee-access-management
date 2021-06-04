@@ -129,6 +129,11 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
         return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))).first()).firstElement().map(this::convert);
     }
 
+    @Override
+    public Flowable<Role> findByNamesAndAssignableType(ReferenceType referenceType, String referenceId, List<String> names, ReferenceType assignableType) {
+        return Flowable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), in(FIELD_NAME, names), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name())))).map(this::convert);
+    }
+
     private Role convert(RoleMongo roleMongo) {
         if (roleMongo == null) {
             return null;

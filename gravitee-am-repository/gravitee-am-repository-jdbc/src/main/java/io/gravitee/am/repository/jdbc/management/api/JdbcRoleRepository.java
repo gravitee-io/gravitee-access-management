@@ -149,6 +149,14 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     }
 
     @Override
+    public Flowable<Role> findByNamesAndAssignableType(ReferenceType referenceType, String referenceId, List<String> names, ReferenceType assignableType) {
+        LOGGER.debug("findByNamesAndAssignableType({},{},{},{})", referenceType, referenceId, names, assignableType);
+        return roleRepository.findByNamesAndAssignableType(referenceType.name(), referenceId, names, assignableType.name())
+                .map(this::toEntity)
+                .flatMapMaybe(role -> completeWithScopes(Maybe.just(role), role.getId()));
+    }
+
+    @Override
     public Maybe<Role> findById(String id) {
         LOGGER.debug("findById({})", id);
         return completeWithScopes(roleRepository.findById(id)

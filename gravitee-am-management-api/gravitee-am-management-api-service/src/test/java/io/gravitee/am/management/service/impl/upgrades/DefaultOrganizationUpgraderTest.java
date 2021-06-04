@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,12 +71,15 @@ public class DefaultOrganizationUpgraderTest {
     @Mock
     private DomainService domainService;
 
+    @Mock
+    private Environment environment;
+
     private DefaultOrganizationUpgrader cut;
 
     @Before
     public void before() {
-
-        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService);
+        when(environment.getProperty("security.defaultAdmin", boolean.class, true)).thenReturn(true);
+        cut = new DefaultOrganizationUpgrader(organizationService, identityProviderService, userService, membershipHelper, roleService, domainService, environment, null);
     }
 
     @Test

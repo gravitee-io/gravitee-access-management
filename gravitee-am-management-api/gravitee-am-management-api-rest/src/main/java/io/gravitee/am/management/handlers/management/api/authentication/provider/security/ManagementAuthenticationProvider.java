@@ -33,10 +33,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,11 +65,14 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         }
 
         details.putIfAbsent(Claims.organization, Organization.DEFAULT);
-
         String organizationId = details.get(Claims.organization);
-        Organization organization = organizationService.findById(organizationId).blockingGet();
 
-        List<String> identities = organization.getIdentities();
+        List<String> identities = identityProviderManager.getAuthenticationProviderFor(organizationId);
+        Organization organization = organizationService.findById(organizationId).blockingGet();
+        if (organization.getIdentities() != null) {
+            identities.addAll(organization.getIdentities());
+        }
+
         Iterator<String> iter = identities.iterator();
         io.gravitee.am.identityprovider.api.User user = null;
         AuthenticationException lastException = null;

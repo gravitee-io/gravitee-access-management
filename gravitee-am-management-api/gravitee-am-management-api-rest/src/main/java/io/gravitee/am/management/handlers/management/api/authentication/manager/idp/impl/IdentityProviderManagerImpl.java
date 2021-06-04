@@ -18,11 +18,13 @@ package io.gravitee.am.management.handlers.management.api.authentication.manager
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
+import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
@@ -30,10 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -41,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 @Component("managementIdentityProviderManager")
-public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload> {
+public class IdentityProviderManagerImpl implements IdentityProviderManager, InitializingBean, EventListener<IdentityProviderEvent, Payload>, InMemoryIdentityProviderListener {
 
     private final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
 
@@ -53,6 +59,15 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private io.gravitee.am.management.service.IdentityProviderManager commonIdentityProviderManager;
 
     private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -78,7 +93,27 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers", e);
         }
+
+        this.commonIdentityProviderManager.setListener(this);
     }
+
+    @Override
+    public void registerAuthenticationProvider(IdentityProvider provider) {
+        updateAuthenticationProvider(provider);
+    }
+
+    public List<String> getAuthenticationProviderFor(String organizationId) {
+        if (this.identities == null) {
+            return Collections.emptyList();
+        }
+        return this.identities.values()
+                .stream()
+                .filter(idp -> organizationId.equals(idp.getReferenceId()) && ReferenceType.ORGANIZATION.equals(idp.getReferenceType()))
+                .map(IdentityProvider::getId)
+                .collect(Collectors.toList());
+    }
+
+
 
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {

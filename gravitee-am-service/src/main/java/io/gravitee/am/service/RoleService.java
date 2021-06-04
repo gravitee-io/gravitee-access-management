@@ -51,6 +51,8 @@ public interface RoleService {
 
     Maybe<Role> findSystemRole(SystemRole systemRole, ReferenceType assignableType);
 
+    Flowable<Role> findRolesByName(ReferenceType referenceType, String referenceId, ReferenceType assignableType, List<String> roleNames);
+
     Maybe<Role> findDefaultRole(String organizationId, DefaultRole defaultRole, ReferenceType assignableType);
 
     Single<Set<Role>> findByIdIn(List<String> ids);

@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator.DEFAULT_REDIRECT_COOKIE_NAME;
+import static java.util.Collections.emptyList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -85,7 +86,9 @@ public class LoginController {
         // fetch domain social identity providers
         List<IdentityProvider> socialProviders = null;
         try {
-            socialProviders = organizationService.findById(organizationId).map(Organization::getIdentities).blockingGet()
+            socialProviders = organizationService.findById(organizationId)
+                    .map(org -> Optional.ofNullable(org.getIdentities()).orElse(emptyList()))
+                    .blockingGet()
                     .stream()
                     .map(identity -> identityProviderManager.getIdentityProvider(identity))
                     .filter(Objects::nonNull)

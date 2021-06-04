@@ -48,6 +48,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.Acl.*;
 
@@ -132,6 +133,17 @@ public class RoleServiceImpl implements RoleService {
                     LOGGER.error("An error occurs while trying to find system role : {} for type : {}", systemRole.name(), assignableType, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find system role : %s for type : %s", systemRole.name(), assignableType), ex));
+                });
+    }
+
+    @Override
+    public Flowable<Role> findRolesByName(ReferenceType referenceType, String referenceId, ReferenceType assignableType, List<String> roleNames) {
+        return roleRepository.findByNamesAndAssignableType(referenceType, referenceId, roleNames, assignableType)
+                .onErrorResumeNext(ex -> {
+                    String joinedRoles = roleNames.stream().collect(Collectors.joining(", "));
+                    LOGGER.error("An error occurs while trying to find roles : {}", joinedRoles, ex);
+                    return Flowable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find roles : %s", joinedRoles), ex));
                 });
     }
 
