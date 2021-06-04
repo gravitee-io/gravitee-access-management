@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Platform;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
@@ -28,6 +29,7 @@ import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
 
@@ -57,6 +59,50 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(roles -> roles.size() == 1);
+    }
+
+    @Test
+    public void testFindByNamesAndAssignable() throws TechnicalException {
+        // create role
+        Role role = new Role();
+        final String NAME_1 = "testName";
+        role.setName(NAME_1);
+        role.setReferenceType(ReferenceType.PLATFORM);
+        role.setReferenceId(Platform.DEFAULT);
+        role.setAssignableType(ReferenceType.ORGANIZATION);
+        roleRepository.create(role).blockingGet();
+
+        Role role2 = new Role();
+        final String NAME_2 = "testName2";
+        role2.setName(NAME_2);
+        role2.setReferenceType(ReferenceType.PLATFORM);
+        role2.setReferenceId(Platform.DEFAULT);
+        role2.setAssignableType(ReferenceType.ORGANIZATION);
+        roleRepository.create(role2).blockingGet();
+
+        Role role3 = new Role();
+        final String NAME_3 = "testName3";
+        role3.setName(NAME_3);
+        role3.setReferenceType(ReferenceType.PLATFORM);
+        role3.setReferenceId(Platform.DEFAULT);
+        role3.setAssignableType(ReferenceType.ORGANIZATION);
+        roleRepository.create(role3).blockingGet();
+
+        Role role4 = new Role();
+        final String NAME_4 = "testName4";
+        role4.setName(NAME_4);
+        role4.setReferenceType(ReferenceType.PLATFORM);
+        role4.setReferenceId(Platform.DEFAULT);
+        role4.setAssignableType(ReferenceType.ENVIRONMENT);
+        roleRepository.create(role4).blockingGet();
+
+        // fetch roles 1 & 2
+        TestObserver<List<Role>> testObserver = roleRepository.findByNamesAndAssignableType(ReferenceType.PLATFORM, Platform.DEFAULT, Arrays.asList(NAME_1, NAME_2), ReferenceType.ORGANIZATION).toList().test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(roles -> roles.size() == 2 && roles.stream().map(Role::getName).collect(Collectors.toList()).containsAll(Arrays.asList(NAME_1, NAME_2)));
     }
 
     @Test

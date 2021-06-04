@@ -19,11 +19,14 @@ import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
+import io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -35,12 +38,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -103,6 +111,18 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private RoleService roleService;
+
+    private InMemoryIdentityProviderListener listener;
+
+    public void setListener(InMemoryIdentityProviderListener listener) {
+        this.listener = listener;
+    }
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -116,6 +136,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
             loadUserProvider(identityProvider);
         });
+
     }
 
     @Override
@@ -129,6 +150,39 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                 removeUserProvider(event.content().getId());
                 break;
         }
+    }
+
+    @Override
+    public void loadIdentityProviders() {
+        if (this.listener != null) {
+            loadProvidersFromConfig().forEach(listener::registerAuthenticationProvider);
+        }
+    }
+
+    private List<IdentityProvider> loadProvidersFromConfig(){
+        List<IdentityProvider> providers = new ArrayList<>();
+        boolean found = true;
+        int idx = 0;
+
+        while (found) {
+            String type = environment.getProperty("security.providers[" + idx + "].type");
+            found = (type != null);
+            if (found) {
+                switch (type) {
+                    case MEMORY_TYPE:
+                        InlineOrganizationProviderConfiguration providerConfig = new InlineOrganizationProviderConfiguration(roleService, environment, idx);
+                        if (providerConfig.isEnabled()) {
+                            providers.add(providerConfig.buildIdentityProvider());
+                        }
+                        break;
+                    default:
+                        logger.warn("Unsupported provider with type '{}'", type);
+                }
+            }
+            idx++;
+        }
+
+        return providers;
     }
 
     @Override
@@ -241,4 +295,5 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             userProviders.remove(identityProvider.getId());
         }
     }
+
 }

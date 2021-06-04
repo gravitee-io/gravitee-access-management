@@ -15,22 +15,24 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.DefaultRole;
-import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.PatchOrganization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -57,18 +59,29 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private final DomainService domainService;
 
+    private final Environment environment;
+
+    private final IdentityProviderManager identityProviderManager;
+
+    private final boolean useDefaultAdmin;
+
     public DefaultOrganizationUpgrader(OrganizationService organizationService,
                                        IdentityProviderService identityProviderService,
                                        UserService userService,
                                        MembershipHelper membershipHelper,
                                        RoleService roleService,
-                                       DomainService domainService) {
+                                       DomainService domainService,
+                                       Environment environment,
+                                       IdentityProviderManager identityProviderManager) {
         this.organizationService = organizationService;
         this.identityProviderService = identityProviderService;
         this.userService = userService;
         this.membershipHelper = membershipHelper;
         this.roleService = roleService;
         this.domainService = domainService;
+        this.environment = environment;
+        this.identityProviderManager = identityProviderManager;
+        this.useDefaultAdmin = environment.getProperty("security.defaultAdmin", boolean.class, true);
     }
 
     @Override
@@ -107,7 +120,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
                     // then delete the domain
                     domainService.delete(ADMIN_DOMAIN).blockingGet();
-                } else {
+                } else if (useDefaultAdmin) {
                     // Need to create an inline provider and an admin user for this newly created default organization.
                     IdentityProvider inlineProvider = createInlineProvider();
                     User adminUser = createAdminUser(inlineProvider);
@@ -115,32 +128,39 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
                 }
             }
 
+            if (identityProviderManager != null) {
+                // call the idpManager here to ensure that roles have been created
+                identityProviderManager.loadIdentityProviders();
+            }
+
             // Get organization with fresh data.
             organization = organizationService.findById(Organization.DEFAULT).blockingGet();
 
             logger.info("Check if default organization is up to date");
 
-            // Need to check that inline idp and default admin user has 'admin' role.
-            final List<String> identities = organization.getIdentities();
+            if (useDefaultAdmin) {
+                // Need to check that inline idp and default admin user has 'admin' role.
+                final List<String> identities = Optional.ofNullable(organization.getIdentities()).orElse(Collections.emptyList());
 
-            IdentityProvider inlineIdp = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
-                    .filter(identityProvider -> identityProvider.getType().equals("inline-am-idp")
-                            && !identityProvider.isExternal()
-                            && identities.contains(identityProvider.getId()))
-                    .firstElement().blockingGet();
+                IdentityProvider inlineIdp = identityProviderService.findAll(ReferenceType.ORGANIZATION, Organization.DEFAULT)
+                        .filter(identityProvider -> identityProvider.getType().equals("inline-am-idp")
+                                && !identityProvider.isExternal()
+                                && identities.contains(identityProvider.getId()))
+                        .firstElement().blockingGet();
 
-            // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
-            if (inlineIdp != null) {
-                // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
-                if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN_USERNAME + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
+                // If inline idp doesn't exist or is not enabled, it is probably an administrator choice. So do not go further.
+                if (inlineIdp != null) {
+                    // If inline idp doesn't have "admin" user in its configuration, it is probably an administrator choice. So do not go further.
+                    if (inlineIdp.getConfiguration().contains(",\"username\":\"" + ADMIN_USERNAME + "\",") && inlineIdp.getRoleMapper().isEmpty()) {
 
-                    // Check the user admin exists.
-                    User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
+                        // Check the user admin exists.
+                        User adminUser = userService.findByUsernameAndSource(ReferenceType.ORGANIZATION, Organization.DEFAULT, ADMIN_USERNAME, inlineIdp.getId()).blockingGet();
 
-                    if (adminUser == null) {
-                        // Create the admin user with organization primary owner role on the default organization.
-                        adminUser = createAdminUser(inlineIdp);
-                        membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
+                        if (adminUser == null) {
+                            // Create the admin user with organization primary owner role on the default organization.
+                            adminUser = createAdminUser(inlineIdp);
+                            membershipHelper.setOrganizationPrimaryOwnerRole(adminUser);
+                        }
                     }
                 }
             }

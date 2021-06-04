@@ -176,6 +176,35 @@ jwt:
   #cookie-domain: .gravitee.io # cookie domain (default "")
   #cookie-secure: true # cookie secure flag (default false)
 
+# Security section is used to defined organization users available on AM bootstrap
+security:
+  # If true create on AM bootstrap an inline identity provider with an admin user (login: admin)
+  # this is the legacy mode
+  defaultAdmin: true
+  ## authentication providers
+  ## currently, only "in memory" provider is supported
+  providers:
+    - type: memory
+      enabled: false
+      ## Name of IdentityProvider
+      ## If missing the type will be used to create a generic name (ex: Memory users)
+      #name:
+      ## password encoding/hashing algorithm. One of:
+      ## - BCrypt : passwords are hashed with bcrypt (supports only $2a$ algorithm)
+      ## - none : passwords are not hashed/encrypted
+      #default value is BCrypt
+      password-encoding-algo: BCrypt
+      users:
+        - user:
+          username: admin
+          #email:
+          firstname: Administrator
+          lastname: Administrator
+          ## Passwords are encoded using BCrypt
+          ## Password value: adminadmin
+          password: $2a$10$NG5WLbspq8V1yJDzUKfUK.oum94qL/Ne3B5fQCgekw/Y4aOEaoFZq
+          role: ORGANIZATION_OWNER
+
 # SMTP configuration used to send mails
 email:
   enabled: false
@@ -318,4 +347,3 @@ ds:
     dbname: gravitee-am
     host: localhost
     port: 27017
-

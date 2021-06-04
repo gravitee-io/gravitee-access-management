@@ -17,11 +17,17 @@ package io.gravitee.am.management.service.impl.upgrades.helpers;
 
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)

@@ -47,4 +47,7 @@ public interface SpringRoleRepository extends RxJava2CrudRepository<JdbcRole, St
 
     @Query("select * from roles r where r.reference_type = :refType and r.reference_id = :refId and r.name = :name and r.assignable_type = :assignable")
     Maybe<JdbcRole> findByNameAndAssignableType(@Param("refType") String refType, @Param("refId") String refId, @Param("name")String name, @Param("assignable")String assignableType);
+
+    @Query("select * from roles r where r.reference_type = :refType and r.reference_id = :refId and r.name in (:names) and r.assignable_type = :assignable")
+    Flowable<JdbcRole> findByNamesAndAssignableType(@Param("refType") String refType, @Param("refId") String refId, @Param("names")List<String> names, @Param("assignable")String assignableType);
 }

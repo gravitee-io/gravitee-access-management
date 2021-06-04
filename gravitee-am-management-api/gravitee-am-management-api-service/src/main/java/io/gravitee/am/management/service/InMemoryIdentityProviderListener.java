@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.authentication.manager.idp;
+package io.gravitee.am.management.service;
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.IdentityProvider;
 
-import java.util.List;
-
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderManager {
+public interface InMemoryIdentityProviderListener  {
 
-    AuthenticationProvider get(String id);
-
-    IdentityProvider getIdentityProvider(String id);
-
-    List<String> getAuthenticationProviderFor(String organizationId);
+  void registerAuthenticationProvider(IdentityProvider provider);
 
 }

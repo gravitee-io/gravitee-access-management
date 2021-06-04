@@ -35,4 +35,9 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
     Single<IdentityProvider> create(String domain);
 
     boolean userProviderExists(String identityProviderId);
+
+    void setListener(InMemoryIdentityProviderListener listener);
+
+    void loadIdentityProviders();
+
 }

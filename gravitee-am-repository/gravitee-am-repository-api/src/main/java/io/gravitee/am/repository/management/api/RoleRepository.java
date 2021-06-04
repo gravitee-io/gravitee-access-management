@@ -43,4 +43,6 @@ public interface RoleRepository extends CrudRepository<Role, String> {
     Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role);
 
     Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType);
+
+    Flowable<Role> findByNamesAndAssignableType(ReferenceType referenceType, String referenceId, List<String> name, ReferenceType assignableType);
 }
