@@ -92,7 +92,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
         <swagger.version>1.6.1</swagger.version>
-        <hibernate-validator.version>6.1.4.Final</hibernate-validator.version>
+        <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
         <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.0.11.RELEASE</thymeleaf.version>
