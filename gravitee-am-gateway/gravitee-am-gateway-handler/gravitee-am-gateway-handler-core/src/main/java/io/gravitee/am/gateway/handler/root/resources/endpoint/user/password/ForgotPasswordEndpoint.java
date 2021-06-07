@@ -88,7 +88,7 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
         routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
 
         AccountSettings settings = AccountSettings.getInstance(domain, client);
-        if (settings.isResetPasswordCustomForm()) {
+        if (settings != null && settings.isResetPasswordCustomForm()) {
             // custom form is enabled
             // display Email form if ConfirmIdentity is enable & warning parameter is missing
             // otherwise display custom form (ConfirmIdentity is disabled or an identity confirmation is required)
