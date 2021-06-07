@@ -39,11 +39,17 @@ public interface ReporterService {
 
     Single<Reporter> createDefault(String domain);
 
+    NewReporter createInternal(String domain);
+
     Single<Reporter> create(String domain, NewReporter newReporter, User principal);
 
     Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal);
 
     Completable delete(String reporterId, User principal);
+
+    default NewReporter createInternal() {
+        return createInternal(null);
+    }
 
     default Single<Reporter> create(String domain, NewReporter newReporter) {
         return create(domain, newReporter, null);
