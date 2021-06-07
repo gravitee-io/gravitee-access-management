@@ -403,7 +403,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // Registration confirmation endpoint
         router
-                .post(PATH_REGISTER)
+                .route(PATH_REGISTER)
                 .handler(sessionHandler);
         router
                 .route(PATH_CONFIRM_REGISTRATION)
@@ -439,7 +439,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_MFA_CHALLENGE).handler(authenticationFlowContextHandler);
 
         // Registration confirmation endpoint
-        router.post(PATH_REGISTER).handler(authenticationFlowContextHandler);
+        router.route(PATH_REGISTER).handler(authenticationFlowContextHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(authenticationFlowContextHandler);
 
         // Reset password endpoint
