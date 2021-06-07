@@ -60,7 +60,7 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
 
         AccountSettings settings = AccountSettings.getInstance(domain, client);
 
-        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings.isResetPasswordCustomForm(), settings.isResetPasswordConfirmIdentity());
+        final ForgotPasswordParameters parameters = new ForgotPasswordParameters(email, username, settings != null && settings.isResetPasswordCustomForm(), settings != null && settings.isResetPasswordConfirmIdentity());
         userService.forgotPassword(parameters, client, getAuthenticatedUser(context))
                 .subscribe(
                         () -> {
