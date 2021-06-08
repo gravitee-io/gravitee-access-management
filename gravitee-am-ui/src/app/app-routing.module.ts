@@ -421,6 +421,16 @@ export const routes: Routes = [
                 }
               },
               {
+                path: 'new',
+                component: UserCreationComponent,
+                canActivate: [AuthGuard],
+                data: {
+                  perms: {
+                    only: ['organization_user_create']
+                  }
+                }
+              },
+              {
                 path: ':userId',
                 component: UserComponent,
                 canActivate: [AuthGuard],

@@ -1,0 +1,6 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:identityprovider:gravitee:GraviteeIdentityProviderConfiguration",
+  "properties" : {
+  }
+}

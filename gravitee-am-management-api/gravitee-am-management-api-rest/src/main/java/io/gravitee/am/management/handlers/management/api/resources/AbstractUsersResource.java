@@ -16,6 +16,8 @@
 package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
+import io.gravitee.am.management.service.CommonUserService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -25,6 +27,7 @@ import io.gravitee.am.service.DomainService;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.inject.Named;
 import javax.ws.rs.BadRequestException;
 
 /**
@@ -40,6 +43,10 @@ public abstract class AbstractUsersResource extends AbstractResource {
     protected UserService userService;
 
     @Autowired
+    @Named("managementOrganizationUserService")
+    protected OrganizationUserService organizationUserService;
+
+    @Autowired
     protected DomainService domainService;
 
     protected Single<Page<User>> searchUsers(ReferenceType referenceType,
@@ -48,13 +55,18 @@ public abstract class AbstractUsersResource extends AbstractResource {
                                              String filter,
                                              int page,
                                              int size) {
+        CommonUserService service = (referenceType == ReferenceType.ORGANIZATION ? organizationUserService : userService);
+        return executeSearchUsers(service, referenceType, referenceId, query, filter, page, size);
+    }
+
+    private Single<Page<User>> executeSearchUsers(CommonUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
         if (query != null) {
-            return userService.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            return service.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
         }
         if (filter != null) {
             return Single.defer(() -> {
                 FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
-                return userService.search(referenceType, referenceId, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                return service.search(referenceType, referenceId, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
             }).onErrorResumeNext(ex -> {
                 if (ex instanceof IllegalArgumentException) {
                     return Single.error(new BadRequestException(ex.getMessage()));
@@ -62,7 +74,7 @@ public abstract class AbstractUsersResource extends AbstractResource {
                 return Single.error(ex);
             });
         }
-        return userService.findAll(referenceType, referenceId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        return service.findAll(referenceType, referenceId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
     }
 
 }

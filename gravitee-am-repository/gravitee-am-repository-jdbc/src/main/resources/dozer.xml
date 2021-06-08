@@ -138,6 +138,26 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.model.User</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>additionalInformation</a>
+            <b>additionalInformation</b>
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter">
+            <a>x509Certificates</a>
+            <b>x509Certificates</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter">
+            <a>factors</a>
+            <b>factors</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.repository.oauth2.model.AuthorizationCode</class-a>
         <class-b>io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.MultiValueMapToStringConverter">

@@ -19,3 +19,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_9_0/schema.yml
   - include:
       - file: liquibase/changelogs/v3_10_0/schema.yml
+  - include:
+      - file: liquibase/changelogs/v3_10_0/users-migration.yml

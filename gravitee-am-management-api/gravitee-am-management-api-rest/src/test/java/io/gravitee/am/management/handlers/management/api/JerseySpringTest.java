@@ -20,6 +20,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.*;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
@@ -43,6 +44,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import javax.annotation.Priority;
+import javax.inject.Named;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -70,6 +72,10 @@ public abstract class JerseySpringTest {
     protected static final String USER_NAME = "UnitTests";
 
     protected ObjectMapper objectMapper = new ObjectMapperResolver().getContext(ObjectMapper.class);
+
+    @Autowired
+    @Named("managementOrganizationUserService")
+    protected OrganizationUserService organizationUserService;
 
     @Autowired
     protected DomainService domainService;
@@ -195,6 +201,11 @@ public abstract class JerseySpringTest {
         @Bean
         public DomainService domainService() {
             return mock(DomainService.class);
+        }
+
+        @Bean("managementOrganizationUserService")
+        public OrganizationUserService organizationUserService() {
+            return mock(OrganizationUserService.class);
         }
 
         @Bean

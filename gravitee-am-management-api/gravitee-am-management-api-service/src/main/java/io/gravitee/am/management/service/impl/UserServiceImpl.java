@@ -18,12 +18,9 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
@@ -38,8 +35,6 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -50,6 +45,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -57,7 +53,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component("managementUserService")
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.UserService> implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
 
@@ -65,20 +61,11 @@ public class UserServiceImpl implements UserService {
     private Integer expireAfter;
 
     @Autowired
-    private io.gravitee.am.service.UserService userService;
-
-    @Autowired
-    private IdentityProviderManager identityProviderManager;
-
-    @Autowired
     private EmailService emailService;
 
     @Autowired
     @Qualifier("managementJwtBuilder")
     private JWTBuilder jwtBuilder;
-
-    @Autowired
-    private AuditService auditService;
 
     @Autowired
     private LoginAttemptService loginAttemptService;
@@ -93,13 +80,12 @@ public class UserServiceImpl implements UserService {
     private DomainService domainService;
 
     @Autowired
-    private MembershipService membershipService;
+    protected io.gravitee.am.service.UserService userService;
 
-    @Autowired
-    private PasswordValidator passwordValidator;
-
-    @Autowired
-    private UserValidator userValidator;
+    @Override
+    protected io.gravitee.am.service.UserService getUserService() {
+        return this.userService;
+    }
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size) {
@@ -123,32 +109,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-        return userService.findById(referenceType, referenceId, id)
-                .map(this::setInternalStatus);
-    }
-
-    @Override
     public Maybe<User> findById(String id) {
         return userService.findById(id)
                 .map(this::setInternalStatus);
-    }
-
-    @Override
-    public Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser) {
-
-        return userService.findByExternalIdAndSource(referenceType, referenceId, newUser.getExternalId(), newUser.getSource())
-                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(referenceType, referenceId, newUser.getUsername(), newUser.getSource())))
-                .flatMap(existingUser -> {
-                    updateInfos(existingUser, newUser);
-                    return userService.update(existingUser).toMaybe();
-                })
-                .switchIfEmpty(Single.defer(() -> {
-                    User user = transform(newUser);
-                    user.setReferenceType(referenceType);
-                    user.setReferenceId(referenceId);
-                    return userService.create(user);
-                }));
     }
 
     @Override
@@ -177,7 +140,7 @@ public class UserServiceImpl implements UserService {
                                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(newUser.getSource())))
                                 .flatMapSingle(userProvider -> {
                                     // check client
-                                    return checkClient(domain.getId(), newUser.getClient())
+                                    return checkClientFunction().apply(domain.getId(), newUser.getClient())
                                             .map(Optional::of)
                                             .defaultIfEmpty(Optional.empty())
                                             .flatMapSingle(optClient -> {
@@ -268,47 +231,6 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    @Override
-    public Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-        return userValidator.validate(updateUser).andThen(
-                userService.findById(referenceType, referenceId, id)
-                        .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
-                                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                                // check client
-                                .flatMapSingle(userProvider -> {
-                                    String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
-                                    if (client != null && referenceType == ReferenceType.DOMAIN) {
-                                        return checkClient(referenceId, client)
-                                                .flatMapSingle(client1 -> {
-                                                    updateUser.setClient(client1.getId());
-                                                    return Single.just(userProvider);
-                                                });
-                                    }
-                                    return Single.just(userProvider);
-                                })
-                                // update the idp user
-                                .flatMap(userProvider -> userProvider.findByUsername(user.getUsername())
-                                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user.getUsername(), updateUser))))
-                                .flatMap(idpUser -> {
-                                    // set external id
-                                    updateUser.setExternalId(idpUser.getId());
-                                    return userService.update(referenceType, referenceId, id, updateUser)
-                                            .map(this::setInternalStatus);
-                                })
-                                .onErrorResumeNext(ex -> {
-                                    if (ex instanceof UserNotFoundException) {
-                                        // idp user does not exist, only update AM user
-                                        return userService.update(referenceType, referenceId, id, updateUser)
-                                                .map(this::setInternalStatus);
-                                    }
-                                    return Single.error(ex);
-                                })
-                                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).oldValue(user).user(user1)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UPDATED).throwable(throwable)))
-                        ));
-    }
-
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
@@ -316,53 +238,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, id)
-                .flatMap(user -> {
-                    user.setEnabled(status);
-                    return userService.update(user);
-                })
-                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).user(user1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type((status ? EventType.USER_ENABLED : EventType.USER_DISABLED)).throwable(throwable)));
-    }
-
-    @Override
     public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-
         return updateStatus(ReferenceType.DOMAIN, domain, id, status, principal);
-    }
-
-    @Override
-    public Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(referenceType, referenceId, userId)
-                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
-                        .map(Optional::ofNullable)
-                        .flatMapCompletable(optUserProvider -> {
-                            // no user provider found, continue
-                            if (!optUserProvider.isPresent()) {
-                                return Completable.complete();
-                            }
-                            // user has never been created in the identity provider, continue
-                            if (user.getExternalId() == null || user.getExternalId().isEmpty()) {
-                                return Completable.complete();
-                            }
-                            return optUserProvider.get().delete(user.getExternalId())
-                                    .onErrorResumeNext(ex -> {
-                                        if (ex instanceof UserNotFoundException) {
-                                            // idp user does not exist, continue
-                                            return Completable.complete();
-                                        }
-                                        return Completable.error(ex);
-                                    });
-                        })
-                        .andThen(userService.delete(userId))
-                        // remove from memberships if user is an administrative user
-                        .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :
-                                membershipService.findByMember(userId, MemberType.USER)
-                                        .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
-                        .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(user)))
-                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).throwable(throwable)))
-                );
     }
 
     @Override
@@ -370,7 +247,7 @@ public class UserServiceImpl implements UserService {
         return userService.findById(ReferenceType.DOMAIN, domain.getId(), userId)
                 .flatMap(user -> {
                     // get client for password settings
-                    return checkClient(domain.getId(), user.getClient())
+                    return checkClientFunction().apply(domain.getId(), user.getClient())
                             .map(Optional::of)
                             .defaultIfEmpty(Optional.empty())
                             .flatMapSingle(optClient -> {
@@ -438,7 +315,7 @@ public class UserServiceImpl implements UserService {
                                 return Completable.error(new UserInvalidException("Registration is completed for the user " + userId));
                             }
                             // fetch the client
-                            return checkClient(user.getReferenceId(), user.getClient())
+                            return checkClientFunction().apply(user.getReferenceId(), user.getClient())
                                     .map(Optional::of)
                                     .defaultIfEmpty(Optional.empty())
                                     .doOnSuccess(optClient -> new Thread(() -> emailService.send(domain1, optClient.orElse(null), Template.REGISTRATION_CONFIRMATION, user)).start())
@@ -517,19 +394,21 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private Maybe<Application> checkClient(String domain, String client) {
-        if (client == null) {
-            return Maybe.empty();
-        }
-        return applicationService.findById(client)
-                .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
-                .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
-                .map(app1 -> {
-                    if (!domain.equals(app1.getDomain())) {
-                        throw new ClientNotFoundException(client);
-                    }
-                    return app1;
-                });
+    protected BiFunction<String, String, Maybe<Application>> checkClientFunction() {
+        return (domain, client) -> {
+            if (client == null) {
+                return Maybe.empty();
+            }
+            return applicationService.findById(client)
+                    .switchIfEmpty(Maybe.defer(() -> applicationService.findByDomainAndClientId(domain, client)))
+                    .switchIfEmpty(Maybe.error(new ClientNotFoundException(client)))
+                    .map(app1 -> {
+                        if (!domain.equals(app1.getDomain())) {
+                            throw new ClientNotFoundException(client);
+                        }
+                        return app1;
+                    });
+        };
     }
 
     private Completable checkRoles(List<String> roles) {
@@ -569,108 +448,7 @@ public class UserServiceImpl implements UserService {
         return jwtBuilder.sign(new JWT(claims));
     }
 
-    private io.gravitee.am.identityprovider.api.User convert(NewUser newUser) {
-        DefaultUser user = new DefaultUser(newUser.getUsername());
-        user.setCredentials(newUser.getPassword());
-
-        Map<String, Object> additionalInformation = new HashMap<>();
-        if (newUser.getFirstName() != null) {
-            user.setFirstName(newUser.getFirstName());
-            additionalInformation.put(StandardClaims.GIVEN_NAME, newUser.getFirstName());
-        }
-        if (newUser.getLastName() != null) {
-            user.setLastName(newUser.getLastName());
-            additionalInformation.put(StandardClaims.FAMILY_NAME, newUser.getLastName());
-        }
-        if (newUser.getEmail() != null) {
-            user.setEmail(newUser.getEmail());
-            additionalInformation.put(StandardClaims.EMAIL, newUser.getEmail());
-        }
-        if (newUser.getAdditionalInformation() != null) {
-            newUser.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
-        }
-        user.setAdditionalInformation(additionalInformation);
-        return user;
-    }
-
     private User transform(NewUser newUser) {
-        User user = new User();
-        user.setId(RandomString.generate());
-        user.setExternalId(newUser.getExternalId());
-        user.setReferenceId(newUser.getDomain());
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setClient(newUser.getClient());
-        user.setEnabled(newUser.isEnabled());
-        user.setUsername(newUser.getUsername());
-        user.setFirstName(newUser.getFirstName());
-        user.setLastName(newUser.getLastName());
-        user.setEmail(newUser.getEmail());
-        user.setSource(newUser.getSource());
-        user.setInternal(newUser.isInternal());
-        user.setPreRegistration(newUser.isPreRegistration());
-        user.setRegistrationCompleted(newUser.isRegistrationCompleted());
-        user.setAdditionalInformation(newUser.getAdditionalInformation());
-        user.setCreatedAt(new Date());
-        user.setUpdatedAt(user.getCreatedAt());
-        return user;
-    }
-
-    private void updateInfos(User user, NewUser newUser) {
-        user.setFirstName(newUser.getFirstName());
-        user.setLastName(newUser.getLastName());
-        user.setEmail(newUser.getEmail());
-        user.setAdditionalInformation(newUser.getAdditionalInformation());
-    }
-
-    private io.gravitee.am.identityprovider.api.User convert(String username, UpdateUser updateUser) {
-        // update additional information
-        DefaultUser user = new DefaultUser(username);
-        Map<String, Object> additionalInformation = new HashMap<>();
-        if (updateUser.getFirstName() != null) {
-            user.setFirstName(updateUser.getFirstName());
-            additionalInformation.put(StandardClaims.GIVEN_NAME, updateUser.getFirstName());
-        }
-        if (updateUser.getLastName() != null) {
-            user.setLastName(updateUser.getLastName());
-            additionalInformation.put(StandardClaims.FAMILY_NAME, updateUser.getLastName());
-        }
-        if (updateUser.getEmail() != null) {
-            user.setEmail(updateUser.getEmail());
-            additionalInformation.put(StandardClaims.EMAIL, updateUser.getEmail());
-        }
-        if (updateUser.getAdditionalInformation() != null) {
-            updateUser.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
-        }
-        user.setAdditionalInformation(additionalInformation);
-        return user;
-    }
-
-    private io.gravitee.am.identityprovider.api.User convert(User user) {
-        DefaultUser idpUser = new DefaultUser(user.getUsername());
-        idpUser.setCredentials(user.getPassword());
-
-        Map<String, Object> additionalInformation = new HashMap<>();
-        if (user.getFirstName() != null) {
-            idpUser.setFirstName(user.getFirstName());
-            additionalInformation.put(StandardClaims.GIVEN_NAME, user.getFirstName());
-        }
-        if (user.getLastName() != null) {
-            idpUser.setLastName(user.getLastName());
-            additionalInformation.put(StandardClaims.FAMILY_NAME, user.getLastName());
-        }
-        if (user.getEmail() != null) {
-            idpUser.setEmail(user.getEmail());
-            additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
-        }
-        if (user.getAdditionalInformation() != null) {
-            user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
-        }
-        idpUser.setAdditionalInformation(additionalInformation);
-        return idpUser;
-    }
-
-    private User setInternalStatus(User user) {
-        user.setInternal(identityProviderManager.userProviderExists(user.getSource()));
-        return user;
+        return transform(newUser, ReferenceType.DOMAIN, newUser.getDomain());
     }
 }

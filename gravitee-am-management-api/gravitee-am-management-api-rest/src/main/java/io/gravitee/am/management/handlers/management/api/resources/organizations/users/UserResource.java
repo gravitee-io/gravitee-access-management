@@ -15,17 +15,22 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.users;
 
+import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -33,6 +38,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.inject.Named;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -52,7 +58,8 @@ public class UserResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private UserService userService;
+    @Named("managementOrganizationUserService")
+    private OrganizationUserService organizationUserService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -70,7 +77,7 @@ public class UserResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.READ)
-                .andThen(userService.findById(ReferenceType.ORGANIZATION, organizationId, user)
+                .andThen(organizationUserService.findById(ReferenceType.ORGANIZATION, organizationId, user)
                         .map(UserEntity::new)
                         .flatMap(this::enhanceIdentityProvider))
                 .subscribe(response::resume, response::resume);
@@ -92,7 +99,7 @@ public class UserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser))
+                .andThen(organizationUserService.update(ReferenceType.ORGANIZATION, organizationId, user, updateUser, authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -113,7 +120,7 @@ public class UserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
-                .andThen(userService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser))
+                .andThen(organizationUserService.updateStatus(ReferenceType.ORGANIZATION, organizationId, user, status.isEnabled(), authenticatedUser))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -130,10 +137,32 @@ public class UserResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.DELETE)
-                .andThen(userService.delete(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
+                .andThen(organizationUserService.delete(ReferenceType.ORGANIZATION, organizationId, user, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
+    @POST
+    @Path("resetPassword")
+    @ApiOperation(value = "Reset password",
+            notes = "User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "Password reset"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void resetPassword(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("user") String user,
+            @ApiParam(name = "password", required = true) @Valid @NotNull PasswordValue password,
+            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_USER, Acl.UPDATE)
+                .andThen(organizationUserService.findById(ReferenceType.ORGANIZATION, organizationId, user)
+                        .filter(existingUser -> IdentityProviderManagerImpl.IDP_GRAVITEE.equals(existingUser.getSource()))
+                        .switchIfEmpty(Maybe.error(new UserInvalidException("Unable to reset password")))
+                        .flatMapCompletable(existingUser -> organizationUserService.resetPassword(organizationId, existingUser, password.getPassword(), authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+
+    }
     private Single<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())

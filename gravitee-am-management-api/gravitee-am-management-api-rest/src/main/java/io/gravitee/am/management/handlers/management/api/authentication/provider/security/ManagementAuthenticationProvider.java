@@ -78,9 +78,12 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         AuthenticationException lastException = null;
 
         // Create a end-user authentication for underlying providers associated to the organization
+        final SimpleAuthenticationContext context = new SimpleAuthenticationContext();
+        details.forEach( (k,v) -> context.setAttribute(k,v));
+
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
                 authentication.getName(),
-                authentication.getCredentials(), new SimpleAuthenticationContext());
+                authentication.getCredentials(), context);
 
         while (iter.hasNext() && user == null) {
             String provider = iter.next();

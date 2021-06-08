@@ -131,8 +131,9 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    public String buildFindUserByDomainAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
-        return new StringBuilder("SELECT * FROM users u WHERE ")
+    public String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
+        boolean organizationUser = (ReferenceType.ORGANIZATION == referenceType);
+        return new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users") +" u WHERE ")
                 .append(" u.reference_type = :refType")
                 .append(" AND u.reference_id = :refId AND (")
                 .append(strict ? "u.email" : "UPPER(u.email)")

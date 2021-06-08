@@ -63,7 +63,7 @@ export class UserProfileComponent implements OnInit {
     // TODO we should be able to update platform users
     Object.keys(this.userClaims).forEach(key => this.user.additionalInformation[key] = this.userClaims[key]);
 
-    this.userService.update(this.domainId, this.user.id, this.user).subscribe(data => {
+    this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe(data => {
       this.user = data;
       this.userClaims = {};
       this.viewContainerRef.clear();
@@ -104,7 +104,7 @@ export class UserProfileComponent implements OnInit {
       .confirm('Reset Password', 'Are you sure you want to reset the password ?')
       .subscribe(res => {
         if (res) {
-          this.userService.resetPassword(this.domainId, this.user.id, this.password).subscribe(() => {
+          this.userService.resetPassword(this.domainId, this.user.id, this.password, this.organizationContext).subscribe(() => {
             this.password = null;
             this.passwordForm.reset();
             // reset the errors of all the controls
@@ -132,9 +132,13 @@ export class UserProfileComponent implements OnInit {
         }
       });
   }
+  
+  isOrganizationUserAction() {
+    return this.organizationContext;
+  }
 
   editMode() {
-    return this.user.internal && !this.organizationContext;
+    return this.user.internal;
   }
 
   isEmptyObject(obj) {

@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.Flowable;
 import org.junit.Before;
@@ -52,6 +54,9 @@ public class IdentityProviderManagerTest {
     @Mock
     private InMemoryIdentityProviderListener listener;
 
+    @Mock
+    private IdentityProviderPluginManager idpPluginManager;
+
     @InjectMocks
     private IdentityProviderManagerImpl cut = new IdentityProviderManagerImpl();
 
@@ -68,8 +73,11 @@ public class IdentityProviderManagerTest {
         role.setName("ORGANIZATION_PRIMARY_OWNER");
 
         when(roleService.findRolesByName(any(), any(), any(), any())).thenReturn(Flowable.just(role));
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any())).thenReturn(mock(UserProvider.class));
 
         cut.loadIdentityProviders();
+
+        verify(listener, times(2)).registerAuthenticationProvider(any());
 
         verify(listener).registerAuthenticationProvider(argThat(idp -> {
             return ReferenceType.ORGANIZATION.equals(idp.getReferenceType()) &&
@@ -77,6 +85,14 @@ public class IdentityProviderManagerTest {
                     idp.getRoleMapper() != null &&
                     idp.getRoleMapper().containsKey("roleid");
         }));
+
+        verify(listener).registerAuthenticationProvider(argThat(idp -> {
+            return ReferenceType.ORGANIZATION.equals(idp.getReferenceType()) &&
+                    Organization.DEFAULT.equals(idp.getReferenceId()) &&
+                    idp.getType().equals("gravitee-am-idp");
+        }));
+        verify(idpPluginManager).create(eq("gravitee-am-idp"), any());
+
     }
 
     @Test
@@ -86,9 +102,18 @@ public class IdentityProviderManagerTest {
         role.setId("roleid");
         role.setName("ORGANIZATION_PRIMARY_OWNER");
 
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any())).thenReturn(mock(UserProvider.class));
+
         cut.loadIdentityProviders();
 
-        verify(listener, never()).registerAuthenticationProvider(any());
+        verify(listener).registerAuthenticationProvider(argThat(idp -> {
+            return ReferenceType.ORGANIZATION.equals(idp.getReferenceType()) &&
+                    Organization.DEFAULT.equals(idp.getReferenceId()) &&
+                    idp.getType().equals("gravitee-am-idp");
+        }));
+
+        verify(listener).registerAuthenticationProvider(any());
+        verify(idpPluginManager).create(eq("gravitee-am-idp"), any());
     }
 
     private void defineDefaultSecurityConfig(boolean enabled) {

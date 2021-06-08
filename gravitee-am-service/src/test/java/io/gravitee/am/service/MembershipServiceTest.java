@@ -54,7 +54,7 @@ public class MembershipServiceTest {
     private MembershipService membershipService = new MembershipServiceImpl();
 
     @Mock
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @Mock
     private RoleService roleService;

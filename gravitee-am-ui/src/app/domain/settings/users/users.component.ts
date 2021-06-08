@@ -56,7 +56,7 @@ export class UsersComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {
       this.organizationContext = true;
-      this.createMode = false;
+      this.createMode = this.authService.hasPermissions(['organization_user_create']);
       this.requiredReadPermission = 'organization_user_read';
     } else {
       this.createMode = this.authService.hasPermissions(['domain_user_create']);

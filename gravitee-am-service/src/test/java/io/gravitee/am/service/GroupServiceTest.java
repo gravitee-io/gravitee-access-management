@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -59,6 +60,12 @@ public class GroupServiceTest {
 
     @Mock
     private GroupRepository groupRepository;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private OrganizationUserService organizationUserService;
 
     @Mock
     private AuditService auditService;
@@ -260,6 +267,7 @@ public class GroupServiceTest {
     public void shouldDelete_technicalException() {
         when(groupRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-group")).thenReturn(Maybe.just(new Group()));
         when(groupRepository.delete("my-group")).thenReturn(Completable.error(TechnicalException::new));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = new TestObserver();
         groupService.delete(ReferenceType.DOMAIN, DOMAIN, "my-group").subscribe(testObserver);
@@ -377,5 +385,37 @@ public class GroupServiceTest {
         testObserver.assertNotComplete();
         testObserver.assertError(RoleNotFoundException.class);
         verify(groupRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldFindMembersFromDomainUsers() {
+        Group group = mock(Group.class);
+        when(group.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(group.getMembers()).thenReturn(Arrays.asList("userid"));
+
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
+        when(userService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+
+        final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
+        observer.awaitTerminalEvent();
+
+        verify(userService).findByIdIn(any());
+        verify(organizationUserService, never()).findByIdIn(any());
+    }
+
+    @Test
+    public void shouldFindMembersFromOrganizationUsers() {
+        Group group = mock(Group.class);
+        when(group.getReferenceType()).thenReturn(ReferenceType.ORGANIZATION);
+        when(group.getMembers()).thenReturn(Arrays.asList("userid"));
+
+        when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
+        when(organizationUserService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+
+        final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
+        observer.awaitTerminalEvent();
+
+        verify(organizationUserService).findByIdIn(any());
+        verify(userService, never()).findByIdIn(any());
     }
 }

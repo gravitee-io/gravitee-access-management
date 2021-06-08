@@ -263,16 +263,16 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected abstract String buildPagingClause(String field, int page, int size);
 
     @Override
-    public String buildSearchUserQuery(boolean wildcard, int page, int size) {
-        StringBuilder builder = new StringBuilder("SELECT * FROM users u WHERE ");
+    public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {
+        StringBuilder builder = new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ");
         return buildSearchUser(wildcard, builder)
                 .append(buildPagingClause("username", page, size))
                 .toString();
     }
 
     @Override
-    public String buildCountUserQuery(boolean wildcard) {
-        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT u.id) FROM users u WHERE ");
+    public String buildCountUserQuery(boolean wildcard, boolean organizationUser) {
+        StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT u.id) FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ");
         return buildSearchUser(wildcard, builder)
                 .toString();
     }
@@ -318,8 +318,9 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public String buildFindUserByDomainAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
-        return new StringBuilder("SELECT * FROM users u WHERE ")
+    public String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
+        boolean organizationUser = (ReferenceType.ORGANIZATION == referenceType);
+        return new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users" )+ " u WHERE ")
                 .append(" u.reference_type = :refType ")
                 .append(" AND u.reference_id = :refId AND (")
                 .append(strict ? "u.email" : "UPPER(u.email)")

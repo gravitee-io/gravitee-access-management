@@ -38,15 +38,20 @@ export class UserService {
     return this.http.post<any>(this.usersURL + domainId + '/users', user);
   }
 
-  update(domainId, id, user): Observable<any> {
-    return this.http.put<any>(this.usersURL + domainId + '/users/' + id, {
+  update(domainId, id, user, organizationContext): Observable<any> {
+    let updatedUserProfile = {
       'firstName' : user.firstName,
       'lastName' : user.lastName,
       'email' : user.email,
       'enabled': user.enabled,
       'client' : user.client,
       'additionalInformation' : user.additionalInformation
-    });
+    };
+
+    if (organizationContext) {
+      return this.organizationService.updateUser(id, updatedUserProfile);
+    }
+    return this.http.put<any>(this.usersURL + domainId + '/users/' + id, updatedUserProfile);
   }
 
   updateStatus(domainId, id, status): Observable<any> {
@@ -66,7 +71,10 @@ export class UserService {
     return this.http.post<any>(this.usersURL + domainId + '/users/' + id + '/sendRegistrationConfirmation', {});
   }
 
-  resetPassword(domainId, id, password): Observable<any> {
+  resetPassword(domainId, id, password, organizationContext): Observable<any> {
+    if (organizationContext) {
+      return this.organizationService.resetUserPassword(id, password);
+    }
     return this.http.post<any>(this.usersURL + domainId + '/users/' + id + '/resetPassword', {
       'password': password
     });

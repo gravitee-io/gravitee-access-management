@@ -23,6 +23,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.InvalidRoleException;
@@ -48,11 +49,11 @@ public class MembershipCommandHandler implements CommandHandler<MembershipComman
 
     private final Logger logger = LoggerFactory.getLogger(MembershipCommandHandler.class);
 
-    private final UserService userService;
+    private final OrganizationUserService userService;
     private final RoleService roleService;
     private final MembershipService membershipService;
 
-    public MembershipCommandHandler(UserService userService,
+    public MembershipCommandHandler(OrganizationUserService userService,
                                     RoleService roleService,
                                     MembershipService membershipService) {
         this.userService = userService;

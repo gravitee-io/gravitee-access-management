@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
@@ -59,6 +60,8 @@ import static io.gravitee.am.management.service.impl.utils.InlineOrganizationPro
  */
 @Component
 public class IdentityProviderManagerImpl extends AbstractService<IdentityProviderManager> implements IdentityProviderManager, EventListener<IdentityProviderEvent, Payload> {
+    public static final String IDP_GRAVITEE = "gravitee";
+
     private static final Logger logger = LoggerFactory.getLogger(IdentityProviderManagerImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     private static final String DEFAULT_IDP_NAME = "Default Identity Provider";
@@ -149,7 +152,15 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Override
     public void loadIdentityProviders() {
         if (this.listener != null) {
-            loadProvidersFromConfig().forEach(listener::registerAuthenticationProvider);
+            final IdentityProvider graviteeIdp = buildOrganizationUserIdentityProvider();
+
+            final List<IdentityProvider> providers = loadProvidersFromConfig();
+            // add the Gravitee provider to allow addition of OrganizationUser through the console
+            providers.add(graviteeIdp);
+            providers.forEach(listener::registerAuthenticationProvider);
+
+            // load gravitee idp into this component to allow user creation and update
+            loadUserProvider(graviteeIdp);
         }
     }
 
@@ -177,6 +188,18 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         }
 
         return providers;
+    }
+
+    private IdentityProvider buildOrganizationUserIdentityProvider() {
+        IdentityProvider provider = new IdentityProvider();
+        provider.setId(IDP_GRAVITEE);
+        provider.setExternal(false);
+        provider.setType("gravitee-am-idp");
+        provider.setName(IDP_GRAVITEE);
+        provider.setReferenceId(Organization.DEFAULT);
+        provider.setReferenceType(ReferenceType.ORGANIZATION);
+        provider.setConfiguration("{}");
+        return provider;
     }
 
     @Override

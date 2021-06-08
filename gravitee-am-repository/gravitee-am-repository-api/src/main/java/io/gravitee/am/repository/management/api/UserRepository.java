@@ -33,7 +33,7 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserRepository extends CrudRepository<User, String> {
+public interface UserRepository extends CommonUserRepository {
 
     Flowable<User> findAll(ReferenceType referenceType, String referenceId);
 

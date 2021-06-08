@@ -104,6 +104,12 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("node_monitoring");
         tables.add("bot_detections");
 
+        tables.add("organization_users");
+        tables.add("organization_user_entitlements");
+        tables.add("organization_user_roles");
+        tables.add("organization_user_attributes");
+        tables.add("organization_user_addresses");
+
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();
         tables.stream().forEach(table -> {

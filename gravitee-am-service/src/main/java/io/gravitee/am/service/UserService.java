@@ -36,47 +36,21 @@ import java.util.Set;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
+public interface UserService extends CommonUserService {
 
     Flowable<User> findByDomain(String domain);
 
-    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
-
     Single<Page<User>> findByDomain(String domain, int page, int size);
-
-    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
-
-    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
-
-    Flowable<User> findByIdIn(List<String> ids);
 
     Maybe<User> findByDomainAndUsername(String domain, String username);
 
-    Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source);
-
     Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
-
-    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
 
     Maybe<User> findById(String id);
 
-    Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
-
     Single<User> create(String domain, NewUser newUser);
 
-    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser);
-
-    Single<User> create(User user);
-
-    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser);
-
     Single<User> update(String domain, String id, UpdateUser updateUser);
-
-    Single<User> update(User user);
-
-    Single<User> enhance(User user);
-
-    Completable delete(String userId);
 
     Single<Long> countByDomain(String domain);
 
