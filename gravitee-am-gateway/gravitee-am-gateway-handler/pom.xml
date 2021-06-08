@@ -33,6 +33,7 @@
 
     <modules>
         <module>gravitee-am-gateway-handler-common</module>
+        <module>gravitee-am-gateway-handler-account</module>
         <module>gravitee-am-gateway-handler-api</module>
         <module>gravitee-am-gateway-handler-core</module>
         <module>gravitee-am-gateway-handler-oidc</module>

@@ -45,9 +45,7 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-
         String redirectUrl = context.get(CONTEXT_PATH) + path;
-
         try {
             final HttpServerRequest request = context.request();
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);

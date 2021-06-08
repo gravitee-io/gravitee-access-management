@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.audit;
+package io.gravitee.am.gateway.handler.account.services;
 
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.common.service.Service;
+import io.gravitee.am.common.scim.filter.Filter;
+import io.gravitee.am.model.User;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuditReporterManager extends Service {
-    Reporter getReporter();
+public interface AccountManagementUserService {
+
+    Single<User> update(User user);
+
 }

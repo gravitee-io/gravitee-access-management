@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.audit;
+package io.gravitee.am.gateway.handler.account.resources.account.util;
 
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.common.service.Service;
+public enum AccountRoutes {
+    INDEX("/"),
+    STATIC_ASSETS("/assets/*"),
+    PROFILE("/api/profile"),
+    FACTORS("/api/factors"),
+    ACTIVITIES("/api/activity"),
+    CHANGE_PASSWORD("/api/changePassword"),
+    CHANGE_PASSWORD_REDIRECT("/forgotPassword");
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface AuditReporterManager extends Service {
-    Reporter getReporter();
+    private String route;
+
+    AccountRoutes(String route){
+        this.route = route;
+    }
+
+    public String getRoute() {
+        return route;
+    }
 }
