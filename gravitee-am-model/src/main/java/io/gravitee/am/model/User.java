@@ -286,6 +286,17 @@ public class User implements IUser {
         this.firstName = firstName;
     }
 
+    public String getMiddleName() {
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.MIDDLE_NAME) != null) {
+                return (String) getAdditionalInformation().get(StandardClaims.MIDDLE_NAME);
+            }
+        return null;
+    }
+
+    public void setMiddleName(String middleName) {
+        putAdditionalInformation(StandardClaims.MIDDLE_NAME, middleName);
+    }
+
     public String getLastName() {
         if (lastName == null) {
             if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.FAMILY_NAME) != null) {
@@ -581,6 +592,13 @@ public class User implements IUser {
         return additionalInformation;
     }
 
+    public User putAdditionalInformation(String key, Object value) {
+        if (getAdditionalInformation() != null){
+            additionalInformation.put(key,value);
+        }
+        return this;
+    }
+
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
         this.additionalInformation = additionalInformation;
     }
@@ -611,5 +629,82 @@ public class User implements IUser {
 
     public Boolean isInactive() {
         return isPreRegistration() && !isRegistrationCompleted();
+    }
+
+    public String getProfile() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PROFILE) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.PROFILE);
+        }
+        return null;
+    }
+
+    public void setProfile(String profile) {
+        putAdditionalInformation(StandardClaims.PROFILE, profile);
+    }
+
+    public String getWebsite() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.WEBSITE) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.WEBSITE);
+        }
+        return null;
+    }
+
+    public void setWebsite(String website) {
+        putAdditionalInformation(StandardClaims.WEBSITE, website);
+    }
+
+    public String getBirthdate() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.BIRTHDATE) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.BIRTHDATE);
+        }
+        return null;
+    }
+
+    public void setBirthdate(String birthdate) {
+        putAdditionalInformation(StandardClaims.BIRTHDATE, birthdate);
+    }
+
+    public String getZoneInfo() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.ZONEINFO) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.ZONEINFO);
+        }
+        return null;
+    }
+
+    public void setZoneInfo(String zoneInfo) {
+        putAdditionalInformation(StandardClaims.ZONEINFO, zoneInfo);
+    }
+
+    public String getLocale() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.LOCALE);
+        }
+        return null;
+    }
+
+    public void setLocale(String locale) {
+        putAdditionalInformation(StandardClaims.LOCALE, locale);
+    }
+
+    public String getPhoneNumber() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PHONE_NUMBER) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.PHONE_NUMBER);
+        }
+        return null;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        putAdditionalInformation(StandardClaims.PHONE_NUMBER, phoneNumber);
+    }
+
+    public Map<String, Object> getAddress() {
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.ADDRESS) != null) {
+            return (Map<String, Object>) getAdditionalInformation().get(StandardClaims.ADDRESS);
+        }
+        return null;
+    }
+
+    public void setAddress(Map<String, Object> address) {
+        putAdditionalInformation(StandardClaims.ADDRESS, address);
     }
 }

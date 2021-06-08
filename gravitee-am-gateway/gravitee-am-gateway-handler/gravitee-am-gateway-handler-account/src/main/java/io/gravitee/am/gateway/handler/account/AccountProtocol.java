@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.audit;
+package io.gravitee.am.gateway.handler.account;
 
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.common.service.Service;
+import io.gravitee.am.gateway.handler.account.spring.AccountConfiguration;
+import io.gravitee.am.gateway.handler.api.Protocol;
+import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface AuditReporterManager extends Service {
-    Reporter getReporter();
+public class AccountProtocol implements Protocol {
+    @Override
+    public Class<? extends ProtocolConfiguration> configuration() {
+        return AccountConfiguration.class;
+    }
+
+    @Override
+    public Class<? extends ProtocolProvider> protocolProvider() {
+        return AccountProvider.class;
+    }
 }

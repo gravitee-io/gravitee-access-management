@@ -237,4 +237,14 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
         stopReporterProvider(reporter.getId(), reporters.get(reporter.getId()));
         startReporterProvider(reporter, context);
     }
+
+    @Override
+    public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
+       return reporters.entrySet()
+                .stream()
+                .map(entry -> entry.getValue())
+                .filter(reporter -> reporter.canSearch())
+                .findFirst()
+                .orElse(null);
+    }
 }
