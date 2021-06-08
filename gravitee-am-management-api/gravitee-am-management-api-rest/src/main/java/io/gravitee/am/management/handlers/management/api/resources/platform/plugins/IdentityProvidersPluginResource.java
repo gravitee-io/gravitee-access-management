@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.platform.plugins;
 
 import io.gravitee.am.management.service.IdentityProviderPluginService;
+import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 @Api(tags = {"Plugin", "Identity Provider"})
 public class IdentityProvidersPluginResource {
 
+    public static final String GRAVITEE_AM_IDP = "gravitee-am-idp";
     @Context
     private ResourceContext resourceContext;
 
@@ -63,6 +65,7 @@ public class IdentityProvidersPluginResource {
 
         identityProviderPluginService.findAll(external, expand)
                 .map(identityProviderPlugins -> identityProviderPlugins.stream()
+                        .filter(identityProvider -> !GRAVITEE_AM_IDP.equals(identityProvider.getId()))
                         .sorted(Comparator.comparing(IdentityProviderPlugin::getName))
                         .collect(Collectors.toList()))
                 .subscribe(response::resume, response::resume);

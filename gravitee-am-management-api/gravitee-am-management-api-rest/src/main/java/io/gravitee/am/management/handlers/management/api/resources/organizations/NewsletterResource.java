@@ -22,6 +22,7 @@ import io.gravitee.am.management.handlers.management.api.resources.AbstractResou
 import io.gravitee.am.management.service.NewsletterService;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.UserService;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class NewsletterResource extends AbstractResource {
     private NewsletterService newsletterService;
 
     @Autowired
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @POST
     @Path("/_subscribe")

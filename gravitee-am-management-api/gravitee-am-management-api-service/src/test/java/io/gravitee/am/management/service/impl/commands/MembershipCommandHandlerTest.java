@@ -22,8 +22,8 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.cockpit.api.command.Command;
 import io.gravitee.cockpit.api.command.CommandStatus;
 import io.gravitee.cockpit.api.command.membership.MembershipCommand;
@@ -52,7 +52,7 @@ import static org.mockito.Mockito.*;
 public class MembershipCommandHandlerTest {
 
     @Mock
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @Mock
     private RoleService roleService;

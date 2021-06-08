@@ -60,7 +60,7 @@ public class DefaultOrganizationUpgraderTest {
     private IdentityProviderService identityProviderService;
 
     @Mock
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @Mock
     private MembershipHelper membershipHelper;

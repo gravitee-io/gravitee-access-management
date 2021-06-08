@@ -66,6 +66,9 @@ public class GroupServiceImpl implements GroupService {
     private UserService userService;
 
     @Autowired
+    private OrganizationUserService organizationUserService;
+
+    @Autowired
     private AuditService auditService;
 
     @Autowired
@@ -163,7 +166,8 @@ public class GroupServiceImpl implements GroupService {
                         // get members
                         List<String> sortedMembers = group.getMembers().stream().sorted().collect(Collectors.toList());
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), page), Math.min(sortedMembers.size(), page + size));
-                        return userService.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, pagedMemberIds.size()));
+                        CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
+                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, pagedMemberIds.size()));
                     }
                 });
     }
@@ -332,7 +336,8 @@ public class GroupServiceImpl implements GroupService {
     private Single<Group> setMembers(Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
-            return userService.findByIdIn(userMembers)
+            CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
+            return service.findByIdIn(userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {

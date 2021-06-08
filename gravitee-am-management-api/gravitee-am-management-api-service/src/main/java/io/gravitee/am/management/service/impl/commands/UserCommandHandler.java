@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewUser;
@@ -30,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Named;
 import java.util.HashMap;
 
 /**
@@ -42,9 +44,9 @@ public class UserCommandHandler implements CommandHandler<UserCommand, UserReply
     public static final String COCKPIT_SOURCE = "cockpit";
     private final Logger logger = LoggerFactory.getLogger(UserCommandHandler.class);
 
-    private final UserService userService;
+    private final OrganizationUserService userService;
 
-    public UserCommandHandler(UserService userService) {
+    public UserCommandHandler(@Named("managementOrganizationUserService") OrganizationUserService userService) {
         this.userService = userService;
     }
 

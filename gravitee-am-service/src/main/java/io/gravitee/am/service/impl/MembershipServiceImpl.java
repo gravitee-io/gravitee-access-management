@@ -65,7 +65,7 @@ public class MembershipServiceImpl implements MembershipService {
     private AuditService auditService;
 
     @Autowired
-    private UserService userService;
+    private OrganizationUserService orgUserService;
 
     @Autowired
     private GroupService groupService;
@@ -200,7 +200,7 @@ public class MembershipServiceImpl implements MembershipService {
         List<String> groupIds = memberships.stream().filter(membership -> MemberType.GROUP.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
-        return Single.zip(userService.findByIdIn(userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
+        return Single.zip(orgUserService.findByIdIn(userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
                 groupService.findByIdIn(groupIds).toMap(Group::getId, g -> this.convert(g)),
                 roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
@@ -330,7 +330,7 @@ public class MembershipServiceImpl implements MembershipService {
     private Completable checkMember(String organizationId, Membership membership) {
 
         if (MemberType.USER.equals(membership.getMemberType())) {
-            return userService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
+            return orgUserService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
                     .ignoreElement();
         } else {
             return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())

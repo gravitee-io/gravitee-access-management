@@ -35,8 +35,6 @@ import static io.gravitee.am.service.validators.UserValidator.*;
 public class NewUser implements IUser {
 
     @NotBlank
-//    @Size(max = DEFAULT_MAX_LENGTH)
-//    @Pattern(regexp = USERNAME_PATTERN, message = "invalid username")
     private String username;
 
     @Size(max = PASSWORD_MAX_LENGTH, message = "must not be greater than "+ PASSWORD_MAX_LENGTH)
@@ -46,14 +44,10 @@ public class NewUser implements IUser {
     @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
     private String email;
 
-//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
     private String firstName;
 
-//    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
-//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
-//    @Size(max = DEFAULT_MAX_LENGTH,  message = "must not be greater than "+ DEFAULT_MAX_LENGTH)
     private String externalId;
 
     private boolean accountNonExpired = true;

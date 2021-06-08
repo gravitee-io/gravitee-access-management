@@ -15,15 +15,16 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import com.google.common.collect.Sets;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.util.Maps;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -31,20 +32,25 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class UsersResourceTest extends JerseySpringTest {
+
+    public static final String ORGANIZATION_DEFAULT = "DEFAULT";
 
     @Before
     public void setUp() {
@@ -77,6 +83,40 @@ public class UsersResourceTest extends JerseySpringTest {
 
         final Response response = target("domains")
                 .path(domainId)
+                .path("users")
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
+    public void shouldGetOrganizationUsers() {
+        final String organizationId = "DEFAULT";
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername("username-1");
+        mockUser.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser.setReferenceId(organizationId);
+
+        final User mockUser2 = new User();
+        mockUser2.setId("domain-id-2");
+        mockUser2.setUsername("username-2");
+        mockUser2.setReferenceType(ReferenceType.ORGANIZATION);
+        mockUser2.setReferenceId(organizationId);
+
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
+        final Page<User> pagedUsers = new Page<>(users, 0, 2);
+
+        final Map<Permission, Set<Acl>> permissions = Maps.<Permission, Set<Acl>>builder().put(Permission.ORGANIZATION_USER, Sets.newHashSet(Acl.LIST)).build();
+        when(permissionService.findAllPermissions(any(), eq(ReferenceType.ORGANIZATION), eq(organizationId))).thenReturn(Single.just(permissions));
+        doReturn(Single.just(pagedUsers)).when(organizationUserService).findAll(ReferenceType.ORGANIZATION, organizationId, 0, 10);
+
+        final Response response = target("organizations")
+                .path("DEFAULT")
                 .path("users")
                 .queryParam("page", 0)
                 .queryParam("size", 10)
@@ -137,5 +177,40 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
+    @Test
+    public void shouldCreateOrganizationUser() {
+        when(permissionService.hasPermission(any(), any())).thenReturn(Single.just(true));
+        when(organizationService.findById(ORGANIZATION_DEFAULT)).thenReturn(Single.just(new Organization()));
+        when(organizationUserService.createGraviteeUser(any(), any(), any())).thenReturn(Single.just(new User()));
+
+        final NewUser entity = new NewUser();
+        entity.setUsername("test");
+        entity.setPassword("password");
+        entity.setEmail("email@acme.fr");
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .request()
+                .post(Entity.entity(entity, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
+        verify(organizationUserService).createGraviteeUser(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotCreateOrganizationUser_InvalidEmail() {
+        final NewUser entity = new NewUser();
+        entity.setUsername("test");
+        entity.setPassword("password");
+        entity.setEmail("email.fr");
+        final Response response = target("organizations")
+                .path(ORGANIZATION_DEFAULT)
+                .path("users")
+                .request()
+                .post(Entity.entity(entity, MediaType.APPLICATION_JSON_TYPE));
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        verify(organizationUserService, never()).createGraviteeUser(any(), any(), any());
+    }
 
 }

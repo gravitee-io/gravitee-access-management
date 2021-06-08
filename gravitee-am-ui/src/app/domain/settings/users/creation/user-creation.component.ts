@@ -21,6 +21,7 @@ import {UserService} from '../../../../services/user.service';
 import {ProviderService} from '../../../../services/provider.service';
 import {UserClaimComponent} from './user-claim.component';
 import * as _ from 'lodash';
+import { OrganizationService } from 'app/services/organization.service';
 
 @Component({
   selector: 'user-creation',
@@ -51,18 +52,24 @@ export class UserCreationComponent implements OnInit {
               private route: ActivatedRoute,
               private snackbarService: SnackbarService,
               private factoryResolver: ComponentFactoryResolver,
-              private providerService: ProviderService) {
+              private providerService: ProviderService,
+              private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
-      this.userProviders = response;
-    });
+    if (!this.isOrganizationUserAction()) {
+      this.providerService.findUserProvidersByDomain(this.domainId).subscribe(response => {
+        this.userProviders = response;
+      });
+    }
+  }
+
+  isOrganizationUserAction() {
+    return !this.domainId;
   }
 
   create() {
-    // TODO we should be able to create platform users
     // set additional information
     if (this.userClaims && Object.keys(this.userClaims).length > 0) {
       let additionalInformation = {};
@@ -73,10 +80,18 @@ export class UserCreationComponent implements OnInit {
     }
     // set pre-registration
     this.user.preRegistration = this.preRegistration;
-    this.userService.create(this.domainId, this.user).subscribe(data => {
-      this.snackbarService.open('User ' + data.username + ' created');
-      this.router.navigate(['..', data.id], { relativeTo: this.route });
-    });
+    
+    if (this.isOrganizationUserAction()) {
+      this.organizationService.createUser(this.user).subscribe(data => {
+        this.snackbarService.open('User ' + data.username + ' created');
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
+      });
+    } else {
+      this.userService.create(this.domainId, this.user).subscribe(data => {
+        this.snackbarService.open('User ' + data.username + ' created');
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
+      });
+    }
   }
 
   onEmailChange(email) {

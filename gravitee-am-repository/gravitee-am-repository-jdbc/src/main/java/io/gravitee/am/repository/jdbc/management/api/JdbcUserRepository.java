@@ -182,7 +182,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Flowable<User> findByDomainAndEmail(String domain, String email, boolean strict) {
         boolean ignoreCase = !strict;
-        return fluxToFlowable(dbClient.execute(databaseDialectHelper.buildFindUserByDomainAndEmail(DOMAIN, domain, email, strict))
+        return fluxToFlowable(dbClient.execute(databaseDialectHelper.buildFindUserByReferenceAndEmail(DOMAIN, domain, email, strict))
                 .bind("refId", domain)
                 .bind("refType", DOMAIN.name())
                 .bind("email", email)

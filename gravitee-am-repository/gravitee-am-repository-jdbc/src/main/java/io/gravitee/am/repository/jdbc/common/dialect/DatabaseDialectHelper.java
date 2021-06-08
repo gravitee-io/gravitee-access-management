@@ -39,11 +39,19 @@ public interface DatabaseDialectHelper {
 
     ScimUserSearch prepareScimSearchUserQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, int page, int size);
 
-    String buildFindUserByDomainAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict);
+    String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict);
 
-    String buildSearchUserQuery(boolean wildcard, int page, int size);
+    String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser);
 
-    String buildCountUserQuery(boolean wildcard);
+    default String buildSearchUserQuery(boolean wildcard, int page, int size) {
+        return buildSearchUserQuery(wildcard, page, size, false);
+    }
+
+    String buildCountUserQuery(boolean wildcard, boolean organizationUser);
+
+    default String buildCountUserQuery(boolean wildcard) {
+        return buildCountUserQuery(wildcard, false);
+    }
 
     String buildSearchApplicationsQuery(boolean wildcard, int page, int size);
 

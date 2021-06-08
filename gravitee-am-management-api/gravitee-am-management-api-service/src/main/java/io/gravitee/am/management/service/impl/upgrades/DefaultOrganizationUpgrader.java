@@ -51,7 +51,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     private final IdentityProviderService identityProviderService;
 
-    private final UserService userService;
+    private final OrganizationUserService userService;
 
     private final MembershipHelper membershipHelper;
 
@@ -67,7 +67,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     public DefaultOrganizationUpgrader(OrganizationService organizationService,
                                        IdentityProviderService identityProviderService,
-                                       UserService userService,
+                                       OrganizationUserService userService,
                                        MembershipHelper membershipHelper,
                                        RoleService roleService,
                                        DomainService domainService,

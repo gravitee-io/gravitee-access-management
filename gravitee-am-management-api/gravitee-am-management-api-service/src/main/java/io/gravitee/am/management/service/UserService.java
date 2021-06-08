@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -33,33 +34,17 @@ import java.util.List;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserService {
-
-    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
-
-    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
-
-    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+public interface UserService extends CommonUserService {
 
     Single<Page<User>> findByDomain(String domain, int page, int size);
 
-    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
-
     Maybe<User> findById(String id);
-
-    Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewUser newUser);
 
     Single<User> create(Domain domain, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
-
     Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
-
     Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
-
-    Completable delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
@@ -80,11 +65,6 @@ public interface UserService {
     default Single<User> updateStatus(String domain, String userId, boolean status) {
         return updateStatus(domain, userId, status, null);
     }
-
-    default Completable delete(ReferenceType referenceType, String referenceId, String userId) {
-        return delete(referenceType, referenceId, userId, null);
-    }
-
     default Completable unlock(ReferenceType referenceType, String referenceId, String userId) {
         return unlock(referenceType, referenceId, userId, null);
     }

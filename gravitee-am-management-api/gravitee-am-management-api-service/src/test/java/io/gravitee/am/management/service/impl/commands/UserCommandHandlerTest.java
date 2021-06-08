@@ -16,7 +16,7 @@
 package io.gravitee.am.management.service.impl.commands;
 
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 public class UserCommandHandlerTest {
 
     @Mock
-    private UserService userService;
+    private OrganizationUserService userService;
 
     public UserCommandHandler cut;
 

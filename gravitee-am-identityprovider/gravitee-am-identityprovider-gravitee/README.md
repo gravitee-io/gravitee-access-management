@@ -1,0 +1,3 @@
+# Gravitee Identity Provider
+
+This Identity Provider is dedicated to organization users. This implementation is based on the OrganizationUserService in order to access user information through the repositories. The UserProvider implementation mostly provide "empty" methods to avoid collision with the regular method of the service layer (create, delete) excepted for the `update` one that allow the password update. 

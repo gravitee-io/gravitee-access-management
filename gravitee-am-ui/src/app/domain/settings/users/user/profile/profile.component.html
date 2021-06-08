@@ -50,7 +50,7 @@
               <mat-error *ngIf="user.email && email.errors?.email">Not a valid email</mat-error>
             </mat-form-field>
           </div>
-          <div *ngIf="editMode() && canEdit">
+          <div *ngIf="!isOrganizationUserAction() && editMode() && canEdit">
             <app-select-applications [selectedApp]="user.applicationEntity" (onSelectApp)="onAppSelectionChanged($event)" (onRemoveApp)="onAppDeleted($event)"></app-select-applications>
           </div>
         </div>
@@ -141,7 +141,24 @@
             </div>
           </div>
         </div>
-
+        <div class="gv-form-section" *ngIf="canEdit && user.referenceType === 'organization'">
+          <div class="gv-form-section-title">
+            <h5>Actions</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <div *ngIf="editMode()" fxLayout="column">
+              <form (ngSubmit)="resetPassword()" #passwordForm="ngForm" fxLayout="row" style="margin-top: 20px;">
+                <mat-form-field style="margin: 0px 15px 0px 15px;" fxFlex="70" appearance="outline" floatLabel="always">
+                  <mat-label>Password</mat-label>
+                  <input matInput type="password" name="password" placeholder="Password" required [(ngModel)]="password"/>
+                  <mat-hint>User's password</mat-hint>
+                </mat-form-field>
+                <button style="min-width: 180px; height:36px; margin-top: 8px;" mat-stroked-button color="accent" [disabled]="!passwordForm.valid || passwordForm.pristine" type="submit">RESET PASSWORD</button>
+              </form>
+            </div>
+          </div>
+        </div>
         <div fxLayout="row" *ngIf="editMode() && canEdit">
           <button mat-raised-button color="primary" [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
