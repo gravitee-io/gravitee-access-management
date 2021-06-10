@@ -1,6 +1,27 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/382?closed=1[AM - 3.5.6 (2021-06-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- NPE during forgot password if user does not exist in database https://github.com/gravitee-io/issues/issues/5701[#5701]
+
+*_General_*
+
+- Backport #5506 https://github.com/gravitee-io/issues/issues/5692[#5692]
+- Backport #5508 https://github.com/gravitee-io/issues/issues/5655[#5655]
+
+*_Management_*
+
+- [idp] default idp configuration must handle MongoDB cluster configuration https://github.com/gravitee-io/issues/issues/2528[#2528]
+- [reporters] default reporter configuration must handle MongoDB cluster configuration https://github.com/gravitee-io/issues/issues/2527[#2527]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/390?closed=1[AM - 3.8.4 (2021-05-26)]
 
 === Bug fixes
