@@ -40,7 +40,7 @@
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!resourceForm.valid || resourceForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!resourceForm.valid || resourceForm.pristine) && (!configurationIsValid || configurationPristine) && !formChanged" (click)="update()">SAVE</button>
         </div>
       </form>
 

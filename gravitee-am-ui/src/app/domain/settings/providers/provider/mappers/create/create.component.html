@@ -38,6 +38,6 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button (click)="dialogRef.close(attributeForm.value)" color="primary" [disabled]="attributeForm.invalid">Save</button>
+  <button type="button" mat-raised-button color="primary" (click)="dialogRef.close(attributeForm.value)" color="primary" [disabled]="attributeForm.invalid">Save</button>
   <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
 </mat-dialog-actions>

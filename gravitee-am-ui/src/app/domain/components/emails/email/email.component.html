@@ -70,7 +70,7 @@
     </mat-tab-group>
   </div>
   <div>
-    <button *ngIf="canEdit()" mat-raised-button [disabled]="isFormInvalid()" (click)="save()">SAVE</button>
+    <button *ngIf="canEdit()" mat-raised-button color="primary" [disabled]="isFormInvalid()" (click)="save()">SAVE</button>
   </div>
   <div *ngIf="emailFound && deleteMode" class="email-delete-zone" fxLayout="column">
     <p>This operation cannot be undone.</p>

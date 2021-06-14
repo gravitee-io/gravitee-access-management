@@ -40,7 +40,7 @@
           </div>
         </div>
         <div *hasPermission="['domain_identity_provider_update']" fxLayout="row">
-          <button mat-raised-button [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
         </div>
       </form>
 

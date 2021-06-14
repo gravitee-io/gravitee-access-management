@@ -127,7 +127,7 @@
         </div>
 
         <div *hasPermission="['domain_settings_update']">
-          <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div *hasPermission="['domain_settings_delete']" class="gv-page-delete-zone" fxLayout="column">

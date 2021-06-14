@@ -122,7 +122,7 @@
         </div>
 
         <div fxLayout="row" *ngIf="!readonly">
-          <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div class="gv-page-delete-zone" fxLayout="column" *ngIf="canDelete()">

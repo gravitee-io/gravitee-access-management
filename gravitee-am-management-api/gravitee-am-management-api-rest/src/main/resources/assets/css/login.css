@@ -1,17 +1,21 @@
+html, body {
+    font-family: "Libre Franklin", sans-serif;
+}
+
 .mdl-layout.mdl-js-layout {
     display: block;
-    background-color: #fdfdfd;
+    background-color: #ededed;
     color: #333;
     font-size: 14px;
 }
 
 .mdl-button--accent.mdl-button--accent.mdl-button--raised {
     color: rgb(255,255,255);
-    background-color: #28444f;
+    background-color: #1b1d3c;
 }
 
 .login-container {
-    max-width: 480px;
+    max-width: 360px;
     margin: auto;
     padding: 8% 0 0;
 }
@@ -19,13 +23,17 @@
 .login-form {
     background: #fff;
     padding: 45px;
-    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+    box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
 }
 
 .login-form form {
     display: flex;
     flex-direction: column;
     margin-top: 30px;
+}
+
+.login-form-logo {
+    margin-bottom: 55px;
 }
 
 .login-form-logo img {
@@ -46,7 +54,7 @@
 }
 
 .login-form-title > span {
-    color: grey;
+    color: #1b1d3c;
 }
 
 .login-form-actions {

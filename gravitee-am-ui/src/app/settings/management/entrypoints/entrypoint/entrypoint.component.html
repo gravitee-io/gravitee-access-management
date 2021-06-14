@@ -68,7 +68,7 @@
         </div>
 
         <div fxLayout="row" *hasPermission="['organization_entrypoint_update']">
-          <button mat-raised-button [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!entrypointForm.valid || entrypointForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
 
       </form>

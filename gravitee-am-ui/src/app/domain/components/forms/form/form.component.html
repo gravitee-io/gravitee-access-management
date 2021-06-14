@@ -47,7 +47,7 @@
   </div>
 
   <div>
-    <button *ngIf="canEdit()" mat-raised-button [disabled]="!formChanged" (click)="save()">SAVE</button>
+    <button *ngIf="canEdit()" mat-raised-button color="primary" [disabled]="!formChanged" (click)="save()">SAVE</button>
   </div>
 
   <div *ngIf="formFound && deleteMode" class="form-delete-zone" fxLayout="column">

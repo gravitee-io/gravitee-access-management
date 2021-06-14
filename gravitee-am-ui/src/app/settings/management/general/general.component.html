@@ -49,7 +49,7 @@
           </div>
         </div>
         <div *hasPermission="['organization_settings_update']">
-          <button mat-raised-button [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!managementForm.valid || managementForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>
     </div>

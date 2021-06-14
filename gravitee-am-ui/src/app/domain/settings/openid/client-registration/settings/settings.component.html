@@ -81,7 +81,7 @@
           </div>
         </div>
         <div *ngIf="!readonly">
-          <button mat-raised-button [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
     </div>

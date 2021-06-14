@@ -84,7 +84,7 @@
         </div>
 
         <div fxLayout="row" class="scope-form-actions" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!scopeForm.valid || scopeForm.pristine || formIsInvalid()) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!scopeForm.valid || scopeForm.pristine || formIsInvalid()) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
 

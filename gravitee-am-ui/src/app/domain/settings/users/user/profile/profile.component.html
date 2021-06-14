@@ -143,7 +143,7 @@
         </div>
 
         <div fxLayout="row" *ngIf="editMode() && canEdit">
-          <button mat-raised-button [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!userForm.valid || userForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div class="gv-page-delete-zone" fxLayout="column" *ngIf="canDelete">
