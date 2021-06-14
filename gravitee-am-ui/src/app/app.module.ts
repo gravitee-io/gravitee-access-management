@@ -371,6 +371,7 @@ import { BotDetectionComponent } from './domain/settings/botdetections/bot-detec
 import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-detection/form/form.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
+import { GvFormControlDirective } from "./directives/gv-form-control.directive";
 
 @NgModule({
   declarations: [
@@ -573,7 +574,8 @@ import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
     BotDetectionCreationStep2Component,
     BotDetectionComponent,
     BotDetectionFormComponent,
-    MfaStepUpDialog
+    MfaStepUpDialog,
+    GvFormControlDirective
   ],
   imports: [
     BrowserModule,

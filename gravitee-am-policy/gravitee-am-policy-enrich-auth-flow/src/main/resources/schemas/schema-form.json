@@ -16,7 +16,10 @@
           },
           "value" : {
             "title": "Value (Support EL)",
-            "type" : "string"
+            "type" : "string",
+            "x-schema-form": {
+              "expression-language": true
+            }
           }
         }
       },

@@ -22,9 +22,16 @@
   <form #userRoleForm="ngForm" fxLayout="column">
     <div fxLayout="column" fxFlex>
       <h5 style="color: grey; margin: 5px 0 5px 0;">Users</h5>
-      <mat-form-field fxFlex>
-        <input matInput name="user" placeholder="attributeName=attributeValue" pattern="^(.+)\=(.+)" autofocus ngModel/>
-      </mat-form-field>
+      <div>
+        <gv-expression-language name="user"
+                                placeholder="Use attributeName=attributeValue or EL syntax."
+                                ngDefaultControl
+                                gvControl
+                                ngModel
+                                required
+                                inner-hint
+                                rows="1"></gv-expression-language>
+      </div>
     </div>
     <h5 style="color: grey; margin:  5px 0 15px 0;">Roles</h5>
     <mat-form-field>

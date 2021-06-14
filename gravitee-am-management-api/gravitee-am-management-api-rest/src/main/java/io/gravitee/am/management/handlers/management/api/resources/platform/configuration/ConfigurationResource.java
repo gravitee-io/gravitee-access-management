@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.con
 import io.gravitee.am.management.handlers.management.api.model.AlertServiceStatusEntity;
 import io.gravitee.am.management.service.AlertService;
 import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.SpelService;
 import io.gravitee.common.http.MediaType;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -41,6 +42,9 @@ public class ConfigurationResource {
 
     @Inject
     private AlertService alertService;
+
+    @Inject
+    private SpelService spelService;
 
     @GET
     @Path("/flow/schema")
@@ -66,4 +70,15 @@ public class ConfigurationResource {
                 .map(AlertServiceStatusEntity::new)
                 .subscribe(response::resume, response::resume);
     }
+
+    @GET
+    @Path("spel/grammar")
+    @Produces(javax.ws.rs.core.MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get the spel grammar",
+        notes = "There is no particular permission needed. User must be authenticated.")
+    public void getSpelGrammar(@Suspended final AsyncResponse response) {
+        spelService.getGrammar()
+            .subscribe(response::resume, response::resume);
+    }
+
 }
