@@ -68,7 +68,7 @@
         </div>
 
         <div fxLayout="row" *hasPermission="['domain_role_update']">
-          <button mat-raised-button [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!roleForm.valid || roleForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div class="gv-page-delete-zone" fxLayout="column" *hasPermission="['domain_role_delete']">

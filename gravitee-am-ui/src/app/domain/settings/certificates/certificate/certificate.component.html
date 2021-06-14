@@ -38,7 +38,7 @@
           </div>
         </div>
         <div *hasPermission="['domain_certificate_update']" fxLayout="row" class="certificate-actions">
-          <button mat-raised-button [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!certificateForm.valid || certificateForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update()">SAVE</button>
         </div>
       </form>
 

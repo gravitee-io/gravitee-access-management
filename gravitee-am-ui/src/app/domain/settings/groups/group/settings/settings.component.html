@@ -32,7 +32,7 @@
         </mat-form-field>
       </div>
       <div fxLayout="row" *ngIf="editMode">
-        <button mat-raised-button [disabled]="!groupForm.valid || groupForm.pristine" type="submit">SAVE</button>
+        <button mat-raised-button color="primary" [disabled]="!groupForm.valid || groupForm.pristine" type="submit">SAVE</button>
       </div>
     </form>
     <div class="gv-page-delete-zone" fxLayout="column" *ngIf="deleteMode">

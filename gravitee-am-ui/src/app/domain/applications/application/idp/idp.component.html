@@ -83,7 +83,7 @@
   </div>
 
   <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row" style="margin-top: 20px;">
-    <button mat-raised-button type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
+    <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
   </div>
 
 </div>

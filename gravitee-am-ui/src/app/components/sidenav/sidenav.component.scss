@@ -1,6 +1,6 @@
 $fontColor: #fdfdfd;
 $bgSettingsColor: #fafafa;
-$fontSettingsColor: #637282;
+$fontSettingsColor: #1b1d3c;
 $sidenavWidth: 200px;
 $sidenavMinWidth: 60px;
 $sidenavItemLeftWidth: 25px;
@@ -26,47 +26,26 @@ $sidenavHeaderHeight: 64px;
   min-height: 100px;
   .logo-image {
     display: block;
-    width: 48px;
-    min-width: 48px;
-    height: 48px;
-    line-height: 48px;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 500;
-    color: #FFF;
-    border-radius: 5px;
-  }
-  .logo-text {
-    margin-bottom: 7px;
-    span {
-      text-overflow: ellipsis;
-      overflow: hidden;
-      width: 132px;
-      font-weight: 400;
-      font-size: 14px;
-      color: #686B73;
-      small {
-        color: #CDCCCC;
-        font-weight: 300;
-        font-size: 10px;
-        position: absolute;
-        top: 25px;
-        right: 15px;
-      }
+    width: 130px;
+    min-width: 130px;
+    &.reduce-mode {
+      width: 22px;
+      min-width: 22px;
     }
   }
 }
 
 .gv-sidenav {
+  background: var(--gv-theme-background-gradient);
   @include min-max-width($sidenavWidth);
   img.logo-image {
-    margin-left: 15px;
+    margin-left: 20px;
   }
 }
 .gv-sidenav-min {
   @include min-max-width($sidenavMinWidth);
   img.logo-image {
-    margin-left: 0px;
+    margin-left: 10px;
   }
   .sidenav-list {
     a {
@@ -76,9 +55,9 @@ $sidenavHeaderHeight: 64px;
   }
 }
 .gv-sidenav-settings {
-  background-color: $bgSettingsColor;
+  background: $bgSettingsColor;
   .navigation-header {
-    background-color: $bgSettingsColor;
+    background: $bgSettingsColor;
   }
   a {
     color: $fontSettingsColor !important;

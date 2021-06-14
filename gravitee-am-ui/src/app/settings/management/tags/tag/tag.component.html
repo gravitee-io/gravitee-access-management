@@ -42,7 +42,7 @@
         </div>
 
         <div fxLayout="row" *hasPermission="['organization_tag_update']">
-          <button mat-raised-button [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!tagForm.valid || tagForm.pristine)" type="submit">SAVE</button>
         </div>
       </form>
 

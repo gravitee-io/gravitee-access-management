@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@import '~@gravitee/ui-components/assets/css/gravitee-theme.generated.css';
+@import '~@gravitee/ui-components/assets/css/gravitee-console-theme.css';
 @import '~@swimlane/ngx-datatable/themes/material.css';
 @import '~@swimlane/ngx-datatable/assets/icons.css';
 @import '~codemirror/lib/codemirror.css';
@@ -13,7 +13,7 @@ $graviteeio-am-primary-palette: (
   200: #b0bec5,
   300: #90a4ae,
   400: #78909c,
-  500: #28444F,
+  500: #1b1d3c,
   600: #546e7a,
   700: #455a64,
   800: #37474f,
@@ -46,7 +46,7 @@ $graviteeio-am-accent-palette: (
   200: #90caf9,
   300: #64b5f6,
   400: #42a5f5,
-  500: #86C3D0,
+  500: #1ecad3,
   600: #1e88e5,
   700: #1976d2,
   800: #1565c0,
@@ -166,8 +166,9 @@ html, body, app-root, mat-sidenav-container {
   height: 100%;
 }
 
-body {
-  font-family: Roboto,Helvetica Neue Light,Helvetica Neue,Helvetica,Arial,Lucida Grande,sans-serif;
+/* font-family configuration */
+html, body, a, span, mat-card-title, mat-card-subtitle {
+  font-family: 'Libre Franklin', sans-serif;
 }
 
 mat-sidenav-container {

@@ -35,7 +35,7 @@
           </scope-selection>
         </div>
         <div *ngIf="!readonly">
-          <button mat-raised-button [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!allowedScopeForm.valid || allowedScopeForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
     </div>

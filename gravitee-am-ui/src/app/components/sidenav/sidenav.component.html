@@ -21,8 +21,8 @@
     <div fxLayout="row" fxLayoutAlign="center center">
         <img class="logo-image"
              [ngClass]="{'reduce-mode': reducedMode}"
-             [src]="isGlobalSettings ? 'assets/theme/logo_gravitee_light.png' : 'assets/theme/logo_gravitee_dark.png'"
-             (error)="isGlobalSettings ? mainLogo.src='assets/logo_gravitee_light.png' : mainLogo.src='assets/logo_gravitee_dark.png'"
+             [src]="isGlobalSettings ? 'assets/theme/logo_gravitee' + ((reducedMode) ? '_min' : '') + '_light.png' : 'assets/theme/logo_gravitee' + ((reducedMode) ? '_min' : '') +'_dark.png'"
+             (error)="isGlobalSettings ? mainLogo.src='assets/logo_gravitee' + ((reducedMode) ? '_min' : '') +  '_light.png' : mainLogo.src='assets/logo_gravitee' + ((reducedMode) ? '_min' : '') + '_dark.png'"
              #mainLogo/>
     </div>
     </a>

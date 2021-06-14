@@ -148,7 +148,7 @@
         </div>
 
         <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="(!applicationForm.valid || applicationForm.pristine) && !formChanged" type="submit">SAVE</button>
         </div>
       </form>
       <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode || renewSecretMode">
