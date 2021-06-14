@@ -17,9 +17,9 @@
 -->
 <div>
   <div fxLayout="column" fxFlex="70">
-    <small style="margin-top: 10px;" *ngIf="!isEmpty"><i>Double click to edit and press enter to save changes</i></small>
+    <small style="margin-top: 10px;" *ngIf="!isEmpty"><i>Press enter to save changes</i></small>
     <ngx-datatable *ngIf="!isEmpty" [columnMode]="'flex'" class="material" [headerHeight]="40" [footerHeight]="40" [rowHeight]="55" [rows]='mappers'>
-      <ngx-datatable-column name="User profile attributes" [flexGrow]="1">
+      <ngx-datatable-column name="User profile attributes" [flexGrow]="2">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
         <span (dblclick)="editing[rowIndex + '-key'] = true" *ngIf="!editing[rowIndex + '-key']">
           {{row.key}}
@@ -32,21 +32,21 @@
           </mat-form-field>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Raw attributes" [flexGrow]="1">
+      <ngx-datatable-column name="Raw attributes" [flexGrow]="4">
         <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
-        <span (dblclick)="editing[rowIndex + '-value'] = true" *ngIf="!editing[rowIndex + '-value']">
-          {{row.value}}
-        </span>
-          <mat-form-field *ngIf="editing[rowIndex + '-value']" class="datatable-input">
-            <input matInput type="text" required autofocus placeholder="Raw attribute"
-                   (keyup.enter)="updateMapper($event, 'value', rowIndex)"
-                   (blur)="editing[rowIndex + '-value'] = false"
-                   [value]="row.value" />
-          </mat-form-field>
+          <div class="raw-attribute-row">
+            <gv-expression-language placeholder="Raw attribute. Support EL."
+                                    (keyup.enter)="updateMapper($event, 'value', rowIndex)"
+                                    [value]="row.value"
+                                    required
+                                    autofocus
+                                    rows="1"></gv-expression-language>
+          </div>
+
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Actions" [flexGrow]="1">
-        <ng-template let-row="row" ngx-datatable-cell-template>
+        <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
           <div fxLayout="row" class="gv-table-cell-actions" *hasPermission="['domain_identity_provider_update']">
             <button mat-icon-button (click)="delete(row.key, $event)"><mat-icon>delete</mat-icon></button>
           </div>

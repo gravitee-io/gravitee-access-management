@@ -20,12 +20,21 @@
 </h5>
 <mat-dialog-content>
   <form #attributeForm="ngForm">
-    <mat-form-field>
-      <input matInput name="key" placeholder="User profile attribute" required autofocus ngModel/>
-    </mat-form-field>
-    <mat-form-field>
-      <input matInput name="value" placeholder="Raw attribute" required ngModel/>
-    </mat-form-field>
+    <div>
+      <mat-form-field appearance="outline">
+        <input matInput name="key" placeholder="User profile attribute" required autofocus ngModel/>
+      </mat-form-field>
+    </div>
+    <div>
+      <gv-expression-language name="value"
+                              placeholder="Raw attribute. Support EL."
+                              ngDefaultControl
+                              gvControl
+                              ngModel
+                              required
+                              inner-hint
+                              rows="1"></gv-expression-language>
+    </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>

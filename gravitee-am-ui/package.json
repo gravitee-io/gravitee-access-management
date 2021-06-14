@@ -1,6 +1,6 @@
 {
   "name": "gravitee-am-webui",
-  "version": "3.9.0",
+  "version": "3.10.0-SNAPSHOT",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
@@ -28,7 +28,7 @@
     "@angular/platform-browser-dynamic": "^11.2.14",
     "@angular/platform-server": "^11.2.14",
     "@angular/router": "^11.2.14",
-    "@gravitee/ui-components": "^3.3.0",
+    "@gravitee/ui-components": "^3.4.0",
     "@swimlane/ngx-datatable": "^19.0.0",
     "@types/hammerjs": "^2.0.36",
     "asciidoctor": "^2.2.4",

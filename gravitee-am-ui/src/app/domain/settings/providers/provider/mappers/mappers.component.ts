@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
-import {ActivatedRoute, Router} from "@angular/router";
+import { Component, ElementRef, HostListener, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from "@angular/router";
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { OrganizationService } from "../../../../../services/organization.service";
+import '@gravitee/ui-components/wc/gv-expression-language';
 
 @Component({
   selector: 'provider-mappers',
@@ -29,22 +31,25 @@ export class ProviderMappersComponent implements OnInit {
   private domainId: string;
   private organizationContext = false;
   private defaultMappers: any = {
-    'sub' : 'uid',
-    'email' : 'mail',
-    'name' : 'displayname',
-    'given_name' : 'givenname',
-    'family_name' : 'sn'
+    'sub': 'uid',
+    'email': 'mail',
+    'name': 'displayname',
+    'given_name': 'givenname',
+    'family_name': 'sn'
   };
   mappers: any = [];
   provider: any;
   editing = {};
+  spelGrammar: any;
 
   constructor(private providerService: ProviderService,
               private snackbarService: SnackbarService,
               private dialogService: DialogService,
               private route: ActivatedRoute,
               private router: Router,
-              private dialog: MatDialog) { }
+              private dialog: MatDialog,
+              private organizationService: OrganizationService) {
+  }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
@@ -57,6 +62,17 @@ export class ProviderMappersComponent implements OnInit {
     } else {
       this.setMappers(this.provider.mappers);
     }
+  }
+
+  getGrammar() {
+    if (this.spelGrammar != null) {
+      return Promise.resolve(this.spelGrammar);
+    }
+
+    return this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+      return this.spelGrammar;
+    });
   }
 
   setMappers(mappers) {
@@ -128,6 +144,15 @@ export class ProviderMappersComponent implements OnInit {
   get isEmpty() {
     return !this.mappers || this.mappers.length == 0;
   }
+
+  @HostListener(':gv-expression-language:ready', ['$event.detail'])
+  setGrammar({currentTarget}) {
+    this.getGrammar().then((grammar)=> {
+      currentTarget.grammar = grammar;
+      currentTarget.requestUpdate();
+    });
+  };
+
 }
 
 @Component({
@@ -135,5 +160,37 @@ export class ProviderMappersComponent implements OnInit {
   templateUrl: './create/create.component.html',
 })
 export class CreateMapperComponent {
-  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>) { }
+
+  spelGrammar: any;
+
+  constructor(public dialogRef: MatDialogRef<CreateMapperComponent>,
+              private elementRef: ElementRef,
+              private organizationService: OrganizationService) {
+  }
+
+  ngOnInit() {
+    this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+    });
+
+  }
+
+  getGrammar() {
+    if (this.spelGrammar != null) {
+      return Promise.resolve(this.spelGrammar);
+    }
+
+    return this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+      return this.spelGrammar;
+    });
+  }
+
+  @HostListener(':gv-expression-language:ready', ['$event.detail'])
+  setGrammar({currentTarget}) {
+    this.getGrammar().then((grammar)=> {
+      currentTarget.grammar = grammar;
+      currentTarget.requestUpdate();
+    });
+  };
 }

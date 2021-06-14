@@ -385,4 +385,8 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/bot-detections/' + id + '/schema');
   }
 
+  spelGrammar(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/configuration/spel/grammar');
+  }
+
 }

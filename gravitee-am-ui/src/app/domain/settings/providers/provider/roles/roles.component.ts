@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, Inject, ViewChild } from '@angular/core';
+import {Component, OnInit, Inject, ViewChild, HostListener} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SnackbarService } from "../../../../../services/snackbar.service";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -21,6 +21,7 @@ import { ProviderService } from "../../../../../services/provider.service";
 import { DialogService } from "../../../../../services/dialog.service";
 import { AppConfig } from "../../../../../../config/app.config";
 import { NgForm } from "@angular/forms";
+import {OrganizationService} from "../../../../../services/organization.service";
 
 @Component({
   selector: 'app-roles',
@@ -142,13 +143,6 @@ export class ProviderRolesComponent implements OnInit {
   get isEmpty() {
     return !this.providerRoleMapper || this.providerRoles.length == 0;
   }
-
-  displayMapping(mapping: string): string {
-    let mapperKey = mapping.split('=')[0];
-    let mapperValue = mapping.split(mapperKey + '=')[1];
-    return mapperKey + '=' + mapperValue;
-  }
-
 }
 
 @Component({
@@ -157,15 +151,42 @@ export class ProviderRolesComponent implements OnInit {
 })
 export class CreateRoleMapperComponent {
   @ViewChild('userRoleForm', { static: true }) form: NgForm;
+  spelGrammar: any;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<CreateRoleMapperComponent>) {
+              public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
+              private organizationService: OrganizationService) {
   }
+
+  ngOnInit() {
+    this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+    });
+
+  }
+
+  getGrammar() {
+    if (this.spelGrammar != null) {
+      return Promise.resolve(this.spelGrammar);
+    }
+
+    return this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+      return this.spelGrammar;
+    });
+  }
+
+  @HostListener(':gv-expression-language:ready', ['$event.detail'])
+  setGrammar({currentTarget}) {
+    this.getGrammar().then((grammar)=> {
+      currentTarget.grammar = grammar;
+      currentTarget.requestUpdate();
+    });
+  };
 
   get formInvalid() {
     let formValue = this.form.value;
     return !formValue.user;
   }
-
 
 }

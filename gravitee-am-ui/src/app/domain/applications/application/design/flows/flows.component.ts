@@ -92,6 +92,13 @@ export class ApplicationFlowsComponent implements OnInit {
 
   }
 
+  @HostListener(':gv-expression-language:ready', ['$event.detail'])
+  fetchSpelGrammar ({currentTarget}) {
+    this.organizationService.spelGrammar().toPromise().then((response) => {
+      currentTarget.grammar = response;
+    });
+  };
+
   enableInheritMode(event) {
     this.dialogService
       .confirm('Inherit Flows', 'Are you sure you want to change the execution flows behavior ?')
