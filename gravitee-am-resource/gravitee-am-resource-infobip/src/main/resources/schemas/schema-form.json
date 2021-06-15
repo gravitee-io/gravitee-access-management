@@ -1,0 +1,33 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:resource:infobip:InfobipResourceConfiguration",
+  "properties" : {
+    "applicationId": {
+      "title": "Application id",
+      "description": "2FA application ID",
+      "type": "string"
+    },
+    "messageId": {
+      "title": "Message id",
+      "description": "Message template ID that will be sent to phone number.",
+      "type": "string"
+    },
+    "apiKey": {
+      "title": "Api Key",
+      "description": "The api key",
+      "type": "string"
+    },
+    "apiKeyPrefix": {
+      "title": "Api Key Prefix",
+      "description": "This will be used as a prefix of the api key",
+      "type": "string",
+      "enum" : ["Basic", "App", "IBSSO", "Bearer"]
+    },
+    "baseUrl": {
+      "title": "base url",
+      "description": "Insert the base url with protocol. Example: https://this-is-my-url.com",
+      "type": "string"
+    }
+  },
+  "required": ["applicationId", "messageId", "apiKey", "apiKeyPrefix", "baseUrl"]
+}
