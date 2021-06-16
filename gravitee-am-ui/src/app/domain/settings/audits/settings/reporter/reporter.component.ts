@@ -18,8 +18,8 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {OrganizationService} from '../../../../../services/organization.service';
 import {ReporterService} from '../../../../../services/reporter.service';
 import {SnackbarService} from '../../../../../services/snackbar.service';
-import { DialogService } from 'app/services/dialog.service';
-import { NavbarService } from 'app/components/navbar/navbar.service';
+import {DialogService} from 'app/services/dialog.service';
+import {NavbarService} from 'app/components/navbar/navbar.service';
 
 @Component({
   selector: 'app-reporter',
@@ -27,7 +27,7 @@ import { NavbarService } from 'app/components/navbar/navbar.service';
   styleUrls: ['./reporter.component.scss']
 })
 export class ReporterComponent implements OnInit {
-  @ViewChild('reporterForm', { static: true }) form: any;
+  @ViewChild('reporterForm', {static: true}) form: any;
 
   private domainId: string;
   private organizationContext = false;
@@ -111,9 +111,11 @@ export class ReporterComponent implements OnInit {
   }
 
   labelFor(pluginId) {
-    switch(pluginId) {
+    switch (pluginId) {
       case 'reporter-am-file':
         return "File";
+      case 'reporter-am-kafka':
+        return "Kafka";
       case 'reporter-am-jdbc':
         return "JDBC";
       case 'mongodb':

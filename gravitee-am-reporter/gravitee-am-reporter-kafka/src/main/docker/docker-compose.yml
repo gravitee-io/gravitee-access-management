@@ -1,0 +1,98 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# compose file to ba able to test the reporter
+# setup :
+# docker-compose up -d
+# docker cp ../../../target/gravitee-am-reporter-kafka-3.10.0-SNAPSHOT.zip gravitee-am-reporter-kafka_am-management_1:/opt/graviteeio-am-management-api/plugins
+# docker cp ../../../target/gravitee-am-reporter-kafka-3.10.0-SNAPSHOT.zip gravitee-am-reporter-kafka_am-gateway_1:/opt/graviteeio-am-gateway/plugins
+# docker-compose restart am-management am-gateway
+# docker-compose restart reverse-proxy
+version: '3.8'
+
+networks:
+  default:
+
+volumes:
+  mongodb-data:
+
+services:
+  mongodb:
+    image: 'mongo:4.4'
+    ports:
+      - '27017:27017'
+    volumes:
+      - 'mongodb-data:/data/db'
+
+  am-management:
+    image: 'graviteeio/am-management-api:${GRAVITEE_VERSION}'
+    depends_on:
+      - 'mongodb'
+    environment:
+      GIO_MIN_MEM: '256m'
+      GIO_MAX_MEM: '256m'
+      gravitee_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+
+  am-gateway:
+    image: 'graviteeio/am-gateway:${GRAVITEE_VERSION}'
+    depends_on:
+      - 'mongodb'
+    ports:
+      - '8092:8092'
+    environment:
+      GIO_MIN_MEM: '256m'
+      GIO_MAX_MEM: '256m'
+      gravitee_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+
+  am-ui:
+    image: 'graviteeio/am-management-ui:${GRAVITEE_VERSION}'
+    depends_on:
+      - 'mongodb'
+    environment:
+      MGMT_API_URL: http://localhost:${NGINX_PORT}/am
+      MGMT_UI_URL: http://localhost:${NGINX_PORT}/am/ui
+
+  reverse-proxy:
+    image: nginx:1.19-alpine
+    restart: unless-stopped
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - ${NGINX_PORT}:80
+    depends_on:
+      - 'am-management'
+      - 'am-gateway'
+      - 'am-ui'
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.1.1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-server:6.1.1
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+

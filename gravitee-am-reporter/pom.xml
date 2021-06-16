@@ -39,5 +39,6 @@
         <module>gravitee-am-reporter-mongodb</module>
         <module>gravitee-am-reporter-jdbc</module>
         <module>gravitee-am-reporter-file</module>
+        <module>gravitee-am-reporter-kafka</module>
     </modules>
 </project>

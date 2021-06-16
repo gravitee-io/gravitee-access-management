@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:reporter:kafka:KafkaReporterConfiguration",
+  "properties": {
+    "bootstrapServers": {
+      "type": "string",
+      "title": "Bootstrap servers",
+      "description": "Comma-separated list of host and port pairs for the the initial connection to the Kafka cluster (localhost:9092,another.host:9092)."
+    },
+    "topic": {
+      "type": "string",
+      "title": "Topic",
+      "default": "gravitee-audit",
+      "pattern": "^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$",
+      "description": "Kafka topic to send audit events."
+    },
+    "acks": {
+      "type": "string",
+      "title": "Acks",
+      "default": "1",
+      "description": "The number of acknowledgments the producer requires the leader to have received before considering a request complete.",
+      "enum": [
+        "-1",
+        "1",
+        "0",
+        "all"
+      ]
+    },
+    "additionalProperties": {
+      "title": "Producer properties",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "option": {
+            "title": "Property",
+            "description": "Kafka producer configuration property (https://kafka.apache.org/documentation/#producerconfigs for more information).",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "description": "Kafka producer configuration property value (https://kafka.apache.org/documentation/#producerconfigs for more information).",
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "bootstrapServers",
+    "topic",
+    "acks"
+  ]
+}
