@@ -321,7 +321,7 @@ public class UserServiceImpl implements UserService {
                                 return identityProviderManager.getUserProvider(authProvider)
                                         .flatMap(userProvider -> {
                                             return userProvider.findByEmail(email)
-                                                    .map(user -> Optional.of(user))
+                                                    .map(user -> Optional.of(convert(user, authProvider)))
                                                     .defaultIfEmpty(Optional.empty())
                                                     .onErrorReturnItem(Optional.empty());
                                         })
@@ -331,21 +331,7 @@ public class UserServiceImpl implements UserService {
                                 return optional.isPresent();
                             })
                             .lastOrError()
-                            .flatMap(optional -> {
-                                io.gravitee.am.identityprovider.api.User idpUser = optional.get();
-                                User newUser = new User();
-                                newUser.setId(RandomString.generate());
-                                newUser.setExternalId(idpUser.getId());
-                                newUser.setUsername(idpUser.getUsername());
-                                newUser.setInternal(true);
-                                newUser.setEmail(idpUser.getEmail());
-                                newUser.setFirstName(idpUser.getFirstName());
-                                newUser.setLastName(idpUser.getLastName());
-                                newUser.setAdditionalInformation(idpUser.getAdditionalInformation());
-                                newUser.setCreatedAt(new Date());
-                                newUser.setUpdatedAt(newUser.getCreatedAt());
-                                return userService.create(newUser);
-                            })
+                            .flatMap(optional -> userService.create(optional.get()))
                             .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
                 })
                 .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
@@ -471,6 +457,22 @@ public class UserServiceImpl implements UserService {
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private User convert(io.gravitee.am.identityprovider.api.User idpUser, String source) {
+        User newUser = new User();
+        newUser.setId(RandomString.generate());
+        newUser.setExternalId(idpUser.getId());
+        newUser.setUsername(idpUser.getUsername());
+        newUser.setInternal(true);
+        newUser.setEmail(idpUser.getEmail());
+        newUser.setFirstName(idpUser.getFirstName());
+        newUser.setLastName(idpUser.getLastName());
+        newUser.setAdditionalInformation(idpUser.getAdditionalInformation());
+        newUser.setReferenceType(ReferenceType.DOMAIN);
+        newUser.setReferenceId(domain.getId());
+        newUser.setSource(source);
+        return newUser;
     }
 
     private void extractAdditionalInformation(User user, Map<String, Object> additionalInformation) {

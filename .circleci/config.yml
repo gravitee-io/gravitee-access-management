@@ -43,12 +43,192 @@ parameters:
     description: "Release version number to use to publish the Docker nightly images ?"
 
 orbs:
-  gravitee: gravitee-io/gravitee@dev:1.0.4
+  # gravitee: gravitee-io/gravitee@dev:1.0.4
+  gravitee: gravitee-io/gravitee@1.0
   secrethub: secrethub/cli@1.1.0
 
-# --- Jobs to perform all workflows
-# jobs:
+jobs:
+  secrethub:
+    docker:
+      - image: 'cimg/base:stable'
+    environment:
+      DEV_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.dev.xml'
+      RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.non.dry.run.xml'
+      DRY_RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.xml'
+      GIO_GPG_PUB_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_pub_key'
+      GIO_GPG_PRV_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_private_key'
+      GIT_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/git/user/name'
+      GIT_USER_EMAIL: 'secrethub://graviteeio/cicd/graviteebot/git/user/email'
+      DOCKERHUB_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-name'
+      DOCKERHUB_USER_TOKEN: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-token'
+    steps:
+      - secrethub/exec:
+          command: |
+            echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
+            mkdir -p /tmp/gravit33bot/.secrets/.gungpg
+            echo $RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/release.settings.xml
+            echo $DRY_RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/dry.release.settings.xml
+            echo $GIO_GPG_PUB_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
+            echo $GIO_GPG_PRV_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
+            echo $GIT_USER_NAME > /tmp/gravit33bot/git_user_name
+            echo $GIT_USER_EMAIL > /tmp/gravit33bot/git_user_email
+            mkdir -p /tmp/gravit33bot/.secrets/dockerhub
+            echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
+            echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
+      - secrethub/install
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - .circleci.settings.xml
+            - gravit33bot
+  build:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Maven Package
+          command: |
+            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-ui/target/*.zip ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - ./gravitee-am-gateway-standalone-*.zip
+            - ./gravitee-am-management-api-standalone-*.zip
+            - ./gravitee-am-webui-*.zip
 
+  publish-images-azure-registry:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Compute Tag for Docker images
+          command: |
+            # Compute tag with branch name, commmit SHA and timestamp. Then slugify it to be sure it can be handled by Docker
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Docker images will be tagged with: ${TAG}"
+            echo $TAG > /tmp/docker-tag.txt
+      - run:
+          name: Build & Publish Management API Docker Image to Azure Registry
+          command: |
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            echo "Gravitee AM version: ${AM_VERSION}"
+            export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
+            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - run:
+          name: Build & Publish Gateway Docker Image to Azure Registry
+          command: |
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
+            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - run:
+          name: Build & Publish Web UI Docker Image to Azure Registry
+          command: |
+            cp -fr docker/management-ui/config /tmp/
+            cp -fr docker/management-ui/run.sh /tmp/
+
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
+            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - ./docker-tag.txt
+
+  deploy-on-aks:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Read tag of Docker images to deploy
+          command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Will deploy Docker images with tag: ${TAG}"
+      - run:
+          name: Install Helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            helm version
+      - run:
+          name: Install Kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client=true
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Setup Git config and clone cloud-am repo
+          command: |
+            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Add SSH Key
+            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
+            ssh-add -D
+            ssh-add "${LOCAL_SSH_PRVIKEY}"
+
+            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+      - run:
+          name: Helm upgrade and 🚀
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az aks get-credentials --resource-group am-hprod --name am-hprod
+            helm upgrade --repo https://helm.gravitee.io \
+                        --install am \
+                        -n nightly \
+                        -f ./cloud-am/nightly/values.yaml am \
+                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                        --set "api.image.tag=${TAG}" \
+                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                        --set "gateway.image.tag=${TAG}" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                        --set "ui.image.tag=${TAG}"
+
+
+
+  purge-azure-registry:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - run:
+          name: 🗑 Let's purge all AM images older than 1d
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az acr run --cmd "acr purge --filter 'am-gateway:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
 
 workflows:
   version: 2.1
@@ -79,7 +259,52 @@ workflows:
                 - master
                 # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
 
-
+  build_branch:
+    jobs:
+      - secrethub:
+          context:
+            - cicd-orchestrator
+      - build:
+          requires:
+            - secrethub
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - publish-images-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - deploy-on-aks:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-id
+                var-name: AZURE_APPLICATION_ID
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/tenant
+                var-name: AZURE_TENANT
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-secret
+                var-name: AZURE_APPLICATION_SECRET
+          requires:
+            - publish-images-azure-registry
+          filters:
+            branches:
+              only: master
 
   release:
     when:
@@ -119,28 +344,6 @@ workflows:
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
           ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
 
-
-
-  docker_nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - master
-                - /^[0-999].[0-999].x/
-                - cicd/circleci-release
-    jobs:
-      - gravitee/d_am_nightly_secrets:
-          context: cicd-orchestrator
-          name: nightly_secrets_resolution
-      - gravitee/d_am_nightly:
-          name: docker_nightly
-          requires:
-            - nightly_secrets_resolution
-          container_size: 'xlarge'
-#
   publish_rpms:
     when:
       equal: [ publish_rpms, << pipeline.parameters.gio_action >> ]
@@ -150,3 +353,25 @@ workflows:
           secrethub_org: graviteeio
           secrethub_repo: cicd
           gio_release_version: << pipeline.parameters.graviteeio_version >>
+
+  daily-purge-azure-registry:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - purge-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-id
+                var-name: AZURE_APPLICATION_ID
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/tenant
+                var-name: AZURE_TENANT
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-secret
+                var-name: AZURE_APPLICATION_SECRET

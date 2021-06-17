@@ -49,11 +49,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,11 +65,12 @@ import java.util.List;
  */
 @Component
 public class ReporterServiceImpl implements ReporterService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     public static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     public static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     public static final String REPORTER_AM_FILE= "reporter-am-file";
     public static final String REPORTER_CONFIG_FILENAME = "filename";
-    private final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     public static final String ADMIN_DOMAIN = "admin";
 
     @Autowired
@@ -114,87 +119,24 @@ public class ReporterServiceImpl implements ReporterService {
                 });
     }
 
-    protected boolean useMongoReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
-    }
-
-    protected boolean useJdbcReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "jdbc".equalsIgnoreCase(managementBackend);
+    @Override
+    public Single<Reporter> createDefault(String domain) {
+        LOGGER.debug("Create default reporter for domain {}", domain);
+        NewReporter newReporter = createInternal(domain);
+        if (newReporter == null) {
+            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty("management.type") + " not found"));
+        }
+        return create(domain, newReporter);
     }
 
     @Override
-    public Single<Reporter> createDefault(String domain) {
-        // get env configuration
+    public NewReporter createInternal(String domain) {
         NewReporter newReporter = null;
         if (useMongoReporter()) {
             newReporter = createMongoReporter(domain);
         } else if (useJdbcReporter()) {
-            // jdbc
             newReporter = createJdbcReporter(domain);
-        } else {
-            return Single.error(new ReporterNotFoundException("Reporter type " + this.environment.getProperty("management.type") + " not found"));
         }
-        LOGGER.debug("Create default reporter for domain {}", domain);
-        return create(domain, newReporter);
-    }
-
-    protected NewReporter createMongoReporter(String domain) {
-        String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-        String mongoPort = environment.getProperty("management.mongodb.port", "27017");
-        String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
-        String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
-
-        NewReporter newReporter = new NewReporter();
-        newReporter.setId(RandomString.generate());
-        newReporter.setEnabled(true);
-        newReporter.setName("MongoDB Reporter");
-        newReporter.setType("mongodb");
-        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits_" + domain + "\",\"bulkActions\":1000,\"flushInterval\":5}");
-
-        return newReporter;
-    }
-
-    protected NewReporter createJdbcReporter(String domain) {
-        String jdbcHost = environment.getProperty("management.jdbc.host");
-        String jdbcPort = environment.getProperty("management.jdbc.port");
-        String jdbcDatabase = environment.getProperty("management.jdbc.database");
-        String jdbcDriver = environment.getProperty("management.jdbc.driver");
-        String jdbcUser = environment.getProperty("management.jdbc.username");
-        String jdbcPwd = environment.getProperty("management.jdbc.password");
-
-        // dash are forbidden in table name, replace them in domainName by underscore
-        String tableSuffix = domain.replaceAll("-", "_");
-        if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
-            try {
-                LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
-                byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
-                tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
-            } catch (NoSuchAlgorithmException e) {
-                throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
-            }
-        }
-
-        NewReporter newReporter = new NewReporter();
-        newReporter.setId(RandomString.generate());
-        newReporter.setEnabled(true);
-        newReporter.setName("JDBC Reporter");
-        newReporter.setType(REPORTER_AM_JDBC);
-        newReporter.setConfiguration("{\"host\":\"" + jdbcHost + "\"," +
-                "\"port\":" + jdbcPort + "," +
-                "\"database\":\"" + jdbcDatabase + "\"," +
-                "\"driver\":\"" + jdbcDriver + "\"," +
-                "\"username\":\"" + jdbcUser+ "\"," +
-                "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
-                "\"tableSuffix\":\"" + tableSuffix + "\"," +
-                "\"initialSize\":0," +
-                "\"maxSize\":10," +
-                "\"maxIdleTime\":30000," +
-                "\"maxLifeTime\":30000," +
-                "\"bulkActions\":1000," +
-                "\"flushInterval\":5}");
-
         return newReporter;
     }
 
@@ -233,41 +175,6 @@ public class ReporterServiceImpl implements ReporterService {
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
     }
 
-    /**
-     * This method check if the configuration attribute of a Reporter is valid
-     *
-     * @param reporter to check
-     * @return
-     */
-    private Single<Reporter> checkReporterConfiguration(Reporter reporter) {
-        Single<Reporter> result = Single.just(reporter);
-
-        if (REPORTER_AM_FILE.equalsIgnoreCase(reporter.getType())) {
-            // for FileReporter we have to check if the filename isn't used by another reporter
-            final JsonObject configuration = (JsonObject) Json.decodeValue(reporter.getConfiguration());
-            final String reporterId = reporter.getId();
-
-            result = reporterRepository.findByDomain(reporter.getDomain()).flatMap(reporters -> {
-                long count = reporters.stream()
-                        .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
-                        .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
-                        .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
-                        .filter(cfg ->
-                                cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
-                                        cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
-                        .count();
-
-                if (count > 0) {
-                    // more than one reporter use the same filename
-                    return Single.error(new ReporterConfigurationException("Filename already defined"));
-                } else {
-                    return Single.just(reporter);
-                }
-            });
-        }
-
-        return result;
-    }
 
     @Override
     public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal) {
@@ -332,5 +239,167 @@ public class ReporterServiceImpl implements ReporterService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete reporter: %s", reporterId), ex));
                 });
+    }
+
+    /**
+     * This method check if the configuration attribute of a Reporter is valid
+     *
+     * @param reporter to check
+     * @return
+     */
+    private Single<Reporter> checkReporterConfiguration(Reporter reporter) {
+        Single<Reporter> result = Single.just(reporter);
+
+        if (REPORTER_AM_FILE.equalsIgnoreCase(reporter.getType())) {
+            // for FileReporter we have to check if the filename isn't used by another reporter
+            final JsonObject configuration = (JsonObject) Json.decodeValue(reporter.getConfiguration());
+            final String reporterId = reporter.getId();
+
+            result = reporterRepository.findByDomain(reporter.getDomain()).flatMap(reporters -> {
+                long count = reporters.stream()
+                        .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
+                        .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
+                        .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
+                        .filter(cfg ->
+                                cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
+                                        cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
+                        .count();
+
+                if (count > 0) {
+                    // more than one reporter use the same filename
+                    return Single.error(new ReporterConfigurationException("Filename already defined"));
+                } else {
+                    return Single.just(reporter);
+                }
+            });
+        }
+
+        return result;
+    }
+
+    private NewReporter createMongoReporter(String domain) {
+        Optional<String> mongoServers = getMongoServers(environment);
+        String mongoHost = null;
+        String mongoPort = null;
+        if (!mongoServers.isPresent()) {
+            mongoHost = environment.getProperty("management.mongodb.host", "localhost");
+            mongoPort = environment.getProperty("management.mongodb.port", "27017");
+        }
+
+        final String username = environment.getProperty("management.mongodb.username");
+        final String password = environment.getProperty("management.mongodb.password");
+        String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
+
+        String defaultMongoUri = "mongodb://";
+        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+            defaultMongoUri += username +":"+ password +"@";
+        }
+        defaultMongoUri += mongoServers.orElse(mongoHost+":"+mongoPort) + "/" + mongoDBName;
+        String mongoUri = environment.getProperty("management.mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
+
+        NewReporter newReporter = new NewReporter();
+        newReporter.setId(RandomString.generate());
+        newReporter.setEnabled(true);
+        newReporter.setName("MongoDB Reporter");
+        newReporter.setType("mongodb");
+        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "") + "\",\"bulkActions\":1000,\"flushInterval\":5}");
+
+        return newReporter;
+    }
+
+    private NewReporter createJdbcReporter(String domain) {
+        String jdbcHost = environment.getProperty("management.jdbc.host");
+        String jdbcPort = environment.getProperty("management.jdbc.port");
+        String jdbcDatabase = environment.getProperty("management.jdbc.database");
+        String jdbcDriver = environment.getProperty("management.jdbc.driver");
+        String jdbcUser = environment.getProperty("management.jdbc.username");
+        String jdbcPwd = environment.getProperty("management.jdbc.password");
+
+        // dash are forbidden in table name, replace them in domainName by underscore
+        String tableSuffix = null;
+        if (domain != null) {
+            domain.replaceAll("-", "_");
+            if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
+                try {
+                    LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
+                    byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
+                    tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
+                } catch (NoSuchAlgorithmException e) {
+                    throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
+                }
+            }
+        }
+
+        NewReporter newReporter = new NewReporter();
+        newReporter.setId(RandomString.generate());
+        newReporter.setEnabled(true);
+        newReporter.setName("JDBC Reporter");
+        newReporter.setType(REPORTER_AM_JDBC);
+        newReporter.setConfiguration("{\"host\":\"" + jdbcHost + "\"," +
+                "\"port\":" + jdbcPort + "," +
+                "\"database\":\"" + jdbcDatabase + "\"," +
+                "\"driver\":\"" + jdbcDriver + "\"," +
+                "\"username\":\"" + jdbcUser+ "\"," +
+                "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
+                "\"tableSuffix\":\"" + (tableSuffix != null ? tableSuffix : "") + "\"," +
+                "\"initialSize\":5," +
+                "\"maxSize\":10," +
+                "\"maxIdleTime\":180000," +
+                "\"bulkActions\":1000," +
+                "\"flushInterval\":5}");
+
+        return newReporter;
+    }
+
+    private String addOptionsToURI(Environment environment, String mongoUri) {
+        Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
+        Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
+        Integer maxConnectionIdleTime = environment.getProperty("management.mongodb.maxConnectionIdleTime", Integer.class);
+        Integer heartbeatFrequency = environment.getProperty("management.mongodb.heartbeatFrequency", Integer.class);
+        Boolean sslEnabled = environment.getProperty("management.mongodb.sslEnabled", Boolean.class);
+        String authSource = environment.getProperty("management.mongodb.authSource", String.class);
+
+        mongoUri += "?connectTimeoutMS="+connectTimeout+"&socketTimeoutMS="+socketTimeout;
+        if (authSource != null) {
+            mongoUri += "&authSource="+authSource;
+        }
+        if (maxConnectionIdleTime != null) {
+            mongoUri += "&maxIdleTimeMS="+maxConnectionIdleTime;
+        }
+        if (heartbeatFrequency != null) {
+            mongoUri += "&heartbeatFrequencyMS="+heartbeatFrequency;
+        }
+        if (sslEnabled != null) {
+            mongoUri += "&ssl="+sslEnabled;
+        }
+
+        return mongoUri;
+    }
+
+    private Optional<String> getMongoServers(Environment env) {
+        LOGGER.debug("Looking for MongoDB server configuration...");
+        boolean found = true;
+        int idx = 0;
+        List<String> endpoints = new ArrayList<>();
+
+        while (found) {
+            String serverHost = env.getProperty("management.mongodb.servers[" + (idx++) + "].host");
+            int serverPort = env.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
+            found = (serverHost != null);
+            if (found) {
+                endpoints.add(serverHost+":"+serverPort);
+            }
+        }
+        return endpoints.isEmpty() ? Optional.empty() : Optional.of(endpoints.stream().collect(Collectors.joining(",")));
+    }
+
+    private boolean useMongoReporter() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "mongodb".equalsIgnoreCase(managementBackend);
+    }
+
+    private boolean useJdbcReporter() {
+        String managementBackend = this.environment.getProperty("management.type", "mongodb");
+        return "jdbc".equalsIgnoreCase(managementBackend);
     }
 }

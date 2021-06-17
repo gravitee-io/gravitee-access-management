@@ -28,7 +28,7 @@ import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundForDomainException;
-import io.gravitee.am.service.impl.ReporterServiceImpl;
+import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
@@ -44,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -64,9 +63,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
     private static final Logger logger = LoggerFactory.getLogger(AuditReporterManagerImpl.class);
     private String deploymentId;
-
-    @Autowired
-    private Environment environment;
 
     @Autowired
     private ReporterPluginManager reporterPluginManager;
@@ -105,41 +101,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         // init noOpReporter
         noOpReporter = new NoOpReporter();
 
-        if (useMongoReporter()) {
-            logger.info("Initializing internal audit mongodb reporter");
-            String mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-            String mongoPort = environment.getProperty("management.mongodb.port", "27017");
-            String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
-            String mongoUri = environment.getProperty("management.mongodb.uri", "mongodb://" + mongoHost + ":" + mongoPort + "/" + mongoDBName);
-            String configuration = "{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + "\",\"bulkActions\":1000,\"flushInterval\":5}";
-            internalReporter = reporterPluginManager.create("mongodb", configuration, null);
-            logger.info("Internal audit mongodb reporter initialized");
-        } else if (useJdbcReporter()) {
-            logger.info("Initializing internal audit jdbc reporter");
-            String jdbcHost = environment.getProperty("management.jdbc.host");
-            String jdbcPort = environment.getProperty("management.jdbc.port");
-            String jdbcDatabase = environment.getProperty("management.jdbc.database");
-            String jdbcDriver = environment.getProperty("management.jdbc.driver");
-            String jdbcUser = environment.getProperty("management.jdbc.username");
-            String jdbcPwd = environment.getProperty("management.jdbc.password");
-
-            String configuration = "{\"host\":\"" + jdbcHost + "\"," +
-                    "\"port\":" + jdbcPort + "," +
-                    "\"database\":\"" + jdbcDatabase + "\"," +
-                    "\"driver\":\"" + jdbcDriver + "\"," +
-                    "\"username\":\"" + jdbcUser+ "\"," +
-                    "\"password\":\"" + jdbcPwd + "\"," +
-                    "\"tableSuffix\":\"\"," + // empty domain
-                    "\"initialSize\":0," +
-                    "\"maxSize\":10," +
-                    "\"maxIdleTime\":30000," +
-                    "\"maxLifeTime\":30000," +
-                    "\"bulkActions\":1000," +
-                    "\"flushInterval\":5}";
-
-            internalReporter = reporterPluginManager.create(ReporterServiceImpl.REPORTER_AM_JDBC, configuration, null);
-            logger.info("Internal audit jdbc reporter initialized");
-        }
+        // init internal reporter (organization reporter)
+        NewReporter organizationReporter = reporterService.createInternal();
+        logger.info("Initializing internal " + organizationReporter.getType() + " audit reporter");
+        internalReporter = reporterPluginManager.create(organizationReporter.getType(), organizationReporter.getConfiguration(), null);
+        logger.info("Internal audit " + organizationReporter.getType() + " reporter initialized");
 
         logger.info("Initializing audit reporters");
         List<io.gravitee.am.model.Reporter> reporters = reporterService.findAll().blockingGet();
@@ -168,16 +134,6 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
 
         // deploy internal reporter verticle
         deployReporterVerticle(asList(new EventBusReporterWrapper(vertx, internalReporter)));
-    }
-
-    protected boolean useMongoReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "mongodb".equalsIgnoreCase(managementBackend);
-    }
-
-    protected boolean useJdbcReporter() {
-        String managementBackend = this.environment.getProperty("management.type", "mongodb");
-        return "jdbc".equalsIgnoreCase(managementBackend);
     }
 
     @Override
