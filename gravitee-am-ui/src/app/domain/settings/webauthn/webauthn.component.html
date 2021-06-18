@@ -86,7 +86,7 @@
 
           <div style="display: flex; flex-direction: column; padding: 10px 5px; margin-top: 10px;">
             <mat-checkbox name="forceRegistration" [(ngModel)]="domain.webAuthnSettings.forceRegistration">Force registration</mat-checkbox>
-            <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the Relying Party accepts the registration, e.g. while deleting the older registration instead of failing the registration ceremony.</mat-hint>
+            <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the Relying Party accepts the registration instead of failing the registration ceremony.</mat-hint>
           </div>
         </div>
         <div fxLayout="row" *hasPermission="['domain_settings_update']">

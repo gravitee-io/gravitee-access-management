@@ -154,7 +154,7 @@ export class AddMemberComponent {
     this.memberCtrl.valueChanges
       .subscribe(searchTerm => {
         if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.userService.search(data.domain, searchTerm + '*', 0, 30, data.organizationContext).subscribe(response => {
+          this.userService.search(data.domain, 'q=' + searchTerm + '*', 0, 30, data.organizationContext).subscribe(response => {
             this.filteredUsers = response.data.filter(domainUser => _.map(this.selectedMembers, 'id').indexOf(domainUser.id) === -1 && this.groupMembers.indexOf(domainUser.id) === -1);
           });
         }

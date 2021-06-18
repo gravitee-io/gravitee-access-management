@@ -129,11 +129,6 @@ public class RepositoryCredentialStore {
                 .flatMapCompletable(credentials -> {
                     if (credentials.isEmpty()) {
                         // no credential found, create it
-                        // if force registration option is enabled, remove existing credentials with the same aaguid
-                        if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
-                            return credentialService.deleteByAaguid(ReferenceType.DOMAIN, domain.getId(), authenticator.getAaguid())
-                                    .andThen(create(authenticator));
-                        }
                         return create(authenticator);
                     } else {
                         // update current credentials
