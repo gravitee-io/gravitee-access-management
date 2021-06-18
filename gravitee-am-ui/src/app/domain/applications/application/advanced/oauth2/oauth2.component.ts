@@ -257,6 +257,7 @@ export class ApplicationOAuth2Component implements OnInit {
         claim.id = Math.random().toString(36).substring(7);
         this.applicationOauthSettings.tokenCustomClaims.push(claim);
         this.applicationOauthSettings.tokenCustomClaims = [...this.applicationOauthSettings.tokenCustomClaims];
+        this.table.groupHeader.collapseAllGroups();
         this.formChanged = true;
       } else {
         this.snackbarService.open('Claim already exists');
