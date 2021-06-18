@@ -212,7 +212,7 @@
           <div class="token-custom-claims">
             <app-create-claim *ngIf="!readonly" (addClaimChange)="addClaim($event)"></app-create-claim>
             <p *ngIf="!claimsIsEmpty() && !readonly"><small><i>Double click to edit and press enter to save changes</i></small></p>
-            <ngx-datatable class="material"
+            <ngx-datatable #claimsTable class="material"
                            [columnMode]="'flex'"
                            [headerHeight]="40"
                            [footerHeight]="40"
