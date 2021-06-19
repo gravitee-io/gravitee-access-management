@@ -1,6 +1,26 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/403?closed=1[AM - 3.9.1 (2021-06-19)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.8.5 https://github.com/gravitee-io/issues/issues/5747[#5747]
+
+*_Management_*
+
+- Add missing information in the domains resource https://github.com/gravitee-io/issues/issues/5754[#5754]
+
+*_Management-ui_*
+
+- Cannot collapse custom claims https://github.com/gravitee-io/issues/issues/5750[#5750]
+- Update an application change its type https://github.com/gravitee-io/issues/issues/5749[#5749]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/382?closed=1[AM - 3.5.6 (2021-06-10)]
 
 === Bug fixes
