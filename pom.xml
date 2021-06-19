@@ -30,7 +30,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>3.9.1-SNAPSHOT</version>
+    <version>3.9.1</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -110,7 +110,7 @@
         <gravitee-cockpit-connectors.version>1.4.0</gravitee-cockpit-connectors.version>
         <gravitee-notifier-webhook.version>1.0.6</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>1.2.8</gravitee-notifier-email.version>
-        <gravitee-alert-api.version>1.7.0</gravitee-alert-api.version>
+        <gravitee-alert-api.version>1.7.1</gravitee-alert-api.version>
     </properties>
 
     <dependencyManagement>
