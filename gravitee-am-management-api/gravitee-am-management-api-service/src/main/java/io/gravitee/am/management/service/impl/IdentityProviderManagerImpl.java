@@ -40,13 +40,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
 
@@ -65,15 +68,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     public static final int TABLE_NAME_MAX_LENGTH = 50;
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
-
-    @Value("${management.mongodb.uri:mongodb://localhost:27017}")
-    private String mongoUri;
-
-    @Value("${management.mongodb.host:localhost}")
-    private String mongoHost;
-
-    @Value("${management.mongodb.port:27017}")
-    private String mongoPort;
 
     @Value("${management.mongodb.dbname:gravitee-am}")
     private String mongoDBName;
@@ -203,7 +197,25 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + "\",\"host\":\"" + mongoHost + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+
+            Optional<String> mongoServers = getMongoServers();
+            String mongoHost = null;
+            String mongoPort = null;
+            if (!mongoServers.isPresent()) {
+                mongoHost = environment.getProperty("management.mongodb.host", "localhost");
+                mongoPort = environment.getProperty("management.mongodb.port", "27017");
+            }
+
+            final String username = environment.getProperty("management.mongodb.username");
+            final String password = environment.getProperty("management.mongodb.password");
+
+            String mongoUri = "mongodb://";
+            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+                mongoUri += username +":"+ password +"@";
+            }
+            mongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
+
+            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
             String tableSuffix = lowerCaseId.replaceAll("-", "_");
@@ -238,6 +250,51 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend + " backend"));
         }
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
+    }
+
+    private Optional<String> getMongoServers() {
+        logger.debug("Looking for MongoDB server configuration...");
+
+        boolean found = true;
+        int idx = 0;
+        List<String> endpoints = new ArrayList<>();
+
+        while (found) {
+            String serverHost = environment.getProperty("management.mongodb.servers[" + (idx++) + "].host");
+            int serverPort = environment.getProperty("management.mongodb.servers[" + (idx++) + "].port", int.class, 27017);
+            found = (serverHost != null);
+            if (found) {
+                endpoints.add(serverHost+":"+serverPort);
+            }
+        }
+
+        return endpoints.isEmpty() ? Optional.empty() : Optional.of(endpoints.stream().collect(Collectors.joining(",")));
+    }
+
+    public  String addOptionsToURI(String mongoUri) {
+        Integer connectTimeout = environment.getProperty("management.mongodb.connectTimeout", Integer.class, 1000);
+        Integer socketTimeout = environment.getProperty("management.mongodb.socketTimeout", Integer.class, 1000);
+        Integer maxConnectionIdleTime = environment.getProperty("management.mongodb.maxConnectionIdleTime", Integer.class);
+        Integer heartbeatFrequency = environment.getProperty("management.mongodb.heartbeatFrequency", Integer.class);
+        Boolean sslEnabled = environment.getProperty("management.mongodb.sslEnabled", Boolean.class);
+        String authSource = environment.getProperty("management.mongodb.authSource", String.class);
+
+        mongoUri += mongoUri.endsWith("/") ? "" : "/";
+        mongoUri += "?connectTimeoutMS="+connectTimeout+"&socketTimeoutMS="+socketTimeout;
+        if (authSource != null) {
+            mongoUri += "&authSource="+authSource;
+        }
+        if (maxConnectionIdleTime != null) {
+            mongoUri += "&maxIdleTimeMS="+maxConnectionIdleTime;
+        }
+        if (heartbeatFrequency != null) {
+            mongoUri += "&heartbeatFrequencyMS="+heartbeatFrequency;
+        }
+        if (sslEnabled != null) {
+            mongoUri += "&ssl="+sslEnabled;
+        }
+
+        return mongoUri;
     }
 
     protected boolean useMongoRepositories() {

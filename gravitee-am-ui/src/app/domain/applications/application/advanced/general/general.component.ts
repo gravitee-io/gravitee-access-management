@@ -103,7 +103,6 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
       this.route.snapshot.data['application'] = this.application;
-      this.application.type = this.application.type.toUpperCase();
       this.form.reset(this.application);
       this.formChanged = false;
       this.snackbarService.open('Application updated');
