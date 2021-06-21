@@ -271,7 +271,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
         if (client.getResponseTypes() == null) {
             throw new UnauthorizedClientException("Client should have response_type.");
         }
-        if(!Arrays.stream(responseType.split("\\s")).allMatch(type -> client.getResponseTypes().contains(type))) {
+        if(!client.getResponseTypes().contains(responseType)) {
             throw new UnauthorizedClientException("Client should have all requested response_type");
         }
     }
