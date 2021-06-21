@@ -23,6 +23,7 @@ import com.infobip.model.TfaVerifyPinRequest;
 import com.infobip.model.TfaVerifyPinResponse;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
+import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.mfa.MFAChallenge;
 import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
@@ -49,14 +50,10 @@ public class InfobipResourceProvider implements MFAResourceProvider {
     private InfobipResourceConfiguration configuration;
 
     @Override
-    public Completable send(MFALink target) {
-        this.to = target.getTarget();
-
+    public ResourceProvider start() throws Exception {
         String baseUrl = this.configuration.getBaseUrl();
         String apiKey = this.configuration.getApiKey();
         String apiKeyPrefix = this.configuration.getApiKeyPrefix();
-        String messageId = this.configuration.getMessageId();
-        String applicationId = this.configuration.getApplicationId();
 
         ApiClient apiClient = new ApiClient();
         apiClient.setApiKeyPrefix(apiKeyPrefix);
@@ -64,6 +61,15 @@ public class InfobipResourceProvider implements MFAResourceProvider {
         apiClient.setBasePath(baseUrl);
 
         this.tfaApi = new TfaApi(apiClient);
+        return this;
+    }
+
+    @Override
+    public Completable send(MFALink target) {
+        this.to = target.getTarget();
+
+        String messageId = this.configuration.getMessageId();
+        String applicationId = this.configuration.getApplicationId();
 
         return Completable.create((emitter) -> {
             try{
@@ -79,12 +85,12 @@ public class InfobipResourceProvider implements MFAResourceProvider {
 
                 if(!isSuccessful) {
                     emitter.onError(new SendChallengeException("Message not sent"));
+                } else {
+                    this.pinId = sendCodeResponse.getPinId();
+
+                    LOGGER.debug("Infobip Verification code asked with ID '{}'", sendCodeResponse.getPinId());
+                    emitter.onComplete();
                 }
-
-                this.pinId = sendCodeResponse.getPinId();
-
-                LOGGER.debug("Infobip Verification code asked with ID '{}'", sendCodeResponse.getPinId());
-                emitter.onComplete();
             } catch (com.infobip.ApiException e) {
                 this.LOGGER.error("Challenge emission fails", e);
                 emitter.onError(new SendChallengeException("Unable to send challenge"));
@@ -108,9 +114,9 @@ public class InfobipResourceProvider implements MFAResourceProvider {
                         verified);
                 if (!verified) {
                     emitter.onError(new InvalidCodeException("Challenger not verified"));
+                } else {
+                    emitter.onComplete();
                 }
-
-                emitter.onComplete();
             } catch (com.infobip.ApiException e) {
                 LOGGER.error("Challenge verification fails", e);
                 emitter.onError(new InvalidCodeException("Invalid 2FA Code"));

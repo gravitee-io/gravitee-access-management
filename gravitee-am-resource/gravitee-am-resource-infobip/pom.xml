@@ -29,11 +29,6 @@
     <artifactId>gravitee-am-resource-infobip</artifactId>
     <name>Infobip 2FA</name>
 
-    <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-    </properties>
-
     <dependencies>
 
         <dependency>
