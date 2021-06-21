@@ -89,12 +89,15 @@ public class ResponseTypeUtils {
         //If grant_type contains authorization_code, response_type must contains code
         if (grantTypes.contains(AUTHORIZATION_CODE)) {
             responseType.add(CODE);
+            responseType.add(CODE_ID_TOKEN);
+            responseType.add(CODE_ID_TOKEN_TOKEN);
         }
 
         //If grant_type contains implicit, response_type must contains token or id_token
         if (grantTypes.contains(IMPLICIT)) {
             responseType.add(ID_TOKEN);
             responseType.add(TOKEN);
+            responseType.add(ID_TOKEN_TOKEN);
         }
 
         return responseType;
