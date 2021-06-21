@@ -1079,7 +1079,7 @@
 													"",
 													"pm.test(\"UM - create user - username invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[£Invalid: invalid username]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Username [£Invalid] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1197,7 +1197,7 @@
 													"",
 													"pm.test(\"UM - create user - first name invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[#Invalid: invalid first name]\");",
+													"    pm.expect(jsonData.message).to.eql(\"First name [#Invalid] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1221,7 +1221,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"#Invalid\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"#Invalid\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -1256,7 +1256,7 @@
 													"",
 													"pm.test(\"UM - create user - last name invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[#Invalid: invalid last name]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Last name [#Invalid] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1280,7 +1280,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"#Invalid\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"password\"\n}"
+											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"#Invalid\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
@@ -1433,7 +1433,7 @@
 													"",
 													"pm.test(\"UM - create user - external id too long\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[Tooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo long: must not be greater than 100]\");",
+													"    pm.expect(jsonData.message).to.eql(\"External id [Tooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo long] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2089,7 +2089,7 @@
 													"",
 													"pm.test(\"UM - create user - first name invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[#Invalid: invalid first name]\");",
+													"    pm.expect(jsonData.message).to.eql(\"First name [#Invalid] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2149,7 +2149,7 @@
 													"",
 													"pm.test(\"UM - create user - last name invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[#Invalid: invalid last name]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Last name [#Invalid] is not a valid value\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -2234,66 +2234,6 @@
 										"body": {
 											"mode": "raw",
 											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaail.com\"\n}"
-										},
-										"url": {
-											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
-											"host": [
-												"{{management_url}}"
-											],
-											"path": [
-												"management",
-												"organizations",
-												"{{defaultOrganizationId}}",
-												"environments",
-												"{{defaultEnvironmentId}}",
-												"domains",
-												"{{domain}}",
-												"users",
-												"{{userUM}}"
-											]
-										}
-									},
-									"response": []
-								},
-								{
-									"name": "Invalid request - external id too long",
-									"event": [
-										{
-											"listen": "test",
-											"script": {
-												"id": "56ffba4f-b70a-452d-a063-8c3865594fd4",
-												"exec": [
-													"pm.test(\"Status code is 400\", function () {",
-													"    pm.response.to.have.status(400);",
-													"});",
-													"",
-													"pm.test(\"UM - create user - external id too long\", function () {",
-													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[Tooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo long: must not be greater than 100]\");",
-													"});"
-												],
-												"type": "text/javascript"
-											}
-										}
-									],
-									"request": {
-										"method": "PUT",
-										"header": [
-											{
-												"key": "Authorization",
-												"type": "text",
-												"value": "Bearer {{token}}"
-											},
-											{
-												"key": "Content-Type",
-												"name": "Content-Type",
-												"type": "text",
-												"value": "application/json"
-											}
-										],
-										"body": {
-											"mode": "raw",
-											"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"externalId\": \"Tooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo long\"\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users/{{userUM}}",
@@ -3731,8 +3671,8 @@
 											"type": "text"
 										},
 										{
-									"key": "password",
-									"value": "#CoMpL3X-P@SsW0Rd",
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -3870,8 +3810,8 @@
 											"type": "text"
 										},
 										{
-									"key": "password",
-									"value": "#CoMpL3X-P@SsW0Rd",
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -3999,8 +3939,8 @@
 											"type": "text"
 										},
 										{
-									"key": "password",
-									"value": "#CoMpL3X-P@SsW0Rd",
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
@@ -4355,8 +4295,8 @@
 											"type": "text"
 										},
 										{
-									"key": "password",
-									"value": "#CoMpL3X-P@SsW0Rd",
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd",
 											"type": "text"
 										}
 									]
