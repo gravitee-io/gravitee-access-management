@@ -38,5 +38,6 @@
         <module>gravitee-am-resource-twilio</module>
         <module>gravitee-am-resource-mfa-mock</module>
         <module>gravitee-am-resource-smtp</module>
+        <module>gravitee-am-resource-infobip</module>
     </modules>
 </project>

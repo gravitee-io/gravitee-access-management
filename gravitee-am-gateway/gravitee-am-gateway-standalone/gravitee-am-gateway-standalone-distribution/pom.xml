@@ -312,6 +312,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.resource</groupId>
+            <artifactId>gravitee-am-resource-infobip</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- AM Policies -->
         <dependency>
@@ -620,6 +627,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.resource</groupId>
                                     <artifactId>gravitee-am-resource-smtp</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.resource</groupId>
+                                    <artifactId>gravitee-am-resource-infobip</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
