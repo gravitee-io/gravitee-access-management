@@ -262,7 +262,7 @@ public class ReporterServiceImpl implements ReporterService {
         // dash are forbidden in table name, replace them in domainName by underscore
         String tableSuffix = null;
         if (domain != null) {
-            domain.replaceAll("-", "_");
+            tableSuffix = domain.replaceAll("-", "_");
             if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
                 try {
                     LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
