@@ -27,10 +27,13 @@ import java.util.List;
  */
 public interface ResourcePluginService {
     String MANIFEST_KEY_CATEGORIES = "categories";
+    String EXPAND_ICON = "icon";
 
-    Single<List<ResourcePlugin>> findAll();
+    Single<List<ResourcePlugin>> findAll(List<String> expand);
 
     Maybe<ResourcePlugin> findById(String id);
 
     Maybe<String> getSchema(String id);
+
+    Maybe<String> getIcon(String resourceId);
 }

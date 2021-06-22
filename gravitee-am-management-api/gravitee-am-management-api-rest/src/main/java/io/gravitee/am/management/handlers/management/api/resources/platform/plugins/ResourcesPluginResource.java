@@ -24,12 +24,14 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -49,9 +51,10 @@ public class ResourcesPluginResource {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List resource plugins",
             notes = "There is no particular permission needed. User must be authenticated.")
-    public void list(@Suspended final AsyncResponse response) {
+    public void list(@QueryParam("expand") List<String> expand,
+                     @Suspended final AsyncResponse response) {
 
-        resourcePluginService.findAll()
+        resourcePluginService.findAll(expand)
                 .map(resourcePlugins -> resourcePlugins.stream()
                         .sorted(Comparator.comparing(ResourcePlugin::getName))
                         .collect(Collectors.toList()))

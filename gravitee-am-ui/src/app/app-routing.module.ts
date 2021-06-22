@@ -1744,7 +1744,8 @@ export const routes: Routes = [
                               }
                             },
                             resolve: {
-                              resources: ResourcesResolver
+                              resources: ResourcesResolver,
+                              resourcePlugins: ResourcePluginsResolver
                             }
                           },
                           {

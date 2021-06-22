@@ -1,6 +1,37 @@
+.gv-page-container {
+  ngx-datatable {
+    .resource-header {
+      margin: 5px;
+      align-items: center;
+      .resource-icon {
+        margin: 0 12px 0 0;
+      }
+
+      .resource-img {
+        height: 24px;
+        width: 24px;
+      }
+
+      .resource-information {
+        h3 {
+          font-size: 14px;
+          font-weight: normal;
+          margin: 0;
+        }
+        small {
+          color: rgba(0,0,0,.54);
+        }
+      }
+    }
+  }
+}
+
 :host {
   ::ng-deep.ngx-datatable.material .datatable-footer {
     display: none;
   }
 
+  ::ng-deep.resource-name-cell {
+    padding: 0 !important;
+  }
 }

@@ -19,15 +19,14 @@
   <p class="gv-plugin-creation-description">
     Choose resource to create.
   </p>
-  <div fxLayout="row wrap" fxLayoutGap="10px">
-    <mat-card *ngFor="let resource of resources" fxFlex="30">
-      <mat-card-header fxLayoutAlign="end end" fxLayout="row">
-        <mat-radio-group [(ngModel)]="selectedResourceTypeId" (ngModelChange)="selectResourceType()">
-          <mat-radio-button [value]="resource.id"></mat-radio-button>
-        </mat-radio-group>
-      </mat-card-header>
+  <div fxLayout="row wrap" fxLayoutGap="10px" fxLayoutAlign="center">
+    <mat-card *ngFor="let res of resources" fxFlex="30" [class.selected]="resource.type === res.id"
+              (click)="selectResourceType(res.id)"
+              (keyup.enter)="selectResourceType(res.id)"
+              tabIndex="0">
       <mat-card-content>
-        {{displayName(resource)}}
+        <div class="identity-provider__icon" [innerHTML]="getIcon(res) | safe:'html'"></div>
+        {{displayName(res)}}
       </mat-card-content>
     </mat-card>
   </div>

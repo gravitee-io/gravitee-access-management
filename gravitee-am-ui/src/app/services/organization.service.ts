@@ -361,8 +361,16 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/factors/' + id + '/schema');
   }
 
-  resources(): Observable<any> {
-    return this.http.get<any>(this.platformURL + '/plugins/resources');
+  resources(expandIcon = false): Observable<any> {
+    let url = `${this.platformURL}/plugins/resources`;
+    const expand = [];
+    if (expandIcon) {
+      expand.push('expand=icon');
+    }
+    if (expand.length > 0) {
+      url += `?${expand.join('&')}`;
+    }
+    return this.http.get<any>(url);
   }
 
   resourceSchema(id): Observable<any> {
