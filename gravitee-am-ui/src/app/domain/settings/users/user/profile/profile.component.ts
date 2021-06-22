@@ -80,11 +80,7 @@ export class UserProfileComponent implements OnInit {
         if (res) {
           this.userService.delete(this.domainId, this.user.id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('User ' + this.user.username + ' deleted');
-            if (this.organizationContext) {
-              this.router.navigate(['/settings', 'management', 'users']);
-            } else {
-              this.router.navigate(['../..'], { relativeTo: this.route });
-            }
+            this.router.navigate(['../..'], { relativeTo: this.route });
           });
         }
       });
