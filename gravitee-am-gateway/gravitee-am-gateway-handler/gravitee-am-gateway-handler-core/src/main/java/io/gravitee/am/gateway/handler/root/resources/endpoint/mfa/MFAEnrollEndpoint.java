@@ -83,6 +83,12 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
     private void renderPage(RoutingContext routingContext) {
         try {
+            if (routingContext.user() == null) {
+                logger.warn("User must be authenticated to enroll MFA challenge.");
+                routingContext.fail(401);
+                return;
+            }
+
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
