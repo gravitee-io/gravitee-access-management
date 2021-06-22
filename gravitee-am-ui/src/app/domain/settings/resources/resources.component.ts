@@ -24,9 +24,11 @@ import {ActivatedRoute} from '@angular/router';
 export class DomainSettingsResourcesComponent implements OnInit {
   private resourceTypes: any = {
     'twilio-verify-am-resource' : 'Twilio Verify',
-    'smtp-am-resource' : 'SMTP'
+    'smtp-am-resource' : 'SMTP',
+    'infobip-am-resource' : 'Infobip 2FA'
   };
   resources: any[];
+  resourcePlugins: any[];
   domainId: any;
 
   constructor(private route: ActivatedRoute) {
@@ -35,6 +37,7 @@ export class DomainSettingsResourcesComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.resources = this.route.snapshot.data['resources'];
+    this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
   }
 
   isEmpty() {
@@ -47,4 +50,21 @@ export class DomainSettingsResourcesComponent implements OnInit {
     }
     return type;
   }
+
+  getResourceTypeIcon(type) {
+    const res = this.getResourcePlugin(type);
+    if (res && res.icon) {
+      const name = this.displayType(type);
+      return `<img width="24" height="24" src="${res.icon}" alt="${name} image" title="${name}"/>`;
+    }
+    return `<span class="material-icons">mail_outline</span>`;
+  }
+
+  private getResourcePlugin(type) {
+    if (this.resourcePlugins) {
+      return this.resourcePlugins.find(r => r.id === type);
+    }
+    return null;
+  }
+
 }

@@ -25,11 +25,24 @@ public class ResourcePlugin extends AbstractPlugin {
      */
     private String[] categories;
 
+    /**
+     * The plugin icon
+     */
+    private String icon;
+
     public String[] getCategories() {
         return categories;
     }
 
     public void setCategories(String[] categories) {
         this.categories = categories;
+    }
+
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 }

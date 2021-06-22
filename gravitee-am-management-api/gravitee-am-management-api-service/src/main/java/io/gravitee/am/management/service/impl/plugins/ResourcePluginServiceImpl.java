@@ -44,10 +44,10 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
     private ResourcePluginManager resourcePluginManager;
 
     @Override
-    public Single<List<ResourcePlugin>> findAll() {
+    public Single<List<ResourcePlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all resource plugins");
         return Observable.fromIterable(resourcePluginManager.getAll())
-                .map(this::convert)
+                .map(plugin -> convert(plugin, expand))
                 .toList();
     }
 
@@ -87,7 +87,29 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
         });
     }
 
+    @Override
+    public Maybe<String> getIcon(String resourceId) {
+        LOGGER.debug("Find resource plugin icon by ID: {}", resourceId);
+        return Maybe.create(emitter -> {
+            try {
+                String icon = resourcePluginManager.getIcon(resourceId);
+                if (icon != null) {
+                    emitter.onSuccess(icon);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error has occurred when trying to get icon for resource plugin {}", resourceId, e);
+                emitter.onError(new TechnicalManagementException("An error has occurred when trying to get icon for resource plugin " + resourceId, e));
+            }
+        });
+    }
+
     private ResourcePlugin convert(Plugin resourcePlugin) {
+        return convert(resourcePlugin, null);
+    }
+
+    private ResourcePlugin convert(Plugin resourcePlugin, List<String> expand) {
         ResourcePlugin plugin = new ResourcePlugin();
         plugin.setId(resourcePlugin.manifest().id());
         plugin.setName(resourcePlugin.manifest().name());
@@ -98,6 +120,11 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
             plugin.setCategories(tags.split(","));
         } else {
             plugin.setCategories(new String[0]);
+        }
+        if (expand != null) {
+            if (expand.contains(ResourcePluginService.EXPAND_ICON)) {
+                this.getIcon(plugin.getId()).subscribe(plugin::setIcon);
+            }
         }
         return plugin;
     }

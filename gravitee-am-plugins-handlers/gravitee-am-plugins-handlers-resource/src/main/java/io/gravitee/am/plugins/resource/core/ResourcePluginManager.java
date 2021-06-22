@@ -31,9 +31,11 @@ public interface ResourcePluginManager {
 
     Collection<Plugin> getAll();
 
-    Plugin findById(String factorId);
+    Plugin findById(String resourceId);
 
     ResourceProvider create(String type, String configuration);
 
-    String getSchema(String factorId) throws IOException;
+    String getSchema(String resourceId) throws IOException;
+
+    String getIcon(String resourceId) throws IOException;
 }

@@ -24,21 +24,21 @@ import { OrganizationService } from "../../../../../../services/organization.ser
 export class ResourceCreationStep1Component implements OnInit {
   private resourceTypes: any = {
     'twilio-verify-am-resource' : 'Twilio Verify',
-    'smtp-am-resource' : 'SMTP'
+    'smtp-am-resource' : 'SMTP',
+    'infobip-am-resource' : 'Infobip 2FA'
   };
   @Input() resource: any;
   resources: any[];
-  selectedResourceTypeId: string;
 
   constructor(private organizationService: OrganizationService) {
   }
 
   ngOnInit() {
-    this.organizationService.resources().subscribe(data => this.resources = data);
+    this.organizationService.resources(true).subscribe(data => this.resources = data);
   }
 
-  selectResourceType() {
-    this.resource.type = this.selectedResourceTypeId;
+  selectResourceType(selectedResourceTypeId) {
+    this.resource.type = selectedResourceTypeId;
   }
 
   displayName(resource) {
@@ -46,5 +46,13 @@ export class ResourceCreationStep1Component implements OnInit {
       return this.resourceTypes[resource.id];
     }
     return resource.name;
+  }
+
+  getIcon(resource) {
+    if (resource && resource.icon) {
+      const title = this.displayName(resource);
+      return `<img mat-card-avatar src="${resource.icon}" alt="${title} image" title="${title}"/>`;
+    }
+    return `<i class="material-icons">mail_outline</i>`;
   }
 }

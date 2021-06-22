@@ -24,6 +24,7 @@ import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -36,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -115,6 +117,22 @@ public class ResourcePluginManagerImpl implements ResourcePluginManager {
         return null;
     }
 
+    @Override
+    public String getIcon(String resourceId) throws IOException {
+        Resource resource = resources.get(resourceId);
+
+        Plugin plugin = resourcePlugins.get(resource);
+        Map<String, String> properties = plugin.manifest().properties();
+        if (properties != null) {
+            String icon = properties.get(PluginManifestProperties.MANIFEST_ICON_PROPERTY);
+            if (icon != null) {
+                Path iconFile = Paths.get(plugin.path().toString(), icon);
+                return "data:" + getMimeType(iconFile) + ";base64," + Base64.getEncoder().encodeToString(Files.readAllBytes(iconFile));
+            }
+        }
+
+        return null;
+    }
 
     private <T> T create0(Plugin plugin, Class<T> identityClass, ResourceConfiguration resourceConfiguration) {
         if (identityClass == null) {
@@ -164,6 +182,23 @@ public class ResourcePluginManagerImpl implements ResourcePluginManager {
         } catch (InstantiationException | IllegalAccessException ex) {
             logger.error("Unable to instantiate class: {}", ex);
             throw ex;
+        }
+    }
+
+    private String getMimeType(final Path file) {
+        if (file == null || file.getFileName() == null) {
+            return null;
+        }
+
+        final String fileName = file.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".svg")) {
+            return "image/svg+xml";
+        } else if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")) {
+            return "image/jpeg";
+        } else {
+            return "application/octet-stream";
         }
     }
 }

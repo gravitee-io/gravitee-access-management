@@ -24,7 +24,7 @@ export class ResourcePluginsResolver implements Resolve<any> {
   constructor(private organizationService: OrganizationService) { }
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
-    return this.organizationService.resources();
+    return this.organizationService.resources(true);
   }
 
 }

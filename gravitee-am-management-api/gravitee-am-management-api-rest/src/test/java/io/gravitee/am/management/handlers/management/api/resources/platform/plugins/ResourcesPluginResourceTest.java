@@ -44,7 +44,7 @@ public class ResourcesPluginResourceTest extends JerseySpringTest {
         resourcePlugin.setDescription("res-desc");
         resourcePlugin.setVersion("1");
 
-        doReturn(Single.just(Collections.singletonList(resourcePlugin))).when(resourcePluginService).findAll();
+        doReturn(Single.just(Collections.singletonList(resourcePlugin))).when(resourcePluginService).findAll(new ArrayList<>());
 
         final Response response = target("platform")
                 .path("plugins")
