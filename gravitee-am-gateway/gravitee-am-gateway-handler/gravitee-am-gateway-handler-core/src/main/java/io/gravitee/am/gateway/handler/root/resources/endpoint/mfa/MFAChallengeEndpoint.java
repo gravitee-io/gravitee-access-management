@@ -97,6 +97,11 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     private void renderMFAPage(RoutingContext routingContext) {
         try {
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+            if (routingContext.user() == null) {
+                logger.warn("User must be authenticated to request MFA challenge.");
+                routingContext.fail(401);
+                return;
+            }
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
@@ -135,6 +140,11 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
 
     private void verifyCode(RoutingContext routingContext) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        if (routingContext.user() == null) {
+            logger.warn("User must be authenticated to submit MFA challenge.");
+            routingContext.fail(401);
+            return;
+        }
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         final Factor factor = getFactor(routingContext, client, endUser);
         MultiMap params = routingContext.request().formAttributes();
