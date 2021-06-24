@@ -160,7 +160,8 @@ public class FlowServiceImpl implements FlowService {
             .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
             .flatMapSingle(oldFlow -> {
 
-                if (!oldFlow.getType().equals(flow.getType())) {
+                // if type isn't define, continue as the oldFlow will contains the right value
+                if (flow.getType() != null && !oldFlow.getType().equals(flow.getType())) {
                     throw new InvalidParameterException("Type of flow '" + flow.getName() +"' can't be updated");
                 }
 
