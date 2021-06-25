@@ -136,6 +136,7 @@ public class FlowServiceTest {
         verify(eventService, times(1)).create(any());
     }
 
+
     @Test
     public void shouldNotUpdate_TypeChange() {
         Flow updateFlow = Mockito.mock(Flow.class);
@@ -362,6 +363,21 @@ public class FlowServiceTest {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(existingFlow, existingFlow2));
 
         TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow2)).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(InvalidParameterException.class);
+
+        verify(flowRepository, never()).update(any(Flow.class));
+        verify(flowRepository, never()).create(any(Flow.class));
+    }
+
+    @Test
+    public void shouldNotUpdateAllFlows_SameId() {
+        Flow updateFlow = new Flow();
+        updateFlow.setType(Type.LOGIN);
+        updateFlow.setId("flow1");
+
+        TestObserver testObserver = flowService.createOrUpdate(ReferenceType.DOMAIN, DOMAIN, Arrays.asList(updateFlow, updateFlow)).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertError(InvalidParameterException.class);
