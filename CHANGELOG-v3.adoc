@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/405?closed=1[AM - 3.5.7 (2021-06-25)]
+
+=== Bug fixes
+
+*_Console_*
+
+- Search user not working https://github.com/gravitee-io/issues/issues/5788[#5788]
+
+*_Gateway_*
+
+- [oidc] hybrid flow response types are not well handled https://github.com/gravitee-io/issues/issues/5765[#5765]
+
+*_Management_*
+
+- Backport #5759 https://github.com/gravitee-io/issues/issues/5760[#5760]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/403?closed=1[AM - 3.9.1 (2021-06-19)]
 
 === Bug fixes
