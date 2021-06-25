@@ -263,6 +263,13 @@ public class FlowServiceImpl implements FlowService {
 
         computeFlowOrders(flows);
 
+        final long ids = flows.stream().filter(flow -> flow.getId() != null).count();
+        final long deduplicateIds = flows.stream().filter(flow -> flow.getId() != null).distinct().count();
+
+        if (ids != deduplicateIds) {
+            return Single.error(new InvalidParameterException("Multiple flows have the same Id"));
+        }
+
         return flowRepository.findAll(referenceType, referenceId)
                 .toList()
                 .flatMap(existingFlows -> {
