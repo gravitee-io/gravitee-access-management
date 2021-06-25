@@ -39,7 +39,7 @@
     "highcharts": "^9.1.0",
     "highcharts-angular": "^2.10.0",
     "highlight": "^0.2.4",
-    "highlight.js": "^10.7.0",
+    "highlight.js": "^10.7.3",
     "jdenticon": "^2.2.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.15",
