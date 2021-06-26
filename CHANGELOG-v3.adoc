@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/406?closed=1[AM - 3.8.6 (2021-06-26)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.5.7 https://github.com/gravitee-io/issues/issues/5790[#5790]
+
+*_Management-ui_*
+
+- Page not found when deleting organization user https://github.com/gravitee-io/issues/issues/5772[#5772]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/405?closed=1[AM - 3.5.7 (2021-06-25)]
 
 === Bug fixes
