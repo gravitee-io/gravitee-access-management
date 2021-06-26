@@ -36,7 +36,7 @@
     "bcryptjs": "^2.4.3",
     "codemirror": "^5.61.1",
     "core-js": "^2.6.11",
-    "highcharts": "^9.1.0",
+    "highcharts": "^9.1.1",
     "highcharts-angular": "^2.10.0",
     "highlight": "^0.2.4",
     "highlight.js": "^10.7.3",
