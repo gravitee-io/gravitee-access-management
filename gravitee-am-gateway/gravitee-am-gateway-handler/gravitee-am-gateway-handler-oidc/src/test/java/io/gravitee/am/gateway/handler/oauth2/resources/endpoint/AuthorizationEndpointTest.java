@@ -1101,7 +1101,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         client.setScopes(Collections.singletonList("read"));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
         client.setAuthorizedGrantTypes(Arrays.asList(GrantType.IMPLICIT));
-        client.setResponseTypes(Arrays.asList(responseType.split("\\s")));
+        client.setResponseTypes(Arrays.asList(responseType));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(true);
