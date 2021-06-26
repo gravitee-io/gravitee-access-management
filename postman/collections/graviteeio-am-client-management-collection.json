@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f074ba25-4098-4f3c-85e2-4e1602f99a6b",
+		"_postman_id": "4e827074-91a3-4d30-b750-aaca74b60471",
 		"name": "Gravitee.io - AM - Client Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -606,7 +606,7 @@
 											"",
 											"    pm.expect(body.redirectUris).to.eql(['https://callback']);",
 											"    pm.expect(body.authorizedGrantTypes).to.eql(['authorization_code']);",
-											"    pm.expect(body.responseTypes).to.eql(['code']);//default value",
+											"    pm.expect(body.responseTypes).to.eql(['code','code id_token token','code id_token']);//default value",
 											"    pm.expect(body.applicationType).to.eql('web');//default value",
 											"});",
 											""
@@ -731,7 +731,7 @@
 											"",
 											"    pm.expect(body.redirectUris).to.eql(['com.gravitee.app://callback']);",
 											"    pm.expect(body.authorizedGrantTypes).to.eql(['authorization_code','refresh_token']);",
-											"    pm.expect(body.responseTypes).to.eql(['code']);",
+											"    pm.expect(body.responseTypes).to.eql(['code','code id_token token','code id_token']);",
 											"    pm.expect(body.applicationType).to.eql('native');",
 											"    ",
 											"});",

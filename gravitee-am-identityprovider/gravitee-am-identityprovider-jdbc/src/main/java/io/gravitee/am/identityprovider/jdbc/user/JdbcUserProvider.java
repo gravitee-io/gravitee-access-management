@@ -204,6 +204,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                     if (rowsUpdated == 0) {
                         return Single.error(new UserNotFoundException(id));
                     }
+                    ((DefaultUser) updateUser).setId(id);
                     return Single.just(updateUser);
                 });
     }

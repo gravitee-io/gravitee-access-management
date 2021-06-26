@@ -52,7 +52,7 @@ export class MembershipsComponent implements OnInit, OnChanges {
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
         if (searchTerm && typeof searchTerm === 'string') {
-          this.organizationService.searchUsers(searchTerm + '*', 0, 30).subscribe(response => {
+          this.organizationService.searchUsers('q='+searchTerm + '*', 0, 30).subscribe(response => {
             this.filteredUsers = response.data.filter(user => _.map(this.members, 'memberId').indexOf(user.id) === -1);
           });
         }
