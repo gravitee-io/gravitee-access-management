@@ -153,11 +153,7 @@ export class ReporterComponent implements OnInit {
         if (res) {
           this.reporterService.delete(this.domainId, this.reporter.id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('Reporter ' + this.reporter.name + ' deleted');
-            if (this.organizationContext) {
-              this.router.navigate(['/settings', 'management', 'audits', 'settings/']);
-            } else {
-              this.router.navigate(['..'], { relativeTo: this.route });
-            }
+            this.router.navigate(['..'], { relativeTo: this.route });
           })
         }
       });
