@@ -150,7 +150,6 @@ jobs:
           command: |
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
-
             export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
@@ -195,12 +194,10 @@ jobs:
           command: |
             # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
             ssh-keyscan github.com >> ~/.ssh/known_hosts
-
             # Add SSH Key
             export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
             ssh-add -D
             ssh-add "${LOCAL_SSH_PRVIKEY}"
-
             git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
       - run:
           name: Helm upgrade and 🚀
@@ -217,9 +214,6 @@ jobs:
                         --set "gateway.image.tag=${TAG}" \
                         --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                         --set "ui.image.tag=${TAG}"
-
-
-
   purge-azure-registry:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -232,7 +226,6 @@ jobs:
             az acr run --cmd "acr purge --filter 'am-gateway:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
-
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
