@@ -380,7 +380,7 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             return Flowable.empty();
         }
 
-        return Flowable.fromPublisher(Flux.fromIterable(audits).flatMap(this::insertReport, configuration.getMaxSize()))
+        return Flowable.fromPublisher(Flux.fromIterable(audits).flatMap(this::insertReport, 2))
                 .doOnError(error -> LOGGER.error("Error during bulk loading", error));
     }
 
