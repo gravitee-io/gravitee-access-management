@@ -41,7 +41,7 @@ import java.util.EnumSet;
  */
 public class ManagementApiServer extends JettyHttpServer {
 
-    @Value("${http.api.entrypoint:/management}")
+    @Value("${http.api.management.entrypoint:${http.api.entrypoint:/}management}")
     private String entrypoint;
 
     @Autowired
