@@ -203,19 +203,23 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     }
 
     private void startReporterProvider(Reporter reporter, GraviteeContext context) {
-        logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-        io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
+        if (reporter.isEnabled()) {
+            logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
+            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
 
-        if (reporterProvider != null) {
-            try {
-                logger.info("Starting reporter: {}", reporter.getName());
-                io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, domain.getId(), reporterProvider);
-                eventBusReporter.start();
-                reporters.put(reporter.getId(), eventBusReporter);
-            } catch (Exception ex) {
-                logger.error("Unexpected error while starting reporter", ex);
+            if (reporterProvider != null) {
+                try {
+                    logger.info("Starting reporter: {}", reporter.getName());
+                    io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, domain.getId(), reporterProvider);
+                    eventBusReporter.start();
+                    reporters.put(reporter.getId(), eventBusReporter);
+                } catch (Exception ex) {
+                    logger.error("Unexpected error while starting reporter", ex);
+                }
+
             }
-
+        } else {
+            logger.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
         }
     }
 

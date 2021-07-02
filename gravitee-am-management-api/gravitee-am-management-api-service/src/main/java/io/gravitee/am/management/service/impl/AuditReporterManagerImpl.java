@@ -250,8 +250,11 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                                     } else {
                                         logger.info("Reporter: {} has been disabled", reporter.getName());
                                         // unregister event bus consumer
-                                        // we do not stop the underlying reporter because it can be used to fetch reportable
+                                        // we do not stop the underlying reporter if it manages search because it can be used to fetch reportable
                                         ((EventBusReporterWrapper) auditReporter).unregister();
+                                        if (!auditReporter.canSearch()) {
+                                            auditReporter.stop();
+                                        }
                                     }
                                 } catch (Exception e) {
                                     logger.error("An error occurs while reloading reporter: {}", reporter.getName(), e);
@@ -292,16 +295,21 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         @Override
         public void accept(GraviteeContext graviteeContext, Throwable throwable) throws Exception {
             if (graviteeContext != null) {
-                Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
-                if (auditReporter != null) {
-                    logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
-                    Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
-                    auditReporters.put(reporter, eventBusReporter);
-                    try {
-                        eventBusReporter.start();
-                    } catch (Exception e) {
-                        logger.error("Unexpected error while loading reporter", e);
+                if (reporter.isEnabled()) {
+                    Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
+                    if (auditReporter != null) {
+                        logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
+                        Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);
+                        auditReporters.put(reporter, eventBusReporter);
+                        try {
+                            eventBusReporter.start();
+                        } catch (Exception e) {
+                            logger.error("Unexpected error while loading reporter", e);
+                        }
                     }
+                } else {
+                    // initialize NoOpReporter in order to allow to reload this reporter with valid implementation if it is enabled through the UI
+                    auditReporters.put(reporter, new EventBusReporterWrapper(vertx, reporter.getDomain(), new NoOpReporter()));
                 }
             }
 
