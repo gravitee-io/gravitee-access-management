@@ -44,6 +44,10 @@ public class LoginSettings {
      * Enable/Disable passwordless (WebAuthn) feature
      */
     private boolean passwordlessEnabled;
+    /**
+     * Enable/Disable hide login form
+     */
+    private boolean hideForm;
 
     public LoginSettings() {
     }
@@ -54,6 +58,7 @@ public class LoginSettings {
         this.registerEnabled = other.registerEnabled;
         this.rememberMeEnabled = other.rememberMeEnabled;
         this.passwordlessEnabled = other.passwordlessEnabled;
+        this.hideForm = other.hideForm;
     }
 
     public boolean isInherited() {
@@ -94,6 +99,14 @@ public class LoginSettings {
 
     public void setPasswordlessEnabled(boolean passwordlessEnabled) {
         this.passwordlessEnabled = passwordlessEnabled;
+    }
+
+    public boolean isHideForm() {
+        return hideForm;
+    }
+
+    public void setHideForm(boolean hideForm) {
+        this.hideForm = hideForm;
     }
 
     public static LoginSettings getInstance(Domain domain, Client client) {

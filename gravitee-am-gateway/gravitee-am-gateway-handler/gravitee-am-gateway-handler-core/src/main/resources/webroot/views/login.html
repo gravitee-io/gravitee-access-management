@@ -28,7 +28,7 @@
                     <label>Sign in</label>
                     <span>to continue to <span th:text="${domain.name}"></span></span>
                 </div>
-                <form id="form" role="form" th:action="${action}" method="post">
+                <form id="form" role="form" th:action="${action}" th:if="${!hideLoginForm}" method="post">
                     <div class="login-form-content">
                         <div class="input-textfield">
                             <label for="username">Username</label>
@@ -68,9 +68,8 @@
                         </div>
                     </div>
                 </form>
-
                 <div th:if="${socialProviders and !socialProviders.empty}" class="social-login-buttons">
-                    <div class="signup-or-separator">
+                    <div th:if="${!hideLoginForm}" class="signup-or-separator">
                         <h6 class="text">or Sign in with</h6>
                         <hr>
                     </div>
@@ -84,6 +83,9 @@
                             </span>
                         </a>
                     </div>
+                </div>
+                <div  th:if="${allowPasswordless && hideLoginForm}">
+                    <a th:href="${passwordlessAction}">Sign in with fingerprint, device or security key</a>
                 </div>
             </div>
         </div>

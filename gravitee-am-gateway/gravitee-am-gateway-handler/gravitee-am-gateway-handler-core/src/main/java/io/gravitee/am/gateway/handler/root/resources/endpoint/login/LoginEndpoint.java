@@ -23,7 +23,9 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -36,7 +38,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -50,6 +54,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
     private static final String ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
     private static final String ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
     private static final String ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
+    private static final String HIDE_FORM_CONTEXT_KEY = "hideLoginForm";
     private static final String REQUEST_CONTEXT_KEY = "request";
     private static final String FORGOT_ACTION_KEY = "forgotPasswordAction";
     private static final String REGISTER_ACTION_KEY = "registerAction";
@@ -86,6 +91,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, loginSettings != null && loginSettings.isForgotPasswordEnabled());
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, loginSettings != null && loginSettings.isRegisterEnabled());
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, loginSettings != null && loginSettings.isPasswordlessEnabled());
+        routingContext.put(HIDE_FORM_CONTEXT_KEY, loginSettings != null && loginSettings.isHideForm());
 
         // put request in context
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));
@@ -116,6 +122,20 @@ public class LoginEndpoint implements Handler<RoutingContext> {
         final Map<String, Object> data = new HashMap<>();
         data.putAll(routingContext.data());
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
+
+        final List<IdentityProvider> providers = (List<IdentityProvider>)data.get(LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY);
+        if (providers != null && Boolean.TRUE.equals(data.get(HIDE_FORM_CONTEXT_KEY))) {
+            if (providers.size() == 1) {
+                // hide login form enabled and only one IdP configured, redirect to the IdP login page
+                Map<String, String> urls = (Map<String, String>)data.get(LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+                String redirectUrl = urls.get(providers.get(0).getId());
+                routingContext.response()
+                        .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, redirectUrl)
+                        .setStatusCode(302)
+                        .end();
+                return;
+            }
+        }
 
         engine.render(data, getTemplateFileName(client), res -> {
             if (res.succeeded()) {

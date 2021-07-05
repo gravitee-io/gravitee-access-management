@@ -66,9 +66,11 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         sMap.put("linkedin-am-idp", "linkedin");
         socialProviders = Collections.unmodifiableMap(sMap);
     }
+
+    public static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
+    public static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
-    private static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
-    private static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
+
     private final IdentityProviderManager identityProviderManager;
     private final JWTService jwtService;
     private final CertificateManager certificateManager;

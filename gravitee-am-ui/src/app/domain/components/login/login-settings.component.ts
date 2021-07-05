@@ -87,4 +87,13 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   isPasswordlessEnabled() {
     return this.loginSettings && this.loginSettings.passwordlessEnabled;
   }
+
+  enableHideForm(event) {
+    this.loginSettings.hideForm = event.checked;
+    this.formChanged = true;
+  }
+
+  isHideFormEnabled() {
+    return this.loginSettings && this.loginSettings.hideForm;
+  }
 }
