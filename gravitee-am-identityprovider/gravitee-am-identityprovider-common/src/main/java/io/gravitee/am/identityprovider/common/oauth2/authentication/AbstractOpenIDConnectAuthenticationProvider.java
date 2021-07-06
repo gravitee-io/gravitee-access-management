@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.common.oauth2.authentication;
 
+import com.google.common.base.Strings;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -113,7 +115,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             }
 
             // append redirect_uri
-            builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? UriBuilder.encodeURIComponent(redirectUri) : redirectUri);
+            builder.addParameter(Parameters.REDIRECT_URI, getConfiguration().isEncodeRedirectUri() ? encodeURIComponent(redirectUri) : redirectUri);
 
             Request request = new Request();
             request.setMethod(HttpMethod.GET);
@@ -142,6 +144,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             // implicit flow was used with response_type=id_token, id token is already fetched, continue
             if (ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
                 String idToken = hashValues.get(ID_TOKEN_PARAMETER);
+                // put the id_token in context for later use
+                authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
                 return Maybe.just(new Token(idToken, TokenTypeHint.ID_TOKEN));
             }
         }
@@ -174,9 +178,8 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
                     JsonObject response = httpResponse.bodyAsJsonObject();
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
-                    if (getConfiguration().isUseIdTokenForUserInfo()) {
-                        // put the id_token in context for later use
-                        String idToken = response.getString(ID_TOKEN_PARAMETER);
+                    String idToken = response.getString(ID_TOKEN_PARAMETER);
+                    if (!Strings.isNullOrEmpty(idToken)) {
                         authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
                     }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
@@ -210,7 +213,6 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (httpClientResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
-
                     return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }

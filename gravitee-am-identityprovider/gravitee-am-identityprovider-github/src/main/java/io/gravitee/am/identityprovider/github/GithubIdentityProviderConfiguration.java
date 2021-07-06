@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.github;
 
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
@@ -108,4 +107,10 @@ public class GithubIdentityProviderConfiguration implements SocialIdentityProvid
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

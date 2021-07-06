@@ -32,6 +32,7 @@ public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdenti
     public static final String HOST_MICROSOFT_LOGIN = "https://login.microsoftonline.com/";
     public static final String AUTHORIZATION_PATH = "/oauth2/v2.0/authorize";
     public static final String TOKEN_PATH = "/oauth2/v2.0/token";
+    public static final String LOGOUT_PATH = "/oauth2/v2.0/logout";
     public static final String JWKS_PATH = "/discovery/v2.0/keys";
 
     public static final String CODE_PARAMETER = "code";
@@ -148,4 +149,10 @@ public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdenti
     public String getResponseType() {
         return DEFAULT_RESPONSE_TYPE;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return HOST_MICROSOFT_LOGIN + getTenantId() + LOGOUT_PATH;
+    }
+
 }

@@ -27,6 +27,7 @@ import io.gravitee.am.identityprovider.azure.authentication.spring.AzureADAuthen
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
+import io.reactivex.Maybe;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;

@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.identityprovider.api.social;
 
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.reactivex.Maybe;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -50,5 +53,15 @@ public interface SocialAuthenticationProvider extends AuthenticationProvider {
         } else {
             return Maybe.<Request>empty();
         }
+    }
+
+    /**
+     * Get the logout endpoint related to the IdentityProvider (ex: "End Session Endpoint" in OIDC)
+     * By default, do nothing since not all IdentityProvider implement this capabilities
+     *
+     * @return
+     */
+    default Maybe<Request> signOutUrl(Authentication authentication) {
+        return Maybe.empty();
     }
 }

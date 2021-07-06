@@ -16,67 +16,67 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
-import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.common.Request;
+import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
-import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.HttpMethod;
 import io.reactivex.Maybe;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
 
-import java.util.List;
+import java.util.Optional;
+
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LogoutEndpoint implements Handler<RoutingContext> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(LogoutEndpoint.class);
-    private static final String LOGOUT_URL_PARAMETER = "target_url";
-    private static final String INVALIDATE_TOKENS_PARAMETER = "invalidate_tokens";
-    private static final String DEFAULT_TARGET_URL = "/";
-    private Domain domain;
-    private TokenService tokenService;
-    private AuditService auditService;
+public class LogoutEndpoint extends AbstractLogoutEndpoint {
+    private IdentityProviderManager identityProviderManager;
+    private CertificateManager certificateManager;
     private ClientSyncService clientSyncService;
     private JWTService jwtService;
-    private AuthenticationFlowContextService authenticationFlowContextService;
 
     public LogoutEndpoint(Domain domain,
                           TokenService tokenService,
                           AuditService auditService,
                           ClientSyncService clientSyncService,
                           JWTService jwtService,
-                          AuthenticationFlowContextService authenticationFlowContextService) {
-        this.domain = domain;
-        this.tokenService = tokenService;
-        this.auditService = auditService;
-        this.clientSyncService = clientSyncService;
+                          AuthenticationFlowContextService authenticationFlowContextService,
+                          IdentityProviderManager identityProviderManager,
+                          CertificateManager certificateManager) {
+        super(domain, tokenService, auditService, authenticationFlowContextService);
         this.jwtService = jwtService;
-        this.authenticationFlowContextService = authenticationFlowContextService;
+        this.clientSyncService = clientSyncService;
+        this.certificateManager = certificateManager;
+        this.identityProviderManager = identityProviderManager;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
+
         // fetch client
         fetchClient(routingContext, clientHandler -> {
             final Client client = clientHandler.result();
@@ -88,20 +88,18 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
                 routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
             }
 
-            // invalidate session
-            invalidateSession(routingContext, invalidateSessionHandler -> {
-                // invalidate tokens if option is enabled
-                if (Boolean.TRUE.valueOf(routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER))) {
-                    invalidateTokens(invalidateSessionHandler.result(), invalidateTokensHandler -> {
-                        if (invalidateTokensHandler.failed()) {
-                            LOGGER.error("An error occurs while invalidating user tokens", invalidateSessionHandler.cause());
-                        }
-                        doRedirect(client, routingContext);
-                    });
+            evaluateSingleSignOut(routingContext, endpointHandler -> {
+                Optional<String> oidcEndSessionEndpoint = endpointHandler.result();
+                if (oidcEndSessionEndpoint.isPresent()) {
+                    // redirect to the OIDC provider to logout the user
+                    // this action will return to the AM logout callback to finally logout the user from AM
+                    doRedirect(client, routingContext, oidcEndSessionEndpoint.get());
                 } else {
-                    doRedirect(client, routingContext);
+                    // External OP do not provide EndSessionEndpoint, call the "standard" AM logout mechanism
+                    // to invalidate session
+                    invalidateSession(routingContext, invalidSessionHandler(routingContext, client));
                 }
-            });
+            } );
         });
     }
 
@@ -135,6 +133,7 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
             // get client from the user's last application
             final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             clientSyncService.findById(endUser.getClient())
+                    .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(endUser.getClient())))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.succeededFuture()),
@@ -142,155 +141,67 @@ public class LogoutEndpoint implements Handler<RoutingContext> {
         }
     }
 
-    /**
-     * Redirection to RP After Logout
-     *
-     * In some cases, the RP will request that the End-User's User Agent to be redirected back to the RP after a logout has been performed.
-     *
-     * Post-logout redirection is only done when the logout is RP-initiated, in which case the redirection target is the post_logout_redirect_uri parameter value sent by the initiating RP.
-     *
-     * An id_token_hint carring an ID Token for the RP is also REQUIRED when requesting post-logout redirection;
-     * if it is not supplied with post_logout_redirect_uri, the OP MUST NOT perform post-logout redirection.
-     *
-     * The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied does not exactly match one of the previously registered post_logout_redirect_uris values.
-     *
-     * The post-logout redirection is performed after the OP has finished notifying the RPs that logged in with the OP for that End-User that they are to log out the End-User.
-     *
-     * @param client the OAuth 2.0 client
-     * @param routingContext the routing context
-     */
-    private void doRedirect(Client client, RoutingContext routingContext) {
-        final HttpServerRequest request = routingContext.request();
+    private void evaluateSingleSignOut(RoutingContext routingContext, Handler<AsyncResult<Optional<String>>> handler) {
+        Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        if (client != null && client.isSingleSignOut() && routingContext.user() != null) {
+            User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            // generate Authentication object containing Request and User information
+            // maybe useful in some IDP to generate the Logout Request
+            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()));
+            final Authentication authentication = new EndUserAuthentication(endUser, null, authenticationContext);
 
-        // validate request
-        // see https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
-        // An id_token_hint is REQUIRED when the post_logout_redirect_uri parameter is included.
-        // for back-compatibility purpose, we skip this validation
-        // see https://github.com/gravitee-io/issues/issues/5163
-        /*if (request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI) != null &&
-                request.getParam(Parameters.ID_TOKEN_HINT) == null) {
-            routingContext.fail(new InvalidRequestException("Missing parameter: id_token_hint"));
-            return;
-        }*/
-
-        // redirect to target url
-        String logoutRedirectUrl = !StringUtils.isEmpty(request.getParam(LOGOUT_URL_PARAMETER)) ?
-                request.getParam(LOGOUT_URL_PARAMETER) : (!StringUtils.isEmpty(request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI)) ?
-                request.getParam(Parameters.POST_LOGOUT_REDIRECT_URI) : DEFAULT_TARGET_URL);
-
-        // The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied
-        // does not exactly match one of the previously registered post_logout_redirect_uris values.
-        // if client is null, check security domain options
-        List<String> registeredUris = client != null ? client.getPostLogoutRedirectUris() :
-                (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
-        if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris)) {
-            routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
-            return;
-         }
-
-        // redirect the End-User
-        doRedirect0(routingContext, logoutRedirectUrl);
-    }
-
-    /**
-     * Invalidate session for the current user.
-     *
-     * @param routingContext the routing context
-     * @param handler handler holding the potential End-User
-     */
-    private void invalidateSession(RoutingContext routingContext, Handler<AsyncResult<User>> handler) {
-        io.gravitee.am.model.User endUser = null;
-        // clear context and session
-        if (routingContext.user() != null) {
-            endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            // audit event
-            report(endUser, routingContext.request());
-            // clear user
-            routingContext.clearUser();
-        }
-
-        if (routingContext.session() != null) {
-            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
-            authenticationFlowContextService.clearContext(routingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
+            final Maybe<AuthenticationProvider> authenticationProviderMaybe = this.identityProviderManager.get(endUser.getSource());
+            authenticationProviderMaybe
+                    .filter(provider -> provider instanceof SocialAuthenticationProvider)
+                    .flatMap(provider -> ((SocialAuthenticationProvider) provider).signOutUrl(authentication))
+                    .map(request -> Optional.ofNullable(request))
+                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                    .flatMap(optLogoutRequest  -> {
+                        if (optLogoutRequest.isPresent()) {
+                            return generateLogoutCallback(routingContext, endUser, optLogoutRequest.get());
+                        } else {
+                            LOGGER.debug("No logout endpoint has been found in the Identity Provider configuration");
+                            return Maybe.just(Optional.<String>empty());
+                        }
+                    })
+                    .doOnSuccess(endpoint -> handler.handle(Future.succeededFuture(endpoint)))
+                    .doOnError(err -> {
+                        LOGGER.warn("Unable to sign the end user out of the external OIDC '{}', only sign out of AM", client.getClientId(), err);
+                        handler.handle(Future.succeededFuture(Optional.empty()));
+                    })
                     .subscribe();
-
-            routingContext.session().destroy();
-        }
-
-        handler.handle(Future.succeededFuture(endUser));
-    }
-
-    /**
-     * Invalidate tokens for the current user.
-     *
-     * @param user the End-User
-     * @param handler handler holding the result
-     */
-    private void invalidateTokens(User user, Handler<AsyncResult<Void>> handler) {
-        // if no user, continue
-        if (user == null) {
-            handler.handle(Future.succeededFuture());
-            return;
-        }
-        tokenService.deleteByUserId(user.getId())
-                .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error)));
-    }
-
-    /**
-     * Report the logout action.
-     *
-     * @param endUser the End-User
-     * @param request the HTTP request
-     */
-    private void report(User endUser, HttpServerRequest request) {
-        auditService.report(
-                AuditBuilder.builder(LogoutAuditBuilder.class)
-                        .domain(domain.getId())
-                        .user(endUser)
-                        .ipAddress(RequestUtils.remoteAddress(request))
-                        .userAgent(RequestUtils.userAgent(request)));
-    }
-
-    private void doRedirect0(RoutingContext routingContext, String url) {
-        // state OPTIONAL. Opaque value used by the RP to maintain state between the logout request and the callback to the endpoint specified by the post_logout_redirect_uri parameter.
-        // If included in the logout request, the OP passes this value back to the RP using the state parameter when redirecting the User Agent back to the RP.
-        UriBuilder uriBuilder = UriBuilder.fromURIString(url);
-        final String state = routingContext.request().getParam(io.gravitee.am.common.oauth2.Parameters.STATE);
-        if (!StringUtils.isEmpty(state)) {
-            uriBuilder.addParameter(io.gravitee.am.common.oauth2.Parameters.STATE, state);
-        }
-
-        try {
-            routingContext
-                    .response()
-                    .putHeader(HttpHeaders.LOCATION, uriBuilder.build().toString())
-                    .setStatusCode(302)
-                    .end();
-        } catch (Exception ex) {
-            LOGGER.error("An error has occurred during post-logout redirection", ex);
-            routingContext.fail(500);
+        } else {
+            handler.handle(Future.succeededFuture(Optional.empty()));
         }
     }
 
-    private boolean isMatchingRedirectUri(String requestedRedirectUri, List<String> registeredRedirectUris) {
-        // no registered uris to check, continue
-        if (registeredRedirectUris == null) {
-            return true;
+    private Maybe<Optional<String>> generateLogoutCallback(RoutingContext routingContext, User endUser, Request endpoint) {
+        // Case of OIDC provider
+        // Single Logout can be done only if the endUser profile contains an IdToken.
+        if (HttpMethod.GET == endpoint.getMethod() &&
+                endUser.getAdditionalInformation() != null &&
+                endUser.getAdditionalInformation().containsKey(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY)) {
+            // Generate a state containing provider id and current query parameter string.
+            // This state will be sent back to AM after social logout.
+            final JWT stateJwt = new JWT();
+            stateJwt.put("c", endUser.getClient());
+            stateJwt.put("p", endUser.getSource());
+            stateJwt.put("q", routingContext.request().query());
+            // remove state from the request to avoid duplicate state parameter into the external idp logout request
+            // this state will be restored during after the redirect triggered by the external idp
+            routingContext.request().params().remove(io.gravitee.am.common.oauth2.Parameters.STATE);
+
+            return jwtService.encode(stateJwt, certificateManager.defaultCertificateProvider()).map(state -> {
+                String redirectUri = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/logout/callback");
+                UriBuilder builder = UriBuilder.fromHttpUrl(endpoint.getUri());
+                builder.addParameter(Parameters.POST_LOGOUT_REDIRECT_URI, redirectUri);
+                builder.addParameter(Parameters.ID_TOKEN_HINT, (String) endUser.getAdditionalInformation().get(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY));
+                builder.addParameter(io.gravitee.am.common.oauth2.Parameters.STATE, state);
+                return Optional.of(builder.buildString());
+            }).toMaybe();
+        } else {
+            // other case not yet implemented, return empty to log out only of AM.
+            return Maybe.empty();
         }
-        // no registered uris to check, continue
-        if (registeredRedirectUris.isEmpty()) {
-            return true;
-        }
-        // default value, continue
-        if (DEFAULT_TARGET_URL.equals(requestedRedirectUri)) {
-            return true;
-        }
-        // compare values
-        return registeredRedirectUris
-                .stream()
-                .anyMatch(registeredUri -> requestedRedirectUri.equals(registeredUri));
     }
 }

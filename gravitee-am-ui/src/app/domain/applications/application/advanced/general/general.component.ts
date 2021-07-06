@@ -38,6 +38,7 @@ export class ApplicationGeneralComponent implements OnInit {
   redirectUri: string;
   logoutRedirectUri: string;
   redirectUris: any[] = [];
+  singleSignOut: boolean;
   logoutRedirectUris: any[] = [];
   formChanged = false;
   editMode: boolean;
@@ -83,6 +84,7 @@ export class ApplicationGeneralComponent implements OnInit {
     this.applicationAdvancedSettings = this.application.settings == null ? {} : this.application.settings.advanced || {};
     this.applicationOAuthSettings.redirectUris = this.applicationOAuthSettings.redirectUris || [];
     this.application.factors = this.application.factors || [];
+    this.singleSignOut = this.applicationOAuthSettings.singleSignOut || false;
     this.redirectUris = _.map(this.applicationOAuthSettings.redirectUris, function (item) { return { value: item }; });
     this.logoutRedirectUris = _.map(this.applicationOAuthSettings.postLogoutRedirectUris, function (item) { return { value: item }; });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
@@ -98,7 +100,11 @@ export class ApplicationGeneralComponent implements OnInit {
     data.name = this.application.name;
     data.description = this.application.description;
     data.settings = {};
-    data.settings.oauth = { 'redirectUris' : _.map(this.redirectUris, 'value'), 'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value') };
+    data.settings.oauth = { 
+      'redirectUris' : _.map(this.redirectUris, 'value'), 
+      'postLogoutRedirectUris' : _.map(this.logoutRedirectUris, 'value'),
+      'singleSignOut' : this.singleSignOut
+    };
     data.settings.advanced = { 'skipConsent' : this.applicationAdvancedSettings.skipConsent };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.application = response;
@@ -209,6 +215,11 @@ export class ApplicationGeneralComponent implements OnInit {
 
   enableAutoApprove(event) {
     this.applicationAdvancedSettings.skipConsent = event.checked;
+    this.formChanged = true;
+  }
+
+  enableSingleSignOut(event) {
+    this.singleSignOut = event.checked;
     this.formChanged = true;
   }
 

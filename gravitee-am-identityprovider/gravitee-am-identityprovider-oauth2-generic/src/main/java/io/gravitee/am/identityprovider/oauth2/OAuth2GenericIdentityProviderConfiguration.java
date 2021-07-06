@@ -16,10 +16,8 @@
 package io.gravitee.am.identityprovider.oauth2;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
-import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 
 import java.util.Set;
@@ -37,6 +35,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private String userAuthorizationUri;
     private String accessTokenUri;
     private String userProfileUri;
+    private String logoutUri;
     private Set<String> scopes;
     private String responseType;
     private boolean useIdTokenForUserInfo;
@@ -175,4 +174,14 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     public SignatureAlgorithm getSignatureAlgorithm() {
         return this.signature == null ? null : this.signature.getAlg();
     }
+
+    @Override
+    public String getLogoutUri() {
+        return this.logoutUri;
+    }
+
+    public void setLogoutUri(String logoutUri) {
+        this.logoutUri = logoutUri;
+    }
+
 }

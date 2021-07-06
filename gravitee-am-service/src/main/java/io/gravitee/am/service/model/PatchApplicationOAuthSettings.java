@@ -85,6 +85,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> authorizationEncryptedResponseEnc;
     private Optional<Boolean> forcePKCE;
     private Optional<List<String>> postLogoutRedirectUris;
+    private Optional<Boolean> singleSignOut;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -518,6 +519,14 @@ public class PatchApplicationOAuthSettings {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
+    public Optional<Boolean> getSingleSignOut() {
+        return singleSignOut;
+    }
+
+    public void setSingleSignOut(Optional<Boolean> singleSignOut) {
+        this.singleSignOut = singleSignOut;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -578,6 +587,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
         SetterUtils.safeSet(toPatch::setForcePKCE, this.getForcePKCE());
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
+        SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
 
         return toPatch;
     }

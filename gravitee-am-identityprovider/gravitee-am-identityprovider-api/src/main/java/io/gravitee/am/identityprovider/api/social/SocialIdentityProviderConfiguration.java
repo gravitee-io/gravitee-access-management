@@ -34,6 +34,8 @@ public interface SocialIdentityProviderConfiguration extends IdentityProviderCon
 
     public String getAccessTokenUri();
 
+    public String getLogoutUri();
+
     public String getUserProfileUri();
 
     public String getCodeParameter();

@@ -112,4 +112,10 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

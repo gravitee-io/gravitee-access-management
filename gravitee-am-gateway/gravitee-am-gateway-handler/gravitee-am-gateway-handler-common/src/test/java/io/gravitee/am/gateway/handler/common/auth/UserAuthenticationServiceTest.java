@@ -67,6 +67,7 @@ public class UserAuthenticationServiceTest {
         when(user.getId()).thenReturn(id);
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("source", source);
+        additionalInformation.put("op_id_token", "somevalue");
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         User createdUser = mock(User.class);
@@ -83,7 +84,7 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(userService, times(1)).create(any());
+        verify(userService, times(1)).create(argThat(u -> u.getAdditionalInformation().containsKey("op_id_token")));
         verify(userService, never()).update(any());
     }
 
@@ -254,5 +255,80 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(user1 -> user1.getRoles().size() == 2);
+    }
+
+    @Test
+    public void shouldConnect_knownUser_with_OpIdToken() {
+        String domainId = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("op_id_token", "token2");
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User existingUser = new User();
+        HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
+        existingAdditionalInformation.put("source", source);
+        existingAdditionalInformation.put("op_id_token", "token1");
+        existingUser.setAdditionalInformation(existingAdditionalInformation);
+
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService).update(argThat(user1 -> "token2".equals(user1.getAdditionalInformation().get("op_id_token"))));
+    }
+
+
+    @Test
+    public void shouldConnect_knownUser_with_OpIdToken_removed() {
+        String domainId = "Domain";
+        String username = "foo";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getUsername()).thenReturn(username);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User existingUser = new User();
+        HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
+        existingAdditionalInformation.put("source", source);
+        existingAdditionalInformation.put("op_id_token", "token1");
+        existingUser.setAdditionalInformation(existingAdditionalInformation);
+
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userService).update(argThat(user1 -> !user1.getAdditionalInformation().containsKey("op_id_token")));
     }
 }

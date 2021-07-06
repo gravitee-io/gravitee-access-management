@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSo
 import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
 import io.gravitee.am.identityprovider.salesforce.SalesForceIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.salesforce.authentication.spring.SalesForceAuthenticationProviderConfiguration;
+import io.reactivex.Maybe;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
