@@ -28,10 +28,12 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
     private String USER_AUTHORIZATION_URI = "/api/v1/authorize";
     private String ACCESS_TOKEN_URI = "/api/v1/token";
     private String USER_PROFILE_URI = "/api/v1/userinfo";
+    private String LOGOUT_URI = "/api/v1/logout";
     private String CODE_PARAMETER = "code";
     private String RESPONSE_TYPE = "code";
     private String clientId;
     private String clientSecret;
+    private String postRedirectUri;
     private Set<String> scopes;
     private Integer connectTimeout = 10000;
     private Integer maxPoolSize = 100;
@@ -115,6 +117,11 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
 
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+    }
+
+    @Override
+    public String getLogoutUri() {
+        return environment.url + LOGOUT_URI;
     }
 
     public enum Environment {

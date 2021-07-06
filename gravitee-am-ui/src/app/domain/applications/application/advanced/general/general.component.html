@@ -134,6 +134,21 @@
 
         <div *ngIf="displaySection()" class="gv-form-section">
           <div class="gv-form-section-title">
+            <h5>Single Sign Out</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableSingleSignOut($event)"
+              [checked]="this.singleSignOut" [disabled]="!editMode">
+              Logout from the external identity provider
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Call the end session endpoint of the external identity provider if available on AM logout call.</mat-hint>
+          </div>
+        </div>
+
+        <div *ngIf="displaySection()" class="gv-form-section">
+          <div class="gv-form-section-title">
             <h5>Consent</h5>
             <mat-divider></mat-divider>
           </div>

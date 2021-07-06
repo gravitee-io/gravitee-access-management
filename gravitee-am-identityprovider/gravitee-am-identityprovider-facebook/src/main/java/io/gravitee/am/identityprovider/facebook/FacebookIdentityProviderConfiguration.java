@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.facebook;
 
-import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
 import java.util.Set;
@@ -97,4 +96,10 @@ public class FacebookIdentityProviderConfiguration implements SocialIdentityProv
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

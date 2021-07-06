@@ -267,6 +267,11 @@ public class ApplicationOAuthSettings {
      */
     private List<String> postLogoutRedirectUris;
 
+    /**
+     * Specify if the end_session_endpoint should be called on OIDC Provider if available
+     */
+    private boolean singleSignOut = false;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -328,6 +333,7 @@ public class ApplicationOAuthSettings {
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
         this.forcePKCE = other.forcePKCE;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
+        this.singleSignOut = other.singleSignOut;
     }
 
     public String getClientId() {
@@ -786,6 +792,14 @@ public class ApplicationOAuthSettings {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
+    public boolean isSingleSignOut() {
+        return singleSignOut;
+    }
+
+    public void setSingleSignOut(boolean singleSignOut) {
+        this.singleSignOut = singleSignOut;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -843,5 +857,6 @@ public class ApplicationOAuthSettings {
         client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);
         client.setForcePKCE(this.forcePKCE);
         client.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
+        client.setSingleSignOut(this.singleSignOut); ;
     }
 }

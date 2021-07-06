@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
@@ -205,6 +206,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             existingUser.getRoles().addAll(principal.getRoles());
         }
         Map<String, Object> additionalInformation = principal.getAdditionalInformation();
+        if (afterAuthentication && !additionalInformation.containsKey(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY) && existingUser.getAdditionalInformation() != null) {
+            // remove the op_id_token from existing user profile to avoid keep this information
+            // if the singleSignOut is disabled
+            existingUser.getAdditionalInformation().remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+        }
         extractAdditionalInformation(existingUser, additionalInformation);
         return userService.update(existingUser);
     }

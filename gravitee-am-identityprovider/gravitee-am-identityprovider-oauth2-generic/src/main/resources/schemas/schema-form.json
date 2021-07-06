@@ -33,6 +33,11 @@
       "title": "UserInfo Endpoint",
       "description": "OpenID Connect UserInfo Endpoint '/userinfo' that returns claims about the authenticated End-User"
     },
+    "logoutUri": {
+      "type" : "string",
+      "title": "End Session Endpoint",
+      "description": "OpenID Connect 'End Session Endpoint' that sign the End-User out of the OIDC Provider.<br/>The OIDC must implement this <a href=\"https://openid.net/specs/openid-connect-rpinitiated-1_0.html\">specification</a> to allow redirect"
+    },
     "responseType": {
       "type" : "string",
       "title": "OpenID Connect Flow",

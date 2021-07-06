@@ -83,6 +83,7 @@ public class ApplicationOAuthSettingsMongo {
     private String authorizationEncryptedResponseEnc;
     private boolean forcePKCE;
     private List<String> postLogoutRedirectUris;
+    private boolean singleSignOut;
 
     public String getClientId() {
         return clientId;
@@ -538,5 +539,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
+    public boolean isSingleSignOut() {
+        return singleSignOut;
+    }
+
+    public void setSingleSignOut(boolean singleSignOut) {
+        this.singleSignOut = singleSignOut;
     }
 }

@@ -113,4 +113,9 @@ public class TwitterIdentityProviderConfiguration implements SocialIdentityProvi
         this.maxPoolSize = maxPoolSize;
     }
 
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.franceconnect.authentication;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -65,6 +66,7 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String CODE = "code";
     private static final String ACCESS_TOKEN_PARAMETER = "access_token";
+    private static final String ID_TOKEN_PARAMETER = "id_token";
 
     @Autowired
     @Qualifier("franceConnectWebClient")
@@ -167,6 +169,10 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
 
                     JsonObject response = httpResponse.bodyAsJsonObject();
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
+                    String idToken = response.getString(ID_TOKEN_PARAMETER);
+                    if (!Strings.isNullOrEmpty(idToken)) {
+                        authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
+                    }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
     }

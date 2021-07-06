@@ -41,7 +41,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -97,6 +96,13 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getClientId());
+                    if (client.isSingleSignOut() && endUserAuthentication.getContext().get(ConstantKeys.ID_TOKEN_KEY) != null) {
+                        logger.debug("Single SignOut enable for client '{}' store the id_token coming from the provider {} as additional information", client.getId(), authProvider);
+                        additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, endUserAuthentication.getContext().get(ConstantKeys.ID_TOKEN_KEY));
+                    } else {
+                        // clear the claim if the singleSignOut is disabled
+                        additionalInformation.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+                    }
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user);
                 })

@@ -146,4 +146,10 @@ public class SalesForceIdentityProviderConfiguration implements OpenIDConnectIde
     public String getResponseType() {
         return DEFAULT_RESPONSE_TYPE;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

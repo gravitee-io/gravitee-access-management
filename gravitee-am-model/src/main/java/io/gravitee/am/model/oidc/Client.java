@@ -25,16 +25,7 @@ import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -206,6 +197,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private MFASettings mfaSettings;
 
+    private boolean singleSignOut;
+
     public Client() {
     }
 
@@ -277,6 +270,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.flowsInherited = other.flowsInherited;
         this.mfaSettings = other.mfaSettings;
+        this.singleSignOut = other.singleSignOut;
     }
 
     public String getId() {
@@ -858,6 +852,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setMfaSettings(MFASettings mfaSettings) {
         this.mfaSettings = mfaSettings;
+    }
+
+    public boolean isSingleSignOut() {
+        return singleSignOut;
+    }
+
+    public void setSingleSignOut(boolean singleSignOut) {
+        this.singleSignOut = singleSignOut;
     }
 
     @Override

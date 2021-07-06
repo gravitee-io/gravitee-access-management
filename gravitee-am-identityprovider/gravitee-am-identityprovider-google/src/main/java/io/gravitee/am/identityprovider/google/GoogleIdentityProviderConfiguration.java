@@ -140,4 +140,10 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
     public String getResponseType() {
         return DEFAULT_RESPONSE_TYPE;
     }
+
+    @Override
+    public String getLogoutUri() {
+        return null;
+    }
+
 }

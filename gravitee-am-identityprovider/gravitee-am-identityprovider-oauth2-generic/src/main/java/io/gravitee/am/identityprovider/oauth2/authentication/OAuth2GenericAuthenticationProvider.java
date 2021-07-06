@@ -39,6 +39,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     private static final String AUTHORIZATION_ENDPOINT = "authorization_endpoint";
     private static final String TOKEN_ENDPOINT = "token_endpoint";
     private static final String USERINFO_ENDPOINT = "userinfo_endpoint";
+    private static final String END_SESSION_ENDPOINT = "end_session_endpoint";
 
     @Autowired
     @Qualifier("oauthWebClient")
@@ -112,6 +113,9 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                 }
                 if (providerConfiguration.containsKey(USERINFO_ENDPOINT)) {
                     configuration.setUserProfileUri((String) providerConfiguration.get(USERINFO_ENDPOINT));
+                }
+                if (providerConfiguration.containsKey(END_SESSION_ENDPOINT)) {
+                    configuration.setLogoutUri((String) providerConfiguration.get(END_SESSION_ENDPOINT));
                 }
 
                 // configuration verification

@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.root;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -30,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlo
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbac
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginSSOPOSTEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
@@ -54,22 +55,12 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.logout.LogoutCallbackParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -106,6 +97,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_MFA_ENROLL = "/mfa/enroll";
     public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
     public static final String PATH_LOGOUT = "/logout";
+    public static final String PATH_LOGOUT_CALLBACK = "/logout/callback";
     public static final String PATH_REGISTER = "/register";
     public static final String PATH_CONFIRM_REGISTRATION = "/confirmRegistration";
     public static final String PATH_RESET_PASSWORD = "/resetPassword";
@@ -247,7 +239,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService));
+                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService, identityProviderManager, certificateManager));
+
+        rootRouter.route(PATH_LOGOUT_CALLBACK)
+                .handler(new LogoutCallbackParseHandler(clientSyncService, jwtService, certificateManager))
+                .handler(new LogoutCallbackEndpoint(domain, tokenService, auditService, authenticationFlowContextService));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));
@@ -400,6 +396,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router
                 .route(PATH_LOGOUT)
                 .handler(sessionHandler);
+        router
+                .route(PATH_LOGOUT_CALLBACK)
+                .handler(sessionHandler);
 
         // Registration confirmation endpoint
         router
@@ -476,6 +475,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> errorHandler = new ErrorHandler(PATH_ERROR);
         router.route(PATH_FORGOT_PASSWORD).failureHandler(errorHandler);
         router.route(PATH_LOGOUT).failureHandler(errorHandler);
+        router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
     }
 }

@@ -29,9 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -70,6 +68,19 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
         } catch (Exception e) {
             LOGGER.error("An error occurs while building Sign In URL", e);
             return null;
+        }
+    }
+
+    @Override
+    public Maybe<Request> signOutUrl(Authentication authentication) {
+        final String endpoint = getConfiguration().getLogoutUri();
+        if (Objects.nonNull(endpoint)) {
+            Request request = new Request();
+            request.setMethod(HttpMethod.GET);
+            request.setUri(endpoint);
+            return Maybe.just(request);
+        } else {
+            return Maybe.empty();
         }
     }
 
@@ -114,7 +125,6 @@ public abstract class AbstractSocialAuthenticationProvider<T extends SocialIdent
     private boolean roleMappingEnabled() {
         return this.getIdentityProviderRoleMapper() != null;
     }
-
 
     protected final class Token {
         private String value;
