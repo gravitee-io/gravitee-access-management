@@ -1,0 +1,978 @@
+{
+	"info": {
+		"_postman_id": "cf17867d-bd28-4005-a32d-3ba8cec13cb5",
+		"name": "Gravitee.io - AM - Self Account Management - app version",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "Generate admin api token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create self account mamagement domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"self-account-management-test\", \n\t\"description\": \"test self-account-management impl\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create application",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"pm.environment.set('client', body.id);",
+									"pm.environment.set('clientId', body.settings.oauth.clientId);",
+									"pm.environment.set('clientSecret', body.settings.oauth.clientSecret);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"WEB\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"applications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure application",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \t  \"scopes\": [\"openid\"],\n      \"defaultScopes\": [\"openid\"]\n  \t}\n  },\n  \"identities\": [\n    \"default-idp-{{domain}}\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"applications",
+								"{{client}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"UM - create user\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    let domain = pm.environment.get(\"domain\");",
+									"    ",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.internal).to.eql(true);",
+									"    pm.expect(jsonData.enabled).to.eql(true);",
+									"    pm.expect(jsonData.preRegistration).to.eql(false);",
+									"    pm.expect(jsonData.registrationCompleted).to.eql(true);",
+									"    pm.expect(jsonData.source).to.eql('default-idp-'+domain)",
+									"    pm.environment.set('userUM', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"firstName\": \"Jensen\",\n\t\"lastName\": \"Barbara\",\n\t\"username\": \"jensen.barbara\",\n\t\"email\": \"jensen.barbara@mail.com\",\n\t\"password\": \"#CoMpL3X-P@SsW0Rd\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enable self account management feature",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Self account management enabled for domain\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.selfServiceAccountManagementSettings.enabled).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"selfServiceAccountManagementSettings\": {\n    \"enabled\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "well-known/openid-configuration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Check discovery endpoints\", function () {",
+									"    pm.response.to.be.header('Content-Type', 'application/json');",
+									"    var body = pm.response.json();",
+									"    ",
+									"    pm.expect(body).to.have.property(\"authorization_endpoint\");",
+									"    pm.expect(body).to.have.property(\"token_endpoint\");",
+									"    pm.expect(body).to.have.property(\"revocation_endpoint\");",
+									"    pm.expect(body).to.have.property(\"userinfo_endpoint\");",
+									"    pm.expect(body).to.have.property(\"registration_endpoint\");",
+									"    pm.expect(body).to.have.property(\"end_session_endpoint\");",
+									"    pm.expect(body).to.have.property(\"introspection_endpoint\");",
+									"",
+									"    pm.environment.set('authorizationEndpoint', body.authorization_endpoint);",
+									"    pm.environment.set('tokenEndpoint', body.token_endpoint);",
+									"    pm.environment.set('userinfoEndpoint', body.userinfo_endpoint);",
+									"    pm.environment.set('revocationEndpoint', body.revocation_endpoint);",
+									"    pm.environment.set('registrationEndpoint', body.registration_endpoint);",
+									"    pm.environment.set('logoutEndpoint', body.end_session_endpoint);",
+									"    pm.environment.set('introspectionEndpoint', body.introspection_endpoint);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/oidc/.well-known/openid-configuration",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"oidc",
+								".well-known",
+								"openid-configuration"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Generate gateway token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has an access_token\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('access_token');",
+									"    pm.expect(body).to.have.property('token_type');",
+									"    pm.expect(body.token_type).to.eql('bearer');",
+									"    pm.expect(body).to.have.property('expires_in');",
+									"    // pm.expect(body).to.have.property('refresh_token');",
+									"    pm.expect(body).to.have.property('scope');",
+									"    pm.expect(body.scope).to.eql('openid');",
+									"    ",
+									"    pm.environment.set('access_token', body.access_token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "jensen.barbara",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "#CoMpL3X-P@SsW0Rd",
+									"type": "text"
+								},
+								{
+									"key": "scope",
+									"value": "scope1",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{tokenEndpoint}}",
+							"host": [
+								"{{tokenEndpoint}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Invalid Case",
+			"item": []
+		},
+		{
+			"name": "Nominal Case",
+			"item": [
+				{
+					"name": "Get Index",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('temp');",
+									"    pm.expect(body).to.have.property('reason');",
+									"    pm.expect(body.temp).to.eql('true');",
+									"    pm.expect(body.reason).to.eql('wip');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Static Assets",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('temp');",
+									"    pm.expect(body).to.have.property('reason');",
+									"    pm.expect(body.temp).to.eql('true');",
+									"    pm.expect(body.reason).to.eql('wip');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/assets/hello/world",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"assets",
+								"hello",
+								"world"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"//Fails if auto redirects are enabled",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"changePassword"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('username');",
+									"    pm.expect(body).to.have.property('displayName');",
+									"    pm.expect(body.username).to.eql('jensen.barbara');",
+									"    pm.expect(body.displayName).to.eql('Jensen Barbara');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Factors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.be.lengthOf(0)",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"factors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Factors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('temp');",
+									"    pm.expect(body).to.have.property('reason');",
+									"    pm.expect(body.temp).to.eql('true');",
+									"    pm.expect(body.reason).to.eql('wip');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"factors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Activity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('data');",
+									"    pm.expect(body).to.have.property('currentPage');",
+									"    pm.expect(body).to.have.property('totalCount');",
+									"    pm.expect(body.currentPage).to.eql(0);",
+									"    pm.expect(body.data).to.not.null",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/activity",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"activity"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Has proper response\", function () {",
+									"    var body = pm.response.json();",
+									"    pm.expect(body).to.have.property('status');",
+									"    pm.expect(body.status).to.eql('OK');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Donald Hope Courtney Jr\",\n  \"given_name\": \"Donald\",\n  \"family_name\": \"Courtney\",\n  \"middle_name\": \"Hope\",\n  \"nickname\": \"Dj\",\n  \"profile\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"picture\": \"https://media-exp3.licdn.com/dms/image/C4E03AQFIFcQeELwSXg/profile-displayphoto-shrink_400_400/0/1604523349570?e=1631750400&v=beta&t=77yVpbv5xfu5pN-yaBqX0_B1NDdT1ovgtq9ZoKDXmEQ\",\n  \"website\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"email\": \"donald.courtney@graviteesource.com\",\n  \"gender\": \"male\",\n  \"birthdate\": \"1992-12-13\",\n  \"zoneinfo\": \"UTC−05:00\",\n  \"locale\": \"en-US\",\n  \"phone_number\": \"+1 (352) 226-3641\",\n  \"address\": {\n      \"street_address\": \"19616 Wyndmill Cir\",\n      \"locality\": \"Odessa\",\n      \"region\": \"Florida\",\n      \"postal_code\": \"33556\",\n      \"country\": \"USA\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"account",
+								"api",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Delete domain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 204\", function () {",
+							"    pm.response.to.have.status(204);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+					"host": [
+						"{{management_url}}"
+					],
+					"path": [
+						"management",
+						"organizations",
+						"{{defaultOrganizationId}}",
+						"environments",
+						"{{defaultEnvironmentId}}",
+						"domains",
+						"{{domain}}"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
