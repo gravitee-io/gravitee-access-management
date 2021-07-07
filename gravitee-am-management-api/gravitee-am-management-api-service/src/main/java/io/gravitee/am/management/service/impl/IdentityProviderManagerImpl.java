@@ -161,12 +161,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             final String username = environment.getProperty("management.mongodb.username");
             final String password = environment.getProperty("management.mongodb.password");
 
-            String mongoUri = "mongodb://";
+            String defaultMongoUri = "mongodb://";
             if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-                mongoUri += username +":"+ password +"@";
+                defaultMongoUri += username +":"+ password +"@";
             }
-            mongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
+            defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
 
+            String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
             newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
