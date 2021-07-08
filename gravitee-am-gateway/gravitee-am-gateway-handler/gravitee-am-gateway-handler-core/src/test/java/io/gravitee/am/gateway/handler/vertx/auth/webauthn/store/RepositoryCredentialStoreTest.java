@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.store;
 
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.Authenticator;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.CredentialService;
 import io.reactivex.Flowable;
+import io.vertx.ext.auth.webauthn.Authenticator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

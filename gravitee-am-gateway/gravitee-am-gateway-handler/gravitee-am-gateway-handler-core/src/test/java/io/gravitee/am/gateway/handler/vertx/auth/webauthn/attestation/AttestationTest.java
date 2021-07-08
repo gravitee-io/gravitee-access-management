@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.vertx.auth.webauthn.attestation;
 
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnCredentials;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.RelyingParty;
+import io.vertx.ext.auth.webauthn.WebAuthn;
+import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
+import io.vertx.ext.auth.webauthn.WebAuthnOptions;
 import org.junit.Assert;
 import org.junit.Test;
 
