@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService} from '../../../services/user.service';
@@ -21,6 +21,10 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { DialogService } from '../../../services/dialog.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { AuthService } from '../../../services/auth.service';
+import {ApplicationService} from "../../../services/application.service";
+import {ProviderService} from "../../../services/provider.service";
+import * as _ from "lodash";
+import {FormControl} from "@angular/forms";
 
 @Component({
   selector: 'app-users',
@@ -28,9 +32,10 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit {
-  private searchValue: string;
   private isLoading: boolean;
   private hasValue: boolean;
+  private re = /\b(eq|ne|co|sw|ew|pr|gt|ge|lt|le|and|or)\b/gi;
+  searchValue: string;
   organizationContext: boolean;
   requiredReadPermission: string;
   pagedUsers: any;
@@ -38,13 +43,20 @@ export class UsersComponent implements OnInit {
   domainId: string;
   page: any = {};
   createMode: boolean;
-  searchMode = 'standard';
+  applications: any[];
+  identityProviders: any[];
+  selectedIdPs: string[];
+  selectedApplications: string[];
+  selectedDisabledUsers: boolean = false;
+  displayAdvancedSearchMode: boolean = false;
 
   constructor(private userService: UserService,
               private organizationService: OrganizationService,
               private dialogService: DialogService,
               private snackbarService: SnackbarService,
               private authService: AuthService,
+              private applicationService: ApplicationService,
+              private providerService: ProviderService,
               private route: ActivatedRoute,
               private router: Router,
               public dialog: MatDialog) {
@@ -72,10 +84,12 @@ export class UsersComponent implements OnInit {
     return !this.users || this.users.length === 0 && (!this.searchValue && !this.hasValue) && !this.isLoading;
   }
 
-  loadUsers() {
+  loadUsers(searchQuery) {
     let findUsers;
-    if (this.searchValue) {
-      const searchTerm = this.searchMode === 'standard' ? 'q=' + this.searchValue + '*' : 'filter=' + this.searchValue;
+    let advancedSearchMode = false;
+    if (searchQuery) {
+      advancedSearchMode = this.isAdvancedSearch(searchQuery);
+      const searchTerm = !advancedSearchMode ? 'q=' + searchQuery + '*' : 'filter=' + searchQuery;
       findUsers = this.userService.search(this.domainId, searchTerm, this.page.pageNumber, this.page.size, this.organizationContext);
     } else {
       findUsers = this.organizationContext
@@ -87,6 +101,9 @@ export class UsersComponent implements OnInit {
       this.isLoading = false;
       this.page.totalElements = pagedUsers.totalCount;
       this.users = pagedUsers.data;
+      if (advancedSearchMode) {
+        this.searchValue = searchQuery;
+      }
     });
   }
 
@@ -99,24 +116,73 @@ export class UsersComponent implements OnInit {
           this.userService.delete(this.domainId, id, this.organizationContext).subscribe(response => {
             this.snackbarService.open('User deleted');
             this.page.pageNumber = 0;
-            this.loadUsers();
+            this.loadUsers(null);
           });
         }
       });
   }
 
+  openAdvancedSearch() {
+    this.displayAdvancedSearchMode = !this.displayAdvancedSearchMode;
+    if (this.displayAdvancedSearchMode) {
+      this.applicationService.findByDomain(this.domainId, 0, 50).subscribe(response => {
+        this.applications = response.data;
+      })
+      this.providerService.findByDomain(this.domainId).subscribe(response => {
+        this.identityProviders = response;
+      })
+    }
+  }
+
+  closeAdvancedSearch() {
+    this.displayAdvancedSearchMode = false;
+  }
+
   discardSearchValue() {
     this.searchValue = null;
-    this.loadUsers();
+    this.selectedApplications = null;
+    this.selectedIdPs = null;
+    this.selectedDisabledUsers = false;
+    this.loadUsers(this.searchValue);
   }
 
   onSearch() {
-    this.loadUsers();
+    this.loadUsers(this.searchValue);
+  }
+
+  onAdvancedSearch() {
+    this.displayAdvancedSearchMode = false;
+    let searchQuery = '';
+    if (this.selectedApplications && this.selectedApplications.length > 0) {
+      if (searchQuery.length > 1) {
+        searchQuery += ' and ';
+      }
+      searchQuery += this.selectedApplications.map(app =>  'client eq "' + app + '"').join(' or ');
+    }
+    if (this.selectedIdPs && this.selectedIdPs.length > 0) {
+      if (searchQuery.length > 1) {
+        searchQuery += ' and ';
+      }
+      searchQuery += this.selectedIdPs.map(idp => 'source eq "' + idp + '"').join(' or ');
+    }
+    if (this.selectedDisabledUsers) {
+      if (searchQuery.length > 1) {
+        searchQuery += ' and ';
+      }
+      searchQuery += 'enabled eq false';
+    }
+    if (searchQuery) {
+      this.loadUsers(searchQuery);
+    }
+  }
+
+  toggleDisabledUsers(event) {
+    this.selectedDisabledUsers = event.checked;
   }
 
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
-    this.loadUsers();
+    this.loadUsers(null);
   }
 
   accountLocked(user) {
@@ -129,6 +195,10 @@ export class UsersComponent implements OnInit {
 
   openDialog() {
     this.dialog.open(UsersSearchInfoDialog, {});
+  }
+
+  private isAdvancedSearch(searchQuery): boolean {
+    return searchQuery.match(this.re);
   }
 }
 
