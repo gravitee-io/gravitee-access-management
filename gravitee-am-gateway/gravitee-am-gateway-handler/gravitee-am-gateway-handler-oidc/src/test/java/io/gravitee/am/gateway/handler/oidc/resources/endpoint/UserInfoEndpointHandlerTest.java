@@ -30,17 +30,13 @@ import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
@@ -58,7 +54,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -74,12 +69,6 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private UserService userService;
 
     @Mock
-    private RoleService roleService;
-
-    @Mock
-    private GroupService groupService;
-
-    @Mock
     private JWTService jwtService;
 
     @Mock
@@ -89,7 +78,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     @InjectMocks
-    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, roleService, groupService, jwtService, jweService, openIDDiscoveryService);
+    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService);
 
     @Override
     public void setUp() throws Exception {
@@ -480,6 +469,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -518,8 +508,9 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
 
         User user = createUser();
         user.setRoles(Arrays.asList("role1", "role2"));
+        user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -552,7 +543,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         User user = createUser();
 
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.empty());
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -579,19 +570,12 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         client.setId("client-id");
         client.setClientId("client-id");
 
-        Group group1 = new Group();
-        group1.setId("group1");
-        group1.setName("group-1");
-
-        Group group2 = new Group();
-        group2.setId("group2");
-        group2.setName("group-2");
-
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
+        user.setGroups(Arrays.asList("group-1", "group-2"));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -627,21 +611,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         role2.setId("role2");
         role2.setName("role-2");
 
-        Group group1 = new Group();
-        group1.setId("group1");
-        group1.setName("group-1");
-
-        Group group2 = new Group();
-        group2.setId("group2");
-        group2.setName("group-2");
-
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
-        user.setRoles(Arrays.asList("role1", "role2"));
+        user.setGroups(Arrays.asList("group-1", "group-2"));
+        user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
@@ -679,21 +655,13 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
         role2.setId("role2");
         role2.setName("role-2");
 
-        Group group1 = new Group();
-        group1.setId("group1");
-        group1.setName("group-1");
-
-        Group group2 = new Group();
-        group2.setId("group2");
-        group2.setName("group-2");
-
         router.route().order(-1).handler(createOAuth2AuthHandler(oAuth2AuthProvider(jwt, client)));
 
         User user = createUser();
-        user.setRoles(Arrays.asList("role1", "role2"));
+        user.setRolesPermissions(new HashSet<>(Arrays.asList(role1, role2)));
+        user.setGroups(Arrays.asList("group-1", "group-2"));
         when(userService.findById(anyString())).thenReturn(Maybe.just(user));
-        when(roleService.findByIdIn(anyList())).thenReturn(Single.just(new HashSet<>(Arrays.asList(role1, role2))));
-        when(groupService.findByMember(user.getId())).thenReturn(Flowable.just(group1, group2));
+        when(userService.enhance(user)).thenReturn(Single.just(user));
 
         testRequest(
                 HttpMethod.GET,
