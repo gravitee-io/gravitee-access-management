@@ -72,7 +72,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthn;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -83,6 +82,7 @@ import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;

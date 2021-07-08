@@ -24,7 +24,9 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.vertx.ext.auth.webauthn.AuthenticatorTransport;
 import io.vertx.ext.auth.webauthn.RelyingParty;
+import io.vertx.ext.auth.webauthn.WebAuthnOptions;
 import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -61,7 +63,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
         }
 
         return WebAuthn.create(
-                vertx.getDelegate(),
+                vertx,
                 new WebAuthnOptions()
                         .setRelyingParty(getRelyingParty())
                         .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
@@ -123,7 +125,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
     private WebAuthn defaultWebAuthn() {
         return WebAuthn.create(
-                vertx.getDelegate(), new WebAuthnOptions().setRelyingParty(getRelyingParty()))
+                vertx, new WebAuthnOptions().setRelyingParty(getRelyingParty()))
                 .authenticatorFetcher(credentialStore::fetch)
                 .authenticatorUpdater(credentialStore::store);
     }
