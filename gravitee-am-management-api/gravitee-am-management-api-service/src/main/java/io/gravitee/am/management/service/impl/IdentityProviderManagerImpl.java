@@ -48,6 +48,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -63,9 +65,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     public static final int TABLE_NAME_MAX_LENGTH = 50;
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
-
-    @Value("${management.mongodb.dbname:gravitee-am}")
-    private String mongoDBName;
 
     @Value("${management.type:mongodb}")
     private String managementBackend;
@@ -160,6 +159,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
             final String username = environment.getProperty("management.mongodb.username");
             final String password = environment.getProperty("management.mongodb.password");
+            final String mongoDBName = getMongoDatabaseName(environment);
 
             String defaultMongoUri = "mongodb://";
             if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
