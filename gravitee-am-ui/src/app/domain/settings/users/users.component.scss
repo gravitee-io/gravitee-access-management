@@ -26,6 +26,14 @@ ngx-datatable {
   width: 80%;
 }
 
+.advanced-search-card {
+  border-radius: 0px;
+  margin-top: 50px;
+  position: absolute;
+  width: 70%;
+  z-index: 10;
+}
+
 :host ::ng-deep.user-name-cell {
   padding: 0 !important;
   a {
@@ -54,19 +62,10 @@ ngx-datatable {
 
 :host ::ng-deep.user-disabled .mat-badge-content {
   color: white;
-  background: #ff9100s;
+  background: #ff9100;
 }
 
 :host ::ng-deep.user-locked .mat-badge-content {
   color: white;
   background: red;
-}
-
-:host ::ng-deep#users-search-input.mat-form-field-appearance-fill .mat-form-field-flex {
-  border-radius: 4px 0;
-}
-
-:host ::ng-deep#users-search-mode.mat-form-field-appearance-fill .mat-form-field-flex {
-  border-radius: 0px 4px 0px 0px;
-  background: #a9a9a9;
 }
