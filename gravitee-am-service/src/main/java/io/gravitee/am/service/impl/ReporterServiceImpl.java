@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -232,7 +234,7 @@ public class ReporterServiceImpl implements ReporterService {
 
         final String username = environment.getProperty("management.mongodb.username");
         final String password = environment.getProperty("management.mongodb.password");
-        String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
+        String mongoDBName = getMongoDatabaseName(environment);
 
         String defaultMongoUri = "mongodb://";
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
