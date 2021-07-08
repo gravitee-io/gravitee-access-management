@@ -21,16 +21,15 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
@@ -65,21 +64,15 @@ import java.util.stream.Collectors;
 public class UserInfoEndpoint implements Handler<RoutingContext> {
 
     private UserService userService;
-    private RoleService roleService;
-    private GroupService groupService;
     private JWTService jwtService;
     private JWEService jweService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
     public UserInfoEndpoint(UserService userService,
-                            RoleService roleService,
-                            GroupService groupService,
                             JWTService jwtService,
                             JWEService jweService,
                             OpenIDDiscoveryService openIDDiscoveryService) {
         this.userService = userService;
-        this.roleService = roleService;
-        this.groupService = groupService;
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
@@ -233,21 +226,24 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return enhanced user
      */
     private Single<User> enhance(User user, JWT accessToken) {
-        return Single.zip(
-                loadRoles(user, accessToken) ? roleService.findByIdIn(user.getRoles()).map(Optional::of) : Single.just(Optional.<Set<Role>>empty()),
-                loadGroups(accessToken) ? groupService.findByMember(user.getId()).toList().map(Optional::of) : Single.just(Optional.<List<Group>>empty()),
-                (optionalRoles, optionalGroups) -> {
-                    Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
-                    if (optionalRoles.isPresent() && !optionalRoles.get().isEmpty()) {
-                        Set<Role> roles = optionalRoles.get();
-                        userClaims.putIfAbsent(CustomClaims.ROLES, roles.stream().map(Role::getName).collect(Collectors.toList()));
+        if (!loadRoles(user, accessToken) && !loadGroups(accessToken)) {
+            return Single.just(user);
+        }
+
+        return userService.enhance(user)
+                .map(user1 -> {
+                    Map<String, Object> userClaims = user.getAdditionalInformation() == null ?
+                            new HashMap<>() :
+                            new HashMap<>(user.getAdditionalInformation());
+
+                    if (user.getRolesPermissions() != null && !user.getRolesPermissions().isEmpty()) {
+                        userClaims.putIfAbsent(CustomClaims.ROLES, user.getRolesPermissions().stream().map(Role::getName).collect(Collectors.toList()));
                     }
-                    if (optionalGroups.isPresent() && !optionalGroups.get().isEmpty()) {
-                        List<Group> groups = optionalGroups.get();
-                        userClaims.putIfAbsent(CustomClaims.GROUPS, groups.stream().map(Group::getName).collect(Collectors.toList()));
+                    if (user.getGroups() != null && !user.getGroups().isEmpty()) {
+                        userClaims.putIfAbsent(CustomClaims.GROUPS, user.getGroups());
                     }
-                    user.setAdditionalInformation(userClaims);
-                    return user;
+                    user1.setAdditionalInformation(userClaims);
+                    return user1;
                 });
     }
 
@@ -260,7 +256,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     }
 
     private boolean loadRoles(User user, JWT accessToken) {
-        return accessToken.hasScope(Scope.ROLES.getKey()) && user.getRoles() != null && !user.getRoles().isEmpty();
+        return accessToken.hasScope(Scope.ROLES.getKey());
     }
 
     private boolean loadGroups(JWT accessToken) {
