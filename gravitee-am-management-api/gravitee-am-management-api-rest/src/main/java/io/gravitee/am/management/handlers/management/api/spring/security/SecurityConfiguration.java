@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.spring.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CsrfRequestMatcher;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.*;
@@ -28,8 +29,12 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.web.*;
+import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ReCaptchaService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -76,6 +81,13 @@ public class SecurityConfiguration {
     private Environment environment;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
+    @Qualifier("managementJwtParser")
+    private JWTParser jwtParser;
+
+    @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
 
     @Autowired
@@ -92,6 +104,9 @@ public class SecurityConfiguration {
 
     @Autowired
     private CockpitAuthenticationFilter cockpitAuthenticationFilter;
+
+    @Autowired
+    private OrganizationUserService userService;
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) {
@@ -121,7 +136,7 @@ public class SecurityConfiguration {
                 .and()
             .logout()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/auth/logout"))
-                .logoutSuccessHandler(new CustomLogoutSuccessHandler())
+                .logoutSuccessHandler(new CustomLogoutSuccessHandler(auditService, environment, jwtParser, userService))
                 .addLogoutHandler(cookieClearingLogoutHandler())
                 .and()
             .exceptionHandling()
