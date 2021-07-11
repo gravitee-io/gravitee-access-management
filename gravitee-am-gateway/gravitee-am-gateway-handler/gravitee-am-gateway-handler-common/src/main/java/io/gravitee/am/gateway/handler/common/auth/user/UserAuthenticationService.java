@@ -19,6 +19,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -43,9 +44,10 @@ public interface UserAuthenticationService {
      *
      * The user should be present in gravitee repository and should be retrieved from the user last identity provider
      * @param subject user technical id
+     * @param request http request
      * @return Pre-authenticated user
      */
-    Maybe<User> loadPreAuthenticatedUser(String subject);
+    Maybe<User> loadPreAuthenticatedUser(String subject, Request request);
 
     /**
      * Use to find a pre-authenticated user (from a previous authentication step)

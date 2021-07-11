@@ -21,10 +21,13 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
@@ -36,6 +39,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -82,14 +86,18 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
-    public Maybe<User> loadPreAuthenticatedUser(String subject) {
+    public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
         // find user by its technical id
         return userService
                 .findById(subject)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
                 .flatMap(user -> identityProviderManager.get(user.getSource())
                         // if the user has been found, try to load user information from its latest identity provider
-                        .flatMap(authenticationProvider -> authenticationProvider.loadUserByUsername(user.getUsername()))
+                        .flatMap(authenticationProvider -> {
+                            SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(request);
+                            final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
+                            return authenticationProvider.loadPreAuthenticatedUser(authentication);
+                        })
                         .flatMap(idpUser -> {
                             // retrieve information from the idp user and update the user
                             Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(idpUser.getAdditionalInformation());

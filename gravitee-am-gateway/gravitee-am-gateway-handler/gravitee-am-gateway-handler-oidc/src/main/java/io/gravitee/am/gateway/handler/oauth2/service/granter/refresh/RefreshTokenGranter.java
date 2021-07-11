@@ -99,7 +99,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
             return Maybe.empty();
         }
 
-        return userAuthenticationManager.loadPreAuthenticatedUser(subject)
+        return userAuthenticationManager.loadPreAuthenticatedUser(subject, tokenRequest)
                 .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
     }
 

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.auth.user;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -32,12 +33,16 @@ public interface UserAuthenticationManager {
 
     Maybe<User> loadUserByUsername(Client client, String username);
 
-    Maybe<User> loadPreAuthenticatedUser(String subject);
+    Maybe<User> loadPreAuthenticatedUser(String subject, Request request);
 
     Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication);
 
     default Single<User> authenticate(Client client, Authentication authentication) {
         return authenticate(client, authentication, false);
+    }
+
+    default Maybe<User> loadPreAuthenticatedUser(String subject) {
+        return loadPreAuthenticatedUser(subject, null);
     }
 
     default Single<User> connect(io.gravitee.am.identityprovider.api.User user) {

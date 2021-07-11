@@ -169,7 +169,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
         }
 
         return jwtService.decodeAndVerify(tokenRequest.getClaimToken(), client)
-                .flatMapMaybe(jwt -> userAuthenticationManager.loadPreAuthenticatedUser(jwt.getSub()))
+                .flatMapMaybe(jwt -> userAuthenticationManager.loadPreAuthenticatedUser(jwt.getSub(), tokenRequest))
                 .switchIfEmpty(Maybe.error(UserInvalidException::new))
                 .onErrorResumeNext(ex -> {
                     //If user

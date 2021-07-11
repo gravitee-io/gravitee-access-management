@@ -33,6 +33,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.common.event.EventManager;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -177,8 +178,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Maybe<User> loadPreAuthenticatedUser(String subject) {
-        return userAuthenticationService.loadPreAuthenticatedUser(subject);
+    public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
+        return userAuthenticationService.loadPreAuthenticatedUser(subject, request);
     }
 
     @Override

@@ -30,6 +30,11 @@ public interface AuthenticationProvider extends Service<AuthenticationProvider> 
 
     Maybe<User> loadUserByUsername(String username);
 
+    default Maybe<User> loadPreAuthenticatedUser(Authentication authentication) {
+        io.gravitee.am.model.User user = (io.gravitee.am.model.User) authentication.getPrincipal();
+        return loadUserByUsername(user.getUsername());
+    }
+
     default Metadata metadata(String idpUrl) {
         return null;
     }
