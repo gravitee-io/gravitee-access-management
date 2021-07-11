@@ -34,9 +34,13 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenUtils;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Single;
@@ -60,6 +64,9 @@ public class IDTokenServiceImpl implements IDTokenService {
     private static final String defaultDigestAlgorithm = "SHA-512";
 
     @Autowired
+    private Domain domain;
+
+    @Autowired
     private CertificateManager certificateManager;
 
     @Autowired
@@ -76,6 +83,9 @@ public class IDTokenServiceImpl implements IDTokenService {
 
     @Autowired
     private ExecutionContextFactory executionContextFactory;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
@@ -112,6 +122,21 @@ public class IDTokenServiceImpl implements IDTokenService {
                                     return jweService.encryptIdToken(signedIdToken, client);
                                 }
                                 return Single.just(signedIdToken);
+                            });
+                });
+    }
+
+    @Override
+    public Single<User> extractUser(String idToken, Client client) {
+        return jwtService.decodeAndVerify(idToken, client)
+                .flatMap(jwt -> {
+                    return userService.findById(jwt.getSub())
+                            .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
+                            .map(user -> {
+                                if (!user.getReferenceId().equals(domain.getId())) {
+                                    throw new UserNotFoundException(jwt.getSub());
+                                }
+                                return user;
                             });
                 });
     }

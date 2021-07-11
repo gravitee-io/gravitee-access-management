@@ -32,4 +32,6 @@ public interface IDTokenService {
     }
 
     Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext);
+
+    Single<User> extractUser(String idToken, Client client);
 }

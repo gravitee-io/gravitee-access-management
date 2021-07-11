@@ -47,6 +47,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
@@ -151,6 +152,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private AuthenticationFlowContextService authenticationFlowContextService;
 
     @Autowired
+    private IDTokenService idTokenService;
+
+    @Autowired
     private Environment environment;
 
     @Override
@@ -197,6 +201,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
+                .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowContextHandler)
                 .handler(authenticationFlowHandler.create())
