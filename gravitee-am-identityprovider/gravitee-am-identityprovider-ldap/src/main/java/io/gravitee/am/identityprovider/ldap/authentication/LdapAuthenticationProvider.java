@@ -175,7 +175,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
         // add additional information
         Map<String, Object> claims = new HashMap<>();
         claims.put(StandardClaims.SUB, user.getUsername());
-        if (mapper.getMappers() != null) {
+        if (mapper.getMappers() != null && !mapper.getMappers().isEmpty()) {
             claims.putAll(this.mapper.apply(authContext, toMap(ldapEntry)));
         } else {
             // default values
