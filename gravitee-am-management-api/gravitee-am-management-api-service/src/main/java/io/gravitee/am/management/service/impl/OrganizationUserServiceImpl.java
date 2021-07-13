@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Organization;
@@ -137,11 +138,13 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
                                             .andThen(userProvider.create(convert(newUser))
                                             .map(idpUser -> {
-                                                // Excepted for GraviteeeIDP that manage Organization Users
+                                                // Excepted for GraviteeIDP that manage Organization Users
                                                 // AM 'users' collection is not made for authentication (but only management stuff)
                                                 userToPersist.setPassword(PWD_ENCODER.encode(newUser.getPassword()));
                                                 // set external id
-                                                userToPersist.setExternalId(idpUser.getId());
+                                                // id and external id are the same for GraviteeIdP users
+                                                userToPersist.setId(RandomString.generate());
+                                                userToPersist.setExternalId(userToPersist.getId());
                                                 return userToPersist;
                                             })
                                             .flatMap(newOrgUser -> {

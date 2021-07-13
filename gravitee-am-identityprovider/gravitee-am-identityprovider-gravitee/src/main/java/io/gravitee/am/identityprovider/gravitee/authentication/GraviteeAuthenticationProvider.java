@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.gravitee.authentication;
 
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.OrganizationUserService;
@@ -66,6 +65,7 @@ public class GraviteeAuthenticationProvider implements AuthenticationProvider {
                 })
                 .map(user -> {
                     DefaultUser idpUser = new DefaultUser(user.getUsername());
+                    idpUser.setId(user.getId());
                     idpUser.setCredentials(user.getPassword());
                     idpUser.setEmail(user.getEmail());
                     idpUser.setAdditionalInformation(user.getAdditionalInformation() == null ? new HashMap<>() : user.getAdditionalInformation());
