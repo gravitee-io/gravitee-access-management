@@ -17,20 +17,15 @@ package io.gravitee.am.identityprovider.gravitee.user;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
-import io.gravitee.am.service.OrganizationUserService;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class GraviteeUserProvider implements UserProvider {
-
-    @Autowired
-    private OrganizationUserService userService;
 
     @Override
     public Maybe<User> findByUsername(String username) {
