@@ -118,6 +118,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private List<String> scopes;
 
+    private List<String> defaultScopes;
+
     private String softwareId; //Should be UUID
 
     private String softwareVersion;
@@ -244,6 +246,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.initiateLoginUri = other.initiateLoginUri;
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
         this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
+        this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
         this.softwareId = other.softwareId;
         this.softwareVersion = other.softwareVersion;
         this.softwareStatement = other.softwareStatement;
@@ -549,6 +552,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public List<String> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(List<String> defaultScopes) {
+        this.defaultScopes = defaultScopes;
     }
 
     public String getSoftwareId() {

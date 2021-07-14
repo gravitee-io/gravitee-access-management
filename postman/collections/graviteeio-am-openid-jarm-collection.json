@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0622de57-a286-4aa7-87ac-f09b044668b7",
+		"_postman_id": "88b10f5e-24db-40d4-804c-ac986219ac73",
 		"name": "Gravitee.io - AM - Openid JARM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -916,7 +916,7 @@
 										"method": "GET",
 										"header": [],
 										"url": {
-											"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientIdJarm}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&response_mode=jwt",
+											"raw": "{{authorizationEndpoint}}?response_type=code&client_id={{clientIdJarm}}&redirect_uri=https://op-test:60001/authz_cb&state=1234-5678-9876&response_mode=jwt&scope=openid",
 											"host": [
 												"{{authorizationEndpoint}}"
 											],
@@ -940,6 +940,10 @@
 												{
 													"key": "response_mode",
 													"value": "jwt"
+												},
+												{
+													"key": "scope",
+													"value": "openid"
 												}
 											]
 										}

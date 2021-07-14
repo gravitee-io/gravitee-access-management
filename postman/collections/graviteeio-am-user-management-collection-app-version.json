@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "fd859148-c29f-46a6-9fdf-20bfb5e65843",
+		"_postman_id": "51a06319-3aff-4486-bad7-3cfd3f28fc58",
 		"name": "Gravitee.io - AM - User Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -3549,7 +3549,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t   \"grantTypes\": [\"password\"],\n       \"scopes\" : [\"openid\"],\n       \"enhanceScopesWithUserPermissions\": true\n  \t}\n  },\n  \"identities\" : [\"{{identityProvider}}\"]\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t   \"grantTypes\": [\"password\"],\n       \"scopes\" : [\"openid\"],\n       \"defaultScopes\" : [\"openid\"],\n       \"enhanceScopesWithUserPermissions\": true\n  \t}\n  },\n  \"identities\" : [\"{{identityProvider}}\"]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientUM}}",
@@ -3795,6 +3795,11 @@
 										{
 											"key": "password",
 											"value": "#CoMpL3X-P@SsW0Rd",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "read openid write",
 											"type": "text"
 										}
 									]

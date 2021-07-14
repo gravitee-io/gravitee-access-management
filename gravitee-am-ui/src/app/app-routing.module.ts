@@ -136,6 +136,9 @@ import {PasswordPolicyComponent} from './domain/applications/application/advance
 import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
 import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {ApplicationScopesComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
+import {ApplicationTokensComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
+import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
 import {ApplicationMetadataComponent} from './domain/applications/application/advanced/metadata/metadata.component';
 import {ApplicationMembershipsComponent} from './domain/applications/application/advanced/memberships/memberships.component';
@@ -1001,11 +1004,6 @@ export const routes: Routes = [
                               {
                                 path: 'oauth2',
                                 component: ApplicationOAuth2Component,
-                                canActivate: [AuthGuard],
-                                resolve: {
-                                  domainGrantTypes: ExtensionGrantsResolver,
-                                  scopes: ScopesAllResolver
-                                },
                                 data: {
                                   menu: {
                                     label: 'OAuth 2.0 / OIDC',
@@ -1014,7 +1012,45 @@ export const routes: Routes = [
                                   perms: {
                                     only: ['application_openid_read']
                                   }
-                                }
+                                },
+                                children: [
+                                  {
+                                    path: 'grantFlows',
+                                    component: ApplicationGrantFlowsComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      domainGrantTypes: ExtensionGrantsResolver
+                                    },
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read']
+                                      }
+                                    }
+                                  },
+                                  {
+                                    path: 'scopes',
+                                    component: ApplicationScopesComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      scopes: ScopesAllResolver
+                                    },
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read']
+                                      }
+                                    }
+                                  },
+                                  {
+                                    path: 'tokens',
+                                    component: ApplicationTokensComponent,
+                                    canActivate: [AuthGuard],
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read']
+                                      }
+                                    }
+                                  }
+                                ]
                               },
                               {
                                 path: 'login',

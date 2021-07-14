@@ -301,6 +301,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setClientIdIssuedAt(other.getClientIdIssuedAt());
         applicationOAuthSettingsMongo.setClientSecretExpiresAt(other.getClientSecretExpiresAt());
         applicationOAuthSettingsMongo.setScopes(other.getScopes());
+        applicationOAuthSettingsMongo.setDefaultScopes(other.getDefaultScopes());
         applicationOAuthSettingsMongo.setScopeApprovals(other.getScopeApprovals() != null ? new Document((Map) other.getScopeApprovals()) : null);
         applicationOAuthSettingsMongo.setEnhanceScopesWithUserPermissions(other.isEnhanceScopesWithUserPermissions());
         applicationOAuthSettingsMongo.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());
@@ -366,6 +367,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setClientIdIssuedAt(other.getClientIdIssuedAt());
         applicationOAuthSettings.setClientSecretExpiresAt(other.getClientSecretExpiresAt());
         applicationOAuthSettings.setScopes(other.getScopes());
+        applicationOAuthSettings.setDefaultScopes(other.getDefaultScopes());
         applicationOAuthSettings.setScopeApprovals(other.getScopeApprovals() != null ? (Map) other.getScopeApprovals() : null);
         applicationOAuthSettings.setEnhanceScopesWithUserPermissions(other.isEnhanceScopesWithUserPermissions());
         applicationOAuthSettings.setAccessTokenValiditySeconds(other.getAccessTokenValiditySeconds());

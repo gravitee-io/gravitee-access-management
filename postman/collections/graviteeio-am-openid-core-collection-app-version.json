@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "4583adc7-e6e3-4987-b3b6-023092227078",
+		"_postman_id": "bd7d1764-0dbc-4f2b-94b4-5df845e2bafa",
 		"name": "Gravitee.io - AM - Openid Core - app version",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -422,7 +422,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\", \"refresh_token\"],\n  \t  \"scopes\": [\"scope1\", \"openid\"]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\", \"refresh_token\"],\n  \t  \"scopes\": [\"scope1\", \"openid\"],\n      \"defaultScopes\": [\"scope1\", \"openid\"]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
@@ -528,7 +528,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"http://localhost:4000/\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\"],\n  \t  \"scopes\": [\"scope1\"]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"http://localhost:4000/\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\"],\n  \t  \"scopes\": [\"scope1\"],\n      \"defaultScopes\": [\"scope1\"]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client2}}",

@@ -48,7 +48,7 @@ export class ApplicationAdvancedComponent implements OnInit, OnDestroy {
   private loadPermissions(): void {
     if (this.canNavigate(['application_settings_read'])) {
       this.router.navigate(['general'], { relativeTo: this.route });
-    } else if (this.canNavigate(['application_oauth_read'])) {
+    } else if (this.canNavigate(['application_openid_read'])) {
       this.router.navigate(['oauth2'], { relativeTo: this.route });
     } else if (this.canNavigate(['application_member_list'])) {
       this.router.navigate(['members'], { relativeTo: this.route });

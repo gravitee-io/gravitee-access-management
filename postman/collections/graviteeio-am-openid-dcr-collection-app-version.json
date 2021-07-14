@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7ca80499-8b16-4ae1-be67-ff068758e528",
+		"_postman_id": "b905b5ea-a02b-41f0-a6a5-240e7e1c7060",
 		"name": "Gravitee.io - AM - Openid DCR - app version",
 		"description": "Test openid connect dynamc client registration specifications: https://openid.net/specs/openid-connect-registration-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -5825,8 +5825,7 @@
 								{
 									"key": "scope",
 									"value": "openid",
-									"type": "text",
-									"disabled": true
+									"type": "text"
 								}
 							]
 						},

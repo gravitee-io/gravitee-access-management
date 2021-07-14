@@ -67,6 +67,7 @@ public class ApplicationOAuthSettingsMongo {
     private Date clientIdIssuedAt;
     private Date clientSecretExpiresAt;
     private List<String> scopes;
+    private List<String> defaultScopes;
     private Document scopeApprovals;
     private boolean enhanceScopesWithUserPermissions;
     private int accessTokenValiditySeconds;
@@ -410,6 +411,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public List<String> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(List<String> defaultScopes) {
+        this.defaultScopes = defaultScopes;
     }
 
     public Document getScopeApprovals() {
