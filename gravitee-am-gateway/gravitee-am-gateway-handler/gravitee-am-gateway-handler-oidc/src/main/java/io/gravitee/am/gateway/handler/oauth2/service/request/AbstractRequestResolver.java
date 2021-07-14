@@ -54,7 +54,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         if (clientScopes != null && !clientScopes.isEmpty()) {
             // no requested scope, set default client scopes to the request
             if (requestScopes == null || requestScopes.isEmpty()) {
-                resolvedScopes.addAll(new HashSet<>(clientScopes));
+                resolvedScopes.addAll(client.getDefaultScopes() != null ? new HashSet<>(client.getDefaultScopes()) : new HashSet<>());
             } else {
                 // filter the actual scopes granted by the client
                 for (String scope : requestScopes) {
@@ -76,7 +76,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
                         .map(role -> role.getOauthScopes() != null ? role.getOauthScopes() : Collections.<String>emptyList())
                         .flatMap(List::stream)
                         .collect(Collectors.toSet());
-                
+
                 if (requestScopes != null) {
                 	// filter the actual scopes granted by the resource owner
                     requestScopes.forEach(scope -> {
@@ -85,7 +85,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
                         }
                     });
                 }
-                
+
                 // The request must be enhanced with all of user's permissions
                 invalidScopes.removeAll(permissions);
                 resolvedScopes.addAll(permissions);

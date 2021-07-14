@@ -266,12 +266,10 @@ import {ApplicationEmailsComponent} from './domain/applications/application/desi
 import {ApplicationEmailComponent} from './domain/applications/application/design/emails/email/email.component';
 import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
-import {
-  ApplicationOAuth2Component,
-  ClaimsInfoDialog,
-  CreateClaimComponent
-} from './domain/applications/application/advanced/oauth2/oauth2.component';
-import {ApplicationScopeComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scope.component';
+import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {ApplicationScopesComponent, AddScopeComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
+import {ApplicationTokensComponent, ClaimsInfoDialog, CreateClaimComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
+import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import {ApplicationCertificatesComponent} from './domain/applications/application/advanced/certificates/certificates.component';
 import {ApplicationMetadataComponent} from './domain/applications/application/advanced/metadata/metadata.component';
 import {
@@ -526,7 +524,10 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     ApplicationAdvancedComponent,
     ApplicationAccountSettingsComponent,
     ApplicationOAuth2Component,
-    ApplicationScopeComponent,
+    ApplicationScopesComponent,
+    AddScopeComponent,
+    ApplicationTokensComponent,
+    ApplicationGrantFlowsComponent,
     ApplicationCertificatesComponent,
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,

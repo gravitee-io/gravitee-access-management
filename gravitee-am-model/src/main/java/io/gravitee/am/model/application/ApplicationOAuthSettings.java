@@ -207,6 +207,10 @@ public class ApplicationOAuthSettings {
      */
     private List<String> scopes;
     /**
+     * Default scopes if the parameter scope is omitted
+     */
+    private List<String> defaultScopes;
+    /**
      * Scope approval duration times
      */
     private Map<String, Integer> scopeApprovals;
@@ -317,6 +321,7 @@ public class ApplicationOAuthSettings {
         this.clientIdIssuedAt = other.clientIdIssuedAt;
         this.clientSecretExpiresAt = other.clientSecretExpiresAt;
         this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
+        this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
@@ -664,6 +669,14 @@ public class ApplicationOAuthSettings {
         this.scopes = scopes;
     }
 
+    public List<String> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(List<String> defaultScopes) {
+        this.defaultScopes = defaultScopes;
+    }
+
     public Map<String, Integer> getScopeApprovals() {
         return scopeApprovals;
     }
@@ -834,6 +847,7 @@ public class ApplicationOAuthSettings {
         client.setInitiateLoginUri(this.initiateLoginUri);
         client.setRequestUris(this.requestUris);
         client.setScopes(this.scopes);
+        client.setDefaultScopes(this.defaultScopes);
         client.setSoftwareId(this.softwareId);
         client.setSoftwareVersion(this.softwareVersion);
         client.setSoftwareStatement(this.softwareStatement);

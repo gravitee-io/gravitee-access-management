@@ -680,25 +680,20 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private Single<Application> validateScopes(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        // check scopes and scope approvals
+        // check scope approvals and default scopes coherency
+        List<String> scopes = oAuthSettings.getScopes() != null ? oAuthSettings.getScopes() : new ArrayList<>();
+        List<String> defaultScopes = oAuthSettings.getDefaultScopes() != null ? oAuthSettings.getDefaultScopes() : new ArrayList<>();
+        Set<String> scopeApprovals = oAuthSettings.getScopeApprovals() != null ? oAuthSettings.getScopeApprovals().keySet() : new HashSet<>();
+        if (!scopes.containsAll(defaultScopes)) {
+            return Single.error(new InvalidClientMetadataException("non valid default scopes"));
+        }
+        if (!scopes.containsAll(scopeApprovals)) {
+            return Single.error(new InvalidClientMetadataException("non valid scope approvals"));
+        }
+        // check scopes against domain scopes
         return scopeService.validateScope(application.getDomain(), oAuthSettings.getScopes())
-                .map(isValid -> {
-                    // scopes are valid, let's check scope approvals
-                    if (isValid && oAuthSettings.getScopeApprovals() != null) {
-                        Map<String, Integer> scopeApprovals = oAuthSettings.getScopeApprovals()
-                                .entrySet()
-                                .stream()
-                                .filter(entry -> oAuthSettings.getScopes() != null && oAuthSettings.getScopes().contains(entry.getKey()))
-                                .collect(Collectors.toMap(
-                                        entry -> entry.getKey(),
-                                        entry -> entry.getValue()));
-                        oAuthSettings.setScopeApprovals(scopeApprovals);
-                    }
-                    return isValid;
-                })
                 .flatMap(isValid -> {
                     if (!isValid) {
-                        //last boolean come from scopes validation...
                         return Single.error(new InvalidClientMetadataException("non valid scopes"));
                     }
                     return Single.just(application);

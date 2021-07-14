@@ -69,6 +69,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<Date> clientIdIssuedAt;
     private Optional<Date> clientSecretExpiresAt;
     private Optional<List<String>> scopes;
+    private Optional<List<String>> defaultScopes;
     private Optional<Map<String, Integer>> scopeApprovals;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Integer> accessTokenValiditySeconds;
@@ -391,6 +392,14 @@ public class PatchApplicationOAuthSettings {
         this.scopes = scopes;
     }
 
+    public Optional<List<String>> getDefaultScopes() {
+        return defaultScopes;
+    }
+
+    public void setDefaultScopes(Optional<List<String>> defaultScopes) {
+        this.defaultScopes = defaultScopes;
+    }
+
     public Optional<Map<String, Integer>> getScopeApprovals() {
         return scopeApprovals;
     }
@@ -571,6 +580,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setClientIdIssuedAt, this.getClientIdIssuedAt());
         SetterUtils.safeSet(toPatch::setClientSecretExpiresAt, this.getClientSecretExpiresAt());
         SetterUtils.safeSet(toPatch::setScopes, this.getScopes());
+        SetterUtils.safeSet(toPatch::setDefaultScopes, this.getDefaultScopes());
         SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
         SetterUtils.safeSet(toPatch::setAccessTokenValiditySeconds, this.getAccessTokenValiditySeconds());

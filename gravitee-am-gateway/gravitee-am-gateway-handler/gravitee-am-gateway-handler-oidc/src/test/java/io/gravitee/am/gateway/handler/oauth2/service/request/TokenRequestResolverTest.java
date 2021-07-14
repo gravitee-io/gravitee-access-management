@@ -52,13 +52,13 @@ public class TokenRequestResolverTest {
     public void shouldResolveTokenRequest_withUser_permissionsRequestedAll() {
         final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
-        
+
         TokenRequest tokenRequest = new TokenRequest();
         List<String> reqScopes = new ArrayList<>();
         reqScopes.add(scope);
         reqScopes.addAll(userScopes);
         tokenRequest.setScopes(new HashSet<>(reqScopes));
-        
+
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
         client.setScopes(Collections.singletonList(scope));
@@ -71,24 +71,24 @@ public class TokenRequestResolverTest {
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         expectedScopes.addAll(userScopes);
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
-    
+
     @Test
     public void shouldResolveTokenRequest_withUser_permissionsRequestedAny() {
         final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
-        
+
         TokenRequest tokenRequest = new TokenRequest();
         List<String> reqScopes = new ArrayList<>();
         reqScopes.add(scope);
         reqScopes.add(userScopes.get(1)); // Request only the second of the three user scopes
         tokenRequest.setScopes(new HashSet<>(reqScopes));
-        
+
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
         client.setScopes(Collections.singletonList(scope));
@@ -101,23 +101,23 @@ public class TokenRequestResolverTest {
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         // Request should have been enhanced with all of user's permissions, even though only one has been requested
         List<String> expectedScopes = new ArrayList<>(reqScopes);
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 2);
     }
-    
+
     @Test
     public void shouldResolveTokenRequest_withUser_permissionsRequestedNone() {
         final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
-        
+
         TokenRequest tokenRequest = new TokenRequest();
         List<String> reqScopes = new ArrayList<>();
         reqScopes.add(scope);
         // Request none of the three user scopes
         tokenRequest.setScopes(new HashSet<>(reqScopes));
-        
+
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
         client.setScopes(Collections.singletonList(scope));
@@ -130,7 +130,7 @@ public class TokenRequestResolverTest {
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        
+
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
@@ -185,6 +185,7 @@ public class TokenRequestResolverTest {
 
         Client client = new Client();
         client.setScopes(Collections.singletonList(scope));
+        client.setDefaultScopes(Collections.singletonList(scope));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();
@@ -210,5 +211,5 @@ public class TokenRequestResolverTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(request -> request.getScopes().iterator().next().equals(scope));
     }
-    
+
 }

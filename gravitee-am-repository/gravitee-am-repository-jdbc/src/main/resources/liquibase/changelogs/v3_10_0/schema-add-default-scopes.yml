@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.10.0-add-default-scopes
+      author: GraviteeSource Team
+      changes:
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE applications SET settings = jsonb_set(cast(settings as jsonb), '{oauth,defaultScopes}', settings->'oauth'->'scopes', true);"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE applications SET settings = JSON_SET(settings, '$.oauth.defaultScopes', JSON_EXTRACT(settings,'$.oauth.scopes'));"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE applications SET settings = JSON_MODIFY(settings, '$.oauth.defaultScopes', JSON_QUERY(settings, '$.oauth.scopes'));"
