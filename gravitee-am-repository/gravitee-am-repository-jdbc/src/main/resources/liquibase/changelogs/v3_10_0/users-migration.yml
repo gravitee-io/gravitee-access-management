@@ -10,16 +10,36 @@ databaseChangeLog:
             sql: INSERT INTO organization_users(id, external_id, username, email, display_name, nick_name, first_name, last_name, title, type, preferred_language, account_non_expired, account_locked_at, account_locked_until, account_non_locked, credentials_non_expired, enabled, internal, pre_registration, registration_completed, newsletter, registration_user_uri, registration_access_token, reference_type, reference_id, source, client, logins_count, logged_at, created_at, updated_at, x509_certificates, factors, additional_information) (SELECT id, external_id, username, email, display_name, nick_name, first_name, last_name, title, type, preferred_language, account_non_expired, account_locked_at, account_locked_until, account_non_locked, credentials_non_expired, enabled, internal, pre_registration, registration_completed, newsletter, registration_user_uri, registration_access_token, reference_type, reference_id, source, client, logins_count, logged_at, created_at, updated_at, x509_certificates, factors, additional_information FROM users WHERE reference_type = 'ORGANIZATION');
 
         - sql:
+            dbms: postgresql, mysql, mariadb
             sql: INSERT INTO organization_user_entitlements (SELECT * from user_entitlements WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
 
         - sql:
+            dbms: postgresql, mysql, mariadb
             sql: INSERT INTO organization_user_roles (SELECT * from user_roles WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
 
         - sql:
+            dbms: postgresql, mysql, mariadb
             sql: INSERT INTO organization_user_addresses (SELECT * from user_addresses WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
 
         - sql:
+            dbms: postgresql, mysql, mariadb
             sql: INSERT INTO organization_user_attributes (SELECT * from user_attributes WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
+
+        - sql:
+            dbms: mssql
+            sql: INSERT INTO organization_user_entitlements (user_id, entitlement) (SELECT user_id, entitlement from user_entitlements WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
+
+        - sql:
+            dbms: mssql
+            sql: INSERT INTO organization_user_roles (user_id, role) (SELECT user_id, role from user_roles WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
+
+        - sql:
+            dbms: mssql
+            sql: INSERT INTO organization_user_addresses (user_id, type, formatted, street_address, locality, region, postal_code, country, [primary]) (SELECT user_id, type, formatted, street_address, locality, region, postal_code, country, [primary] from user_addresses WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
+
+        - sql:
+            dbms: mssql
+            sql: INSERT INTO organization_user_attributes (user_id, user_field, value, type, [primary]) (SELECT user_id, user_field, value, type, [primary] from user_attributes WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION'));
 
         - sql:
             sql: DELETE FROM user_entitlements WHERE user_id in (SELECT id FROM users WHERE reference_type = 'ORGANIZATION');
