@@ -15,21 +15,25 @@
  */
 package io.gravitee.am.gateway.handler.common.auth;
 
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
-import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -69,6 +73,12 @@ public class UserAuthenticationManagerTest {
 
     @Mock
     private EventManager eventManager;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private UserService userService;
 
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {
@@ -325,5 +335,111 @@ public class UserAuthenticationManagerTest {
         observer.assertNotComplete();
         observer.assertError(InternalAuthenticationServiceException.class);
         verifyZeroInteractions(userAuthenticationService);
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_unknownUserFromIdp_loginAttempt_enabled() {
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(false);
+        accountSettings.setLoginAttemptsDetectionEnabled(true);
+        accountSettings.setMaxLoginAttempts(1);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentities(Collections.singleton("idp-1"));
+        client.setAccountSettings(accountSettings);
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.error(new UsernameNotFoundException("username"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.empty());
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.assertError(BadCredentialsException.class);
+        verify(userService, never()).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
+        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_unknownUserFromAM_loginAttempt_enabled() {
+        AccountSettings accountSettings = new AccountSettings();
+        accountSettings.setInherited(false);
+        accountSettings.setLoginAttemptsDetectionEnabled(true);
+        accountSettings.setMaxLoginAttempts(1);
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentities(Collections.singleton("idp-1"));
+        client.setAccountSettings(accountSettings);
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.error(new BadCredentialsException("username"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        when(domain.getId()).thenReturn("domain-id");
+        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.empty());
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.assertError(BadCredentialsException.class);
+        verify(userService, times(1)).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
+        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 }

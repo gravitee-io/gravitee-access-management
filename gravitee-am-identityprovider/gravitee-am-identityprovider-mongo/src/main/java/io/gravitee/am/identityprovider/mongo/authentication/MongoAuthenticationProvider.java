@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -73,6 +74,13 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         String username = ((String) authentication.getPrincipal()).toLowerCase();
         return findUserByMultipleField(username)
+                .toList()
+                .flatMapPublisher(users -> {
+                    if (users.isEmpty()) {
+                        return Flowable.error(new UsernameNotFoundException(username));
+                    }
+                    return Flowable.fromIterable(users);
+                })
                 .filter( user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
@@ -97,7 +105,6 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
 
                     return true;
                 })
-                .map(this::createUser)
                 .toList()
                 .flatMapMaybe(users -> {
                     if (users.isEmpty()) {
@@ -106,7 +113,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
                     if (users.size() > 1) {
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
-                    return Maybe.just(users.get(0));
+                    return Maybe.just(this.createUser(users.get(0)));
                 });
     }
 

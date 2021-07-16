@@ -111,40 +111,26 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
-    public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client) {
-        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
-                .switchIfEmpty(Maybe.error(new UserNotFoundException(criteria.username())))
-                .flatMapSingle(user -> {
-                    user.setAccountNonLocked(false);
-                    user.setAccountLockedAt(new Date());
-                    user.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
-                    return userService.update(user);
-                })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        final User newUser = new User();
-                        newUser.setUsername(criteria.username());
-                        newUser.setReferenceType(ReferenceType.DOMAIN);
-                        newUser.setReferenceId(criteria.domain());
-                        newUser.setClient(criteria.client());
-                        newUser.setSource(criteria.identityProvider());
-                        newUser.setLoginsCount(0l);
-                        newUser.setAccountNonLocked(false);
-                        newUser.setAccountLockedAt(new Date());
-                        newUser.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
-                        return userService.create(newUser);
-                    }
-                    return Single.error(ex);
-                })
-                .flatMap(user -> {
+    public Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user) {
+        if (user == null) {
+            return Completable.complete();
+        }
+
+        // update user status
+        user.setAccountNonLocked(false);
+        user.setAccountLockedAt(new Date());
+        user.setAccountLockedUntil(new Date(System.currentTimeMillis() + (accountSettings.getAccountBlockedDuration() * 1000)));
+
+        return userService.update(user)
+                .flatMap(user1 -> {
                     // send an email if option is enabled
-                    if (user.getEmail() != null && accountSettings.isSendRecoverAccountEmail()) {
-                        new Thread(() -> emailService.send(Template.BLOCKED_ACCOUNT, user, client)).start();
+                    if (user1.getEmail() != null && accountSettings.isSendRecoverAccountEmail()) {
+                        new Thread(() -> emailService.send(Template.BLOCKED_ACCOUNT, user1, client)).start();
                     }
                     return Single.just(user);
                 })
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user)))
-                .toCompletable();
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_LOCKED).domain(criteria.domain()).client(criteria.client()).principal(null).user(user1)))
+                .ignoreElement();
     }
 
     private Single<User> saveOrUpdate(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
