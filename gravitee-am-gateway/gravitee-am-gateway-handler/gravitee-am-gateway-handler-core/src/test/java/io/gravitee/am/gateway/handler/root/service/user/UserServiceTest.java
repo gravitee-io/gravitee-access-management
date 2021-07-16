@@ -326,6 +326,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_MultipleMatch_NoMultiFieldForm() {
         Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -352,11 +353,10 @@ public class UserServiceTest {
     @Test
     public void shouldNotForgotPassword_MultipleMatch_ConfirmIdentityForm() {
         Client client = mock(Client.class);
+        when(client.getId()).thenReturn("client-id");
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
-
-        UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));

@@ -296,10 +296,29 @@ public class UserServiceImpl implements UserService {
 
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
                 .flatMap(users -> {
-                    final List<User> foundUsers = users
-                            .stream()
-                            .filter(user -> email == null || (user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase())))
-                            .collect(Collectors.toList());
+                    List<User> foundUsers = new ArrayList<>(users);
+                    // narrow users
+                    if (users.size() > 1) {
+                        // filter by identity provider
+                        if (client.getIdentities() != null && !client.getIdentities().isEmpty()) {
+                            foundUsers = users
+                                    .stream()
+                                    .filter(u -> client.getIdentities().contains(u.getSource()))
+                                    .collect(Collectors.toList());
+                        }
+
+                        if (foundUsers.size() > 1) {
+                            // try to filter by latest application used
+                            List<User> filteredSourceUsers = users
+                                    .stream()
+                                    .filter(u -> client.getId().equals(u.getClient()))
+                                    .collect(Collectors.toList());
+
+                            if (!filteredSourceUsers.isEmpty()) {
+                                foundUsers = new ArrayList<>(filteredSourceUsers);
+                            }
+                        }
+                    }
 
                     // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
                     if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
