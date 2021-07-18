@@ -301,19 +301,27 @@ public class UserServiceImpl implements UserService {
                             .filter(user -> email == null || (user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase())))
                             .collect(Collectors.toList());
 
-                    if (foundUsers.size() == 1 ||
-                            // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
-                            (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
+                    // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
+                    if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
-                                .map(__ -> {
+                                .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process");
+                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
-                                    return user;
+                                    // fetch latest information from the identity provider and return the user
+                                    return userProvider.findByUsername(user.getUsername())
+                                            .map(Optional::ofNullable)
+                                            .defaultIfEmpty(Optional.empty())
+                                            .flatMapSingle(optUser -> {
+                                                if (!optUser.isPresent()) {
+                                                    return Single.just(user);
+                                                }
+                                                return userService.update(enhanceUser(user, optUser.get()));
+                                            });
                                 });
                     }
 
@@ -362,7 +370,7 @@ public class UserServiceImpl implements UserService {
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
-                .toCompletable();
+                .ignoreElement();
     }
 
     @Override
@@ -510,6 +518,24 @@ public class UserServiceImpl implements UserService {
                 user.setAdditionalInformation(extraInformation);
             }
         }
+    }
+
+    private User enhanceUser(User user, io.gravitee.am.identityprovider.api.User idpUser) {
+        if (idpUser.getEmail() != null) {
+            user.setEmail(idpUser.getEmail());
+        }
+        if (idpUser.getFirstName() != null) {
+            user.setFirstName(idpUser.getFirstName());
+        }
+        if (idpUser.getLastName() != null) {
+            user.setLastName(idpUser.getLastName());
+        }
+        if (idpUser.getAdditionalInformation() != null) {
+            Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
+            additionalInformation.putAll(idpUser.getAdditionalInformation());
+            user.setAdditionalInformation(additionalInformation);
+        }
+        return user;
     }
 
 }
