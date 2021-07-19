@@ -72,7 +72,7 @@
     "maxAcquireTime" : {
       "type": "number",
       "minimum": 0,
-      "default": 1000,
+      "default": 0,
       "title": "Maximum Acquiring Time",
       "description": "Maximum time to acquire connection from pool in millis (default: 0)"
     },
