@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/412?closed=1[AM - 3.5.8 (2021-07-19)]
+
+=== Bug fixes
+
+*_Jdbc_*
+
+- Define default value for connection pool https://github.com/gravitee-io/issues/issues/5811[#5811]
+
+*_Management_*
+
+- Manage properly dbname for mongo backend https://github.com/gravitee-io/issues/issues/5836[#5836]
+- Use mongodb.uri in MongoIDP https://github.com/gravitee-io/issues/issues/5830[#5830]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/407?closed=1[AM - 3.9.2 (2021-06-27)]
 
 === Bug fixes
