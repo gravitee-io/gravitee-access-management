@@ -48,7 +48,7 @@ public class ForgotPasswordSubmissionRequestParseHandler extends UserBodyRequest
     protected Optional<String> lookForMissingParameters(RoutingContext context, MultiMap params, List<String> requiredParams) {
         Optional<String> missingParam = super.lookForMissingParameters(context, params, requiredParams);
         AccountSettings accountSettings = AccountSettings.getInstance(domain, (Client)  context.get(ConstantKeys.CLIENT_CONTEXT_KEY));
-        if (missingParam.isPresent() && accountSettings.isResetPasswordCustomForm()) {
+        if (missingParam.isPresent() && accountSettings != null && accountSettings.isResetPasswordCustomForm()) {
             final List<String> alternativeParams = accountSettings.getResetPasswordCustomFormFields().stream().map(FormField::getKey).collect(Collectors.toList());
             missingParam = super.lookForMissingParameters(context, params, alternativeParams);
         }
