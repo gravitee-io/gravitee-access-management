@@ -56,8 +56,11 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
 
     private String getDatabaseName() {
         String uri = environment.getProperty("oauth2.mongodb.uri");
-        if (uri != null && ! uri.isEmpty()) {
-            return URI.create(uri).getPath().substring(1);
+        if (uri != null && !uri.isEmpty()) {
+            final String path = URI.create(uri).getPath();
+            if (path != null && path.length() > 1) {
+                return path.substring(1);
+            }
         }
 
         return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");

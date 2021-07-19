@@ -59,6 +59,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -288,7 +290,7 @@ public class ReporterServiceImpl implements ReporterService {
 
         final String username = environment.getProperty("management.mongodb.username");
         final String password = environment.getProperty("management.mongodb.password");
-        String mongoDBName = environment.getProperty("management.mongodb.dbname", "gravitee-am");
+        String mongoDBName = getMongoDatabaseName(environment);
 
         String defaultMongoUri = "mongodb://";
         if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
@@ -342,9 +344,10 @@ public class ReporterServiceImpl implements ReporterService {
                 "\"username\":\"" + jdbcUser+ "\"," +
                 "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
                 "\"tableSuffix\":\"" + (tableSuffix != null ? tableSuffix : "") + "\"," +
-                "\"initialSize\":5," +
+                "\"initialSize\":0," +
                 "\"maxSize\":10," +
-                "\"maxIdleTime\":180000," +
+                "\"maxIdleTime\":30000," +
+                "\"maxLifeTime\":30000," +
                 "\"bulkActions\":1000," +
                 "\"flushInterval\":5}");
 
