@@ -376,7 +376,9 @@ public class UserServiceTest {
         when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(idpUser.getId()).thenReturn("idp-id");
         when(idpUser.getEmail()).thenReturn("test@test.com");
+        when(idpUser.getUsername()).thenReturn("idp-username");
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -389,10 +391,44 @@ public class UserServiceTest {
         when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.create(any())).thenReturn(Single.just(user));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        verify(commonUserService, times(1)).create(any());
+        verify(commonUserService, never()).update(any());
+    }
+
+    @Test
+    public void shouldForgotPassword_userNotFound_fallback_idp_update_user() {
+        Client client = mock(Client.class);
+        when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(idpUser.getEmail()).thenReturn("test@test.com");
+        when(idpUser.getUsername()).thenReturn("idp-username");
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("test@test.com");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByEmail(user.getEmail())).thenReturn(Maybe.just(idpUser));
+
+        when(domain.getId()).thenReturn("domain-id");
+
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
+
+        TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(commonUserService, never()).findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString());
+        verify(commonUserService, never()).create(any());
+        verify(commonUserService, times(1)).update(any());
     }
 
     @Test

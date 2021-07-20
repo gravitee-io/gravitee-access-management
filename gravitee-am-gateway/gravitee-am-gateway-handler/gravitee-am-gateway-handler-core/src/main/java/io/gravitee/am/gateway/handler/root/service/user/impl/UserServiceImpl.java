@@ -49,6 +49,7 @@ import io.gravitee.am.service.validators.EmailValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Observable;
 import io.reactivex.*;
+import io.reactivex.functions.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
@@ -311,7 +312,7 @@ public class UserServiceImpl implements UserService {
                             // try to filter by latest application used
                             List<User> filteredSourceUsers = users
                                     .stream()
-                                    .filter(u -> client.getId().equals(u.getClient()))
+                                    .filter(u -> u.getClient() == null || client.getId().equals(u.getClient()))
                                     .collect(Collectors.toList());
 
                             if (!filteredSourceUsers.isEmpty()) {
@@ -369,18 +370,32 @@ public class UserServiceImpl implements UserService {
                                             final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
                                                     userProvider.findByUsername(username) : userProvider.findByEmail(email) ;
                                             return findQuery
-                                                    .map(user -> Optional.of(convert(user, authProvider)))
+                                                    .map(user -> Optional.of(new UserAuthentication(user, authProvider)))
                                                     .defaultIfEmpty(Optional.empty())
                                                     .onErrorReturnItem(Optional.empty());
                                         })
                                         .defaultIfEmpty(Optional.empty());
                             })
-                            .takeUntil(optional -> {
-                                return optional.isPresent();
-                            })
+                            .takeUntil((Predicate<? super Optional<UserAuthentication>>) Optional::isPresent)
                             .lastOrError()
-                            .flatMap(optional -> userService.create(optional.get()))
-                            .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
+                            .flatMap(optional -> {
+                                // be sure to not duplicate an existing user
+                                if (!optional.isPresent()) {
+                                    return Single.error(new UserNotFoundException());
+                                }
+                                final UserAuthentication idpUser = optional.get();
+                                return userService.findByDomainAndUsernameAndSource(domain.getId(), idpUser.getUser().getUsername(), idpUser.getSource())
+                                        .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndExternalIdAndSource(domain.getId(), idpUser.getUser().getId(), idpUser.getSource())))
+                                        .map(Optional::ofNullable)
+                                        .defaultIfEmpty(Optional.empty())
+                                        .flatMapSingle(optEndUser -> {
+                                            if (!optEndUser.isPresent()) {
+                                                return userService.create(convert(idpUser.getUser(), idpUser.getSource()));
+                                            }
+                                            return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
+                                        });
+                            })
+                            .onErrorResumeNext(Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
                 })
                 .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
                 .doOnSuccess(user1 -> {
@@ -555,6 +570,24 @@ public class UserServiceImpl implements UserService {
             user.setAdditionalInformation(additionalInformation);
         }
         return user;
+    }
+
+    private class UserAuthentication {
+        private final io.gravitee.am.identityprovider.api.User user;
+        private final String source;
+
+        public UserAuthentication(io.gravitee.am.identityprovider.api.User user, String source) {
+            this.user = user;
+            this.source = source;
+        }
+
+        public io.gravitee.am.identityprovider.api.User getUser() {
+            return user;
+        }
+
+        public String getSource() {
+            return source;
+        }
     }
 
 }

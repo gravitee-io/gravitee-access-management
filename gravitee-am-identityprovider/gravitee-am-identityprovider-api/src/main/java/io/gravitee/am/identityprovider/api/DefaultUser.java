@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.api;
 
+import io.gravitee.am.common.oidc.StandardClaims;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +78,13 @@ public class DefaultUser implements User {
 
     @Override
     public String getUsername() {
-        return username;
+        if (username != null) {
+            return username;
+        }
+        if (getAdditionalInformation() != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.PREFERRED_USERNAME);
+        }
+        return null;
     }
 
     public void setUsername(String username) {
@@ -85,7 +93,13 @@ public class DefaultUser implements User {
 
     @Override
     public String getEmail() {
-        return email;
+        if (email != null) {
+            return email;
+        }
+        if (getAdditionalInformation() != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.EMAIL);
+        }
+        return null;
     }
 
     public void setEmail(String email) {
@@ -94,7 +108,13 @@ public class DefaultUser implements User {
 
     @Override
     public String getFirstName() {
-        return firstName;
+        if (firstName != null) {
+            return firstName;
+        }
+        if (getAdditionalInformation() != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.GIVEN_NAME);
+        }
+        return null;
     }
 
     public void setFirstName(String firstName) {
@@ -103,7 +123,13 @@ public class DefaultUser implements User {
 
     @Override
     public String getLastName() {
-        return lastName;
+        if (lastName != null) {
+            return lastName;
+        }
+        if (getAdditionalInformation() != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.FAMILY_NAME);
+        }
+        return null;
     }
 
     public void setLastName(String lastName) {
