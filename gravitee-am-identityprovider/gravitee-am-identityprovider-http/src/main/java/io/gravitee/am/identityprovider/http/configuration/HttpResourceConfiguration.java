@@ -31,6 +31,7 @@ public class HttpResourceConfiguration {
     private List<HttpHeader> httpHeaders;
     private String httpBody;
     private List<HttpResponseErrorCondition> httpResponseErrorConditions;
+    private HttpAuthResourcePathsConfiguration paths;
 
     public String getBaseURL() {
         return baseURL;
@@ -70,5 +71,13 @@ public class HttpResourceConfiguration {
 
     public void setHttpResponseErrorConditions(List<HttpResponseErrorCondition> httpResponseErrorConditions) {
         this.httpResponseErrorConditions = httpResponseErrorConditions;
+    }
+
+    public HttpAuthResourcePathsConfiguration getPaths() {
+        return paths;
+    }
+
+    public void setPaths(HttpAuthResourcePathsConfiguration paths) {
+        this.paths = paths;
     }
 }
