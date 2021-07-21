@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 
-FROM nginx:1.19-alpine
+FROM nginx:1.18-alpine
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
+ARG GRAVITEEIO_DOWNLOAD_URL=https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui
 
 ENV CONFD_VERSION="0.16.0"
 ENV CONFD_URL="https://github.com/kelseyhightower/confd/releases/download"
@@ -27,21 +28,17 @@ RUN apk --update add zip unzip bash wget
 
 ENV WWW_TARGET /usr/share/nginx/html
 
-RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip \
+RUN wget --no-check-certificate -O /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip $GRAVITEEIO_DOWNLOAD_URL/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && mkdir -p ${WWW_TARGET} \
     && mv /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}/* ${WWW_TARGET} \
     && rm -rf /tmp/* \
     && wget -T 5 ${CONFD_URL}/v${CONFD_VERSION}/confd-${CONFD_VERSION}-linux-amd64 -O /bin/confd \
-    && chmod +x /bin/confd \
-    && ln -sf /dev/stdout /var/log/nginx/access.log \
-    && ln -sf /dev/stderr /var/log/nginx/error.log \
-    && sed -i '/user  nginx;/d' /etc/nginx/nginx.conf \
-    && sed -i 's,/var/run/nginx.pid,/tmp/nginx.pid,' /etc/nginx/nginx.conf \
-    && sed -i "/^http {/a \    proxy_temp_path /tmp/proxy_temp;\n    client_body_temp_path /tmp/client_temp;\n    fastcgi_temp_path /tmp/fastcgi_temp;\n    uwsgi_temp_path /tmp/uwsgi_temp;\n    scgi_temp_path /tmp/scgi_temp;\n" /etc/nginx/nginx.conf \
-    && chown -R 101:0 /usr/share/nginx /var/log/nginx /var/cache/nginx /etc/nginx /var/run \
-    && chmod -R g+w /var/cache/nginx \
-    && chmod -R g+w /etc/nginx
+    && chmod +x /bin/confd
+
+# support running as arbitrary user which belongs to the root group
+RUN chgrp -R 0 /usr/share/nginx/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/ && \
+    chmod -R g=u /usr/share/nginx/ /var/log/nginx /var/cache/nginx/ /etc/nginx/ /var/run/
 
 ADD config /etc/confd
 
