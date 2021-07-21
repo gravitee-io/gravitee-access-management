@@ -25,3 +25,7 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 .vertx
 
 dependency-reduced-pom.xml
+
+
+## Devops tests
+docker/management-ui/3.9.2
