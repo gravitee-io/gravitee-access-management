@@ -102,6 +102,104 @@
               "exception"
             ]
           }
+        },
+        "paths": {
+          "type": "object",
+          "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpAuthResourcePathsConfiguration",
+          "title": "Paths",
+          "properties": {
+            "loadPreAuthUserResource": {
+              "type": "object",
+              "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpResourceConfiguration",
+              "htmlClass": "path",
+              "title": "Load pre-authenticated user (by username)",
+              "properties": {
+                "baseURL" : {
+                  "type" : "string",
+                  "title": "Base URL",
+                  "default": "https://api.company.com/users?username={#user.username}",
+                  "description": "Resource URL (support EL)"
+                },
+                "httpMethod" : {
+                  "type" : "string",
+                  "default": "GET",
+                  "enum" : ["CONNECT", "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "TRACE", "OTHER"],
+                  "title": "HTTP Method",
+                  "description": "HTTP method used to call the resource"
+                },
+                "httpHeaders" : {
+                  "type" : "array",
+                  "title": "HTTP Headers",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:common:http:HttpHeader",
+                    "title": "HTTP Header",
+                    "properties" : {
+                      "name" : {
+                        "title": "Name",
+                        "description": "HTTP Header name",
+                        "type" : "string"
+                      },
+                      "value" : {
+                        "title": "Value",
+                        "description": "HTTP Header value (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "value"
+                    ]
+                  }
+                },
+                "httpBody" : {
+                  "type" : "string",
+                  "title": "Body Request",
+                  "widget": "textarea",
+                  "description": "HTTP body request used to call the resource (support EL)"
+                },
+                "httpResponseErrorConditions" : {
+                  "type" : "array",
+                  "title": "Response Error Conditions (one of)",
+                  "items" : {
+                    "type" : "object",
+                    "id" : "urn:jsonschema:io:gravitee:am:identityprovider:http:configuration:HttpResponseError",
+                    "title": "Error Condition",
+                    "properties" : {
+                      "value" : {
+                        "title": "Value",
+                        "description": "The condition which will be verified after the remote call (support EL)",
+                        "default": "{#usersResponse.status == 404}",
+                        "type" : "string"
+                      },
+                      "exception" : {
+                        "title": "Exception",
+                        "description": "Exception send to the consumer if the condition is true",
+                        "type" : "string",
+                        "default": "io.gravitee.am.service.exception.UserNotFoundException",
+                        "enum" : ["io.gravitee.am.service.exception.UserNotFoundException"],
+                        "x-schema-form": {
+                          "type": "select",
+                          "titleMap": {
+                            "io.gravitee.am.service.exception.UserNotFoundException" : "UserNotFoundException"
+                          }
+                        }
+                      },
+                      "message" : {
+                        "title": "Message",
+                        "description": "The message of the error if the condition is true (support EL)",
+                        "type" : "string"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "exception"
+                    ]
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "required": [
