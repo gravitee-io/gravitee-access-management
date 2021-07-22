@@ -21,9 +21,12 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.http.HttpIdentityProviderResponse;
 import io.gravitee.am.identityprovider.http.authentication.spring.HttpAuthenticationProviderConfiguration;
+import io.gravitee.am.identityprovider.http.configuration.HttpAuthResourcePathsConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpHeader;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -31,6 +34,7 @@ import io.gravitee.el.TemplateEngine;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
@@ -57,6 +61,7 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     private static final String PRINCIPAL_CONTEXT_KEY = "principal";
     private static final String CREDENTIALS_CONTEXT_KEY = "credentials";
     private static final String AUTHENTICATION_RESPONSE_CONTEXT_KEY = "authenticationResponse";
+    private static final String USER_CONTEXT_KEY = "user";
 
     @Autowired
     @Qualifier("idpHttpAuthWebClient")
@@ -85,82 +90,14 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
             final HttpMethod authenticationHttpMethod = HttpMethod.valueOf(resourceConfiguration.getHttpMethod().toString());
             final List<HttpHeader> authenticationHttpHeaders = resourceConfiguration.getHttpHeaders();
             final String authenticationBody = resourceConfiguration.getHttpBody();
-            final HttpRequest<Buffer> httpRequest = client.requestAbs(authenticationHttpMethod, authenticationURI);
-            final List<HttpResponseErrorCondition> errorConditions = resourceConfiguration.getHttpResponseErrorConditions();
+            final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, authenticationURI, authenticationHttpMethod, authenticationHttpHeaders, authenticationBody);
 
-            // set headers
-            if (authenticationHttpHeaders != null) {
-                authenticationHttpHeaders.forEach(header -> {
-                    String extValue = templateEngine.getValue(header.getValue(), String.class);
-                    httpRequest.putHeader(header.getName(), extValue);
-                });
-            }
-
-            // set body
-            Single<HttpResponse<Buffer>> responseHandler;
-            if (authenticationBody != null && !authenticationBody.isEmpty()) {
-                String bodyRequest = templateEngine.getValue(authenticationBody, String.class);
-                if (!httpRequest.headers().contains(HttpHeaders.CONTENT_TYPE)) {
-                    httpRequest.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()));
-                    responseHandler = httpRequest.rxSendBuffer(Buffer.buffer(bodyRequest));
-                } else {
-                    String contentTypeHeader = httpRequest.headers().get(HttpHeaders.CONTENT_TYPE);
-                    switch (contentTypeHeader) {
-                        case(MediaType.APPLICATION_JSON):
-                            responseHandler = httpRequest.rxSendJsonObject(new JsonObject(bodyRequest));
-                            break;
-                        case(MediaType.APPLICATION_FORM_URLENCODED):
-                            Map<String, String> queryParameters = format(bodyRequest);
-                            MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
-                            multiMap.setAll(queryParameters);
-                            responseHandler = httpRequest.rxSendForm(multiMap);
-                            break;
-                        default:
-                            httpRequest.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()));
-                            responseHandler = httpRequest.rxSendBuffer(Buffer.buffer(bodyRequest));
-                    }
-                }
-            } else {
-                responseHandler = httpRequest.rxSend();
-            }
-
-            return responseHandler
+            return requestHandler
                     .toMaybe()
                     .map(httpResponse -> {
-                        String responseBody =  httpResponse.bodyAsString();
-                        // put response into template variable for EL
-                        templateEngine.getTemplateContext().setVariable(AUTHENTICATION_RESPONSE_CONTEXT_KEY,
-                                new HttpIdentityProviderResponse(httpResponse, responseBody));
-
-                        // process authentication response
-                        Exception lastException = null;
-                        if (errorConditions != null) {
-                            Iterator<HttpResponseErrorCondition> iter = errorConditions.iterator();
-                            while (iter.hasNext() && lastException == null) {
-                                HttpResponseErrorCondition errorCondition = iter.next();
-                                if (templateEngine.getValue(errorCondition.getValue(), Boolean.class)) {
-                                    Class<? extends Exception> clazz = (Class<? extends Exception>) Class.forName(errorCondition.getException());
-                                    if (errorCondition.getMessage() != null) {
-                                        String errorMessage = templateEngine.getValue(errorCondition.getMessage(), String.class);
-                                        Constructor<?> constructor = clazz.getConstructor(String.class);
-                                        lastException = clazz.cast(constructor.newInstance(new Object[]{errorMessage}));
-                                    } else {
-                                        lastException = clazz.newInstance();
-                                    }
-                                }
-                            }
-                        }
-
-                        // if user authentication failed, throw exception
-                        if (lastException != null) {
-                            throw lastException;
-                        }
-                        // unable to get user information, throw exception
-                        if (responseBody == null) {
-                            throw new InternalAuthenticationServiceException("Unable to find user information");
-                        }
-                        // else connect the user
-                        return createUser(authentication.getContext(), new JsonObject(responseBody).getMap());
+                        final List<HttpResponseErrorCondition> errorConditions = resourceConfiguration.getHttpResponseErrorConditions();
+                        Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
+                        return createUser(authentication.getContext(), userAttributes);
                     })
                     .onErrorResumeNext(ex -> {
                         if (ex instanceof AuthenticationException) {
@@ -177,7 +114,141 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public Maybe<User> loadUserByUsername(String username) {
-        return Maybe.empty();
+        // prepare request
+        final HttpAuthResourcePathsConfiguration authResourceConfiguration = configuration.getAuthenticationResource().getPaths();
+        if (authResourceConfiguration == null) {
+            return Maybe.empty();
+        }
+        if (authResourceConfiguration.getLoadPreAuthUserResource() == null) {
+            return Maybe.empty();
+        }
+
+        final HttpResourceConfiguration readResourceConfiguration = authResourceConfiguration.getLoadPreAuthUserResource();
+
+        if (readResourceConfiguration.getBaseURL() == null) {
+            LOGGER.warn("Missing pre-authenticated user resource base URL");
+            return Maybe.empty();
+        }
+
+        if (readResourceConfiguration.getHttpMethod() == null) {
+            LOGGER.warn("Missing pre-authenticated user resource HTTP method");
+            return Maybe.empty();
+        }
+
+        final DefaultUser user = new DefaultUser(username);
+
+        try {
+            // prepare context
+            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
+            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
+
+            // prepare request
+            final String readUserURI = readResourceConfiguration.getBaseURL();
+            final HttpMethod readUserHttpMethod = HttpMethod.valueOf(readResourceConfiguration.getHttpMethod().toString());
+            final List<HttpHeader> readUserHttpHeaders = readResourceConfiguration.getHttpHeaders();
+            final String readUserBody = readResourceConfiguration.getHttpBody();
+            final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, readUserURI, readUserHttpMethod, readUserHttpHeaders, readUserBody);
+
+            return requestHandler
+                    .toMaybe()
+                    .map(httpResponse -> {
+                        final List<HttpResponseErrorCondition> errorConditions = readResourceConfiguration.getHttpResponseErrorConditions();
+                        Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
+                        return createUser(authenticationContext, userAttributes);
+                    })
+                    .onErrorResumeNext(ex -> {
+                        if (ex instanceof AbstractManagementException) {
+                            return Maybe.error(ex);
+                        }
+                        LOGGER.error("An error has occurred when loading pre-authenticated user {} from the remote HTTP identity provider", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+                        return Maybe.error(new TechnicalManagementException("An error has occurred when loading pre-authenticated user from the remote HTTP identity provider", ex));
+                    });
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred when loading pre-authenticated user {}", user.getUsername() != null ? user.getUsername() : user.getEmail(), ex);
+            return Maybe.error(new TechnicalManagementException("An error has occurred when when loading pre-authenticated user", ex));
+        }
+    }
+
+    private Single<HttpResponse<Buffer>> processRequest(TemplateEngine templateEngine,
+                                                        String httpURI,
+                                                        HttpMethod httpMethod,
+                                                        List<HttpHeader> httpHeaders,
+                                                        String httpBody) {
+        // prepare request
+        final String evaluatedHttpURI = templateEngine.getValue(httpURI, String.class);
+        final HttpRequest<Buffer> httpRequest = client.requestAbs(httpMethod, evaluatedHttpURI);
+
+        // set headers
+        if (httpHeaders != null) {
+            httpHeaders.forEach(header -> {
+                String extValue = templateEngine.getValue(header.getValue(), String.class);
+                httpRequest.putHeader(header.getName(), extValue);
+            });
+        }
+
+        // set body
+        Single<HttpResponse<Buffer>> responseHandler;
+        if (httpBody != null && !httpBody.isEmpty()) {
+            String bodyRequest = templateEngine.getValue(httpBody, String.class);
+            if (!httpRequest.headers().contains(HttpHeaders.CONTENT_TYPE)) {
+                httpRequest.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()));
+                responseHandler = httpRequest.rxSendBuffer(Buffer.buffer(bodyRequest));
+            } else {
+                String contentTypeHeader = httpRequest.headers().get(HttpHeaders.CONTENT_TYPE);
+                switch (contentTypeHeader) {
+                    case(MediaType.APPLICATION_JSON):
+                        responseHandler = httpRequest.rxSendJsonObject(new JsonObject(bodyRequest));
+                        break;
+                    case(MediaType.APPLICATION_FORM_URLENCODED):
+                        Map<String, String> queryParameters = format(bodyRequest);
+                        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+                        multiMap.setAll(queryParameters);
+                        responseHandler = httpRequest.rxSendForm(multiMap);
+                        break;
+                    default:
+                        httpRequest.putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()));
+                        responseHandler = httpRequest.rxSendBuffer(Buffer.buffer(bodyRequest));
+                }
+            }
+        } else {
+            responseHandler = httpRequest.rxSend();
+        }
+        return responseHandler;
+    }
+
+    private Map<String, Object> processResponse(TemplateEngine templateEngine, List<HttpResponseErrorCondition> errorConditions, HttpResponse<Buffer> httpResponse) throws Exception {
+        String responseBody =  httpResponse.bodyAsString();
+        templateEngine.getTemplateContext().setVariable(AUTHENTICATION_RESPONSE_CONTEXT_KEY, new HttpIdentityProviderResponse(httpResponse, responseBody));
+
+        // process response
+        Exception lastException = null;
+        if (errorConditions != null) {
+            Iterator<HttpResponseErrorCondition> iter = errorConditions.iterator();
+            while (iter.hasNext() && lastException == null) {
+                HttpResponseErrorCondition errorCondition = iter.next();
+                if (templateEngine.getValue(errorCondition.getValue(), Boolean.class)) {
+                    Class<? extends Exception> clazz = (Class<? extends Exception>) Class.forName(errorCondition.getException());
+                    if (errorCondition.getMessage() != null) {
+                        String errorMessage = templateEngine.getValue(errorCondition.getMessage(), String.class);
+                        Constructor<?> constructor = clazz.getConstructor(String.class);
+                        lastException = clazz.cast(constructor.newInstance(new Object[]{errorMessage}));
+                    } else {
+                        lastException = clazz.newInstance();
+                    }
+                }
+            }
+        }
+
+        // if remote API call failed, throw exception
+        if (lastException != null) {
+            throw lastException;
+        }
+        if (responseBody == null) {
+            throw new InternalAuthenticationServiceException("Unable to find user information");
+        }
+        return responseBody.startsWith("[") ?
+                new JsonArray(responseBody).getJsonObject(0).getMap() : new JsonObject(responseBody).getMap();
     }
 
     private User createUser(AuthenticationContext authContext, Map<String, Object> attributes) {

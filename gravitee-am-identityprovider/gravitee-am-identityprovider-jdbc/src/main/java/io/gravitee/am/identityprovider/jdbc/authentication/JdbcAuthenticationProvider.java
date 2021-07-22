@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.jdbc.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.*;
 import io.gravitee.am.identityprovider.jdbc.JdbcAbstractProvider;
@@ -54,6 +55,13 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         final String presentedPassword = authentication.getCredentials().toString();
 
         return selectUserByMultipleField(username)
+                .toList()
+                .flatMapPublisher(users -> {
+                    if (users.isEmpty()) {
+                        return Flowable.error(new UsernameNotFoundException(username));
+                    }
+                    return Flowable.fromIterable(users);
+                })
                 .filter(result -> {
                     // check password
                     String password = String.valueOf(result.get(configuration.getPasswordAttribute()));
@@ -77,7 +85,6 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
 
                     return true;
                 })
-                .map(attributes -> createUser(authentication.getContext(), attributes))
                 .toList()
                 .flatMapMaybe(users -> {
                     if (users.isEmpty()) {
@@ -86,7 +93,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                     if (users.size() > 1) {
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
-                    return Maybe.just(users.get(0));
+                    return Maybe.just(createUser(authentication.getContext(), users.get(0)));
                 });
     }
 

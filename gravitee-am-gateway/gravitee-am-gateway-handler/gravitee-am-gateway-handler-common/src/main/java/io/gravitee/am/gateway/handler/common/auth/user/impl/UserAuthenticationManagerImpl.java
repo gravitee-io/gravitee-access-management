@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -71,6 +72,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private UserAuthenticationService userAuthenticationService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
@@ -267,13 +271,19 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             // no exception clear login attempt
             if (userAuthentication.getLastException() == null) {
                 return loginAttemptService.loginSucceeded(criteria);
-            } else if (userAuthentication.getLastException() instanceof BadCredentialsException){
-                return loginAttemptService.loginFailed(criteria, accountSettings)
-                        .flatMapCompletable(loginAttempt -> {
-                            if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
-                                return userAuthenticationService.lockAccount(criteria, accountSettings, client);
-                            }
-                            return Completable.complete();
+            } else if (userAuthentication.getLastException() instanceof BadCredentialsException) {
+                // do not execute login attempt feature for non existing users
+                // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
+                // but we can't control custom IdP that's why we have to check user existence
+                return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
+                        .flatMapCompletable(user -> {
+                            return loginAttemptService.loginFailed(criteria, accountSettings)
+                                    .flatMapCompletable(loginAttempt -> {
+                                        if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                                            return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
+                                        }
+                                        return Completable.complete();
+                                    });
                         });
             }
         }

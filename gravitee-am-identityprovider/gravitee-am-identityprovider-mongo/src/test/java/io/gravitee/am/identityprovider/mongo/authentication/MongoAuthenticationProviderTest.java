@@ -187,7 +187,7 @@ public class MongoAuthenticationProviderTest {
         }).test();
 
         testObserver.awaitTerminalEvent();
-        testObserver.assertError(BadCredentialsException.class); // return BadCredentialsException now we may have multiple users returned by the multifieldQuery
+        testObserver.assertError(UsernameNotFoundException.class);
     }
 
 }

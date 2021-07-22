@@ -63,9 +63,11 @@ public interface UserAuthenticationService {
      *
      * @param criteria login attempt criteria
      * @param accountSettings account settings
+     * @param client oauth2 client
+     * @param user End-User to lock
      * @return
      */
-    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client);
+    Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user);
 
     default Single<User> connect(io.gravitee.am.identityprovider.api.User principal) {
         return connect(principal, true);

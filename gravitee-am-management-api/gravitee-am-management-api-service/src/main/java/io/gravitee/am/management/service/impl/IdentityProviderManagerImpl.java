@@ -53,6 +53,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
+import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,9 +72,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     public static final int TABLE_NAME_MAX_LENGTH = 50;
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
-
-    @Value("${management.mongodb.dbname:gravitee-am}")
-    private String mongoDBName;
 
     @Value("${management.type:mongodb}")
     private String managementBackend;
@@ -231,13 +229,15 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
             final String username = environment.getProperty("management.mongodb.username");
             final String password = environment.getProperty("management.mongodb.password");
+            final String mongoDBName = getMongoDatabaseName(environment);
 
-            String mongoUri = "mongodb://";
+            String defaultMongoUri = "mongodb://";
             if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-                mongoUri += username +":"+ password +"@";
+                defaultMongoUri += username +":"+ password +"@";
             }
-            mongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
+            defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
 
+            String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
             newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);

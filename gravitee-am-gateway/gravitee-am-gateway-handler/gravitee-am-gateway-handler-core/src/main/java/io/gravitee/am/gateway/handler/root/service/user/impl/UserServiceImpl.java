@@ -49,6 +49,7 @@ import io.gravitee.am.service.validators.EmailValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Observable;
 import io.reactivex.*;
+import io.reactivex.functions.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
@@ -296,24 +297,51 @@ public class UserServiceImpl implements UserService {
 
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
                 .flatMap(users -> {
-                    final List<User> foundUsers = users
-                            .stream()
-                            .filter(user -> email == null || (user.getEmail() != null && email.toLowerCase().equals(user.getEmail().toLowerCase())))
-                            .collect(Collectors.toList());
+                    List<User> foundUsers = new ArrayList<>(users);
+                    // narrow users
+                    if (users.size() > 1) {
+                        // filter by identity provider
+                        if (client.getIdentities() != null && !client.getIdentities().isEmpty()) {
+                            foundUsers = users
+                                    .stream()
+                                    .filter(u -> client.getIdentities().contains(u.getSource()))
+                                    .collect(Collectors.toList());
+                        }
 
-                    if (foundUsers.size() == 1 ||
-                            // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
-                            (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
+                        if (foundUsers.size() > 1) {
+                            // try to filter by latest application used
+                            List<User> filteredSourceUsers = users
+                                    .stream()
+                                    .filter(u -> u.getClient() == null || client.getId().equals(u.getClient()))
+                                    .collect(Collectors.toList());
+
+                            if (!filteredSourceUsers.isEmpty()) {
+                                foundUsers = new ArrayList<>(filteredSourceUsers);
+                            }
+                        }
+                    }
+
+                    // If multiple results, check if ConfirmIdentity isn't required before returning the first User.
+                    if (foundUsers.size() == 1 || (foundUsers.size() > 1 && !params.isConfirmIdentityEnabled())) {
                         User user = foundUsers.get(0);
                         // check if user can update its password according to its identity provider type
                         return identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
-                                .map(__ -> {
+                                .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
                                     if (user.isInactive() && !forceUserRegistration(domain, client)) {
-                                        throw new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process");
+                                        return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
-                                    return user;
+                                    // fetch latest information from the identity provider and return the user
+                                    return userProvider.findByUsername(user.getUsername())
+                                            .map(Optional::ofNullable)
+                                            .defaultIfEmpty(Optional.empty())
+                                            .flatMapSingle(optUser -> {
+                                                if (!optUser.isPresent()) {
+                                                    return Single.just(user);
+                                                }
+                                                return userService.update(enhanceUser(user, optUser.get()));
+                                            });
                                 });
                     }
 
@@ -342,18 +370,32 @@ public class UserServiceImpl implements UserService {
                                             final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
                                                     userProvider.findByUsername(username) : userProvider.findByEmail(email) ;
                                             return findQuery
-                                                    .map(user -> Optional.of(convert(user, authProvider)))
+                                                    .map(user -> Optional.of(new UserAuthentication(user, authProvider)))
                                                     .defaultIfEmpty(Optional.empty())
                                                     .onErrorReturnItem(Optional.empty());
                                         })
                                         .defaultIfEmpty(Optional.empty());
                             })
-                            .takeUntil(optional -> {
-                                return optional.isPresent();
-                            })
+                            .takeUntil((Predicate<? super Optional<UserAuthentication>>) Optional::isPresent)
                             .lastOrError()
-                            .flatMap(optional -> userService.create(optional.get()))
-                            .onErrorResumeNext(Single.error(new UserNotFoundException(email)));
+                            .flatMap(optional -> {
+                                // be sure to not duplicate an existing user
+                                if (!optional.isPresent()) {
+                                    return Single.error(new UserNotFoundException());
+                                }
+                                final UserAuthentication idpUser = optional.get();
+                                return userService.findByDomainAndUsernameAndSource(domain.getId(), idpUser.getUser().getUsername(), idpUser.getSource())
+                                        .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndExternalIdAndSource(domain.getId(), idpUser.getUser().getId(), idpUser.getSource())))
+                                        .map(Optional::ofNullable)
+                                        .defaultIfEmpty(Optional.empty())
+                                        .flatMapSingle(optEndUser -> {
+                                            if (!optEndUser.isPresent()) {
+                                                return userService.create(convert(idpUser.getUser(), idpUser.getSource()));
+                                            }
+                                            return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
+                                        });
+                            })
+                            .onErrorResumeNext(Single.error(new UserNotFoundException(email != null ? email : params.getUsername())));
                 })
                 .doOnSuccess(user -> new Thread(() -> emailService.send(Template.RESET_PASSWORD, user, client)).start())
                 .doOnSuccess(user1 -> {
@@ -362,7 +404,7 @@ public class UserServiceImpl implements UserService {
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
-                .toCompletable();
+                .ignoreElement();
     }
 
     @Override
@@ -509,6 +551,42 @@ public class UserServiceImpl implements UserService {
             } else {
                 user.setAdditionalInformation(extraInformation);
             }
+        }
+    }
+
+    private User enhanceUser(User user, io.gravitee.am.identityprovider.api.User idpUser) {
+        if (idpUser.getEmail() != null) {
+            user.setEmail(idpUser.getEmail());
+        }
+        if (idpUser.getFirstName() != null) {
+            user.setFirstName(idpUser.getFirstName());
+        }
+        if (idpUser.getLastName() != null) {
+            user.setLastName(idpUser.getLastName());
+        }
+        if (idpUser.getAdditionalInformation() != null) {
+            Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
+            additionalInformation.putAll(idpUser.getAdditionalInformation());
+            user.setAdditionalInformation(additionalInformation);
+        }
+        return user;
+    }
+
+    private class UserAuthentication {
+        private final io.gravitee.am.identityprovider.api.User user;
+        private final String source;
+
+        public UserAuthentication(io.gravitee.am.identityprovider.api.User user, String source) {
+            this.user = user;
+            this.source = source;
+        }
+
+        public io.gravitee.am.identityprovider.api.User getUser() {
+            return user;
+        }
+
+        public String getSource() {
+            return source;
         }
     }
 
