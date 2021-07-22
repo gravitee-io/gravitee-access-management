@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/415?closed=1[AM - 3.9.3 (2021-07-22)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Forgot password - update profile from IdP during forgot password action https://github.com/gravitee-io/issues/issues/5863[#5863]
+- Forgot password - wrong email sent if same user email is shared across multiple IdP and multiple app https://github.com/gravitee-io/issues/issues/5864[#5864]
+- Http identity provider is not compatible with the passwordless feature https://github.com/gravitee-io/issues/issues/5889[#5889]
+- Users are created with brute force detection https://github.com/gravitee-io/issues/issues/5866[#5866]
+
+*_General_*
+
+- Backport #5675 https://github.com/gravitee-io/issues/issues/5868[#5868]
+- Merge 3.8.7 https://github.com/gravitee-io/issues/issues/5879[#5879]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/411?closed=1[AM - 3.8.7 (2021-07-19)]
 
 === Bug fixes
