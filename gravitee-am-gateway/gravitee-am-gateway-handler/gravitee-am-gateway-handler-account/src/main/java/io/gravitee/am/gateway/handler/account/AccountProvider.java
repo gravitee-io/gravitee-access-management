@@ -67,24 +67,30 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
     protected void doStart() throws Exception {
         super.doStart();
 
-        final Router accountRouter = Router.router(vertx);
-        final AccountEndpointHandler accountHandler = new AccountEndpointHandler(userService, factorService, activityAuditService, accountManagementUserService, domain);
-        OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
-        oAuth2AuthHandler.extractToken(true);
-        oAuth2AuthHandler.extractClient(true);
-        accountRouter.route().handler(oAuth2AuthHandler);
+        if (isSelfServiceAccountEnabled()) {
+            final Router accountRouter = Router.router(vertx);
+            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(userService, factorService, activityAuditService, accountManagementUserService, domain);
+            OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
+            oAuth2AuthHandler.extractToken(true);
+            oAuth2AuthHandler.extractClient(true);
+            accountRouter.route().handler(oAuth2AuthHandler);
 
-        // user consent routes
-        accountRouter.get(AccountRoutes.INDEX.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAccount);
-        accountRouter.get(AccountRoutes.STATIC_ASSETS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAsset);
-        accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
-        accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
-        accountRouter.get(AccountRoutes.FACTORS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getUserFactors);
-        accountRouter.put(AccountRoutes.FACTORS.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateUserFactors);
-        accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);
-        accountRouter.get(AccountRoutes.CHANGE_PASSWORD.getRoute()).handler(accountHandler::redirectForgotPassword);
-        // error handler
-        accountRouter.route().failureHandler(new ErrorHandler());
-        router.mountSubRouter(path(), accountRouter);
+            // user consent routes
+            accountRouter.get(AccountRoutes.INDEX.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAccount);
+            accountRouter.get(AccountRoutes.STATIC_ASSETS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAsset);
+            accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
+            accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
+            accountRouter.get(AccountRoutes.FACTORS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getUserFactors);
+            accountRouter.put(AccountRoutes.FACTORS.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateUserFactors);
+            accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);
+            accountRouter.get(AccountRoutes.CHANGE_PASSWORD.getRoute()).handler(accountHandler::redirectForgotPassword);
+            // error handler
+            accountRouter.route().failureHandler(new ErrorHandler());
+            router.mountSubRouter(path(), accountRouter);
+        }
+    }
+
+    private boolean isSelfServiceAccountEnabled() {
+        return domain.getSelfServiceAccountManagementSettings() != null && domain.getSelfServiceAccountManagementSettings().isEnabled();
     }
 }

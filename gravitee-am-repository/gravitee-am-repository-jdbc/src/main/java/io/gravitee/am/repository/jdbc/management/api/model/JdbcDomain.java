@@ -52,6 +52,8 @@ public class JdbcDomain {
     private String accountSettings;
     @Column("password_settings")
     private String passwordSettings;
+    @Column("self_service_account_settings")
+    private String selfServiceAccountManagementSettings;
     @Column("reference_type")
     private String referenceType;
     @Column("reference_id")
@@ -184,6 +186,14 @@ public class JdbcDomain {
 
     public void setPasswordSettings(String passwordSettings) {
         this.passwordSettings = passwordSettings;
+    }
+
+    public String getSelfServiceAccountManagementSettings() {
+        return selfServiceAccountManagementSettings;
+    }
+
+    public void setSelfServiceAccountManagementSettings(String selfServiceAccountManagementSettings) {
+        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
     }
 
     public String getReferenceType() {

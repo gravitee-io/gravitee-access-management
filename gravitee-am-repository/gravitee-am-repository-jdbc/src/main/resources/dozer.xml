@@ -50,6 +50,10 @@
             <a get-method="isAlertEnabled">alertEnabled</a>
             <b>alertEnabled</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.SelfServiceAccountManagementSettingsConverter">
+            <a>selfServiceAccountManagementSettings</a>
+            <b>selfServiceAccountManagementSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

@@ -121,6 +121,7 @@ import {DomainSettingsLoginComponent} from './domain/settings/login/login.compon
 import {DomainSettingsEmailsComponent} from './domain/settings/emails/emails.component';
 import {DomainSettingsEmailComponent} from './domain/settings/emails/email/email.component';
 import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
+import {DomainSettingsSelfServiceAccountComponent} from './domain/settings/self-service-account/self-service-account.component';
 import {
   DomainMembershipsDialog,
   DomainSettingsMembershipsComponent
@@ -402,6 +403,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     DomainSettingsEmailsComponent,
     DomainSettingsEmailComponent,
     DomainSettingsAccountComponent,
+    DomainSettingsSelfServiceAccountComponent,
     DomainSettingsMembershipsComponent,
     DomainSettingsFactorsComponent,
     DomainSettingsResourcesComponent,

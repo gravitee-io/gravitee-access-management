@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -57,6 +58,7 @@ public class PatchDomain {
     private Optional<WebAuthnSettings> webAuthnSettings;
     private Optional<AccountSettings> accountSettings;
     private Optional<PatchPasswordSettings> passwordSettings;
+    private Optional<SelfServiceAccountManagementSettings> selfServiceAccountManagementSettings;
     private Optional<Set<String>> tags;
     private Optional<Boolean> master;
 
@@ -156,6 +158,14 @@ public class PatchDomain {
         this.passwordSettings = passwordSettings;
     }
 
+    public Optional<SelfServiceAccountManagementSettings> getSelfServiceAccountManagementSettings() {
+        return selfServiceAccountManagementSettings;
+    }
+
+    public void setSelfServiceAccountManagementSettings(Optional<SelfServiceAccountManagementSettings> selfServiceAccountManagementSettings) {
+        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
+    }
+
     public Optional<Boolean> getMaster() {
         return master;
     }
@@ -180,6 +190,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setLoginSettings, this.getLoginSettings());
         SetterUtils.safeSet(toPatch::setWebAuthnSettings, this.getWebAuthnSettings());
         SetterUtils.safeSet(toPatch::setAccountSettings, this.getAccountSettings());
+        SetterUtils.safeSet(toPatch::setSelfServiceAccountManagementSettings, this.getSelfServiceAccountManagementSettings());
         SetterUtils.safeSet(toPatch::setTags, this.getTags());
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
 
@@ -220,6 +231,7 @@ public class PatchDomain {
                 || webAuthnSettings != null && webAuthnSettings.isPresent()
                 || accountSettings != null && accountSettings.isPresent()
                 || passwordSettings != null && passwordSettings.isPresent()
+                || selfServiceAccountManagementSettings != null && selfServiceAccountManagementSettings.isPresent()
                 || tags != null && tags.isPresent()
                 || master != null && master.isPresent()) {
 

@@ -94,6 +94,7 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setLoginSettings(domain.getLoginSettings());
             filteredDomain.setWebAuthnSettings(domain.getWebAuthnSettings());
             filteredDomain.setAccountSettings(domain.getAccountSettings());
+            filteredDomain.setSelfServiceAccountManagementSettings(domain.getSelfServiceAccountManagementSettings());
             filteredDomain.setTags(domain.getTags());
         }
 

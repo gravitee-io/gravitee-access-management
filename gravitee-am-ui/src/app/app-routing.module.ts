@@ -38,6 +38,7 @@ import {DomainSettingsEmailsComponent} from './domain/settings/emails/emails.com
 import {DomainSettingsEmailComponent} from './domain/settings/emails/email/email.component';
 import {DomainSettingsExtensionGrantsComponent} from './domain/settings/extension-grants/extension-grants.component';
 import {DomainSettingsAccountComponent} from './domain/settings/account/account.component';
+import {DomainSettingsSelfServiceAccountComponent} from './domain/settings/self-service-account/self-service-account.component';
 import {DomainSettingsMembershipsComponent} from './domain/settings/memberships/memberships.component';
 import {DomainSettingsFlowsComponent} from './domain/settings/flows/flows.component';
 import {DomainCreationComponent} from './domain/creation/domain-creation.component';
@@ -2068,6 +2069,20 @@ export const routes: Routes = [
                           },
                           perms: {
                             only: ['domain_scim_read']
+                          }
+                        }
+                      },
+                      {
+                        path: 'self-service-account',
+                        component: DomainSettingsSelfServiceAccountComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Self-service account',
+                            section: 'User Management'
+                          },
+                          perms: {
+                            only: ['domain_settings_read']
                           }
                         }
                       },

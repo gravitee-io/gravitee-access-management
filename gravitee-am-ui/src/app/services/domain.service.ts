@@ -141,6 +141,10 @@ export class DomainService {
     });
   }
 
+  patch(id, domainSettings): Observable<any> {
+    return this.http.patch<any>(this.domainsURL + id, domainSettings);
+  }
+
   delete(id): Observable<any> {
     return this.http.delete<any>(this.domainsURL + id);
   }
