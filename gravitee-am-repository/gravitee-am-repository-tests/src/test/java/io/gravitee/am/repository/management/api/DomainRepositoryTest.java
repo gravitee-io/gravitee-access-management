@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -95,6 +96,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         domain.setScim(new SCIMSettings());
         domain.setUma(new UMASettings());
         domain.setWebAuthnSettings(new WebAuthnSettings());
+        domain.setSelfServiceAccountManagementSettings(new SelfServiceAccountManagementSettings());
 
         return domain;
     }
@@ -174,6 +176,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getOidc() != null);
         testObserver.assertValue(d -> d.getScim() != null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
+        testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);
     }
 
     @Test

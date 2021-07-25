@@ -54,6 +54,16 @@ public class Domain implements Resource {
     private String description;
 
     /**
+     * The type of reference the domain is attached to (for now, should be ENVIRONMENT).
+     */
+    private ReferenceType referenceType;
+
+    /**
+     * The id of the reference the domain is attached to (for now, should be the environment id).
+     */
+    private String referenceId;
+
+    /**
      * Domain enabled.
      */
     private boolean enabled;
@@ -62,6 +72,36 @@ public class Domain implements Resource {
      * Flag indicating if alerts are enabled or not.
      */
     private Boolean alertEnabled;
+
+    /**
+     * Domain HTTP path
+     */
+    private String path;
+
+    /**
+     * NOTE: only use for the DefaultOrganizationUpgrader
+     */
+    private Set<String> identities;
+
+    /**
+     * If domain is master, it can do cross domains token introspection
+     */
+    private boolean master;
+
+    /**
+     * Indicates if domain is in vhost mode or not. If true, then security domain will be exposed under specified virtual hosts.
+     */
+    private boolean vhostMode = false;
+
+    /**
+     * The list of vhosts to expose the domain on.
+     */
+    private List<VirtualHost> vhosts;
+
+    /**
+     * The list of sharding tags to expose the domain on.
+     */
+    private Set<String> tags;
 
     /**
      * Domain creation date
@@ -74,30 +114,39 @@ public class Domain implements Resource {
     private Date updatedAt;
 
     /**
-     * Domain HTTP path
+     * -------------------------
+     * Advanced settings section
+     * -------------------------
      */
-    private String path;
 
     /**
-     * Indicates if domain is in vhost mode or not. If true, then security domain will be exposed under specified virtual hosts.
+     * OAuth 2.0 / OIDC settings
      */
-    private boolean vhostMode = false;
-
-    /**
-     * The list of vhosts to expose the domain on.
-     */
-    private List<VirtualHost> vhosts;
-
     private OIDCSettings oidc;
 
+    /**
+     * UMA 2.0 settings
+     */
     private UMASettings uma;
 
+    /**
+     * Login page settings
+     */
     private LoginSettings loginSettings;
 
+    /**
+     * WebAuthn/Passwordless settings
+     */
     private WebAuthnSettings webAuthnSettings;
 
+    /**
+     * SCIM 2.0 settings
+     */
     private SCIMSettings scim;
 
+    /**
+     * User accounts settings
+     */
     private AccountSettings accountSettings;
 
     /**
@@ -105,27 +154,10 @@ public class Domain implements Resource {
      */
     private PasswordSettings passwordSettings;
 
-    private Set<String> tags;
-
     /**
-     * The type of reference the domain is attached to (for now, should be ENVIRONMENT).
+     * Self-service Account Management settings
      */
-    private ReferenceType referenceType;
-
-    /**
-     * The id of the reference the domain is attached to (for now, should be the environment id).
-     */
-    private String referenceId;
-
-    /**
-     * NOTE: only use for the DefaultOrganizationUpgrader
-     */
-    private Set<String> identities;
-
-    /**
-     * If domain is master, it can do cross domains token introspection
-     */
-    private boolean master;
+    private SelfServiceAccountManagementSettings selfServiceAccountManagementSettings;
 
     public Domain() {
     }
@@ -135,26 +167,29 @@ public class Domain implements Resource {
         this.hrid = other.hrid;
         this.name = other.name;
         this.description = other.description;
+        this.referenceType = other.referenceType;
+        this.referenceId = other.referenceId;
         this.enabled = other.enabled;
         this.alertEnabled = other.alertEnabled;
-        this.createdAt = other.createdAt;
-        this.updatedAt = other.updatedAt;
         this.path = other.path;
+        this.identities = other.identities;
+        this.master = other.master;
         this.vhostMode = other.vhostMode;
         this.vhosts = other.vhosts;
+        this.tags = other.tags;
+        this.createdAt = other.createdAt;
+        this.updatedAt = other.updatedAt;
         this.oidc = other.oidc;
         this.uma = other.uma;
         this.loginSettings = other.loginSettings;
         this.webAuthnSettings = other.webAuthnSettings;
         this.scim = other.scim;
         this.accountSettings = other.accountSettings;
-        this.tags = other.tags;
-        this.referenceType = other.referenceType;
-        this.referenceId = other.referenceId;
         this.passwordSettings = other.passwordSettings;
-        this.master = other.master;
+        this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
     }
 
+    @Override
     public String getId() {
         return id;
     }
@@ -187,6 +222,22 @@ public class Domain implements Resource {
         this.description = description;
     }
 
+    public ReferenceType getReferenceType() {
+        return referenceType;
+    }
+
+    public void setReferenceType(ReferenceType referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -195,20 +246,12 @@ public class Domain implements Resource {
         this.enabled = enabled;
     }
 
-    public Date getCreatedAt() {
-        return createdAt;
+    public Boolean isAlertEnabled() {
+        return alertEnabled;
     }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setAlertEnabled(Boolean alertEnabled) {
+        this.alertEnabled = alertEnabled;
     }
 
     public String getPath() {
@@ -217,6 +260,22 @@ public class Domain implements Resource {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public Set<String> getIdentities() {
+        return identities;
+    }
+
+    public void setIdentities(Set<String> identities) {
+        this.identities = identities;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public void setMaster(boolean master) {
+        this.master = master;
     }
 
     public boolean isVhostMode() {
@@ -235,6 +294,30 @@ public class Domain implements Resource {
         this.vhosts = vhosts;
     }
 
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public OIDCSettings getOidc() {
         return oidc;
     }
@@ -249,14 +332,6 @@ public class Domain implements Resource {
 
     public void setUma(UMASettings uma) {
         this.uma = uma;
-    }
-
-    public SCIMSettings getScim() {
-        return scim;
-    }
-
-    public void setScim(SCIMSettings scim) {
-        this.scim = scim;
     }
 
     public LoginSettings getLoginSettings() {
@@ -275,44 +350,20 @@ public class Domain implements Resource {
         this.webAuthnSettings = webAuthnSettings;
     }
 
+    public SCIMSettings getScim() {
+        return scim;
+    }
+
+    public void setScim(SCIMSettings scim) {
+        this.scim = scim;
+    }
+
     public AccountSettings getAccountSettings() {
         return accountSettings;
     }
 
     public void setAccountSettings(AccountSettings accountSettings) {
         this.accountSettings = accountSettings;
-    }
-
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
     }
 
     public PasswordSettings getPasswordSettings() {
@@ -323,20 +374,12 @@ public class Domain implements Resource {
         this.passwordSettings = passwordSettings;
     }
 
-    public Boolean isAlertEnabled() {
-        return alertEnabled;
+    public SelfServiceAccountManagementSettings getSelfServiceAccountManagementSettings() {
+        return selfServiceAccountManagementSettings;
     }
 
-    public void setAlertEnabled(Boolean alertEnabled) {
-        this.alertEnabled = alertEnabled;
-    }
-
-    public boolean isMaster() {
-        return master;
-    }
-
-    public void setMaster(boolean master) {
-        this.master = master;
+    public void setSelfServiceAccountManagementSettings(SelfServiceAccountManagementSettings selfServiceAccountManagementSettings) {
+        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

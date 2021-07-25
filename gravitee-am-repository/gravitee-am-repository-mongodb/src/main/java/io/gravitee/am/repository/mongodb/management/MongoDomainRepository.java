@@ -24,6 +24,7 @@ import io.gravitee.am.common.webauthn.UserVerification;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -45,8 +46,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.*;
@@ -175,6 +174,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setWebAuthnSettings(convert(domainMongo.getWebAuthnSettings()));
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
         domain.setPasswordSettings(convert(domainMongo.getPasswordSettings()));
+        domain.setSelfServiceAccountManagementSettings(convert(domainMongo.getSelfServiceAccountManagementSettings()));
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
@@ -207,6 +207,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setWebAuthnSettings(convert(domain.getWebAuthnSettings()));
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
         domainMongo.setPasswordSettings(convert(domain.getPasswordSettings()));
+        domainMongo.setSelfServiceAccountManagementSettings(convert(domain.getSelfServiceAccountManagementSettings()));
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
@@ -378,5 +379,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static PasswordSettingsMongo convert(PasswordSettings passwordSettings) {
         return PasswordSettingsMongo.convert(passwordSettings);
+    }
+
+    private static SelfServiceAccountManagementSettings convert(SelfServiceAccountManagementSettingsMongo selfAccountManagementSettingsMongo) {
+        return selfAccountManagementSettingsMongo != null ? selfAccountManagementSettingsMongo.convert() : null;
+    }
+
+    private static SelfServiceAccountManagementSettingsMongo convert(SelfServiceAccountManagementSettings selfAccountManagementSettings) {
+        return SelfServiceAccountManagementSettingsMongo.convert(selfAccountManagementSettings);
     }
 }

@@ -64,6 +64,8 @@ public class DomainMongo extends Auditable {
 
     private PasswordSettingsMongo passwordSettings;
 
+    private SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings;
+
     private Set<String> tags;
 
     private ReferenceType referenceType;
@@ -232,6 +234,14 @@ public class DomainMongo extends Auditable {
 
     public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
         this.passwordSettings = passwordSettings;
+    }
+
+    public SelfServiceAccountManagementSettingsMongo getSelfServiceAccountManagementSettings() {
+        return selfServiceAccountManagementSettings;
+    }
+
+    public void setSelfServiceAccountManagementSettings(SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings) {
+        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
     }
 
     public boolean isMaster() {
