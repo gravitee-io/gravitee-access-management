@@ -110,7 +110,7 @@
             </ngx-datatable-column>
             <ngx-datatable-column name="" [flexGrow]="1">
               <ng-template let-row="row" ngx-datatable-cell-template>
-                <div fxLayout="row" class="provider-claims-actions" *ngIf="!readonly">
+                <div fxLayout="row" class="gv-table-cell-actions" *ngIf="!readonly">
                   <button mat-icon-button (click)="deleteClaim(row.tokenType, row.claimName, $event)"><mat-icon>close</mat-icon></button>
                 </div>
               </ng-template>

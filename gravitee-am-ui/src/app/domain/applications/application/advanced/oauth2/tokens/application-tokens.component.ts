@@ -63,6 +63,8 @@ export class ApplicationTokensComponent implements OnInit {
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
+      this.formChanged = false;
+      this.initCustomClaims();
     });
   }
 
@@ -146,7 +148,7 @@ export class ApplicationTokensComponent implements OnInit {
 })
 export class CreateClaimComponent {
   claim: any = {};
-  tokenTypes: any[] = ['ID_TOKEN', 'ACCESS_TOKEN'];
+  tokenTypes: any[] = ['id_token', 'access_token'];
   @Output() addClaimChange = new EventEmitter();
   @ViewChild('claimForm', { static: true }) form: NgForm;
 
