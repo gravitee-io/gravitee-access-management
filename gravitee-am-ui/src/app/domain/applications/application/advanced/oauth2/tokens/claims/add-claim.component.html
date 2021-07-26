@@ -20,7 +20,7 @@
     <mat-form-field appearance="outline" floatLabel="always" fxFlex="20">
       <mat-select placeholder="Token Type" name="tokenType" required [(ngModel)]="claim.tokenType">
         <mat-option *ngFor="let tokenType of tokenTypes" [value]="tokenType">
-          {{tokenType}}
+          {{tokenType | uppercase}}
         </mat-option>
       </mat-select>
     </mat-form-field>
