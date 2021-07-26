@@ -195,7 +195,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 break;
             case FactorTypes.TYPE_SMS:
-                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, params.get("phone")));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, params.get("phone")));
                 break;
             case FactorTypes.TYPE_EMAIL:
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
