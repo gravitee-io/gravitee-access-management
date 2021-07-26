@@ -222,7 +222,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         user.setLoginsCount(5l);
         user.setNewsletter(false);
         user.setNickName("nick"+random);
-        user.setSource("test");
+        user.setSource("gravitee");
         user.setPassword("testpassword");
 
         Attribute attribute = new Attribute();
