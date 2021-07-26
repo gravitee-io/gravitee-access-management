@@ -1,0 +1,286 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+swagger: '2.0'
+info:
+  description: >-
+    Gravitee.io - Access Management - Self-service Account Management API.
+    Defines Self Account Management Endpoints exposed by AM server.
+
+    Self Account Management endpoints are OAuth 2.0 secured and can be accessed with the 'sub' claim of the current user.
+  version: 3.10.x
+  title: Gravitee.io - Access Management - Self-service Account Management API
+  contact:
+    email: contact@graviteesource.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: auth.gravitee.io
+basePath: /{domain}/account
+schemes:
+  - https
+paths:
+  /api/changepassword:
+    get:
+      tags:
+        - Self Account
+      summary: Initiates dialog to change user password
+      responses:
+        '302':
+          description: redirection to forgotten password
+        '401':
+          description: Invalid Token
+  /api/profile:
+    get:
+      tags:
+        - Self Account
+      summary: Gets current user's profile
+      description: Gets a profile for the current user
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: A JSON object that represents a user profile
+          schema:
+            $ref: '#/definitions/UserProfile'
+        '401':
+          description: Invalid Token
+    put:
+      tags:
+        - Self Account
+      summary: Updates current user's profile
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: User update
+          description: New user information for update
+          schema:
+            $ref: '#/definitions/UpdateUser'
+      responses:
+        '200':
+          description: A JSON object that represents the status of the request.
+          schema:
+            $ref: '#/definitions/StatusResponse'
+        '401':
+          description: Invalid Token
+  /api/activity:
+    get:
+      tags:
+        - Self Account
+      summary: Get current user's recent activity
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: A JSON object that represents a user's recent activity.
+          schema:
+            $ref: '#/definitions/UserActivityPage'
+        '401':
+          description: Invalid Token
+securityDefinitions:
+  bearerAuth:
+    type: oauth2
+    flow: application
+    tokenUrl: https://auth.gravitee.io/{domain}/oauth/token
+definitions:
+  UserProfile:
+    type: object
+    properties:
+      id:
+        type: string
+        description: User's technical id.
+      externalId:
+        type: string
+        description: External IDP technical id.
+      username:
+        type: string
+        description: User's username.
+      displayName:
+        type: string
+        description: User's display name.
+      roles:
+        type: object
+        properties:
+          schemas:
+            type: array
+            description: User's list of applied roles..
+            items:
+              $ref: '#/definitions/UserRole'
+      accountNonExpired:
+        type: boolean
+        description: Boolean description of user's expired position.
+      accountNonLocked:
+        type: boolean
+        description: Boolean description of user's locked position.
+      credentialsNonExpired:
+        type: boolean
+        description: Boolean description of user's credential expired position.
+      enabled:
+        type: boolean
+        description: Boolean description of user's enabled position.
+      internal:
+        type: boolean
+        description: Boolean description of user's internal position.
+      preRegistration:
+        type: boolean
+        description: Boolean description of user's preregistration position.
+      registrationCompleted:
+        type: boolean
+        description: Boolean description of user's registration completed position.
+      referenceType:
+        type: string
+        description: User's reference type.
+      referenceId:
+        type: string
+        description: Reference technical id.
+      source:
+        type: string
+        description: Source technical uuid.
+      client:
+        type: string
+        description: Client technical uuid.
+      loginsCount:
+        type: integer
+        description: Total count of all occasions of specific user logins.
+      additionalInformation:
+        type: object
+        additionalProperties: true
+        description: Hashmap/Dictionary of additional user information.
+      loggedAt:
+        type: integer
+        description: Epoch timestamp of last log in of user.
+      createdAt:
+        type: integer
+        description: Epoch timestamp of creation of user.
+      updatedAt:
+        type: integer
+        description: Epoch timestamp of last update of user.
+      inactive:
+        type: boolean
+        description: Boolean description of user's inactive position.
+  UpdateUser:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Name.
+      given_name:
+        type: string
+        description: Given Name.
+      family_name:
+        type: string
+        description: Family Name.
+      middle_name:
+        type: string
+        description: Middle Name.
+      nickname:
+        type: string
+        description: Nickname.
+      profile:
+        type: string
+        description: URL link to profile.
+      picture:
+        type: string
+        description: URL link to picture.
+      website:
+        type: string
+        description: URL link to website.
+      email:
+        type: string
+        description: User email address.
+      gender:
+        type: string
+        description: Gender.
+      birthdate:
+        type: string
+        description: Birthdate in yyyy-mm-dd format.
+      zoneinfo:
+        type: string
+        description: User zone info.
+      locale:
+        type: string
+        description: User locale.
+      phone_number:
+        type: string
+        description: user phone number.
+      address:
+        type: object
+        additionalProperties: true
+        description: Hashmap/Dictionary of additional user address information.
+  UserRole:
+    type: object
+    additionalProperties: true
+    description: Hashmap/Dictionary of additional user role information.
+  UserFactors:
+    type: object
+    properties:
+      schemas:
+        type: array
+        description: Array of factors containing technical and non-technical data about the user's factors.
+        items:
+          $ref: '#/definitions/UserFactor'
+  UserFactor:
+    type: object
+    additionalProperties: true
+    description: Hashmap/Dictionary of additional user factor information.
+  StatusResponse:
+    type: object
+    properties:
+      status:
+        type: string
+        description: status either OK or KO.
+  UserActivityPage:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          schemas:
+            type: array
+            description: User's list of applied roles..
+            items:
+              $ref: '#/definitions/UserActivity'
+      totalCount:
+        type: integer
+        description: Total count of all auditable activies for current user.
+      currentPage:
+        type: integer
+        description: Current page of activities paging within the data list.
+  UserActivity:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Activities's technical id.
+      transactionId:
+        type: string
+        description: Transaction's technical id.
+      type:
+        type: string
+        description: Type of activity.
+      referenceType:
+        type: string
+        description: Type of reference.
+      accessPoint:
+        type: object
+        description: Description of access point.
+      actor:
+        type: object
+        description: Description of actor in activity.
+      outcome:
+        type: object
+        description: Overall outcome of activity.
