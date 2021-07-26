@@ -229,7 +229,6 @@ jobs:
           root: /tmp
           paths:
             - ./docker-tag.txt
-
   deploy-on-aks:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -310,6 +309,76 @@ jobs:
             az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
             az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
 
+  deploy-formind-on-aks:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Read tag of Docker images to deploy
+          command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Will deploy Docker images with tag: ${TAG}"
+      - run:
+          name: Install Helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            helm version
+      - run:
+          name: Install Kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client=true
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Setup Git config and clone cloud-am repo
+          command: |
+            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Add SSH Key
+            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
+            ssh-add -D
+            ssh-add "${LOCAL_SSH_PRVIKEY}"
+
+            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+      - run:
+          name: Helm upgrade and 🚀 Formind instances
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az aks get-credentials --resource-group am-hprod --name am-hprod
+            helm upgrade --repo https://helm.gravitee.io \
+                        --install am-formind \
+                        -n formind \
+                        -f ./cloud-am/nightly/values-formind.yaml am \
+                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                        --set "api.image.tag=${TAG}" \
+                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                        --set "gateway.image.tag=${TAG}" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                        --set "ui.image.tag=${TAG}"
+
+  purge-formind-azure-registry:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - run:
+          name: 🗑 Let's purge all AM images older than 1d
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az acr run --cmd "acr purge --filter 'am-gateway:am-formind-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-api:am-formind-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-ui:am-formind-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -337,6 +406,7 @@ workflows:
             branches:
               ignore:
                 - master
+                - am-formind
                 # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
 
   testcontainer_tests:
@@ -361,6 +431,7 @@ workflows:
               ignore:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - am-formind
 
   build_branch:
     jobs:
@@ -371,6 +442,7 @@ workflows:
             branches:
               only:
                 - master
+                - am-formind
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - build:
           requires:
@@ -379,6 +451,7 @@ workflows:
             branches:
               only:
                 - master
+                - am-formind
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - run_postman_tests:
           requires:
@@ -404,6 +477,8 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+                - am-formind
+
       - deploy-on-aks:
           context: cicd-orchestrator
           pre-steps:
@@ -421,6 +496,25 @@ workflows:
           filters:
             branches:
               only: master
+
+      - deploy-formind-on-aks:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-id
+                var-name: AZURE_APPLICATION_ID
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/tenant
+                var-name: AZURE_TENANT
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-secret
+                var-name: AZURE_APPLICATION_SECRET
+          requires:
+            - publish-images-azure-registry
+          filters:
+            branches:
+              only:
+                - am-formind
 
   release:
     when:
@@ -472,6 +566,7 @@ workflows:
           secrethub_repo: cicd
           gio_release_version: << pipeline.parameters.graviteeio_version >>
 
+
   daily-purge-azure-registry:
     triggers:
       - schedule:
@@ -482,6 +577,28 @@ workflows:
                 - master
     jobs:
       - purge-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-id
+                var-name: AZURE_APPLICATION_ID
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/tenant
+                var-name: AZURE_TENANT
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-secret
+                var-name: AZURE_APPLICATION_SECRET
+
+  formind-daily-purge-azure-registry:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 1"
+          filters:
+            branches:
+              only:
+                - am-formind
+    jobs:
+      - purge-formind-azure-registry:
           context: cicd-orchestrator
           pre-steps:
             - secrethub/env-export:
