@@ -39,6 +39,7 @@ public class UserProperties {
     private String firstName;
     private String lastName;
     private String email;
+    private String source;
     private Set<String> roles;
     private List<String> groups;
     private Map<String, Object> claims;
@@ -69,6 +70,7 @@ public class UserProperties {
         if (user.getLoggedAt() != null) {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
+        this.source = user.getSource();
     }
 
     public String getId() {
@@ -149,5 +151,13 @@ public class UserProperties {
 
     public void setClaims(Map<String, Object> claims) {
         this.claims = claims;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }
