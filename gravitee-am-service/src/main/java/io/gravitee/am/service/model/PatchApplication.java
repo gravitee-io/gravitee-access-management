@@ -159,7 +159,7 @@ public class PatchApplication {
             requiredPermissions.add(Permission.APPLICATION_FACTOR);
         }
 
-        if (certificate != null && certificate.isPresent()) {
+        if (certificate != null) {
             requiredPermissions.add(Permission.APPLICATION_CERTIFICATE);
         }
 
