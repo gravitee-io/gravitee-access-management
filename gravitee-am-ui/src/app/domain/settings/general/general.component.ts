@@ -35,6 +35,7 @@ export interface Tag {
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
+  @ViewChild('deleteDomainBtn', { static: false }) deleteDomainBtn: any;
   private envId: string;
   formChanged = false;
   domain: any = {};
@@ -147,7 +148,10 @@ export class DomainSettingsGeneralComponent implements OnInit {
       .confirm('Delete Domain', 'Are you sure you want to delete this domain ?')
       .subscribe(res => {
         if (res) {
+          this.deleteDomainBtn.nativeElement.loading = true;
+          this.deleteDomainBtn.nativeElement.disabled = true;
           this.domainService.delete(this.domain.id).subscribe(response => {
+            this.deleteDomainBtn.nativeElement.loading = false;
             this.snackbarService.open('Domain ' + this.domain.name + ' deleted');
             this.navbarService.notifyDomain({});
             this.router.navigate(['']);

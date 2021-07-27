@@ -136,7 +136,7 @@
         Current domain's users will no longer have access to the platform to log in and access protected resources.
         <div class="gv-page-delete-button" fxLayout="row">
           <span fxFlex></span>
-          <button mat-raised-button color="warn" (click)="delete($event)">DELETE</button>
+          <gv-button #deleteDomainBtn danger (click)="delete($event)">DELETE</gv-button>
         </div>
       </div>
     </div>

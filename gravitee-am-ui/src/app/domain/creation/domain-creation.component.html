@@ -31,8 +31,8 @@
         </mat-form-field>
       </div>
       <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center" style="margin-top: 20px; border-top: 1px solid #e2e5e7; padding: 10px;">
-        <button mat-raised-button color="primary" [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE</button>
-        <a mat-stroked-button [routerLink]="['']">CANCEL</a>
+        <gv-button #createDomainBtn [disabled]="!domainForm.valid || domainForm.pristine" type="submit">CREATE</gv-button>
+        <gv-button outlined [routerLink]="['']">CANCEL</gv-button>
       </div>
     </form>
     <div class="gv-page-description" fxFlex>
