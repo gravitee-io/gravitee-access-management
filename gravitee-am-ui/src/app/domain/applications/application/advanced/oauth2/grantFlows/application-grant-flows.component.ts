@@ -73,6 +73,11 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     oauthSettings.grantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     oauthSettings.forcePKCE = this.applicationOauthSettings.forcePKCE;
     oauthSettings.tokenEndpointAuthMethod = this.applicationOauthSettings.tokenEndpointAuthMethod;
+    oauthSettings.tlsClientAuthSubjectDn = this.applicationOauthSettings.tlsClientAuthSubjectDn;
+    oauthSettings.tlsClientAuthSanDns = this.applicationOauthSettings.tlsClientAuthSanDns;
+    oauthSettings.tlsClientAuthSanUri = this.applicationOauthSettings.tlsClientAuthSanUri;
+    oauthSettings.tlsClientAuthSanIp = this.applicationOauthSettings.tlsClientAuthSanIp;
+    oauthSettings.tlsClientAuthSanEmail = this.applicationOauthSettings.tlsClientAuthSanEmail;
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});

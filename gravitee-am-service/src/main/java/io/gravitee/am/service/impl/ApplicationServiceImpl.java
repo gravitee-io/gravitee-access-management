@@ -735,7 +735,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             } else if (settings.getTlsClientAuthSanDns() != null && !settings.getTlsClientAuthSanDns().isEmpty() && (
-                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSanDns().isEmpty()) ||
+                    (settings.getTlsClientAuthSubjectDn() != null && !settings.getTlsClientAuthSubjectDn().isEmpty()) ||
                             (settings.getTlsClientAuthSanEmail() != null && !settings.getTlsClientAuthSanEmail().isEmpty()) ||
                             (settings.getTlsClientAuthSanIp() != null && !settings.getTlsClientAuthSanIp().isEmpty()) ||
                             (settings.getTlsClientAuthSanUri() != null && !settings.getTlsClientAuthSanUri().isEmpty()))) {
