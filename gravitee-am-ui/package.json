@@ -30,7 +30,7 @@
     "@angular/router": "^11.2.14",
     "@gravitee/ui-components": "^3.10.0",
     "@swimlane/ngx-datatable": "^19.0.0",
-    "@types/hammerjs": "^2.0.36",
+    "@types/hammerjs": "^2.0.40",
     "asciidoctor": "^2.2.4",
     "asciidoctor-highlight.js": "^0.3.0",
     "bcryptjs": "^2.4.3",
