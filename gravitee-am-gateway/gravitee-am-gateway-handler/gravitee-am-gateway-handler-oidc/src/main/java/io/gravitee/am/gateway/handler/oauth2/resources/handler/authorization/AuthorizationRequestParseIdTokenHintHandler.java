@@ -84,6 +84,13 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
             throw new InvalidRequestException("prompt=none must be present when id_token_hint is used");
         }
 
+        // if client has not enabled this option, continue
+        if (!client.isSilentReAuthentication()) {
+            routingContext.next();
+            return;
+        }
+
+        // process silent re-authentication
         extractUser(idTokenHint, client, h -> {
             if (h.failed()) {
                 // if no user, continue

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bd7d1764-0dbc-4f2b-94b4-5df845e2bafa",
+		"_postman_id": "b8413fe9-f1bf-4d60-8f1e-c42e6be747b7",
 		"name": "Gravitee.io - AM - Openid Core - app version",
 		"description": "Test Openid core specifications: https://openid.net/specs/openid-connect-core-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -5183,7 +5183,7 @@
 							"name": "Authorize - id_token_hint",
 							"item": [
 								{
-									"name": "Configure application - skip consent",
+									"name": "Configure application - enable silent re-auth",
 									"event": [
 										{
 											"listen": "test",
@@ -5214,7 +5214,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"settings\": {\n  \t\"advanced\": {\n      \"skipConsent\": true\n    }\n  }\n}"
+											"raw": "{\n  \"settings\": {\n    \"oauth\": {\n        \"silentReAuthentication\": true\n    }, \n  \t\"advanced\": {\n      \"skipConsent\": true\n    }\n  }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",

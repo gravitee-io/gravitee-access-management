@@ -319,6 +319,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setForcePKCE(other.isForcePKCE());
         applicationOAuthSettingsMongo.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettingsMongo.setSingleSignOut(other.isSingleSignOut());
+        applicationOAuthSettingsMongo.setSilentReAuthentication(other.isSilentReAuthentication());
         return applicationOAuthSettingsMongo;
     }
 
@@ -386,6 +387,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setForcePKCE(other.isForcePKCE());
         applicationOAuthSettings.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettings.setSingleSignOut(other.isSingleSignOut());
+        applicationOAuthSettings.setSilentReAuthentication(other.isSilentReAuthentication());
         return applicationOAuthSettings;
     }
 

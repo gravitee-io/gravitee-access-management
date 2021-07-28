@@ -87,6 +87,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<Boolean> forcePKCE;
     private Optional<List<String>> postLogoutRedirectUris;
     private Optional<Boolean> singleSignOut;
+    private Optional<Boolean> silentReAuthentication;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -536,6 +537,14 @@ public class PatchApplicationOAuthSettings {
         this.singleSignOut = singleSignOut;
     }
 
+    public Optional<Boolean> getSilentReAuthentication() {
+        return silentReAuthentication;
+    }
+
+    public void setSilentReAuthentication(Optional<Boolean> silentReAuthentication) {
+        this.silentReAuthentication = silentReAuthentication;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -598,6 +607,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setForcePKCE, this.getForcePKCE());
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
+        SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
 
         return toPatch;
     }

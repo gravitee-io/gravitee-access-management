@@ -140,10 +140,25 @@
           <div fxLayout="column">
             <mat-slide-toggle
               (change)="enableSingleSignOut($event)"
-              [checked]="this.singleSignOut" [disabled]="!editMode">
+              [checked]="this.applicationOAuthSettings.singleSignOut" [disabled]="!editMode">
               Logout from the external identity provider
             </mat-slide-toggle>
             <mat-hint style="font-size: 75%;">Call the end session endpoint of the external identity provider if available on AM logout call.</mat-hint>
+          </div>
+        </div>
+
+        <div *ngIf="displaySection()" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Silent re-authentication</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableSilentReAuthentication($event)"
+              [checked]="this.applicationOAuthSettings.silentReAuthentication" [disabled]="!editMode">
+              Silent re-authentication of your users
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">Enable the use of id_token_hint and prompt='none' parameters to ask for new tokens in a non interactive manner.</mat-hint>
           </div>
         </div>
 

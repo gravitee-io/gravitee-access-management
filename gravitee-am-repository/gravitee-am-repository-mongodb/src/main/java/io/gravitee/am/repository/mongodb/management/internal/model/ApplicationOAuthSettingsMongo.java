@@ -85,6 +85,7 @@ public class ApplicationOAuthSettingsMongo {
     private boolean forcePKCE;
     private List<String> postLogoutRedirectUris;
     private boolean singleSignOut;
+    private boolean silentReAuthentication;
 
     public String getClientId() {
         return clientId;
@@ -556,5 +557,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setSingleSignOut(boolean singleSignOut) {
         this.singleSignOut = singleSignOut;
+    }
+
+    public boolean isSilentReAuthentication() {
+        return silentReAuthentication;
+    }
+
+    public void setSilentReAuthentication(boolean silentReAuthentication) {
+        this.silentReAuthentication = silentReAuthentication;
     }
 }
