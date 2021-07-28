@@ -244,6 +244,12 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
         oAuthSettings.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
         oAuthSettings.setPostLogoutRedirectUris(client.getPostLogoutRedirectUris());
+        // parameters to control client identity when application authenticate using mtls
+        oAuthSettings.setTlsClientAuthSanDns(client.getTlsClientAuthSanDns());
+        oAuthSettings.setTlsClientAuthSanEmail(client.getTlsClientAuthSanEmail());
+        oAuthSettings.setTlsClientAuthSanIp(client.getTlsClientAuthSanIp());
+        oAuthSettings.setTlsClientAuthSanUri(client.getTlsClientAuthSanUri());
+        oAuthSettings.setTlsClientAuthSubjectDn(client.getTlsClientAuthSubjectDn());
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings
