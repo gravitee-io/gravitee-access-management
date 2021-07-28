@@ -153,7 +153,9 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
         if (nimbusJwk.getKeyOperations() != null) {
             jwk.setKeyOps(nimbusJwk.getKeyOperations().stream().map(keyOperation -> keyOperation.identifier()).collect(Collectors.toSet()));
         }
-        if (nimbusJwk.getAlgorithm() != null) {
+        if (configuration.getAlgorithm() != null && !configuration.getAlgorithm().isEmpty()) {
+            jwk.setAlg(configuration.getAlgorithm());
+        } else if (nimbusJwk.getAlgorithm() != null) {
             jwk.setAlg(nimbusJwk.getAlgorithm().getName());
         }
         if (nimbusJwk.getKeyID() != null) {
