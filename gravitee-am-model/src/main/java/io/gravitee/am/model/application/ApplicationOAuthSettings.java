@@ -276,6 +276,11 @@ public class ApplicationOAuthSettings {
      */
     private boolean singleSignOut = false;
 
+    /**
+     * Specify if the id_token_hint parameter can be use to (re)authenticate the end-user
+     */
+    private boolean silentReAuthentication;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -339,6 +344,7 @@ public class ApplicationOAuthSettings {
         this.forcePKCE = other.forcePKCE;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.singleSignOut = other.singleSignOut;
+        this.silentReAuthentication = other.silentReAuthentication;
     }
 
     public String getClientId() {
@@ -813,6 +819,14 @@ public class ApplicationOAuthSettings {
         this.singleSignOut = singleSignOut;
     }
 
+    public boolean isSilentReAuthentication() {
+        return silentReAuthentication;
+    }
+
+    public void setSilentReAuthentication(boolean silentReAuthentication) {
+        this.silentReAuthentication = silentReAuthentication;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -871,6 +885,7 @@ public class ApplicationOAuthSettings {
         client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);
         client.setForcePKCE(this.forcePKCE);
         client.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
-        client.setSingleSignOut(this.singleSignOut); ;
+        client.setSingleSignOut(this.singleSignOut);
+        client.setSilentReAuthentication(this.silentReAuthentication);
     }
 }

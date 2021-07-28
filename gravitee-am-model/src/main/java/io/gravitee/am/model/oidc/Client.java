@@ -201,6 +201,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean singleSignOut;
 
+    private boolean silentReAuthentication;
+
     public Client() {
     }
 
@@ -274,6 +276,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.flowsInherited = other.flowsInherited;
         this.mfaSettings = other.mfaSettings;
         this.singleSignOut = other.singleSignOut;
+        this.silentReAuthentication = other.silentReAuthentication;
     }
 
     public String getId() {
@@ -871,6 +874,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSingleSignOut(boolean singleSignOut) {
         this.singleSignOut = singleSignOut;
+    }
+
+    public boolean isSilentReAuthentication() {
+        return silentReAuthentication;
+    }
+
+    public void setSilentReAuthentication(boolean silentReAuthentication) {
+        this.silentReAuthentication = silentReAuthentication;
     }
 
     @Override
