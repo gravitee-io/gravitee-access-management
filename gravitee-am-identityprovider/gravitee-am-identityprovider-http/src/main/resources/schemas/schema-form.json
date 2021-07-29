@@ -169,7 +169,7 @@
                       "value" : {
                         "title": "Value",
                         "description": "The condition which will be verified after the remote call (support EL)",
-                        "default": "{#usersResponse.status == 404}",
+                        "default": "{#authenticationResponse.status == 404}",
                         "type" : "string"
                       },
                       "exception" : {

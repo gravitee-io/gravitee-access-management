@@ -71,7 +71,7 @@ public class HttpUserProvider implements UserProvider {
         // prepare request
         final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
         final HttpResourceConfiguration readResourceConfiguration = usersResourceConfiguration.getPaths().getReadResourceByEmail();
-        final DefaultUser user = new DefaultUser(null);
+        final DefaultUser user = new DefaultUser();
         user.setEmail(email);
 
         return findByUser(usersResourceConfiguration, readResourceConfiguration, user);
@@ -164,7 +164,7 @@ public class HttpUserProvider implements UserProvider {
     public Completable delete(String id) {
         try {
             // prepare context
-            DefaultUser deleteUser = new DefaultUser(null);
+            DefaultUser deleteUser = new DefaultUser();
             deleteUser.setId(id);
             AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
             TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
