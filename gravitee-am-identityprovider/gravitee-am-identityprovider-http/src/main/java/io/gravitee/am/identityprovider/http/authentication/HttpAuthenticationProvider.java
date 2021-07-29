@@ -113,7 +113,16 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     }
 
     @Override
+    public Maybe<User> loadPreAuthenticatedUser(Authentication authentication) {
+        return loadByUsername0(authentication.getContext(), new DefaultUser((io.gravitee.am.model.User) authentication.getPrincipal()));
+    }
+
+    @Override
     public Maybe<User> loadUserByUsername(String username) {
+        return loadByUsername0(new SimpleAuthenticationContext(), new DefaultUser(username));
+    }
+
+    private Maybe<User> loadByUsername0(AuthenticationContext authenticationContext, User user) {
         // prepare request
         final HttpAuthResourcePathsConfiguration authResourceConfiguration = configuration.getAuthenticationResource().getPaths();
         if (authResourceConfiguration == null) {
@@ -135,11 +144,8 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
             return Maybe.empty();
         }
 
-        final DefaultUser user = new DefaultUser(username);
-
         try {
             // prepare context
-            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
             TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
             templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
 

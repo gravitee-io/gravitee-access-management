@@ -52,8 +52,23 @@ public class DefaultUser implements User {
 
     private Date updatedAt;
 
+    public DefaultUser() {}
+
     public DefaultUser(String username) {
         this.username = username;
+    }
+
+    public DefaultUser(io.gravitee.am.model.User user) {
+        if (user != null) {
+            id = user.getExternalId();
+            username = user.getUsername();
+            email = user.getEmail();
+            firstName = user.getFirstName();
+            lastName = user.getLastName();
+            additionalInformation = user.getAdditionalInformation();
+            createdAt = user.getCreatedAt();
+            updatedAt = user.getUpdatedAt();
+        }
     }
 
     public void setAccountExpired(boolean accountExpired) {
