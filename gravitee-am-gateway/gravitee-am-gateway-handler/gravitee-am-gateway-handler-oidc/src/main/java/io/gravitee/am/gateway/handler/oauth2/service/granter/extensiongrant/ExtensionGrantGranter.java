@@ -18,19 +18,23 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Single;
@@ -106,7 +110,11 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                             }
                             return identityProviderManager
                                     .get(extensionGrant.getIdentityProvider())
-                                    .flatMap((Function<AuthenticationProvider, MaybeSource<io.gravitee.am.identityprovider.api.User>>) authProvider -> authProvider.loadUserByUsername(endUser.getUsername()))
+                                    .flatMap((Function<AuthenticationProvider, MaybeSource<io.gravitee.am.identityprovider.api.User>>) authProvider -> {
+                                        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
+                                        final Authentication authentication = new EndUserAuthentication(convert(endUser), null, authenticationContext);
+                                        return authProvider.loadPreAuthenticatedUser(authentication);
+                                    })
                                     .map(idpUser -> {
                                         User user = new User();
                                         user.setId(idpUser.getId());
@@ -138,6 +146,17 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                 .onErrorResumeNext(ex -> {
                     return Maybe.error(new InvalidGrantException(ex.getMessage()));
                 });
+    }
+
+    private User convert(io.gravitee.am.identityprovider.api.User idpUser) {
+        User newUser = new User();
+        newUser.setExternalId(idpUser.getId());
+        newUser.setUsername(idpUser.getUsername());
+        newUser.setEmail(idpUser.getEmail());
+        newUser.setFirstName(idpUser.getFirstName());
+        newUser.setLastName(idpUser.getLastName());
+        newUser.setAdditionalInformation(idpUser.getAdditionalInformation());
+        return newUser;
     }
 
     public void setMinDate(Date minDate) {

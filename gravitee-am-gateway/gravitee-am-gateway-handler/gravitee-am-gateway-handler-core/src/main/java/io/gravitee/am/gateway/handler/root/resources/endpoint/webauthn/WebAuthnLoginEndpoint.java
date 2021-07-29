@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
@@ -139,7 +140,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                 } else {
                     final JsonObject getAssertion = generateServerGetAssertion.result();
                     // check if user exists in AM
-                    checkUser(client, username, h -> {
+                    checkUser(client, username, new VertxHttpServerRequest(ctx.request().getDelegate()), h -> {
                         // if user doesn't exists to need to set values in the session
                         if (h.result() != null) {
                             session

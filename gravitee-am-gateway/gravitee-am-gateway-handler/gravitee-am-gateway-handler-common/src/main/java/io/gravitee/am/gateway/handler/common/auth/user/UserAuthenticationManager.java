@@ -31,7 +31,7 @@ public interface UserAuthenticationManager {
 
     Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated);
 
-    Maybe<User> loadUserByUsername(Client client, String username);
+    Maybe<User> loadUserByUsername(Client client, String username, Request request);
 
     Maybe<User> loadPreAuthenticatedUser(String subject, Request request);
 

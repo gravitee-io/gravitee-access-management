@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
@@ -134,7 +135,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Maybe<User> loadUserByUsername(Client client, String username) {
+    public Maybe<User> loadUserByUsername(Client client, String username, Request request) {
         logger.debug("Trying to load user [{}]", username);
 
         // Get identity providers associated to a client
@@ -155,7 +156,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             return Maybe.error(new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId()));
         }
 
-        Authentication authentication = new EndUserAuthentication(username, null);
+        final Authentication authentication = new EndUserAuthentication(username, null, new SimpleAuthenticationContext(request));
         return Observable.fromIterable(identities)
                 .flatMapMaybe(authProvider -> loadUserByUsername0(client, authentication, authProvider, true))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
@@ -205,7 +206,13 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     return Maybe.just(preAuthenticated)
                             .flatMap(preAuth -> {
                                 if (preAuth) {
-                                    return authenticationProvider.loadUserByUsername(authentication.getPrincipal().toString());
+                                    final String username = authentication.getPrincipal().toString();
+                                    return userService.findByDomainAndUsernameAndSource(domain.getId(), username, authProvider)
+                                            .switchIfEmpty(Maybe.error(new UsernameNotFoundException(username)))
+                                            .flatMap(user -> {
+                                                final Authentication enhanceAuthentication = new EndUserAuthentication(user, null, authentication.getContext());
+                                                return authenticationProvider.loadPreAuthenticatedUser(enhanceAuthentication);
+                                            });
                                 } else {
                                     return authenticationProvider.loadUserByUsername(authentication);
                                 }
