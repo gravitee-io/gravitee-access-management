@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Request;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -43,8 +44,8 @@ public abstract class WebAuthnEndpoint implements Handler<RoutingContext> {
      * @param username User name
      * @param handler Response handler
      */
-    protected void checkUser(Client client, String username, Handler<AsyncResult<User>> handler) {
-        userAuthenticationManager.loadUserByUsername(client, username)
+    protected void checkUser(Client client, String username, Request request, Handler<AsyncResult<User>> handler) {
+        userAuthenticationManager.loadUserByUsername(client, username, request)
                 .subscribe(
                         user -> handler.handle(Future.succeededFuture(user)),
                         error -> handler.handle(Future.failedFuture(error)),
