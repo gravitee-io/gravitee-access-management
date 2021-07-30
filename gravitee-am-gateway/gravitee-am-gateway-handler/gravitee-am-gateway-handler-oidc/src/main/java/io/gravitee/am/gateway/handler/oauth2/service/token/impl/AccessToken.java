@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.jackson.AccessTokenSerializer;
+
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -25,8 +28,18 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.jackson.AccessTokenSe
  */
 @JsonSerialize(using = AccessTokenSerializer.class)
 public class AccessToken extends Token {
+    @JsonProperty("cnf")
+    public Map<String, Object> confirmationMethod;
 
     public AccessToken(String value) {
         super(value);
+    }
+
+    public Map<String, Object> getConfirmationMethod() {
+        return confirmationMethod;
+    }
+
+    public void setConfirmationMethod(Map<String, Object> confirmationMethod) {
+        this.confirmationMethod = confirmationMethod;
     }
 }

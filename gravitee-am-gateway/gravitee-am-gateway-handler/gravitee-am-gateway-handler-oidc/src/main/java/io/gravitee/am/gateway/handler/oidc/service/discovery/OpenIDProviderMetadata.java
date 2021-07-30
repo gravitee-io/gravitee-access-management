@@ -164,10 +164,12 @@ public class OpenIDProviderMetadata {
 
     @JsonProperty("request_object_endpoint")
     private String requestObjectEndpoint;
-
     public String getIssuer() {
         return issuer;
     }
+
+    @JsonProperty("tls_client_certificate_bound_access_tokens")
+    private Boolean tlsClientCertificateBoundAccessTokens = Boolean.FALSE;
 
     public void setIssuer(String issuer) {
         this.issuer = issuer;
@@ -523,5 +525,13 @@ public class OpenIDProviderMetadata {
 
     public void setRequestObjectEndpoint(String requestObjectEndpoint) {
         this.requestObjectEndpoint = requestObjectEndpoint;
+    }
+
+    public Boolean getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public void setTlsClientCertificateBoundAccessTokens(Boolean tlsClientCertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 }

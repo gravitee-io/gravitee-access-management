@@ -65,6 +65,7 @@ public class TokenRequest extends OAuth2Request {
      */
     private String requestingPartyToken;
 
+
     public String getUsername() {
         return username;
     }
@@ -157,6 +158,9 @@ public class TokenRequest extends OAuth2Request {
 
         // set UMA 2.0 permissions
         oAuth2Request.setPermissions(getPermissions());
+
+        // certificate bound access token
+        oAuth2Request.setConfirmationMethodX5S256(getConfirmationMethodX5S256());
 
         return oAuth2Request;
     }

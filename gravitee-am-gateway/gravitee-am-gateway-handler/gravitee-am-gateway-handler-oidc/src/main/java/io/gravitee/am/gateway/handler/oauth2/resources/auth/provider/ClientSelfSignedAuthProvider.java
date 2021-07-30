@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
-import com.nimbusds.jose.util.Base64URL;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.oidc.Client;
@@ -26,11 +26,10 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import javax.net.ssl.SSLSession;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
 
 /**
  * Client Authentication method : self_signed_tls_client_auth
@@ -77,6 +76,7 @@ public class ClientSelfSignedAuthProvider implements ClientAuthProvider {
                                         .stream()
                                         .anyMatch(jwk -> thumbprint256.equals(jwk.getX5tS256()) || thumbprint.equals(jwk.getX5t()));
                                 if (match) {
+                                    context.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, thumbprint256);
                                     handler.handle(Future.succeededFuture(client));
                                 } else {
                                     handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate")));
@@ -89,12 +89,4 @@ public class ClientSelfSignedAuthProvider implements ClientAuthProvider {
         }
     }
 
-    private static String getThumbprint(X509Certificate cert, String algorithm)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
-        MessageDigest md = MessageDigest.getInstance(algorithm);
-        byte[] der = cert.getEncoded();
-        md.update(der);
-        byte[] digest = md.digest();
-        return Base64URL.encode(digest).toString();
-    }
 }

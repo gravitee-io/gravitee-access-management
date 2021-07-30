@@ -21,12 +21,16 @@ import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -44,6 +48,21 @@ public class OpenIDDiscoveryServiceTest {
 
     @Mock
     private ScopeService scopeService;
+
+    @Mock
+    private Environment environment;
+
+    @Before
+    public void prepare() {
+        Mockito.when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(false);
+        Mockito.when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("none");
+    }
+
+    private void enableMtls() {
+        Mockito.reset(environment);
+        Mockito.when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(true);
+        Mockito.when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("required");
+    }
 
     @Test
     public void shouldContain_request_parameter_supported() {
@@ -83,5 +102,15 @@ public class OpenIDDiscoveryServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(JWAlgorithmUtils.getSupportedRequestObjectSigningAlg().containsAll(openIDProviderMetadata.getRequestObjectSigningAlgValuesSupported()));
     }
+
+    @Test
+    public void shouldContain_tls_client_certificate_bound_access_tokens() {
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertFalse(openIDProviderMetadata.getTlsClientCertificateBoundAccessTokens());
+        enableMtls();
+        openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertTrue(openIDProviderMetadata.getTlsClientCertificateBoundAccessTokens());
+    }
+
 }
 

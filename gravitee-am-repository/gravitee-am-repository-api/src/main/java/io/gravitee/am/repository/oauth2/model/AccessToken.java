@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.oauth2.model;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -32,6 +34,20 @@ public class AccessToken extends Token {
      * https://tools.ietf.org/html/rfc6749#section-4.1.2
      */
     private String authorizationCode;
+
+    /**
+     * Confirmation method https://datatracker.ietf.org/doc/html/rfc8705#section-3.1
+     * This attribute isn't persisted, it is only here to allow insertion into the Introspection response
+     */
+    private Map<String, Object> confirmationMethod;
+
+    public Map<String, Object> getConfirmationMethod() {
+        return confirmationMethod;
+    }
+
+    public void setConfirmationMethod(Map<String, Object> confirmationMethod) {
+        this.confirmationMethod = confirmationMethod;
+    }
 
     public String getRefreshToken() {
         return refreshToken;

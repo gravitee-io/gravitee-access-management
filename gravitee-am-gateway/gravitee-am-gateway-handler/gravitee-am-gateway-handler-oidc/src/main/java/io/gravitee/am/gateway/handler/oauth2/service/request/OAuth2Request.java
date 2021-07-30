@@ -117,6 +117,11 @@ public class OAuth2Request extends BaseRequest {
 
     private MultiValueMap<String, String> pathParameters = null;
 
+    /**
+     * REQUIRED for <a href=" https://datatracker.ietf.org/doc/html/rfc8705#section-3.1">Certificate Bound Access Token</a>
+     */
+    private String confirmationMethodX5S256;
+
     public String getClientId() {
         return clientId;
     }
@@ -215,6 +220,14 @@ public class OAuth2Request extends BaseRequest {
 
     public void setPermissions(List<PermissionRequest> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getConfirmationMethodX5S256() {
+        return confirmationMethodX5S256;
+    }
+
+    public void setConfirmationMethodX5S256(String confirmationMethodX5S256) {
+        this.confirmationMethodX5S256 = confirmationMethodX5S256;
     }
 
     public boolean shouldGenerateIDToken() {

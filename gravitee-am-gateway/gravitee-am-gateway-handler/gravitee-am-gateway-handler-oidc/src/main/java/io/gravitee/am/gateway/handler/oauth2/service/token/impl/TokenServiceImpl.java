@@ -37,13 +37,13 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.common.util.Maps;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
@@ -242,6 +242,9 @@ public class TokenServiceImpl implements TokenService {
      */
     private Token convertAccessToken(JWT jwt) {
         AccessToken accessToken = new AccessToken(jwt.getJti());
+        if (jwt.getConfirmationMethod() != null) {
+            accessToken.setConfirmationMethod((Map) jwt.getConfirmationMethod());
+        }
         return convert(accessToken, jwt);
     }
 
@@ -270,6 +273,8 @@ public class TokenServiceImpl implements TokenService {
         JWT jwt = createJWT(request, client, user);
         // set exp claim
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getAccessTokenValiditySeconds()).getEpochSecond());
+
+        jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, request.getConfirmationMethodX5S256()).build());
 
         // set claims parameter (only for an access token)
         // useful for UserInfo Endpoint to request for specific claims

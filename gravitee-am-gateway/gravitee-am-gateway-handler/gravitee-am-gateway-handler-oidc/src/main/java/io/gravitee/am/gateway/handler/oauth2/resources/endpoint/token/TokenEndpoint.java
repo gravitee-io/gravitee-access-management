@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -72,6 +73,11 @@ public class TokenEndpoint implements Handler<RoutingContext> {
         // check if client has authorized grant types
         if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
+        }
+
+        if (context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT) != null) {
+            // preserve certificate thumbprint to add the information into the access token
+            tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
         }
 
         tokenGranter.grant(tokenRequest, client)
