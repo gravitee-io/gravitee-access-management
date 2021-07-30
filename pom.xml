@@ -62,6 +62,7 @@
         <module>gravitee-am-ui</module>
         <module>gravitee-am-resource</module>
         <module>gravitee-am-botdetection</module>
+        <module>gravitee-am-fapi-resource-api</module>
     </modules>
 
     <properties>
