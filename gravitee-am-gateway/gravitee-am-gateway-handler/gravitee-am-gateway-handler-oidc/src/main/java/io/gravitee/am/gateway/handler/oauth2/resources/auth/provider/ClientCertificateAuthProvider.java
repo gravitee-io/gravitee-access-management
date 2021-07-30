@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
@@ -27,11 +28,15 @@ import org.bouncycastle.asn1.x509.GeneralName;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
+
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
 
 /**
  * Client Authentication method : tls_client_auth
@@ -67,17 +72,18 @@ public class ClientCertificateAuthProvider implements ClientAuthProvider {
         try {
             Certificate[] peerCertificates = sslSession.getPeerCertificates();
             X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
-
             if ((client.getTlsClientAuthSubjectDn() != null && validateSubjectDn(client, peerCertificate)) ||
                     (client.getTlsClientAuthSanDns() != null && validateSAN(peerCertificate, GeneralName.dNSName, client.getTlsClientAuthSanDns())) ||
                     (client.getTlsClientAuthSanEmail() != null && validateSAN(peerCertificate, GeneralName.rfc822Name, client.getTlsClientAuthSanEmail())) ||
                     (client.getTlsClientAuthSanIp() != null && validateSAN(peerCertificate, GeneralName.iPAddress, client.getTlsClientAuthSanIp())) ||
                     (client.getTlsClientAuthSanUri() != null && validateSAN(peerCertificate, GeneralName.uniformResourceIdentifier, client.getTlsClientAuthSanUri()))) {
+
+                context.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate, "SHA-256"));
                 handler.handle(Future.succeededFuture(client));
             } else {
                 handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing TLS configuration")));
             }
-        } catch (SSLPeerUnverifiedException | CertificateParsingException ce) {
+        } catch (SSLPeerUnverifiedException | CertificateParsingException | CertificateEncodingException | NoSuchAlgorithmException ce ) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported certificate")));
         }
     }

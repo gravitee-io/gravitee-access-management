@@ -26,6 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +59,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
 
     @Autowired
     private ScopeService scopeService;
+
+    @Autowired
+    private Environment env;
 
     @Override
     public OpenIDProviderMetadata getConfiguration(String basePath) {
@@ -119,6 +123,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setTokenEndpointAuthSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg());
 
         openIDProviderMetadata.setAcrValuesSupported(AcrValues.values());
+
+        // certificate bound accessToken requires TLS & Client Auth
+        final Boolean secured = env.getProperty("http.secured", Boolean.class, false);
+        final String clientAuth = env.getProperty("http.ssl.clientAuth", String.class, "none");
+        openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(secured && !clientAuth.equalsIgnoreCase("none"));
 
         return openIDProviderMetadata;
     }

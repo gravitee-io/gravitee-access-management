@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -32,8 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Client Authentication method : tls_client_auth
@@ -103,6 +103,7 @@ public class ClientCertificateAuthProviderTest {
         SSLSession sslSession = mock(SSLSession.class);
 
         X509Certificate certificate = mock(X509Certificate.class);
+        when(certificate.getEncoded()).thenReturn("MYCERTIFICATE".getBytes());
         Principal subjectDN = mock(Principal.class);
 
         when(client.getTlsClientAuthSubjectDn()).thenReturn("CN=localhost, O=GraviteeSource, C=FR");
@@ -119,6 +120,7 @@ public class ClientCertificateAuthProviderTest {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertNotNull(clientAsyncResult.result());
+            verify(context).put(eq(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT), any());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));

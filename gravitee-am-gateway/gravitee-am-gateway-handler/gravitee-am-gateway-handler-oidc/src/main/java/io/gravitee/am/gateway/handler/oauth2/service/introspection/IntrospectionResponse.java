@@ -16,6 +16,9 @@
 package io.gravitee.am.gateway.handler.oauth2.service.introspection;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.idtoken.Claims;
+
+import java.util.Map;
 
 /**
  * The introspection response.
@@ -71,5 +74,12 @@ public class IntrospectionResponse extends JWT {
 
     public void setTokenType(String tokenType) {
         put(TOKEN_TYPE, tokenType);
+    }
+
+    public void setConfirmationMethod(Map<String, Object> confirmationMethod) {
+        put(Claims.cnf, confirmationMethod);
+    }
+    public Object getConfirmationMethod() {
+        return get(Claims.cnf);
     }
 }

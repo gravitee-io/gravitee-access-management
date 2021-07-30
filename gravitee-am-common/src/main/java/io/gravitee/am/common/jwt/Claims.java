@@ -97,10 +97,14 @@ public interface Claims {
      * The oauth 2.0 "scopes"
      */
     String scope = "scope";
+    /**
+     * The oauth 2.0 confirmation method
+     */
+    String cnf = "cnf";
 
     static List<String> claims() {
         return Arrays.asList(iss, sub, aud, exp, nbf, iat,
-                jti, domain, claims, ip_address, user_agent, scope);
+                jti, domain, claims, ip_address, user_agent, scope, cnf);
     }
 
 }

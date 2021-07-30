@@ -75,6 +75,9 @@ public class IntrospectionServiceImpl implements IntrospectionService {
         if (accessToken.getAdditionalInformation() != null && !accessToken.getAdditionalInformation().isEmpty()) {
             accessToken.getAdditionalInformation().forEach((k, v) -> introspectionResponse.putIfAbsent(k, v));
         }
+
+        introspectionResponse.setConfirmationMethod(accessToken.getConfirmationMethod());
+
         // remove "aud" claim due to some backend APIs unable to verify the "aud" value
         // see <a href="https://github.com/gravitee-io/issues/issues/3111"></a>
         introspectionResponse.remove(Claims.aud);

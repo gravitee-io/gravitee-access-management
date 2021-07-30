@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
-import io.gravitee.am.service.validators.AccountSettingsValidator;
-
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -55,6 +53,7 @@ public interface ConstantKeys {
     String SKIP_ACTION_KEY = "skipAction";
     String TRANSACTION_ID_KEY = "tid";
     String OIDC_PROVIDER_ID_TOKEN_KEY = "op_id_token";
+    String PEER_CERTIFICATE_THUMBPRINT = "x509_thumbprint_s256";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";

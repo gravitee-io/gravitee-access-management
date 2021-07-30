@@ -27,6 +27,8 @@ import java.util.Map;
  */
 public class JWT extends HashMap<String, Object> {
 
+    public static final String CONFIRMATION_METHOD_X509_THUMBPRINT = "x5t#S256";
+
     public JWT() { }
 
     public JWT(Map<? extends String, ?> claims) {
@@ -115,5 +117,13 @@ public class JWT extends HashMap<String, Object> {
 
     public boolean hasScope(String scope) {
         return getScope() != null && Arrays.asList(getScope().split("\\s+")).contains(scope);
+    }
+
+    public void setConfirmationMethod(Map<String, Object> confirmation) {
+        put(Claims.cnf, confirmation);
+    }
+
+    public Object getConfirmationMethod() {
+        return get(Claims.cnf);
     }
 }
