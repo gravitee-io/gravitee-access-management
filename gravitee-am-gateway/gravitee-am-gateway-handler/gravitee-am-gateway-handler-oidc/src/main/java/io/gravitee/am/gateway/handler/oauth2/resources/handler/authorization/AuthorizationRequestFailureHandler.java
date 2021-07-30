@@ -211,7 +211,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                 .host(redirectUri.getHost())
                 .port(redirectUri.getPort())
                 .userInfo(redirectUri.getUserInfo())
-                .path(redirectUri.getPath());
+                .path(redirectUri.getPath())
+                .query(redirectUri.getQuery());
 
         // append error parameters in "application/x-www-form-urlencoded" format
         if (fragment) {
