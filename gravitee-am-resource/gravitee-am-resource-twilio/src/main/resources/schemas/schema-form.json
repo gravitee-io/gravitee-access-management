@@ -16,6 +16,12 @@
       "title": "Authentication Token",
       "description": "Authentication Token linked to your account",
       "type": "string"
+    },
+    "useSystemProxy": {
+      "title": "Use system proxy",
+      "description": "Use the system proxy to call Twilio API.",
+      "type": "boolean",
+      "default": false
     }
   },
   "required": ["sid", "accountSid", "authToken"]
