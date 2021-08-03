@@ -43,6 +43,7 @@
 #  alpn: false
 #  ssl:
 #    clientAuth: request # Supports none, request, required
+#    ciphers: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 , TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 , TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 #    tlsProtocols: TLSv1.2, TLSv1.3
 #    keystore:
 #      type: jks # Supports jks, pem, pkcs12

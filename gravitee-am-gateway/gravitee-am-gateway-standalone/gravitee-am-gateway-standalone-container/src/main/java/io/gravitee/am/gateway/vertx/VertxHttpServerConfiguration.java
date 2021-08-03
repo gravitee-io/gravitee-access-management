@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.vertx;
 
+import io.gravitee.common.util.EnvironmentUtils;
 import io.vertx.core.http.HttpServerOptions;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.ConfigurableEnvironment;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -85,6 +89,8 @@ public class VertxHttpServerConfiguration implements InitializingBean {
     private int maxFormAttributeSize;
 
     private ClientAuthMode clientAuth;
+
+    private List<String> authorizedTlsCipherSuites;
 
     public int getPort() {
         return port;
@@ -238,6 +244,14 @@ public class VertxHttpServerConfiguration implements InitializingBean {
         this.maxFormAttributeSize = maxFormAttributeSize;
     }
 
+    public List<String> getAuthorizedTlsCipherSuites() {
+        return authorizedTlsCipherSuites;
+    }
+
+    public void setAuthorizedTlsCipherSuites(List<String> authorizedTlsCipherSuites) {
+        this.authorizedTlsCipherSuites = authorizedTlsCipherSuites;
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         String sClientAuthMode = environment.getProperty("http.ssl.clientAuth", ClientAuthMode.NONE.name());
@@ -249,6 +263,8 @@ public class VertxHttpServerConfiguration implements InitializingBean {
         } else {
             clientAuth = ClientAuthMode.valueOf(sClientAuthMode.toUpperCase());
         }
+
+        this.authorizedTlsCipherSuites = environment.getProperty("http.ssl.ciphers", List.class);
     }
 
     public enum ClientAuthMode {
