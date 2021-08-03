@@ -210,6 +210,7 @@ import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.r
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
+import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -2223,6 +2224,20 @@ export const routes: Routes = [
                             resolve: {apps: ApplicationsResolver}
                           }
                         ]
+                      },
+                      {
+                        path: 'oidc-profile',
+                        component: OIDCProfileComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Security Profile',
+                            section: 'Openid'
+                          },
+                          perms: {
+                            only: ['domain_openid_read']
+                          }
+                        }
                       },
                       {
                         path: 'uma',

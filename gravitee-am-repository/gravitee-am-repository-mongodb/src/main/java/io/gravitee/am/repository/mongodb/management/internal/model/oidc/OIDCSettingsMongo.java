@@ -24,6 +24,7 @@ import java.util.List;
 public class OIDCSettingsMongo {
 
     private ClientRegistrationSettingsMongo clientRegistrationSettings;
+    private SecurityProfileSettingsMongo securityProfileSettings;
     private boolean redirectUriStrictMatching;
     private List<String> postLogoutRedirectUris;
 
@@ -49,5 +50,13 @@ public class OIDCSettingsMongo {
 
     public void setPostLogoutRedirectUris(List<String> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
+    public SecurityProfileSettingsMongo getSecurityProfileSettings() {
+        return securityProfileSettings;
+    }
+
+    public void setSecurityProfileSettings(SecurityProfileSettingsMongo securityProfileSettings) {
+        this.securityProfileSettings = securityProfileSettings;
     }
 }

@@ -26,6 +26,8 @@ public class OIDCSettings {
 
     private ClientRegistrationSettings clientRegistrationSettings;
 
+    private SecurityProfileSettings securityProfileSettings;
+
     /**
      * Enable redirect_uri strict matching during OIDC flow (check for redirect_uri_mismatch exception)
      */
@@ -60,9 +62,18 @@ public class OIDCSettings {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
+    public SecurityProfileSettings getSecurityProfileSettings() {
+        return securityProfileSettings;
+    }
+
+    public void setSecurityProfileSettings(SecurityProfileSettings securityProfileSettings) {
+        this.securityProfileSettings = securityProfileSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
+        defaultSettings.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
         defaultSettings.setRedirectUriStrictMatching(false);
         return defaultSettings;
     }

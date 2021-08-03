@@ -323,6 +323,7 @@ import {IdenticonHashDirective} from './directives/identicon-hash.directive';
 import {UserAvatarComponent} from './components/user-avatar/user-avatar.component';
 import {NotFoundComponent} from './not-found/not-found.component';
 import {UmaComponent} from './domain/settings/uma/uma.component';
+import {OIDCProfileComponent} from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import {ApplicationResourcesComponent} from './domain/applications/application/advanced/resources/resources.component';
 import {ApplicationResourcesResolver} from './resolvers/application-resources.resolver';
 import {ApplicationResourceComponent} from './domain/applications/application/advanced/resources/resource/resource.component';
@@ -558,6 +559,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
+    OIDCProfileComponent,
     LoginSettingsComponent,
     UsersSearchInfoDialog,
     NewsletterComponent,
