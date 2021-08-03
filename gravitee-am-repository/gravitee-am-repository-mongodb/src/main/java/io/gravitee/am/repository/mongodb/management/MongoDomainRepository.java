@@ -30,6 +30,7 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
@@ -37,6 +38,7 @@ import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import io.reactivex.*;
 import org.bson.BsonDocument;
@@ -224,6 +226,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         OIDCSettings oidcSettings = new OIDCSettings();
         oidcSettings.setRedirectUriStrictMatching(oidcMongo.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
+        oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
 
         return oidcSettings;
@@ -258,6 +261,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
+    private static SecurityProfileSettings convert(SecurityProfileSettingsMongo profiles) {
+        if (profiles == null) {
+            return null;
+        }
+
+        SecurityProfileSettings result = new SecurityProfileSettings();
+        result.setEnablePlainFapi(profiles.isEnablePlainFapi());
+
+        return result;
+    }
+
     private static OIDCSettingsMongo convert(OIDCSettings oidc) {
         if (oidc == null) {
             return null;
@@ -266,6 +280,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         OIDCSettingsMongo oidcSettings = new OIDCSettingsMongo();
         oidcSettings.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
+        oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
 
         return oidcSettings;
@@ -296,6 +311,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedScopesEnabled(dcr.isAllowedScopesEnabled());
         result.setAllowedScopes(dcr.getAllowedScopes());
         result.setClientTemplateEnabled(dcr.isClientTemplateEnabled());
+
+        return result;
+    }
+
+    private static SecurityProfileSettingsMongo convert(SecurityProfileSettings profile) {
+        if (profile == null) {
+            return null;
+        }
+
+        SecurityProfileSettingsMongo result = new SecurityProfileSettingsMongo();
+        result.setEnablePlainFapi(profile.isEnablePlainFapi());
 
         return result;
     }

@@ -18,6 +18,7 @@ package io.gravitee.am.service.model.openid;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
@@ -37,6 +38,9 @@ public class PatchOIDCSettings {
     @JsonProperty("clientRegistrationSettings")
     private Optional<PatchClientRegistrationSettings> clientRegistrationSettings;
 
+    @JsonProperty("securityProfileSettings")
+    private Optional<PatchSecurityProfileSettings> securityProfileSettings;
+
     private Optional<Boolean> redirectUriStrictMatching;
 
     private Optional<List<String>> postLogoutRedirectUris;
@@ -47,6 +51,14 @@ public class PatchOIDCSettings {
 
     public void setClientRegistrationSettings(Optional<PatchClientRegistrationSettings> clientRegistrationSettings) {
         this.clientRegistrationSettings = clientRegistrationSettings;
+    }
+
+    public Optional<PatchSecurityProfileSettings> getSecurityProfileSettings() {
+        return securityProfileSettings;
+    }
+
+    public void setSecurityProfileSettings(Optional<PatchSecurityProfileSettings> securityProfileSettings) {
+        this.securityProfileSettings = securityProfileSettings;
     }
 
     public Optional<Boolean> getRedirectUriStrictMatching() {
@@ -82,6 +94,16 @@ public class PatchOIDCSettings {
                 toPatch.setClientRegistrationSettings(patcher.patch(source));
             } else {
                 toPatch.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
+            }
+        }
+
+        if (getSecurityProfileSettings() != null) {
+            if (getSecurityProfileSettings().isPresent()) {
+                final PatchSecurityProfileSettings patcher = getSecurityProfileSettings().get();
+                final SecurityProfileSettings source = toPatch.getSecurityProfileSettings();
+                toPatch.setSecurityProfileSettings(patcher.patch(source));
+            } else {
+                toPatch.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
             }
         }
 
