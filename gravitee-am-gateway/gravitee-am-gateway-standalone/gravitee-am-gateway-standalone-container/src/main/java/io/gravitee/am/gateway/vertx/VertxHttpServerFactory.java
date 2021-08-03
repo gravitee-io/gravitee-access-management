@@ -62,6 +62,14 @@ public class VertxHttpServerFactory implements FactoryBean<HttpServer> {
                 options.setEnabledSecureTransportProtocols(new HashSet<>(Arrays.asList(httpServerConfiguration.getTlsProtocols().split("\\s*,\\s*"))));
             }
 
+            // restrict the authorized ciphers
+            if (httpServerConfiguration.getAuthorizedTlsCipherSuites() != null) {
+                httpServerConfiguration.getAuthorizedTlsCipherSuites()
+                        .stream()
+                        .map(cipher -> cipher.trim())
+                        .forEach(options::addEnabledCipherSuite);
+            }
+
             if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.NONE) {
                 options.setClientAuth(ClientAuth.NONE);
             } else if (httpServerConfiguration.getClientAuth() == VertxHttpServerConfiguration.ClientAuthMode.REQUEST) {
