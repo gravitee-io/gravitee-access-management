@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.web.UriBuilder;
@@ -273,6 +274,21 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
         }
         if(!client.getResponseTypes().contains(responseType)) {
             throw new UnauthorizedClientException("Client should have all requested response_type");
+        }
+
+        if (this.domain.getOidc() != null &&
+                this.domain.getOidc().getSecurityProfileSettings() != null &&
+                this.domain.getOidc().getSecurityProfileSettings().isEnablePlainFapi()) {
+            // For FAPI : https://openid.net/specs/openid-financial-api-part-2-1_0-final.html#authorization-server
+            // The authorization server
+            //    shall require
+            //        the response_type value code id_token, or
+            //        the response_type value code in conjunction with the response_mode value jwt;
+            String responseMode = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
+            if (!((responseType.equals(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN)) ||
+                    (responseType.equals(ResponseType.CODE) && (responseMode != null && responseMode.equalsIgnoreCase("jwt"))))) {
+                throw new InvalidRequestException("Invalid response_type");
+            }
         }
     }
 
