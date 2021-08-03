@@ -182,7 +182,9 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
     private Single<JWT> validateRequestObjectClaims(RoutingContext context, JWT jwt) {
         try {
             final JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
-
+            if (jwtClaimsSet.getExpirationTime() == null || jwtClaimsSet.getExpirationTime().before(new Date())) {
+                return Single.error(new InvalidRequestObjectException("Request object must contains valid exp claim"));
+            }
             // according to https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
             // OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax
             // So we test the consistency of these parameters
