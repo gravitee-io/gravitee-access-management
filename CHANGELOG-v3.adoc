@@ -1,6 +1,100 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/252?closed=1[AM - 3.10.0 (2021-08-03)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Allow enrich authentication context on Registration flow https://github.com/gravitee-io/issues/issues/5676[#5676]
+- Define user source IDP as custom claims https://github.com/gravitee-io/issues/issues/5914[#5914]
+- Fix mfa channel type https://github.com/gravitee-io/issues/issues/5918[#5918]
+- Test if user is not null on MFA https://github.com/gravitee-io/issues/issues/5717[#5717]
+- Unable to register client with DRC and tls_client_auth https://github.com/gravitee-io/issues/issues/5927[#5927]
+
+*_General_*
+
+- Merge 3.9.1 https://github.com/gravitee-io/issues/issues/5755[#5755]
+- Merge 3.9.2 https://github.com/gravitee-io/issues/issues/5794[#5794]
+- Merge 3.9.3 https://github.com/gravitee-io/issues/issues/5898[#5898]
+- Unable to register a user or reset a password https://github.com/gravitee-io/issues/issues/5675[#5675]
+
+*_Jwks_*
+
+- The alg field is wrong https://github.com/gravitee-io/issues/issues/5923[#5923]
+
+*_Management_*
+
+- Unable to remove certificate from application https://github.com/gravitee-io/issues/issues/5922[#5922]
+
+*_Mangement_*
+
+- [jdbc] unable to create domain https://github.com/gravitee-io/issues/issues/5759[#5759]
+
+*_Userinfo_*
+
+- Provide roles grant by groups https://github.com/gravitee-io/issues/issues/5795[#5795]
+
+=== Features
+
+*_Gateway_*
+
+- Be able to logout from OIDC provider in addition of AM https://github.com/gravitee-io/issues/issues/5654[#5654]
+- Handle id_token_hint to sign in users https://github.com/gravitee-io/issues/issues/5840[#5840]
+- Self account management API configuration https://github.com/gravitee-io/issues/issues/5854[#5854]
+- [identity-provider] support EL for role mapping https://github.com/gravitee-io/issues/issues/4107[#4107]
+- [identity-provider] support EL for user mapping https://github.com/gravitee-io/issues/issues/5645[#5645]
+- [login] be able to skip the login page if client has social/OIDC identity providers https://github.com/gravitee-io/issues/issues/2289[#2289]
+
+*_Management_*
+
+- Manage organization users https://github.com/gravitee-io/issues/issues/3922[#3922]
+- [gateway] activate flow condition https://github.com/gravitee-io/issues/issues/5610[#5610]
+- [gateway] create new flow https://github.com/gravitee-io/issues/issues/5646[#5646]
+
+*_Mfa_*
+
+- [sms] Infobip implementation https://github.com/gravitee-io/issues/issues/5736[#5736]
+
+*_Reporter_*
+
+- Kafka implementation https://github.com/gravitee-io/issues/issues/5735[#5735]
+
+=== Improvements
+
+*_Console_*
+
+- Add loader on button for long lasting action https://github.com/gravitee-io/issues/issues/5920[#5920]
+
+*_Gateway_*
+
+- Add more context for the pre-authenticated user flows https://github.com/gravitee-io/issues/issues/5839[#5839]
+
+*_Idp_*
+
+- [http] use enhance context to load pre-authenticated user https://github.com/gravitee-io/issues/issues/5935[#5935]
+
+*_Management_*
+
+- Add resource logo https://github.com/gravitee-io/issues/issues/5770[#5770]
+- Be able to override default admin username and password during first load https://github.com/gravitee-io/issues/issues/3975[#3975]
+- Manage default requested scopes for an application https://github.com/gravitee-io/issues/issues/5838[#5838]
+- User logout should be traced https://github.com/gravitee-io/issues/issues/5799[#5799]
+
+*_Management-ui_*
+
+- Apply new theme https://github.com/gravitee-io/issues/issues/5605[#5605]
+- Improve UX for advanced users search https://github.com/gravitee-io/issues/issues/5837[#5837]
+- Use expression language ui component for EL field https://github.com/gravitee-io/issues/issues/5719[#5719]
+
+*_Reporter_*
+
+- Do not start AuditReporter if diseabled https://github.com/gravitee-io/issues/issues/5813[#5813]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/415?closed=1[AM - 3.9.3 (2021-07-22)]
 
 === Bug fixes
