@@ -15,7 +15,7 @@
  */
 
 db.getCollection("applications")
-    .find()
+    .find({ "settings.oauth.scopes" : { $exists: true} })
     .forEach(function (application) {
         db.getCollection("applications").update({_id: application._id}, { "$set": { "settings.oauth.defaultScopes" : application.settings.oauth.scopes } });
     });
