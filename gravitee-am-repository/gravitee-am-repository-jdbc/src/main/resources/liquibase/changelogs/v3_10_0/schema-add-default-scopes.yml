@@ -6,12 +6,12 @@ databaseChangeLog:
 
         - sql:
             dbms: postgresql
-            sql: "UPDATE applications SET settings = jsonb_set(cast(settings as jsonb), '{oauth,defaultScopes}', settings->'oauth'->'scopes', true);"
+            sql: "UPDATE applications SET settings = jsonb_set(cast(settings as jsonb), '{oauth,defaultScopes}', settings->'oauth'->'scopes', true) where (settings->'oauth'->'scopes') IS NOT NULL;"
 
         - sql:
             dbms: mysql, mariadb
-            sql: "UPDATE applications SET settings = JSON_SET(settings, '$.oauth.defaultScopes', JSON_EXTRACT(settings,'$.oauth.scopes'));"
+            sql: "UPDATE applications SET settings = JSON_SET(settings, '$.oauth.defaultScopes', JSON_EXTRACT(settings,'$.oauth.scopes')) where JSON_EXTRACT(settings,'$.oauth.scopes') IS NOT NULL;"
 
         - sql:
             dbms: mssql
-            sql: "UPDATE applications SET settings = JSON_MODIFY(settings, '$.oauth.defaultScopes', JSON_QUERY(settings, '$.oauth.scopes'));"
+            sql: "UPDATE applications SET settings = JSON_MODIFY(settings, '$.oauth.defaultScopes', JSON_QUERY(settings, '$.oauth.scopes')) where JSON_QUERY(settings, '$.oauth.scopes') IS NOT NULL;"
