@@ -200,7 +200,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService))
+                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowContextHandler)
