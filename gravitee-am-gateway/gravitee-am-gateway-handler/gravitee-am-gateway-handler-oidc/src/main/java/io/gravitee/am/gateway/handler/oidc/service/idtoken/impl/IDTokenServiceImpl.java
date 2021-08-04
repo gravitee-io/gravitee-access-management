@@ -164,13 +164,18 @@ public class IDTokenServiceImpl implements IDTokenService {
         idToken.setAud(oAuth2Request.getClientId());
         idToken.setIat(Instant.now().getEpochSecond());
         idToken.setExp(Instant.ofEpochSecond(idToken.getIat()).plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+
         // set auth_time (Time when the End-User authentication occurred.)
+        //
+        // according to OIDC specification (https://openid.net/specs/openid-connect-core-1_0.html#IDToken),
+        // this claim is optional but REQUIRED if the max_age parameter is specified
+        // or it the auth_time is part of the claims request.
+        // we decided to always provide this claim during the Financial-grand API conformance implementation
+        // since this claim was return by default in some cases even if conditions that require it were missing
         if (!oAuth2Request.isClientOnly() && user != null && user.getLoggedAt() != null) {
-            String maxAge = oAuth2Request.parameters().getFirst(Parameters.MAX_AGE);
-            if (maxAge != null) {
-                idToken.setAuthTime(user.getLoggedAt().getTime() / 1000l);
-            }
+            idToken.setAuthTime(user.getLoggedAt().getTime() / 1000l);
         }
+
         // set nonce
         String nonce = oAuth2Request.parameters() != null ? oAuth2Request.parameters().getFirst(Parameters.NONCE) : null;
         if (nonce != null && !nonce.isEmpty()) {
