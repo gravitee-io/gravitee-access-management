@@ -276,9 +276,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             throw new UnauthorizedClientException("Client should have all requested response_type");
         }
 
-        if (this.domain.getOidc() != null &&
-                this.domain.getOidc().getSecurityProfileSettings() != null &&
-                this.domain.getOidc().getSecurityProfileSettings().isEnablePlainFapi()) {
+        if (this.domain.usePlainFapiProfile()) {
             // For FAPI : https://openid.net/specs/openid-financial-api-part-2-1_0-final.html#authorization-server
             // The authorization server
             //    shall require
@@ -350,7 +348,8 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     private boolean redirectMatches(String requestedRedirect, String registeredClientUri) {
         // if redirect_uri strict matching mode is enabled, do string matching
-        if (this.domain.isRedirectUriStrictMatching()) {
+        // FAPI also requires strict matching
+        if (this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()) {
             return requestedRedirect.equals(registeredClientUri);
         }
 
