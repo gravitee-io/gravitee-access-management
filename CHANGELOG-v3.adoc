@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/420?closed=1[AM - 3.10.1 (2021-08-04)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Loss of data when migrating on 3.10.0 for jdbc users https://github.com/gravitee-io/issues/issues/5957[#5957]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/252?closed=1[AM - 3.10.0 (2021-08-03)]
 
 === Bug fixes
