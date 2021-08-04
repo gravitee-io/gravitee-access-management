@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -57,7 +58,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
 
     @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
-        String refreshToken = tokenRequest.parameters().getFirst("refresh_token");
+        String refreshToken = tokenRequest.parameters().getFirst(Parameters.REFRESH_TOKEN);
 
         if (refreshToken == null || refreshToken.isEmpty()) {
             return Single.error(new InvalidRequestException("A refresh token must be supplied."));

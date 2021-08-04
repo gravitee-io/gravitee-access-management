@@ -423,6 +423,12 @@ public class Domain implements Resource {
         return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
     }
 
+    public boolean usePlainFapiProfile() {
+        return this.getOidc() != null &&
+                this.getOidc().getSecurityProfileSettings() != null &&
+                this.getOidc().getSecurityProfileSettings().isEnablePlainFapi();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
