@@ -27,7 +27,6 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
@@ -183,79 +182,77 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
     }
 
     private Single<JWT> validateRequestObjectClaims(RoutingContext context, JWT jwt) {
-        try {
-            final JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
-            if (jwtClaimsSet.getExpirationTime() == null || jwtClaimsSet.getExpirationTime().before(new Date())) {
-                throw new InvalidRequestObjectException("Request object must contains valid exp claim");
-            }
-
-            // according to https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
-            // OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax
-            // So we test the consistency of these parameters
-            List<String> scope = context.queryParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
-            final String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
-            if (scope != null && !scope.isEmpty() &&
-                    (scopeClaim == null || !scopeClaim.equals(scope.get(0)))) {
-                throw new InvalidRequestObjectException("Request object must contains valid scope claim");
-            }
-
-            List<String> redirectUri = context.queryParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-            final String redirectUriClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-            if ( (redirectUri == null) ||
-                    (redirectUri != null && (redirectUri.size() != 1 || redirectUriClaim == null || !redirectUriClaim.equals(redirectUri.get(0))))) {
-                // remove redirect_uri provided as parameter and continue to let AuthorizationRequestParseParametersHandler
-                // throws the right error according to the client configuration
-                context.request().params().remove(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-                throw new InvalidRequestException("Missing or invalid redirect_uri");
-            }
-
-            // here after these  constraints are specific to the FAPI specification
-            validateRequestObjectClaimsAgainstFapi(context, jwtClaimsSet);
-
-        } catch (OAuth2Exception e) {
-            // in case of OAuth2 Exception related to the request object validation,
-            // we override parameters to use then in redirect (like the state one)
-            overrideRequestParameters(context, jwt);
-            return Single.error(e);
-        } catch (ParseException e) {
-            return Single.error(new InvalidRequestObjectException());
-        }
-        return Single.just(jwt);
-    }
-
-    private void validateRequestObjectClaimsAgainstFapi(RoutingContext context, JWTClaimsSet jwtClaimsSet) throws ParseException {
         if (this.domain.usePlainFapiProfile()) {
+            try {
+                final JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
 
-            final Date nbf = jwtClaimsSet.getNotBeforeTime();
-            if (nbf == null || (nbf.getTime() + ONE_HOUR_IN_MILLIS) < jwtClaimsSet.getExpirationTime().getTime()) {
-                throw new InvalidRequestObjectException("Request object older than 60 minutes");
-            }
+                // according to https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
+                // OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax
+                // but FAPI requires that these params are equals, so we test the consistency of these parameters
+                // in addition FAPI requires some claims that are optional in the OIDC core spec (like exp, nbf...)
 
-            List<String> state = context.queryParam(io.gravitee.am.common.oauth2.Parameters.STATE);
-            final String stateClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE);
-            if (state != null && !state.isEmpty() &&
-                    (stateClaim == null || !stateClaim.equals(state.get(0)))) {
-                throw new InvalidRequestObjectException("Request object must contains valid state claim");
-            }
+                if (jwtClaimsSet.getExpirationTime() == null || jwtClaimsSet.getExpirationTime().before(new Date())) {
+                    throw new InvalidRequestObjectException("Request object must contains valid exp claim");
+                }
 
-            final OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
-            if (jwtClaimsSet.getAudience() == null || (openIDProviderMetadata != null &&
-                    !jwtClaimsSet.getAudience().contains(openIDProviderMetadata.getIssuer()))) {
-                // the aud claim in the request object shall be, or shall be an array containing, the OP’s Issuer Identifier URL;
-                throw new InvalidRequestObjectException("Invalid audience claim");
-            }
+                List<String> redirectUri = context.queryParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+                final String redirectUriClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+                if ( (redirectUri == null) ||
+                        (redirectUri != null && (redirectUri.size() != 1 || redirectUriClaim == null || !redirectUriClaim.equals(redirectUri.get(0))))) {
+                    // remove redirect_uri provided as parameter and continue to let AuthorizationRequestParseParametersHandler
+                    // throws the right error according to the client configuration
+                    context.request().params().remove(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+                    throw new InvalidRequestException("Missing or invalid redirect_uri");
+                }
 
-            String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
-            if (scopeClaim != null && scopeClaim.contains("openid") && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(Parameters.NONCE))) {
-                // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#client-requesting-openid-scope
-                // If the client requests the openid scope, the authorization server shall require the nonce parameter defined
-                throw new InvalidRequestObjectException("Scope openid expect the nonce parameter defined");
-            } else if ((scopeClaim == null || !scopeClaim.contains("openid")) && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE))) {
-                // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#clients-not-requesting-openid-scope
-                // If the client does not request the openid scope, the authorization server shall require the state parameter defined
-                throw new InvalidRequestObjectException("Absence of scope openid expect the state parameter defined");
+                final Date nbf = jwtClaimsSet.getNotBeforeTime();
+                if (nbf == null || (nbf.getTime() + ONE_HOUR_IN_MILLIS) < jwtClaimsSet.getExpirationTime().getTime()) {
+                    throw new InvalidRequestObjectException("Request object older than 60 minutes");
+                }
+
+                List<String> state = context.queryParam(io.gravitee.am.common.oauth2.Parameters.STATE);
+                final String stateClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE);
+                if (state != null && !state.isEmpty() &&
+                        (stateClaim == null || !stateClaim.equals(state.get(0)))) {
+                    throw new InvalidRequestObjectException("Request object must contains valid state claim");
+                }
+
+                final OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
+                if (jwtClaimsSet.getAudience() == null || (openIDProviderMetadata != null &&
+                        !jwtClaimsSet.getAudience().contains(openIDProviderMetadata.getIssuer()))) {
+                    // the aud claim in the request object shall be, or shall be an array containing, the OP’s Issuer Identifier URL;
+                    throw new InvalidRequestObjectException("Invalid audience claim");
+                }
+
+                List<String> scope = context.queryParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
+                final String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
+                if (scope != null && !scope.isEmpty() &&
+                        (scopeClaim == null || !scopeClaim.equals(scope.get(0)))) {
+                    throw new InvalidRequestObjectException("Request object must contains valid scope claim");
+                }
+
+                // String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
+                if (scopeClaim != null && scopeClaim.contains("openid") && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(Parameters.NONCE))) {
+                    // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#client-requesting-openid-scope
+                    // If the client requests the openid scope, the authorization server shall require the nonce parameter defined
+                    throw new InvalidRequestObjectException("Scope openid expect the nonce parameter defined");
+                } else if ((scopeClaim == null || !scopeClaim.contains("openid")) && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE))) {
+                    // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#clients-not-requesting-openid-scope
+                    // If the client does not request the openid scope, the authorization server shall require the state parameter defined
+                    throw new InvalidRequestObjectException("Absence of scope openid expect the state parameter defined");
+                }
+
+            } catch (OAuth2Exception e) {
+                // in case of OAuth2 Exception related to the request object validation,
+                // we override parameters to use then in redirect (like the state one)
+                overrideRequestParameters(context, jwt);
+                return Single.error(e);
+            } catch (ParseException e) {
+                return Single.error(new InvalidRequestObjectException());
             }
         }
+
+        return Single.just(jwt);
     }
 
     private Maybe<JWT> handleRequestObjectURI(RoutingContext context) {
