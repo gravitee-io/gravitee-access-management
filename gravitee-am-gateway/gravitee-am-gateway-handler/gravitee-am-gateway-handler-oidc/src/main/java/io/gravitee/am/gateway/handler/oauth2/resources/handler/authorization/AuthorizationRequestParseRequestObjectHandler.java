@@ -70,6 +70,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                             io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
                             io.gravitee.am.common.oauth2.Parameters.STATE
                             )).flatMap(Collection::stream).collect(Collectors.toList());
+    public static final int ONE_HOUR_IN_MILLIS = 3600 * 1000;
 
     private final RequestObjectService requestObjectService;
 
@@ -224,6 +225,11 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
     private void validateRequestObjectClaimsAgainstFapi(RoutingContext context, JWTClaimsSet jwtClaimsSet) throws ParseException {
         if (this.domain.usePlainFapiProfile()) {
+
+            final Date nbf = jwtClaimsSet.getNotBeforeTime();
+            if (nbf == null || (nbf.getTime() + ONE_HOUR_IN_MILLIS) < jwtClaimsSet.getExpirationTime().getTime()) {
+                throw new InvalidRequestObjectException("Request object older than 60 minutes");
+            }
 
             List<String> state = context.queryParam(io.gravitee.am.common.oauth2.Parameters.STATE);
             final String stateClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE);
