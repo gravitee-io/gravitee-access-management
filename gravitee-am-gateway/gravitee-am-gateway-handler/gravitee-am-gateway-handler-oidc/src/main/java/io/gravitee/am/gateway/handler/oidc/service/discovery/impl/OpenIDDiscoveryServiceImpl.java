@@ -45,6 +45,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
 
     private static final String AUTHORIZATION_ENDPOINT = "/oauth/authorize";
     private static final String TOKEN_ENDPOINT = "/oauth/token";
+    private static final String PAR_ENDPOINT = "/oauth/par";
     private static final String USERINFO_ENDPOINT = "/oidc/userinfo";
     private static final String JWKS_URI = "/oidc/.well-known/jwks.json";
     private static final String REVOCATION_ENDPOINT = "/oauth/revoke";
@@ -80,6 +81,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setEndSessionEndpoint(getEndpointAbsoluteURL(basePath, ENDSESSION_ENDPOINT));
         openIDProviderMetadata.setRegistrationEndpoint(getEndpointAbsoluteURL(basePath, REGISTRATION_ENDPOINT));
         openIDProviderMetadata.setRequestObjectEndpoint(getEndpointAbsoluteURL(basePath, REQUEST_OBJECT_ENDPOINT));
+        openIDProviderMetadata.setParEndpoint(getEndpointAbsoluteURL(basePath, PAR_ENDPOINT));
         openIDProviderMetadata.setRegistrationRenewSecretEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"/:client_id/renew_secret");
         if(domain.isDynamicClientRegistrationTemplateEnabled()) {
             openIDProviderMetadata.setRegistrationTemplatesEndpoint(openIDProviderMetadata.getRegistrationEndpoint()+"_templates");

@@ -24,6 +24,7 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
@@ -53,7 +54,7 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestParseRequestObjectHandler implements Handler<RoutingContext> {
-
+    private static final String REQUEST_OBJECT_FROM_URI = "ro-from-uri";
     private static final String HTTPS_SCHEME  = "https";
 
     // When the request parameter is used, the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
@@ -72,12 +73,14 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
     public static final int ONE_HOUR_IN_MILLIS = 3600 * 1000;
 
     private final RequestObjectService requestObjectService;
+    private final PushedAuthorizationRequestService parService;
 
     private final Domain domain;
 
-    public AuthorizationRequestParseRequestObjectHandler(RequestObjectService requestObjectService, Domain domain) {
+    public AuthorizationRequestParseRequestObjectHandler(RequestObjectService requestObjectService, Domain domain, PushedAuthorizationRequestService parService) {
         this.requestObjectService = requestObjectService;
         this.domain = domain;
+        this.parService = parService;
     }
 
     @Override
@@ -85,6 +88,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         // Even if a scope parameter is present in the Request Object value, a scope parameter MUST always be passed
         // using the OAuth 2.0 request syntax containing the openid scope value to indicate to the underlying OAuth 2.0
         // logic that this is an OpenID Connect request.
+        // This is not the case if the RequestObject comes from a request_uri
         String scope = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
         HashSet<String> scopes = scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
         if (scopes == null || !scopes.contains(Scope.OPENID.getKey())) {
@@ -114,8 +118,10 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         Maybe<JWT> requestObject = null;
 
         if (context.request().getParam(Parameters.REQUEST) != null) {
+            context.put(REQUEST_OBJECT_FROM_URI, false);
             requestObject = handleRequestObjectValue(context);
         } else if (context.request().getParam(Parameters.REQUEST_URI) != null) {
+            context.put(REQUEST_OBJECT_FROM_URI, true);
             requestObject = handleRequestObjectURI(context);
         }
 
@@ -123,6 +129,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                 .subscribe(
                         jwt -> {
                             try {
+                                context.put(REQUEST_OBJECT_KEY, jwt);
                                 // Check OAuth2 parameters
                                 checkOAuthParameters(context, jwt);
                                 overrideRequestParameters(context, jwt);
@@ -156,7 +163,10 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                 URI uri = URI.create(requestUri);
 
                 // The scheme used in the request_uri value MUST be https or starts with urn:ros:
-                if (uri.getScheme() == null || (!uri.getScheme().equalsIgnoreCase(HTTPS_SCHEME) && !requestUri.startsWith(RequestObjectService.RESOURCE_OBJECT_URN_PREFIX))) {
+                if (uri.getScheme() == null ||
+                        (!uri.getScheme().equalsIgnoreCase(HTTPS_SCHEME) &&
+                                !requestUri.startsWith(RequestObjectService.RESOURCE_OBJECT_URN_PREFIX) &&
+                                !requestUri.startsWith(PushedAuthorizationRequestService.PAR_URN_PREFIX))) {
                     throw new InvalidRequestUriException("request_uri parameter scheme must be HTTPS");
                 }
             } catch (IllegalArgumentException iae) {
@@ -184,15 +194,15 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
     private Single<JWT> validateRequestObjectClaims(RoutingContext context, JWT jwt) {
         if (this.domain.usePlainFapiProfile()) {
             try {
+                final boolean fromRequestUri = context.get(REQUEST_OBJECT_FROM_URI);
                 final JWTClaimsSet jwtClaimsSet = jwt.getJWTClaimsSet();
 
                 // according to https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
                 // OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax
                 // but FAPI requires that these params are equals, so we test the consistency of these parameters
                 // in addition FAPI requires some claims that are optional in the OIDC core spec (like exp, nbf...)
-
                 if (jwtClaimsSet.getExpirationTime() == null || jwtClaimsSet.getExpirationTime().before(new Date())) {
-                    throw new InvalidRequestObjectException("Request object must contains valid exp claim");
+                    throw generateException(jwtClaimsSet.getExpirationTime() == null && fromRequestUri, "Request object must contains valid exp claim");
                 }
 
                 List<String> redirectUri = context.queryParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
@@ -207,39 +217,39 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
                 final Date nbf = jwtClaimsSet.getNotBeforeTime();
                 if (nbf == null || (nbf.getTime() + ONE_HOUR_IN_MILLIS) < jwtClaimsSet.getExpirationTime().getTime()) {
-                    throw new InvalidRequestObjectException("Request object older than 60 minutes");
+                    throw generateException(fromRequestUri, "Request object older than 60 minutes");
                 }
 
                 List<String> state = context.queryParam(io.gravitee.am.common.oauth2.Parameters.STATE);
                 final String stateClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE);
                 if (state != null && !state.isEmpty() &&
                         (stateClaim == null || !stateClaim.equals(state.get(0)))) {
-                    throw new InvalidRequestObjectException("Request object must contains valid state claim");
+                    throw generateException(fromRequestUri, "Request object must contains valid state claim");
                 }
 
                 final OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
                 if (jwtClaimsSet.getAudience() == null || (openIDProviderMetadata != null &&
                         !jwtClaimsSet.getAudience().contains(openIDProviderMetadata.getIssuer()))) {
                     // the aud claim in the request object shall be, or shall be an array containing, the OP’s Issuer Identifier URL;
-                    throw new InvalidRequestObjectException("Invalid audience claim");
+                    throw generateException(fromRequestUri, "Invalid audience claim");
                 }
 
                 List<String> scope = context.queryParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
                 final String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
                 if (scope != null && !scope.isEmpty() &&
                         (scopeClaim == null || !scopeClaim.equals(scope.get(0)))) {
-                    throw new InvalidRequestObjectException("Request object must contains valid scope claim");
+                    throw generateException(fromRequestUri, "Request object must contains valid scope claim");
                 }
 
                 // String scopeClaim = jwtClaimsSet.getStringClaim(Claims.scope);
                 if (scopeClaim != null && scopeClaim.contains("openid") && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(Parameters.NONCE))) {
                     // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#client-requesting-openid-scope
                     // If the client requests the openid scope, the authorization server shall require the nonce parameter defined
-                    throw new InvalidRequestObjectException("Scope openid expect the nonce parameter defined");
+                    throw generateException(fromRequestUri, "Scope openid expect the nonce parameter defined");
                 } else if ((scopeClaim == null || !scopeClaim.contains("openid")) && StringUtils.isEmpty(jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.STATE))) {
                     // https://openid.net/specs/openid-financial-api-part-1-1_0-final.html#clients-not-requesting-openid-scope
                     // If the client does not request the openid scope, the authorization server shall require the state parameter defined
-                    throw new InvalidRequestObjectException("Absence of scope openid expect the state parameter defined");
+                    throw generateException(fromRequestUri, "Absence of scope openid expect the state parameter defined");
                 }
 
             } catch (OAuth2Exception e) {
@@ -255,6 +265,11 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         return Single.just(jwt);
     }
 
+    private OAuth2Exception generateException(boolean throwUriException, String msg) {
+        // according to the request mode (PAR or std), FAPI error code maybe different
+        return throwUriException ? new InvalidRequestUriException(msg) : new InvalidRequestObjectException(msg);
+    }
+
     private Maybe<JWT> handleRequestObjectURI(RoutingContext context) {
         final String requestUri = context.request().getParam(Parameters.REQUEST_URI);
 
@@ -262,10 +277,16 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST_URI);
 
-            return requestObjectService
-                    .readRequestObjectFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY))
-                    .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
-                    .toMaybe();
+            if (requestUri.startsWith(PushedAuthorizationRequestService.PAR_URN_PREFIX)) {
+                return parService.readFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY), context.get(PROVIDER_METADATA_CONTEXT_KEY))
+                        .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
+                        .toMaybe();
+            } else {
+                return requestObjectService
+                        .readRequestObjectFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY))
+                        .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
+                        .toMaybe();
+            }
         } else {
             return Maybe.empty();
         }

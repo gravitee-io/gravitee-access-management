@@ -178,6 +178,16 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcPushedAuthorizationRequest</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.MultiValueMapToStringConverter">
+            <a>parameters</a>
+            <b>parameters</b>
+            <a-hint>io.gravitee.common.util.LinkedMultiValueMap</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.model.Installation</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcInstallation</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
