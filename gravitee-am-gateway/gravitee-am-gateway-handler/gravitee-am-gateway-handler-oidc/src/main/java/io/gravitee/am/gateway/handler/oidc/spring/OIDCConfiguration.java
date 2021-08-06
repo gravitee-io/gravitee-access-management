@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
+import io.gravitee.am.gateway.handler.oauth2.service.par.impl.PushedAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
@@ -91,5 +93,10 @@ public class OIDCConfiguration implements ProtocolConfiguration {
     @Bean
     public RequestObjectService requestObjectService() {
         return new RequestObjectServiceImpl();
+    }
+
+    @Bean
+    public PushedAuthorizationRequestService pushedAuthorizationRequestService() {
+        return new PushedAuthorizationRequestServiceImpl();
     }
 }

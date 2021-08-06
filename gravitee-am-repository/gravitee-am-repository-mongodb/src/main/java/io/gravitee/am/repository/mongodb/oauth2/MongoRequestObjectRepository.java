@@ -17,7 +17,6 @@ package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.oauth2.AbstractOAuth2MongoRepository;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.RequestObjectMongo;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.gravitee.am.repository.oidc.model.RequestObject;

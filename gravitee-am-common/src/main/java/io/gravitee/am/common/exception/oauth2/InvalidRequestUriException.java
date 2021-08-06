@@ -36,7 +36,7 @@ public class InvalidRequestUriException extends OAuth2Exception {
 
     @Override
     public String getOAuth2ErrorCode() {
-        return "invalid_request_uris";
+        return "invalid_request_uri";
     }
 
 }

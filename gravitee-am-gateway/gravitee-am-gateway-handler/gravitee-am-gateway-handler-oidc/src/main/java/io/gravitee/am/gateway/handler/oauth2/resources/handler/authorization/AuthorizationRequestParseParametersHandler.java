@@ -268,6 +268,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
 
     private void parseResponseTypeParameter(RoutingContext context, Client client) {
         String responseType = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+
         // Authorization endpoint implies that the client should have response_type
         if (client.getResponseTypes() == null) {
             throw new UnauthorizedClientException("Client should have response_type.");

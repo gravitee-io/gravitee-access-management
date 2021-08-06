@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.11.0
+      author: GraviteeSource Team
+      changes:
+
+        ## pushed_authorization_requests
+        ###################
+        - createTable:
+            tableName: pushed_authorization_requests
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: parameters, type: clob, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_par
+            columnNames: id
+            tableName: pushed_authorization_requests
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_par_expire
+            tableName: pushed_authorization_requests
+            unique: false

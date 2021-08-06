@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.Au
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentPostEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.introspection.IntrospectionEndpoint;
+import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.par.PushedAuthorizationRequestEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token.TokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -42,9 +43,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionSe
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -60,7 +61,9 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.*;
+import io.vertx.reactivex.ext.web.handler.CSRFHandler;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
+import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,6 +160,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private PushedAuthorizationRequestService parService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -200,7 +206,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
-                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain))
+                .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowContextHandler)
@@ -257,6 +263,14 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, "/error")
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+
+        // Pushed Authorization Request
+        oauth2Router.route(HttpMethod.POST,"/par")
+                .handler(clientAuthHandler)
+                .handler(new PushedAuthorizationRequestEndpoint(parService));
+
+        oauth2Router.route("/par")
+                .handler(new PushedAuthorizationRequestEndpoint.MethodNotAllowedHandler());
 
         // error handler
         errorHandler(oauth2Router);

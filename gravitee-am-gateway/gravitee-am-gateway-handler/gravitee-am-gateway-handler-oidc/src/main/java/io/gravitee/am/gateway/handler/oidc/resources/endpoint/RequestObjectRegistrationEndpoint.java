@@ -38,9 +38,12 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 /**
  * See <a href="https://openid.net/specs/openid-financial-api-part-2.html#request-object-endpoint">7.  Request object endpoint</a>
  *
+ * Deprecated: should use the Pushed Authorization Request endpoint
+ *
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Deprecated
 public class RequestObjectRegistrationEndpoint implements Handler<RoutingContext> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestObjectRegistrationEndpoint.class);
