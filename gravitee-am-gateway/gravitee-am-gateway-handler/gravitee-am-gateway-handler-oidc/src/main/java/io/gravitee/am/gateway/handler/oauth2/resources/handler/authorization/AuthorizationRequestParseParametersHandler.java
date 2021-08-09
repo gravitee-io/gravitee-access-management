@@ -46,12 +46,10 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
@@ -145,7 +143,8 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
             throw new InvalidRequestException("Missing parameter: code_challenge");
         }
 
-        if (codeChallenge == null && client.isForcePKCE()) {
+        final boolean pkceRequiredByFapi = this.domain.usePlainFapiProfile() && Optional.ofNullable((Boolean)context.get(REQUEST_OBJECT_FROM_URI)).orElse(Boolean.FALSE);
+        if (codeChallenge == null && (client.isForcePKCE() || pkceRequiredByFapi)) {
             throw new InvalidRequestException("Missing parameter: code_challenge");
         }
 
@@ -153,8 +152,11 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
             if (codeChallengeMethod != null) {
                 // https://tools.ietf.org/html/rfc7636#section-4.2
                 // It must be plain or S256
-                if (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
-                        !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod)) {
+                // For FAPI, only S256 is allowed for PKCE
+                // https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server (point 18)
+                if ((this.domain.usePlainFapiProfile() && !CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod)) ||
+                        (!CodeChallengeMethod.S256.equalsIgnoreCase(codeChallengeMethod) &&
+                        !CodeChallengeMethod.PLAIN.equalsIgnoreCase(codeChallengeMethod))) {
                     throw new InvalidRequestException("Invalid parameter: code_challenge_method");
                 }
             } else {

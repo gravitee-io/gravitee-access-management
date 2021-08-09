@@ -29,8 +29,9 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.model.AuthenticationFlowContext;
-import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.common.util.MultiValueMap;
@@ -92,7 +93,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                     .onErrorResumeNext(error -> (exitOnError) ? Maybe.error(error) : Maybe.just(new AuthenticationFlowContext()))
                                     .map(ctx -> {
                                         checkRedirectUris(tokenRequest1, authorizationCode);
-                                        checkPKCE(tokenRequest1, authorizationCode);
+                                        checkPKCE( tokenRequest1, authorizationCode);
                                         // set resource owner
                                         tokenRequest1.setSubject(authorizationCode.getSubject());
                                         // set original scopes

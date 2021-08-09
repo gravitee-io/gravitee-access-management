@@ -44,7 +44,8 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(authorizationCode1 -> authorizationCode1.getCode().equals(code) && authorizationCode1.getContextVersion() == 1);
+        testObserver.assertValue(authorizationCode1 -> authorizationCode1.getCode().equals(code)
+                && authorizationCode1.getContextVersion() == 1);
     }
 
     @Test
