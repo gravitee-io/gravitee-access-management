@@ -65,7 +65,6 @@ public class TokenRequest extends OAuth2Request {
      */
     private String requestingPartyToken;
 
-
     public String getUsername() {
         return username;
     }

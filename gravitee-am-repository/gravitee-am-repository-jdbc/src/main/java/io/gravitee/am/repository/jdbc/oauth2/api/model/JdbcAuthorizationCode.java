@@ -135,4 +135,5 @@ public class JdbcAuthorizationCode {
     public void setRequestParameters(String requestParameters) {
         this.requestParameters = requestParameters;
     }
+
 }

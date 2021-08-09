@@ -99,4 +99,6 @@ public interface ConstantKeys {
     String REQUEST_OBJECT_KEY = "requestObject";
     // identifier of the Pushed Authorization Parameters
     String REQUEST_URI_ID_KEY = "requestUriId";
+    String REQUEST_OBJECT_FROM_URI = "request-object-from-uri";
+
 }

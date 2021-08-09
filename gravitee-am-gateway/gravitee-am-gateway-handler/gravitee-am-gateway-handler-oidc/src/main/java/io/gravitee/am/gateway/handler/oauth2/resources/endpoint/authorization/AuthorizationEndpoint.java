@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequ
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -55,10 +56,12 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private final Flow flow;
     private final ThymeleafTemplateEngine engine;
     private final PushedAuthorizationRequestService parService;
+    private final Domain domain;
 
-    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService) {
+    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService, Domain domain) {
         this.flow = flow;
         this.engine = engine;
+        this.domain = domain;
         this.parService = parService;
     }
 

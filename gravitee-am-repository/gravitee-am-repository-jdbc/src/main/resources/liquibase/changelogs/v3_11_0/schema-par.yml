@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 3.11.0
+      id: 3.11.0-PAR-Table
       author: GraviteeSource Team
       changes:
 

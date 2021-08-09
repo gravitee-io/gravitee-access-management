@@ -52,8 +52,7 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseRequestObjectHandler implements Handler<RoutingContext> {
-    private static final String REQUEST_OBJECT_FROM_URI = "ro-from-uri";
+public class AuthorizationRequestParseRequestObjectHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
     private static final String HTTPS_SCHEME  = "https";
 
     // When the request parameter is used, the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
@@ -67,7 +66,9 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                             io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
                             io.gravitee.am.common.oauth2.Parameters.SCOPE,
                             io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
-                            io.gravitee.am.common.oauth2.Parameters.STATE
+                            io.gravitee.am.common.oauth2.Parameters.STATE,
+                            io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE,
+                            io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD
                             )).flatMap(Collection::stream).collect(Collectors.toList());
     public static final int ONE_HOUR_IN_MILLIS = 3600 * 1000;
 
