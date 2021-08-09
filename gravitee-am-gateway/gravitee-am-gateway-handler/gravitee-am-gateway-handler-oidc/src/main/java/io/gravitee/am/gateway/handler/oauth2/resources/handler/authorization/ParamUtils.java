@@ -23,6 +23,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.util.Optional;
 
@@ -57,4 +59,30 @@ public class ParamUtils {
         return value.orElse(context.request().getParam(paramName));
     }
 
+    public static boolean redirectMatches(String requestedRedirect, String registeredClientUri, boolean uriStrictMatch) {
+        if (uriStrictMatch) {
+            return requestedRedirect.equals(registeredClientUri);
+        }
+
+        // nominal case
+        try {
+            URL req = new URL(requestedRedirect);
+            URL reg = new URL(registeredClientUri);
+
+            int requestedPort = req.getPort() != -1 ? req.getPort() : req.getDefaultPort();
+            int registeredPort = reg.getPort() != -1 ? reg.getPort() : reg.getDefaultPort();
+
+            boolean portsMatch = registeredPort == requestedPort;
+
+            if (reg.getProtocol().equals(req.getProtocol()) &&
+                    reg.getHost().equals(req.getHost()) &&
+                    portsMatch) {
+                return req.getPath().startsWith(reg.getPath());
+            }
+        } catch (MalformedURLException e) {
+
+        }
+
+        return requestedRedirect.equals(registeredClientUri);
+    }
 }

@@ -48,6 +48,9 @@ import org.springframework.util.StringUtils;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.redirectMatches;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -130,9 +133,13 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
         final String request = par.getParameters().getFirst(io.gravitee.am.common.oidc.Parameters.REQUEST);
         if (request != null) {
-            registrationValidation = registrationValidation.andThen(Single.defer(() ->
-                            readRequestObject(client, request)))
+            registrationValidation = registrationValidation
+                    .andThen(Single.defer(() ->
+                            readRequestObject(client, request)
+                            .map(jwt -> checkRedirectUriParameter(jwt, client))))
                     .ignoreElement();
+        } else {
+            registrationValidation.andThen(Completable.fromAction(() -> checkRedirectUriParameter(par, client)));
         }
 
         return registrationValidation.andThen(Single.defer(() -> parRepository.create(par))).map(parPersisted -> {
@@ -161,12 +168,10 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
     private JWT checkRequestObjectClaims(JWT jwt) {
         try {
-
             if (jwt.getJWTClaimsSet().getStringClaim(io.gravitee.am.common.oidc.Parameters.REQUEST) != null
                     || jwt.getJWTClaimsSet().getStringClaim(io.gravitee.am.common.oidc.Parameters.REQUEST_URI) != null) {
                 throw new InvalidRequestObjectException("Claims request and request_uri are forbidden");
             }
-
             return jwt;
         } catch (ParseException e) {
             LOGGER.warn("request object received in PAR request is malformed: {}", e.getMessage());
@@ -209,6 +214,53 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
                         }
                     }
                 });
+    }
+
+    private PushedAuthorizationRequest checkRedirectUriParameter(PushedAuthorizationRequest request, Client client) {
+        checkRedirectUri(client, request.getParameters().getFirst(Parameters.REDIRECT_URI));
+        return request;
+    }
+
+    private JWT checkRedirectUriParameter(JWT request, Client client) {
+        try {
+            String requestedRedirectUri = request.getJWTClaimsSet().getStringClaim(Parameters.REDIRECT_URI);
+            checkRedirectUri(client, requestedRedirectUri);
+        } catch (ParseException e) {
+            throw new InvalidRequestException("request object is malformed");
+        }
+        return request;
+    }
+
+    private void checkRedirectUri(Client client, String requestedRedirectUri) {
+        final List<String> registeredClientRedirectUris = client.getRedirectUris();
+        final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
+        final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
+
+        // if no requested redirect_uri and no registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
+            throw new InvalidRequestException("A redirect_uri must be supplied");
+        }
+
+        // if no requested redirect_uri and more than one registered client redirect_uris
+        // throw invalid request exception
+        if (!hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
+            throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
+        }
+
+        // if requested redirect_uri doesn't match registered client redirect_uris
+        // throw redirect mismatch exception
+        if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
+            checkMatchingRedirectUri(requestedRedirectUri, registeredClientRedirectUris);
+        }
+    }
+
+    private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
+        if (registeredClientRedirectUris
+                .stream()
+                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()))) {
+            throw new InvalidRequestObjectException("The redirect_uri MUST match the registered callback URL for this application");
+        }
     }
 
     @Override

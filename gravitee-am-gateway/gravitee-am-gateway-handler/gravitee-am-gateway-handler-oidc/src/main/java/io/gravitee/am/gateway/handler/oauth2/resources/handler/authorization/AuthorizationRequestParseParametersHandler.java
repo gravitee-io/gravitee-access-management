@@ -43,15 +43,14 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.*;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.redirectMatches;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -348,37 +347,8 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
         if (registeredClientRedirectUris
                 .stream()
-                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri))) {
+                .noneMatch(registeredClientUri -> redirectMatches(requestedRedirect, registeredClientUri, this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()))) {
             throw new RedirectMismatchException("The redirect_uri MUST match the registered callback URL for this application");
         }
-    }
-
-    private boolean redirectMatches(String requestedRedirect, String registeredClientUri) {
-        // if redirect_uri strict matching mode is enabled, do string matching
-        // FAPI also requires strict matching
-        if (this.domain.isRedirectUriStrictMatching() || this.domain.usePlainFapiProfile()) {
-            return requestedRedirect.equals(registeredClientUri);
-        }
-
-        // nominal case
-        try {
-            URL req = new URL(requestedRedirect);
-            URL reg = new URL(registeredClientUri);
-
-            int requestedPort = req.getPort() != -1 ? req.getPort() : req.getDefaultPort();
-            int registeredPort = reg.getPort() != -1 ? reg.getPort() : reg.getDefaultPort();
-
-            boolean portsMatch = registeredPort == requestedPort;
-
-            if (reg.getProtocol().equals(req.getProtocol()) &&
-                    reg.getHost().equals(req.getHost()) &&
-                    portsMatch) {
-                return req.getPath().startsWith(reg.getPath());
-            }
-        } catch (MalformedURLException e) {
-
-        }
-
-        return requestedRedirect.equals(registeredClientUri);
     }
 }
