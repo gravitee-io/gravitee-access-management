@@ -20,12 +20,14 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Completable;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.auth.User;
@@ -52,10 +54,12 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private static final String FORM_PARAMETERS = "parameters";
     private final Flow flow;
     private final ThymeleafTemplateEngine engine;
+    private final PushedAuthorizationRequestService parService;
 
-    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine) {
+    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService) {
         this.flow = flow;
         this.engine = engine;
+        this.parService = parService;
     }
 
     @Override
@@ -76,7 +80,12 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         // get resource owner
         io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) authenticatedUser.getDelegate()).getUser();
 
-        flow.run(request, client, endUser)
+        final String uriIdentifier = context.get(ConstantKeys.REQUEST_URI_ID_KEY);
+        parService.deleteRequestUri(uriIdentifier).onErrorResumeNext((err) -> {
+            logger.warn("Deletion of Pushed Authorization Request with id '{}' failed", uriIdentifier, err);
+            return Completable.complete();
+        })
+                .andThen(flow.run(request, client, endUser))
                 .subscribe(
                         authorizationResponse -> {
                             try {

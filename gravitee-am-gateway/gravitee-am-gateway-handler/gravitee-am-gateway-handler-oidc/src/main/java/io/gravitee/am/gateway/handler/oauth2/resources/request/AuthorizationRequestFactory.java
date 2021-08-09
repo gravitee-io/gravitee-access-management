@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -79,17 +80,17 @@ public final class AuthorizationRequestFactory {
 
         // set OAuth 2.0 information
         authorizationRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
-        authorizationRequest.setResponseType(request.params().get(Parameters.RESPONSE_TYPE));
-        authorizationRequest.setRedirectUri(request.params().get(Parameters.REDIRECT_URI));
-        String scope = request.params().get(Parameters.SCOPE);
+        authorizationRequest.setResponseType(getOAuthParameter(context, Parameters.RESPONSE_TYPE));
+        authorizationRequest.setRedirectUri(getOAuthParameter(context, Parameters.REDIRECT_URI));
+        String scope = getOAuthParameter(context, Parameters.SCOPE);
         authorizationRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
-        authorizationRequest.setState(request.params().get(Parameters.STATE));
-        authorizationRequest.setResponseMode(request.params().get(Parameters.RESPONSE_MODE));
+        authorizationRequest.setState(getOAuthParameter(context, Parameters.STATE));
+        authorizationRequest.setResponseMode(getOAuthParameter(context, Parameters.RESPONSE_MODE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
         authorizationRequest.setApproved(Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_CONSENT_APPROVED_KEY)));
 
         // set OIDC information
-        String prompt = request.params().get(io.gravitee.am.common.oidc.Parameters.PROMPT);
+        String prompt = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.PROMPT);
         authorizationRequest.setPrompts(prompt != null ? new HashSet<>(Arrays.asList(prompt.split("\\s+"))) : Collections.emptySet());
 
         context.put(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);

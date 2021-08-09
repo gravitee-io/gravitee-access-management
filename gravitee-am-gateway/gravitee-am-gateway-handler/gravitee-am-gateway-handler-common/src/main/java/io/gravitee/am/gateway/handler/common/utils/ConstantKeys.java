@@ -94,4 +94,9 @@ public interface ConstantKeys {
     // Forgot Password
     String FORGOT_PASSWORD_FIELDS_KEY = "forgotPwdFormFields";
     String FORGOT_PASSWORD_CONFIRM = "forgot_password_confirm";
+
+    // key used to store & retrieve the request object from the routing context
+    String REQUEST_OBJECT_KEY = "requestObject";
+    // identifier of the Pushed Authorization Parameters
+    String REQUEST_URI_ID_KEY = "requestUriId";
 }

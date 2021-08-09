@@ -53,6 +53,7 @@ import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
 
 /**
@@ -65,7 +66,7 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseParametersHandler implements Handler<RoutingContext> {
+public class AuthorizationRequestParseParametersHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private final static String LOGIN_ENDPOINT = "/login";
@@ -113,7 +114,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parsePromptParameter(RoutingContext context) {
-        String prompt = context.request().getParam(Parameters.PROMPT);
+        String prompt = getOAuthParameter(context, Parameters.PROMPT);
 
         if (prompt != null) {
             // retrieve prompt values (prompt parameter is a space delimited, case sensitive list of ASCII string values)
@@ -137,8 +138,8 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parsePKCEParameter(RoutingContext context, Client client) {
-        String codeChallenge = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE);
-        String codeChallengeMethod = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD);
+        String codeChallenge = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE);
+        String codeChallengeMethod = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD);
 
         if (codeChallenge == null && codeChallengeMethod != null) {
             throw new InvalidRequestException("Missing parameter: code_challenge");
@@ -178,7 +179,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             return;
         }
 
-        String maxAge = context.request().getParam(Parameters.MAX_AGE);
+        String maxAge = getOAuthParameter(context, Parameters.MAX_AGE);
         if (maxAge == null || !maxAge.matches("-?\\d+")) {
             // none or invalid max age, continue
             return;
@@ -207,7 +208,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parseClaimsParameter(RoutingContext context) {
-        String claims = context.request().getParam(Parameters.CLAIMS);
+        String claims = getOAuthParameter(context, Parameters.CLAIMS);
         OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
         if (claims != null) {
             try {
@@ -233,7 +234,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parseResponseModeParameter(RoutingContext context) {
-        String responseMode = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
+        String responseMode = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
         OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
         if (responseMode == null) {
             return;
@@ -247,8 +248,8 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parseNonceParameter(RoutingContext context) {
-        String nonce = context.request().getParam(io.gravitee.am.common.oidc.Parameters.NONCE);
-        String responseType = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+        String nonce = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.NONCE);
+        String responseType = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
         // nonce parameter is required for the Hybrid flow
         if (nonce == null && requireNonce(responseType)) {
             throw new InvalidRequestException("Missing parameter: nonce is required for Implicit and Hybrid Flow");
@@ -267,7 +268,10 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parseResponseTypeParameter(RoutingContext context, Client client) {
-        String responseType = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+        String responseType = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
+
+        // response_type is required and may be provided by query parameter or by request object
+        checkResponseType(responseType, context.get(PROVIDER_METADATA_CONTEXT_KEY));
 
         // Authorization endpoint implies that the client should have response_type
         if (client.getResponseTypes() == null) {
@@ -283,7 +287,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
             //    shall require
             //        the response_type value code id_token, or
             //        the response_type value code in conjunction with the response_mode value jwt;
-            String responseMode = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
+            String responseMode = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE);
             if (!((responseType.equals(io.gravitee.am.common.oidc.ResponseType.CODE_ID_TOKEN)) ||
                     (responseType.equals(ResponseType.CODE) && (responseMode != null && responseMode.equalsIgnoreCase("jwt"))))) {
                 throw new InvalidRequestException("Invalid response_type");
@@ -292,7 +296,7 @@ public class AuthorizationRequestParseParametersHandler implements Handler<Routi
     }
 
     private void parseRedirectUriParameter(RoutingContext context, Client client) {
-        String requestedRedirectUri = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+        String requestedRedirectUri = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
         final List<String> registeredClientRedirectUris = client.getRedirectUris();
         final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
         final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();

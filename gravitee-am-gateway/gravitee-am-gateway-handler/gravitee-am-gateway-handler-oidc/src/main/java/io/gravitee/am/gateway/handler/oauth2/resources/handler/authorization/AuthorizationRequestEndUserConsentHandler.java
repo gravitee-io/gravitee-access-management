@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
 
 /**
  * Once the End-User is authenticated, the Authorization Server MUST obtain an authorization decision before releasing information to the Relying Party.
@@ -86,7 +87,7 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             }
             // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
             // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-            String prompt = request.params().get(Parameters.PROMPT);
+            String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
             if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
                 routingContext.fail(new InteractionRequiredException("Interaction required"));
             } else {
@@ -96,8 +97,8 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         }
         // application has forced to prompt consent screen to the user
         // go to the user consent page
-        if (request.params().contains(Parameters.PROMPT)
-                && request.params().get(Parameters.PROMPT).contains("consent")) {
+        final String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
+        if (prompt != null && prompt.contains("consent")) {
             redirectToConsentPage(routingContext);
             return;
         }

@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -84,8 +85,6 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
 
             return parRepository.findById(identifier)
                     .switchIfEmpty(Single.error(new InvalidRequestUriException()))
-                    // request_uri is a one shot use
-                    .flatMap(par -> parRepository.delete(identifier).andThen(Single.just(par)))
                     .flatMap((Function<PushedAuthorizationRequest, Single<JWT>>) req -> {
                         if (req.getParameters() != null &&
                                 req.getExpireAt() != null &&
@@ -210,5 +209,15 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
                         }
                     }
                 });
+    }
+
+    @Override
+    public Completable deleteRequestUri(String uriIdentifier) {
+        LOGGER.debug("Delete Pushed Authorization Request with id '{}'", uriIdentifier);
+        if (StringUtils.isEmpty(uriIdentifier)) {
+            // if the identifier is null or empty, return successful operation.
+            return Completable.complete();
+        }
+        return parRepository.delete(uriIdentifier);
     }
 }

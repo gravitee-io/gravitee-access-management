@@ -44,7 +44,7 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthorizationRequestParseRequiredParametersHandler implements Handler<RoutingContext> {
+public class AuthorizationRequestParseRequiredParametersHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
@@ -77,14 +77,11 @@ public class AuthorizationRequestParseRequiredParametersHandler implements Handl
         String responseType = context.request().getParam(Parameters.RESPONSE_TYPE);
         OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
 
-        if (responseType == null) {
-            throw new InvalidRequestException("Missing parameter: " + Parameters.RESPONSE_TYPE);
-        }
-
-        // get supported response types
-        List<String> responseTypesSupported = openIDProviderMetadata.getResponseTypesSupported();
-        if (!responseTypesSupported.contains(responseType)) {
-            throw new UnsupportedResponseTypeException("Unsupported response type: " + responseType);
+        if (!isJwtAuthRequest(context)) {
+            // for non JAR request, response_type is required as query parameter
+            // otherwise, it can be provided by the request object and will be checked
+            // later in the flow by io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseParametersHandler
+            checkResponseType(responseType, openIDProviderMetadata);
         }
     }
 

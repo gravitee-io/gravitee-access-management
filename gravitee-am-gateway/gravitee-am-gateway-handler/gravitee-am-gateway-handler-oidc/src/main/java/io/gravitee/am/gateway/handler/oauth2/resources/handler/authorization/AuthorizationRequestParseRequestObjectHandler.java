@@ -40,8 +40,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 
 /**
  * The request Authorization Request parameter enables OpenID Connect requests to be passed in a single,
@@ -88,10 +87,10 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
         // Even if a scope parameter is present in the Request Object value, a scope parameter MUST always be passed
         // using the OAuth 2.0 request syntax containing the openid scope value to indicate to the underlying OAuth 2.0
         // logic that this is an OpenID Connect request.
-        // This is not the case if the RequestObject comes from a request_uri
+        // NOTE: In FAPI specification (https://github.com/gravitee-io/issues/issues/5975), scope may come from the RequestObject
         String scope = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
         HashSet<String> scopes = scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
-        if (scopes == null || !scopes.contains(Scope.OPENID.getKey())) {
+        if (!domain.usePlainFapiProfile() && (scopes == null || !scopes.contains(Scope.OPENID.getKey()))) {
             context.next();
             return;
         }
@@ -133,6 +132,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
                                 // Check OAuth2 parameters
                                 checkOAuthParameters(context, jwt);
                                 overrideRequestParameters(context, jwt);
+                                context.put(REQUEST_OBJECT_KEY, jwt);
                                 context.next();
                             } catch (Exception ex) {
                                 context.fail(ex);
@@ -207,8 +207,8 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
 
                 List<String> redirectUri = context.queryParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
                 final String redirectUriClaim = jwtClaimsSet.getStringClaim(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-                if ( (redirectUri == null) ||
-                        (redirectUri != null && (redirectUri.size() != 1 || redirectUriClaim == null || !redirectUriClaim.equals(redirectUri.get(0))))) {
+                if (redirectUriClaim == null ||
+                        (redirectUriClaim != null && redirectUri != null && !redirectUri.isEmpty() && !redirectUriClaim.equals(redirectUri.get(0)))) {
                     // remove redirect_uri provided as parameter and continue to let AuthorizationRequestParseParametersHandler
                     // throws the right error according to the client configuration
                     context.request().params().remove(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
@@ -280,6 +280,11 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             if (requestUri.startsWith(PushedAuthorizationRequestService.PAR_URN_PREFIX)) {
                 return parService.readFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY), context.get(PROVIDER_METADATA_CONTEXT_KEY))
                         .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
+                        .map(jwt -> {
+                            final String uriIdentifier = requestUri.substring(PushedAuthorizationRequestService.PAR_URN_PREFIX.length());
+                            context.put(REQUEST_URI_ID_KEY, uriIdentifier);
+                            return jwt;
+                        })
                         .toMaybe();
             } else {
                 return requestObjectService
@@ -308,7 +313,7 @@ public class AuthorizationRequestParseRequestObjectHandler implements Handler<Ro
             }
 
             String reqObjResponseType = (String) claims.get(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE);
-            if (reqObjResponseType != null && !reqObjResponseType.equals(responseType)) {
+            if (responseType != null && reqObjResponseType != null && !reqObjResponseType.equals(responseType)) {
                 throw new InvalidRequestObjectException("response_type does not match request parameter");
             }
 
