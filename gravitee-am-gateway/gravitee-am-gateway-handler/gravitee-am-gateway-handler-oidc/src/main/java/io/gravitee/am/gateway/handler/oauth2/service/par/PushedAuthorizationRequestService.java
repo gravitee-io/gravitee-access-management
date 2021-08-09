@@ -19,6 +19,7 @@ import com.nimbusds.jwt.JWT;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 /**
@@ -48,4 +49,12 @@ public interface PushedAuthorizationRequestService {
      * @return
      */
     Single<PushedAuthorizationRequestResponse> registerParameters(PushedAuthorizationRequest par, Client client);
+
+    /**
+     * Delete the PushedAuthorizationRequest entry from the repository
+     *
+     * @param uriIdentifier
+     * @return
+     */
+    Completable deleteRequestUri(String uriIdentifier);
 }

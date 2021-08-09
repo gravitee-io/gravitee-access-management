@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.getOAuthParameter;
+
 /**
  * Silent Re-authentication of subject with ID Token.
  *
@@ -63,8 +65,8 @@ public class AuthorizationRequestParseIdTokenHintHandler implements Handler<Rout
     @Override
     public void handle(RoutingContext routingContext) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final String idTokenHint = routingContext.request().getParam(Parameters.ID_TOKEN_HINT);
-        final String prompt = routingContext.request().getParam(Parameters.PROMPT);
+        final String idTokenHint = getOAuthParameter(routingContext, Parameters.ID_TOKEN_HINT);
+        final String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
 
         // if no id_token_hint parameter, continue;
         if (idTokenHint == null) {

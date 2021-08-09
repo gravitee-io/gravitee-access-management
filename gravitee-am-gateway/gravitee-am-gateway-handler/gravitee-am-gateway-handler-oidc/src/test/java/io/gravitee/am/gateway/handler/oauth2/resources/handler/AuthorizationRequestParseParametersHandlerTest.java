@@ -31,6 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.mockito.Mockito.when;
@@ -78,6 +79,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     public void shouldAcceptRequest_supportedAcrValues() throws Exception {
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
         openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
         Client client = new Client();
         client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
         client.setResponseTypes(Collections.singletonList(ResponseType.CODE));

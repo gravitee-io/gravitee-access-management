@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.*;
 import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationCodeResponse;
@@ -38,6 +39,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
@@ -92,11 +94,14 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
+    @Mock
+    private PushedAuthorizationRequestService parService;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, thymeleafTemplateEngine);
+        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService);
 
         // set openid provider service
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
@@ -135,6 +140,8 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
             routingContext.put(CONTEXT_PATH, "/test");
             routingContext.next();
         });
+
+        when(parService.deleteRequestUri(any())).thenReturn(Completable.complete());
     }
 
     @Test
