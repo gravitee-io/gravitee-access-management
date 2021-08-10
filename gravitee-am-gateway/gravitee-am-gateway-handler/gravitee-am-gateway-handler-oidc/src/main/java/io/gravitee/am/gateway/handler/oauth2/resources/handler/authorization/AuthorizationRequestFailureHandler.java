@@ -37,6 +37,7 @@ import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -71,13 +72,18 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private final JWTService jwtService;
     private final JWEService jweService;
     private final OpenIDDiscoveryService openIDDiscoveryService;
+    private final Environment environment;
+    private final int codeValidityInSec;
 
     public AuthorizationRequestFailureHandler(final OpenIDDiscoveryService openIDDiscoveryService,
                                               final JWTService jwtService,
-                                              final JWEService jweService) {
+                                              final JWEService jweService,
+                                              final Environment environment) {
         this.openIDDiscoveryService = openIDDiscoveryService;
         this.jwtService = jwtService;
         this.jweService = jweService;
+        this.environment = environment;
+        this.codeValidityInSec = this.environment.getProperty("authorization.code.validity", Integer.class, 60000) / 1000;
     }
 
     @Override
@@ -159,8 +165,8 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             jwtException.setIss(openIDDiscoveryService.getIssuer(authorizationRequest.getOrigin()));
             jwtException.setAud(client.getClientId());
 
-            // There is nothing about expiration. We admit to use the one settled for IdToken validity
-            jwtException.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+            // There is nothing about expiration. We admit to use the one settled for authorization code validity
+            jwtException.setExp(Instant.now().plusSeconds(this.codeValidityInSec).getEpochSecond());
 
             // Sign if needed, else return unsigned JWT
             jwtService.encodeAuthorization(jwtException.build(), client)
