@@ -129,11 +129,9 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                 .subscribe(
                         jwt -> {
                             try {
-                                context.put(REQUEST_OBJECT_KEY, jwt);
                                 // Check OAuth2 parameters
                                 checkOAuthParameters(context, jwt);
                                 overrideRequestParameters(context, jwt);
-                                context.put(REQUEST_OBJECT_KEY, jwt);
                                 context.next();
                             } catch (Exception ex) {
                                 context.fail(ex);
@@ -185,11 +183,25 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
 
             return requestObjectService
                     .readRequestObject(request, context.get(CLIENT_CONTEXT_KEY))
+                    .map(jwt -> preserveRequestObject(context, jwt))
                     .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
                     .toMaybe();
         } else {
             return Maybe.empty();
         }
+    }
+
+    /**
+     * Keep the requestObject JWT into the RoutingContext for later use.
+     * This is useful to retrieve parameter either from the JWT or from the request params
+     *
+     * @param context
+     * @param jwt
+     * @return
+     */
+    private JWT preserveRequestObject(RoutingContext context, JWT jwt) {
+        context.put(REQUEST_OBJECT_KEY, jwt);
+        return jwt;
     }
 
     private Single<JWT> validateRequestObjectClaims(RoutingContext context, JWT jwt) {
@@ -280,6 +292,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
 
             if (requestUri.startsWith(PushedAuthorizationRequestService.PAR_URN_PREFIX)) {
                 return parService.readFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY), context.get(PROVIDER_METADATA_CONTEXT_KEY))
+                        .map(jwt -> preserveRequestObject(context, jwt))
                         .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
                         .map(jwt -> {
                             final String uriIdentifier = requestUri.substring(PushedAuthorizationRequestService.PAR_URN_PREFIX.length());
@@ -290,6 +303,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
             } else {
                 return requestObjectService
                         .readRequestObjectFromURI(requestUri, context.get(CLIENT_CONTEXT_KEY))
+                        .map(jwt -> preserveRequestObject(context, jwt))
                         .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
                         .toMaybe();
             }

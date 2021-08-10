@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
@@ -148,6 +149,11 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         }
         // user set a wrong redirect_uri, go to default error page
         if (oAuth2Exception instanceof RedirectMismatchException) {
+            authorizationRequest.setRedirectUri(defaultErrorURL);
+        }
+        // InvalidRequestObjectException without the RequestObject present into the Context means that the JWT can't be decoded
+        // return to the default error page to avoid redirect using wrong response mode
+        if (oAuth2Exception instanceof InvalidRequestObjectException && context.get(ConstantKeys.REQUEST_OBJECT_KEY) == null) {
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
 
