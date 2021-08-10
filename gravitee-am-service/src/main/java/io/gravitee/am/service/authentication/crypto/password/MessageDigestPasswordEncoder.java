@@ -46,16 +46,14 @@ public abstract class MessageDigestPasswordEncoder implements PasswordEncoder {
 
     @Override
     public String encode(CharSequence rawPassword) {
-        // if the salt is not defined as a specific field, we suppose that it lies in the encodedPassword with the following format :
-        // s = salt == null ? "" : "{" + salt + "}"
-        // s + digest(password + s)
         try {
-            SecureRandom random = new SecureRandom();
-            byte[] bytes = new byte[saltLength];
-            random.nextBytes(bytes);
-
-            final String encodedSalt = encodeSaltAsBase64 ? b64enc.encodeToString(bytes) : Hex.encodeHexString(bytes);
-            final String salt = PREFIX + encodedSalt + SUFFIX;
+            String salt = "";
+            if (saltLength > 0) {
+                SecureRandom random = new SecureRandom();
+                byte[] bytes = new byte[saltLength];
+                random.nextBytes(bytes);
+                salt = PREFIX + (encodeSaltAsBase64 ? b64enc.encodeToString(bytes) : Hex.encodeHexString(bytes)) + SUFFIX;
+            }
             final String saltedPassword = rawPassword + salt;
             final byte[] digest = MessageDigest.getInstance(algorithm).digest(saltedPassword.getBytes(StandardCharsets.UTF_8));
             final String rawPasswordEncoded = salt + (encodeSaltAsBase64 ? b64enc.encodeToString(digest) : Hex.encodeHexString(digest));

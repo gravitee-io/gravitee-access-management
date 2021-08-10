@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfigurat
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
 import io.gravitee.am.identityprovider.http.configuration.HttpUsersResourceConfiguration;
 import io.gravitee.am.identityprovider.http.user.spring.HttpUserProviderConfiguration;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpHeader;
@@ -44,6 +45,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
@@ -65,6 +67,9 @@ public class HttpUserProvider implements UserProvider {
 
     @Autowired
     private HttpIdentityProviderConfiguration configuration;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public Maybe<User> findByEmail(String email) {
@@ -93,6 +98,10 @@ public class HttpUserProvider implements UserProvider {
             // prepare context
             AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
             TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+            // encode password
+            if (!StringUtils.isEmpty(user.getCredentials())) {
+                ((DefaultUser) user).setCredentials(passwordEncoder.encode(user.getCredentials()));
+            }
             templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
 
             // prepare request
@@ -130,6 +139,10 @@ public class HttpUserProvider implements UserProvider {
             AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
             TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
             ((DefaultUser) updateUser).setId(id);
+            // encode password
+            if (!StringUtils.isEmpty(updateUser.getCredentials())) {
+                ((DefaultUser) updateUser).setCredentials(passwordEncoder.encode(updateUser.getCredentials()));
+            }
             templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, updateUser);
 
             // prepare request
