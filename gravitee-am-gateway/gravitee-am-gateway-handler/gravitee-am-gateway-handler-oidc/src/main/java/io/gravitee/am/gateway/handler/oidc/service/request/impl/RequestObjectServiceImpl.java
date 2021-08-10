@@ -156,7 +156,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                         return jwkService.getKey(jwkSet, jwt.getHeader().getKeyID());
                     }
                 })
-                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException()))
+                .switchIfEmpty(Maybe.error(new InvalidRequestObjectException("Invalid key ID")))
                 .flatMapSingle(new Function<JWK, SingleSource<JWT>>() {
                     @Override
                     public SingleSource<JWT> apply(JWK jwk) throws Exception {
@@ -164,8 +164,9 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                         // To perform Signature Validation, the alg Header Parameter in the
                         // JOSE Header MUST match the value of the request_object_signing_alg
                         // set during Client Registration
-                        if (jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg()) &&
-                                jwsService.isValidSignature(jwt, jwk)) {
+                        if (!jwt.getHeader().getAlgorithm().getName().equals(client.getRequestObjectSigningAlg())) {
+                            return Single.error(new InvalidRequestObjectException("Invalid request object signing algorithm"));
+                        } else if (jwsService.isValidSignature(jwt, jwk)) {
                             return Single.just(jwt);
                         } else {
                             return Single.error(new InvalidRequestObjectException("Invalid signature"));
