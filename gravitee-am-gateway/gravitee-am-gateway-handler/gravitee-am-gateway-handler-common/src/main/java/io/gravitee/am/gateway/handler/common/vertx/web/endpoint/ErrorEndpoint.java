@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.endpoint;
 
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -49,11 +54,13 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     private String domain;
     private ThymeleafTemplateEngine engine;
     private ClientSyncService clientSyncService;
+    private JWTService jwtService;
 
-    public ErrorEndpoint(String domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService) {
+    public ErrorEndpoint(String domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService, JWTService jwtService) {
         this.domain = domain;
         this.engine = engine;
         this.clientSyncService = clientSyncService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -92,13 +99,34 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
                 // unable to decode UTF-8 encoded query parameter
             }
         }
-        routingContext.put(ERROR_PARAM, error);
-        routingContext.put(ERROR_DESCRIPTION_PARAM, errorDescription);
 
+        final Map<String, String> errorParams = new HashMap<>();
+        errorParams.put(ERROR_PARAM, error);
+        errorParams.put(ERROR_DESCRIPTION_PARAM, errorDescription);
+
+        Single<Map<String, String>> singlePageRendering = Single.just(errorParams);
+
+        final String jarm = request.getParam(io.gravitee.am.common.oidc.Parameters.RESPONSE);
+        if (error == null && jarm != null) {
+            // extract error details from the JWT provided as response parameter
+            singlePageRendering = this.jwtService.decode(jarm).map(jwt -> {
+                Map<String, String> result = new HashMap<>();
+                result.put(ERROR_PARAM, (String) jwt.get(ERROR_PARAM));
+                result.put(ERROR_DESCRIPTION_PARAM, (String) jwt.get(ERROR_DESCRIPTION_PARAM));
+                return result;
+            });
+        }
+
+        singlePageRendering.subscribe(
+                params -> render(routingContext, client, params),
+                // single contains an error due to JWT decoding, return the default error page without error details
+                (exception) ->render(routingContext, client, errorParams));
+
+    }
+
+    private void render(RoutingContext routingContext, Client client, Map<String, String> params) {
+        params.forEach((k, v) -> routingContext.put(k, v));
         // put parameters in context (backward compatibility)
-        Map<String, String> params = new HashMap<>();
-        params.put(ERROR_PARAM, error);
-        params.put(ERROR_DESCRIPTION_PARAM, errorDescription);
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
         engine.render(routingContext.data(), getTemplateFileName(client), res -> {
