@@ -214,7 +214,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService, domain))
-                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService));
+                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);

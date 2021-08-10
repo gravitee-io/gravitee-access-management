@@ -25,6 +25,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,6 +42,7 @@ public abstract class AbstractFlow implements Flow {
     private OpenIDDiscoveryService openIDDiscoveryService;
     private JWTService jwtService;
     private JWEService jweService;
+    private int codeValidityInSec;
 
     public AbstractFlow(final List<String> responseTypes) {
         Objects.requireNonNull(responseTypes);
@@ -70,8 +72,9 @@ public abstract class AbstractFlow implements Flow {
         JWTAuthorizationResponse jwtAuthorizationResponse = JWTAuthorizationResponse.from(authorizationResponse);
         jwtAuthorizationResponse.setIss(openIDDiscoveryService.getIssuer(authorizationRequest.getOrigin()));
         jwtAuthorizationResponse.setAud(client.getClientId());
-        // There is nothing about expiration. We admit to use the one settled for IdToken validity
-        jwtAuthorizationResponse.setExp(Instant.now().plusSeconds(client.getIdTokenValiditySeconds()).getEpochSecond());
+        // JWT contains Authorization code, this JWT duration should be short
+        // Because the code is persisted, we align the JWT duration with it
+        jwtAuthorizationResponse.setExp(Instant.now().plusSeconds(codeValidityInSec).getEpochSecond());
 
         // Sign if needed, else return unsigned JWT
         return jwtService.encodeAuthorization(jwtAuthorizationResponse.build(), client)
@@ -93,5 +96,7 @@ public abstract class AbstractFlow implements Flow {
         this.openIDDiscoveryService = applicationContext.getBean(OpenIDDiscoveryService.class);
         this.jwtService = applicationContext.getBean(JWTService.class);
         this.jweService = applicationContext.getBean(JWEService.class);
+        final Environment environment = applicationContext.getEnvironment();
+        this.codeValidityInSec = environment.getProperty("authorization.code.validity", Integer.class, 60000) / 1000;
     }
 }

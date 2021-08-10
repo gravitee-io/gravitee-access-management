@@ -55,6 +55,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,6 +98,9 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private PushedAuthorizationRequestService parService;
 
+    @Mock
+    private Environment environment;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -121,6 +125,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 ResponseMode.JWT));
 
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
+        when(environment.getProperty("authorization.code.validity", Integer.class, 60000)).thenReturn(60000);
 
         // set Authorization endpoint routes
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
@@ -134,7 +139,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestResolveHandler())
                 .handler(authorizationEndpointHandler);
         router.route()
-                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService));
+                .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(CONTEXT_PATH, "/test");
