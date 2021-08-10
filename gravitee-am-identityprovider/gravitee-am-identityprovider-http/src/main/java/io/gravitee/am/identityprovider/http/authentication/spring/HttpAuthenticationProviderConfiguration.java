@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.http.authentication.spring;
 
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.http.spring.HttpCommonProviderConfiguration;
 import io.gravitee.am.service.http.WebClientBuilder;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.Vertx;
@@ -24,12 +25,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
+@Import(HttpCommonProviderConfiguration.class)
 public class HttpAuthenticationProviderConfiguration {
 
     private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM";

@@ -702,6 +702,19 @@
         }
       }
     },
+    "passwordEncoder" : {
+      "type": "string",
+      "enum": ["BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "None"],
+      "default": "BCrypt",
+      "title": "Password encoder",
+      "description": "The encoding mechanism used to store user password value."
+    },
+    "passwordEncoding" : {
+      "type": "string",
+      "title": "Password binary-to-text encoding",
+      "description": "This property will cause the encoded pass to be returned as encoding text representation",
+      "enum" : ["Base64", "Hex"]
+    },
     "connectTimeout" : {
       "type" : "integer",
       "default": 10000,

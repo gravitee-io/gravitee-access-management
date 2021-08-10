@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.http.configuration.HttpAuthResourcePathsC
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpHeader;
@@ -76,13 +77,16 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private IdentityProviderRoleMapper roleMapper;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         try {
             // prepare context
             TemplateEngine templateEngine = authentication.getContext().getTemplateEngine();
             templateEngine.getTemplateContext().setVariable(PRINCIPAL_CONTEXT_KEY, authentication.getPrincipal());
-            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, authentication.getCredentials());
+            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, passwordEncoder.encode((String) authentication.getCredentials()));
 
             // prepare request
             final HttpResourceConfiguration resourceConfiguration = configuration.getAuthenticationResource();

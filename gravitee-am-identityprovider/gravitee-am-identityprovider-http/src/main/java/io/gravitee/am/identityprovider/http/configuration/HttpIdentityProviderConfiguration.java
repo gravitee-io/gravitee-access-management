@@ -16,10 +16,6 @@
 package io.gravitee.am.identityprovider.http.configuration;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.common.http.HttpHeader;
-import io.gravitee.common.http.HttpMethod;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -32,6 +28,10 @@ public class HttpIdentityProviderConfiguration implements IdentityProviderConfig
 
     /* ----- Users Resource ----- */
     private HttpUsersResourceConfiguration usersResource;
+
+    /* ----- Password encoder properties ----- */
+    private String passwordEncoder;
+    private String passwordEncoding = "Base64";
 
     /* ----- HTTP client properties ----- */
     private Integer connectTimeout = 10000;
@@ -56,6 +56,22 @@ public class HttpIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setUsersResource(HttpUsersResourceConfiguration usersResource) {
         this.usersResource = usersResource;
+    }
+
+    public String getPasswordEncoder() {
+        return passwordEncoder;
+    }
+
+    public void setPasswordEncoder(String passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    public String getPasswordEncoding() {
+        return passwordEncoding;
+    }
+
+    public void setPasswordEncoding(String passwordEncoding) {
+        this.passwordEncoding = passwordEncoding;
     }
 
     public Integer getConnectTimeout() {
