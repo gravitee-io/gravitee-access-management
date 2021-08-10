@@ -354,7 +354,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // error handler
         errorHandler(rootRouter);
