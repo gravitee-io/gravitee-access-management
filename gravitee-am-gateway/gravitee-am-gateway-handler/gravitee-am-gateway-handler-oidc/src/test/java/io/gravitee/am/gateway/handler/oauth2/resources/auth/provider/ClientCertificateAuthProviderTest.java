@@ -103,7 +103,6 @@ public class ClientCertificateAuthProviderTest {
         SSLSession sslSession = mock(SSLSession.class);
 
         X509Certificate certificate = mock(X509Certificate.class);
-        when(certificate.getEncoded()).thenReturn("MYCERTIFICATE".getBytes());
         Principal subjectDN = mock(Principal.class);
 
         when(client.getTlsClientAuthSubjectDn()).thenReturn("CN=localhost, O=GraviteeSource, C=FR");
@@ -120,7 +119,6 @@ public class ClientCertificateAuthProviderTest {
             latch.countDown();
             Assert.assertNotNull(clientAsyncResult);
             Assert.assertNotNull(clientAsyncResult.result());
-            verify(context).put(eq(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT), any());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));

@@ -255,7 +255,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(dynamicClientAccessEndpoint::renewClientSecret);
 
         // client auth handler
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain);
 
         // Request object registration
         oidcRouter

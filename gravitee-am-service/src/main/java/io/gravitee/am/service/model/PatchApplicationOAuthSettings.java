@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -81,6 +82,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> tlsClientAuthSanUri;
     private Optional<String> tlsClientAuthSanIp;
     private Optional<String> tlsClientAuthSanEmail;
+    private Optional<Boolean> tlsClientCertificateBoundAccessTokens;
     private Optional<String> authorizationSignedResponseAlg;
     private Optional<String> authorizationEncryptedResponseAlg;
     private Optional<String> authorizationEncryptedResponseEnc;
@@ -545,6 +547,14 @@ public class PatchApplicationOAuthSettings {
         this.silentReAuthentication = silentReAuthentication;
     }
 
+    public Optional<Boolean> getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public void setTlsClientCertificateBoundAccessTokens(Optional<Boolean> tlsClientCertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
     public ApplicationOAuthSettings patch(ApplicationOAuthSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationOAuthSettings toPatch = _toPatch == null ? new ApplicationOAuthSettings() : new ApplicationOAuthSettings(_toPatch);
@@ -601,6 +611,7 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(toPatch::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
+        SetterUtils.safeSet(toPatch::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
         SetterUtils.safeSet(toPatch::setAuthorizationSignedResponseAlg, this.getAuthorizationSignedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseAlg, this.getAuthorizationEncryptedResponseAlg());
         SetterUtils.safeSet(toPatch::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());

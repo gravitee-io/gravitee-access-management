@@ -26,6 +26,8 @@ import io.gravitee.am.service.UserService;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Map;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,7 +78,10 @@ public class IntrospectionServiceImpl implements IntrospectionService {
             accessToken.getAdditionalInformation().forEach((k, v) -> introspectionResponse.putIfAbsent(k, v));
         }
 
-        introspectionResponse.setConfirmationMethod(accessToken.getConfirmationMethod());
+        final Map<String, Object> cnf = accessToken.getConfirmationMethod();
+        if (cnf != null) {
+            introspectionResponse.setConfirmationMethod(cnf);
+        }
 
         // remove "aud" claim due to some backend APIs unable to verify the "aud" value
         // see <a href="https://github.com/gravitee-io/issues/issues/3111"></a>

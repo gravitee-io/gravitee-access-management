@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
@@ -51,12 +52,15 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Mock
     private JWKService jwkService;
 
+    @Mock
+    private Domain domain;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }
@@ -156,6 +160,21 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
                 HttpMethod.POST,
                 "/oauth/token?client_assertion_type=type&client_assertion=myToken",
                 HttpStatusCode.OK_200, "OK");
+    }
+
+
+    @Test
+    public void shouldNotInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod_MissingSSLCert() throws Exception {
+        final String clientId = "client-id";
+        Client client = mock(Client.class);
+        when(client.isTlsClientCertificateBoundAccessTokens()).thenReturn(true);
+
+        when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test

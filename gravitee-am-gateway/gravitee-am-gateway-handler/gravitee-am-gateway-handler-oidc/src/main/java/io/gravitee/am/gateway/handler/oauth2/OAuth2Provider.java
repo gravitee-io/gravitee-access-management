@@ -187,7 +187,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         final Router oauth2Router = Router.router(vertx);
 
         // client auth handler
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain);
 
         // static handler
         staticHandler(oauth2Router);

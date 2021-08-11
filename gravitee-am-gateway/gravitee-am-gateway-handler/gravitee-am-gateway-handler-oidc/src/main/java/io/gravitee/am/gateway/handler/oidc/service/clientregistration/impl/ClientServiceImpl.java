@@ -250,6 +250,7 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setTlsClientAuthSanIp(client.getTlsClientAuthSanIp());
         oAuthSettings.setTlsClientAuthSanUri(client.getTlsClientAuthSanUri());
         oAuthSettings.setTlsClientAuthSubjectDn(client.getTlsClientAuthSubjectDn());
+        oAuthSettings.setTlsClientCertificateBoundAccessTokens((client.isTlsClientCertificateBoundAccessTokens()));
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings

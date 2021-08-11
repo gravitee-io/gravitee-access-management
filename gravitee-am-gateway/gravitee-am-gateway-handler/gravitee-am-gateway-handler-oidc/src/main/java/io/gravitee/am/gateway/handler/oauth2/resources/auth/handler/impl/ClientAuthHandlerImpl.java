@@ -17,9 +17,11 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -27,11 +29,20 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.bouncycastle.asn1.x509.GeneralName;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateParsingException;
+import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,10 +51,12 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CO
 public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
     private final ClientSyncService clientSyncService;
     private final List<ClientAuthProvider> clientAuthProviders;
+    private final Domain domain;
 
-    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders) {
+    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain) {
         this.clientSyncService = clientSyncService;
         this.clientAuthProviders = clientAuthProviders;
+        this.domain = domain;
     }
 
     @Override
@@ -73,6 +86,25 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
                 // the client might has been upgraded after authentication process, get the new value
                 Client authenticatedClient = authHandler.result();
+
+                // get SSL certificate thumbprint to bind with access token
+                try {
+                    SSLSession sslSession = routingContext.request().sslSession();
+                    if (sslSession != null) {
+                        Certificate[] peerCertificates = sslSession.getPeerCertificates();
+                        X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
+                        routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate, "SHA-256"));
+                    } else if (sslSession == null && (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile())) {
+                        routingContext.fail(new InvalidClientException("Missing or invalid peer certificate"));
+                        return;
+                    }
+                } catch (SSLPeerUnverifiedException | CertificateEncodingException | NoSuchAlgorithmException ce ) {
+                    if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
+                        routingContext.fail(new InvalidClientException("Missing or invalid peer certificate"));
+                        return;
+                    }
+                }
+
                 // put client in context and continue
                 routingContext.put(CLIENT_CONTEXT_KEY, authenticatedClient);
                 routingContext.next();
