@@ -274,8 +274,10 @@ public class TokenServiceImpl implements TokenService {
         // set exp claim
         jwt.setExp(Instant.ofEpochSecond(jwt.getIat()).plusSeconds(client.getAccessTokenValiditySeconds()).getEpochSecond());
 
-        jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, request.getConfirmationMethodX5S256()).build());
-
+        final String cnfValue = request.getConfirmationMethodX5S256();
+        if (cnfValue != null) {
+            jwt.setConfirmationMethod(Maps.<String, Object>builder().put(JWT.CONFIRMATION_METHOD_X509_THUMBPRINT, cnfValue).build());
+        }
         // set claims parameter (only for an access token)
         // useful for UserInfo Endpoint to request for specific claims
         MultiValueMap<String, String> requestParameters = request.parameters();

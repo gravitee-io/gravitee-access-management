@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.oidc.Client;
@@ -76,7 +75,6 @@ public class ClientSelfSignedAuthProvider implements ClientAuthProvider {
                                         .stream()
                                         .anyMatch(jwk -> thumbprint256.equals(jwk.getX5tS256()) || thumbprint.equals(jwk.getX5t()));
                                 if (match) {
-                                    context.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, thumbprint256);
                                     handler.handle(Future.succeededFuture(client));
                                 } else {
                                     handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: invalid self-signed certificate")));

@@ -170,6 +170,9 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("tls_client_auth_san_email")
     private Optional<String> tlsClientAuthSanEmail;
 
+    @JsonProperty("tls_client_certificate_bound_access_tokens")
+    private Optional<Boolean> tlsClientCertificateBoundAccessTokens;
+
     /*******************************************************************************
      * Metadata in same order than the openid JARM specification
      * https://openid.net//specs/openid-financial-api-jarm.html#client-metadata
@@ -509,6 +512,14 @@ public class DynamicClientRegistrationRequest {
         this.tlsClientAuthSanEmail = tlsClientAuthSanEmail;
     }
 
+    public Optional<Boolean> getTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public void setTlsClientCertificateBoundAccessTokens(Optional<Boolean> tlsClientCertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
     public Optional<String> getAuthorizationSignedResponseAlg() {
         return authorizationSignedResponseAlg;
     }
@@ -595,6 +606,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
         SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
+        SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
 
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
@@ -651,6 +663,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanEmail, this.getTlsClientAuthSanEmail());
         SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
+        SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
 
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());

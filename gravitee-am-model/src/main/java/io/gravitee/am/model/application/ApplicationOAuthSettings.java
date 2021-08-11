@@ -245,6 +245,8 @@ public class ApplicationOAuthSettings {
 
     private String tlsClientAuthSanEmail;
 
+    private boolean tlsClientCertificateBoundAccessTokens;
+
     /**
      * JWS alg algorithm [JWA] REQUIRED for signing Authorization Responses.
      */
@@ -338,6 +340,7 @@ public class ApplicationOAuthSettings {
         this.tlsClientAuthSanEmail = other.tlsClientAuthSanEmail;
         this.tlsClientAuthSanIp = other.tlsClientAuthSanIp;
         this.tlsClientAuthSanUri = other.tlsClientAuthSanUri;
+        this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
         this.authorizationSignedResponseAlg = other.authorizationSignedResponseAlg;
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
@@ -827,6 +830,14 @@ public class ApplicationOAuthSettings {
         this.silentReAuthentication = silentReAuthentication;
     }
 
+    public boolean isTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public void setTlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -880,6 +891,7 @@ public class ApplicationOAuthSettings {
         client.setTlsClientAuthSanEmail(this.tlsClientAuthSanEmail);
         client.setTlsClientAuthSanIp(this.tlsClientAuthSanIp);
         client.setTlsClientAuthSanUri(this.tlsClientAuthSanUri);
+        client.setTlsClientCertificateBoundAccessTokens(this.tlsClientCertificateBoundAccessTokens);
         client.setAuthorizationSignedResponseAlg(this.authorizationSignedResponseAlg);
         client.setAuthorizationEncryptedResponseAlg(this.authorizationEncryptedResponseAlg);
         client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);

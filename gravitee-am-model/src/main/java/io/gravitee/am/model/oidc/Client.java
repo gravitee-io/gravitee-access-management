@@ -143,6 +143,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String tlsClientAuthSanEmail;
 
+    private boolean tlsClientCertificateBoundAccessTokens;
+
     private String authorizationSignedResponseAlg;
 
     private String authorizationEncryptedResponseAlg;
@@ -277,6 +279,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.mfaSettings = other.mfaSettings;
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
+        this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
     }
 
     public String getId() {
@@ -882,6 +885,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSilentReAuthentication(boolean silentReAuthentication) {
         this.silentReAuthentication = silentReAuthentication;
+    }
+
+    public boolean isTlsClientCertificateBoundAccessTokens() {
+        return tlsClientCertificateBoundAccessTokens;
+    }
+
+    public void setTlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
+        this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
     @Override
