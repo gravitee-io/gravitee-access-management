@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectRegistrationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
@@ -44,6 +45,8 @@ import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -68,6 +71,9 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
     @Autowired
     private RequestObjectRepository requestObjectRepository;
+
+    @Autowired
+    private Domain domain;
 
     @Override
     public Single<JWT> readRequestObject(String request, Client client) {
@@ -182,6 +188,11 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                 (jwt.getHeader().getAlgorithm() != null && "none".equalsIgnoreCase(jwt.getHeader().getAlgorithm().getName()))) {
             return Completable.error(new InvalidRequestObjectException("Request object must be signed"));
         }
+
+        if (this.domain.usePlainFapiProfile() && !isCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+            return Completable.error(new InvalidRequestObjectException("Request object must be signed with PS256"));
+        }
+
         return Completable.complete();
     }
 }

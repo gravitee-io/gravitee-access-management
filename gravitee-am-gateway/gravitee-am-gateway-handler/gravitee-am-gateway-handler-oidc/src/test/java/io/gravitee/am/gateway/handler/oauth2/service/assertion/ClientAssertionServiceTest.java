@@ -33,6 +33,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.gravitee.am.model.oidc.Client;
@@ -91,6 +92,9 @@ public class ClientAssertionServiceTest {
     @InjectMocks
     private ClientAssertionService clientAssertionService = new ClientAssertionServiceImpl();
 
+    @Mock
+    private Domain domain;
+    
     @Test
     public void testAssertionTypeNotValid() {
         TestObserver testObserver = clientAssertionService.assertClient("",null,null).test();
@@ -343,6 +347,25 @@ public class ClientAssertionServiceTest {
     }
 
     @Test
+    public void testRsaJwt_withClientJwks_RS256InvalidForFAPI() throws NoSuchAlgorithmException, JOSEException{
+        KeyPair rsaKey = generateRsaKeyPair();
+
+        RSAPrivateKey privateKey = (RSAPrivateKey) rsaKey.getPrivate();
+
+        String assertion = generateJWT(privateKey);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath="/";
+
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidClientException.class);
+    }
+
+    @Test
     public void testRsaJwt_withClientJwks_invalidClientAuthMethod() throws NoSuchAlgorithmException, JOSEException{
         KeyPair rsaKey = generateRsaKeyPair();
 
@@ -434,6 +457,31 @@ public class ClientAssertionServiceTest {
 
         testObserver.assertNoErrors();
         testObserver.assertValue(client);
+    }
+
+    @Test
+    public void testHmacJwt_RS256InvalidForFapi() throws NoSuchAlgorithmException, JOSEException {
+        // Generate random 256-bit (32-byte) shared secret
+        SecureRandom random = new SecureRandom();
+        byte[] sharedSecret = new byte[32];
+        random.nextBytes(sharedSecret);
+
+        String clientSecret = new String(sharedSecret, StandardCharsets.UTF_8);
+
+        JWSSigner signer = new MACSigner(clientSecret);
+
+        String assertion = generateJWT(signer);
+        OpenIDProviderMetadata openIDProviderMetadata = Mockito.mock(OpenIDProviderMetadata.class);
+        String basePath="/";
+
+        when(openIDProviderMetadata.getTokenEndpoint()).thenReturn(AUDIENCE);
+        when(openIDDiscoveryService.getConfiguration(basePath)).thenReturn(openIDProviderMetadata);
+
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+
+        TestObserver testObserver = clientAssertionService.assertClient(JWT_BEARER_TYPE,assertion,basePath).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidClientException.class);
     }
 
     @Test
