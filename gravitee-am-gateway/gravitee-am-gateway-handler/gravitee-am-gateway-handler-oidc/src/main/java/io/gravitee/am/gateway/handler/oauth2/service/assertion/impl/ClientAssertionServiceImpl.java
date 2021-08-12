@@ -23,6 +23,7 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
@@ -32,6 +33,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.reactivex.Maybe;
@@ -40,12 +42,13 @@ import io.reactivex.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
 
 /**
  * Client assertion as described for <a href="https://tools.ietf.org/html/rfc7521#section-4.2">oauth2 assertion framework</a>
@@ -72,6 +75,9 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;
+
+    @Autowired
+    private Domain domain;
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
@@ -134,6 +140,10 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
+            if (this.domain.usePlainFapiProfile() && !isCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+                return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
+            }
+
             return Maybe.just(jwt);
         } catch (ParseException pe) {
             return Maybe.error(NOT_VALID);
@@ -188,6 +198,8 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
             String clientId = jwt.getJWTClaimsSet().getSubject();
             SignedJWT signedJWT = (SignedJWT) jwt;
+
+
 
             return this.clientSyncService.findByClientId(clientId)
                     .switchIfEmpty(Maybe.error(new InvalidClientException("Missing or invalid client")))

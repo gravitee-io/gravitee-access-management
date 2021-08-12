@@ -44,6 +44,11 @@ public class JWAlgorithmUtils {
             JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
     )));
 
+    public static final boolean isCompliantWithFapi(String alg) {
+        // ES256 is also authorized by FAPI but not managed by AM
+        return JWSAlgorithm.PS256.getName().equals(alg);
+    }
+
     /**
      * https://tools.ietf.org/html/rfc7518#section-4.1
      */
