@@ -23,7 +23,6 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
-import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
@@ -48,6 +47,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
 
 /**
@@ -61,7 +61,6 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientAssertionServiceImpl.class);
 
-    private static final String JWT_BEARER = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
     private static final InvalidClientException NOT_VALID = new InvalidClientException("assertion is not valid");
 
     @Autowired
@@ -136,7 +135,13 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(new ServerErrorException("Unable to retrieve discovery token endpoint."));
             }
 
-            if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count()==0) {
+            // OIDC specifies that "The Audience SHOULD be the URL of the Authorization Server's Token Endpoint."
+            // https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication
+            // BUT the PAR specification specify the usage of the Issuer value, Token endpoint or PAR endpoint.
+            // https://tools.ietf.org/id/draft-lodderstedt-oauth-par-00.html#pushed-authorization-request-endpoint
+            if (aud.stream().filter(discovery.getTokenEndpoint()::equals).count() == 0 &&
+                    (discovery.getIssuer() != null && aud.stream().filter(discovery.getIssuer()::equals).count() == 0) &&
+                    (discovery.getParEndpoint() != null && aud.stream().filter(discovery.getParEndpoint()::equals).count() == 0)) {
                 return Maybe.error(NOT_VALID);
             }
 

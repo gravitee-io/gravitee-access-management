@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.par.impl;
 
-import com.nimbusds.jwt.JWT;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.PlainJWT;
-import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.*;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
@@ -26,12 +23,10 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestResponse;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
-import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.oidc.Client;
@@ -51,6 +46,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.redirectMatches;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
 
@@ -124,8 +120,11 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
         par.setClient(client.getId()); // link parameters to the internal client identifier
         par.setExpireAt(new Date(Instant.now().plusMillis(requestUriValidity).toEpochMilli()));
 
+
+
         Completable registrationValidation = Completable.fromAction(() -> {
-            if (!client.getClientId().equals(par.getParameters().getFirst(Parameters.CLIENT_ID))) {
+            String clientId = jwtClientAssertion(par) ? getClientIdFromAssertion(par) : par.getParameters().getFirst(Parameters.CLIENT_ID);
+            if (!client.getClientId().equals(clientId)) {
                throw new InvalidRequestException();
             }
             if (par.getParameters().getFirst(io.gravitee.am.common.oidc.Parameters.REQUEST_URI) != null) {
@@ -152,6 +151,19 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
             response.setExp(exp);
             return response;
         });
+    }
+
+    private boolean jwtClientAssertion(PushedAuthorizationRequest par) {
+        return par.getParameters().getFirst(Parameters.CLIENT_ASSERTION) != null && JWT_BEARER.equals(par.getParameters().getFirst(Parameters.CLIENT_ASSERTION_TYPE));
+    }
+
+    private String getClientIdFromAssertion(PushedAuthorizationRequest par) {
+        try {
+            return JWTParser.parse(par.getParameters().getFirst(Parameters.CLIENT_ASSERTION)).getJWTClaimsSet().getSubject();
+        } catch (ParseException e) {
+            LOGGER.warn("Unable to parse the Client Assertion to extract the sub claim");
+            return null;
+        }
     }
 
     private Single<JWT> readRequestObject(Client client, String request) {
