@@ -56,12 +56,10 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private final Flow flow;
     private final ThymeleafTemplateEngine engine;
     private final PushedAuthorizationRequestService parService;
-    private final Domain domain;
 
-    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService, Domain domain) {
+    public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService) {
         this.flow = flow;
         this.engine = engine;
-        this.domain = domain;
         this.parService = parService;
     }
 

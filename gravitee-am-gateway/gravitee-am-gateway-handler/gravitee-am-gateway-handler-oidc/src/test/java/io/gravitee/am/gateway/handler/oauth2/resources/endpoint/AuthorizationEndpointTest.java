@@ -105,7 +105,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService, domain);
+        AuthorizationEndpoint authorizationEndpointHandler = new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService);
 
         // set openid provider service
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
