@@ -1164,7 +1164,7 @@
 											"    pm.expect(body).to.have.property(\"error_description\");",
 											"    ",
 											"    pm.expect(body.error).to.eql('invalid_request_object');",
-											"    pm.expect(body.error_description).to.eql('Invalid signature');",
+											"    pm.expect(body.error_description).to.eql('Invalid request object signing algorithm');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1241,7 +1241,7 @@
 											"    pm.expect(body).to.have.property(\"error_description\");",
 											"    ",
 											"    pm.expect(body.error).to.eql('invalid_request_object');",
-											"    pm.expect(body.error_description).to.eql('Invalid signature');",
+											"    pm.expect(body.error_description).to.eql('Invalid request object signing algorithm');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1546,9 +1546,9 @@
 											"",
 											"pm.test(\"Should be a location error\", function() {",
 											"    var location = postman.getResponseHeader('Location');",
-											"    let domain = pm.environment.get(\"domain\");",
+											"    let domain = pm.environment.get(\"domainHrid\");",
 											"    ",
-											"    tests['Redirect to redirect_uri'] = location.startsWith(\"https://op-test:60001/authz_cb?error\");",
+											"    tests['Redirect to redirect_uri'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 											"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
 											"});"
 										],

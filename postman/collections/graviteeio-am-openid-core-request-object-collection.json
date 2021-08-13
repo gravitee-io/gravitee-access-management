@@ -1048,11 +1048,11 @@
 									"",
 									"pm.test(\"Should be a location error\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to redirect_uri'] = location.startsWith(\"https://op-test:60001/authz_cb?error\");",
-									"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request');",
-									"    tests['Contains an error description query-parameter'] = location.includes('error_description=Invalid+signature');",
+									"    tests['Redirect to redirect_uri'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
+									"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
+									"    tests['Contains an error description query-parameter'] = location.includes('error_description=Invalid+request+object+signing+algorithm');",
 									"});"
 								],
 								"type": "text/javascript"
@@ -2140,9 +2140,9 @@
 									"",
 									"pm.test(\"Should be a location error\", function() {",
 									"    var location = postman.getResponseHeader('Location');",
-									"    let domain = pm.environment.get(\"domain\");",
+									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to redirect_uri'] = location.startsWith(\"http://unknown-redirect-uri/?error\");",
+									"    tests['Redirect to redirect_uri'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 									"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
 									"    tests['Contains an error description query-parameter'] = location.includes('error_description=Malformed+request+object');",
 									"});"
