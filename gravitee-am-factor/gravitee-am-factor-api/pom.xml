@@ -50,13 +50,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.gravitee.am.gateway.handler</groupId>
-            <artifactId>gravitee-am-gateway-handler-common</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -80,6 +73,11 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
     </dependencies>
 </project>

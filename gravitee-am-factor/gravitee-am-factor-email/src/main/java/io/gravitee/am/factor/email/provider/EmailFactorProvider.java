@@ -26,10 +26,12 @@ import io.gravitee.am.factor.utils.SharedSecret;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
@@ -152,8 +154,9 @@ public class EmailFactorProvider implements FactorProvider {
             return provider.sendMessage(emailWrapper.getEmail())
                     .andThen(Single.just(enrolledFactor)
                             .flatMap(ef ->  {
+                                ef.setStatus(FactorStatus.ACTIVATED);
                                 ef.getSecurity().putData(FactorDataKeys.KEY_EXPIRE_AT, emailWrapper.getExpireAt());
-                                return userService.addFactor(context.getUser().getId(), ef);
+                                return userService.addFactor(context.getUser().getId(), ef, new DefaultUser(context.getUser()));
                             }).ignoreElement());
 
         } catch (NoSuchAlgorithmException| InvalidKeyException e) {

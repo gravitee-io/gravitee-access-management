@@ -23,9 +23,11 @@ import io.gravitee.am.factor.otp.OTPFactorConfiguration;
 import io.gravitee.am.factor.otp.utils.QRCode;
 import io.gravitee.am.factor.otp.utils.TOTP;
 import io.gravitee.am.factor.utils.SharedSecret;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,4 +96,12 @@ public class OTPFactorProvider implements FactorProvider {
         return valid;
     }
 
+    @Override
+    public Maybe<String> generateQrCode(User user, EnrolledFactor enrolledFactor) {
+        return Maybe.fromCallable(() -> {
+            final String key = enrolledFactor.getSecurity().getValue();
+            final String username = user.getUsername();
+            return QRCode.generate(QRCode.generateURI(key, otpFactorConfiguration.getIssuer(), username), 200, 200);
+        });
+    }
 }

@@ -42,7 +42,7 @@ public interface UserService {
 
     Completable forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor);
+    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
     default Single<RegistrationResponse> register(Client client, User user) {
         return register(client, user, null);

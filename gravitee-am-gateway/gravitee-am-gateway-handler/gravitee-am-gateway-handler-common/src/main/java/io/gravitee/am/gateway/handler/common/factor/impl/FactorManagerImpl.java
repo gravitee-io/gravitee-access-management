@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.manager.factor.impl;
+package io.gravitee.am.gateway.handler.common.factor.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FactorEvent;
 import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;

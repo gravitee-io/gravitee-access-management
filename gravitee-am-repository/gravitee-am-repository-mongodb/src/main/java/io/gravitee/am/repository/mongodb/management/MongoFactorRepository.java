@@ -105,7 +105,7 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
         factorMongo.setId(factor.getId());
         factorMongo.setName(factor.getName());
         factorMongo.setType(factor.getType());
-        factorMongo.setFactorType(factor.getFactorType());
+        factorMongo.setFactorType(factor.getFactorType().getType());
         factorMongo.setConfiguration(factor.getConfiguration());
         factorMongo.setDomain(factor.getDomain());
         factorMongo.setCreatedAt(factor.getCreatedAt());

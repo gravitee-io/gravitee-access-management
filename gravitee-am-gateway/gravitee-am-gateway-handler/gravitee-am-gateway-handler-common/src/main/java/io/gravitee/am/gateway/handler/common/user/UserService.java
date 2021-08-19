@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.user;
 
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -82,4 +83,12 @@ public interface UserService {
      */
     Single<User> enhance(User user);
 
+    /**
+     * Add an MFA factor to an end-user
+     * @param userId the end-user id
+     * @param enrolledFactor the factor to enroll
+     * @param principal the user who has performed this action
+     * @return
+     */
+    Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 }

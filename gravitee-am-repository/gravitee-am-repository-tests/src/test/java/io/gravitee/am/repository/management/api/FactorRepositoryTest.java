@@ -56,7 +56,7 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         factor.setName("name"+random);
         factor.setDomain("domain"+random);
         factor.setConfiguration("{\"config\": \"" + random +"\"}");
-        factor.setFactorType("factType"+random);
+        factor.setFactorType("EMAIL");
         factor.setType("type"+random);
         factor.setCreatedAt(new Date());
         factor.setUpdatedAt(new Date());

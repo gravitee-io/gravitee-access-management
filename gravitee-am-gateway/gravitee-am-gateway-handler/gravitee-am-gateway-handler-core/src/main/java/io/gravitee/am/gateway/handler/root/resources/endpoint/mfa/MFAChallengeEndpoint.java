@@ -18,24 +18,28 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.Maps;
+import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
@@ -59,6 +63,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -155,10 +160,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         }
         FactorProvider factorProvider = factorManager.get(factorId);
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
-        final FactorContext factorCtx = new FactorContext(applicationContext, routingContext, new Maps.MapBuilder(new HashMap())
-                .put(FactorContext.KEY_CODE, code)
-                .put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor)
-                .build());
+        Map<String, Object> factorData = new HashMap<>();
+        factorData.putAll(getEvaluableAttributes(routingContext));
+        factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+        factorData.put(FactorContext.KEY_CODE, code);
+        final FactorContext factorCtx = new FactorContext(applicationContext, factorData);
 
         verify(factorProvider, factorCtx, h -> {
             if (h.failed()) {
@@ -171,7 +177,8 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
 
             if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
-                saveFactor(endUser.getId(), factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
+                enrolledFactor.setStatus(FactorStatus.ACTIVATED);
+                saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
                     if (fh.failed()) {
                         logger.error("An error occurs while saving enrolled factor for the current user", fh.cause());
                         handleException(routingContext);
@@ -205,10 +212,10 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         error -> handler.handle(Future.failedFuture(error)));
     }
 
-    private void saveFactor(String userId, Single<EnrolledFactor> enrolledFactor, Handler<AsyncResult<User>> handler) {
-        enrolledFactor.flatMap(factor -> userService.addFactor(userId, factor))
+    private void saveFactor(User user, Single<EnrolledFactor> enrolledFactor, Handler<AsyncResult<User>> handler) {
+        enrolledFactor.flatMap(factor -> userService.addFactor(user.getId(), factor, new DefaultUser(user)))
                 .subscribe(
-                        user -> handler.handle(Future.succeededFuture(user)),
+                        user1 -> handler.handle(Future.succeededFuture(user1)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
@@ -221,9 +228,13 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         }
 
         EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factor, endUser);
-        FactorContext factorContext = new FactorContext(applicationContext, routingContext, new Maps.MapBuilder(new HashMap())
-                .put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor)
-                .build());
+        Map<String, Object> factorData = new HashMap<>();
+        factorData.putAll(getEvaluableAttributes(routingContext));
+        factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
+        factorData.put(FactorContext.KEY_USER, endUser);
+        factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+        factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
+        FactorContext factorContext = new FactorContext(applicationContext, factorData);
 
         factorProvider.sendChallenge(factorContext)
                 .subscribeOn(Schedulers.io())
@@ -261,15 +272,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId(factor.getId());
             switch (factor.getFactorType()) {
-                case FactorTypes.TYPE_TOTP:
+                case OTP:
                     enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                     break;
-                case FactorTypes.TYPE_SMS:
+                case SMS:
                     enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
                     break;
-                case FactorTypes.TYPE_EMAIL:
+                case EMAIL:
                     Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
                             .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
                             .build();

@@ -74,12 +74,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.factor</groupId>
-            <artifactId>gravitee-am-factor-api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-factor</artifactId>
             <version>${project.version}</version>

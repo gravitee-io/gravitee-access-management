@@ -13,25 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account;
-
-import io.gravitee.am.gateway.handler.account.spring.AccountConfiguration;
-import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+package io.gravitee.am.gateway.handler.account.resources.util;
 
 /**
- * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author Donald COURTNEY (donald.courtney at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountProtocol implements Protocol {
-    @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
-        return AccountConfiguration.class;
+public enum AccountRoutes {
+    PROFILE("/api/profile"),
+    ACTIVITIES("/api/activity"),
+    CHANGE_PASSWORD("/api/changePassword"),
+    CHANGE_PASSWORD_REDIRECT("/forgotPassword"),
+    FACTORS("/api/factors"),
+    FACTORS_CATALOG("/api/factors/catalog"),
+    FACTORS_BY_ID("/api/factors/:factorId"),
+    FACTORS_OTP_QR("/api/factors/:factorId/qr"),
+    FACTORS_VERIFY("/api/factors/:factorId/verify");
+
+    private String route;
+
+    AccountRoutes(String route){
+        this.route = route;
     }
 
-    @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
-        return AccountProvider.class;
+    public String getRoute() {
+        return route;
     }
 }
