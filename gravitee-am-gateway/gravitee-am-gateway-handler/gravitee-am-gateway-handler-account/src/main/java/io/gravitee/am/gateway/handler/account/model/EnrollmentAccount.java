@@ -13,25 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account;
-
-import io.gravitee.am.gateway.handler.account.spring.AccountConfiguration;
-import io.gravitee.am.gateway.handler.api.Protocol;
-import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+package io.gravitee.am.gateway.handler.account.model;
 
 /**
- * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * Account information to enroll a factor
+ *
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountProtocol implements Protocol {
-    @Override
-    public Class<? extends ProtocolConfiguration> configuration() {
-        return AccountConfiguration.class;
+public class EnrollmentAccount {
+
+    /**
+     * User phone number (if factor type is SMS)
+     */
+    private String phoneNumber;
+
+    /**
+     * User email (if factor type is EMAIL)
+     */
+    private String email;
+
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
-    @Override
-    public Class<? extends ProtocolProvider> protocolProvider() {
-        return AccountProvider.class;
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

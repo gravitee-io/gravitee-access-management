@@ -72,6 +72,9 @@ public class SmtpResourceProvider implements EmailSenderProvider {
         if (configuration.getSslTrust() != null) {
             properties.setProperty(MAILAPI_PROPERTIES_PREFIX + configuration.getProtocol() + ".ssl.trust", configuration.getSslTrust());
         }
+        if (!StringUtils.isEmpty(configuration.getSslProtocols())) {
+            properties.setProperty(MAILAPI_PROPERTIES_PREFIX + configuration.getProtocol()+ ".ssl.protocols", configuration.getSslProtocols());
+        }
         properties.setProperty(MAILAPI_PROPERTIES_PREFIX + configuration.getProtocol()+ ".auth", Boolean.toString(configuration.isAuthentication()));
         properties.setProperty(MAILAPI_PROPERTIES_PREFIX + configuration.getProtocol()+ ".starttls.enable", Boolean.toString(configuration.isStartTls()));
         javaMailSender.setJavaMailProperties(properties);

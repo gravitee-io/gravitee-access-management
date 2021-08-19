@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account.services;
+package io.gravitee.am.gateway.handler.common.factor;
 
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.common.Page;
-import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
-import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.reactivex.Single;
+import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.model.Factor;
+import io.gravitee.common.service.Service;
 
-public interface ActivityAuditService {
-    Single<Page<Audit>> search(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria, int page, int size);
+/**
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public interface FactorManager extends Service {
 
+    FactorProvider get(String factorId);
+
+    Factor getFactor(String factorId);
+
+    void updateFactor(String factorId);
 }

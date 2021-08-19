@@ -31,6 +31,7 @@ public class SmtpResourceConfiguration implements ResourceConfiguration {
     private String password;
     private boolean startTls;
     private String sslTrust;
+    private String sslProtocols;
 
     public String getHost() {
         return host;
@@ -94,6 +95,14 @@ public class SmtpResourceConfiguration implements ResourceConfiguration {
 
     public void setSslTrust(String sslTrust) {
         this.sslTrust = sslTrust;
+    }
+
+    public String getSslProtocols() {
+        return sslProtocols;
+    }
+
+    public void setSslProtocols(String sslProtocols) {
+        this.sslProtocols = sslProtocols;
     }
 
     public String getProtocol() {

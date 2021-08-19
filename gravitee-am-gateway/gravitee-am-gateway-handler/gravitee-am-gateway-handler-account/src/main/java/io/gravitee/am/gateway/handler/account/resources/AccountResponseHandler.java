@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account.resources.account;
+package io.gravitee.am.gateway.handler.account.resources;
 
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
@@ -23,11 +23,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
+/**
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class AccountResponseHandler {
-
-    public static void handleWIP(RoutingContext routingContext) {
-        buildDefaultHeader(routingContext).end(getTemporaryWipResponseJson());
-    }
 
     public static void handleDefaultResponse(RoutingContext routingContext, Object obj){
         buildDefaultHeader(routingContext).end(Json.encodePrettily(obj));
@@ -66,7 +66,7 @@ public class AccountResponseHandler {
         return new JsonObject().put("status", "OK").toString();
     }
 
-    private static String getTemporaryWipResponseJson() {
-        return new JsonObject().put("temp", "true").put("reason", "wip").toString();
+    public static void handleNoBodyResponse(RoutingContext routingContext) {
+        routingContext.response().setStatusCode(204).end();
     }
 }

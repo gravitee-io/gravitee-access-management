@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.manager.resource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ResourceEvent;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
-import io.gravitee.am.gateway.handler.manager.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;

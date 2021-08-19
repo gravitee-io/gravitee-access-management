@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account.resources.account.util;
+package io.gravitee.am.gateway.handler.account.resources.util;
 
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Objects;
 
+/**
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class ContextPathParamUtil {
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int DEFAULT_PAGE = 0;

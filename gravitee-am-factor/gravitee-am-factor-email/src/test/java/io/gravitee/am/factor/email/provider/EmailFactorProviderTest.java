@@ -110,7 +110,7 @@ public class EmailFactorProviderTest {
         when(user.getId()).thenReturn("id");
         when(factorContext.getUser()).thenReturn(user);
 
-        when(userService.addFactor(any(), any())).thenReturn(Single.just(user));
+        when(userService.addFactor(any(), any(), any())).thenReturn(Single.just(user));
         when(smtpProvider.sendMessage(any())).thenReturn(Completable.complete());
 
         TestObserver<Void> test = cut.sendChallenge(factorContext).test();
@@ -119,7 +119,7 @@ public class EmailFactorProviderTest {
         test.assertNoErrors();
 
         verify(smtpProvider).sendMessage(argThat(m -> m.getTo()[0].equals(RECIPIENT)));
-        verify(userService).addFactor(any(), any());
+        verify(userService).addFactor(any(), any(), any());
     }
 
     @Test

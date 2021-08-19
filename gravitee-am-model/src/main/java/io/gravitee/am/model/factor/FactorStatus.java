@@ -13,24 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.account.resources.account.util;
+package io.gravitee.am.model.factor;
 
-public enum AccountRoutes {
-    INDEX("/"),
-    STATIC_ASSETS("/assets/*"),
-    PROFILE("/api/profile"),
-    FACTORS("/api/factors"),
-    ACTIVITIES("/api/activity"),
-    CHANGE_PASSWORD("/api/changePassword"),
-    CHANGE_PASSWORD_REDIRECT("/forgotPassword");
-
-    private String route;
-
-    AccountRoutes(String route){
-        this.route = route;
-    }
-
-    public String getRoute() {
-        return route;
-    }
+public enum FactorStatus {
+    PENDING_ACTIVATION, ACTIVATED, REVOKED, NULL;
 }

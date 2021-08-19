@@ -13,22 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.manager.factor;
-
-import io.gravitee.am.common.event.FactorEvent;
-import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.am.model.Factor;
-import io.gravitee.common.service.Service;
+package io.gravitee.am.gateway.handler.account.model;
 
 /**
+ * Factor to enroll
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorManager extends Service {
+public class Enrollment {
 
-    FactorProvider get(String factorId);
+    /**
+     * Factor technical ID to enroll
+     */
+    private String factorId;
 
-    Factor getFactor(String factorId);
+    /**
+     * Account information to enroll the factor
+     */
+    private EnrollmentAccount account;
 
-    void updateFactor(String factorId);
+    public String getFactorId() {
+        return factorId;
+    }
+
+    public void setFactorId(String factorId) {
+        this.factorId = factorId;
+    }
+
+    public EnrollmentAccount getAccount() {
+        return account;
+    }
+
+    public void setAccount(EnrollmentAccount account) {
+        this.account = account;
+    }
 }

@@ -30,7 +30,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandle
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;

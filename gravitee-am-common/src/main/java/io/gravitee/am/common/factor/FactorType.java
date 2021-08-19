@@ -15,13 +15,30 @@
  */
 package io.gravitee.am.common.factor;
 
+import java.util.NoSuchElementException;
+
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorType {
+public enum FactorType {
+    OTP("TOTP"),
+    SMS("SMS"),
+    EMAIL("EMAIL");
 
-    String TOTP = "TOTP";
-    String SMS = "SMS";
-    String EMAIL = "EMAIL";
+    FactorType(String type) {
+        this.type = type;
+    }
+    private final String type;
+
+    public static FactorType getFactorTypeFromString(String type){
+        if (OTP.getType().equalsIgnoreCase(type) || "OTP".equalsIgnoreCase(type)) return OTP;
+        if (SMS.getType().equalsIgnoreCase(type)) return SMS;
+        if (EMAIL.getType().equalsIgnoreCase(type)) return EMAIL;
+        throw new NoSuchElementException(String.format("No factor type for provided string of %s", type));
+    }
+
+    public String getType() {
+        return type;
+    }
 }

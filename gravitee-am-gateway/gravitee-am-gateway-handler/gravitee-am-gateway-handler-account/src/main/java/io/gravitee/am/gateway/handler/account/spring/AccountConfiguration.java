@@ -15,27 +15,21 @@
  */
 package io.gravitee.am.gateway.handler.account.spring;
 
-import io.gravitee.am.gateway.handler.account.services.AccountManagementUserService;
-import io.gravitee.am.gateway.handler.account.services.ActivityAuditService;
-import io.gravitee.am.gateway.handler.account.services.impl.AccountManagementUserServiceImpl;
-import io.gravitee.am.gateway.handler.account.services.impl.ActivityAuditServiceImpl;
+import io.gravitee.am.gateway.handler.account.services.AccountService;
+import io.gravitee.am.gateway.handler.account.services.impl.AccountServiceImpl;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.impl.UserServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Configuration
 public class AccountConfiguration implements ProtocolConfiguration {
 
-        @Bean
-        public ActivityAuditService deviceService() {return new ActivityAuditServiceImpl();}
-
-        @Bean
-        public AccountManagementUserService accountManagementUserService() {return new AccountManagementUserServiceImpl();}
-
-        @Bean
-        public UserService accountService() {
-            return new UserServiceImpl();
-        }
+    @Bean
+    public AccountService accountService() {
+        return new AccountServiceImpl();
+    }
 }

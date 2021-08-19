@@ -55,6 +55,11 @@
       "type": "string",
       "title": "SSL Trust",
       "description": "Trusted domains. If set to \"*\", all hosts are trusted. If set to a whitespace separated list of hosts, those hosts are trusted.(ex: smtp.gmail.com)"
+    },
+    "sslProtocols": {
+      "type": "string",
+      "title": "SSL Protocols",
+      "description": "SSL protocols that are enabled for SSL connections. Must be a whitespace separated list of protocols.(ex: TLSv1 TLSv1.1)"
     }
   },
   "required": ["host", "port", "from", "protocol"]

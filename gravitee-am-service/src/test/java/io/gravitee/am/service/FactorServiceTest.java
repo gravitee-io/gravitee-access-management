@@ -125,7 +125,7 @@ public class FactorServiceTest {
     @Test
     public void shouldCreate() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
+        when(newFactor.getFactorType()).thenReturn(FactorType.OTP.getType());
         when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -142,7 +142,7 @@ public class FactorServiceTest {
     @Test
     public void shouldCreateSMS() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.SMS);
+        when(newFactor.getFactorType()).thenReturn(FactorType.SMS.getType());
         when(newFactor.getType()).thenReturn("sms-am-factor");
         when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, us\"}");
         when(factorRepository.create(any(Factor.class))).thenReturn(Single.just(new Factor()));
@@ -161,7 +161,7 @@ public class FactorServiceTest {
     @Test
     public void shouldCreate_SMS_InvalidCountry() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.SMS);
+        when(newFactor.getFactorType()).thenReturn(FactorType.SMS.getType());
         when(newFactor.getType()).thenReturn("sms-am-factor");
         when(newFactor.getConfiguration()).thenReturn("{\"countryCodes\":\"fr, g8\"}");
 
@@ -177,7 +177,7 @@ public class FactorServiceTest {
     @Test
     public void shouldCreate_technicalException() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
+        when(newFactor.getFactorType()).thenReturn(FactorType.OTP.getType());
         when(factorRepository.create(any())).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Factor> testObserver = new TestObserver<>();
@@ -192,7 +192,7 @@ public class FactorServiceTest {
     @Test
     public void shouldCreate2_technicalException() {
         NewFactor newFactor = Mockito.mock(NewFactor.class);
-        when(newFactor.getFactorType()).thenReturn(FactorType.TOTP);
+        when(newFactor.getFactorType()).thenReturn(FactorType.OTP.getType());
         when(factorRepository.create(any(Factor.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Factor> testObserver = new TestObserver<>();

@@ -20,8 +20,8 @@ import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionMana
 import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
 import io.gravitee.am.gateway.handler.manager.domain.impl.CrossDomainManagerImpl;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
-import io.gravitee.am.gateway.handler.manager.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;

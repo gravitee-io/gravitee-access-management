@@ -56,7 +56,7 @@ public class UserFactorsResourceTest extends JerseySpringTest {
 
         final Factor mockFactor = new Factor();
         mockFactor.setId("factor-id");
-        mockFactor.setFactorType(FactorType.TOTP);
+        mockFactor.setFactorType(FactorType.OTP);
         mockFactor.setName("OTP");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);

@@ -29,7 +29,7 @@ public class EnrolledFactor {
 
     private String appId;
 
-    private String status;
+    private FactorStatus status = FactorStatus.NULL;
 
     private EnrolledFactorSecurity security;
 
@@ -68,11 +68,11 @@ public class EnrolledFactor {
         this.appId = appId;
     }
 
-    public String getStatus() {
+    public FactorStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(FactorStatus status) {
         this.status = status;
     }
 

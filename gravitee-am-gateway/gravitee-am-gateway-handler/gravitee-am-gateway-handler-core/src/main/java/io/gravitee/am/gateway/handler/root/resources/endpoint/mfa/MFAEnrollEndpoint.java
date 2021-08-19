@@ -21,7 +21,7 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Template;
@@ -184,13 +184,13 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private EnrolledFactor getSecurityFactor(MultiMap params, io.gravitee.am.model.Factor factor) {
         EnrolledFactor enrolledFactor = new EnrolledFactor();
         switch (factor.getFactorType()) {
-            case FactorTypes.TYPE_TOTP:
+            case OTP:
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 break;
-            case FactorTypes.TYPE_SMS:
+            case SMS:
                 enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, params.get("phone")));
                 break;
-            case FactorTypes.TYPE_EMAIL:
+            case EMAIL:
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, params.get("email")));
                 break;
@@ -234,7 +234,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         public Factor(io.gravitee.am.model.Factor factor, Enrollment enrollment) {
             this.id = factor.getId();
             this.name = factor.getName();
-            this.factorType = factor.getFactorType();
+            this.factorType = factor.getFactorType().getType();
             this.enrollment = enrollment;
         }
 

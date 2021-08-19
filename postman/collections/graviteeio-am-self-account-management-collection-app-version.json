@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "ebddc50d-e391-4277-b81c-87f8761dbd9c",
+		"_postman_id": "cf17867d-bd28-4005-a32d-3ba8cec13cb5",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -70,7 +70,7 @@
 					"response": []
 				},
 				{
-					"name": "Create self account mamagement domain",
+					"name": "Create self account management domain",
 					"event": [
 						{
 							"listen": "test",
@@ -85,7 +85,7 @@
 									"pm.environment.set('domainHrid', jsonData.hrid);",
 									"",
 									"// wait for sync process",
-									"setTimeout(function(){}, 10000);"
+									"setTimeout(function(){}, 5000);"
 								],
 								"type": "text/javascript"
 							}
@@ -544,384 +544,819 @@
 		},
 		{
 			"name": "Invalid Case",
-			"item": []
+			"item": [
+				{
+					"name": "Factors",
+					"item": [
+						{
+							"name": "Enroll Factor - Invalid request - malformed json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor malformed json\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(400);",
+											"    pm.expect(jsonData.message).to.eql(\"Unable to parse body message\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Enroll Factor - Invalid request - factorId required",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor missing factorId\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(400);",
+											"    pm.expect(jsonData.message).to.eql(\"Field [factorId] is required\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Enroll Factor - Invalid request - unknown factor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor unknown factorId\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(404);",
+											"    pm.expect(jsonData.message).to.eql(\"Factor [unknown] can not be found.\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"factorId\": \"unknown\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Factor - Invalid request - malformed json",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor malformed json\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(400);",
+											"    pm.expect(jsonData.message).to.eql(\"Unable to parse body message\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors/test/verify",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors",
+										"test",
+										"verify"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Factor - Invalid request - code required",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor missing factorId\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(400);",
+											"    pm.expect(jsonData.message).to.eql(\"Field [code] is required\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors/test/verify",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors",
+										"test",
+										"verify"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Factor - Invalid request - unknown factor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 404\", function () {",
+											"    pm.response.to.have.status(404);",
+											"});",
+											"",
+											"pm.test(\"Enroll factor unknown factorId\", function () {",
+											"    var jsonData = pm.response.json();",
+											"    pm.expect(jsonData.http_status).to.eql(404);",
+											"    pm.expect(jsonData.message).to.eql(\"Factor [unknown] can not be found.\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "Bearer {{access_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"123456\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors/unknown/verify",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors",
+										"unknown",
+										"verify"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
 		},
 		{
 			"name": "Nominal Case",
 			"item": [
 				{
-					"name": "Get Index",
-					"event": [
+					"name": "Profile",
+					"item": [
 						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('temp');",
-									"    pm.expect(body).to.have.property('reason');",
-									"    pm.expect(body.temp).to.eql('true');",
-									"    pm.expect(body.reason).to.eql('wip');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Static Assets",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('temp');",
-									"    pm.expect(body).to.have.property('reason');",
-									"    pm.expect(body.temp).to.eql('true');",
-									"    pm.expect(body.reason).to.eql('wip');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/assets/hello/world",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"assets",
-								"hello",
-								"world"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Change Password",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"//Fails if auto redirects are enabled",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(302);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"changePassword"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Profile",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('username');",
-									"    pm.expect(body).to.have.property('displayName');",
-									"    pm.expect(body.username).to.eql('jensen.barbara');",
-									"    pm.expect(body.displayName).to.eql('Jensen Barbara');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Factors",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.be.lengthOf(0)",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"factors"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Factors",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('temp');",
-									"    pm.expect(body).to.have.property('reason');",
-									"    pm.expect(body.temp).to.eql('true');",
-									"    pm.expect(body.reason).to.eql('wip');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"factors"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Get Activity",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('data');",
-									"    pm.expect(body).to.have.property('currentPage');",
-									"    pm.expect(body).to.have.property('totalCount');",
-									"    pm.expect(body.currentPage).to.eql(0);",
-									"    pm.expect(body.data).to.not.null",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/activity",
-							"host": [
-								"{{gateway_url}}"
-							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"activity"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Update Profile",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"",
-									"pm.test(\"Has proper response\", function () {",
-									"    var body = pm.response.json();",
-									"    pm.expect(body).to.have.property('status');",
-									"    pm.expect(body.status).to.eql('OK');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Donald Hope Courtney Jr\",\n  \"given_name\": \"Donald\",\n  \"family_name\": \"Courtney\",\n  \"middle_name\": \"Hope\",\n  \"nickname\": \"Dj\",\n  \"profile\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"picture\": \"https://media-exp3.licdn.com/dms/image/C4E03AQFIFcQeELwSXg/profile-displayphoto-shrink_400_400/0/1604523349570?e=1631750400&v=beta&t=77yVpbv5xfu5pN-yaBqX0_B1NDdT1ovgtq9ZoKDXmEQ\",\n  \"website\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"email\": \"donald.courtney@graviteesource.com\",\n  \"gender\": \"male\",\n  \"birthdate\": \"1992-12-13\",\n  \"zoneinfo\": \"UTC−05:00\",\n  \"locale\": \"en-US\",\n  \"phone_number\": \"+1 (352) 226-3641\",\n  \"address\": {\n      \"street_address\": \"19616 Wyndmill Cir\",\n      \"locality\": \"Odessa\",\n      \"region\": \"Florida\",\n      \"postal_code\": \"33556\",\n      \"country\": \"USA\"\n  }\n}",
-							"options": {
-								"raw": {
-									"language": "json"
+							"name": "Get Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('username');",
+											"    pm.expect(body).to.have.property('displayName');",
+											"    pm.expect(body.username).to.eql('jensen.barbara');",
+											"    pm.expect(body.displayName).to.eql('Jensen Barbara');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
 								}
-							}
-						},
-						"url": {
-							"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
-							"host": [
-								"{{gateway_url}}"
 							],
-							"path": [
-								"{{domainHrid}}",
-								"account",
-								"api",
-								"profile"
-							]
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('status');",
+											"    pm.expect(body.status).to.eql('OK');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Donald Hope Courtney Jr\",\n  \"given_name\": \"Donald\",\n  \"family_name\": \"Courtney\",\n  \"middle_name\": \"Hope\",\n  \"nickname\": \"Dj\",\n  \"profile\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"picture\": \"https://media-exp3.licdn.com/dms/image/C4E03AQFIFcQeELwSXg/profile-displayphoto-shrink_400_400/0/1604523349570?e=1631750400&v=beta&t=77yVpbv5xfu5pN-yaBqX0_B1NDdT1ovgtq9ZoKDXmEQ\",\n  \"website\": \"https://www.linkedin.com/in/donald-courtney-b98106190/\",\n  \"email\": \"donald.courtney@graviteesource.com\",\n  \"gender\": \"male\",\n  \"birthdate\": \"1992-12-13\",\n  \"zoneinfo\": \"UTC−05:00\",\n  \"locale\": \"en-US\",\n  \"phone_number\": \"+1 (352) 226-3641\",\n  \"address\": {\n      \"street_address\": \"19616 Wyndmill Cir\",\n      \"locality\": \"Odessa\",\n      \"region\": \"Florida\",\n      \"postal_code\": \"33556\",\n      \"country\": \"USA\"\n  }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/profile",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"profile"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Change Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"//Fails if auto redirects are enabled",
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(302);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"changePassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Activity",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('data');",
+											"    pm.expect(body).to.have.property('currentPage');",
+											"    pm.expect(body).to.have.property('totalCount');",
+											"    pm.expect(body.currentPage).to.eql(0);",
+											"    pm.expect(body.data).to.not.null",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/activity",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"activity"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
+				},
+				{
+					"name": "Factors",
+					"item": [
+						{
+							"name": "Create factor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"var body = JSON.parse(responseBody);",
+											"pm.environment.set('factorId', body.id);",
+											"pm.environment.set('factorType', body.factorType);",
+											"",
+											"// wait for sync process",
+											"setTimeout(function(){}, 10000);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\":\"otp-am-factor\",\n    \"factorType\":\"TOTP\",\n    \"configuration\":\"{\\\"issuer\\\":\\\"Gravitee.io\\\",\\\"algorithm\\\":\\\"HmacSHA1\\\",\\\"timeStep\\\":\\\"30\\\",\\\"returnDigits\\\":\\\"6\\\"}\",\n    \"name\":\"TOTP\"\n}"
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/factors",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get factors catalog",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.be.lengthOf(1)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors/catalog",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors",
+										"catalog"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Enroll Factor",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"factorId\": \"{{factorId}}\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get enrolled factors",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.be.lengthOf(1)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove factor from user",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors/{{factorId}}",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors",
+										"{{factorId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get enrolled factors (bis)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has proper response\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.be.lengthOf(0)",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/factors",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"factors"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},

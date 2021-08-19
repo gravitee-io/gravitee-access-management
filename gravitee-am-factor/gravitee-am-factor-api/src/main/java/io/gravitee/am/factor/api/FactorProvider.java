@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 
 /**
@@ -42,5 +44,9 @@ public interface FactorProvider {
 
     default Single<EnrolledFactor> changeVariableFactorSecurity(EnrolledFactor factor) {
         return Single.just(factor);
+    }
+
+    default Maybe<String> generateQrCode(User user, EnrolledFactor enrolledFactor) {
+        return Maybe.empty();
     }
 }

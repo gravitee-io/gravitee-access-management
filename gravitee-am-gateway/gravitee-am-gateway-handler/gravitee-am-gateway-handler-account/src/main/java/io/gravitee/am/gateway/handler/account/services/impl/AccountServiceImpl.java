@@ -17,27 +17,42 @@ package io.gravitee.am.gateway.handler.account.services.impl;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.account.services.AccountManagementUserService;
+import io.gravitee.am.gateway.handler.account.services.AccountService;
+import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.validators.UserValidator;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class AccountManagementUserServiceImpl implements AccountManagementUserService {
+/**
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public class AccountServiceImpl implements AccountService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountManagementUserServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     @Autowired
     private Domain domain;
@@ -50,6 +65,36 @@ public class AccountManagementUserServiceImpl implements AccountManagementUserSe
 
     @Autowired
     private UserValidator userValidator;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private FactorService factorService;
+
+    @Autowired
+    private AuditReporterManager auditReporterManager;
+
+    @Override
+    public Maybe<User> get(String userId) {
+        return userService.findById(userId);
+    }
+
+    @Override
+    public Single<Page<Audit>> getActivity(User user, AuditReportableCriteria criteria, int page, int size) {
+        try {
+            Single<Page<Audit>> reporter = auditReporterManager.getReporter().search(ReferenceType.DOMAIN, user.getReferenceId(), criteria, page, size);
+            return reporter.map(result -> {
+                if(Objects.isNull(result) || Objects.isNull(result.getData())){
+                    return new Page<>(new ArrayList<>(), 0, 0);
+                }
+                return result;
+            });
+        } catch (Exception ex) {
+            LOGGER.error("An error occurs during audits search for {}}: {}", ReferenceType.DOMAIN, user.getReferenceId(), ex);
+            return Single.error(ex);
+        }
+    }
 
     @Override
     public Single<User> update(User user) {
@@ -79,6 +124,25 @@ public class AccountManagementUserServiceImpl implements AccountManagementUserSe
 
     }
 
+    @Override
+    public Single<List<Factor>> getFactors(String domain) {
+        return factorService.findByDomain(domain).toList();
+    }
+
+    @Override
+    public Maybe<Factor> getFactor(String id) {
+        return factorService.findById(id);
+    }
+
+    @Override
+    public Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.upsertFactor(userId, enrolledFactor, principal);
+    }
+
+    @Override
+    public Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.removeFactor(userId, factorId, principal);
+    }
 
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {
         DefaultUser idpUser = new DefaultUser(user.getUsername());

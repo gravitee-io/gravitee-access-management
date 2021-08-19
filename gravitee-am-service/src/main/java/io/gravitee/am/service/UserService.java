@@ -19,6 +19,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -58,4 +59,7 @@ public interface UserService extends CommonUserService {
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
+    Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+
+    Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal);
 }

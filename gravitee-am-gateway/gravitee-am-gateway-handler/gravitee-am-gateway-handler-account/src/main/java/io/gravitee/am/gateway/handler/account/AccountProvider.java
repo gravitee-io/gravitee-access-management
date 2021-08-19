@@ -15,29 +15,29 @@
  */
 package io.gravitee.am.gateway.handler.account;
 
-import io.gravitee.am.gateway.handler.account.resources.account.AccountEndpointHandler;
-import io.gravitee.am.gateway.handler.account.services.AccountManagementUserService;
-import io.gravitee.am.gateway.handler.account.services.ActivityAuditService;
-import io.gravitee.am.gateway.handler.account.resources.account.util.AccountRoutes;
+import io.gravitee.am.gateway.handler.account.resources.AccountEndpointHandler;
+import io.gravitee.am.gateway.handler.account.resources.AccountFactorsEndpointHandler;
+import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
+import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
+/**
+ * @author Donald Courtney (donald.courtney at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class AccountProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
-    @Override
-    public String path() {
-        return "/account";
-    }
 
     @Autowired
     private Vertx vertx;
@@ -49,48 +49,87 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
     private Router router;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
-    private FactorService factorService;
-
-    @Autowired
-    private ActivityAuditService activityAuditService;
-
-    @Autowired
-    private AccountManagementUserService accountManagementUserService;
+    private AccountService accountService;
 
     @Autowired
     private OAuth2AuthProvider oAuth2AuthProvider;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private FactorManager factorManager;
+
+    @Autowired
+    private CorsHandler corsHandler;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
         if (isSelfServiceAccountEnabled()) {
+            // Create the account router
             final Router accountRouter = Router.router(vertx);
-            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(userService, factorService, activityAuditService, accountManagementUserService, domain);
+
+            // CORS handler
+            accountRouter.route().handler(corsHandler);
+
+            // Account resources are OAuth 2.0 secured
             OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider);
             oAuth2AuthHandler.extractToken(true);
             oAuth2AuthHandler.extractClient(true);
             accountRouter.route().handler(oAuth2AuthHandler);
 
-            // user consent routes
-            accountRouter.get(AccountRoutes.INDEX.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAccount);
-            accountRouter.get(AccountRoutes.STATIC_ASSETS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getAsset);
+            // Account profile routes
+            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService);
             accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
             accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
-            accountRouter.get(AccountRoutes.FACTORS.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getUserFactors);
-            accountRouter.put(AccountRoutes.FACTORS.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateUserFactors);
             accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);
             accountRouter.get(AccountRoutes.CHANGE_PASSWORD.getRoute()).handler(accountHandler::redirectForgotPassword);
+
+            // Account factors routes
+            AccountFactorsEndpointHandler accountFactorsEndpointHandler =
+                    new AccountFactorsEndpointHandler(accountService, factorManager, applicationContext);
+
+            accountRouter.get(AccountRoutes.FACTORS.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::listEnrolledFactors);
+            accountRouter.get(AccountRoutes.FACTORS_CATALOG.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::listAvailableFactors);
+            accountRouter.get(AccountRoutes.FACTORS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::getEnrolledFactor);
+            accountRouter.get(AccountRoutes.FACTORS_OTP_QR.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::getEnrolledFactorQrCode);
+            accountRouter.delete(AccountRoutes.FACTORS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::removeFactor);
+            accountRouter.post(AccountRoutes.FACTORS.getRoute())
+                    .handler(BodyHandler.create())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::enrollFactor);
+            accountRouter.post(AccountRoutes.FACTORS_VERIFY.getRoute())
+                    .handler(BodyHandler.create())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::verifyFactor);
+
             // error handler
             accountRouter.route().failureHandler(new ErrorHandler());
+
+            // mount account router
             router.mountSubRouter(path(), accountRouter);
         }
     }
 
+    @Override
+    public String path() {
+        return "/account";
+    }
+
     private boolean isSelfServiceAccountEnabled() {
-        return domain.getSelfServiceAccountManagementSettings() != null && domain.getSelfServiceAccountManagementSettings().isEnabled();
+        return domain.getSelfServiceAccountManagementSettings() != null &&
+                domain.getSelfServiceAccountManagementSettings().isEnabled();
     }
 }

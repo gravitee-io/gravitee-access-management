@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.common.factor.FactorType;
+
 import java.util.Date;
 
 /**
@@ -29,7 +31,7 @@ public class Factor {
 
     private String type;
 
-    private String factorType;
+    private FactorType factorType;
 
     private String configuration;
 
@@ -77,11 +79,15 @@ public class Factor {
         this.type = type;
     }
 
-    public String getFactorType() {
+    public FactorType getFactorType() {
         return factorType;
     }
 
     public void setFactorType(String factorType) {
+        this.factorType = FactorType.getFactorTypeFromString(factorType);
+    }
+
+    public void setFactorType(FactorType factorType) {
         this.factorType = factorType;
     }
 

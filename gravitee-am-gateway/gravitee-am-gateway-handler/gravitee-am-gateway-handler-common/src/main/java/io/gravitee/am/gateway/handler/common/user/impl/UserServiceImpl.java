@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.user.impl;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -68,5 +69,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> enhance(User user) {
         return userService.enhance(user);
+    }
+
+    @Override
+    public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.upsertFactor(userId, enrolledFactor, principal);
     }
 }
