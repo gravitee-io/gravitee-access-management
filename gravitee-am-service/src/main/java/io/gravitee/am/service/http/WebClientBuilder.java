@@ -138,6 +138,11 @@ public class WebClientBuilder {
                     .map(String::valueOf)
                     .collect(Collectors.toList());
 
+            if(url.contains("?")) {
+                // Remove the query part as it could contains invalid characters such as those used in El expression.
+                url = url.substring(0, url.indexOf('?'));
+            }
+
             URL uri = URI.create(url).toURL();
             String host = uri.getHost();
             return proxyExcludeHosts.stream().anyMatch(excludedHost -> {
