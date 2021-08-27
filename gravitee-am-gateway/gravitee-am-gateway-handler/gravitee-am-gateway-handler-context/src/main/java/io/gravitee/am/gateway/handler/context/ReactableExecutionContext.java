@@ -22,6 +22,7 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.MutableExecutionContext;
+import io.gravitee.tracing.api.Tracer;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
@@ -148,5 +149,10 @@ public class ReactableExecutionContext implements MutableExecutionContext {
             Object value = super.get(key);
             return (value != null) ? value : super.get(ExecutionContext.ATTR_PREFIX + key);
         }
+    }
+
+    @Override
+    public Tracer getTracer() {
+        throw new IllegalStateException();
     }
 }
