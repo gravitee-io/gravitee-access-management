@@ -36,6 +36,7 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
     private String postRedirectUri;
     private Set<String> scopes;
     private Integer connectTimeout = 10000;
+    private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 100;
     private Environment environment = Environment.INTEGRATION;
 
@@ -101,6 +102,14 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
 
     public void setConnectTimeout(Integer connectTimeout) {
         this.connectTimeout = connectTimeout;
+    }
+
+    public Integer getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(Integer idleTimeout) {
+        this.idleTimeout = idleTimeout;
     }
 
     public Integer getMaxPoolSize() {

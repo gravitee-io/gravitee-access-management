@@ -61,6 +61,13 @@
       "title": "HTTP Client connect timeout",
       "description": "Duration of time in milliseconds that connects will block. (default 10000 ms)"
     },
+    "idleTimeout" : {
+      "type" : "integer",
+      "default": 10000,
+      "minimum": 1,
+      "title": "HTTP Client idle timeout",
+      "description": "Duration of time in milliseconds that request will hold. (default 10000 ms)"
+    },
     "maxPoolSize" : {
       "type" : "integer",
       "default": 100,
