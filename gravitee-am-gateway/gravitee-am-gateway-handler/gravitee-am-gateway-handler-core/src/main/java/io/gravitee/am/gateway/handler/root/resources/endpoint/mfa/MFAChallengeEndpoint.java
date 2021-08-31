@@ -247,6 +247,11 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         if (savedFactorId != null) {
             return factorManager.getFactor(savedFactorId);
         }
+        
+        if (endUser.getFactors() == null)  {
+            throw new FactorNotFoundException("No factor found for the end user");
+        }
+
         return endUser.getFactors()
                 .stream()
                 .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
@@ -297,6 +302,10 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     }
 
     private Optional<EnrolledFactor> getEnrolledFactor(Factor factor, User endUser) {
+        if (endUser.getFactors() == null) {
+            return Optional.empty();
+        }
+
         return endUser.getFactors()
                 .stream()
                 .filter(f -> factor.getId().equals(f.getFactorId()))
