@@ -25,6 +25,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -33,6 +35,7 @@ import org.springframework.context.annotation.Configuration;
 public class LinkedinAuthenticationProviderConfiguration {
 
     private static final String DEFAULT_USER_AGENT = "Gravitee.io-AM/3";
+    private static final TimeUnit DEFAULT_IDLE_TIMEOUT_UNIT = TimeUnit.MILLISECONDS;
 
     @Autowired
     private Vertx vertx;
@@ -47,6 +50,8 @@ public class LinkedinAuthenticationProviderConfiguration {
         httpClientOptions
                 .setUserAgent(DEFAULT_USER_AGENT)
                 .setConnectTimeout(configuration.getConnectTimeout())
+                .setIdleTimeout(configuration.getIdleTimeout())
+                .setIdleTimeoutUnit(DEFAULT_IDLE_TIMEOUT_UNIT)
                 .setMaxPoolSize(configuration.getMaxPoolSize());
 
         return new WebClientBuilder().createWebClient(vertx, httpClientOptions, configuration.getUserAuthorizationUri());

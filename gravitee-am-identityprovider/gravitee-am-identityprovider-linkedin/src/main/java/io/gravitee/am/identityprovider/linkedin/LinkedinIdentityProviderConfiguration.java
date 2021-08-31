@@ -35,6 +35,7 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
     private String clientSecret;
     private Set<String> scopes;
     private Integer connectTimeout = 10000;
+    private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
 
     public String getClientId() {
@@ -103,6 +104,14 @@ public class LinkedinIdentityProviderConfiguration implements SocialIdentityProv
 
     public void setConnectTimeout(Integer connectTimeout) {
         this.connectTimeout = connectTimeout;
+    }
+
+    public Integer getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(Integer idleTimeout) {
+        this.idleTimeout = idleTimeout;
     }
 
     public Integer getMaxPoolSize() {

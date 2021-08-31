@@ -18,12 +18,14 @@ package io.gravitee.am.identityprovider.api.social;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface SocialIdentityProviderConfiguration extends IdentityProviderConfiguration {
+
     public String getClientId();
 
     public String getClientSecret();
@@ -43,6 +45,8 @@ public interface SocialIdentityProviderConfiguration extends IdentityProviderCon
     public String getResponseType();
 
     public Integer getConnectTimeout();
+
+    public Integer getIdleTimeout();
 
     public Integer getMaxPoolSize();
 
