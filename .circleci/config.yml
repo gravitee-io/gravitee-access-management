@@ -163,7 +163,7 @@ jobs:
       os_name: "ubuntu"
       os_version: "2004"
       os_patch: "202101-01"
-      machine_size: "large"
+      machine_size: "xlarge"
 
     steps:
       - attach_workspace:
