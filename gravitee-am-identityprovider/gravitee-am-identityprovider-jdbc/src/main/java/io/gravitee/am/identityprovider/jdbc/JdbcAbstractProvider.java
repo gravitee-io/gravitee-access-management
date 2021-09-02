@@ -42,7 +42,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.*;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JdbcAbstractProvider<T extends LifecycleComponent> extends AbstractService<T>  {
+public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends AbstractService<T>  {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(JdbcAbstractProvider.class);
 
