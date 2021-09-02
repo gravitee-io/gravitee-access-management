@@ -158,6 +158,6 @@ public abstract class JdbcAuthenticationProviderTest {
         }).test();
 
         testObserver.awaitTerminalEvent();
-        testObserver.assertError(BadCredentialsException.class);
+        testObserver.assertError(UsernameNotFoundException.class);
     }
 }
