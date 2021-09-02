@@ -117,7 +117,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         final int variables = StringUtils.countOccurrencesOf(rawQuery, "%s");
         String[] idxParameters = new String[variables];
         for (int i = 0; i < variables; ++i) {
-            idxParameters[i] = getIndexParameter("username", i);
+            idxParameters[i] = getIndexParameter(configuration.getUsernameAttribute(), i);
         }
         return idxParameters;
     }
@@ -129,7 +129,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
-        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter("username"));
+        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(configuration.getUsernameAttribute()));
         return Flowable.fromPublisher(connectionPool.create())
                 .flatMap(connection -> Flowable.fromPublisher(connection.createStatement(sql).bind(0, username).execute())
                         .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe()))
