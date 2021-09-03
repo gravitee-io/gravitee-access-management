@@ -21,6 +21,7 @@ import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
+import io.gravitee.tracing.api.Tracer;
 
 import java.util.Collections;
 import java.util.Enumeration;
@@ -96,5 +97,10 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
             templateContext.setVariable(TEMPLATE_ATTRIBUTE_CONTEXT, new EvaluableAuthenticationContext(this));
         }
         return templateEngine;
+    }
+
+    @Override
+    public Tracer getTracer() {
+        throw new IllegalStateException();
     }
 }

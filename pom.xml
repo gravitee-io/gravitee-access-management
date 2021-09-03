@@ -69,16 +69,16 @@
         <gravitee-bom.version>1.0</gravitee-bom.version>
         <gravitee-common.version>1.16.2</gravitee-common.version>
         <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
-        <gravitee-node.version>1.15.1</gravitee-node.version>
+        <gravitee-node.version>1.16.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>1.26.0</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>1.27.1</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
         <spring-security.version>5.3.9.RELEASE</spring-security.version>
         <spring-integration.version>5.2.6.RELEASE</spring-integration.version>
         <nimbus.version>8.17</nimbus.version>
-        <tink.version>1.5.0</tink.version>
+        <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jsoup.version>1.14.1</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>

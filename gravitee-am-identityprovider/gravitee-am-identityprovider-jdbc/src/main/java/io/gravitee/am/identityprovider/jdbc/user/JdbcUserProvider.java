@@ -121,7 +121,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     private Maybe<Map<String, Object>> selectUserByEmail(String email) {
-        final String sql = String.format(configuration.getSelectUserByEmailQuery(), getIndexParameter(1, "email"));
+        final String sql = String.format(configuration.getSelectUserByEmailQuery(), getIndexParameter(1, configuration.getEmailAttribute()));
         return query(sql, email)
                 .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
                 .firstElement();
@@ -157,12 +157,12 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                                                 configuration.getPasswordSaltAttribute(),
                                                 configuration.getEmailAttribute(),
                                                 configuration.getMetadataAttribute(),
-                                                getIndexParameter(1, "id"),
-                                                getIndexParameter(2, "username"),
-                                                getIndexParameter(3, "password"),
-                                                getIndexParameter(4, "salt"),
-                                                getIndexParameter(5, "email"),
-                                                getIndexParameter(6, "metadata"));
+                                                getIndexParameter(1, configuration.getIdentifierAttribute()),
+                                                getIndexParameter(2, configuration.getUsernameAttribute()),
+                                                getIndexParameter(3, configuration.getPasswordAttribute()),
+                                                getIndexParameter(4, configuration.getPasswordSaltAttribute()),
+                                                getIndexParameter(5, configuration.getEmailAttribute()),
+                                                getIndexParameter(6, configuration.getMetadataAttribute()));
 
                                         args = new Object[6];
                                         byte[] salt = createSalt();
@@ -180,11 +180,11 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                                                 configuration.getPasswordAttribute(),
                                                 configuration.getEmailAttribute(),
                                                 configuration.getMetadataAttribute(),
-                                                getIndexParameter(1, "id"),
-                                                getIndexParameter(2, "username"),
-                                                getIndexParameter(3, "password"),
-                                                getIndexParameter(4, "email"),
-                                                getIndexParameter(5, "metadata"));
+                                                getIndexParameter(1, configuration.getIdentifierAttribute()),
+                                                getIndexParameter(2, configuration.getUsernameAttribute()),
+                                                getIndexParameter(3, configuration.getPasswordAttribute()),
+                                                getIndexParameter(4, configuration.getEmailAttribute()),
+                                                getIndexParameter(5, configuration.getMetadataAttribute()));
 
                                         args = new Object[5];
                                         args[0] = user.getId();
@@ -204,7 +204,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(Connection cnx, String username) {
-        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, "username"));
+        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, configuration.getUsernameAttribute()));
         return query(cnx, sql, username)
                 .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
                 .firstElement();
@@ -219,15 +219,16 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
         if (updateUser.getCredentials() != null) {
             if (configuration.isUseDedicatedSalt()) {
                 args = new Object[4];
-                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s WHERE id = %s",
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s, %s = %s WHERE %s = %s",
                         configuration.getUsersTable(),
                         configuration.getPasswordAttribute(),
-                        getIndexParameter(1, "password"),
+                        getIndexParameter(1, configuration.getPasswordAttribute()),
                         configuration.getPasswordSaltAttribute(),
-                        getIndexParameter(2, "salt"),
+                        getIndexParameter(2, configuration.getPasswordSaltAttribute()),
                         configuration.getMetadataAttribute(),
-                        getIndexParameter(3, "metadata"),
-                        getIndexParameter(4, "id"));
+                        getIndexParameter(3, configuration.getMetadataAttribute()),
+                        configuration.getIdentifierAttribute(),
+                        getIndexParameter(4, configuration.getIdentifierAttribute()));
                 byte[] salt = createSalt();
                 args[0] = passwordEncoder.encode(updateUser.getCredentials(), salt);
                 args[1] = binaryToTextEncoder.encode(salt);
@@ -235,24 +236,26 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                 args[3] = id;
             } else {
                 args = new Object[3];
-                sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE id = %s",
+                sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE %s = %s",
                         configuration.getUsersTable(),
                         configuration.getPasswordAttribute(),
-                        getIndexParameter(1, "password"),
+                        getIndexParameter(1, configuration.getPasswordAttribute()),
                         configuration.getMetadataAttribute(),
-                        getIndexParameter(2, "metadata"),
-                        getIndexParameter(3, "id"));
+                        getIndexParameter(2, configuration.getMetadataAttribute()),
+                        configuration.getIdentifierAttribute(),
+                        getIndexParameter(3, configuration.getIdentifierAttribute()));
                 args[0] = passwordEncoder.encode(updateUser.getCredentials());
                 args[1] = metadata;
                 args[2] = id;
             }
         } else {
             args = new Object[2];
-            sql = String.format("UPDATE %s SET %s = %s WHERE id = %s",
+            sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
                     configuration.getUsersTable(),
                     configuration.getMetadataAttribute(),
-                    getIndexParameter(1, "metadata"),
-                    getIndexParameter(2, "id"));
+                    getIndexParameter(1, configuration.getMetadataAttribute()),
+                    configuration.getIdentifierAttribute(),
+                    getIndexParameter(2, configuration.getIdentifierAttribute()));
             args[0] = metadata;
             args[1] = id;
         }
@@ -271,9 +274,10 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
     @Override
     public Completable delete(String id) {
-        final String sql = String.format("DELETE FROM %s where id = %s",
+        final String sql = String.format("DELETE FROM %s where %s = %s",
                 configuration.getUsersTable(),
-                getIndexParameter(1, "id"));
+                configuration.getIdentifierAttribute(),
+                getIndexParameter(1, configuration.getIdentifierAttribute()));
 
         return query(sql, id)
                 .flatMap(Result::getRowsUpdated)
@@ -286,7 +290,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
-        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, "username"));
+        final String sql = String.format(configuration.getSelectUserByUsernameQuery(), getIndexParameter(1, configuration.getUsernameAttribute()));
         return query(sql, username)
                 .flatMap(result -> result.map(ColumnMapRowMapper::mapRow))
                 .firstElement();
