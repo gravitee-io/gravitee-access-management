@@ -1,6 +1,27 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/423?closed=1[AM - 3.10.2 (2021-09-03)]
+
+=== Bug fixes
+
+*_Am_*
+
+- [ee] wrong CAS plugin version for the 3.10 https://github.com/gravitee-io/issues/issues/6074[#6074]
+- [ee] wrong SAML plugin version for the 3.10 https://github.com/gravitee-io/issues/issues/6076[#6076]
+
+*_Gateway_*
+
+- Bump org json dependency to fix EE CAS IdP plugin https://github.com/gravitee-io/issues/issues/6078[#6078]
+- [mfa] Unable to enroll newly created user with email factor https://github.com/gravitee-io/issues/issues/6067[#6067]
+
+*_Idp_*
+
+- [jdbc] id column name it's hard encoded when updating a user https://github.com/gravitee-io/issues/issues/6083[#6083]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/420?closed=1[AM - 3.10.1 (2021-08-04)]
 
 === Bug fixes
