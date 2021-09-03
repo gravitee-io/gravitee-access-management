@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
+import io.gravitee.tracing.api.Tracer;
 
 import java.util.Collections;
 import java.util.Enumeration;
@@ -81,6 +82,11 @@ public class DummyAuthenticationContext implements AuthenticationContext {
     @Override
     public TemplateEngine getTemplateEngine() {
         return TemplateEngine.templateEngine();
+    }
+
+    @Override
+    public Tracer getTracer() {
+        return null;
     }
 
 }
