@@ -16748,7 +16748,10 @@
 													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
 													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
-													"});"
+													"});",
+                                                  "",
+                                                  "// wait for sync process",
+                                                  "setTimeout(function(){}, 5000);"
 												],
 												"type": "text/javascript"
 											}
