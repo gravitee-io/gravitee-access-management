@@ -1,6 +1,67 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/397?closed=1[AM - 3.11.0 (2021-09-05)]
+
+=== Bug fixes
+
+*_Fapi_*
+
+- Keep query params of the redirect_uri https://github.com/gravitee-io/issues/issues/5939[#5939]
+- Oauth2 redirect_uri query parameters are not returned if error has occurred https://github.com/gravitee-io/issues/issues/4045[#4045]
+- [JARM] Response parameter missing from some error responses https://github.com/gravitee-io/issues/issues/5967[#5967]
+- [JARM] the Error page doesn't use the error coming from the JWT https://github.com/gravitee-io/issues/issues/5976[#5976]
+- [PAR] issues when client auth use private_key_jwt https://github.com/gravitee-io/issues/issues/5990[#5990]
+
+*_General_*
+
+- Merge 3.10.1 https://github.com/gravitee-io/issues/issues/5960[#5960]
+- Merge 3.10.2 https://github.com/gravitee-io/issues/issues/6094[#6094]
+
+*_Oidc_*
+
+- Always provide auth_time in idToken https://github.com/gravitee-io/issues/issues/5956[#5956]
+
+=== Features
+
+*_Fapi_*
+
+- Certificate bound access tokens https://github.com/gravitee-io/issues/issues/4028[#4028]
+- Response_type code restricted in the authorization request https://github.com/gravitee-io/issues/issues/5955[#5955]
+- [PAR] Implement PAR specification https://github.com/gravitee-io/issues/issues/5969[#5969]
+
+*_Identity-provider_*
+
+- [http] encode password https://github.com/gravitee-io/issues/issues/5710[#5710]
+
+*_Management_*
+
+- Create FAPI option https://github.com/gravitee-io/issues/issues/5951[#5951]
+
+*_Oidc_*
+
+- Plain FAPI support https://github.com/gravitee-io/issues/issues/3708[#3708]
+
+=== Improvements
+
+*_Fapi_*
+
+- 'nbf' and 'aud' claims shall be present in request object https://github.com/gravitee-io/issues/issues/5965[#5965]
+- Certificate bound access tokens client option https://github.com/gravitee-io/issues/issues/5985[#5985]
+- Manage 'exp' claim in request object https://github.com/gravitee-io/issues/issues/5940[#5940]
+- Restrict JWS algorithm https://github.com/gravitee-io/issues/issues/5989[#5989]
+- Scope & response_type are optional in OAuth parameters https://github.com/gravitee-io/issues/issues/5975[#5975]
+- Shall require that all parameters are present inside the signed request object passed in the request or request_uri parameter https://github.com/gravitee-io/issues/issues/4052[#4052]
+- [JARM] make response lifetime configurable https://github.com/gravitee-io/issues/issues/5968[#5968]
+- [PAR] PKCE required https://github.com/gravitee-io/issues/issues/5973[#5973]
+
+*_Gateway_*
+
+- Manage TLS Cipher Suites https://github.com/gravitee-io/issues/issues/5929[#5929]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/423?closed=1[AM - 3.10.2 (2021-09-03)]
 
 === Bug fixes
