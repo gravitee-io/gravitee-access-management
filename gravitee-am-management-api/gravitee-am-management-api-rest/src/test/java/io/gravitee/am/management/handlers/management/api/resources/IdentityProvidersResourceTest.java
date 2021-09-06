@@ -91,10 +91,12 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         newIdentityProvider.setName("extensionGrant-name");
         newIdentityProvider.setType("extensionGrant-type");
         newIdentityProvider.setConfiguration("extensionGrant-configuration");
+        newIdentityProvider.setDomainWhitelist(List.of());
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("identityProvider-id");
         identityProvider.setName("identityProvider-name");
+        identityProvider.setDomainWhitelist(List.of());
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(identityProvider)).when(identityProviderService).create(eq(domainId), any(), any());

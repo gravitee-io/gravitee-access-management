@@ -17,6 +17,7 @@ import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges
 import {ActivatedRoute} from '@angular/router';
 import {OrganizationService} from '../../../../../../services/organization.service';
 import * as _ from 'lodash';
+import {SnackbarService} from "../../../../../../services/snackbar.service";
 
 @Component({
   selector: 'provider-creation-step2',
@@ -29,9 +30,11 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Output('configurationIsValidChange') configurationIsValidChange: EventEmitter<boolean> = new EventEmitter<boolean>();
   configuration: any;
   providerSchema: any = {};
+  domainWhitelistPattern:string = ''
   private certificates: any[];
 
   constructor(private organizationService: OrganizationService,
+              private snackbarService: SnackbarService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
@@ -60,4 +63,25 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     this.configurationIsValidChange.emit(this.configurationIsValid);
     this.provider.configuration = configurationWrapper.configuration;
   }
+
+  addDomainWhitelistPattern(event){
+    event.preventDefault();
+    if (this.domainWhitelistPattern) {
+      if (!this.provider.domainWhitelist.some(el => el === this.domainWhitelistPattern)) {
+        this.provider.domainWhitelist.push(this.domainWhitelistPattern);
+        this.provider.domainWhitelist = [...this.provider.domainWhitelist]
+        this.domainWhitelistPattern = '';
+      } else {
+        this.snackbarService.open(`Error : domain whitelist pattern "${this.domainWhitelistPattern}" already exists`);
+      }
+    }
+  }
+
+  removeDomainWhitelistPattern(dwPattern){
+    const index = this.provider.domainWhitelist.indexOf(dwPattern);
+    if (index > -1){
+      this.provider.domainWhitelist.splice(index, 1);
+    }
+  }
+
 }

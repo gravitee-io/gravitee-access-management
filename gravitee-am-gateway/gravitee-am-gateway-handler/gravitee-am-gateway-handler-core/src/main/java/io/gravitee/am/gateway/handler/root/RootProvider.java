@@ -41,6 +41,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallb
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -105,6 +106,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
     public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
+    public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
 
     @Autowired
@@ -234,6 +236,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginFormHandler(userAuthProvider))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
+
         rootRouter.route(PATH_LOGIN)
                 .failureHandler(new LoginFailureHandler(authenticationFlowContextService));
 
@@ -352,6 +355,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
+        //identifier First Login Route
+        rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -423,6 +433,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router
                 .route(PATH_WEBAUTHN_LOGIN)
                 .handler(sessionHandler);
+
+        //Identifier First login
+        router
+                .route(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(sessionHandler);
     }
 
     private void authFlowContextHandler(Router router) {
@@ -448,11 +463,15 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_REGISTER).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
+
+        //identifier First Login Route
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
     }
 
     private void csrfHandler(Router router) {
         router.route(PATH_FORGOT_PASSWORD).handler(csrfHandler);
         router.route(PATH_LOGIN).handler(csrfHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(csrfHandler);
         // /login/callback does not need csrf as it is not submit to our server.
         router.route(PATH_LOGIN_SSO_POST).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE).handler(csrfHandler);
@@ -477,5 +496,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGOUT).failureHandler(errorHandler);
         router.route(PATH_LOGOUT_CALLBACK).failureHandler(errorHandler);
         router.route(PATH_LOGIN).failureHandler(errorHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).failureHandler(errorHandler);
     }
 }

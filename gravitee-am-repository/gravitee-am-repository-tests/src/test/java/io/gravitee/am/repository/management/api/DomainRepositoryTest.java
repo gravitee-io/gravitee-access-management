@@ -102,7 +102,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindAllByEnvironment() throws TechnicalException {
+    public void testFindAllByEnvironment() {
         // create domain
         Domain domain = initDomain();
         domain.setReferenceType(ReferenceType.ENVIRONMENT);
@@ -126,7 +126,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindInIds() throws TechnicalException {
+    public void testFindInIds() {
         // create domain
         Domain domain = initDomain();
         Domain domainCreated = domainRepository.create(domain).blockingGet();

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c1ada774-658d-4329-912a-1ea9e35b5441",
+		"_postman_id": "163296ee-b1c2-4bb9-b2cc-fb3e05f5d593",
 		"name": "Gravitee.io - AM - Openid Discovery",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"

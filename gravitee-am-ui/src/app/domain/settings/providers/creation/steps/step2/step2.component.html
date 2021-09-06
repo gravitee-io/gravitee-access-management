@@ -27,6 +27,29 @@
           <input matInput type="text" placeholder="Name" name="name" [(ngModel)]="provider.name" required>
           <mat-hint>Identity provider name</mat-hint>
         </mat-form-field>
+        <div *ngIf="provider.external">
+          <div fxLayout="row" fxLayoutGap="10px">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Domain Whitelist</mat-label>
+              <mat-chip-list #chipList aria-label="domainWhitelist">
+                <mat-chip
+                  *ngFor="let dwPattern of provider.domainWhitelist"
+                  [removable]="true"
+                  (removed)="removeDomainWhitelistPattern(dwPattern)">
+                  {{dwPattern}}
+                  <mat-icon matChipRemove >cancel</mat-icon>
+                </mat-chip>
+                <input matInput
+                       type="text" placeholder="Enter a domain whitelist pattern" name="domainWhitelist"
+                       [matChipInputFor]="chipList"
+                       (keydown.enter)="addDomainWhitelistPattern($event)"
+                       [value]="domainWhitelistPattern || ''" (input)='domainWhitelistPattern = $event.target.value'
+                />
+              </mat-chip-list>
+              <mat-hint>Enables Identifier-first login automatic redirection to the provider when the user email domain matches the list</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
       </div>
 
       <div class="gv-form-section">

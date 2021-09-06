@@ -135,7 +135,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal) {
         LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
 
-        IdentityProvider identityProvider = new IdentityProvider();
+        var identityProvider = new IdentityProvider();
         identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
         identityProvider.setReferenceType(referenceType);
         identityProvider.setReferenceId(referenceId);
@@ -143,6 +143,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setType(newIdentityProvider.getType());
         identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
         identityProvider.setExternal(newIdentityProvider.isExternal());
+        identityProvider.setDomainWhitelist(newIdentityProvider.getDomainWhitelist());
         identityProvider.setCreatedAt(new Date());
         identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
@@ -178,6 +179,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
+                    identityToUpdate.setDomainWhitelist(updateIdentityProvider.getDomainWhitelist());
                     identityToUpdate.setUpdatedAt(new Date());
 
                     return identityProviderRepository.update(identityToUpdate)

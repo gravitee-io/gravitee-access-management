@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import com.mongodb.BasicDBList;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import org.bson.BsonArray;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -44,6 +46,8 @@ public class IdentityProviderMongo extends Auditable {
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
     private Document roleMapper;
+
+    private BsonArray domainWhitelist;
 
     private ReferenceType referenceType;
 
@@ -121,6 +125,14 @@ public class IdentityProviderMongo extends Auditable {
 
     public void setExternal(boolean external) {
         this.external = external;
+    }
+
+    public BsonArray getDomainWhitelist() {
+        return domainWhitelist;
+    }
+
+    public void setDomainWhitelist(BsonArray domainWhitelist) {
+        this.domainWhitelist = domainWhitelist;
     }
 
     @Override

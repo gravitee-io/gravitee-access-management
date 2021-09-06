@@ -48,6 +48,10 @@ public class LoginSettings {
      * Enable/Disable hide login form
      */
     private boolean hideForm;
+    /**
+     * Enable/Disable Identifier-first Login
+     */
+    private boolean identifierFirstEnabled;
 
     public LoginSettings() {
     }
@@ -58,7 +62,8 @@ public class LoginSettings {
         this.registerEnabled = other.registerEnabled;
         this.rememberMeEnabled = other.rememberMeEnabled;
         this.passwordlessEnabled = other.passwordlessEnabled;
-        this.hideForm = other.hideForm;
+        this.hideForm = !other.identifierFirstEnabled && other.hideForm;
+        this.identifierFirstEnabled = other.identifierFirstEnabled;
     }
 
     public boolean isInherited() {
@@ -107,6 +112,14 @@ public class LoginSettings {
 
     public void setHideForm(boolean hideForm) {
         this.hideForm = hideForm;
+    }
+
+    public boolean isIdentifierFirstEnabled() {
+        return identifierFirstEnabled;
+    }
+
+    public void setIdentifierFirstEnabled(boolean identifierFirstEnabled) {
+        this.identifierFirstEnabled = identifierFirstEnabled;
     }
 
     public static LoginSettings getInstance(Domain domain, Client client) {

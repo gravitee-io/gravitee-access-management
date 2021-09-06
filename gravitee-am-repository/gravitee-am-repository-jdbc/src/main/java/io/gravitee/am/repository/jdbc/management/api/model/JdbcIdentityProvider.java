@@ -22,6 +22,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,6 +39,8 @@ public class JdbcIdentityProvider {
     private String mappers;
     @Column("role_mapper")
     private String roleMapper;
+    @Column("domain_whitelist")
+    private String domainWhitelist;
     @Column("reference_type")
     private String referenceType;
     @Column("reference_id")
@@ -134,5 +137,13 @@ public class JdbcIdentityProvider {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getDomainWhitelist() {
+        return domainWhitelist;
+    }
+
+    public void setDomainWhitelist(String domainWhitelist) {
+        this.domainWhitelist = domainWhitelist;
     }
 }

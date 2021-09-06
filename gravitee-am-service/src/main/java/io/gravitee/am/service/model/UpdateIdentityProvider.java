@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,6 +34,9 @@ public class UpdateIdentityProvider {
     private Map<String, String> mappers;
 
     private Map<String, String[]> roleMapper;
+
+    @NotNull
+    private List<String> domainWhitelist;
 
     public String getName() {
         return name;
@@ -64,6 +68,14 @@ public class UpdateIdentityProvider {
 
     public void setRoleMapper(Map<String, String[]> roleMapper) {
         this.roleMapper = roleMapper;
+    }
+
+    public List<String> getDomainWhitelist() {
+        return domainWhitelist;
+    }
+
+    public void setDomainWhitelist(List<String> domainWhitelist) {
+        this.domainWhitelist = domainWhitelist;
     }
 
     @Override

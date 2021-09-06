@@ -81,7 +81,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
 
 
     @Test
-    public void testFindByDomainAndClientId() throws TechnicalException {
+    public void testFindByDomainAndClientId() {
         // create application
         Application application = new Application();
         application.setName("testApp");
@@ -141,7 +141,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByIdentity() throws TechnicalException {
+    public void testFindByIdentity() {
         // create app
         Application app = buildApplication();
         Application appCreated = applicationRepository.create(app).blockingGet();

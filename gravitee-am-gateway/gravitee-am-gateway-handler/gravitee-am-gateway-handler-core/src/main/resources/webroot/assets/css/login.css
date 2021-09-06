@@ -45,6 +45,10 @@
     justify-content: flex-end;
 }
 
+.login-form-actions > .no-margin-left {
+    margin-left: 0px;
+}
+
 .login-form-additional-actions {
     display:flex;
     flex-direction: column;

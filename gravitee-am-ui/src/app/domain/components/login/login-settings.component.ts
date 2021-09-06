@@ -96,4 +96,16 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   isHideFormEnabled() {
     return this.loginSettings && this.loginSettings.hideForm;
   }
+
+  enableIdentifierFirstLogin(event) {
+    this.loginSettings.identifierFirstEnabled = event.checked;
+    if (event.checked) {
+      this.loginSettings.hideForm = !event.checked;
+    }
+    this.formChanged = true;
+  }
+
+  isIdentifierFirstLoginEnabled() {
+    return this.loginSettings && this.loginSettings.identifierFirstEnabled;
+  }
 }

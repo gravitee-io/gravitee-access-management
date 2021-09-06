@@ -20,12 +20,14 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,11 +43,10 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
 
     private static final Logger logger = LoggerFactory.getLogger(ResetPasswordEndpoint.class);
 
-    private final ThymeleafTemplateEngine engine;
     private final Domain domain;
 
-    public ResetPasswordEndpoint(ThymeleafTemplateEngine engine, Domain domain) {
-        this.engine = engine;
+    public ResetPasswordEndpoint(TemplateEngine engine, Domain domain) {
+        super(engine);
         this.domain = domain;
     }
 
@@ -62,35 +63,25 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
         routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
-        copyValue(request,routingContext,ConstantKeys.SUCCESS_PARAM_KEY);
-        copyValue(request,routingContext,ConstantKeys.WARNING_PARAM_KEY);
+        copyValue(request, routingContext, ConstantKeys.SUCCESS_PARAM_KEY);
+        copyValue(request, routingContext, ConstantKeys.WARNING_PARAM_KEY);
         // add query params to context
-        copyValue(request,routingContext,ConstantKeys.TOKEN_PARAM_KEY);
+        copyValue(request, routingContext, ConstantKeys.TOKEN_PARAM_KEY);
 
         // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>();
         params.computeIfAbsent(ConstantKeys.ERROR_PARAM_KEY, val -> error);
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
-
-
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path()));
 
         // render the reset password page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render reset password page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render reset password page");
     }
 
 
     @Override
     public String getTemplateSuffix() {
-        return "reset_password";
+        return Template.RESET_PASSWORD.template();
     }
 }

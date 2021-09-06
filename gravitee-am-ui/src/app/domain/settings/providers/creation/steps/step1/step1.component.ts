@@ -35,9 +35,20 @@ export class ProviderCreationStep1Component implements OnInit {
     this.identities = this.route.snapshot.data['identities'];
   }
 
+  private initDomainWhitelist(idpType:string) {
+    this.provider.domainWhitelist = [];
+    if(idpType === 'google-am-idp'){
+      this.provider.domainWhitelist.push("gmail.com");
+    }
+    if(idpType === 'azure-ad-am-idp'){
+      this.provider.domainWhitelist.push("microsoft.com");
+    }
+  }
+
   selectProviderType({id, external}) {
     this.provider.external = external === true;
     this.provider.type = id;
+    this.initDomainWhitelist(id);
   }
 
   displayName(identityProvider) {

@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
@@ -25,16 +26,23 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class WebAuthnEndpoint implements Handler<RoutingContext> {
+public abstract class WebAuthnEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     protected final UserAuthenticationManager userAuthenticationManager;
 
+    WebAuthnEndpoint(TemplateEngine templateEngine, UserAuthenticationManager userAuthenticationManager) {
+        super(templateEngine);
+        this.userAuthenticationManager = userAuthenticationManager;
+    }
+
     WebAuthnEndpoint(UserAuthenticationManager userAuthenticationManager) {
+        super(null);
         this.userAuthenticationManager = userAuthenticationManager;
     }
 

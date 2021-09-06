@@ -16,12 +16,9 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcInstallation;
-import io.gravitee.am.repository.jdbc.management.api.spring.SpringIdentityProviderRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringInstallationRepository;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.reactivex.Completable;
@@ -32,7 +29,6 @@ import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

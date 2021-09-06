@@ -19,25 +19,28 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.model.Template.LOGIN;
+import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,12 +50,11 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
 
     private static final Logger logger = LoggerFactory.getLogger(RegisterEndpoint.class);
 
-    private final ThymeleafTemplateEngine engine;
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
 
-    public RegisterEndpoint(ThymeleafTemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
-        this.engine = engine;
+    public RegisterEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+        super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
     }
@@ -80,24 +82,20 @@ public class RegisterEndpoint extends AbstractEndpoint implements Handler<Routin
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
+        var optionalSettings = Optional.ofNullable(LoginSettings.getInstance(domain, client)).filter(Objects::nonNull);
+        var isIdentifierFirstEnabled = optionalSettings.map(LoginSettings::isIdentifierFirstEnabled).orElse(false);
+
         MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
-        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
+        final String loginActionKey = routingContext.get(CONTEXT_PATH) + (isIdentifierFirstEnabled ? IDENTIFIER_FIRST_LOGIN.redirectUri() : LOGIN.redirectUri());
+        routingContext.put(ConstantKeys.ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
+        routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
 
         final Map<String, Object> data = new HashMap<>();
         data.putAll(routingContext.data());
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
         // render the registration confirmation page
-        engine.render(data, getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render registration page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        this.renderPage(routingContext, data, client, logger, "Unable to render registration page");
     }
 
     @Override

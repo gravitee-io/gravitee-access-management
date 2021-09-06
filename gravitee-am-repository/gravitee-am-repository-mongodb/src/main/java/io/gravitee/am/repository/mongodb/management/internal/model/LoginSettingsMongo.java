@@ -29,6 +29,7 @@ public class LoginSettingsMongo {
     private boolean rememberMeEnabled;
     private boolean passwordlessEnabled;
     private boolean hideForm;
+    private boolean identifierFirstLoginEnabled;
 
     public boolean isInherited() {
         return inherited;
@@ -78,15 +79,23 @@ public class LoginSettingsMongo {
         this.hideForm = hideForm;
     }
 
-    public LoginSettings convert() {
+    public boolean isIdentifierFirstLoginEnabled() {
+        return identifierFirstLoginEnabled;
+    }
 
+    public void setIdentifierFirstLoginEnabled(boolean identifierFirstLoginEnabled) {
+        this.identifierFirstLoginEnabled = identifierFirstLoginEnabled;
+    }
+
+    public LoginSettings convert() {
         LoginSettings loginSettings = new LoginSettings();
         loginSettings.setInherited(isInherited());
         loginSettings.setForgotPasswordEnabled(isForgotPasswordEnabled());
         loginSettings.setRegisterEnabled(isRegisterEnabled());
         loginSettings.setRememberMeEnabled(isRememberMeEnabled());
         loginSettings.setPasswordlessEnabled(isPasswordlessEnabled());
-        loginSettings.setHideForm(isHideForm());
+        loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
+        loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
 
         return loginSettings;
     }
@@ -102,7 +111,8 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setRegisterEnabled(loginSettings.isRegisterEnabled());
         loginSettingsMongo.setRememberMeEnabled(loginSettings.isRememberMeEnabled());
         loginSettingsMongo.setPasswordlessEnabled(loginSettings.isPasswordlessEnabled());
-        loginSettingsMongo.setHideForm(loginSettings.isHideForm());
+        loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
+        loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
 
         return loginSettingsMongo;
     }

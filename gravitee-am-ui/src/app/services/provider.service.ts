@@ -34,7 +34,7 @@ export class ProviderService {
   findUserProvidersByDomain(domainId): Observable<any> {
     return this.http.get<any>(this.providersURL + domainId + '/identities?userProvider=true');
   }
-  
+
   findOrganizationUserProviders(): Observable<any> {
     return this.organizationService.identityProviders(true);
   }
@@ -59,6 +59,7 @@ export class ProviderService {
     return this.http.put<any>(this.providersURL + domainId + '/identities/' + id, {
       'name' : provider.name,
       'configuration' : provider.configuration,
+      'domainWhitelist' : provider.domainWhitelist,
       'mappers' : provider.mappers,
       'roleMapper' : provider.roleMapper
     });
