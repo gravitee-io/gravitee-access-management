@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM nginx:1.19-alpine
+FROM nginx:1.21.1-alpine
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -29,6 +29,7 @@ ENV WWW_TARGET /usr/share/nginx/html
 
 RUN apk update \
   && apk add --update --no-cache zip unzip netcat-openbsd wget \
+  && apk add --upgrade --no-cache libgcrypt \
   && wget https://download.gravitee.io/graviteeio-am/components/gravitee-am-webui/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -P /tmp \
   && unzip /tmp/gravitee-am-webui-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
   && apk del zip unzip netcat-openbsd wget \
