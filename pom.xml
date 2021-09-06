@@ -100,6 +100,7 @@
         <bouncycastle.version>1.69</bouncycastle.version>
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
+        <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
@@ -117,6 +118,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Security upgrades -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Import bom to properly inherit all dependencies -->
             <dependency>
                 <groupId>io.gravitee</groupId>
