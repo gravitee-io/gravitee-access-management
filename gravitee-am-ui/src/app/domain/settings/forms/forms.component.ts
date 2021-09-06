@@ -47,6 +47,13 @@ export class DomainSettingsFormsComponent implements OnInit {
         'enabled': true
       },
       {
+        'name': 'Identifier-first login',
+        'description': 'Identifier-first login page to authenticate users',
+        'template': 'IDENTIFIER_FIRST_LOGIN',
+        'icon': 'account_box',
+        'enabled': true
+      },
+      {
         'name': 'WebAuthn Login',
         'description': 'Passwordless page to authenticate users',
         'template': 'WEBAUTHN_LOGIN',

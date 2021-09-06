@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -33,6 +34,9 @@ public class NewIdentityProvider {
 
     @NotNull
     private String configuration;
+
+    @NotNull
+    private List<String> domainWhitelist;
 
     private boolean external;
 
@@ -74,6 +78,14 @@ public class NewIdentityProvider {
 
     public void setExternal(boolean external) {
         this.external = external;
+    }
+
+    public List<String> getDomainWhitelist() {
+        return domainWhitelist;
+    }
+
+    public void setDomainWhitelist(List<String> domainWhitelist) {
+        this.domainWhitelist = domainWhitelist;
     }
 
     @Override

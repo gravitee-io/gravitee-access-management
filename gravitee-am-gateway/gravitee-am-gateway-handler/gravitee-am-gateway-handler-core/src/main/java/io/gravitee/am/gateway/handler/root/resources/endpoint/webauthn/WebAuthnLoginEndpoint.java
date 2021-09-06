@@ -21,9 +21,9 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -39,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -58,7 +60,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                  UserAuthenticationManager userAuthenticationManager,
                                  WebAuthn webAuthn,
                                  ThymeleafTemplateEngine engine) {
-        super(userAuthenticationManager);
+        super(engine, userAuthenticationManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
         this.engine = engine;
@@ -86,7 +88,12 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
 
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
-            routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
+
+            var optionalSettings = Optional.ofNullable(LoginSettings.getInstance(domain, client)).filter(Objects::nonNull);
+            var isIdentifierFirstEnabled = optionalSettings.map(LoginSettings::isIdentifierFirstEnabled).orElse(false);
+
+            final String loginActionKey = routingContext.get(CONTEXT_PATH) + (isIdentifierFirstEnabled ? "/login/identifier" : "/login");
+            routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
             routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
@@ -164,7 +171,8 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
         }
     }
 
-    private String getTemplateFileName(Client client) {
-        return Template.WEBAUTHN_LOGIN.template() + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return Template.WEBAUTHN_LOGIN.template();
     }
 }

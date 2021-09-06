@@ -21,13 +21,11 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.provider.UserProperties;
-import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
@@ -36,7 +34,7 @@ import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,16 +53,14 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
 
     private final Domain domain;
     private final WebAuthn webAuthn;
-    private final ThymeleafTemplateEngine engine;
 
     public WebAuthnRegisterEndpoint(Domain domain,
                                     UserAuthenticationManager userAuthenticationManager,
                                     WebAuthn webAuthn,
-                                    ThymeleafTemplateEngine engine) {
-        super(userAuthenticationManager);
+                                    TemplateEngine templateEngine) {
+        super(templateEngine, userAuthenticationManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
-        this.engine = engine;
     }
 
     @Override
@@ -124,20 +120,12 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
-            if(domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getAuthenticatorAttachment() != null) {
+            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getAuthenticatorAttachment() != null) {
                 routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());
             }
 
             // render the webauthn register page
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render WebAuthn register page", res.cause());
-                    routingContext.fail(res.cause());
-                }
-            });
+            this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render WebAuthn register page");
         } catch (Exception ex) {
             logger.error("An error has occurred while rendering WebAuthn register page", ex);
             routingContext.fail(503);
@@ -222,11 +210,12 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
         }
     }
 
-    private String getTemplateFileName(Client client) {
-        return Template.WEBAUTHN_REGISTER.template() + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
-    }
-
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    @Override
+    public String getTemplateSuffix() {
+        return Template.WEBAUTHN_REGISTER.template();
     }
 }

@@ -45,6 +45,7 @@ export class ProviderSettingsComponent implements OnInit {
   updateProviderConfiguration: any;
   redirectUri: string;
   customCode: string;
+  domainWhitelistPattern:string;
 
   constructor(private providerService: ProviderService,
               private organizationService: OrganizationService,
@@ -124,6 +125,28 @@ export class ProviderSettingsComponent implements OnInit {
       this.configurationIsValid = configurationWrapper.isValid;
       this.updateProviderConfiguration = configurationWrapper.configuration;
     });
+  }
+
+  addDomainWhitelistPattern(event){
+    event.preventDefault();
+    if (this.domainWhitelistPattern) {
+      if (!this.provider.domainWhitelist.some(el => el === this.domainWhitelistPattern)) {
+        this.provider.domainWhitelist.push(this.domainWhitelistPattern);
+        this.provider.domainWhitelist = [...this.provider.domainWhitelist]
+        this.form.form.markAsDirty();
+        this.domainWhitelistPattern = '';
+      } else {
+        this.snackbarService.open(`Error : domain whitelist pattern "${this.domainWhitelistPattern}" already exists`);
+      }
+    }
+  }
+
+  removeDomainWhitelistPattern(dwPattern){
+    const index = this.provider.domainWhitelist.indexOf(dwPattern);
+    if (index > -1){
+      this.provider.domainWhitelist.splice(index, 1);
+      this.form.form.markAsDirty();
+    }
   }
 
   valueCopied(message: string) {

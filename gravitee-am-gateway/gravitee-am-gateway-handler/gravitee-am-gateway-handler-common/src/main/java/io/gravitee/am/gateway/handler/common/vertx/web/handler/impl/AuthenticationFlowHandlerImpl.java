@@ -43,6 +43,7 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
         steps.add(new SPNEGOStep(RedirectHandler.create("/login/SSO/SPNEGO"), identityProviderManager));
+        steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll")));

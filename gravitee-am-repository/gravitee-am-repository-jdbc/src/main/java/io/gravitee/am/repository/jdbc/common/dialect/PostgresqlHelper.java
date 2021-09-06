@@ -53,7 +53,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     @Override
     public Map<SqlIdentifier, Object> addJsonField(Map<SqlIdentifier, Object> spec, String name, Object value) {
         if (value == null) {
-            spec.put(SqlIdentifier.quoted(name), (Json)null);
+            spec.put(SqlIdentifier.quoted(name), (Json) null);
         } else {
             spec.put(SqlIdentifier.quoted(name), Json.of(JSONMapper.toJson(value)));
         }
@@ -66,22 +66,22 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         final String value = criteria.getFilterValue();
         switch (operator) {
             case "eq":
-                queryBuilder.append(path[0]+" ->> '"+path[1] + "' = '" + value + "' ");
+                queryBuilder.append(path[0] + " ->> '" + path[1] + "' = '" + value + "' ");
                 break;
             case "ne":
-                queryBuilder.append(path[0]+" ->> '"+path[1] + "' != '" + value + "' ");
+                queryBuilder.append(path[0] + " ->> '" + path[1] + "' != '" + value + "' ");
                 break;
             case "pr":
-                queryBuilder.append(path[0]+" ? '"+path[1] + "'");
+                queryBuilder.append(path[0] + " ? '" + path[1] + "'");
                 break;
             case "co":
-                queryBuilder.append(path[0]+" ->> '"+path[1] + "' like '%" + value + "%' ");
+                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like '%" + value + "%' ");
                 break;
             case "sw":
-                queryBuilder.append(path[0]+" ->> '"+path[1] + "' like '" + value + "%' ");
+                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like '" + value + "%' ");
                 break;
             case "ew":
-                queryBuilder.append(path[0]+" ->> '"+path[1] + "' like '%" + value + "' ");
+                queryBuilder.append(path[0] + " ->> '" + path[1] + "' like '%" + value + "' ");
                 break;
             default:
                 // TODO gt, ge, lt, le not managed yet... we have to know the json field type in order to adapt the clause
@@ -127,13 +127,13 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     }
 
     protected String buildPagingClause(String field, int page, int size) {
-        return " ORDER BY "+field+" LIMIT " + size + " OFFSET " + (page * size);
+        return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + (page * size);
     }
 
     @Override
     public String buildFindUserByReferenceAndEmail(ReferenceType referenceType, String referenceId, String email, boolean strict) {
         boolean organizationUser = (ReferenceType.ORGANIZATION == referenceType);
-        return new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users") +" u WHERE ")
+        return new StringBuilder("SELECT * FROM " + (organizationUser ? "organization_users" : "users") + " u WHERE ")
                 .append(" u.reference_type = :refType")
                 .append(" AND u.reference_id = :refId AND (")
                 .append(strict ? "u.email" : "UPPER(u.email)")

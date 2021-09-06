@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.12.0
+      author: GraviteeSource Team
+      changes:
+        ## domain_whitelist column
+        ###################
+        - addColumn:
+            tableName: identities
+            columns:
+              - column: { name: domain_whitelist, type: clob, constraints: { nullable: true }}

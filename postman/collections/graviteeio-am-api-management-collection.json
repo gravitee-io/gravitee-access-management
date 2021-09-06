@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "58d46c7f-da8d-4372-b7b4-ada62d0871da",
+		"_postman_id": "2551b100-c026-48be-a008-a36974b3f9e1",
 		"name": "Gravitee.io - AM - API Management",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -165,7 +165,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"external\":false,\n\t\"type\":\"inline-am-idp\",\n\t\"configuration\":\"{\\\"users\\\":[{\\\"firstname\\\":\\\"test\\\",\\\"lastname\\\":\\\"test\\\",\\\"username\\\":\\\"{{username}}\\\",\\\"email\\\":\\\"test@test.com\\\",\\\"password\\\":\\\"test\\\"}]}\",\n\t\"name\":\"Inline Users 2\"\n}",
+									"raw": "{\n\t\"external\":false,\n\t\"type\":\"inline-am-idp\",\n    \"domainWhitelist\" : [],\n\t\"configuration\":\"{\\\"users\\\":[{\\\"firstname\\\":\\\"test\\\",\\\"lastname\\\":\\\"test\\\",\\\"username\\\":\\\"{{username}}\\\",\\\"email\\\":\\\"test@test.com\\\",\\\"password\\\":\\\"test\\\"}]}\",\n\t\"name\":\"Inline Users 2\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -815,7 +815,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"{{username}}\\\",\\\"password\\\":\\\"test\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+									"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"domainWhitelist\" : [],\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"{{username}}\\\",\\\"password\\\":\\\"test\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
@@ -1076,7 +1076,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"external\": true,\n\t\"type\": \"oauth2-generic-am-idp\",\n\t\"configuration\": \"{\\\"clientId\\\":\\\"my-client\\\",\\\"clientSecret\\\":\\\"my-client-secret\\\",\\\"wellKnownUri\\\":\\\"{{gateway_url}}/social/oidc/.well-known/openid-configuration\\\",\\\"responseType\\\":\\\"code\\\",\\\"encodeRedirectUri\\\":false,\\\"useIdTokenForUserInfo\\\":false,\\\"signature\\\":\\\"RSA_RS256\\\",\\\"publicKeyResolver\\\":\\\"GIVEN_KEY\\\",\\\"connectTimeout\\\":10000,\\\"maxPoolSize\\\":200}\",\n\t\"name\": \"Social\"\n}",
+									"raw": "{\n\t\"external\": true,\n\t\"type\": \"oauth2-generic-am-idp\",\n    \"domainWhitelist\" : [],\n\t\"configuration\": \"{\\\"clientId\\\":\\\"my-client\\\",\\\"clientSecret\\\":\\\"my-client-secret\\\",\\\"wellKnownUri\\\":\\\"{{gateway_url}}/social/oidc/.well-known/openid-configuration\\\",\\\"responseType\\\":\\\"code\\\",\\\"encodeRedirectUri\\\":false,\\\"useIdTokenForUserInfo\\\":false,\\\"signature\\\":\\\"RSA_RS256\\\",\\\"publicKeyResolver\\\":\\\"GIVEN_KEY\\\",\\\"connectTimeout\\\":10000,\\\"maxPoolSize\\\":200}\",\n\t\"name\": \"Social\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"

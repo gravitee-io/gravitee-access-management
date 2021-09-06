@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -39,6 +40,7 @@ import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,16 +56,15 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
+public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAEnrollEndpoint.class);
 
     private final FactorManager factorManager;
-    private final ThymeleafTemplateEngine engine;
 
-    public MFAEnrollEndpoint(FactorManager factorManager, ThymeleafTemplateEngine engine) {
+    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine) {
+        super(engine);
         this.factorManager = factorManager;
-        this.engine = engine;
     }
 
     @Override
@@ -120,15 +121,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 }
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
-                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                    if (res.succeeded()) {
-                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                        routingContext.response().end(res.result());
-                    } else {
-                        logger.error("Unable to render MFA enroll page", res.cause());
-                        routingContext.fail(res.cause());
-                    }
-                });
+                this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render MFA enroll page");
             });
         } catch (Exception ex) {
             logger.error("An error occurs while rendering MFA enroll page", ex);
@@ -163,7 +156,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment) {
             routingContext.session().put(ConstantKeys.MFA_SKIPPED_KEY, true);
-        }else {
+        } else {
             FactorProvider provider = optFactor.get().getValue();
             if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
                 // save enrolled factor for the current user and continue
@@ -223,8 +216,9 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 .collect(Collectors.toMap(factorManager::getFactor, factorManager::get));
     }
 
-    private String getTemplateFileName(Client client) {
-        return Template.MFA_ENROLL.template() + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return Template.MFA_ENROLL.template();
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

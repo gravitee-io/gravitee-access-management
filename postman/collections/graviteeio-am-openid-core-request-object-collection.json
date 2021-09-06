@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "bfa6f7e7-60a3-4172-9860-7fffe62c9083",
+		"_postman_id": "55f738b9-91d2-4958-80b0-02caee15dbbd",
 		"name": "Gravitee.io - AM - Openid Core - Request Object",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -270,7 +270,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"domainWhitelist\" : [],\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",

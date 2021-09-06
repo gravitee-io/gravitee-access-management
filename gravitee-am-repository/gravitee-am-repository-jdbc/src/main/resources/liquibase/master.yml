@@ -27,4 +27,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_10_0/schema-add-self-service-account-settings.yml
   - include:
       - file: liquibase/changelogs/v3_11_0/schema-par.yml
+  - include:
+      - file: liquibase/changelogs/v3_12_0/schema.yml
 

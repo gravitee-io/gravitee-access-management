@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "b905b5ea-a02b-41f0-a6a5-240e7e1c7060",
+		"_postman_id": "a71fb0bc-c2a9-447a-91ee-6444d68197f6",
 		"name": "Gravitee.io - AM - Openid DCR - app version",
 		"description": "Test openid connect dynamc client registration specifications: https://openid.net/specs/openid-connect-registration-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -214,7 +214,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"domainWhitelist\" : [],\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"#CoMpL3X-P@SsW0Rd\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
@@ -16749,9 +16749,9 @@
 													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
 													"});",
-                                                  "",
-                                                  "// wait for sync process",
-                                                  "setTimeout(function(){}, 5000);"
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 5000);"
 												],
 												"type": "text/javascript"
 											}

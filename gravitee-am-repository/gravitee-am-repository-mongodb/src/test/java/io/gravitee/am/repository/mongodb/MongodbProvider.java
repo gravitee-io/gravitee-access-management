@@ -22,6 +22,8 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import org.bson.codecs.BsonArrayCodec;
+import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.DisposableBean;
@@ -59,8 +61,10 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
         // cluster configuration
         ClusterSettings clusterSettings = ClusterSettings.builder().hosts(Collections.singletonList(new ServerAddress(mongoDBContainer.getHost(), mongoDBContainer.getFirstMappedPort()))).build();
         // codec configuration
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClients.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
+        CodecRegistry pojoCodecRegistry = fromRegistries(
+                MongoClients.getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build())
+        );
 
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyToClusterSettings(builder1 -> builder1.applySettings(clusterSettings))

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "88b10f5e-24db-40d4-804c-ac986219ac73",
+		"_postman_id": "c44f03a8-bd4d-4cc8-86c3-f67937c2a722",
 		"name": "Gravitee.io - AM - Openid JARM",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -273,7 +273,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
+							"raw": "{\n  \"external\": false,\n  \"type\": \"inline-am-idp\",\n  \"domainWhitelist\" : [],\n  \"configuration\": \"{\\\"users\\\":[{\\\"firstname\\\":\\\"my-user\\\",\\\"lastname\\\":\\\"my-user-lastname\\\",\\\"username\\\":\\\"user\\\",\\\"password\\\":\\\"password\\\"}]}\",\n  \"name\": \"inmemory\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",

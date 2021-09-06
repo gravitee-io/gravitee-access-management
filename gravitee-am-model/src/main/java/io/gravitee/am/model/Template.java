@@ -37,6 +37,7 @@ public enum Template {
     COMPLETE_PROFILE("complete_profile", "/completeProfile"),
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),
     WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
+    IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
     ERROR("error", "/error");
 
     private final String template;
@@ -56,14 +57,14 @@ public enum Template {
     }
 
     public static Template parse(String toParse) {
-        if(toParse==null || toParse.trim().isEmpty()) {
+        if (toParse == null || toParse.trim().isEmpty()) {
             throw new IllegalArgumentException("template must not be null");
         }
         List<Template> matchingTemplate = Arrays.stream(Template.values())
                 .filter(template -> template.template().equals(toParse))
                 .collect(Collectors.toList());
 
-        if(matchingTemplate.size()==1) {
+        if (matchingTemplate.size() == 1) {
             return matchingTemplate.get(0);
         }
 

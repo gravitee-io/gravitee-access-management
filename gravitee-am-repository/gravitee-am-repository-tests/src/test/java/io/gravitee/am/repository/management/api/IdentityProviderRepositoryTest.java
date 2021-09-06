@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class IdentityProviderRepositoryTest extends AbstractManagementTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
+
     @Autowired
     private IdentityProviderRepository identityProviderRepository;
 
@@ -65,20 +66,22 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     private IdentityProvider buildIdentityProvider() {
         String random = UUID.randomUUID().toString();
         IdentityProvider identityProvider = new IdentityProvider();
-        identityProvider.setName("name"+random);
+        identityProvider.setName("name" + random);
         identityProvider.setReferenceType(ReferenceType.DOMAIN);
-        identityProvider.setReferenceId("ref"+random);
-        identityProvider.setConfiguration("{\"field\": \""+random+"\"}");
+        identityProvider.setReferenceId("ref" + random);
+        identityProvider.setConfiguration("{\"field\": \"" + random + "\"}");
         identityProvider.setExternal(true);
-        identityProvider.setType("type"+random);
+        identityProvider.setType("type" + random);
 
         Map<String, String> mappers = new HashMap<>();
-        mappers.put("mapper", "mapper"+random);
+        mappers.put("mapper", "mapper" + random);
         identityProvider.setMappers(mappers);
 
         Map<String, String[]> roleMapper = new HashMap<>();
-        roleMapper.put("mapper", new String[]{"mapper"+random, "mapper2"+random});
+        roleMapper.put("mapper", new String[]{"mapper" + random, "mapper2" + random});
         identityProvider.setRoleMapper(roleMapper);
+
+        identityProvider.setDomainWhitelist(List.of("gmail.com", "hotmail.com", "customdomain.com"));
 
         identityProvider.setCreatedAt(new Date());
         identityProvider.setUpdatedAt(new Date());
@@ -110,7 +113,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(idp -> idp.getReferenceType().equals(identityProvider.getReferenceType()));
         testObserver.assertValue(idp -> idp.getMappers().entrySet().equals(identityProvider.getMappers().entrySet()));
         testObserver.assertValue(idp -> idp.getRoleMapper().keySet().equals(identityProvider.getRoleMapper().keySet()));
-        testObserver.assertValue(idp -> idp.getRoleMapper().values().stream().filter(v -> v instanceof String[]).count()>0);
+        testObserver.assertValue(idp -> idp.getRoleMapper().values().stream().filter(v -> v instanceof String[]).count() > 0);
     }
 
     @Test

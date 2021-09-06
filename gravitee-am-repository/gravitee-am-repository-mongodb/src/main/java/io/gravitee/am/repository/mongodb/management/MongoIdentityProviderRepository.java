@@ -15,24 +15,33 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.IdentityProviderMongo;
 import io.reactivex.*;
+import io.reactivex.Observable;
+import org.bson.BsonArray;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.swing.text.html.Option;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -80,15 +89,25 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
 
     @Override
     public Single<IdentityProvider> create(IdentityProvider item) {
-        IdentityProviderMongo identityProvider = convert(item);
-        identityProvider.setId(identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId());
-        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> findById(identityProvider.getId()).toSingle());
+        Optional<IdentityProviderMongo> optionalIdp = convert(item);
+        if (optionalIdp.isPresent()) {
+            var identityProvider = optionalIdp.get();
+            final String id = identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId();
+            identityProvider.setId(id);
+            return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> findById(identityProvider.getId()).toSingle());
+        }
+        return Single.error(new TechnicalException("Identity provider must be present for create"));
     }
 
     @Override
     public Single<IdentityProvider> update(IdentityProvider item) {
-        IdentityProviderMongo identityProvider = convert(item);
-        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> findById(identityProvider.getId()).toSingle());
+        Optional<IdentityProviderMongo> optionalIdp = convert(item);
+        if (optionalIdp.isPresent()) {
+            var identityProvider = optionalIdp.get();
+            return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider))
+                    .flatMap(updateResult -> findById(identityProvider.getId()).toSingle());
+        }
+        return Single.error(new TechnicalException("Identity provider must be present for update"));
     }
 
     @Override
@@ -97,11 +116,11 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     }
 
     private IdentityProvider convert(IdentityProviderMongo identityProviderMongo) {
-        if (identityProviderMongo == null) {
+        if (isNull(identityProviderMongo)) {
             return null;
         }
 
-        IdentityProvider identityProvider = new IdentityProvider();
+        var identityProvider = new IdentityProvider();
         identityProvider.setId(identityProviderMongo.getId());
         identityProvider.setName(identityProviderMongo.getName());
         identityProvider.setType(identityProviderMongo.getType());
@@ -122,29 +141,37 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         identityProvider.setReferenceType(identityProviderMongo.getReferenceType());
         identityProvider.setReferenceId(identityProviderMongo.getReferenceId());
         identityProvider.setExternal(identityProviderMongo.isExternal());
+        identityProvider.setDomainWhitelist(
+                ofNullable(identityProviderMongo.getDomainWhitelist()).orElse(new BsonArray())
+                        .stream().map(BsonValue::asString).map(BsonString::getValue)
+                        .collect(toList()));
         identityProvider.setCreatedAt(identityProviderMongo.getCreatedAt());
         identityProvider.setUpdatedAt(identityProviderMongo.getUpdatedAt());
         return identityProvider;
     }
 
-    private IdentityProviderMongo convert(IdentityProvider identityProvider) {
-        if (identityProvider == null) {
-            return null;
-        }
-
-        IdentityProviderMongo identityProviderMongo = new IdentityProviderMongo();
-        identityProviderMongo.setId(identityProvider.getId());
-        identityProviderMongo.setName(identityProvider.getName());
-        identityProviderMongo.setType(identityProvider.getType());
-        identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
-        identityProviderMongo.setMappers(identityProvider.getMappers() != null ? new Document((Map) identityProvider.getMappers()) : new Document());
-        identityProviderMongo.setRoleMapper(identityProvider.getRoleMapper() != null ? convert(identityProvider.getRoleMapper()) : new Document());
-        identityProviderMongo.setReferenceType(identityProvider.getReferenceType());
-        identityProviderMongo.setReferenceId(identityProvider.getReferenceId());
-        identityProviderMongo.setExternal(identityProvider.isExternal());
-        identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
-        identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
-        return identityProviderMongo;
+    private Optional<IdentityProviderMongo> convert(IdentityProvider identityProvider) {
+        return ofNullable(identityProvider).map(Objects::nonNull).map(idp -> {
+            var identityProviderMongo = new IdentityProviderMongo();
+            identityProviderMongo.setId(identityProvider.getId());
+            identityProviderMongo.setName(identityProvider.getName());
+            identityProviderMongo.setType(identityProvider.getType());
+            identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
+            identityProviderMongo.setReferenceType(identityProvider.getReferenceType());
+            identityProviderMongo.setReferenceId(identityProvider.getReferenceId());
+            identityProviderMongo.setExternal(identityProvider.isExternal());
+            identityProviderMongo.setCreatedAt(identityProvider.getCreatedAt());
+            identityProviderMongo.setUpdatedAt(identityProvider.getUpdatedAt());
+            var mappers = new Document((Map) ofNullable(identityProvider.getMappers()).filter(Objects::nonNull).orElse(Map.of()));
+            var roleMapper = new Document(convert(ofNullable(identityProvider.getRoleMapper()).filter(Objects::nonNull).orElse(Map.of())));
+            identityProviderMongo.setMappers(mappers);
+            identityProviderMongo.setRoleMapper(roleMapper);
+            identityProviderMongo.setDomainWhitelist(
+                    ofNullable(identityProvider.getDomainWhitelist()).orElse(List.of()).stream()
+                            .map(BsonString::new)
+                            .collect(toCollection(BsonArray::new)));
+            return identityProviderMongo;
+        });
     }
 
     private Document convert(Map<String, String[]> map) {

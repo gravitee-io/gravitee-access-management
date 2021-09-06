@@ -21,7 +21,9 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.oidc.Client;
@@ -31,6 +33,7 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +49,14 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
+public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
-
-    private final ThymeleafTemplateEngine engine;
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
 
-    public ForgotPasswordEndpoint(ThymeleafTemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
-        this.engine = engine;
+    public ForgotPasswordEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+        super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
     }
@@ -94,7 +95,7 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
             // otherwise display custom form (ConfirmIdentity is disabled or an identity confirmation is required)
             if (settings.isResetPasswordConfirmIdentity() && !FORGOT_PASSWORD_CONFIRM.equals(warning)) {
                 routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
-            }  else {
+            } else {
                 routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, settings.getResetPasswordCustomFormFields());
             }
         } else {
@@ -105,19 +106,11 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
         data.putAll(routingContext.data());
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
-        // render the forgot password page
-        engine.render(data, getTemplateFileName(client), res -> {
-            if (res.succeeded()) {
-                routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                routingContext.response().end(res.result());
-            } else {
-                logger.error("Unable to render forgot password page", res.cause());
-                routingContext.fail(res.cause());
-            }
-        });
+        this.renderPage(routingContext, data, client, logger, "Unable to render forgot password page");
     }
 
-    private String getTemplateFileName(Client client) {
-        return "forgot_password" + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return Template.FORGOT_PASSWORD.template();
     }
 }

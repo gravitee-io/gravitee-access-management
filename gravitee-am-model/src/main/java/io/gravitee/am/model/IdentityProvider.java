@@ -16,6 +16,7 @@
 package io.gravitee.am.model;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,6 +43,8 @@ public class IdentityProvider {
 
     private boolean external;
 
+    private List<String> domainWhitelist;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -59,6 +62,7 @@ public class IdentityProvider {
         this.referenceType = other.referenceType;
         this.referenceId = other.referenceId;
         this.external = other.external;
+        this.domainWhitelist = other.domainWhitelist;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -137,6 +141,14 @@ public class IdentityProvider {
 
     public Date getCreatedAt() {
         return createdAt;
+    }
+
+    public List<String> getDomainWhitelist() {
+        return domainWhitelist;
+    }
+
+    public void setDomainWhitelist(List<String> domainWhitelist) {
+        this.domainWhitelist = domainWhitelist;
     }
 
     public void setCreatedAt(Date createdAt) {

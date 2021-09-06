@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0fc3660f-63d3-4323-b540-f110254e37d3",
+		"_postman_id": "d8f231cd-0462-4728-8ffa-80a03a353bfb",
 		"name": "Gravitee.io - AM - Scope Management",
 		"description": "Test openid connect discovery specifications: https://openid.net/specs/openid-connect-discovery-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"

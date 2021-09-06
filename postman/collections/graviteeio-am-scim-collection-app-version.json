@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "cf4c74bf-c3b4-43c4-b1a9-20e1f2418853",
+		"_postman_id": "d67013ac-2b9f-444c-834b-999201fc709b",
 		"name": "Gravitee.io - AM - SCIM - app version",
 		"description": "Test System for Cross-domain Identity Management\nSCIM 2.0 is released as RFC7642, RFC7643 and RFC7644",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"

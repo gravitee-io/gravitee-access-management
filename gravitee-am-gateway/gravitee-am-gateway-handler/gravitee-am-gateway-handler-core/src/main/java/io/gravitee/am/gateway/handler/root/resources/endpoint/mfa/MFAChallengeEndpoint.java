@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Template;
@@ -45,6 +46,7 @@ import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,20 +65,19 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAChallengeEndpoint implements Handler<RoutingContext> {
+public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
 
     private final FactorManager factorManager;
     private final UserService userService;
-    private final ThymeleafTemplateEngine engine;
     private final ApplicationContext applicationContext;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, ThymeleafTemplateEngine engine, ApplicationContext applicationContext) {
+    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, ApplicationContext applicationContext) {
+        super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
         this.userService = userService;
-        this.engine = engine;
     }
 
     @Override
@@ -122,15 +123,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                     return;
                 }
                 // render the mfa challenge page
-                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
-                    if (res.succeeded()) {
-                        routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                        routingContext.response().end(res.result());
-                    } else {
-                        logger.error("Unable to render MFA challenge page", res.cause());
-                        routingContext.fail(res.cause());
-                    }
-                });
+                this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render MFA challenge page");
             });
         } catch (Exception ex) {
             logger.error("An error has occurred when rendering MFA challenge page", ex);
@@ -247,8 +240,8 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         if (savedFactorId != null) {
             return factorManager.getFactor(savedFactorId);
         }
-        
-        if (endUser.getFactors() == null)  {
+
+        if (endUser.getFactors() == null) {
             throw new FactorNotFoundException("No factor found for the end user");
         }
 
@@ -278,8 +271,8 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                     break;
                 case FactorTypes.TYPE_EMAIL:
                     Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                        .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
-                        .build();
+                            .put(FactorDataKeys.KEY_MOVING_FACTOR, generateInitialMovingFactor(endUser))
+                            .build();
                     // For email even if the endUser will contains all relevant information, we extract only the Expiration Date of the code.
                     // this is done only to enforce the other parameter (shared secret and initialMovingFactor)
                     getEnrolledFactor(factor, endUser).ifPresent(ef -> {
@@ -322,8 +315,9 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
         }
     }
 
-    private String getTemplateFileName(Client client) {
-        return Template.MFA_CHALLENGE.template() + (client != null ? FormManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
+    @Override
+    public String getTemplateSuffix() {
+        return Template.MFA_CHALLENGE.template();
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

@@ -30,6 +30,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -197,5 +198,10 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                         () -> handler.handle(Future.succeededFuture()),
                         error -> handler.handle(Future.failedFuture(error))
                 );
+    }
+
+    @Override
+    public String getTemplateSuffix() {
+        throw new NotImplementedException("No need to render a template");
     }
 }

@@ -45,6 +45,13 @@ export class ApplicationFormsComponent implements OnInit {
         'enabled': this.applicationSettingsValid()
       },
       {
+        'name': 'Identifier-first Login',
+        'description': 'Identifier-first login page to authenticate users',
+        'template': 'IDENTIFIER_FIRST_LOGIN',
+        'icon': 'account_box',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
         'name': 'WebAuthn Register',
         'description': 'Passwordless page to register authenticators (devices)',
         'template': 'WEBAUTHN_REGISTER',

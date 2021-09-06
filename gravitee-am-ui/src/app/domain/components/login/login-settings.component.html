@@ -56,10 +56,18 @@
       <div fxLayout="column" style="margin-top: 10px;">
         <mat-slide-toggle
           (change)="enableHideForm($event)"
-          [checked]="isHideFormEnabled()" [disabled]="readonly">
+          [checked]="isHideFormEnabled()" [disabled]="readonly || isIdentifierFirstLoginEnabled()">
           Hide login form
         </mat-slide-toggle>
         <mat-hint style="font-size: 75%;">Hide the login form to only display external Identity Providers (if only one provider is enabled, the login page is skipped to redirect to the login page of the identity provider).</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px;">
+        <mat-slide-toggle
+          (change)="enableIdentifierFirstLogin($event)"
+          [checked]="isIdentifierFirstLoginEnabled()" [disabled]="readonly">
+          Identifier-first login
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Enables Identifier-first login (after entering the login, the user will be either asked to sign-in to an internal identity provider or will be redirected to an external provider regarding its domain whitelist).</mat-hint>
       </div>
     </div>
   </div>

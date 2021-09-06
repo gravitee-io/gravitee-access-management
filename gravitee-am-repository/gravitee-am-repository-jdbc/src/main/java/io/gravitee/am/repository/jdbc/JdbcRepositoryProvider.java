@@ -37,14 +37,12 @@ public class JdbcRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Class<?> configuration(Scope scope) {
-
         switch (scope) {
             case MANAGEMENT:
                 return ManagementRepositoryConfiguration.class;
             case OAUTH2:
                 return OAuth2RepositoryConfiguration.class;
         }
-
         return null;
     }
 }

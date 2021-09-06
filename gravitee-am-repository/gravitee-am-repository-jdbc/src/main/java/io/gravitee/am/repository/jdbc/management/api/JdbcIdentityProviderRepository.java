@@ -34,9 +34,12 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import static java.util.Optional.ofNullable;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
@@ -53,12 +56,9 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     protected IdentityProvider toEntity(JdbcIdentityProvider entity) {
         IdentityProvider idp = mapper.map(entity, IdentityProvider.class);
         // init to empty map t adopt same behaviour as Mongo Repository
-        if (idp.getRoleMapper() == null) {
-            idp.setRoleMapper(new HashMap<>());
-        }
-        if (idp.getMappers() == null) {
-            idp.setMappers(new HashMap<>());
-        }
+        idp.setRoleMapper(ofNullable(idp.getRoleMapper()).orElse(new HashMap<>()));
+        idp.setMappers(ofNullable(idp.getMappers()).orElse(new HashMap<>()));
+        idp.setDomainWhitelist(ofNullable(idp.getDomainWhitelist()).orElse(new ArrayList<>()));
         return idp;
     }
 
@@ -109,17 +109,18 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("identities");
 
         // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"name", item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"external", item.isExternal(), boolean.class);
-        insertSpec = addQuotedField(insertSpec,"reference_id", item.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"configuration", item.getConfiguration(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"mappers", item.getMappers());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"role_mapper", item.getRoleMapper());
+        insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, "type", item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, "name", item.getName(), String.class);
+        insertSpec = addQuotedField(insertSpec, "external", item.isExternal(), boolean.class);
+        insertSpec = addQuotedField(insertSpec, "reference_id", item.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, "configuration", item.getConfiguration(), String.class);
+        insertSpec = addQuotedField(insertSpec, "reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "domain_whitelist", ofNullable(item.getDomainWhitelist()).orElse(List.of()));
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "mappers", item.getMappers());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "role_mapper", item.getRoleMapper());
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -133,17 +134,19 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("identities");
         Map<SqlIdentifier, Object> updateFields = new HashMap<>();
         // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType(), String.class);
-        updateFields = addQuotedField(updateFields,"name", item.getName(), String.class);
-        updateFields = addQuotedField(updateFields,"external", item.isExternal(), boolean.class);
-        updateFields = addQuotedField(updateFields,"reference_id", item.getReferenceId(), String.class);
-        updateFields = addQuotedField(updateFields,"configuration", item.getConfiguration(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"mappers", item.getMappers());
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"role_mapper", item.getRoleMapper());
+        updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
+        updateFields = addQuotedField(updateFields, "type", item.getType(), String.class);
+        updateFields = addQuotedField(updateFields, "name", item.getName(), String.class);
+        updateFields = addQuotedField(updateFields, "external", item.isExternal(), boolean.class);
+        updateFields = addQuotedField(updateFields, "reference_id", item.getReferenceId(), String.class);
+        updateFields = addQuotedField(updateFields, "configuration", item.getConfiguration(), String.class);
+        updateFields = addQuotedField(updateFields, "reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "domain_whitelist", ofNullable(item.getDomainWhitelist()).orElse(List.of()), List.class);
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "domain_whitelist", ofNullable(item.getDomainWhitelist()).orElse(List.of()));
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "mappers", item.getMappers());
+        updateFields = databaseDialectHelper.addJsonField(updateFields, "role_mapper", item.getRoleMapper());
 
         Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
 
