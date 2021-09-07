@@ -30,7 +30,6 @@ import io.gravitee.am.management.handlers.management.api.authentication.provider
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.ManagementAuthenticationProvider;
 import io.gravitee.am.management.handlers.management.api.authentication.web.*;
 import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ReCaptchaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +52,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
@@ -150,6 +150,8 @@ public class SecurityConfiguration {
             .addFilterBefore(cockpitAuthenticationFilter, AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(new RecaptchaFilter(reCaptchaService, objectMapper), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(new CheckRedirectionCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+            .addFilterBefore(checkLoginRedirectUriFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+            .addFilterBefore(checkLogoutRedirectUriFilter(), LogoutFilter.class)
             .addFilterBefore(builtInAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(socialAuthFilter(), AbstractPreAuthenticatedProcessingFilter.class)
             .addFilterBefore(checkAuthCookieFilter(), AbstractPreAuthenticatedProcessingFilter.class);
@@ -305,6 +307,22 @@ public class SecurityConfiguration {
     @Bean
     public Filter jwtAuthenticationFilter() {
         return new JWTAuthenticationFilter(new AntPathRequestMatcher("/**"));
+    }
+
+    @Bean
+    public Filter checkLoginRedirectUriFilter() {
+        CheckRedirectUriFilter checkRedirectUriFilter = new CheckRedirectUriFilter("/authorize");
+        checkRedirectUriFilter.setParamName("redirect_uri");
+        checkRedirectUriFilter.setAllowedUrls(getPropertiesAsList("http.login.allow-redirect-urls", "*"));
+        return checkRedirectUriFilter;
+    }
+
+    @Bean
+    public Filter checkLogoutRedirectUriFilter() {
+        CheckRedirectUriFilter checkRedirectUriFilter = new CheckRedirectUriFilter("/logout");
+        checkRedirectUriFilter.setParamName("target_url");
+        checkRedirectUriFilter.setAllowedUrls(getPropertiesAsList("http.logout.allow-redirect-urls", "*"));
+        return checkRedirectUriFilter;
     }
 
     @Bean
