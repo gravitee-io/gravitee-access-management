@@ -144,6 +144,13 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         if (oAuth2Exception instanceof RedirectMismatchException) {
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
+        // check if the redirect_uri request parameter is allowed
+        if (client != null
+                && client.getRedirectUris() != null
+                && authorizationRequest.getRedirectUri() != null
+                && !client.getRedirectUris().contains(authorizationRequest.getRedirectUri())) {
+            authorizationRequest.setRedirectUri(defaultErrorURL);
+        }
 
         // Process error response
         try {

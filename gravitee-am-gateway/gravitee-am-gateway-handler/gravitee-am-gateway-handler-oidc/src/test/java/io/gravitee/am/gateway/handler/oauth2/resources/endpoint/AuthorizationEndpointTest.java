@@ -1288,4 +1288,23 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
+
+    @Test
+    public void shouldNotInvokeAuthorizationEndpoint_invalidFormatRequest_withRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&response_type=code&client_id=client-id&redirect_uri=http://dummy",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Parameter+%255Bresponse_type%255D+is+included+more+than+once"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
 }
