@@ -20,10 +20,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CookieCsrfSignedTokenRepository;
 import io.gravitee.am.management.handlers.management.api.authentication.csrf.CsrfRequestMatcher;
 import io.gravitee.am.management.handlers.management.api.authentication.filter.*;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CookieClearingLogoutHandler;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationFailureHandler;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomAuthenticationSuccessHandler;
-import io.gravitee.am.management.handlers.management.api.authentication.handler.CustomLogoutSuccessHandler;
+import io.gravitee.am.management.handlers.management.api.authentication.handler.*;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.RedirectCookieGenerator;
@@ -56,6 +53,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -326,6 +325,11 @@ public class SecurityConfiguration {
     @Bean
     public CookieCsrfSignedTokenRepository cookieCsrfSignedTokenRepository() {
         return new CookieCsrfSignedTokenRepository();
+    }
+
+    @Bean
+    public RequestRejectedHandler requestRejectedHandler() {
+        return new CustomRequestRejectedHandler();
     }
 
     private List<String> getPropertiesAsList(final String propertyKey, final String defaultValue) {
