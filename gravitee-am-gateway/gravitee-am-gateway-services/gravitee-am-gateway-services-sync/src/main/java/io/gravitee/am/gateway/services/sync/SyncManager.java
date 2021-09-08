@@ -25,6 +25,7 @@ import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
+import io.gravitee.node.api.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -68,15 +69,10 @@ public class SyncManager implements InitializingBean {
 
     @Lazy
     @Autowired
-    private EnvironmentRepository environmentRepository;
-
-    @Lazy
-    @Autowired
-    private OrganizationRepository organizationRepository;
-
-    @Lazy
-    @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private Node node;
 
     private Optional<List<String>> shardingTags;
 
@@ -242,26 +238,7 @@ public class SyncManager implements InitializingBean {
     private void initEnvironments() {
         environments = getSystemValues(ENVIRONMENTS_SYSTEM_PROPERTY);
         organizations = getSystemValues(ORGANIZATIONS_SYSTEM_PROPERTY);
-        if (organizations.isPresent()) {
-            final List<Organization> foundOrgs = organizationRepository.findByHrids(this.organizations.get()).toList().blockingGet();
-            this.environmentIds = foundOrgs.stream().flatMap(org ->{
-                return environmentRepository.findAll(org.getId())
-                        .filter(environment1 -> {
-                            if (!environments.isPresent()) {
-                                return true;
-                            } else {
-                                return environment1.getHrids().stream().anyMatch(h -> environments.get().contains(h));
-                            }
-                        })
-                        .map(io.gravitee.am.model.Environment::getId).toList().blockingGet().stream();
-            }).distinct().collect(Collectors.toList());
-        } else if (environments.isPresent()) {
-            environmentIds = environmentRepository.findAll()
-                    .filter(environment1 -> environment1.getHrids().stream().anyMatch(h -> environments.get().contains(h)))
-                    .map(io.gravitee.am.model.Environment::getId)
-                    .toList()
-                    .blockingGet();
-        }
+        this.environmentIds = new ArrayList<>((Set<String>) node.metadata().get(Node.META_ENVIRONMENTS));
     }
 
     private Optional<List<String>> getSystemValues(String key) {

@@ -18,6 +18,7 @@ package io.gravitee.am.management.standalone.spring;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
+import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
@@ -32,6 +33,7 @@ import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
+import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
@@ -98,5 +100,10 @@ public class StandaloneConfiguration {
     @Bean
     public RepositoryScopeProvider repositoryScopeProvider() {
         return new io.gravitee.am.repository.RepositoryScopeProvider();
+    }
+
+    @Bean
+    public NodeMetadataResolver nodeMetadataResolver() {
+        return new ManagementNodeMetadataResolver();
     }
 }

@@ -28,6 +28,7 @@ import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
+import io.gravitee.node.api.Node;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -39,11 +40,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.*;
 
+import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
+import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
+import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -77,13 +78,11 @@ public class SyncManagerTest {
     private EventRepository eventRepository;
 
     @Mock
-    private EnvironmentRepository environmentRepository;
-
-    @Mock
-    private OrganizationRepository organizationRepository;
+    private Node node;
 
     @Before
     public void before() throws Exception {
+        lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
         syncManager.afterPropertiesSet();
     }
 
@@ -273,15 +272,14 @@ public class SyncManagerTest {
     public void init_test_one_env_one_domain() throws Exception {
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
 
         Domain domain = new Domain();
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
 
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
-        when(environmentRepository.findAll()).thenReturn(Flowable.just(env));
+        when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.afterPropertiesSet();
@@ -290,14 +288,13 @@ public class SyncManagerTest {
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
-        verify(organizationRepository, never()).findByHrids(any());
     }
 
     @Test
     public void init_test_one_env_two_domains() throws Exception {
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
 
         Domain domain = new Domain();
         domain.setId("domain-1");
@@ -309,8 +306,7 @@ public class SyncManagerTest {
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
 
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
-        when(environmentRepository.findAll()).thenReturn(Flowable.just(env));
+        when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
@@ -319,17 +315,16 @@ public class SyncManagerTest {
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
-        verify(organizationRepository, never()).findByHrids(any());
     }
 
     @Test
     public void init_test_two_env() throws Exception {
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
         io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
         env2.setId("env-2");
-        env2.setHrids(Arrays.asList("prod"));
+        env2.setHrids(asList("prod"));
 
         final Domain domain = new Domain();
         domain.setId("domain-1");
@@ -340,8 +335,7 @@ public class SyncManagerTest {
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
 
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev,prod");
-        when(environmentRepository.findAll()).thenReturn(Flowable.just(env, env2));
+        when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
@@ -350,17 +344,16 @@ public class SyncManagerTest {
         verify(securityDomainManager, times(2)).deploy(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
-        verify(organizationRepository, never()).findByHrids(any());
     }
 
     @Test
     public void init_test_two_env_only_one_deployed() throws Exception {
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
         io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
         env2.setId("env-2");
-        env2.setHrids(Arrays.asList("prod"));
+        env2.setHrids(asList("prod"));
 
         final Domain domain = new Domain();
         domain.setId("domain-1");
@@ -371,8 +364,7 @@ public class SyncManagerTest {
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
 
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
-        when(environmentRepository.findAll()).thenReturn(Flowable.just(env, env2));
+        when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
@@ -381,14 +373,13 @@ public class SyncManagerTest {
         verify(securityDomainManager).deploy(any());
         verify(securityDomainManager, never()).update(any());
         verify(securityDomainManager, never()).undeploy(any(String.class));
-        verify(organizationRepository, never()).findByHrids(any());
     }
 
     @Test
     public void init_test_one_org() throws Exception {
         Organization organization = new Organization();
         organization.setId("org-1");
-        organization.setHrids(Arrays.asList("gravitee"));
+        organization.setHrids(asList("gravitee"));
 
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
@@ -406,9 +397,10 @@ public class SyncManagerTest {
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
 
+        when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1")),
+                META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2"))));
+
         when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee");
-        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization));
-        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.afterPropertiesSet();
@@ -424,11 +416,11 @@ public class SyncManagerTest {
     public void init_test_two_org() throws Exception {
         Organization organization = new Organization();
         organization.setId("org-1");
-        organization.setHrids(Arrays.asList("gravitee"));
+        organization.setHrids(asList("gravitee"));
 
         Organization organization2 = new Organization();
         organization2.setId("org-2");
-        organization2.setHrids(Arrays.asList("gravitee2"));
+        organization2.setHrids(asList("gravitee2"));
 
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
@@ -462,10 +454,10 @@ public class SyncManagerTest {
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
 
+        when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
+                META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2", "env-3", "env-4"))));
+
         when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
-        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
-        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
-        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
@@ -480,28 +472,28 @@ public class SyncManagerTest {
     public void init_test_two_org_and_env() throws Exception {
         Organization organization = new Organization();
         organization.setId("org-1");
-        organization.setHrids(Arrays.asList("gravitee"));
+        organization.setHrids(asList("gravitee"));
 
         Organization organization2 = new Organization();
         organization2.setId("org-2");
-        organization2.setHrids(Arrays.asList("gravitee2"));
+        organization2.setHrids(asList("gravitee2"));
 
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
         env.setOrganizationId("org-1");
         io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
         env2.setId("env-2");
-        env2.setHrids(Arrays.asList("prod"));
+        env2.setHrids(asList("prod"));
         env2.setOrganizationId("org-1");
 
         io.gravitee.am.model.Environment env3 = new io.gravitee.am.model.Environment();
         env3.setId("env-3");
-        env3.setHrids(Arrays.asList("prod"));
+        env3.setHrids(asList("prod"));
         env3.setOrganizationId("org-2");
         io.gravitee.am.model.Environment env4 = new io.gravitee.am.model.Environment();
         env4.setId("env-4");
-        env4.setHrids(Arrays.asList("dev"));
+        env4.setHrids(asList("dev"));
         env4.setOrganizationId("org-2");
 
         final Domain domain = new Domain();
@@ -522,11 +514,8 @@ public class SyncManagerTest {
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
 
-        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
-        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
-        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
-        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
+        when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
+                META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-4"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
@@ -541,28 +530,28 @@ public class SyncManagerTest {
     public void init_test_two_org_and_env_and_sharding_tags() throws Exception {
         Organization organization = new Organization();
         organization.setId("org-1");
-        organization.setHrids(Arrays.asList("gravitee"));
+        organization.setHrids(asList("gravitee"));
 
         Organization organization2 = new Organization();
         organization2.setId("org-2");
-        organization2.setHrids(Arrays.asList("gravitee2"));
+        organization2.setHrids(asList("gravitee2"));
 
         io.gravitee.am.model.Environment env = new io.gravitee.am.model.Environment();
         env.setId("env-1");
-        env.setHrids(Arrays.asList("dev"));
+        env.setHrids(asList("dev"));
         env.setOrganizationId("org-1");
         io.gravitee.am.model.Environment env2 = new io.gravitee.am.model.Environment();
         env2.setId("env-2");
-        env2.setHrids(Arrays.asList("prod"));
+        env2.setHrids(asList("prod"));
         env2.setOrganizationId("org-1");
 
         io.gravitee.am.model.Environment env3 = new io.gravitee.am.model.Environment();
         env3.setId("env-3");
-        env3.setHrids(Arrays.asList("prod"));
+        env3.setHrids(asList("prod"));
         env3.setOrganizationId("org-2");
         io.gravitee.am.model.Environment env4 = new io.gravitee.am.model.Environment();
         env4.setId("env-4");
-        env4.setHrids(Arrays.asList("dev"));
+        env4.setHrids(asList("dev"));
         env4.setOrganizationId("org-2");
 
         final Domain domain = new Domain();
@@ -584,12 +573,9 @@ public class SyncManagerTest {
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
 
-        when(environment.getProperty(ORGANIZATIONS_SYSTEM_PROPERTY)).thenReturn("gravitee,gravitee2");
-        when(environment.getProperty(ENVIRONMENTS_SYSTEM_PROPERTY)).thenReturn("dev");
+        when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
+                META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2", "env-3", "env-4"))));
         when(environment.getProperty(SHARDING_TAGS_SYSTEM_PROPERTY)).thenReturn("private");
-        when(organizationRepository.findByHrids(anyList())).thenReturn(Flowable.just(organization, organization2));
-        when(environmentRepository.findAll(organization.getId())).thenReturn(Flowable.just(env, env2));
-        when(environmentRepository.findAll(organization2.getId())).thenReturn(Flowable.just(env3, env4));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3, domain4));
 
         syncManager.afterPropertiesSet();
@@ -608,7 +594,7 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
-        domain.setTags(new HashSet<>(Arrays.asList(domainTags)));
+        domain.setTags(new HashSet<>(asList(domainTags)));
 
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
