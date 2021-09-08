@@ -18,8 +18,10 @@ package io.gravitee.am.gateway.node;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.common.component.LifecycleComponent;
+import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.container.AbstractNode;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +33,11 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class GatewayNode extends AbstractNode {
+
+    @Autowired
+    private NodeMetadataResolver nodeMetadataResolver;
+
+    private Map<String, Object> metadata = null;
 
     @Override
     public String name() {
@@ -55,7 +62,10 @@ public class GatewayNode extends AbstractNode {
 
     @Override
     public Map<String, Object> metadata() {
-        Map<String, Object> metadata = new HashMap<>();
+        if(metadata == null) {
+            metadata = nodeMetadataResolver.resolve();
+        }
+
         return metadata;
     }
 }

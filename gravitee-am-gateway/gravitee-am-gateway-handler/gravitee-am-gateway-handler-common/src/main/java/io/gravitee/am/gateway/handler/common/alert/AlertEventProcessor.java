@@ -20,6 +20,9 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.OrganizationService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
@@ -58,11 +61,26 @@ public class AlertEventProcessor extends AbstractService {
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private EnvironmentService environmentService;
+
     private final EventListener<AuthenticationEvent, AuthenticationDetails> authenticationEventListener = this::onAuthenticationEvent;
+
+    private String environmentId;
+
+    private String organizationId;
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
+
+        try {
+            this.environmentId = domain.getReferenceId();
+            final io.gravitee.am.model.Environment domainEnv = environmentService.findById(environmentId).blockingGet();
+            this.organizationId = domainEnv.getOrganizationId();
+        } catch (Exception e) {
+            logger.warn("The domain [{}] seems not attached to any environment or organization. Alert events may not be accurate.", domain.getName());
+        }
 
         logger.info("Register event listener for all events for domain {}", domain.getName());
         eventManager.subscribeForEvents(authenticationEventListener, AuthenticationEvent.class, domain.getId());
@@ -92,7 +110,9 @@ public class AlertEventProcessor extends AbstractService {
                 .property(PROPERTY_DOMAIN, authenticationDetails.getDomain().getId())
                 .property(PROPERTY_APPLICATION, authenticationDetails.getClient().getId())
                 .property(PROPERTY_USER, authenticationDetails.getPrincipal().getPrincipal())
-                .property(PROPERTY_AUTHENTICATION_STATUS, eventItem.type().name());
+                .property(PROPERTY_AUTHENTICATION_STATUS, eventItem.type().name())
+                .property(PROPERTY_ORGANIZATION, organizationId)
+                .property(PROPERTY_ENVIRONMENT, environmentId);
 
         if (authenticationDetails.getPrincipal().getContext() != null) {
             final Map<String, Object> attributes = authenticationDetails.getPrincipal().getContext().attributes();

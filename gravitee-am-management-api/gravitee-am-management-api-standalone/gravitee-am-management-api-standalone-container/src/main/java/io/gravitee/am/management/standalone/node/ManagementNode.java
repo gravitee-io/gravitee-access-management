@@ -17,18 +17,26 @@ package io.gravitee.am.management.standalone.node;
 
 import io.gravitee.am.management.service.*;
 import io.gravitee.common.component.LifecycleComponent;
+import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.jetty.node.JettyNode;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.internal.PluginEventListener;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class ManagementNode extends JettyNode {
+
+    @Autowired
+    private NodeMetadataResolver nodeMetadataResolver;
+
+    private Map<String, Object> metadata = null;
 
     @Override
     public String name() {
@@ -38,6 +46,15 @@ public class ManagementNode extends JettyNode {
     @Override
     public String application() {
         return "gio-am-management";
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        if(metadata == null) {
+            metadata = nodeMetadataResolver.resolve();
+        }
+
+        return metadata;
     }
 
     @Override

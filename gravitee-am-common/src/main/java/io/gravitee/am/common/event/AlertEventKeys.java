@@ -34,5 +34,7 @@ public interface AlertEventKeys {
     String PROPERTY_USER_AGENT = "user_agent";
     String PROPERTY_TRANSACTION_ID = "transaction_id";
     String PROPERTY_AUTHENTICATION_STATUS = "authentication.status";
+    String PROPERTY_ENVIRONMENT = "environment";
+    String PROPERTY_ORGANIZATION = "organization";
     String TYPE_AUTHENTICATION = "AUTHENTICATION";
 }
