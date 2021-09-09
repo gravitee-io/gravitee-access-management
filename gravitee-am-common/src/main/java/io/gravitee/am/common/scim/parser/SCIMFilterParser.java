@@ -109,6 +109,7 @@ public final class SCIMFilterParser {
             throw new IllegalArgumentException(msg);
         }
 
+
         final AttributePath filterAttribute;
         try {
             filterAttribute = AttributePath.parse(word, defaultSchema);
@@ -488,6 +489,11 @@ public final class SCIMFilterParser {
                     case '^':
                     case '_':
                     case '`':
+                    case '$':
+                    case '{':
+                    case '}':
+                    case ',':
+                    case '*':
                         // These are not allowed, but they are explicitly called out because
                         // they are included in the range of values between '-' and 'z', and
                         // making sure all possible characters are included can help make
