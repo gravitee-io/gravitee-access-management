@@ -61,6 +61,7 @@ export class UserProfileComponent implements OnInit {
 
   update() {
     // TODO we should be able to update platform users
+    this.user.additionalInformation = this.user.additionalInformation || {};
     Object.keys(this.userClaims).forEach(key => this.user.additionalInformation[key] = this.userClaims[key]);
 
     this.userService.update(this.domainId, this.user.id, this.user, this.organizationContext).subscribe(data => {

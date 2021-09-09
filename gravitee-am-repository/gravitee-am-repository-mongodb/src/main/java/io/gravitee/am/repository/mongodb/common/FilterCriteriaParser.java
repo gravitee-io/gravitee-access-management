@@ -17,11 +17,27 @@ package io.gravitee.am.repository.mongodb.common;
 
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public final class FilterCriteriaParser {
+
+    private static final int MAX_SIZE = 64;
+    private static final List<String> specialCharsList = new ArrayList<>() {
+        {
+            add("'");
+            add("\"");
+            add("\\");
+            add(";");
+            add("{");
+            add("}");
+            add("$");
+        }
+    };
 
     private FilterCriteriaParser() {}
 
@@ -95,13 +111,21 @@ public final class FilterCriteriaParser {
             case "ew":
                 return "$regex";
             default:
-                return operator;
+                throw new IllegalArgumentException("Invalid operator [" + operator + "] found in the search query");
         }
     }
 
     private static String convertFilterName(String filterName) {
         if (filterName == null) {
             return null;
+        }
+
+        if (specialCharsList.stream().anyMatch(s -> filterName.contains(s))) {
+            throw new IllegalArgumentException("Invalid filter name [" + filterName + "] found in the the search query");
+        }
+
+        if (filterName.length() > MAX_SIZE) {
+            throw new IllegalArgumentException("Invalid filter name [" + filterName + "] found in the the search query");
         }
 
         switch (filterName) {
@@ -135,7 +159,12 @@ public final class FilterCriteriaParser {
     }
 
     private static String convertFilterValue(FilterCriteria criteria, String filterName, String operator) {
+        if (specialCharsList.stream().anyMatch(s -> criteria.getFilterValue().contains(s))) {
+            throw new IllegalArgumentException("Invalid filter value [" + criteria.getFilterValue() + "] found in the the search query");
+        }
+
         String filterValue = criteria.getFilterValue();
+
         if (isDateInput(filterName)) {
             filterValue = "ISODate(\"" + filterValue + "\")";
             return filterValue;

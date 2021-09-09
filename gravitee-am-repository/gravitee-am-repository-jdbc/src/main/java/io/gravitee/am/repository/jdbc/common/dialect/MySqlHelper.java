@@ -40,24 +40,31 @@ public class MySqlHelper extends AbstractDialectHelper {
         String[] path = convertFieldName(criteria).split("\\.");
         final String operator = criteria.getOperator().toLowerCase().trim();
         final String value = criteria.getFilterValue();
+        final String bindValueName = (":" + path[0] + path[1].substring(0, 1).toUpperCase() + path[1].substring(1)).replaceAll("_", "");
+        final String bindValueKey = bindValueName.substring(1);
         switch (operator) {
             case "eq":
-                queryBuilder.append(path[0]+"_"+path[1] +" = '" + value + "'");
+                queryBuilder.append(path[0]+"_"+path[1] +" = " + bindValueName + "");
+                search.addBinding(bindValueKey, value);
                 break;
             case "ne":
-                queryBuilder.append(path[0]+"_"+path[1] +" <> '" + value + "'");
+                queryBuilder.append(path[0]+"_"+path[1] +" <> " + bindValueName + "");
+                search.addBinding(bindValueKey, value);
                 break;
             case "pr":
                 queryBuilder.append(path[0]+"_"+path[1] +" IS NOT NULL ");
                 break;
             case "co":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE '%" + value+"%'");
+                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                search.addBinding(bindValueKey, "%" + value + "%");
                 break;
             case "sw":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE '" + value + "%'");
+                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                search.addBinding(bindValueKey, value + "%");
                 break;
             case "ew":
-                queryBuilder.append(path[0]+"_"+path[1] +" LIKE '%" + value + "'");
+                queryBuilder.append(path[0]+"_"+path[1] +" LIKE " + bindValueName + "");
+                search.addBinding(bindValueKey, "%" + value);
                 break;
             default:
                 // TODO gt, ge, lt, le not managed yet... we have to know the json field type in order to adapt the clause
