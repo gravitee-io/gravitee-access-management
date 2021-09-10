@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.http.configuration.HttpAuthResourcePathsC
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
+import io.gravitee.am.identityprovider.http.utils.SanitizeUtils;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpHeader;
@@ -55,7 +56,7 @@ import java.util.*;
  * @author GraviteeSource Team
  */
 @Import(HttpAuthenticationProviderConfiguration.class)
-public class HttpAuthenticationProvider implements AuthenticationProvider {
+public class    HttpAuthenticationProvider implements AuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpAuthenticationProvider.class);
     private static final String PRINCIPAL_CONTEXT_KEY = "principal";
@@ -79,17 +80,22 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         try {
-            // prepare context
-            TemplateEngine templateEngine = authentication.getContext().getTemplateEngine();
-            templateEngine.getTemplateContext().setVariable(PRINCIPAL_CONTEXT_KEY, authentication.getPrincipal());
-            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, authentication.getCredentials());
-
             // prepare request
             final HttpResourceConfiguration resourceConfiguration = configuration.getAuthenticationResource();
-            final String authenticationURI = templateEngine.getValue(resourceConfiguration.getBaseURL(), String.class);
             final HttpMethod authenticationHttpMethod = HttpMethod.valueOf(resourceConfiguration.getHttpMethod().toString());
             final List<HttpHeader> authenticationHttpHeaders = resourceConfiguration.getHttpHeaders();
             final String authenticationBody = resourceConfiguration.getHttpBody();
+
+            final Object principal = authentication.getPrincipal();
+            final Object credentials = SanitizeUtils.sanitize((String) authentication.getCredentials(), authenticationBody, authenticationHttpHeaders);
+
+            // prepare context
+            TemplateEngine templateEngine = authentication.getContext().getTemplateEngine();
+            templateEngine.getTemplateContext().setVariable(PRINCIPAL_CONTEXT_KEY, principal);
+            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, credentials);
+
+            // process request
+            final String authenticationURI = templateEngine.getValue(resourceConfiguration.getBaseURL(), String.class);
             final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, authenticationURI, authenticationHttpMethod, authenticationHttpHeaders, authenticationBody);
 
             return requestHandler
