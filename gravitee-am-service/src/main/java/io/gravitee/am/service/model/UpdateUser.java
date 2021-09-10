@@ -38,13 +38,12 @@ public class UpdateUser implements IUser {
     @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
     private String email;
 
-//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid first name")
     private String firstName;
 
-//    @Pattern(regexp = NAME_STRICT_PATTERN, message = "invalid last name")
     private String lastName;
 
-//    @Size(max = UserValidator.DEFAULT_MAX_LENGTH,  message = "must not be greater than " + DEFAULT_MAX_LENGTH)
+    private String displayName;
+
     private String externalId;
 
     private boolean accountNonExpired = true;
@@ -101,18 +100,21 @@ public class UpdateUser implements IUser {
 
     @Override
     @JsonIgnore
-    public String getDisplayName() {
-        return null;
-    }
-
-    @Override
-    @JsonIgnore
     public String getNickName() {
         return null;
     }
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getExternalId() {

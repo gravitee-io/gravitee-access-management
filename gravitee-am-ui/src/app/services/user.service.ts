@@ -42,6 +42,7 @@ export class UserService {
     let updatedUserProfile = {
       'firstName' : user.firstName,
       'lastName' : user.lastName,
+      'displayName' : user.displayName,
       'email' : user.email,
       'enabled': user.enabled,
       'client' : user.client,
