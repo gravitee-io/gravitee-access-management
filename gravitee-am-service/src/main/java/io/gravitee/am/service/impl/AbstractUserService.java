@@ -230,6 +230,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
                     oldUser.setLastName(updateUser.getLastName());
+                    oldUser.setDisplayName(updateUser.getDisplayName());
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
                     oldUser.setLoggedAt(updateUser.getLoggedAt());
