@@ -80,9 +80,19 @@ public class OpenIDDiscoveryServiceTest {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg().containsAll(openIDProviderMetadata.getTokenEndpointAuthSigningAlgValuesSupported()));
     }
+
+    @Test
     public void shouldContain_acr_claim_supported() {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
+    }
+
+    @Test
+    public void shouldContain_brazil_claim_supported() {
+        Mockito.when(domain.useFapiBrazilProfile()).thenReturn(true);
+        OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
+        assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
+        assertTrue(openIDProviderMetadata.getClaimsSupported().containsAll(OpenIDDiscoveryServiceImpl.BRAZIL_CLAIMS));
     }
 
     @Test

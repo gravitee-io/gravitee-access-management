@@ -429,6 +429,12 @@ public class Domain implements Resource {
                 this.getOidc().getSecurityProfileSettings().isEnablePlainFapi();
     }
 
+    public boolean useFapiBrazilProfile() {
+        return this.getOidc() != null &&
+                this.getOidc().getSecurityProfileSettings() != null &&
+                this.getOidc().getSecurityProfileSettings().isEnableFapiBrazil();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

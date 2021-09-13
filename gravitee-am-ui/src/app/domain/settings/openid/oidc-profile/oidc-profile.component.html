@@ -28,6 +28,14 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Enable Financial-grade API Security Profile 1.0</mat-hint>
         </div>
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableFAPIBrazil($event)"
+            [checked]="isFAPIBrazilEnabled()" [disabled]="!editMode">
+            Open Banking Brasil FAPI 1.0 Support
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable Open Banking Brasil Financial-grade API Security Profile 1.0</mat-hint>
+        </div>
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
         </div>
@@ -46,6 +54,14 @@
             <li>PKCE is required when authorization endpoint parameters are provided using JWT Secured Authorization Request by reference</li>
             <li>reponse_mode jwt is required when the response_type value is code</li>
             <li>Client shall use mTLS connection to bind the access_token to the client certificate</li>
+          </ul>
+      </div>
+      <h3>Open Banking Brasil Financial-grade API Security Profile 1.0</h3>
+      <div class="gv-page-description-content">
+        <p>The <a href="https://openbanking-brasil.github.io/specs-seguranca/open-banking-brasil-financial-api-1_ID2.html">Open Banking Brasil Financial-grade API</a> provides specific implementation guidelines for security and interoperability which can be applied to APIs in the Brasil Open Banking area that require a higher level of privacy than provided by standard Financial-grade API Security Profile 1.0 .</p>
+        <p>Enable this option will:</p>
+          <ul>
+            <li>Authorize <i>cnpj</i> and <i>cpf</i> claims</li>
           </ul>
       </div>
     </div>
