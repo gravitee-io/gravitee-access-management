@@ -128,7 +128,11 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(ClientAuthenticationMethod.supportedValues());
         openIDProviderMetadata.setTokenEndpointAuthSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedTokenEndpointAuthSigningAlg());
 
-        openIDProviderMetadata.setAcrValuesSupported(AcrValues.values());
+        if (domain.useFapiBrazilProfile()) {
+            openIDProviderMetadata.setAcrValuesSupported(Stream.concat(AcrValues.values().stream(), BrazilAcrValues.values().stream()).collect(Collectors.toList()));
+        } else {
+            openIDProviderMetadata.setAcrValuesSupported(AcrValues.values());
+        }
 
         // certificate bound accessToken requires TLS & Client Auth
         final Boolean secured = env.getProperty("http.secured", Boolean.class, false);
