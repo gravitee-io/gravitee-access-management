@@ -26,12 +26,25 @@ public class SecurityProfileSettings {
      */
     private boolean enablePlainFapi;
 
+    /**
+     * Apply the standard Open Banking Brasil Financial-grade API Security Profile 1.0 (version 1.0).
+     */
+    private boolean enableFapiBrazil;
+
     public boolean isEnablePlainFapi() {
         return enablePlainFapi;
     }
 
     public void setEnablePlainFapi(boolean enablePlainFapi) {
         this.enablePlainFapi = enablePlainFapi;
+    }
+
+    public boolean isEnableFapiBrazil() {
+        return enableFapiBrazil;
+    }
+
+    public void setEnableFapiBrazil(boolean enableFapiBrazil) {
+        this.enableFapiBrazil = enableFapiBrazil;
     }
 
     public static SecurityProfileSettings defaultSettings() {

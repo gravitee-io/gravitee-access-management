@@ -56,10 +56,30 @@ export class OIDCProfileComponent implements OnInit {
       this.domain.oidc.securityProfileSettings = {};
     }
     this.domain.oidc.securityProfileSettings.enablePlainFapi = event.checked;
+    if (!event.checked) {
+      // Disable Plain FAPI imply to disable FAPI Brazil
+      this.domain.oidc.securityProfileSettings.enableFapiBrazil = event.checked;
+    }
     this.formChanged = true;
   }
 
   isFAPIEnabled() {
     return this.domain.oidc.securityProfileSettings && this.domain.oidc.securityProfileSettings.enablePlainFapi;
+  }
+
+  enableFAPIBrazil(event) {
+    if (!this.domain.oidc.securityProfileSettings) {
+      this.domain.oidc.securityProfileSettings = {};
+    }
+    this.domain.oidc.securityProfileSettings.enableFapiBrazil = event.checked;
+    if (event.checked) {
+      // Enable FAPI Brazil imply to enable Plain FAPI
+      this.domain.oidc.securityProfileSettings.enablePlainFapi = event.checked;
+    }
+    this.formChanged = true;
+  }
+
+  isFAPIBrazilEnabled() {
+    return this.domain.oidc.securityProfileSettings && this.domain.oidc.securityProfileSettings.enableFapiBrazil;
   }
 }

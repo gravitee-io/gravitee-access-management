@@ -24,6 +24,7 @@ import java.util.List;
 public class SecurityProfileSettingsMongo {
 
     private boolean enablePlainFapi;
+    private boolean enableFapiBrazil;
 
     public boolean isEnablePlainFapi() {
         return enablePlainFapi;
@@ -31,5 +32,13 @@ public class SecurityProfileSettingsMongo {
 
     public void setEnablePlainFapi(boolean enablePlainFapi) {
         this.enablePlainFapi = enablePlainFapi;
+    }
+
+    public boolean isEnableFapiBrazil() {
+        return enableFapiBrazil;
+    }
+
+    public void setEnableFapiBrazil(boolean enableFapiBrazil) {
+        this.enableFapiBrazil = enableFapiBrazil;
     }
 }

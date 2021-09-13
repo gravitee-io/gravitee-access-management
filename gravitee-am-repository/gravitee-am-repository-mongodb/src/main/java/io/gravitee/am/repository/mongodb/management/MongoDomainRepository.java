@@ -268,6 +268,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SecurityProfileSettings result = new SecurityProfileSettings();
         result.setEnablePlainFapi(profiles.isEnablePlainFapi());
+        result.setEnableFapiBrazil(profiles.isEnableFapiBrazil());
 
         return result;
     }
@@ -322,6 +323,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SecurityProfileSettingsMongo result = new SecurityProfileSettingsMongo();
         result.setEnablePlainFapi(profile.isEnablePlainFapi());
+        result.setEnableFapiBrazil(profile.isEnableFapiBrazil());
 
         return result;
     }

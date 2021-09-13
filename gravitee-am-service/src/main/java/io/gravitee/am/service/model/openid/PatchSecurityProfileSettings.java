@@ -34,6 +34,10 @@ public class PatchSecurityProfileSettings {
      * Apply the standard Financial-grade API security profile (version 1.0).
      */
     private Optional<Boolean> enablePlainFapi;
+    /**
+     * Apply the standard Open Banking Brasil Financial-grade API Security Profile 1.0 (version 1.0).
+     */
+    private Optional<Boolean> enableFapiBrazil;
 
     public Optional<Boolean> getEnablePlainFapi() {
         return enablePlainFapi;
@@ -43,10 +47,19 @@ public class PatchSecurityProfileSettings {
         this.enablePlainFapi = enablePlainFapi;
     }
 
+    public Optional<Boolean> getEnableFapiBrazil() {
+        return enableFapiBrazil;
+    }
+
+    public void setEnableFapiBrazil(Optional<Boolean> enableFapiBrazil) {
+        this.enableFapiBrazil = enableFapiBrazil;
+    }
+
     public SecurityProfileSettings patch(SecurityProfileSettings toPatch) {
         SecurityProfileSettings result=toPatch!=null? toPatch: SecurityProfileSettings.defaultSettings();
 
         SetterUtils.safeSet(result::setEnablePlainFapi, this.getEnablePlainFapi(), boolean.class);
+        SetterUtils.safeSet(result::setEnableFapiBrazil, this.getEnableFapiBrazil(), boolean.class);
 
         return result;
     }
