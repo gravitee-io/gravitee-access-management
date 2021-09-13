@@ -26,6 +26,7 @@ import org.apache.commons.cli.*;
 import java.util.Set;
 
 import static io.vertx.core.http.HttpMethod.GET;
+import static io.vertx.core.http.HttpMethod.POST;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -55,6 +56,11 @@ public class FapiApi {
                 .method(GET)
                 .produces("application/json")
                 .handler(new FapiResourceApiHandler());
+
+        router.route("/fapi/api/consent")
+                .method(POST)
+                .produces("application/json")
+                .handler(new FapiConsentResourceApiHandler());
 
         server.requestHandler(router)
 

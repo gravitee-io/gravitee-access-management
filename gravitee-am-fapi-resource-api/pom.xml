@@ -21,16 +21,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
         <version>3.12.0-SNAPSHOT</version>
     </parent>
-
     <groupId>io.gravitee.am.fapi</groupId>
-    <artifactId>gravitee-fapi-resource-api</artifactId>
+    <artifactId>gravitee-am-fapi-resource-api</artifactId>
     <version>3.12.0-SNAPSHOT</version>
-    <name> Gravitee.io - OIDC FAPI - Resource API</name>
+    <name>Gravitee IO - Access Management - OIDC FAPI - Resource API</name>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
