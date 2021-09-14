@@ -211,4 +211,57 @@ public class JdbcApplication {
             this.factor = factor;
         }
     }
+
+    @Table("application_scope_settings")
+    public static class ScopeSettings {
+        @Column("application_id")
+        private String applicationId;
+        private String scope;
+        @Column("is_default")
+        private boolean defaultScope;
+        @Column("is_parameterized")
+        private boolean parameterized;
+        @Column("scope_approval")
+        private int scopeApproval;
+
+        public String getApplicationId() {
+            return applicationId;
+        }
+
+        public void setApplicationId(String applicationId) {
+            this.applicationId = applicationId;
+        }
+
+        public String getScope() {
+            return scope;
+        }
+
+        public void setScope(String scope) {
+            this.scope = scope;
+        }
+
+        public boolean isDefaultScope() {
+            return defaultScope;
+        }
+
+        public void setDefaultScope(boolean defaultScope) {
+            this.defaultScope = defaultScope;
+        }
+
+        public boolean isParameterized() {
+            return parameterized;
+        }
+
+        public void setParameterized(boolean parameterized) {
+            this.parameterized = parameterized;
+        }
+
+        public int getScopeApproval() {
+            return scopeApproval;
+        }
+
+        public void setScopeApproval(int scopeApproval) {
+            this.scopeApproval = scopeApproval;
+        }
+    }
 }

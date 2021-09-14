@@ -60,6 +60,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("user_addresses");
         tables.add("application_factors");
         tables.add("application_identities");
+        tables.add("application_scope_settings");
         tables.add("applications");
         tables.add("tags");
         tables.add("scope_claims");

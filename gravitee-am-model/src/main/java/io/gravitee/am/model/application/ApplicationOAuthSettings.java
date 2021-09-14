@@ -204,16 +204,23 @@ public class ApplicationOAuthSettings {
     private Date clientSecretExpiresAt;
     /**
      * String containing a space-separated list of scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749]) that the client can use when requesting access tokens.
+     * @Deprecated this attribute is only used for migration purpose
      */
     private List<String> scopes;
     /**
      * Default scopes if the parameter scope is omitted
+     * @Deprecated this attribute is only used for migration purpose
      */
     private List<String> defaultScopes;
     /**
      * Scope approval duration times
+     * @Deprecated this attribute is only used for migration purpose
      */
     private Map<String, Integer> scopeApprovals;
+    /**
+     * List containing scope values (as described in Section 3.3 of OAuth 2.0 [RFC6749]) with related settings that the client can use when requesting access tokens.
+     */
+    private List<ApplicationScopeSettings> scopeSettings;
     /**
      * Enhance scopes with user roles' permissions
      */
@@ -330,6 +337,7 @@ public class ApplicationOAuthSettings {
         this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
         this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
         this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
+        this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
         this.accessTokenValiditySeconds = other.accessTokenValiditySeconds;
         this.refreshTokenValiditySeconds = other.refreshTokenValiditySeconds;
@@ -702,6 +710,14 @@ public class ApplicationOAuthSettings {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
+    public List<ApplicationScopeSettings> getScopeSettings() {
+        return scopeSettings;
+    }
+
+    public void setScopeSettings(List<ApplicationScopeSettings> scopeSettings) {
+        this.scopeSettings = scopeSettings;
+    }
+
     public int getAccessTokenValiditySeconds() {
         return accessTokenValiditySeconds;
     }
@@ -871,8 +887,8 @@ public class ApplicationOAuthSettings {
         client.setDefaultACRvalues(this.defaultACRvalues);
         client.setInitiateLoginUri(this.initiateLoginUri);
         client.setRequestUris(this.requestUris);
-        client.setScopes(this.scopes);
-        client.setDefaultScopes(this.defaultScopes);
+        client.setScopes(this.scopes);// TODO convert from scopeSettings?
+        client.setDefaultScopes(this.defaultScopes);// TODO convert from scopeSettings?
         client.setSoftwareId(this.softwareId);
         client.setSoftwareVersion(this.softwareVersion);
         client.setSoftwareStatement(this.softwareStatement);
@@ -884,7 +900,7 @@ public class ApplicationOAuthSettings {
         client.setRefreshTokenValiditySeconds(this.refreshTokenValiditySeconds);
         client.setIdTokenValiditySeconds(this.idTokenValiditySeconds);
         client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
-        client.setScopeApprovals(this.scopeApprovals);
+        client.setScopeApprovals(this.scopeApprovals);// TODO convert from scopeSettings?
         client.setTokenCustomClaims(this.tokenCustomClaims);
         client.setTlsClientAuthSubjectDn(this.tlsClientAuthSubjectDn);
         client.setTlsClientAuthSanDns(this.tlsClientAuthSanDns);

@@ -15,15 +15,14 @@
  */
 package io.gravitee.am.service.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -69,9 +68,6 @@ public class PatchApplicationOAuthSettings {
     private Optional<String> registrationClientUri;
     private Optional<Date> clientIdIssuedAt;
     private Optional<Date> clientSecretExpiresAt;
-    private Optional<List<String>> scopes;
-    private Optional<List<String>> defaultScopes;
-    private Optional<Map<String, Integer>> scopeApprovals;
     private Optional<Boolean> enhanceScopesWithUserPermissions;
     private Optional<Integer> accessTokenValiditySeconds;
     private Optional<Integer> refreshTokenValiditySeconds;
@@ -90,6 +86,7 @@ public class PatchApplicationOAuthSettings {
     private Optional<List<String>> postLogoutRedirectUris;
     private Optional<Boolean> singleSignOut;
     private Optional<Boolean> silentReAuthentication;
+    private Optional<List<ApplicationScopeSettings>> scopeSettings;
 
     public Optional<List<String>> getRedirectUris() {
         return redirectUris;
@@ -387,28 +384,12 @@ public class PatchApplicationOAuthSettings {
         this.clientSecretExpiresAt = clientSecretExpiresAt;
     }
 
-    public Optional<List<String>> getScopes() {
-        return scopes;
+    public Optional<List<ApplicationScopeSettings>> getScopeSettings() {
+        return scopeSettings;
     }
 
-    public void setScopes(Optional<List<String>> scopes) {
-        this.scopes = scopes;
-    }
-
-    public Optional<List<String>> getDefaultScopes() {
-        return defaultScopes;
-    }
-
-    public void setDefaultScopes(Optional<List<String>> defaultScopes) {
-        this.defaultScopes = defaultScopes;
-    }
-
-    public Optional<Map<String, Integer>> getScopeApprovals() {
-        return scopeApprovals;
-    }
-
-    public void setScopeApprovals(Optional<Map<String, Integer>> scopeApprovals) {
-        this.scopeApprovals = scopeApprovals;
+    public void setScopeSettings(Optional<List<ApplicationScopeSettings>> scopeSettings) {
+        this.scopeSettings = scopeSettings;
     }
 
     public Optional<Boolean> getEnhanceScopesWithUserPermissions() {
@@ -598,9 +579,6 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setRegistrationClientUri, this.getRegistrationClientUri());
         SetterUtils.safeSet(toPatch::setClientIdIssuedAt, this.getClientIdIssuedAt());
         SetterUtils.safeSet(toPatch::setClientSecretExpiresAt, this.getClientSecretExpiresAt());
-        SetterUtils.safeSet(toPatch::setScopes, this.getScopes());
-        SetterUtils.safeSet(toPatch::setDefaultScopes, this.getDefaultScopes());
-        SetterUtils.safeSet(toPatch::setScopeApprovals, this.getScopeApprovals());
         SetterUtils.safeSet(toPatch::setEnhanceScopesWithUserPermissions, this.getEnhanceScopesWithUserPermissions(), boolean.class);
         SetterUtils.safeSet(toPatch::setAccessTokenValiditySeconds, this.getAccessTokenValiditySeconds());
         SetterUtils.safeSet(toPatch::setRefreshTokenValiditySeconds, this.getRefreshTokenValiditySeconds());
@@ -619,7 +597,9 @@ public class PatchApplicationOAuthSettings {
         SetterUtils.safeSet(toPatch::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
         SetterUtils.safeSet(toPatch::setSingleSignOut, this.getSingleSignOut());
         SetterUtils.safeSet(toPatch::setSilentReAuthentication, this.getSilentReAuthentication());
-
+        if (this.getScopeSettings() != null && this.getScopeSettings().isPresent()) {
+            toPatch.setScopeSettings(this.getScopeSettings().get());
+        }
         return toPatch;
     }
 }

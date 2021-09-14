@@ -34,6 +34,7 @@ import {COMMA, ENTER} from "@angular/cdk/keycodes";
 export class ApplicationScopesComponent implements OnInit {
   private domainId: string;
   private defaultScopes: string[];
+  private parameterizedScopes: string[];
   formChanged: boolean;
   application: any;
   applicationOauthSettings: any = {};
@@ -54,7 +55,6 @@ export class ApplicationScopesComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.scopes = this.route.snapshot.data['scopes'];
     this.applicationOauthSettings = (this.application.settings == null) ? {} : this.application.settings.oauth || {};
-    this.selectedScopeApprovals = this.applicationOauthSettings.scopeApprovals || {};
     this.applicationOauthSettings.scopes =  this.applicationOauthSettings.scopes || [];
     this.readonly = !this.authService.hasPermissions(['application_openid_update']);
     this.initScopes();
@@ -63,26 +63,50 @@ export class ApplicationScopesComponent implements OnInit {
   private initScopes() {
     // Merge with existing scope
     this.selectedScopes = [];
-    this.applicationOauthSettings.scopes.forEach(scope => {
-      const definedScope = _.find(this.scopes, {key: scope});
-      if (definedScope) {
-        this.selectedScopes.push(definedScope);
-      }
-    });
+    this.defaultScopes = [];
+    this.parameterizedScopes = [];
+    this.selectedScopeApprovals = {};
+    if (this.applicationOauthSettings.scopeSettings) {
+      this.applicationOauthSettings.scopeSettings.forEach(scopeSettings => {
+        const definedScope = _.find(this.scopes, {key: scopeSettings.scope});
+        if (definedScope) {
+          this.selectedScopes.push(definedScope);
+          if (scopeSettings.defaultScope) {
+            this.defaultScopes.push(scopeSettings.scope);      
+          }
+          if (scopeSettings.parameterized) {
+            this.parameterizedScopes.push(scopeSettings.scope);      
+          }
+          if (scopeSettings.scopeApproval) {
+            this.selectedScopeApprovals[scopeSettings.scope] = { 'expiresIn' : this.getExpiresIn(scopeSettings.scopeApproval), 'unitTime' : this.getUnitTime(scopeSettings.scopeApproval) };
+          }
+        }
+      });
+
+    }
 
     this.scopes = _.difference(this.scopes, this.selectedScopes);
-    this.defaultScopes = this.applicationOauthSettings.defaultScopes || [];
-    this.selectedScopeApprovals = _.reduce(this.selectedScopeApprovals, (i, v, k) => { i[k] = { 'expiresIn' : this.getExpiresIn(v), 'unitTime' : this.getUnitTime(v) }; return i;}, {});
+
   }
 
   patch() {
     let oauthSettings: any = {};
     oauthSettings.enhanceScopesWithUserPermissions = this.applicationOauthSettings.enhanceScopesWithUserPermissions;
-    oauthSettings.scopes = _.map(this.selectedScopes, scope => scope.key);
-    oauthSettings.defaultScopes = this.defaultScopes;
-    // manage scope approvals
-    this.selectedScopeApprovals = _.pickBy(this.selectedScopeApprovals, (value, key) => value.expiresIn && value.unitTime);
-    oauthSettings.scopeApprovals = _.reduce(this.selectedScopeApprovals, (i, v, k) => { i[k] = moment.duration(v.expiresIn, v.unitTime).asSeconds(); return i;}, {});
+    oauthSettings.scopeSettings = [];
+    this.selectedScopes.forEach(s => {
+      let setting = {
+        scope: s.key,
+        defaultScope: (this.defaultScopes.indexOf(s.key) !== -1),
+        parameterized: (this.parameterizedScopes.indexOf(s.key) !== -1)
+      };
+
+      let approval = this.selectedScopeApprovals[s.key];
+      if (approval) {
+        setting['scopeApproval'] = moment.duration(approval.expiresIn, approval.unitTime).asSeconds();
+      }
+
+      oauthSettings.scopeSettings.push(setting);
+    });
     this.applicationService.patch(this.domainId, this.application.id, {'settings' : { 'oauth' : oauthSettings}}).subscribe(data => {
       this.snackbarService.open('Application updated');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
@@ -150,6 +174,19 @@ export class ApplicationScopesComponent implements OnInit {
 
   isDefaultScope(scope) {
     return this.defaultScopes.indexOf(scope) !== -1;
+  }
+
+  toggleParameterizedScope(event, scope) {
+    if (event.checked) {
+      this.parameterizedScopes.push(scope);
+    } else {
+      this.parameterizedScopes.splice(this.parameterizedScopes.indexOf(scope), 1);
+    }
+    this.formChanged = true;
+  }
+
+  isParameterizedScope(scope) {
+    return this.parameterizedScopes.indexOf(scope) !== -1;
   }
 
   onExpiresInEvent(event, scope) {

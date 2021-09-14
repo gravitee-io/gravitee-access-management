@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.12.0-AppScopeSettings-Table
+      author: GraviteeSource Team
+      changes:
+
+        ## scopes
+        ###################
+        - createTable:
+            tableName: application_scope_settings
+            columns:
+              - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: scope, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: is_default, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }
+              - column: { name: is_parameterized, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }
+              - column: { name: scope_approval, type: integer, constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: application_id
+            indexName: idx_ass_app_id
+            tableName: application_scope_settings
+            unique: false
