@@ -24,10 +24,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.ApplicationAdvancedSettings;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.login.LoginSettings;
@@ -321,6 +318,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettingsMongo.setSingleSignOut(other.isSingleSignOut());
         applicationOAuthSettingsMongo.setSilentReAuthentication(other.isSilentReAuthentication());
+        if (other.getScopeSettings() != null) {
+            applicationOAuthSettingsMongo.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
+        }
         return applicationOAuthSettingsMongo;
     }
 
@@ -390,7 +390,28 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettings.setSingleSignOut(other.isSingleSignOut());
         applicationOAuthSettings.setSilentReAuthentication(other.isSilentReAuthentication());
+        if (other.getScopeSettings() != null) {
+            applicationOAuthSettings.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
+        }
         return applicationOAuthSettings;
+    }
+
+    private static ApplicationScopeSettings convert(ApplicationScopeSettingsMongo other) {
+        ApplicationScopeSettings applicationScopeSettings = new ApplicationScopeSettings();
+        applicationScopeSettings.setScope(other.getScope());
+        applicationScopeSettings.setScopeApproval(other.getScopeApproval());
+        applicationScopeSettings.setDefaultScope(other.isDefaultScope());
+        applicationScopeSettings.setParameterized(other.isParameterized());
+        return applicationScopeSettings;
+    }
+
+    private static ApplicationScopeSettingsMongo convert(ApplicationScopeSettings other) {
+        ApplicationScopeSettingsMongo applicationScopeSettingsMongo = new ApplicationScopeSettingsMongo();
+        applicationScopeSettingsMongo.setScope(other.getScope());
+        applicationScopeSettingsMongo.setScopeApproval(other.getScopeApproval());
+        applicationScopeSettingsMongo.setDefaultScope(other.isDefaultScope());
+        applicationScopeSettingsMongo.setParameterized(other.isParameterized());
+        return applicationScopeSettingsMongo;
     }
 
     private static AccountSettings convert(AccountSettingsMongo accountSettingsMongo) {

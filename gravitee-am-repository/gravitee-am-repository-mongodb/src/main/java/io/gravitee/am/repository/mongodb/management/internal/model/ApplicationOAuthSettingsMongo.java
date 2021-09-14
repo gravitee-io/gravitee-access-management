@@ -87,6 +87,7 @@ public class ApplicationOAuthSettingsMongo {
     private List<String> postLogoutRedirectUris;
     private boolean singleSignOut;
     private boolean silentReAuthentication;
+    private List<ApplicationScopeSettingsMongo> scopeSettings;
 
     public String getClientId() {
         return clientId;
@@ -574,5 +575,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setTlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
+    }
+
+    public List<ApplicationScopeSettingsMongo> getScopeSettings() {
+        return scopeSettings;
+    }
+
+    public void setScopeSettings(List<ApplicationScopeSettingsMongo> scopeSettings) {
+        this.scopeSettings = scopeSettings;
     }
 }

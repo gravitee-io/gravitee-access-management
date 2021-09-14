@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -25,6 +26,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationFactorRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationScopeRepository;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -63,6 +65,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     private SpringApplicationFactorRepository factorRepository;
 
     @Autowired
+    private SpringApplicationScopeRepository scopeRepository;
+
+    @Autowired
     private SpringApplicationIdentityRepository identityRepository;
 
     protected Application toEntity(JdbcApplication entity) {
@@ -82,6 +87,13 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         ).flatMap(app ->
                 factorRepository.findAllByApplicationId(app.getId()).map(JdbcApplication.Factor::getFactor).toList().map(factors -> {
                     app.setFactors(new HashSet<>(factors));
+                    return app;
+                })
+        ).flatMap(app ->
+                scopeRepository.findAllByApplicationId(app.getId()).map(jdbcScopeSettings -> mapper.map(jdbcScopeSettings, ApplicationScopeSettings.class)).toList().map(scopeSettings -> {
+                    if (app.getSettings() != null && app.getSettings().getOauth() != null) {
+                        app.getSettings().getOauth().setScopeSettings(scopeSettings);
+                    }
                     return app;
                 })
         );// do not read grant tables, information already present into the settings object
@@ -316,16 +328,17 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         Mono<Integer> identities = dbClient.delete().from(JdbcApplication.Identity.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
         Mono<Integer> factors = dbClient.delete().from(JdbcApplication.Factor.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
         Mono<Integer> grants = dbClient.delete().from(JdbcApplication.Grant.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
-        return factors.then(identities).then(grants);
+        Mono<Integer> scopeSettings = dbClient.delete().from(JdbcApplication.ScopeSettings.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
+        return factors.then(identities).then(grants).then(scopeSettings);
     }
 
-    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Application item) {
-        final Set<String> identities = item.getIdentities();
+    private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Application app) {
+        final Set<String> identities = app.getIdentities();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
                 JdbcApplication.Identity identity = new JdbcApplication.Identity();
                 identity.setIdentity(idp);
-                identity.setApplicationId(item.getId());
+                identity.setApplicationId(app.getId());
 
                 DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("application_identities");
                 insertSpec = addQuotedField(insertSpec,"application_id", identity.getApplicationId(), String.class);
@@ -335,23 +348,32 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
             }).reduce(Integer::sum));
         }
 
-        final Set<String> factors = item.getFactors();
+        final Set<String> factors = app.getFactors();
         if (factors != null && !factors.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(factors).concatMap(value -> {
                 JdbcApplication.Factor factor = new JdbcApplication.Factor();
                 factor.setFactor(value);
-                factor.setApplicationId(item.getId());
+                factor.setApplicationId(app.getId());
                 return dbClient.insert().into(JdbcApplication.Factor.class).using(factor).fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 
-        final List<String> grants = Optional.ofNullable(item.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getGrantTypes).orElse(Collections.emptyList());
+        final List<String> grants = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getGrantTypes).orElse(Collections.emptyList());
         if (grants != null && !grants.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(grants).concatMap(value -> {
                 JdbcApplication.Grant grant = new JdbcApplication.Grant();
                 grant.setGrant(value);
-                grant.setApplicationId(item.getId());
+                grant.setApplicationId(app.getId());
                 return dbClient.insert().into(JdbcApplication.Grant.class).using(grant).fetch().rowsUpdated();
+            }).reduce(Integer::sum));
+        }
+
+        final List<ApplicationScopeSettings> scopeSettings = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getScopeSettings).orElse(Collections.emptyList());
+        if (scopeSettings != null && !scopeSettings.isEmpty()) {
+            actionFlow = actionFlow.then(Flux.fromIterable(scopeSettings).concatMap(value -> {
+                JdbcApplication.ScopeSettings jdbcScopeSettings = mapper.map(value, JdbcApplication.ScopeSettings.class);
+                jdbcScopeSettings.setApplicationId(app.getId());
+                return dbClient.insert().into(JdbcApplication.ScopeSettings.class).using(jdbcScopeSettings).fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 

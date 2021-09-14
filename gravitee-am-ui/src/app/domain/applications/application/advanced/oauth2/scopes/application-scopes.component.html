@@ -69,6 +69,11 @@
                 <mat-checkbox (change)="toggleDefaultScope($event, row.key)" [checked]="isDefaultScope(row.key)"></mat-checkbox>
               </ng-template>
             </ngx-datatable-column>
+            <ngx-datatable-column name="Parameterized" [flexGrow]="1">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                <mat-checkbox (change)="toggleParameterizedScope($event, row.key)" [checked]="isParameterizedScope(row.key)"></mat-checkbox>
+              </ng-template>
+            </ngx-datatable-column>
             <ngx-datatable-column name="User consent" [flexGrow]="4">
               <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                 <div fxLayout="row" style="align-items: center; margin-top: -10px;">
@@ -114,6 +119,10 @@
       <h4>Scopes</h4>
       <p>
         You can add default scopes to the tokens to control application's access to protected resources/APIs.
+      </p>
+      <p>
+        If a scope is marked as <b>Parameterized</b>, then this scope may be suffixed by a value using the following syntaxe <i>[myscope]:[suffix value]</i>. 
+        <b>NOTE:</b> If the suffix value change at each authorization call and according to the frequence of these calls, a Parameterized scope should have a short duration to avoid preserving too many approvals in database.
       </p>
     </div>
   </div>

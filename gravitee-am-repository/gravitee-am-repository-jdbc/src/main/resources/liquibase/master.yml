@@ -29,4 +29,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_11_0/schema-par.yml
   - include:
       - file: liquibase/changelogs/v3_12_0/schema.yml
-
+  - include:
+      - file: liquibase/changelogs/v3_12_0/schema-app-scope-settings.yml

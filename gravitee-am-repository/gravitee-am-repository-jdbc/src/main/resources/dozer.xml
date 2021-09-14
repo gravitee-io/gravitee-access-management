@@ -203,7 +203,7 @@
             <a-hint>java.util.Map</a-hint>
         </field>
     </mapping>
-
+    
     <mapping map-null="false">
         <class-a>io.gravitee.am.model.AuthenticationFlowContext</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthenticationFlowContext</class-b>
@@ -213,5 +213,10 @@
             <!-- hint required otherwise generic Collection interface can't be mapped -->
             <a-hint>java.util.Map</a-hint>
         </field>
+    </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.application.ApplicationScopeSettings</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.ScopeSettings</class-b>
     </mapping>
 </mappings>

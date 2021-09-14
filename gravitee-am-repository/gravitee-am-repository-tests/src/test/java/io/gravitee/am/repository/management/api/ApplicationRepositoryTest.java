@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -168,6 +169,11 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth().getGrantTypes().containsAll(Arrays.asList("authorization_code")));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().size() == 1);
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isDefaultScope());
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isParameterized());
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScopeApproval() == 42);
+        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScope().equals("scopename"));
         testObserver.assertValue(a -> a.getMetadata() != null);
         testObserver.assertValue(a -> a.getMetadata().containsKey("key1"));
     }
@@ -199,6 +205,12 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setGrantTypes(Collections.singletonList("authorization_code"));
         settings.setOauth(oauth);
+        ApplicationScopeSettings scopeSettings = new ApplicationScopeSettings();
+        scopeSettings.setScope("scopename");
+        scopeSettings.setDefaultScope(true);
+        scopeSettings.setParameterized(true);
+        scopeSettings.setScopeApproval(42);
+        oauth.setScopeSettings(Arrays.asList(scopeSettings));
         return settings;
     }
 
