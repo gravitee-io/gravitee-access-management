@@ -56,6 +56,6 @@ public class DefaultRoleUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 1;
+        return UpgraderOrder.DEFAULT_ROLE_UPGRADER;
     }
 }

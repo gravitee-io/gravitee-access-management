@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_UPGRADER;
+
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
@@ -80,6 +82,6 @@ public class DomainUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 6;
+        return DOMAIN_UPGRADER;
     }
 }

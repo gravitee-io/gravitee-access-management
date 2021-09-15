@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.12.0-SystemTasks-Table
+      author: GraviteeSource Team
+      changes:
+
+        ## scopes
+        ###################
+        - createTable:
+            tableName: system_tasks
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: status, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: operation_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_system_tasks
+            columnNames: id
+            tableName: system_tasks

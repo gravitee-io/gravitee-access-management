@@ -207,6 +207,6 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 2;
+        return UpgraderOrder.DEFAULT_ORG_UPGRADER;
     }
 }

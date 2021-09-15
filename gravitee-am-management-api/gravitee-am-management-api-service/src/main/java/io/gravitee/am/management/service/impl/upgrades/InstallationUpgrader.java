@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.INSTALLATION_UPGRADER;
+
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
@@ -55,6 +57,6 @@ public class InstallationUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 0;
+        return INSTALLATION_UPGRADER;
     }
 }
