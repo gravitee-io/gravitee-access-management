@@ -151,9 +151,19 @@ public class UserConsentsResource extends AbstractResource {
 
     private Single<ScopeEntity> getScope(String domain, String scopeKey) {
         return scopeService.findByDomainAndKey(domain, scopeKey)
+                .switchIfEmpty(scopeService.findByDomainAndKey(domain, getScopeBase(scopeKey)).map(entity -> {
+                    // set the right scopeKey since the one returned by the service contains the scope definition without parameter
+                    entity.setId("unknown-id");
+                    entity.setKey(scopeKey);
+                    return entity;
+                }))
                 .map(ScopeEntity::new)
                 .defaultIfEmpty(new ScopeEntity("unknown-id", scopeKey, "unknown-scope-name", "unknown-scope-description"))
                 .toSingle()
                 .cache();
+    }
+
+    private String getScopeBase(String scope) {
+        return scope.indexOf(':') > 0 ? scope.substring(0, scope.indexOf(':')) : scope;
     }
 }

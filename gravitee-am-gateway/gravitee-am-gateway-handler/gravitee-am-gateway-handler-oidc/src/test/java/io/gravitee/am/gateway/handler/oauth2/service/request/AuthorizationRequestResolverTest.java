@@ -94,6 +94,26 @@ public class AuthorizationRequestResolverTest {
         testObserver.assertError(InvalidScopeException.class);
     }
 
+
+    @Test
+    public void shouldResolveAuthorizationRequest_ParameterizedScope() {
+        final String scope = "read";
+        final String redirectUri = "http://localhost:8080/callback";
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        final String parameterizedScope = scope + ":36fc67776";
+        authorizationRequest.setScopes(Collections.singleton(parameterizedScope));
+        authorizationRequest.setRedirectUri(redirectUri);
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings(scope);
+        setting.setParameterized(true);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(request -> request.getScopes().iterator().next().equals(parameterizedScope));
+    }
+
     @Test
     public void shouldResolveAuthorizationRequest_invalidScope_withUser() {
         final String scope = "read";
