@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -40,7 +43,7 @@ public class DynamicClientRegistrationRequestTest {
         toPatch.setClientName("oldName");
         toPatch.setClientSecret("expectedSecret");
         toPatch.setClientUri("shouldDisappear");
-        toPatch.setScopes(Arrays.asList("scopeA","scopeB"));
+        toPatch.setScopeSettings(Arrays.asList(new ApplicationScopeSettings("scopeA"), new ApplicationScopeSettings("scopeB")));
         toPatch.setAccessTokenValiditySeconds(7200);
         toPatch.setRefreshTokenValiditySeconds(3600);
         toPatch.setResponseTypes(Arrays.asList("old","old2"));
@@ -70,7 +73,7 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Default Max Age should have been kept",Integer.valueOf(1),result.getDefaultMaxAge());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
         assertNull("Response type should have been set to null", result.getResponseTypes());
-        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).toArray());
     }
 
     @Test
@@ -90,7 +93,7 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Default Max Age should have been kept",Integer.valueOf(1),result.getDefaultMaxAge());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
         assertArrayEquals("Response type should have not been replaced",Arrays.asList("old","old2").toArray(),result.getResponseTypes().toArray());
-        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).toArray());
     }
 
     @Test
@@ -106,7 +109,7 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
         assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
-        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).toArray());
         assertNull("Response type should have been set to null", result.getResponseTypes());
         assertNull("Default max age should be set to null", result.getDefaultMaxAge());
     }
@@ -126,7 +129,7 @@ public class DynamicClientRegistrationRequestTest {
         assertEquals("Access token validity should have been kept",7200,result.getAccessTokenValiditySeconds());
         assertEquals("Refresh token validity should have been kept",3600, result.getRefreshTokenValiditySeconds());
         assertArrayEquals("Grant types should have been replaced",Arrays.asList("grant1","grant2").toArray(),result.getAuthorizedGrantTypes().toArray());
-        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopes().toArray());
+        assertArrayEquals("Scopes should have been replaced",Arrays.asList("scope1","scope2").toArray(), result.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).toArray());
         assertNull("Response type should have been set to null", result.getResponseTypes());
         assertNull("Default max age should be set to null", result.getDefaultMaxAge());
     }

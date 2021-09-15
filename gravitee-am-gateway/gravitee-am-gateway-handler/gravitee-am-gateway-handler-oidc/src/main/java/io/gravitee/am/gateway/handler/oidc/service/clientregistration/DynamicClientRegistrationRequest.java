@@ -19,13 +19,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -595,7 +598,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
 
         /* set oauth2 request metadata */
-        SetterUtils.safeSet(client::setScopes, this.getScope());
+        updateScopeSettings(client);
         SetterUtils.safeSet(client::setSoftwareId, this.getSoftwareId());
         SetterUtils.safeSet(client::setSoftwareVersion, this.getSoftwareVersion());
         SetterUtils.safeSet(client::setSoftwareStatement, this.getSoftwareStatement());
@@ -612,6 +615,10 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
 
         return client;
+    }
+
+    private Optional<ApplicationScopeSettings> getScopeSettings(List<ApplicationScopeSettings> currentClientScopeSettings, String lookup) {
+        return currentClientScopeSettings.stream().filter(setting -> setting.getScope().equalsIgnoreCase(lookup)).findFirst();
     }
 
     public Client update(Client client) {
@@ -652,7 +659,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.set(client::setAuthorizationEncryptedResponseEnc, this.getAuthorizationEncryptedResponseEnc());
 
         /* set oauth2 request metadata */
-        SetterUtils.set(client::setScopes, this.getScope());
+        updateScopeSettings(client);
         SetterUtils.set(client::setSoftwareId, this.getSoftwareId());
         SetterUtils.set(client::setSoftwareVersion, this.getSoftwareVersion());
         SetterUtils.set(client::setSoftwareStatement, this.getSoftwareStatement());
@@ -669,6 +676,20 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
 
         return client;
+    }
+
+    private void updateScopeSettings(Client client) {
+        if (this.getScope() != null) {
+            final List<ApplicationScopeSettings> currentClientScopeSettings = client.getScopeSettings() == null ? new ArrayList<ApplicationScopeSettings>() : client.getScopeSettings();
+            final Optional<List<ApplicationScopeSettings>> scopeSettingsToUpdate = this.getScope().map(scopes -> {
+                return scopes.stream().map(scope -> {
+                    ApplicationScopeSettings newSetting = new ApplicationScopeSettings();
+                    newSetting.setScope(scope);
+                    return getScopeSettings(currentClientScopeSettings, scope).orElse(newSetting);
+                }).collect(Collectors.toList());
+            });
+            SetterUtils.safeSet(client::setScopeSettings, scopeSettingsToUpdate);
+        }
     }
 }
 

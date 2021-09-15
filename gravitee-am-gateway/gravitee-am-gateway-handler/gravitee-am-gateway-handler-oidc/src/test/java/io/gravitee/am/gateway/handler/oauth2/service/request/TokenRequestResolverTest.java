@@ -16,17 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,7 +58,9 @@ public class TokenRequestResolverTest {
 
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
 
         User user = new User();
         Role role = new Role();
@@ -91,7 +90,9 @@ public class TokenRequestResolverTest {
 
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
 
         User user = new User();
         Role role = new Role();
@@ -120,7 +121,9 @@ public class TokenRequestResolverTest {
 
         Client client = new Client();
         client.setEnhanceScopesWithUserPermissions(true);
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
 
         User user = new User();
         Role role = new Role();
@@ -153,7 +156,9 @@ public class TokenRequestResolverTest {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setScopes(Collections.singleton(scope));
         Client client = new Client();
-        client.setScopes(Collections.singletonList("write"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("write");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
         testObserver.assertNotComplete();
@@ -166,7 +171,9 @@ public class TokenRequestResolverTest {
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setScopes(Collections.singleton(scope));
         Client client = new Client();
-        client.setScopes(Collections.singletonList("write"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("write");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         User user = new User();
         Role role = new Role();
@@ -184,8 +191,10 @@ public class TokenRequestResolverTest {
         TokenRequest authorizationRequest = new TokenRequest();
 
         Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
-        client.setDefaultScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        setting.setDefaultScope(true);
+        client.setScopeSettings(Collections.singletonList(setting));
 
         TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();

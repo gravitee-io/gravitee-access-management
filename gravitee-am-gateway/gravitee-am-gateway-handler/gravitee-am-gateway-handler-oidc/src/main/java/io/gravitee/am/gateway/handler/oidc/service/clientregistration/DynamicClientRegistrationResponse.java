@@ -19,11 +19,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
@@ -637,7 +638,7 @@ public class DynamicClientRegistrationResponse {
         response.setDefaultACRvalues(client.getDefaultACRvalues());
         response.setInitiateLoginUri(client.getInitiateLoginUri());
         response.setRequestUris(client.getRequestUris());
-        response.setScope(client.getScopes()!=null?String.join(SCOPE_DELIMITER,client.getScopes()):null);
+        response.setScope(client.getScopeSettings()!=null? client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.joining(SCOPE_DELIMITER)) : null);
         response.setSoftwareId(client.getSoftwareId());
         response.setSoftwareVersion(client.getSoftwareVersion());
         response.setSoftwareStatement(client.getSoftwareStatement());

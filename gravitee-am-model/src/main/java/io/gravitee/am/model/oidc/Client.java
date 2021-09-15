@@ -21,6 +21,7 @@ import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;
@@ -107,10 +108,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private List<String> requestUris;
 
-    private List<String> scopes;
-
-    private List<String> defaultScopes;
-
     private String softwareId; //Should be UUID
 
     private String softwareVersion;
@@ -179,7 +176,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean enhanceScopesWithUserPermissions;
 
-    private Map<String, Integer> scopeApprovals;
+    private List<ApplicationScopeSettings> scopeSettings;
 
     private AccountSettings accountSettings;
 
@@ -242,8 +239,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.defaultACRvalues = other.defaultACRvalues;
         this.initiateLoginUri = other.initiateLoginUri;
         this.requestUris = other.requestUris != null ? new ArrayList<>(other.requestUris) : null;
-        this.scopes = other.scopes != null ? new ArrayList<>(other.scopes) : null;
-        this.defaultScopes = other.defaultScopes != null ? new ArrayList<>(other.defaultScopes) : null;
         this.softwareId = other.softwareId;
         this.softwareVersion = other.softwareVersion;
         this.softwareStatement = other.softwareStatement;
@@ -263,7 +258,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
-        this.scopeApprovals = other.scopeApprovals != null ? new HashMap<>(other.scopeApprovals) : null;
+        this.scopeSettings = other.scopeSettings != null ? new ArrayList<>(other.scopeSettings) : null;
         this.accountSettings = other.accountSettings;
         this.loginSettings = other.loginSettings;
         this.passwordSettings = other.passwordSettings;
@@ -546,22 +541,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.requestUris = requestUris;
     }
 
-    public List<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(List<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public List<String> getDefaultScopes() {
-        return defaultScopes;
-    }
-
-    public void setDefaultScopes(List<String> defaultScopes) {
-        this.defaultScopes = defaultScopes;
-    }
-
     public String getSoftwareId() {
         return softwareId;
     }
@@ -719,12 +698,12 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.enhanceScopesWithUserPermissions = enhanceScopesWithUserPermissions;
     }
 
-    public Map<String, Integer> getScopeApprovals() {
-        return scopeApprovals;
+    public List<ApplicationScopeSettings> getScopeSettings() {
+        return scopeSettings;
     }
 
-    public void setScopeApprovals(Map<String, Integer> scopeApprovals) {
-        this.scopeApprovals = scopeApprovals;
+    public void setScopeSettings(List<ApplicationScopeSettings> scopeSettings) {
+        this.scopeSettings = scopeSettings;
     }
 
     public AccountSettings getAccountSettings() {
@@ -918,8 +897,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setContacts(this.getContacts() != null ? new ArrayList<>(this.getContacts()) : null);
         clone.setDefaultACRvalues(this.getDefaultACRvalues() != null ? new ArrayList<>(this.getDefaultACRvalues()) : null);
         clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
-        clone.setScopes(this.getScopes() != null ? new ArrayList<>(this.getScopes()) : null);
-        clone.setScopeApprovals(this.getScopeApprovals() != null ? new HashMap<>(this.getScopeApprovals()) : null);
+        clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
         clone.setIdentities(this.getIdentities() != null ? new HashSet<>(this.getIdentities()) : null);
         clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);

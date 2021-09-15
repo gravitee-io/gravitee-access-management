@@ -16,9 +16,10 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
 import java.util.Collections;
@@ -45,16 +46,18 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
      * @return the oauth 2.0 request
      */
     protected Single<R> resolveAuthorizedScopes(R request, Client client, User endUser) {
-        final List<String> clientScopes = client.getScopes();
         final Set<String> requestScopes = request.getScopes();
         Set<String> clientResolvedScopes = new HashSet<>();
         Set<String> resolvedScopes = new HashSet<>();
         Set<String> invalidScopes = new HashSet<>();
         // client scopes
-        if (clientScopes != null && !clientScopes.isEmpty()) {
+        if (client.getScopeSettings() != null && !client.getScopeSettings().isEmpty()) {
+            final List<String> clientScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+            final List<String> defaultScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isDefaultScope).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+
             // no requested scope, set default client scopes to the request
             if (requestScopes == null || requestScopes.isEmpty()) {
-                resolvedScopes.addAll(client.getDefaultScopes() != null ? new HashSet<>(client.getDefaultScopes()) : new HashSet<>());
+                resolvedScopes.addAll(new HashSet<>(defaultScopes));
             } else {
                 // filter the actual scopes granted by the client
                 for (String scope : requestScopes) {

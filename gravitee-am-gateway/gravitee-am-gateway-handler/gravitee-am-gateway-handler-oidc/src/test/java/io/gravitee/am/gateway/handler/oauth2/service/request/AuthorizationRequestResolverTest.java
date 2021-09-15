@@ -16,17 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,8 +66,10 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
-        client.setDefaultScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        setting.setDefaultScope(true);
+        client.setScopeSettings(Collections.singletonList(setting));
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();
@@ -86,7 +85,9 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(Collections.singleton(scope));
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
-        client.setScopes(Collections.singletonList("write"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("write");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertNotComplete();
@@ -101,7 +102,9 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(Collections.singleton(scope));
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
-        client.setScopes(Collections.singletonList("write"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("write");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         User user = new User();
         Role role = new Role();
@@ -127,7 +130,9 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(new HashSet<>(authScopes));
 
         Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
         client.setEnhanceScopesWithUserPermissions(true);
 
         User user = new User();
@@ -160,7 +165,9 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(new HashSet<>(authScopes));
 
         Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
         client.setEnhanceScopesWithUserPermissions(true);
 
         User user = new User();
@@ -189,7 +196,9 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setScopes(new HashSet<>(Arrays.asList(scope)));
 
         Client client = new Client();
-        client.setScopes(Collections.singletonList(scope));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
         client.setEnhanceScopesWithUserPermissions(true);
 
         User user = new User();

@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.model.oidc.OIDCSettings;
@@ -56,6 +57,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -223,7 +225,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         //scope is not allowed, so expecting to erase scope (no scope)
-        testObserver.assertValue(client -> this.defaultAssertion(client) && client.getScopes()==null);
+        testObserver.assertValue(client -> this.defaultAssertion(client) && client.getScopeSettings()==null);
     }
 
     @Test
@@ -242,8 +244,9 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
-                client.getScopes().size() == 2 &&
-                client.getScopes().containsAll(Arrays.asList("phone","email"))
+                client.getScopeSettings().size() == 2 &&
+                client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
+                        .containsAll(Arrays.asList("phone","email"))
         );
     }
 
@@ -262,8 +265,9 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
-                client.getScopes().size() == 1 &&
-                client.getScopes().containsAll(Arrays.asList("openid"))
+                client.getScopeSettings().size() == 1 &&
+                !client.getScopeSettings()
+                        .stream().filter(setting -> setting.getScope().equalsIgnoreCase("openid")).findFirst().isEmpty()
         );
     }
 
@@ -281,8 +285,9 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
-                client.getScopes().size() == 3 &&
-                client.getScopes().containsAll(Arrays.asList("openid","not","allowed"))
+                client.getScopeSettings().size() == 3 &&
+                client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
+                        .containsAll(Arrays.asList("openid","not","allowed"))
         );
     }
 
@@ -299,8 +304,9 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
-                client.getScopes().size() == 2 &&
-                client.getScopes().containsAll(Arrays.asList("phone","email"))
+                client.getScopeSettings().size() == 2 &&
+                client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
+                        .containsAll(Arrays.asList("phone","email"))
         );
     }
 

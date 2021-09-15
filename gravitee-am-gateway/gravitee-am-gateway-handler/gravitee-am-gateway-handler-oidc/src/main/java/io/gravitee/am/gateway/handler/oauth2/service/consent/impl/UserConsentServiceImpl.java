@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,7 +63,11 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Override
     public Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal) {
         // compute expiry date for each approval
-        approvals.forEach(a -> a.setExpiresAt(computeExpiry(client, a.getScope())));
+        final Map<String, Integer> scopeApprovals = client.getScopeSettings()
+                .stream()
+                .filter(s -> s.getScopeApproval() != null)
+                .collect(Collectors.toMap(ApplicationScopeSettings::getScope, ApplicationScopeSettings::getScopeApproval));
+        approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope())));
         // save consent
         return scopeApprovalService.saveConsent(domain.getId(), client, approvals);
     }
@@ -84,12 +90,12 @@ public class UserConsentServiceImpl implements UserConsentService {
                 });
     }
 
-    private Date computeExpiry(Client client, String scope) {
+    private Date computeExpiry(Map<String, Integer> scopeApprovals, String scope) {
         Calendar expiresAt = Calendar.getInstance();
 
         // if client has approval settings, apply them
-        if (client.getScopeApprovals() != null && client.getScopeApprovals().containsKey(scope)) {
-            expiresAt.add(Calendar.SECOND, client.getScopeApprovals().get(scope));
+        if (scopeApprovals != null && scopeApprovals.containsKey(scope)) {
+            expiresAt.add(Calendar.SECOND, scopeApprovals.get(scope));
             return expiresAt.getTime();
         }
 

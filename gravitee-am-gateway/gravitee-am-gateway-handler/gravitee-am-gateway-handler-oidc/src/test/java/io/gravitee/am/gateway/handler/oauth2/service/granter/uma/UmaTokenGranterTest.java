@@ -34,6 +34,7 @@ import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -151,7 +152,7 @@ public class UmaTokenGranterTest {
         //Init mocks
         when(domain.getUma()).thenReturn(new UMASettings().setEnabled(true));
         when(client.getClientId()).thenReturn(CLIENT_ID);
-        when(client.getScopes()).thenReturn(Arrays.asList("scopeA", "scopeB", "scopeC", "scopeD"));
+        when(client.getScopeSettings()).thenReturn(Arrays.asList(new ApplicationScopeSettings("scopeA"), new ApplicationScopeSettings("scopeB"), new ApplicationScopeSettings("scopeC"), new ApplicationScopeSettings("scopeD")));
         when(client.getAuthorizedGrantTypes()).thenReturn(Arrays.asList(GrantType.UMA, GrantType.REFRESH_TOKEN));
         when(user.getId()).thenReturn(USER_ID);
         when(jwt.getSub()).thenReturn(USER_ID);
@@ -242,7 +243,7 @@ public class UmaTokenGranterTest {
     public void grant_scopesNotPreregistered() {
         //Here request scope has not been pre-registered on client.
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("not-pre-registered-scope")));
-        when(client.getScopes()).thenReturn(Collections.emptyList());
+        when(client.getScopeSettings()).thenReturn(Collections.emptyList());
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidScopeException.class);
     }
@@ -250,7 +251,7 @@ public class UmaTokenGranterTest {
     @Test
     public void grant_unboundResourceScope() {
         //Here request scope is well pre-registered on client, but does not match any resources
-        when(client.getScopes()).thenReturn(Arrays.asList("not-resource-scope"));
+        when(client.getScopeSettings()).thenReturn(Arrays.asList(new ApplicationScopeSettings("not-resource-scope")));
         tokenRequest.setScopes(new HashSet<>(Arrays.asList("not-resource-scope")));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidScopeException.class);
