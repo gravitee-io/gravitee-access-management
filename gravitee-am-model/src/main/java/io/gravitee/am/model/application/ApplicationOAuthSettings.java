@@ -887,8 +887,6 @@ public class ApplicationOAuthSettings {
         client.setDefaultACRvalues(this.defaultACRvalues);
         client.setInitiateLoginUri(this.initiateLoginUri);
         client.setRequestUris(this.requestUris);
-        client.setScopes(this.scopes);// TODO convert from scopeSettings?
-        client.setDefaultScopes(this.defaultScopes);// TODO convert from scopeSettings?
         client.setSoftwareId(this.softwareId);
         client.setSoftwareVersion(this.softwareVersion);
         client.setSoftwareStatement(this.softwareStatement);
@@ -900,7 +898,7 @@ public class ApplicationOAuthSettings {
         client.setRefreshTokenValiditySeconds(this.refreshTokenValiditySeconds);
         client.setIdTokenValiditySeconds(this.idTokenValiditySeconds);
         client.setEnhanceScopesWithUserPermissions(this.enhanceScopesWithUserPermissions);
-        client.setScopeApprovals(this.scopeApprovals);// TODO convert from scopeSettings?
+        client.setScopeSettings(this.scopeSettings);
         client.setTokenCustomClaims(this.tokenCustomClaims);
         client.setTlsClientAuthSubjectDn(this.tlsClientAuthSubjectDn);
         client.setTlsClientAuthSanDns(this.tlsClientAuthSanDns);

@@ -36,6 +36,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetad
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -236,7 +237,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         router.route().order(-1).handler(routingContext -> {
@@ -263,7 +264,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setApproved(true);
@@ -288,7 +289,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Arrays.asList("http://redirect1", "http://redirect2"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -314,7 +315,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -341,7 +342,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -371,7 +372,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -408,7 +409,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         testRequest(
@@ -608,7 +609,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -641,7 +642,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -869,7 +870,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
@@ -896,7 +897,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -934,7 +935,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
@@ -988,7 +989,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
@@ -1009,7 +1010,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
         when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
 
@@ -1065,7 +1066,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
         client.setAuthorizedGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE,GrantType.IMPLICIT));
         client.setResponseTypes(Arrays.asList(ResponseType.CODE,ResponseType.TOKEN, io.gravitee.am.common.oidc.ResponseType.ID_TOKEN));
@@ -1110,7 +1111,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
         client.setAuthorizedGrantTypes(Arrays.asList(GrantType.IMPLICIT));
         client.setResponseTypes(Arrays.asList(responseType));
@@ -1244,7 +1245,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         final Client client = new Client();
         client.setId("client-id");
         client.setClientId("client-id");
-        client.setScopes(Collections.singletonList("read"));
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
         client.setRedirectUris(Collections.singletonList("http://localhost:9999/authorize/callback"));
 
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();

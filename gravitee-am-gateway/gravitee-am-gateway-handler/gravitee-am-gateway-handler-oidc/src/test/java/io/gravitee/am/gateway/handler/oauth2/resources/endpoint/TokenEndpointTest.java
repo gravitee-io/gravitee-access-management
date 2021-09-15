@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
@@ -173,7 +174,9 @@ public class TokenEndpointTest extends RxWebTestBase {
     public void shouldInvokeTokenEndpoint_withValidClientCredentials() throws Exception {
         Client client = new Client();
         client.setClientId("my-client");
-        client.setScopes(Collections.singletonList("read"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("read");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override
@@ -197,7 +200,9 @@ public class TokenEndpointTest extends RxWebTestBase {
     public void shouldInvokeTokenEndpoint_withValidClientCredentials_noAccessToken() throws Exception {
         Client client = new Client();
         client.setClientId("my-client");
-        client.setScopes(Collections.singletonList("read"));
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("read");
+        client.setScopeSettings(Collections.singletonList(setting));
 
         router.route().order(-1).handler(new Handler<RoutingContext>() {
             @Override

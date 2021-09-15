@@ -226,7 +226,7 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setDefaultACRvalues(client.getDefaultACRvalues());
         oAuthSettings.setInitiateLoginUri(client.getInitiateLoginUri());
         oAuthSettings.setRequestUris(client.getRequestUris());
-        oAuthSettings.setScopes(client.getScopes());
+        oAuthSettings.setScopeSettings(client.getScopeSettings());
         oAuthSettings.setSoftwareId(client.getSoftwareId());
         oAuthSettings.setSoftwareVersion(client.getSoftwareVersion());
         oAuthSettings.setSoftwareStatement(client.getSoftwareStatement());
@@ -238,7 +238,6 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setRefreshTokenValiditySeconds(client.getRefreshTokenValiditySeconds());
         oAuthSettings.setIdTokenValiditySeconds(client.getIdTokenValiditySeconds());
         oAuthSettings.setEnhanceScopesWithUserPermissions(client.isEnhanceScopesWithUserPermissions());
-        oAuthSettings.setScopeApprovals(client.getScopeApprovals());
         oAuthSettings.setTokenCustomClaims(client.getTokenCustomClaims());
         oAuthSettings.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
         oAuthSettings.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());

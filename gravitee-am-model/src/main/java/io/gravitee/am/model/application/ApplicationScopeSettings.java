@@ -37,6 +37,10 @@ public class ApplicationScopeSettings {
     public ApplicationScopeSettings() {
     }
 
+    public ApplicationScopeSettings(String scope) {
+        this.scope = scope;
+    }
+
     public ApplicationScopeSettings(ApplicationScopeSettings other) {
         this.scope = other.scope;
         this.defaultScope = other.defaultScope;

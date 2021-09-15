@@ -38,6 +38,7 @@ import io.gravitee.am.gateway.handler.uma.policy.Rule;
 import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -195,7 +196,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
      */
     private Single<TokenRequest> resolveRequestedScopes(TokenRequest tokenRequest, Client client) {
         if(tokenRequest.getScopes()!=null && !tokenRequest.getScopes().isEmpty()) {
-            if(client.getScopes()==null || client.getScopes().isEmpty() || !client.getScopes().containsAll(tokenRequest.getScopes())) {
+            if(client.getScopeSettings()==null || client.getScopeSettings().isEmpty() || !client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()).containsAll(tokenRequest.getScopes())) {
                 //TokenRequest scopes are not null and not empty, already did the check in earlier step.
                 return Single.error(new InvalidScopeException("At least one of the scopes included in the request does not match client pre-registered scopes"));
             }
