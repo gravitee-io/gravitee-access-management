@@ -112,6 +112,8 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
 
         tables.add("pushed_authorization_requests");
 
+        tables.add("system_tasks");
+
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();
         tables.stream().forEach(table -> {

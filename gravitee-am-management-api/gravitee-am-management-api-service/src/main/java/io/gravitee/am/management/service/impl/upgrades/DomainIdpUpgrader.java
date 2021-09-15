@@ -28,6 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMAIN_IDP_UPGRADER;
+
 /**
  * Create default mongo IDP for each domain for user management
  *
@@ -73,7 +75,7 @@ public class DomainIdpUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 7;
+        return DOMAIN_IDP_UPGRADER;
     }
 
 }

@@ -67,7 +67,7 @@ public class DomainReporterUpgrader implements Upgrader, Ordered {
     }
     @Override
     public int getOrder() {
-        return 8;
+        return UpgraderOrder.DOMAIN_REPORTER_UPGRADER;
     }
 
 }

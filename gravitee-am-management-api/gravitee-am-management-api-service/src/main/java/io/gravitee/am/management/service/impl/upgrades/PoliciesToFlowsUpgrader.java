@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.POLICY_FLOW_UPGRADER;
 import static java.util.function.Function.identity;
 
 /**
@@ -129,6 +130,6 @@ public class PoliciesToFlowsUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 11;
+        return POLICY_FLOW_UPGRADER;
     }
 }

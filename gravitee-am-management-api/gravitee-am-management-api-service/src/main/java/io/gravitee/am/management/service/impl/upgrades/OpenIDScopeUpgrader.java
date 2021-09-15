@@ -31,6 +31,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPENID_SCOPE_UPGRADER;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -108,6 +110,6 @@ public class OpenIDScopeUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 5;
+        return OPENID_SCOPE_UPGRADER;
     }
 }

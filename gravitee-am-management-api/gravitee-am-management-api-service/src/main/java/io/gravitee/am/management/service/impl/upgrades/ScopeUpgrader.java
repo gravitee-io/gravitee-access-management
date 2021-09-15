@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOPE_UPGRADER;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -118,6 +120,6 @@ public class ScopeUpgrader implements Upgrader, Ordered {
 
     @Override
     public int getOrder() {
-        return 4;
+        return SCOPE_UPGRADER;
     }
 }
