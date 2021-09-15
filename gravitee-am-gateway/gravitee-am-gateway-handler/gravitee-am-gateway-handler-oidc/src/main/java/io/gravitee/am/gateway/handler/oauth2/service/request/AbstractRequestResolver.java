@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -54,6 +55,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         if (client.getScopeSettings() != null && !client.getScopeSettings().isEmpty()) {
             final List<String> clientScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
             final List<String> defaultScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isDefaultScope).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+            final List<String> parameterizedScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isParameterized).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
 
             // no requested scope, set default client scopes to the request
             if (requestScopes == null || requestScopes.isEmpty()) {
@@ -61,7 +63,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             } else {
                 // filter the actual scopes granted by the client
                 for (String scope : requestScopes) {
-                    if (clientScopes.contains(scope)) {
+                    if (clientScopes.contains(scope) || ParameterizedScopeUtils.isParameterizedScope(parameterizedScopes, scope)) {
                         resolvedScopes.add(scope);
                         clientResolvedScopes.add(scope);
                     } else {
@@ -110,4 +112,6 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
 
         return Single.just(request);
     }
+
+
 }

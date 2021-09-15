@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.consent.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
+import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -29,7 +30,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.getScopeBase;
+import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.isParameterizedScope;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,11 +68,13 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Override
     public Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal) {
         // compute expiry date for each approval
-        final Map<String, Integer> scopeApprovals = client.getScopeSettings()
+        final Map<String, ApplicationScopeSettings> scopeApprovals = client.getScopeSettings()
                 .stream()
                 .filter(s -> s.getScopeApproval() != null)
-                .collect(Collectors.toMap(ApplicationScopeSettings::getScope, ApplicationScopeSettings::getScopeApproval));
-        approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope())));
+                .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()));
+        final List<String> parameterizedScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isParameterized).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+
+        approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
         return scopeApprovalService.saveConsent(domain.getId(), client, approvals);
     }
@@ -90,17 +97,31 @@ public class UserConsentServiceImpl implements UserConsentService {
                 });
     }
 
-    private Date computeExpiry(Map<String, Integer> scopeApprovals, String scope) {
+    private Date computeExpiry(Map<String, ApplicationScopeSettings> scopeApprovals, String scope, List<String> parameterizedScopes) {
+        final boolean isParameterizedScope = isParameterizedScope(parameterizedScopes, scope);
         Calendar expiresAt = Calendar.getInstance();
 
         // if client has approval settings, apply them
-        if (scopeApprovals != null && scopeApprovals.containsKey(scope)) {
-            expiresAt.add(Calendar.SECOND, scopeApprovals.get(scope));
-            return expiresAt.getTime();
+        if (scopeApprovals != null) {
+            // test scope using strict match
+            if (scopeApprovals.containsKey(scope)) {
+                expiresAt.add(Calendar.SECOND, scopeApprovals.get(scope).getScopeApproval());
+                return expiresAt.getTime();
+            }
+
+            // test parameterized scope
+            if (isParameterizedScope) {
+                final String parameterizedScope = getScopeBase(scope);
+                if (scopeApprovals.containsKey(parameterizedScope) &&
+                                scopeApprovals.get(parameterizedScope).isParameterized()) {
+                    expiresAt.add(Calendar.SECOND, scopeApprovals.get(parameterizedScope).getScopeApproval());
+                    return expiresAt.getTime();
+                }
+            }
         }
 
         // if domain has approval settings, apply them
-        Scope domainScope = scopeService.findByKey(scope);
+        Scope domainScope = scopeService.findByKey(isParameterizedScope ? getScopeBase(scope) : scope);
         if (domainScope != null && domainScope.getExpiresIn() != null) {
             expiresAt.add(Calendar.SECOND, domainScope.getExpiresIn());
             return expiresAt.getTime();
