@@ -16,7 +16,7 @@ Gravitee considers the security of our systems to be a top priority. But no matt
 If you discover a vulnerability, please kindly let us know about it so we can take steps to address it as quickly as possible.
 We need your help ro better protect our clients and our systems, so please do the following:
 
-E-mail your findings to **bug@graviteesource.com** using the subject "Submission.". Encrypt your findings using our public PGP key:
+E-mail your findings to **bug@graviteesource.com** using the subject "Submission." Encrypt your findings using our public PGP key:
 
 pub [expires: 2022-08-13]
 
