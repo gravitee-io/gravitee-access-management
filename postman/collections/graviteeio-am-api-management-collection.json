@@ -920,7 +920,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"tokenEndpointAuthMethod\": \"client_secret_post\",\n        \"scopes\": [\"openid\"],\n        \"defaultScopes\": [\"openid\"]\n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
+									"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"tokenEndpointAuthMethod\": \"client_secret_post\",\n        \"scopeSettings\": [{\"scope\": \"openid\", \"defaultScope\" : true}]\n   \n\t},\n    \"advanced\": {\n        \"skipConsent\": true\n    }\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

@@ -306,7 +306,7 @@
 									"pm.test(\"Check grant\", function () {",
 									"    let body = JSON.parse(responseBody);",
 									"    pm.expect(body.settings.oauth.grantTypes).to.eql([\"password\",\"client_credentials\"]);",
-									"    pm.expect(body.settings.oauth.scopes).to.eql([\"uma_protection\"]);",
+									"    pm.expect(body.settings.oauth.scopeSettings[0].scope).to.eql(\"uma_protection\");",
 									"});"
 								],
 								"type": "text/javascript"
@@ -327,7 +327,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopes\": [\"uma_protection\"],\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"scopeSettings\": [{\"scope\": \"uma_protection\"}],\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rs_app}}",
@@ -448,7 +448,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopes\": [\"openid\",\"profile\",\"email\",\"phone\",\"address\"]\n\t}\n  }\n}\n"
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\"password\",\"refresh_token\",\"urn:ietf:params:oauth:grant-type:uma-ticket\"],\n\t\t\"scopeSettings\": [ {\"scope\": \"openid\"} , {\"scope\": \"profile\"} , {\"scope\": \"email\"} , {\"scope\": \"phone\"} , {\"scope\": \"address\"}]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{rqp_app}}",

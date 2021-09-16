@@ -1255,7 +1255,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"scopes\" : [\"scim\"],\n      \"defaultScopes\" : [\"scim\"]\n  \t}\n  }\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"scopeSettings\" : [ { \"scope\" : \"scim\", \"defaultScope\" : true }]\n   \t}\n  }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientSCIM}}",

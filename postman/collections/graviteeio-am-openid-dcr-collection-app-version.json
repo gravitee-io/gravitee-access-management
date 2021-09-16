@@ -1262,7 +1262,7 @@
 									"",
 									"pm.test(\"DCR enabled for client\", function () {",
 									"    var jsonData = pm.response.json();",
-									"    pm.expect(jsonData.settings.oauth.scopes).to.eql(['dcr_admin']);",
+									"    pm.expect(jsonData.settings.oauth.scopeSettings[0].scope).to.eql('dcr_admin');",
 									"});",
 									"",
 									"// wait for sync process",
@@ -1286,7 +1286,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"scopes\": [\"dcr_admin\"]\n\t\t}\n\t}\n}"
+							"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"dcr_admin\"}]\n\t\t}\n\t}\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientDCR}}",
