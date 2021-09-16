@@ -604,7 +604,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\"],\n\t\t\t  \"scopeSettings\": [ {\"scope\" : \"openid\"} ]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -731,7 +731,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"https://callback\"],\n\t\t\t\"grantTypes\": [\"implicit\"],\n\t\t\t\"responseTypes\": [\"token\"],\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -863,7 +863,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"redirectUris\": [\"com.gravitee.app://callback\"],\n\t\t\t\"grantTypes\": [\"authorization_code\",\"refresh_token\"],\n\t\t\t\"applicationType\": \"native\",\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -995,7 +995,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopes\": [\"openid\"]\n\t\t}\n\t}\n}"
+									"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t \"redirectUris\": [],\n\t\t\t  \"grantTypes\": [\"client_credentials\"],\n\t\t\t  \"responseTypes\": [],\n\t\t\t  \"applicationType\": \"web\",\n\t\t\t  \"scopeSettings\": [ {\"scope\" : \"openid\"}]\n\t\t}\n\t}\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

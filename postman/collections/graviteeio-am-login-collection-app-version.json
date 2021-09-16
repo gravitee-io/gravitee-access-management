@@ -369,7 +369,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopes\": [\"openid\"]\n\t}\n  }\n}"
+							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",
@@ -431,7 +431,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{identityProvider}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopes\": [\"openid\"]\n\t}\n  }\n}"
+							"raw": "{\n  \"identities\": [\n    \"{{identityProvider}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n\t\t\"grantTypes\": [\n\t\t    \"authorization_code\",\n\t\t    \"client_credentials\",\n\t\t    \"password\",\n\t\t    \"refresh_token\"\n\t\t  ],\n\t\t\"scopeSettings\": [{\"scope\" : \"openid\"}]\n\t}\n  }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app2}}",

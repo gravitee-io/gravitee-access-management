@@ -209,7 +209,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \t  \"scopes\": [\"openid\"],\n      \"defaultScopes\": [\"openid\"]\n  \t}\n  },\n  \"identities\": [\n    \"default-idp-{{domain}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://auth-nightly.gravitee.io/myApp/callback\"],\n  \t  \"scopeSettings\": [{\"scope\" : \"openid\", \"defaultScope\": true}]\n  \t}\n  },\n  \"identities\": [\n    \"default-idp-{{domain}}\"\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client}}",

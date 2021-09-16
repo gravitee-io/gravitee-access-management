@@ -3549,7 +3549,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t   \"grantTypes\": [\"password\"],\n       \"scopes\" : [\"openid\"],\n       \"defaultScopes\" : [\"openid\"],\n       \"enhanceScopesWithUserPermissions\": true\n  \t}\n  },\n  \"identities\" : [\"{{identityProvider}}\"]\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t   \"grantTypes\": [\"password\"],\n       \"scopeSettings\" : [ { \"scope\" : \"openid\", \"defaultScope\" : true }],\n       \"enhanceScopesWithUserPermissions\": true\n  \t}\n  },\n  \"identities\" : [\"{{identityProvider}}\"]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientUM}}",

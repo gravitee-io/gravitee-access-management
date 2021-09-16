@@ -708,7 +708,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": { \n      \"oauth\": {\n          \"grantTypes\": [\"client_credentials\"],\n          \"responseTypes\": [],\n          \"applicationType\": \"server\",\n          \"scopes\": [\"dcr_admin\"]\n        }\n    }\n}"
+							"raw": "{\n  \"settings\": { \n      \"oauth\": {\n          \"grantTypes\": [\"client_credentials\"],\n          \"responseTypes\": [],\n          \"applicationType\": \"server\",\n          \"scopeSettings\": [ {\"scope\" : \"dcr_admin\" }]\n        }\n    }\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientDCR}}",
