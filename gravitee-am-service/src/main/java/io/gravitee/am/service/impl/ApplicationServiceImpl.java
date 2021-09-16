@@ -29,6 +29,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -681,9 +682,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateScopes(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
         // check scope approvals and default scopes coherency
-        List<String> scopes = oAuthSettings.getScopes() != null ? oAuthSettings.getScopes() : new ArrayList<>();
-        List<String> defaultScopes = oAuthSettings.getDefaultScopes() != null ? oAuthSettings.getDefaultScopes() : new ArrayList<>();
-        Set<String> scopeApprovals = oAuthSettings.getScopeApprovals() != null ? oAuthSettings.getScopeApprovals().keySet() : new HashSet<>();
+        List<String> scopes = oAuthSettings.getScopeSettings() != null ? oAuthSettings.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList()) : new ArrayList<>();
+        List<String> defaultScopes = oAuthSettings.getScopeSettings() != null ? oAuthSettings.getScopeSettings().stream().filter(ApplicationScopeSettings::isDefaultScope).map(ApplicationScopeSettings::getScope).collect(Collectors.toList()) : new ArrayList<>();
+        Set<String> scopeApprovals = oAuthSettings.getScopeSettings() != null ? oAuthSettings.getScopeSettings().stream().filter(s -> s.getScopeApproval() != null).map(ApplicationScopeSettings::getScope).collect(Collectors.toSet()) : new HashSet<>();
         if (!scopes.containsAll(defaultScopes)) {
             return Single.error(new InvalidClientMetadataException("non valid default scopes"));
         }
@@ -691,7 +692,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.error(new InvalidClientMetadataException("non valid scope approvals"));
         }
         // check scopes against domain scopes
-        return scopeService.validateScope(application.getDomain(), oAuthSettings.getScopes())
+        return scopeService.validateScope(application.getDomain(), scopes)
                 .flatMap(isValid -> {
                     if (!isValid) {
                         return Single.error(new InvalidClientMetadataException("non valid scopes"));

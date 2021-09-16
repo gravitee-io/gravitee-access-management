@@ -678,26 +678,51 @@ public class ApplicationOAuthSettings {
         this.clientSecretExpiresAt = clientSecretExpiresAt;
     }
 
+    /**
+     * user getScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public List<String> getScopes() {
         return scopes;
     }
-
+    /**
+     * user setScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public void setScopes(List<String> scopes) {
         this.scopes = scopes;
     }
-
+    /**
+     * user getScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public List<String> getDefaultScopes() {
         return defaultScopes;
     }
-
+    /**
+     * user setScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public void setDefaultScopes(List<String> defaultScopes) {
         this.defaultScopes = defaultScopes;
     }
-
+    /**
+     * user getScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public Map<String, Integer> getScopeApprovals() {
         return scopeApprovals;
     }
-
+    /**
+     * user setScopeSettings instead
+     * @return
+     */
+    @Deprecated
     public void setScopeApprovals(Map<String, Integer> scopeApprovals) {
         this.scopeApprovals = scopeApprovals;
     }

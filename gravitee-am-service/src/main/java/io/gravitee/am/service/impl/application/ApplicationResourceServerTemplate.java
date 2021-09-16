@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.Collections;
@@ -55,10 +56,10 @@ public class ApplicationResourceServerTemplate extends ApplicationWebTemplate {
     private void update(Application application) {
         // UMA resource server should at least has the uma_protection scope
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-        if (oAuthSettings.getScopes() == null) {
-            oAuthSettings.setScopes(Collections.singletonList(Scope.UMA.getKey()));
-        } else if (!oAuthSettings.getScopes().contains(Scope.UMA.getKey())) {
-            oAuthSettings.getScopes().add(Scope.UMA.getKey());
+        if (oAuthSettings.getScopeSettings() == null) {
+            oAuthSettings.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings(Scope.UMA.getKey())));
+        } else if (oAuthSettings.getScopeSettings().stream().filter(s -> s.getScope().equals(Scope.UMA.getKey())).findFirst().isEmpty()) {
+            oAuthSettings.getScopeSettings().add(new ApplicationScopeSettings(Scope.UMA.getKey()));
         }
         // UMA resource server should at least has the client_credentials grant to request permissions
         if(oAuthSettings.getGrantTypes() == null) {
