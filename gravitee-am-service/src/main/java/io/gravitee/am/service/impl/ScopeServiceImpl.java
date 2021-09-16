@@ -22,6 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -313,12 +314,13 @@ public class ScopeServiceImpl implements ScopeService {
                                                                 return false;
                                                             }
                                                             ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
-                                                            return oAuthSettings.getScopes() != null && oAuthSettings.getScopes().contains(scope.getKey());
+                                                            return oAuthSettings.getScopeSettings() != null && !oAuthSettings.getScopeSettings().stream().filter(s -> s.getScope().equals(scope.getKey())).findFirst().isEmpty();
                                                         })
                                                         .collect(Collectors.toList())))
                                                 .flatMapSingle(application -> {
                                                     // Remove scope from application
-                                                    application.getSettings().getOauth().getScopes().remove(scope.getKey());
+                                                    final List<ApplicationScopeSettings> cleanScopes = application.getSettings().getOauth().getScopeSettings().stream().filter(s -> !s.getScope().equals(scope.getKey())).collect(Collectors.toList());
+                                                    application.getSettings().getOauth().setScopeSettings(cleanScopes);
                                                     // Then update
                                                     return applicationService.update(application);
                                                 }).toList()).toCompletable()

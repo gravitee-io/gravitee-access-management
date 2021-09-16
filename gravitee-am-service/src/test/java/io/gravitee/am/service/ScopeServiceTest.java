@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
+import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
@@ -641,7 +642,7 @@ public class ScopeServiceTest {
 
         ApplicationSettings applicationSettings = mock(ApplicationSettings.class);
         ApplicationOAuthSettings applicationOAuthSettings = mock(ApplicationOAuthSettings.class);
-        when(applicationOAuthSettings.getScopes()).thenReturn(new LinkedList<>(Arrays.asList("my-scope")));
+        when(applicationOAuthSettings.getScopeSettings()).thenReturn(Arrays.asList(new ApplicationScopeSettings("my-scope")));
         when(applicationSettings.getOauth()).thenReturn(applicationOAuthSettings);
         when(application.getSettings()).thenReturn(applicationSettings);
 

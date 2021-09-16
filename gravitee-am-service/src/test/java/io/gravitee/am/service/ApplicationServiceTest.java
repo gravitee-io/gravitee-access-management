@@ -548,7 +548,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -745,7 +745,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -791,7 +791,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -862,7 +862,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -892,7 +892,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, null)).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
