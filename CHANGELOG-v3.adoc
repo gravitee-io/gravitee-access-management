@@ -1,6 +1,33 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/424?closed=1[AM - 3.10.3 (2021-09-19)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] enforce URL redirects when the authorization request format is invalid https://github.com/gravitee-io/issues/issues/6123[#6123]
+- [oidc] re-introduce supported_subject_type into the wellknown endpoint https://github.com/gravitee-io/issues/issues/6175[#6175]
+
+*_Idp_*
+
+- [http] escaped double quotes character https://github.com/gravitee-io/issues/issues/6147[#6147]
+
+*_Management_*
+
+- Add allowed-redirect-urls for both login and logout endpoints https://github.com/gravitee-io/issues/issues/6121[#6121]
+- Enforce SCIM parser control https://github.com/gravitee-io/issues/issues/6127[#6127]
+- Handle request rejected exception https://github.com/gravitee-io/issues/issues/6112[#6112]
+- We should be able to update the user display name https://github.com/gravitee-io/issues/issues/6098[#6098]
+
+*_Mfa_*
+
+- Manage http proxy for Twilio provider https://github.com/gravitee-io/issues/issues/5905[#5905]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/397?closed=1[AM - 3.11.0 (2021-09-05)]
 
 === Bug fixes
