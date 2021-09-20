@@ -23,6 +23,7 @@ import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTParser;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
@@ -105,12 +106,21 @@ public class JWEServiceImpl implements JWEService {
     }
 
     @Override
-    public Single<JWT> decrypt(String jwt) {
-        return decrypt(jwt, null);
+    public Single<Boolean> isEncrypted(String jwt) {
+        try {
+            return Single.just(JWTParser.parse(jwt) instanceof EncryptedJWT);
+        } catch (Exception ex) {
+            return Single.error(ex);
+        }
     }
 
     @Override
-    public Single<JWT> decrypt(String jwt, Client client) {
+    public Single<JWT> decrypt(String jwt, boolean encRequired) {
+        return decrypt(jwt, null, encRequired);
+    }
+
+    @Override
+    public Single<JWT> decrypt(String jwt, Client client, boolean encRequired) {
         try {
             // Parse a first time to check if the JWT is encrypted
             JWT parsedJwt = JWTParser.parse(jwt);
@@ -157,6 +167,8 @@ public class JWEServiceImpl implements JWEService {
                 }
 
                 return Single.error(new ServerErrorException("Unable to perform Json Web Decryption, unsupported algorithm: " + algorithm.getName()));
+            } else if (encRequired) {
+                return Single.error(new InvalidRequestObjectException("Request Object must be encrypted"));
             } else {
                 return Single.just(parsedJwt);
             }

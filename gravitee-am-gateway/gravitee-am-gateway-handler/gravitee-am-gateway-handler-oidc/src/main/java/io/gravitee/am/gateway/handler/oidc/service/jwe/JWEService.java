@@ -41,16 +41,26 @@ public interface JWEService {
      */
     Single<String> encryptUserinfo(String signedJwt, Client client);
 
-    Single<JWT> decrypt(String jwt, Client client);
+    /**
+     *
+     * @param jwt
+     * @param client
+     * @param encRequired true if the jwt has to be encrypted
+     * @return the decoded JWT or an error if encRequired is true and the JWT isn't encoded
+     */
+    Single<JWT> decrypt(String jwt, Client client, boolean encRequired);
 
     /**
      * Decrypt JWT send by RP.
      * This decryption action will use a private key provided by the domain jwks
      *
      * @param jwt
-     * @return
+     * @param encRequired true if the jwt has to be encrypted
+     * @return the decoded JWT or an error if encRequired is true and the JWT isn't encoded
      */
-    Single<JWT> decrypt(String jwt);
+    Single<JWT> decrypt(String jwt, boolean encRequired);
+
+    Single<Boolean> isEncrypted(String jwt);
 
     /**
      * Encode raw JWT to JWT signed representation using authorization_encrypted_response_alg Client preferences.

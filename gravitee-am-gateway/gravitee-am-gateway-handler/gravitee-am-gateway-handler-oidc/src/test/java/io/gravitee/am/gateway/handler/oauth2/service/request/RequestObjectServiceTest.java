@@ -59,9 +59,9 @@ public class RequestObjectServiceTest {
         String request = "request-object";
         PlainJWT plainJWT = mock(PlainJWT.class);;
 
-        when(jweService.decrypt(request)).thenReturn(Single.just(plainJWT));
+        when(jweService.decrypt(request, false)).thenReturn(Single.just(plainJWT));
 
-        TestObserver<JWT> testObserver = requestObjectService.readRequestObject(request, client).test();
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObject(request, client, false).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRequestObjectException.class);
     }
@@ -74,9 +74,9 @@ public class RequestObjectServiceTest {
         JSONObject jsonObject = new JSONObject();
         SignedJWT signedJWT = new SignedJWT(jwsHeader,  JWTClaimsSet.parse(jsonObject));
 
-        when(jweService.decrypt(request)).thenReturn(Single.just(signedJWT));
+        when(jweService.decrypt(request, false)).thenReturn(Single.just(signedJWT));
 
-        TestObserver<JWT> testObserver = requestObjectService.readRequestObject(request, client).test();
+        TestObserver<JWT> testObserver = requestObjectService.readRequestObject(request, client, false).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRequestObjectException.class);
     }

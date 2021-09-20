@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
@@ -182,7 +183,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
             context.request().params().remove(Parameters.REQUEST);
 
             return requestObjectService
-                    .readRequestObject(request, context.get(CLIENT_CONTEXT_KEY))
+                    .readRequestObject(request, context.get(CLIENT_CONTEXT_KEY), domain.useFapiBrazilProfile())
                     .map(jwt -> preserveRequestObject(context, jwt))
                     .flatMap(jwt -> validateRequestObjectClaims(context, jwt))
                     .toMaybe();
