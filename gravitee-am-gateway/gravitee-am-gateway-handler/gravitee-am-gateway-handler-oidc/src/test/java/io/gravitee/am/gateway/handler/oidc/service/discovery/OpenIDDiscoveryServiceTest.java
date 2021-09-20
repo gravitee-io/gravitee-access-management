@@ -31,8 +31,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -126,9 +125,19 @@ public class OpenIDDiscoveryServiceTest {
     public void shouldContain_tls_client_certificate_bound_access_tokens() {
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertFalse(openIDProviderMetadata.getTlsClientCertificateBoundAccessTokens());
+        assertNull(openIDProviderMetadata.getMtlsAliases());
         enableMtls();
         openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(openIDProviderMetadata.getTlsClientCertificateBoundAccessTokens());
+        assertNotNull(openIDProviderMetadata.getMtlsAliases());
+        assertTrue("revocation endpoint is required", openIDProviderMetadata.getMtlsAliases().getRevocationEndpoint().contains("revoke"));
+        assertTrue("registration endpoint is required", openIDProviderMetadata.getMtlsAliases().getRegistrationEndpoint().contains("register"));
+        assertTrue("userinfo endpoint is required", openIDProviderMetadata.getMtlsAliases().getUserinfoEndpoint().contains("userinfo"));
+        assertTrue("token endpoint is required", openIDProviderMetadata.getMtlsAliases().getTokenEndpoint().contains("token"));
+        assertTrue("authorization endpoint is required", openIDProviderMetadata.getMtlsAliases().getAuthorizationEndpoint().contains("authorize"));
+        assertTrue("par endpoint is required", openIDProviderMetadata.getMtlsAliases().getParEndpoint().contains("par"));
+        assertTrue("endSession endpoint is required", openIDProviderMetadata.getMtlsAliases().getEndSessionEndpoint().contains("logout"));
+        assertTrue("introspection endpoint is required", openIDProviderMetadata.getMtlsAliases().getIntrospectionEndpoint().contains("introspect"));
     }
 
 }

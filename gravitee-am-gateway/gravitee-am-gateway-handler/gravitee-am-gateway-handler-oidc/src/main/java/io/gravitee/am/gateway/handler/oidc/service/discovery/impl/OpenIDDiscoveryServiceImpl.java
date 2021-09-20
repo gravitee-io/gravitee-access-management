@@ -19,6 +19,7 @@ import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.MtlsEndpointAliases;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
@@ -138,6 +139,19 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         final Boolean secured = env.getProperty("http.secured", Boolean.class, false);
         final String clientAuth = env.getProperty("http.ssl.clientAuth", String.class, "none");
         openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(secured && !clientAuth.equalsIgnoreCase("none"));
+
+        if (secured && !clientAuth.equalsIgnoreCase("none")) {
+            MtlsEndpointAliases  aliases = new MtlsEndpointAliases();
+            aliases.setAuthorizationEndpoint(openIDProviderMetadata.getAuthorizationEndpoint());
+            aliases.setEndSessionEndpoint(openIDProviderMetadata.getEndSessionEndpoint());
+            aliases.setIntrospectionEndpoint(openIDProviderMetadata.getIntrospectionEndpoint());
+            aliases.setParEndpoint(openIDProviderMetadata.getParEndpoint());
+            aliases.setRegistrationEndpoint(openIDProviderMetadata.getRegistrationEndpoint());
+            aliases.setTokenEndpoint(openIDProviderMetadata.getTokenEndpoint());
+            aliases.setRevocationEndpoint(openIDProviderMetadata.getRevocationEndpoint());
+            aliases.setUserinfoEndpoint(openIDProviderMetadata.getUserinfoEndpoint());
+            openIDProviderMetadata.setMtlsAliases(aliases);
+        }
 
         return openIDProviderMetadata;
     }
