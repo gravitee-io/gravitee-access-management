@@ -35,9 +35,10 @@ public interface RequestObjectService {
      *
      * @param request
      * @param client
+     * @param encRequired true if the request object has to be encrypted (JWE)
      * @return
      */
-    Single<JWT> readRequestObject(String request, Client client);
+    Single<JWT> readRequestObject(String request, Client client, boolean encRequired);
 
     /**
      * Validate encryption, signature and read the content of the JWT token from the URI.

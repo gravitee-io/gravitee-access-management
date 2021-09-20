@@ -167,7 +167,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
     }
 
     private Single<JWT> readRequestObject(Client client, String request) {
-        return jweService.decrypt(request)
+        return jweService.decrypt(request, false)
                 .onErrorResumeNext((ex) -> {
                     if (ex instanceof OAuth2Exception) {
                         return Single.error(ex);

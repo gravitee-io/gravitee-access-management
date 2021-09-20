@@ -76,9 +76,14 @@ public class RequestObjectServiceImpl implements RequestObjectService {
     private Domain domain;
 
     @Override
-    public Single<JWT> readRequestObject(String request, Client client) {
-        return jweService.decrypt(request)
-                .onErrorResumeNext(Single.error(new InvalidRequestObjectException("Malformed request object")))
+    public Single<JWT> readRequestObject(String request, Client client, boolean encRequired) {
+        return jweService.decrypt(request, encRequired)
+                .onErrorResumeNext(err -> {
+                    if (err instanceof InvalidRequestObjectException) {
+                        return Single.error(err);
+                    }
+                    return Single.error(new InvalidRequestObjectException("Malformed request object"));
+                })
                 .flatMap((Function<JWT, SingleSource<JWT>>) jwt -> {
                     return checkRequestObjectAlgorithm(jwt)
                             .andThen(Single.defer(() -> validateSignature((SignedJWT) jwt, client)));
@@ -96,7 +101,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                         .switchIfEmpty(Single.error(new InvalidRequestObjectException()))
                         .flatMap((Function<RequestObject, Single<JWT>>) req -> {
                             if (req.getExpireAt().after(new Date())) {
-                                return readRequestObject(req.getPayload(), client);
+                                return readRequestObject(req.getPayload(), client, false);
                             }
 
                             return Single.error(new InvalidRequestObjectException());
@@ -105,7 +110,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
                 return webClient.getAbs(UriBuilder.fromHttpUrl(requestUri).build().toString())
                         .rxSend()
                         .map(HttpResponse::bodyAsString)
-                        .flatMap((Function<String, Single<JWT>>) s -> readRequestObject(s, client));
+                        .flatMap((Function<String, Single<JWT>>) s -> readRequestObject(s, client, false));
             }
         }
         catch (IllegalArgumentException | URISyntaxException ex) {
