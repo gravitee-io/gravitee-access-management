@@ -157,7 +157,7 @@ public class PushedAuthorizationRequestServiceTest {
         par.setId("parid");
         par.setClient(client.getId());
 
-        when(jweService.decrypt(any(), any())).thenReturn(Single.error(new ParseException("parse error",1)));
+        when(jweService.decrypt(any())).thenReturn(Single.error(new ParseException("parse error",1)));
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
@@ -183,7 +183,7 @@ public class PushedAuthorizationRequestServiceTest {
         par.setId("parid");
         par.setClient(client.getId());
 
-        when(jweService.decrypt(any(), any())).thenReturn(Single.just(parse));
+        when(jweService.decrypt(any())).thenReturn(Single.just(parse));
 
         final TestObserver<PushedAuthorizationRequestResponse> observer = cut.registerParameters(par, client).test();
 
@@ -315,7 +315,7 @@ public class PushedAuthorizationRequestServiceTest {
                 .build();
         final SignedJWT signedJwt = mock(SignedJWT.class);
         when(signedJwt.getJWTClaimsSet()).thenReturn(claimsSet);
-        when(jweService.decrypt(any(), any())).thenReturn(Single.just(signedJwt));
+        when(jweService.decrypt(any())).thenReturn(Single.just(signedJwt));
         final JWSHeader jwsHeaders = new JWSHeader.Builder(JWSAlgorithm.RS256).build();
         when(signedJwt.getHeader()).thenReturn(jwsHeaders);
 

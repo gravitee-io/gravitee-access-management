@@ -33,6 +33,8 @@ public interface CertificateProvider {
 
     Single<String> publicKey();
 
+    Flowable<JWK> privateKey();
+
     Flowable<JWK> keys();
 
     CertificateMetadata certificateMetadata();

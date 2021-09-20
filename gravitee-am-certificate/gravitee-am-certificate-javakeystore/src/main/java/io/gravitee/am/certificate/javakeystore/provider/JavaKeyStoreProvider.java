@@ -35,8 +35,12 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -99,6 +103,16 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     }
 
     @Override
+    public Flowable<JWK> privateKey() {
+        // CertificateProvider only manage RSA key.
+        com.nimbusds.jose.jwk.JWK nimbusJwk = new com.nimbusds.jose.jwk.RSAKey.Builder((RSAPublicKey) ((KeyPair) certificateKey.getValue()).getPublic())
+                .privateKey((RSAPrivateKey) ((KeyPair) certificateKey.getValue()).getPrivate())
+                .keyID(configuration.getAlias())
+                .build();
+        return Flowable.fromIterable(convert(nimbusJwk, true).collect(Collectors.toList()));
+    }
+
+    @Override
     public Single<io.gravitee.am.certificate.api.Key> key() {
         return Single.just(certificateKey);
     }
@@ -142,10 +156,15 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     // TODO : should be moved to the gravitee-am-jwt module
     private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk) {
         final Set<String> useFor = configuration.getUse() == null || configuration.getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : configuration.getUse();
-        return useFor.stream().map(use -> createRSAKey(nimbusJwk, use));
+        return useFor.stream().map(use -> createRSAKey(nimbusJwk, false, use));
     }
 
-    private JWK createRSAKey(com.nimbusds.jose.jwk.JWK nimbusJwk, String use) {
+    private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate) {
+        final Set<String> useFor = configuration.getUse() == null || configuration.getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : configuration.getUse();
+        return useFor.stream().map(use -> createRSAKey(nimbusJwk, includePrivate, use));
+    }
+
+    private JWK createRSAKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
         RSAKey jwk = new RSAKey();
         if (nimbusJwk.getKeyType() != null) {
             jwk.setKty(nimbusJwk.getKeyType().getValue());
@@ -189,6 +208,32 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
         }
         if (nimbusRSAJwk.getModulus() != null) {
             jwk.setN(nimbusRSAJwk.getModulus().toString());
+        }
+
+        if (includePrivate) {
+            if (nimbusRSAJwk.getPrivateExponent() != null) {
+                jwk.setD(nimbusRSAJwk.getPrivateExponent().toString());
+            }
+
+            if (nimbusRSAJwk.getFirstPrimeFactor() != null) {
+                jwk.setP(nimbusRSAJwk.getFirstPrimeFactor().toString());
+            }
+
+            if (nimbusRSAJwk.getFirstFactorCRTExponent() != null) {
+                jwk.setDp(nimbusRSAJwk.getFirstFactorCRTExponent().toString());
+            }
+
+            if (nimbusRSAJwk.getFirstCRTCoefficient() != null) {
+                jwk.setQi(nimbusRSAJwk.getFirstCRTCoefficient().toString());
+            }
+
+            if (nimbusRSAJwk.getSecondPrimeFactor() != null) {
+                jwk.setQ(nimbusRSAJwk.getSecondPrimeFactor().toString());
+            }
+
+            if (nimbusRSAJwk.getSecondFactorCRTExponent() != null) {
+                jwk.setDq(nimbusRSAJwk.getSecondFactorCRTExponent().toString());
+            }
         }
 
         return jwk;

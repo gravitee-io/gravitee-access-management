@@ -32,6 +32,7 @@ public interface JWKService {
 
     Single<JWKSet> getKeys();
     Maybe<JWKSet> getKeys(Client client);
+    Maybe<JWKSet> getDomainPrivateKeys();
     Maybe<JWKSet> getKeys(String jwksUri);
     Maybe<JWK> getKey(JWKSet jwkSet, String kid);
     Maybe<JWK> filter(JWKSet jwkSet, Predicate<JWK> filter);
