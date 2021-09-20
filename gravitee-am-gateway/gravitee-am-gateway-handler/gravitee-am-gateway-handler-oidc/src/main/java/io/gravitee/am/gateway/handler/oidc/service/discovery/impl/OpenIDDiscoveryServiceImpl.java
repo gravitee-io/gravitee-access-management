@@ -30,13 +30,15 @@ import io.gravitee.am.service.utils.ResponseTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP;
+import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP_256;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
 
 /**
@@ -124,6 +126,14 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
 
         // request_object
         openIDProviderMetadata.setRequestObjectSigningAlgValuesSupported(JWAlgorithmUtils.getSupportedRequestObjectSigningAlg());
+        final List<String> supportedRequestObjectAlg = new ArrayList<>(JWAlgorithmUtils.getSupportedRequestObjectAlg());
+        if (domain.useFapiBrazilProfile()) {
+            // FAPI Brazil conformance test requires this alg (even if we specify RSA_OAEP_256 as supported)
+            supportedRequestObjectAlg.add(RSA_OAEP.getName());
+        }
+        openIDProviderMetadata.setRequestObjectEncryptionAlgValuesSupported(supportedRequestObjectAlg);
+        openIDProviderMetadata.setRequestObjectEncryptionEncValuesSupported(JWAlgorithmUtils.getSupportedRequestObjectEnc());
+
 
         // token_endpoint_auth
         openIDProviderMetadata.setTokenEndpointAuthMethodsSupported(ClientAuthenticationMethod.supportedValues());

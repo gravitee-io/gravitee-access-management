@@ -257,4 +257,12 @@ public class JWAlgorithmUtils {
     public static List<String> getSupportedTokenEndpointAuthSigningAlg() {
         return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
     }
+
+    public static List<String> getSupportedRequestObjectAlg() {
+        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    public static List<String> getSupportedRequestObjectEnc() {
+        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
 }
