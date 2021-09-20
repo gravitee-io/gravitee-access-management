@@ -174,6 +174,9 @@ public class OpenIDProviderMetadata {
     @JsonProperty("pushed_authorization_request_endpoint")
     private String parEndpoint;
 
+    @JsonProperty("mtls_endpoint_aliases")
+    private MtlsEndpointAliases mtlsAliases;
+
     public void setIssuer(String issuer) {
         this.issuer = issuer;
     }
@@ -544,5 +547,13 @@ public class OpenIDProviderMetadata {
 
     public void setParEndpoint(String parEndpoint) {
         this.parEndpoint = parEndpoint;
+    }
+
+    public MtlsEndpointAliases getMtlsAliases() {
+        return mtlsAliases;
+    }
+
+    public void setMtlsAliases(MtlsEndpointAliases mtlsAliases) {
+        this.mtlsAliases = mtlsAliases;
     }
 }
