@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -83,6 +84,10 @@ public class CertificateProviderManagerTest {
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, "none"));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+            @Override
+            public Flowable<JWK> privateKey() {
+                throw new UnsupportedOperationException("No private key for \"none\" algorithm");
+            }
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
@@ -121,6 +126,10 @@ public class CertificateProviderManagerTest {
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+            @Override
+            public Flowable<JWK> privateKey() {
+               return null;
+            }
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {

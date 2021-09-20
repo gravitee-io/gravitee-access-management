@@ -77,7 +77,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
 
     @Override
     public Single<JWT> readRequestObject(String request, Client client) {
-        return jweService.decrypt(request, client)
+        return jweService.decrypt(request)
                 .onErrorResumeNext(Single.error(new InvalidRequestObjectException("Malformed request object")))
                 .flatMap((Function<JWT, SingleSource<JWT>>) jwt -> {
                     return checkRequestObjectAlgorithm(jwt)

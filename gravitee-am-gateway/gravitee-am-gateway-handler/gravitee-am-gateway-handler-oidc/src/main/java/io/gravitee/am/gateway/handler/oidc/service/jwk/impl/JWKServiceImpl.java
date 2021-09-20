@@ -73,6 +73,18 @@ public class JWKServiceImpl implements JWKService {
     }
 
     @Override
+    public Maybe<JWKSet> getDomainPrivateKeys() {
+        return Flowable.fromIterable(certificateManager.providers())
+                .flatMap(provider -> provider.getProvider().privateKey())
+                .toList()
+                .map(keys -> {
+                    JWKSet jwkSet = new JWKSet();
+                    jwkSet.setKeys(keys);
+                    return jwkSet;
+                }).toMaybe();
+    }
+
+    @Override
     public Maybe<JWKSet> getKeys(String jwksUri) {
         try{
             return client.getAbs(UriBuilder.fromHttpUrl(jwksUri).build().toString())

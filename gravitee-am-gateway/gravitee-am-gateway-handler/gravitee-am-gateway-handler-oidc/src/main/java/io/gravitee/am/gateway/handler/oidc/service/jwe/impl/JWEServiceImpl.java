@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKConverter;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -104,6 +105,11 @@ public class JWEServiceImpl implements JWEService {
     }
 
     @Override
+    public Single<JWT> decrypt(String jwt) {
+        return decrypt(jwt, null);
+    }
+
+    @Override
     public Single<JWT> decrypt(String jwt, Client client) {
         try {
             // Parse a first time to check if the JWT is encrypted
@@ -160,8 +166,8 @@ public class JWEServiceImpl implements JWEService {
     }
 
     private Single<JWT> decrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEDecrypterFunction<JWK, JWEDecrypter> function) {
-        return jwkService.getKeys(client)
-                .flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
+        final Maybe<JWKSet> jwks = client != null ? jwkService.getKeys(client) : jwkService.getDomainPrivateKeys();
+        return jwks.flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
                 .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("no matching key found to decrypt")))
                 .flatMapSingle(jwk -> Single.just(function.apply(jwk)))
                 .map(decrypter -> {

@@ -44,6 +44,15 @@ public interface JWEService {
     Single<JWT> decrypt(String jwt, Client client);
 
     /**
+     * Decrypt JWT send by RP.
+     * This decryption action will use a private key provided by the domain jwks
+     *
+     * @param jwt
+     * @return
+     */
+    Single<JWT> decrypt(String jwt);
+
+    /**
      * Encode raw JWT to JWT signed representation using authorization_encrypted_response_alg Client preferences.
      * @param signedJwt Signed JWT to encrypt
      * @param client client which want to encrypt the token

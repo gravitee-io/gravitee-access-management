@@ -244,6 +244,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
             }
 
             @Override
+            public Flowable<JWK> privateKey() {
+                return null;
+            }
+
+            @Override
             public Single<String> publicKey() {
                 return null;
             }
@@ -271,6 +276,11 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, SignatureAlgorithm.NONE.getValue()));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+
+            @Override
+            public Flowable<JWK> privateKey() {
+                throw new UnsupportedOperationException("No private key for \"none\" algorithm");
+            }
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
