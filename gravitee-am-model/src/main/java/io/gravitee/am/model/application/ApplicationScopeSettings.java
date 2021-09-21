@@ -26,10 +26,6 @@ public class ApplicationScopeSettings {
      */
     private boolean defaultScope;
     /**
-     * True if the scope maybe parameterized (ie: the scope asked by the client may have a suffix)
-     */
-    private boolean parameterized;
-    /**
      * Scope approval duration times
      */
     private Integer scopeApproval;
@@ -44,7 +40,6 @@ public class ApplicationScopeSettings {
     public ApplicationScopeSettings(ApplicationScopeSettings other) {
         this.scope = other.scope;
         this.defaultScope = other.defaultScope;
-        this.parameterized = other.parameterized;
         this.scopeApproval = other.scopeApproval;
     }
 
@@ -62,14 +57,6 @@ public class ApplicationScopeSettings {
 
     public void setDefaultScope(boolean defaultScope) {
         this.defaultScope = defaultScope;
-    }
-
-    public boolean isParameterized() {
-        return parameterized;
-    }
-
-    public void setParameterized(boolean parameterized) {
-        this.parameterized = parameterized;
     }
 
     public Integer getScopeApproval() {

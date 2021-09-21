@@ -12,7 +12,6 @@ databaseChangeLog:
               - column: { name: application_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: scope, type: nvarchar(255), constraints: { nullable: false } }
               - column: { name: is_default, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }
-              - column: { name: is_parameterized, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }
               - column: { name: scope_approval, type: integer, constraints: { nullable: true } }
 
         - createIndex:
@@ -22,3 +21,10 @@ databaseChangeLog:
             indexName: idx_ass_app_id
             tableName: application_scope_settings
             unique: false
+
+        # Scopes
+        ##############
+        - addColumn:
+            tableName: scopes
+            columns:
+              - column: { name: parameterized, type: boolean, constraints: { nullable: false }, defaultValueBoolean: false }

@@ -45,6 +45,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
@@ -163,6 +164,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private PushedAuthorizationRequestService parService;
 
+    @Autowired
+    private ScopeManager scopeManager;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -214,7 +218,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowContextHandler)
                 .handler(authenticationFlowHandler.create())
-                .handler(new AuthorizationRequestResolveHandler())
+                .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
@@ -224,7 +228,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         oauth2Router.route(HttpMethod.GET, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService))
-                .handler(new AuthorizationRequestResolveHandler())
+                .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(userConsentPrepareContextHandler)
                 .handler(authenticationFlowContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
@@ -232,7 +236,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         oauth2Router.route(HttpMethod.POST, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService))
-                .handler(new AuthorizationRequestResolveHandler())
+                .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(userConsentPrepareContextHandler)
                 .handler(authenticationFlowContextHandler)
                 .handler(new UserConsentProcessHandler(userConsentService, domain))

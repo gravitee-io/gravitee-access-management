@@ -16,22 +16,40 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
+
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RunWith(MockitoJUnitRunner.class)
 public class AuthorizationRequestResolverTest {
 
     private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
+
+    @Mock
+    private ScopeManager scopeManager;
+
+    @Before
+    public void init() {
+        reset(scopeManager);
+        authorizationRequestResolver.setScopeManager(scopeManager);
+    }
 
     @Test
     public void shouldNotResolveAuthorizationRequest_unknownScope() {
@@ -105,9 +123,8 @@ public class AuthorizationRequestResolverTest {
         authorizationRequest.setRedirectUri(redirectUri);
         Client client = new Client();
         ApplicationScopeSettings setting = new ApplicationScopeSettings(scope);
-        setting.setParameterized(true);
         client.setScopeSettings(Collections.singletonList(setting));
-
+        when(scopeManager.isParameterizedScope(scope)).thenReturn(true);
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();

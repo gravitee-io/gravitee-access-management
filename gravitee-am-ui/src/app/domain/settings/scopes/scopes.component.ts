@@ -103,4 +103,12 @@ export class DomainSettingsScopesComponent implements OnInit {
       this.loadScopes();
     });
   }
+
+  enableParameterizedScope(id, event) {
+    this.scopeService.patchParameterized(this.domainId, id, event.checked).subscribe(response => {
+      this.snackbarService.open('Scope updated');
+      this.loadScopes();
+    });
+  }
+  
 }

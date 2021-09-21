@@ -43,7 +43,7 @@ public class JdbcScope {
     @Column("expires_in")
     private Integer expiresIn;
     private boolean discovery;
-
+    private boolean parameterized;
 
     public String getId() {
         return id;
@@ -131,6 +131,14 @@ public class JdbcScope {
 
     public void setDiscovery(boolean discovery) {
         this.discovery = discovery;
+    }
+
+    public boolean isParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(boolean parameterized) {
+        this.parameterized = parameterized;
     }
 
     @Table("scope_claims")

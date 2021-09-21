@@ -131,6 +131,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scope.setCreatedAt(scopeMongo.getCreatedAt());
         scope.setUpdatedAt(scopeMongo.getUpdatedAt());
         scope.setDiscovery(scopeMongo.isDiscovery());
+        scope.setParameterized(scopeMongo.isParameterized());
 
         return scope;
     }
@@ -153,6 +154,7 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         scopeMongo.setCreatedAt(scope.getCreatedAt());
         scopeMongo.setUpdatedAt(scope.getUpdatedAt());
         scopeMongo.setDiscovery(scope.isDiscovery());
+        scopeMongo.setParameterized(scope.isParameterized());
 
         return scopeMongo;
     }

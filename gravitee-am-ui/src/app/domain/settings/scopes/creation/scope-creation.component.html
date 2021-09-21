@@ -44,6 +44,14 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Enable scope to be displayed into the openid discovery endpoint under <i>:domain/oidc/.well-known/openid-configuration</i></mat-hint>
         </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableParameterizedScope($event)"
+            [checked]="isParameterized()">
+            Allow scope parameter
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">A <b>Parameterized</b> scope may be suffixed by a value using the following syntaxe <i>[myscope]:[suffix value]</i>.</mat-hint>
+        </div>
       </div>
 
       <div class="gv-form-section">

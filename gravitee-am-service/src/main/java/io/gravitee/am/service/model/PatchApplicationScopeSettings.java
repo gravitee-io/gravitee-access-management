@@ -15,15 +15,9 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.TokenClaim;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -36,10 +30,6 @@ public class PatchApplicationScopeSettings {
      * True if the scope is used as default scope
      */
     private Optional<Boolean> defaultScope;
-    /**
-     * True if the scope maybe parameterized (ie: the scope asked by the client may have a suffix)
-     */
-    private Optional<Boolean> parameterized;
     /**
      * Scope approval duration times
      */
@@ -61,14 +51,6 @@ public class PatchApplicationScopeSettings {
         this.defaultScope = defaultScope;
     }
 
-    public Optional<Boolean> getParameterized() {
-        return parameterized;
-    }
-
-    public void setParameterized(Optional<Boolean> parameterized) {
-        this.parameterized = parameterized;
-    }
-
     public Optional<Integer> getScopeApproval() {
         return scopeApproval;
     }
@@ -82,7 +64,6 @@ public class PatchApplicationScopeSettings {
 
         SetterUtils.safeSet(toPatch::setScope, this.getScope());
         SetterUtils.safeSet(toPatch::setDefaultScope, this.getDefaultScope());
-        SetterUtils.safeSet(toPatch::setParameterized, this.getParameterized());
         SetterUtils.safeSet(toPatch::setScopeApproval, this.getScopeApproval());
 
         return toPatch;

@@ -34,6 +34,8 @@ public class UpdateScope {
 
     private Boolean discovery;
 
+    private Boolean parameterized;
+
     private String iconUri;
 
     public String getName() {
@@ -78,5 +80,17 @@ public class UpdateScope {
 
     public void setIconUri(String iconUri) {
         this.iconUri = iconUri;
+    }
+
+    public Boolean getParameterized() {
+        return parameterized;
+    }
+
+    public boolean isParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(Boolean parameterized) {
+        this.parameterized = parameterized;
     }
 }

@@ -38,6 +38,8 @@ public class NewScope {
 
     private boolean discovery;
 
+    private boolean parameterized;
+
     public String getKey() {
         return key;
     }
@@ -84,5 +86,13 @@ public class NewScope {
 
     public void setDiscovery(boolean discovery) {
         this.discovery = discovery;
+    }
+
+    public boolean isParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(boolean parameterized) {
+        this.parameterized = parameterized;
     }
 }

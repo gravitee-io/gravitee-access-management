@@ -65,4 +65,12 @@ export class ScopeCreationComponent implements OnInit {
   isDiscovery() {
     return this.scope.discovery;
   }
+
+  enableParameterizedScope(event) {
+    this.scope.parameterized = event.checked;
+  }
+
+  isParameterized() {
+    return this.scope.parameterized;
+  }
 }
