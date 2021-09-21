@@ -34,7 +34,6 @@ import {COMMA, ENTER} from "@angular/cdk/keycodes";
 export class ApplicationScopesComponent implements OnInit {
   private domainId: string;
   private defaultScopes: string[];
-  private parameterizedScopes: string[];
   formChanged: boolean;
   application: any;
   applicationOauthSettings: any = {};
@@ -64,7 +63,6 @@ export class ApplicationScopesComponent implements OnInit {
     // Merge with existing scope
     this.selectedScopes = [];
     this.defaultScopes = [];
-    this.parameterizedScopes = [];
     this.selectedScopeApprovals = {};
     if (this.applicationOauthSettings.scopeSettings) {
       this.applicationOauthSettings.scopeSettings.forEach(scopeSettings => {
@@ -73,9 +71,6 @@ export class ApplicationScopesComponent implements OnInit {
           this.selectedScopes.push(definedScope);
           if (scopeSettings.defaultScope) {
             this.defaultScopes.push(scopeSettings.scope);      
-          }
-          if (scopeSettings.parameterized) {
-            this.parameterizedScopes.push(scopeSettings.scope);      
           }
           if (scopeSettings.scopeApproval) {
             this.selectedScopeApprovals[scopeSettings.scope] = { 'expiresIn' : this.getExpiresIn(scopeSettings.scopeApproval), 'unitTime' : this.getUnitTime(scopeSettings.scopeApproval) };
@@ -96,8 +91,7 @@ export class ApplicationScopesComponent implements OnInit {
     this.selectedScopes.forEach(s => {
       let setting = {
         scope: s.key,
-        defaultScope: (this.defaultScopes.indexOf(s.key) !== -1),
-        parameterized: (this.parameterizedScopes.indexOf(s.key) !== -1)
+        defaultScope: (this.defaultScopes.indexOf(s.key) !== -1)
       };
 
       let approval = this.selectedScopeApprovals[s.key];
@@ -174,19 +168,6 @@ export class ApplicationScopesComponent implements OnInit {
 
   isDefaultScope(scope) {
     return this.defaultScopes.indexOf(scope) !== -1;
-  }
-
-  toggleParameterizedScope(event, scope) {
-    if (event.checked) {
-      this.parameterizedScopes.push(scope);
-    } else {
-      this.parameterizedScopes.splice(this.parameterizedScopes.indexOf(scope), 1);
-    }
-    this.formChanged = true;
-  }
-
-  isParameterizedScope(scope) {
-    return this.parameterizedScopes.indexOf(scope) !== -1;
   }
 
   onExpiresInEvent(event, scope) {

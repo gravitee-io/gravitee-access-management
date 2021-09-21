@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshToke
 import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.uma.policy.RulesEngine;
@@ -89,6 +90,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private ScopeManager scopeManager;
+
     public CompositeTokenGranter() { }
 
     @Override
@@ -119,6 +123,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        this.tokenRequestResolver.setScopeManager(this.scopeManager);
         addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService));
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService,userAuthenticationManager));
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment));

@@ -171,7 +171,6 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings().getOauth().getGrantTypes().containsAll(Arrays.asList("authorization_code")));
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().size() == 1);
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isDefaultScope());
-        testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isParameterized());
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScopeApproval() == 42);
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScope().equals("scopename"));
         testObserver.assertValue(a -> a.getMetadata() != null);
@@ -208,7 +207,6 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         ApplicationScopeSettings scopeSettings = new ApplicationScopeSettings();
         scopeSettings.setScope("scopename");
         scopeSettings.setDefaultScope(true);
-        scopeSettings.setParameterized(true);
         scopeSettings.setScopeApproval(42);
         oauth.setScopeSettings(Arrays.asList(scopeSettings));
         return settings;

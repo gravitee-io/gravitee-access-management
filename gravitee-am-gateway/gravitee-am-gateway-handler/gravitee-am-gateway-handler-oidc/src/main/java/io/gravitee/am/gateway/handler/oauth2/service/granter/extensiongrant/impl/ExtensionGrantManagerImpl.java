@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
@@ -83,9 +84,13 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private ScopeManager scopeManager;
+
     @Override
     public void afterPropertiesSet() {
         logger.info("Initializing extension grants for domain {}", domain.getName());
+        this.tokenRequestResolver.setScopeManager(this.scopeManager);
         extensionGrantRepository.findByDomain(domain.getId())
                 .subscribe(
                         extensionGrant -> {

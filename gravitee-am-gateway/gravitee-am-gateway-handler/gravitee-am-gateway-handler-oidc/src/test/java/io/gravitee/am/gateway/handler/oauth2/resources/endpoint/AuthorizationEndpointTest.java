@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequ
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.*;
 import io.gravitee.am.gateway.handler.oauth2.service.response.jwt.JWTAuthorizationCodeResponse;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -100,6 +101,9 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     private PushedAuthorizationRequestService parService;
 
     @Mock
+    private ScopeManager scopeManager;
+
+    @Mock
     private Environment environment;
 
     @Override
@@ -137,7 +141,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
-                .handler(new AuthorizationRequestResolveHandler())
+                .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(authorizationEndpointHandler);
         router.route()
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));

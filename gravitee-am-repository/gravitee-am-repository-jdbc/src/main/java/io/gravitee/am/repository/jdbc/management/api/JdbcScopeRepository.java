@@ -180,6 +180,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         insertSpec = addQuotedField(insertSpec, "icon_uri", item.getIconUri(), String.class);
         insertSpec = addQuotedField(insertSpec, "key", item.getKey(), String.class); // mssql keyword
         insertSpec = addQuotedField(insertSpec, "discovery", item.isDiscovery(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, "parameterized", item.isParameterized(), Boolean.class);
         insertSpec = addQuotedField(insertSpec, "system", item.isSystem(), Boolean.class);
         insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
@@ -218,6 +219,7 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         updateFields = addQuotedField(updateFields, "icon_uri", item.getIconUri(), String.class);
         updateFields = addQuotedField(updateFields, "key", item.getKey(), String.class); // mssql keyword
         updateFields = addQuotedField(updateFields, "discovery", item.isDiscovery(), Boolean.class);
+        updateFields = addQuotedField(updateFields, "parameterized", item.isParameterized(), Boolean.class);
         updateFields = addQuotedField(updateFields, "system", item.isSystem(), Boolean.class);
         updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);

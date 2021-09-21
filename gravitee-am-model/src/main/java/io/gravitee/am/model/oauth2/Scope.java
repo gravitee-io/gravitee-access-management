@@ -70,6 +70,8 @@ public class Scope {
 
     private boolean discovery;
 
+    private boolean parameterized;
+
     public Scope() {
     }
 
@@ -90,6 +92,7 @@ public class Scope {
         this.claims = other.claims;
         this.expiresIn = other.expiresIn;
         this.discovery = other.discovery;
+        this.parameterized = other.parameterized;
     }
 
     public String getId() {
@@ -186,6 +189,14 @@ public class Scope {
 
     public void setDiscovery(boolean discovery) {
         this.discovery = discovery;
+    }
+
+    public boolean isParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(boolean parameterized) {
+        this.parameterized = parameterized;
     }
 
     @Override

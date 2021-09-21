@@ -127,7 +127,6 @@ public class ApplicationScopeSettingsUpgraderTest {
             return withScopeSettings && app.getSettings().getOauth().getScopeSettings().stream().allMatch(a -> {
                 return (a.getScope().equalsIgnoreCase(SCOPE_OPENID) || a.getScope().equalsIgnoreCase(SCOPE_PROFILE))
                         && !a.isDefaultScope()
-                        && !a.isParameterized()
                         && a.getScopeApproval() == null;
             });
         }));
@@ -137,10 +136,8 @@ public class ApplicationScopeSettingsUpgraderTest {
             return withScopeSettings && app.getSettings().getOauth().getScopeSettings().stream().allMatch(a -> {
                 return (a.getScope().equalsIgnoreCase(SCOPE_OPENID)
                         && a.isDefaultScope()
-                        && !a.isParameterized()
                         && a.getScopeApproval() != null && a.getScopeApproval() == 42) || (a.getScope().equalsIgnoreCase(SCOPE_PROFILE)
                         && !a.isDefaultScope()
-                        && !a.isParameterized()
                         && a.getScopeApproval() == null);
             });
         }));

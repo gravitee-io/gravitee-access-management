@@ -56,6 +56,8 @@ public class ScopeMongo extends Auditable {
 
     private boolean discovery;
 
+    private boolean parameterized;
+
     public String getId() {
         return id;
     }
@@ -134,6 +136,14 @@ public class ScopeMongo extends Auditable {
 
     public void setDiscovery(boolean discovery) {
         this.discovery = discovery;
+    }
+
+    public boolean isParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(boolean parameterized) {
+        this.parameterized = parameterized;
     }
 
     @Override

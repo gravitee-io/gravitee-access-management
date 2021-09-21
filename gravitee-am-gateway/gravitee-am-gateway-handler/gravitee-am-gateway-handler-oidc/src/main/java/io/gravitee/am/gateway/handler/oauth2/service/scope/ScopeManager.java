@@ -30,4 +30,5 @@ public interface ScopeManager extends Service {
 
     Scope findByKey(String scopeKey);
 
+    boolean isParameterizedScope(String scope);
 }

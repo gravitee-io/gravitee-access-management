@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.AsyncResult;
@@ -35,7 +36,12 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CO
 public class AuthorizationRequestResolveHandler implements Handler<RoutingContext> {
 
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
+    private final AuthorizationRequestResolver authorizationRequestResolver;
+
+    public AuthorizationRequestResolveHandler(ScopeManager scopeManager) {
+        this.authorizationRequestResolver = new AuthorizationRequestResolver();
+        this.authorizationRequestResolver.setScopeManager(scopeManager);
+    }
 
     @Override
     public void handle(RoutingContext routingContext) {

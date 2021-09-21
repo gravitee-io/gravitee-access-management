@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.service.consent.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
-import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -49,6 +49,9 @@ public class UserConsentServiceImpl implements UserConsentService {
     private ScopeService scopeService;
 
     @Autowired
+    private ScopeManager scopeManager;
+
+    @Autowired
     private Domain domain;
 
     @Value("${oauth2.approval.expiry:-1}")
@@ -72,7 +75,7 @@ public class UserConsentServiceImpl implements UserConsentService {
                 .stream()
                 .filter(s -> s.getScopeApproval() != null)
                 .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()));
-        final List<String> parameterizedScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isParameterized).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+        final List<String> parameterizedScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).filter(scopeManager::isParameterizedScope).collect(Collectors.toList());
 
         approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
@@ -113,7 +116,7 @@ public class UserConsentServiceImpl implements UserConsentService {
             if (isParameterizedScope) {
                 final String parameterizedScope = getScopeBase(scope);
                 if (scopeApprovals.containsKey(parameterizedScope) &&
-                                scopeApprovals.get(parameterizedScope).isParameterized()) {
+                                scopeManager.isParameterizedScope(parameterizedScope)) {
                     expiresAt.add(Calendar.SECOND, scopeApprovals.get(parameterizedScope).getScopeApproval());
                     return expiresAt.getTime();
                 }

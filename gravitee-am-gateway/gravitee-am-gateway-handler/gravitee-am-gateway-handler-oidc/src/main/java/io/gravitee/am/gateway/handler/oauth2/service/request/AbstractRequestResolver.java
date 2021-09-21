@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -23,10 +24,7 @@ import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Single;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
@@ -36,6 +34,12 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
  * @author GraviteeSource Team
  */
 public abstract class AbstractRequestResolver<R extends OAuth2Request> {
+
+    private ScopeManager scopeManager;
+
+    public void setScopeManager(ScopeManager scopeManager) {
+        this.scopeManager = scopeManager;
+    }
 
     /**
      * If the client omits the scope parameter when requesting authorization, the authorization server MUST either process the
@@ -55,7 +59,7 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         if (client.getScopeSettings() != null && !client.getScopeSettings().isEmpty()) {
             final List<String> clientScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
             final List<String> defaultScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isDefaultScope).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
-            final List<String> parameterizedScopes = client.getScopeSettings().stream().filter(ApplicationScopeSettings::isParameterized).map(ApplicationScopeSettings::getScope).collect(Collectors.toList());
+            final List<String> parameterizedScopes = this.scopeManager == null ? new ArrayList<>() : client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).filter(scopeManager::isParameterizedScope).collect(Collectors.toList());
 
             // no requested scope, set default client scopes to the request
             if (requestScopes == null || requestScopes.isEmpty()) {

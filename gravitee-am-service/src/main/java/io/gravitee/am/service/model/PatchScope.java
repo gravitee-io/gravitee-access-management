@@ -36,6 +36,8 @@ public class PatchScope {
 
     private Optional<Boolean> discovery;
 
+    private Optional<Boolean> parameterized;
+
     public Optional<String> getName() {
         return name;
     }
@@ -76,6 +78,14 @@ public class PatchScope {
         this.discovery = discovery;
     }
 
+    public Optional<Boolean> getParameterized() {
+        return parameterized;
+    }
+
+    public void setParameterized(Optional<Boolean> parameterized) {
+        this.parameterized = parameterized;
+    }
+
     public Scope patch(Scope toPatch) {
         Scope patched = new Scope(toPatch);
         SetterUtils.safeSet(patched::setName,this.getName());
@@ -84,6 +94,7 @@ public class PatchScope {
         SetterUtils.safeSet(patched::setExpiresIn, this.getExpiresIn());
         if(!toPatch.isSystem()){
             SetterUtils.safeSet(patched::setDiscovery, this.getDiscovery(), boolean.class);
+            SetterUtils.safeSet(patched::setParameterized, this.getParameterized(), boolean.class);
         }
         return patched;
     }

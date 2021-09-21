@@ -63,13 +63,20 @@ export class ScopeService {
       'name' : scope.name,
       'description' : scope.description,
       'expiresIn' : scope.expiresIn,
-      'discovery' : scope.discovery
+      'discovery' : scope.discovery,
+      'parameterized' : scope.parameterized
     });
   }
 
   patchDiscovery(domainId, id, discovery): Observable<any> {
     return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
       'discovery' : discovery
+    });
+  }
+
+  patchParameterized(domainId, id, parameterized): Observable<any> {
+    return this.http.patch<any>(this.scopes + domainId + "/scopes/" + id, {
+      'parameterized' : parameterized
     });
   }
 

@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -139,5 +140,9 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
     private void removeScope(String scopeId) {
         logger.info("Domain {} has received scope event, delete scope {}", domain.getName(), scopeId);
         scopes.values().removeIf(scope -> scopeId.equals(scope.getId()));
+    }
+
+    public boolean isParameterizedScope(String scopeKey) {
+        return Optional.ofNullable(this.scopes.get(scopeKey)).map(scope -> scope.isParameterized()).orElse(false);
     }
 }

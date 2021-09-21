@@ -138,6 +138,7 @@ public class ScopesResource extends AbstractResource {
         filteredScope.setName(scope.getName());
         filteredScope.setSystem(scope.isSystem());
         filteredScope.setDiscovery(scope.isDiscovery());
+        filteredScope.setParameterized(scope.isParameterized());
         filteredScope.setDescription(scope.getDescription());
 
         return  filteredScope;

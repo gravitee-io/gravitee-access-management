@@ -132,6 +132,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(s -> s.getDomain().equals(scope.getDomain()));
         testObserver.assertValue(s -> s.getExpiresIn().equals(scope.getExpiresIn()));
         testObserver.assertValue(s -> s.isDiscovery() == scope.isDiscovery());
+        testObserver.assertValue(s -> s.isParameterized() == scope.isParameterized());
         testObserver.assertValue(s -> s.isSystem() == scope.isSystem());
         testObserver.assertValue(s -> s.getIconUri().equals(scope.getIconUri()));
         testObserver.assertValue(s -> s.getKey().equals(scope.getKey()));
@@ -149,6 +150,7 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         scope.setIconUri("http://icon.acme.fr/"+rand);
         scope.setKey("key"+rand);
         scope.setSystem(true);
+        scope.setParameterized(true);
         scope.setCreatedAt(new Date());
         scope.setUpdatedAt(new Date());
         scope.setClaims(Arrays.asList("claim1" + rand, "claim2" + rand));

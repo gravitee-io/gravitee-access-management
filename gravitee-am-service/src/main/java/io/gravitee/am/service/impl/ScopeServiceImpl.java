@@ -125,6 +125,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setIconUri(newScope.getIconUri());
                     scope.setExpiresIn(newScope.getExpiresIn());
                     scope.setDiscovery(newScope.isDiscovery());
+                    scope.setParameterized(newScope.isParameterized());
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
 
@@ -169,6 +170,7 @@ public class ScopeServiceImpl implements ScopeService {
                     scope.setDescription(newScope.getDescription());
                     scope.setExpiresIn(newScope.getExpiresIn());
                     scope.setDiscovery(newScope.isDiscovery());
+                    scope.setParameterized(false);
                     scope.setCreatedAt(new Date());
                     scope.setUpdatedAt(new Date());
                     return scopeRepository.create(scope);
@@ -217,6 +219,9 @@ public class ScopeServiceImpl implements ScopeService {
                     scopeToUpdate.setExpiresIn(updateScope.getExpiresIn());
                     if (!oldScope.isSystem() && updateScope.getDiscovery() != null) {
                         scopeToUpdate.setDiscovery(updateScope.isDiscovery());
+                    }
+                    if (!oldScope.isSystem() && updateScope.getParameterized() != null) {
+                        scopeToUpdate.setParameterized(updateScope.isParameterized());
                     }
                     scopeToUpdate.setIconUri(updateScope.getIconUri());
 

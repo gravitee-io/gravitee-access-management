@@ -20,7 +20,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -219,8 +218,6 @@ public class JdbcApplication {
         private String scope;
         @Column("is_default")
         private boolean defaultScope;
-        @Column("is_parameterized")
-        private boolean parameterized;
         @Column("scope_approval")
         private int scopeApproval;
 
@@ -246,14 +243,6 @@ public class JdbcApplication {
 
         public void setDefaultScope(boolean defaultScope) {
             this.defaultScope = defaultScope;
-        }
-
-        public boolean isParameterized() {
-            return parameterized;
-        }
-
-        public void setParameterized(boolean parameterized) {
-            this.parameterized = parameterized;
         }
 
         public int getScopeApproval() {

@@ -90,6 +90,14 @@ export class ScopeComponent implements OnInit {
     return this.scope.discovery;
   }
 
+  enableParameterizedScope(event) {
+    this.scope.parameterized = event.checked;
+  }
+  
+  isParameterized() {
+    return this.scope.parameterized;
+  }
+
   delete(event) {
     event.preventDefault();
     this.dialogService
