@@ -1,0 +1,36 @@
+# Generate Encrypted Request Object
+
+To generate the encrypted request object of "Case - Nominal - Encrypted Request Object"
+into graviteeio-am-openid-core-request-object-collection.json, use the following code.
+"jwt" variable will contain the signedJwt of the "Case - Nominal - Signed Request Object"
+as it is the same scenario but with signed JWT instead of JWE.
+
+```
+public static void main(String[] args) throws Exception {
+        final String jwt = "eyJra...BIsUZkw";
+        final com.nimbusds.jwt.JWT parse = JWTParser.parse(jwt);
+        final JWK pubKey = JWK.parseFromPEMEncodedObjects("-----BEGIN PUBLIC KEY-----\n" +
+                "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsOVPMlbmEo2MV+4r1TRk\n" +
+                "Uxzal92iz4aiROuZ5uC2+BuZfETjbu6tgAS5Nn4x15YPhXHzV8Cs1Rp1QB5R4XJa\n" +
+                "h2laHBX4IBtu+1yEVIQdcHhMAyn/H+CYDM4RoGkSaHFGuImmhBNZ1X2AiNQSiQvD\n" +
+                "5JFZh+CByhsNVjRbgScrwH0BnhNLpB+mmd+tieCdtrhT1ocU89QnpbI+BoZIQD/l\n" +
+                "4QSFe0yrgFtz4aSdvR58BT195zu1IA0gwxR7bQsZ9tGbu4RRZKwLbe7S0L3PyoaF\n" +
+                "SH3pwq/JYGrbxqZWH4khzaBDgzqvX9OQYYbtTPWff+cqYMl4dgZ4kKPdKFHVrG80\n" +
+                "UwIDAQAB\n" +
+                "-----END PUBLIC KEY-----\n");
+        System.out.printf("");
+
+        JWEAlgorithm alg = JWEAlgorithm.RSA_OAEP_256;
+        EncryptionMethod enc = EncryptionMethod.A128CBC_HS256;
+
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(enc.cekBitLength());
+        SecretKey cek = keyGenerator.generateKey();
+
+        // Encrypt the JWE with the RSA public key + specified AES CEK
+        JWEObject jwe = new JWEObject(
+                new JWEHeader(alg, enc),
+                new Payload(jwt));
+        jwe.encrypt(new RSAEncrypter(pubKey.toRSAKey().toRSAPublicKey(), cek));
+        System.out.println(jwe.serialize());
+```
