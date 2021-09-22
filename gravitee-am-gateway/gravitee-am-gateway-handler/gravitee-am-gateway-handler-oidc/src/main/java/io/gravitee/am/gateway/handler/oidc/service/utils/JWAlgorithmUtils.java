@@ -44,10 +44,11 @@ public class JWAlgorithmUtils {
             JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
     )));
 
-    public static final boolean isCompliantWithFapi(String alg) {
+    public static final boolean isSignAlgCompliantWithFapi(String alg) {
         // ES256 is also authorized by FAPI but not managed by AM
         return JWSAlgorithm.PS256.getName().equals(alg);
     }
+
 
     /**
      * https://tools.ietf.org/html/rfc7518#section-4.1
@@ -68,6 +69,11 @@ public class JWAlgorithmUtils {
 
     )));
 
+    public static final boolean isKeyEncCompliantWithFapiBrazil(String enc) {
+        // RSA_OAP_256 should be used but FAPI Brazil specify RSA_OAEP
+        return RSA_OAEP.getName().equals(enc) || RSA_OAEP_256.getName().equals(enc);
+    }
+
     /**
      * See https://tools.ietf.org/html/rfc7518#section-5.1
      */
@@ -75,6 +81,10 @@ public class JWAlgorithmUtils {
             EncryptionMethod.A128CBC_HS256.getName(), EncryptionMethod.A192CBC_HS384.getName(), EncryptionMethod.A256CBC_HS512.getName(),
             EncryptionMethod.A128GCM.getName(), EncryptionMethod.A192GCM.getName(), EncryptionMethod.A256GCM.getName()
     )));
+
+    public static final boolean isContentEncCompliantWithFapiBrazil(String enc) {
+        return EncryptionMethod.A256GCM.getName().equals(enc);
+    }
 
     /**
      * @return the supported list of userinfo signing algorithm.
@@ -258,11 +268,30 @@ public class JWAlgorithmUtils {
         return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
     }
 
+    public static boolean isValidRequestObjectSigningAlg(String algorithm) {
+        return SUPPORTED_SIGNING_ALG.contains(algorithm);
+    }
+
     public static List<String> getSupportedRequestObjectAlg() {
         return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    public static boolean isValidRequestObjectAlg(String algorithm) {
+        return SUPPORTED_KEY_ENCRYPTION_ALG.contains(algorithm);
+    }
+
+    public static boolean isValidRequestObjectEnc(String algorithm) {
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.contains(algorithm);
     }
 
     public static List<String> getSupportedRequestObjectEnc() {
         return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
     }
+    /**
+     * @return the default userinfo content encryption algorithm when userinfo_encrypted_response_alg is informed
+     */
+    public static String getDefaultRequestObjectEnc() {
+        return EncryptionMethod.A128CBC_HS256.getName();
+    }
+
 }

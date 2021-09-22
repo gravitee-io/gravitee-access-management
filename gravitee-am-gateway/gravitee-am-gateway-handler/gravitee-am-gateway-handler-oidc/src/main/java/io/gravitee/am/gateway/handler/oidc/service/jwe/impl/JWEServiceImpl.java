@@ -31,16 +31,20 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKFilter;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKConverter;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.function.Predicate;
+
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
 
 /**
  *
@@ -54,6 +58,9 @@ public class JWEServiceImpl implements JWEService {
 
     @Autowired
     private JWKService jwkService;
+
+    @Autowired
+    private Domain domain;
 
     @Override
     public Single<String> encryptIdToken(String signedJwt, Client client) {
@@ -130,6 +137,12 @@ public class JWEServiceImpl implements JWEService {
                 JWEObject jweObject = JWEObject.parse(jwt);
 
                 JWEAlgorithm algorithm = jweObject.getHeader().getAlgorithm();
+
+                if (this.domain.useFapiBrazilProfile() &&
+                        !(isKeyEncCompliantWithFapiBrazil(algorithm.getName()) &&
+                                isContentEncCompliantWithFapiBrazil(jweObject.getHeader().getEncryptionMethod().getName()))) {
+                    return Single.error(new InvalidRequestObjectException("Request object must be encrypted using RSA-OAEP with A256GCM"));
+                }
 
                 //RSA decryption
                 if (RSACryptoProvider.SUPPORTED_ALGORITHMS.contains(algorithm)) {

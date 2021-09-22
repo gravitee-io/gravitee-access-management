@@ -48,7 +48,7 @@ import java.util.List;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.redirectMatches;
-import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -201,7 +201,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
            throw new InvalidRequestObjectException("Request object must be signed");
         }
 
-        if (this.domain.usePlainFapiProfile() && !isCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+        if (this.domain.usePlainFapiProfile() && !isSignAlgCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
             throw new InvalidRequestObjectException("Request object must be signed with PS256");
         }
 

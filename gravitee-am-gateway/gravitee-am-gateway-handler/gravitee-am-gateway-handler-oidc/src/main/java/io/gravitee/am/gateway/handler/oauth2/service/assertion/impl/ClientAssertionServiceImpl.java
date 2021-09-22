@@ -48,7 +48,7 @@ import java.util.Date;
 import java.util.List;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.JWT_BEARER;
-import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 
 /**
  * Client assertion as described for <a href="https://tools.ietf.org/html/rfc7521#section-4.2">oauth2 assertion framework</a>
@@ -145,7 +145,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                 return Maybe.error(NOT_VALID);
             }
 
-            if (this.domain.usePlainFapiProfile() && !isCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+            if (this.domain.usePlainFapiProfile() && !isSignAlgCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
                 return Maybe.error(new InvalidClientException("JWT Assertion must be signed with PS256"));
             }
 

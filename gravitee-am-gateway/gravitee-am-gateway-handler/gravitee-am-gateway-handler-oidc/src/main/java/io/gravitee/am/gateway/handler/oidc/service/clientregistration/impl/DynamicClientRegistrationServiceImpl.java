@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 
+import com.google.common.base.Strings;
 import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jwt.JWTParser;
+import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
@@ -28,6 +31,7 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicCli
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
@@ -38,25 +42,30 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
+import io.reactivex.*;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.time.Instant;
 import java.util.*;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -65,6 +74,12 @@ import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 public class DynamicClientRegistrationServiceImpl implements DynamicClientRegistrationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DynamicClientRegistrationServiceImpl.class);
+    public static final int FIVE_MINUTES_IN_SEC = 300;
+    public static final String FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI = "openid.fapi.openbanking.brazil.directory.jwks_uri";
+    public static final String OPENID_DCR_ACCESS_TOKEN_VALIDITY = "openid.dcr.access_token.validity";
+    public static final String OPENID_DCR_REFRESH_TOKEN_VALIDITY = "openid.dcr.refresh_token.validity";
+    public static final String OPENID_DCR_ID_TOKEN_VALIDITY = "openid.dcr.id_token.validity";
+    public static final int FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY = 900;
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -82,6 +97,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     private JWKService jwkService;
 
     @Autowired
+    private JWSService jwsService;
+
+    @Autowired
     private JWTService jwtService;
 
     @Autowired
@@ -96,6 +114,9 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Autowired
     private EmailTemplateService emailTemplateService;
+
+    @Autowired
+    private Environment environment;
 
     @Override
     public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
@@ -145,8 +166,16 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .map(req -> req.patch(client))
                 .flatMap(this::applyDefaultIdentityProvider)
                 .flatMap(this::applyDefaultCertificateProvider)
+                .flatMap(this::applyAccessTokenValidity)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
                 .flatMap(clientService::create);
+    }
+
+    private Single<Client> applyAccessTokenValidity(Client client) {
+        client.setAccessTokenValiditySeconds(environment.getProperty(OPENID_DCR_ACCESS_TOKEN_VALIDITY, Integer.class, domain.useFapiBrazilProfile() ? FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY : Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS));
+        client.setRefreshTokenValiditySeconds(environment.getProperty(OPENID_DCR_REFRESH_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS));
+        client.setIdTokenValiditySeconds(environment.getProperty(OPENID_DCR_ID_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS));
+        return Single.just(client);
     }
 
     /**
@@ -294,7 +323,97 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateTlsClientAuth)
                 .flatMap(this::validateSelfSignedClientAuth)
                 .flatMap(this::validateAuthorizationSigningAlgorithm)
-                .flatMap(this::validateAuthorizationEncryptionAlgorithm);
+                .flatMap(this::validateAuthorizationEncryptionAlgorithm)
+                .flatMap(this::validateRequestObjectSigningAlgorithm)
+                .flatMap(this::validateRequestObjectEncryptionAlgorithm)
+                .flatMap(this::enforceWithSoftwareStatement);
+    }
+
+    private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
+        if (this.domain.useFapiBrazilProfile()) {
+            if (request.getSoftwareStatement() == null || request.getSoftwareStatement().isEmpty()) {
+                return Single.error(new InvalidClientMetadataException("software_statement is required"));
+            }
+
+            final String directoryJwksUri = environment.getProperty(FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI);
+            if (Strings.isNullOrEmpty(directoryJwksUri)) {
+                return Single.error(new InvalidClientMetadataException("No jwks_uri for OpenBanking Directory, unable to validate software_statement"));
+            }
+
+            try {
+
+                com.nimbusds.jwt.JWT jwt = JWTParser.parse(request.getSoftwareStatement().get());
+                if (jwt instanceof SignedJWT) {
+                    final SignedJWT signedJWT = (SignedJWT) jwt;
+                    if (isSignAlgCompliantWithFapi(signedJWT.getHeader().getAlgorithm().getName())) {
+                        return jwkService.getKeys(directoryJwksUri)
+                                .flatMap(jwk -> jwkService.getKey(jwk, signedJWT.getHeader().getKeyID()))
+                                .switchIfEmpty(Single.error(new TechnicalManagementException("Invalid jwks_uri for OpenBanking Directory")))
+                                .filter(jwk -> jwsService.isValidSignature(signedJWT, jwk))
+                                .switchIfEmpty(Single.error(new InvalidClientMetadataException("Invalid signature for software_statement")))
+                                .map(__ -> {
+                                    LOGGER.debug("software_statement is valid, check claims regarding the registration request information");
+                                    JSONObject softwareStatement = signedJWT.getPayload().toJSONObject();
+                                    final Number iat = softwareStatement.getAsNumber("iat");
+                                    if (iat == null || (Instant.now().getEpochSecond() - (iat.longValue())) > FIVE_MINUTES_IN_SEC) {
+                                        throw new InvalidClientMetadataException("software_statement older than 5 minutes");
+                                    }
+
+                                    if (request.getJwks() != null && !request.getJwks().isEmpty()) {
+                                        throw new InvalidClientMetadataException("jwks is forbidden, prefer jwks_uri");
+                                    }
+
+                                    if (request.getJwksUri() == null || request.getJwksUri().isEmpty()) {
+                                        throw new InvalidClientMetadataException("jwks_uri is required");
+                                    }
+
+                                    if (!request.getJwksUri().get().equals(softwareStatement.getAsString("software_jwks_uri"))) {
+                                        throw new InvalidClientMetadataException("jwks_uri doesn't match the software_jwks_uri");
+                                    }
+
+                                    final Object software_redirect_uris = softwareStatement.get("software_redirect_uris");
+                                    if (software_redirect_uris != null) {
+                                        if (request.getRedirectUris() == null || request.getRedirectUris().isEmpty()) {
+                                            throw new InvalidClientMetadataException("redirect_uris are missing");
+                                        }
+
+                                        final List<String> redirectUris = request.getRedirectUris().get();
+                                        if (software_redirect_uris instanceof JSONArray) {
+                                            redirectUris.forEach(uri -> {
+                                                if (!((JSONArray) software_redirect_uris).contains(uri)) {
+                                                    throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
+                                                }
+                                            });
+                                        } else if (software_redirect_uris instanceof String && (redirectUris.size() > 1 || !software_redirect_uris.equals(redirectUris.get(0)))) {
+                                            throw new InvalidClientMetadataException("redirect_uris contains unknown uri from software_statement");
+                                        }
+                                    }
+
+                                    if (request.getTokenEndpointAuthMethod() != null && !request.getTokenEndpointAuthMethod().isEmpty()) {
+
+                                        if (!(ClientAuthenticationMethod.SELF_SIGNED_TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
+                                                ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) ||
+                                                ClientAuthenticationMethod.PRIVATE_KEY_JWT.equals(request.getTokenEndpointAuthMethod().get()))) {
+                                            throw new InvalidClientMetadataException("invalid token_endpoint_auth_method");
+                                        }
+
+                                        if (ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(request.getTokenEndpointAuthMethod().get()) && (request.getTlsClientAuthSubjectDn() == null || request.getTlsClientAuthSubjectDn().isEmpty())) {
+                                            throw new InvalidClientMetadataException("tls_client_auth_subject_dn is required with tls_client_auth as client authentication method");
+                                        }
+                                    }
+
+                                    return request;
+                                });
+                    }
+                }
+
+                return Single.error(new InvalidClientMetadataException("software_statement isn't signed or doesn't use PS256"));
+
+            } catch (ParseException pe) {
+                return Single.error(new InvalidClientMetadataException("signature of software_statement is invalid"));
+            }
+        }
+        return Single.just(request);
     }
 
     /**
@@ -375,6 +494,60 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         }
         return Single.just(request);
     }
+
+
+    private Single<DynamicClientRegistrationRequest> validateRequestObjectSigningAlgorithm(DynamicClientRegistrationRequest request) {
+        //if userinfo_signed_response_alg is provided, it must be valid.
+        if(request.getRequestObjectSigningAlg() !=null && request.getRequestObjectSigningAlg().isPresent()) {
+            if(!JWAlgorithmUtils.isValidRequestObjectSigningAlg(request.getRequestObjectSigningAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported request object signing algorithm"));
+            }
+
+            if (this.domain.usePlainFapiProfile() && !isSignAlgCompliantWithFapi(request.getRequestObjectSigningAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("request_object_signing_alg shall be PS256"));
+            }
+        }
+
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateRequestObjectEncryptionAlgorithm(DynamicClientRegistrationRequest request) {
+        if(request.getRequestObjectEncryptionEnc() !=null && request.getRequestObjectEncryptionAlg()==null) {
+            return Single.error(new InvalidClientMetadataException("When request_object_encryption_enc is included, request_object_encryption_alg MUST also be provided"));
+        }
+
+        //if userinfo_encrypted_response_alg is provided, it must be valid.
+        if(request.getRequestObjectEncryptionAlg()!=null && request.getRequestObjectEncryptionAlg().isPresent()) {
+            if(!domain.useFapiBrazilProfile() && !JWAlgorithmUtils.isValidRequestObjectAlg(request.getRequestObjectEncryptionAlg().get())) {
+                return Single.error(new InvalidClientMetadataException("Unsupported request_object_encryption_alg value"));
+            }
+
+            if(request.getRequestObjectEncryptionEnc()!=null && request.getRequestObjectEncryptionEnc().isPresent()) {
+                if(!JWAlgorithmUtils.isValidRequestObjectEnc(request.getRequestObjectEncryptionEnc().get())) {
+                    return Single.error(new InvalidClientMetadataException("Unsupported request_object_encryption_enc value"));
+                }
+            }
+            else {
+                //Apply default value if request_object_encryption_alg is informed and not request_object_encryption_enc.
+                request.setRequestObjectEncryptionEnc(Optional.of(JWAlgorithmUtils.getDefaultRequestObjectEnc()));
+            }
+        }
+
+        if (domain.useFapiBrazilProfile()) {
+            // for Fapi Brazil, request object MUST be encrypted using RSA-OAEP with A256GCM
+            // if the request object is passed by_value (requiredPARRequest set to false)
+            final boolean requestModeByValue = request.getRequireParRequest() != null && !request.getRequireParRequest().isEmpty() && !request.getRequireParRequest().get();
+            if (requestModeByValue &&
+                    ((request.getRequestObjectEncryptionEnc() == null || request.getRequestObjectEncryptionEnc().isEmpty()) ||
+                            (request.getRequestObjectEncryptionAlg() == null || request.getRequestObjectEncryptionAlg().isEmpty()) ||
+                            !(isKeyEncCompliantWithFapiBrazil(request.getRequestObjectEncryptionAlg().get()) && isContentEncCompliantWithFapiBrazil(request.getRequestObjectEncryptionEnc().get())))) {
+                throw new InvalidClientMetadataException("Request object must be encrypted using RSA-OAEP with A256GCM");
+            }
+        }
+
+        return Single.just(request);
+    }
+
 
     private Single<DynamicClientRegistrationRequest> validateIdTokenSigningAlgorithm(DynamicClientRegistrationRequest request) {
         //if userinfo_signed_response_alg is provided, it must be valid.
