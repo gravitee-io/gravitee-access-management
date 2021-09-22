@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
-import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -24,6 +27,8 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.Dynam
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
+import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
+import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -46,6 +51,8 @@ import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,12 +60,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.*;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Matchers.any;
@@ -71,6 +82,8 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class DynamicClientRegistrationServiceTest {
 
+    public static final String DUMMY_JWKS_URI = "https://somewhere/jwks";
+    public static final String DUMMY_REDIRECTURI = "https://redirecturi";
     @InjectMocks
     private DynamicClientRegistrationService dcrService = new DynamicClientRegistrationServiceImpl();
 
@@ -90,6 +103,9 @@ public class DynamicClientRegistrationServiceTest {
     private JWKService jwkService;
 
     @Mock
+    private JWSService jwsService;
+
+    @Mock
     private JWTService jwtService;
 
     @Mock
@@ -107,6 +123,9 @@ public class DynamicClientRegistrationServiceTest {
     @Mock
     private EmailTemplateService emailTemplateService;
 
+    @Mock
+    private Environment environment;
+
     private static final String DOMAIN_ID = "domain";
     private static final String BASE_PATH = "";
     private static final String ID_SOURCE = "123";
@@ -114,6 +133,8 @@ public class DynamicClientRegistrationServiceTest {
 
     @Before
     public void setUp() {
+        reset(domain, environment);
+
         when(domain.getId()).thenReturn(DOMAIN_ID);
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
@@ -134,6 +155,12 @@ public class DynamicClientRegistrationServiceTest {
             toRenew.setClientSecret("secretRenewed");
             return Single.just(toRenew);
         });
+
+        when(domain.useFapiBrazilProfile()).thenReturn(false);
+        when(environment.getProperty(OPENID_DCR_ACCESS_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS)).thenReturn(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
+        when(environment.getProperty(OPENID_DCR_ACCESS_TOKEN_VALIDITY, Integer.class, FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY)).thenReturn(FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY);
+        when(environment.getProperty(OPENID_DCR_REFRESH_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS)).thenReturn(1000);
+        when(environment.getProperty(OPENID_DCR_ID_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_ID_TOKEN_VALIDITY_SECONDS)).thenReturn(1100);
     }
 
     @Test
@@ -899,4 +926,407 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(client -> client.getAuthorizationSignedResponseAlg().equals(JWSAlgorithm.RS256.getName()));
         verify(clientService, times(1)).create(any());
     }
+
+    @Test
+    public void create_unsupportedRequestObjectSigningAlg() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectSigningAlg(Optional.of("unknownSigningAlg"));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported request object signing algorithm");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void fapi_create_unsupportedRequestObjectSigningAlg() {
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectSigningAlg(Optional.of(JWSAlgorithm.RS256.getName()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("request_object_signing_alg shall be PS256");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_missingRequestObjectEncryptionAlgorithm() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectEncryptionAlg(null);
+        request.setRequestObjectEncryptionEnc(Optional.of(JWAlgorithmUtils.getDefaultRequestObjectEnc()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("When request_object_encryption_enc is included, request_object_encryption_alg MUST also be provided");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_unsupportedRequestObjectEncryptionAlgorithm() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectEncryptionAlg(Optional.of("unknownKeyAlg"));
+        request.setRequestObjectEncryptionEnc(Optional.of(JWAlgorithmUtils.getDefaultRequestObjectEnc()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported request_object_encryption_alg value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_supportRequestObjectEncryptionAlgorithm() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(JWAlgorithmUtils.getDefaultRequestObjectEnc()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void create_unsupportedRequestObjectContentEncryptionAlgorithm() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of("unsupported"));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Unsupported request_object_encryption_enc value");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_unsupportRequestObjectEncryptionAlgorithm_FapiBrazil() {
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(JWAlgorithmUtils.getDefaultRequestObjectEnc()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Request object must be encrypted using RSA-OAEP with A256GCM");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_noOpenBanking_JWKS_URI_FapiBrazil() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setSoftwareStatement(Optional.of("jws"));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(null);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("No jwks_uri for OpenBanking Directory, unable to validate software_statement");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_invalidSignatureAlg() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.RS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("software_statement isn't signed or doesn't use PS256");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_invalidSignature() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now().minus(6, ChronoUnit.MINUTES))));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(false);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("Invalid signature for software_statement");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_iatToOld() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now().minus(6, ChronoUnit.MINUTES))));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("software_statement older than 5 minutes");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_jwks_forbidden() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        final JWKSet jwkSet = new JWKSet();
+        jwkSet.setKeys(Arrays.asList(new io.gravitee.am.model.jose.RSAKey()));
+        request.setJwks(Optional.of(jwkSet));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("jwks is forbidden, prefer jwks_uri");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_missing_jwks_uri() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("jwks_uri is required");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_invalid_jwks_uri() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of("https://invalid"));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("jwks_uri doesn't match the software_jwks_uri");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_missing_redirect_uris() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+
+        request.setRedirectUris(Optional.empty());
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("redirect_uris are missing");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_SoftwareStatement_invalid_redirect_uris() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+
+        request.setRedirectUris(Optional.of(Arrays.asList("https://invalid")));
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("redirect_uris contains unknown uri from software_statement");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_tlsClientAuth_missingDN() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.TLS_CLIENT_AUTH));
+        request.setTlsClientAuthSanEmail(Optional.of("email@domain.net"));
+        request.setTlsClientAuthSubjectDn(Optional.empty());
+        request.setTlsClientAuthSanDns(Optional.empty());
+        request.setTlsClientAuthSanIp(Optional.empty());
+        request.setTlsClientAuthSanUri(Optional.empty());
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertError(InvalidClientMetadataException.class);
+        testObserver.assertErrorMessage("tls_client_auth_subject_dn is required with tls_client_auth as client authentication method");
+        testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void create_FapiBrazil_success() throws Exception {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+
+        request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.TLS_CLIENT_AUTH));
+        request.setTlsClientAuthSubjectDn(Optional.of("Subject DN"));
+        request.setTlsClientAuthSanEmail(Optional.empty());
+        request.setTlsClientAuthSanDns(Optional.empty());
+        request.setTlsClientAuthSanIp(Optional.empty());
+        request.setTlsClientAuthSanUri(Optional.empty());
+
+        final RSAKey rsaKey = generateRSAKey();
+        request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
+
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(environment.getProperty(DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DIRECTORY_JWKS_URI)).thenReturn(DUMMY_JWKS_URI);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(new io.gravitee.am.model.jose.RSAKey()));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(clientService).create(argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
+                && client.getRefreshTokenValiditySeconds() == 1000
+                && client.getIdTokenValiditySeconds() == 1100));
+    }
+
+    private RSAKey generateRSAKey() throws Exception {
+        return new RSAKeyGenerator(2048)
+                .keyID("123")
+                .generate();
+    }
+
+    private String generateSoftwareStatement(RSAKey rsaJWK, JWSAlgorithm jwsAlg, Instant iat) throws Exception {
+        JWSSigner signer = new RSASSASigner(rsaJWK);
+
+        final JSONObject jsonObject = new JSONObject();
+        jsonObject.put("iat", iat.getEpochSecond());
+        jsonObject.put("software_jwks_uri", DUMMY_JWKS_URI);
+        final JSONArray redirectUris = new JSONArray();
+        redirectUris.add(DUMMY_REDIRECTURI);
+        jsonObject.put("software_redirect_uris", redirectUris);
+
+        JWSObject jwsObject = new JWSObject(
+                new JWSHeader.Builder(jwsAlg).keyID(rsaJWK.getKeyID()).build(),
+                new Payload(jsonObject));
+
+        jwsObject.sign(signer);
+
+        return jwsObject.serialize();
+    }
+
 }

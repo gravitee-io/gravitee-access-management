@@ -46,7 +46,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
-import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isCompliantWithFapi;
+import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.isSignAlgCompliantWithFapi;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -194,7 +194,7 @@ public class RequestObjectServiceImpl implements RequestObjectService {
             return Completable.error(new InvalidRequestObjectException("Request object must be signed"));
         }
 
-        if (this.domain.usePlainFapiProfile() && !isCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
+        if (this.domain.usePlainFapiProfile() && !isSignAlgCompliantWithFapi(jwt.getHeader().getAlgorithm().getName())) {
             return Completable.error(new InvalidRequestObjectException("Request object must be signed with PS256"));
         }
 

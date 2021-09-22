@@ -114,6 +114,9 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("request_object_encryption_enc")
     private Optional<String> requestObjectEncryptionEnc;
 
+    @JsonProperty("require_pushed_authorization_requests")
+    private Optional<Boolean> requireParRequest;
+
     @JsonProperty("token_endpoint_auth_method")
     private Optional<String> tokenEndpointAuthMethod;
 
@@ -553,6 +556,14 @@ public class DynamicClientRegistrationRequest {
 
     public void setPostLogoutRedirectUris(Optional<List<String>> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
+    }
+
+    public Optional<Boolean> getRequireParRequest() {
+        return requireParRequest;
+    }
+
+    public void setRequireParRequest(Optional<Boolean> requireParRequest) {
+        this.requireParRequest = requireParRequest;
     }
 
     @Override
