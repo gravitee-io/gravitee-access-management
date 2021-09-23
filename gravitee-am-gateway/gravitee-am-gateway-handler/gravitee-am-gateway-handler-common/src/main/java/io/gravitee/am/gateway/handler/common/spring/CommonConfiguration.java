@@ -41,6 +41,8 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenService;
 import io.gravitee.am.gateway.handler.common.oauth2.impl.IntrospectionTokenServiceImpl;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
+import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
@@ -85,6 +87,11 @@ public class CommonConfiguration {
                 .setTrustAll(Boolean.valueOf(environment.getProperty("oidc.http.client.trustAll", "true")));
 
         return WebClient.create(vertx,options);
+    }
+
+    @Bean
+    public RuleEngine ruleEngine() {
+        return new SpELRuleEngine();
     }
 
     @Bean

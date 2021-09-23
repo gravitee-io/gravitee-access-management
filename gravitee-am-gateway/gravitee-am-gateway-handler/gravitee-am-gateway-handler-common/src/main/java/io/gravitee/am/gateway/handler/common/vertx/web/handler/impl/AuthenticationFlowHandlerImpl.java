@@ -16,9 +16,12 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
 import io.gravitee.am.model.Domain;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -39,6 +42,9 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
+    @Autowired
+    private RuleEngine ruleEngine;
+
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
@@ -46,8 +52,8 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
-        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll")));
-        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge")));
+        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine));
+        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine));
         return new AuthenticationFlowChainHandler(steps);
     }
 }

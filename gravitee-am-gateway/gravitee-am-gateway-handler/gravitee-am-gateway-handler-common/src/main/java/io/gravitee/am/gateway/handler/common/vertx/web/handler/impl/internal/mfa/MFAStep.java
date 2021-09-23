@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
+package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -29,40 +33,19 @@ import org.springframework.expression.ParseException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
+import java.util.Map;
+import java.util.function.Predicate;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class MFAStep extends AuthenticationFlowStep {
 
-    private static final Logger logger = LoggerFactory.getLogger(MFAStep.class);
+    protected final RuleEngine ruleEngine;
 
-    public MFAStep(Handler<RoutingContext> handler) {
+    MFAStep(Handler<RoutingContext> handler, RuleEngine ruleEngine) {
         super(handler);
-    }
-
-    protected boolean isUserStronglyAuth(RoutingContext routingContext) {
-        return routingContext.session().get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY) != null &&
-                routingContext.session().get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY).equals(true);
-    }
-
-    protected boolean isMfaSkipped(RoutingContext routingContext) {
-        return routingContext.session().get(ConstantKeys.MFA_SKIPPED_KEY) != null &&
-                routingContext.session().get(ConstantKeys.MFA_SKIPPED_KEY).equals(true);
-    }
-
-    protected boolean isStepUpAuthentication(RoutingContext routingContext, String selectionRule) {
-        try {
-            Expression expression = new SpelExpressionParser().parseExpression(selectionRule);
-
-            StandardEvaluationContext evaluation = new StandardEvaluationContext();
-            evaluation.setVariable("request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
-            evaluation.setVariable("context", new EvaluableExecutionContext(routingContext.data()));
-
-            return expression.getValue(evaluation, Boolean.class);
-        } catch (ParseException | EvaluationException ex) {
-            logger.debug("Unable to evaluate the following expression : {}", selectionRule, ex);
-            return false;
-        }
+        this.ruleEngine = ruleEngine;
     }
 }

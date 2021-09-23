@@ -23,6 +23,7 @@ public class MFASettings {
 
     private String loginRule;
     private String stepUpAuthenticationRule;
+    private String adaptiveAuthenticationRule;
 
     public MFASettings() {
     }
@@ -30,6 +31,7 @@ public class MFASettings {
     public MFASettings(MFASettings other) {
         this.loginRule = other.loginRule;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
+        this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
     }
 
     public String getLoginRule() {
@@ -46,5 +48,13 @@ public class MFASettings {
 
     public void setStepUpAuthenticationRule(String stepUpAuthenticationRule) {
         this.stepUpAuthenticationRule = stepUpAuthenticationRule;
+    }
+
+    public String getAdaptiveAuthenticationRule() {
+        return adaptiveAuthenticationRule;
+    }
+
+    public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
+        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
     }
 }

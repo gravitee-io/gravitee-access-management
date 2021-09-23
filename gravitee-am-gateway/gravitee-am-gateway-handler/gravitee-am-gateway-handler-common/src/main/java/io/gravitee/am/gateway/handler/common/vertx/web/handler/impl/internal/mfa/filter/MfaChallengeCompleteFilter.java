@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
+
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.vertx.reactivex.ext.web.Session;
+
+import java.util.function.Supplier;
+
+import static java.lang.Boolean.TRUE;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthenticationFlowStep {
+public class MfaChallengeCompleteFilter implements Supplier<Boolean> {
 
-    private final Handler<RoutingContext> handler;
+    private final Session session;
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
-        this.handler = handler;
+    public MfaChallengeCompleteFilter(Session session) {
+        this.session = session;
     }
 
-    public Handler<RoutingContext> handler() {
-        return handler;
+    @Override
+    public Boolean get() {
+        return TRUE.equals(session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY));
     }
-
-    public abstract void execute(RoutingContext routingContext, AuthenticationFlowChain flow);
 }
