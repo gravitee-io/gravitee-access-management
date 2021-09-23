@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+package io.gravitee.am.gateway.handler.common.ruleengine;
+
+import java.util.Map;
+import java.util.Optional;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthenticationFlowStep {
+public interface RuleEngine {
 
-    private final Handler<RoutingContext> handler;
+    <E> E evaluate(String rule, Map<String, Object> parameters, Class<E> clazz, E defaultValue);
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
-        this.handler = handler;
-    }
-
-    public Handler<RoutingContext> handler() {
-        return handler;
-    }
-
-    public abstract void execute(RoutingContext routingContext, AuthenticationFlowChain flow);
 }

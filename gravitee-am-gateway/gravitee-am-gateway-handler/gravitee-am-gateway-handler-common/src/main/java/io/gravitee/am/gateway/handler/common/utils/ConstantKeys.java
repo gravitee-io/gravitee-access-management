@@ -103,4 +103,8 @@ public interface ConstantKeys {
     String REQUEST_URI_ID_KEY = "requestUriId";
     String REQUEST_OBJECT_FROM_URI = "request-object-from-uri";
 
+    //geoip
+    String GEOIP_KEY = "geoip";
+    //login attempts
+    String LOGIN_ATTEMPT_KEY = "login_attempts";
 }

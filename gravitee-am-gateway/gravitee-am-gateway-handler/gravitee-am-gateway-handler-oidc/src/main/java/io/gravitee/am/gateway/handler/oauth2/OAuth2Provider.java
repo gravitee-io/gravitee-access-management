@@ -274,7 +274,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // Pushed Authorization Request
-        oauth2Router.route(HttpMethod.POST,"/par")
+        oauth2Router.route(HttpMethod.POST, "/par")
                 .handler(clientAuthHandler)
                 .handler(new PushedAuthorizationRequestEndpoint(parService));
 

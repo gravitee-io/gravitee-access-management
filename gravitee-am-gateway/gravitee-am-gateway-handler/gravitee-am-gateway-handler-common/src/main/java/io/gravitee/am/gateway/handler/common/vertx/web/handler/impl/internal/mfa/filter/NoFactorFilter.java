@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
+
+import java.util.Set;
+import java.util.function.Supplier;
+
+import static java.util.Objects.isNull;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthenticationFlowStep {
+public class NoFactorFilter implements Supplier<Boolean> {
 
-    private final Handler<RoutingContext> handler;
+    private final Set<String> factors;
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
-        this.handler = handler;
+    public NoFactorFilter(Set<String> factors) {
+        this.factors = factors;
     }
 
-    public Handler<RoutingContext> handler() {
-        return handler;
+    @Override
+    public Boolean get() {
+        return isNull(factors) || factors.isEmpty();
     }
-
-    public abstract void execute(RoutingContext routingContext, AuthenticationFlowChain flow);
 }

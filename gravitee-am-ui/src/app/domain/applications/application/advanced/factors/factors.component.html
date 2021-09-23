@@ -65,8 +65,26 @@
         <div *ngIf="hasFactors()" class="gv-form-section">
           <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
+              <h5>Adaptive MFA</h5>
+              <button mat-icon-button (click)="openAMFADialog($event)"><mat-icon>info_outline</mat-icon></button>
+            </div>
+            <small>Adaptive MFA skips Multi-factor authentication based on the user's information and enforces factors otherwise.</small>
+            <small class="danger">You need to install the <b>gravitee-service-geoip</b> plugin to use the geoip based variables.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <input matInput placeholder="Adaptive MFA rule" name="adaptiveMfaRule" [(ngModel)]="adaptiveMfaRule" (ngModelChange)="formChanged = true;" />
+            <mat-hint>
+              MFA challenge page will be displayed if the condition above is <b>false</b> in addition to the login step.
+            </mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="hasFactors()" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <div fxLayout="row" style="align-items: center;">
               <h5 style="margin: 0;">Step up authentication</h5>
-              <button mat-icon-button (click)="openDialog($event)"><mat-icon>info_outline</mat-icon></button>
+              <button mat-icon-button (click)="openStepUpDialog($event)"><mat-icon>info_outline</mat-icon></button>
             </div>
             <small>Step up authentication may be required in certain situations where it is asked to provide access to a resource that is determined to be very sensitive.</small>
             <mat-divider></mat-divider>

@@ -279,8 +279,9 @@ import {
   ApplicationMembershipsDialog
 } from './domain/applications/application/advanced/memberships/memberships.component';
 import {
+  AdaptiveMfaDialog,
   ApplicationFactorsComponent,
-  MfaStepUpDialog
+  MfaStepUpDialog,
 } from './domain/applications/application/advanced/factors/factors.component';
 import {ManagementRolesComponent} from './settings/management/roles/roles.component';
 import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
@@ -581,6 +582,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     BotDetectionComponent,
     BotDetectionFormComponent,
     MfaStepUpDialog,
+    AdaptiveMfaDialog,
     GvFormControlDirective
   ],
   imports: [

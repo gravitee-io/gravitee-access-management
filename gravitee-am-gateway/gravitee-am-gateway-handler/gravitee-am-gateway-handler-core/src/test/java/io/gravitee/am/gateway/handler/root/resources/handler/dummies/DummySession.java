@@ -13,26 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
+
+import io.vertx.reactivex.ext.web.Session;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthenticationFlowStep {
+public class DummySession extends Session {
 
-    private final Handler<RoutingContext> handler;
+    private final Map<String, Object> data = new HashMap<>();
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
-        this.handler = handler;
+    public DummySession() {
+        super(null);
     }
 
-    public Handler<RoutingContext> handler() {
-        return handler;
+    @Override
+    public <T> T get(String key) {
+        return (T) data.get(key);
     }
 
-    public abstract void execute(RoutingContext routingContext, AuthenticationFlowChain flow);
+    @Override
+    public Session put(String key, Object obj) {
+        data.put(key, obj);
+        return this;
+    }
 }

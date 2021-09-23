@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
-import io.vertx.core.Handler;
-import io.vertx.reactivex.ext.web.RoutingContext;
+package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
+
+import io.vertx.reactivex.core.http.HttpServerRequest;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public abstract class AuthenticationFlowStep {
+public class MockHttpServerRequest extends HttpServerRequest {
 
-    private final Handler<RoutingContext> handler;
+    private final DummyHttpRequest dummyHttpRequest = new DummyHttpRequest();
 
-    public AuthenticationFlowStep(Handler<RoutingContext> handler) {
-        this.handler = handler;
+    public MockHttpServerRequest() {
+        super(null);
     }
 
-    public Handler<RoutingContext> handler() {
-        return handler;
+    @Override
+    public io.vertx.core.http.HttpServerRequest getDelegate() {
+        return dummyHttpRequest;
     }
 
-    public abstract void execute(RoutingContext routingContext, AuthenticationFlowChain flow);
+
+
 }

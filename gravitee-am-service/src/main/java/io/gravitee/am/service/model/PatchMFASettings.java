@@ -28,6 +28,7 @@ public class PatchMFASettings {
 
     private Optional<String> loginRule;
     private Optional<String> stepUpAuthenticationRule;
+    private Optional<String> adaptiveAuthenticationRule;
 
     public Optional<String> getLoginRule() {
         return loginRule;
@@ -45,10 +46,19 @@ public class PatchMFASettings {
         this.stepUpAuthenticationRule = stepUpAuthenticationRule;
     }
 
+    public Optional<String> getAdaptiveAuthenticationRule() {
+        return adaptiveAuthenticationRule;
+    }
+
+    public void setAdaptiveAuthenticationRule(Optional<String> adaptiveAuthenticationRule) {
+        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
+    }
+
     public MFASettings patch(MFASettings _toPatch) {
         MFASettings toPatch = _toPatch == null ? new MFASettings() : new MFASettings(_toPatch);
         SetterUtils.safeSet(toPatch::setLoginRule, this.getLoginRule());
         SetterUtils.safeSet(toPatch::setStepUpAuthenticationRule, this.getStepUpAuthenticationRule());
+        SetterUtils.safeSet(toPatch::setAdaptiveAuthenticationRule, this.getAdaptiveAuthenticationRule());
         return toPatch;
     }
 }

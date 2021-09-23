@@ -25,6 +25,7 @@ public class MFASettingsMongo {
 
     private String loginRule;
     private String stepUpAuthenticationRule;
+    private String adaptiveAuthenticationRule;
 
     public String getLoginRule() {
         return loginRule;
@@ -42,10 +43,19 @@ public class MFASettingsMongo {
         this.stepUpAuthenticationRule = stepUpAuthenticationRule;
     }
 
+    public String getAdaptiveAuthenticationRule() {
+        return adaptiveAuthenticationRule;
+    }
+
+    public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
+        this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
+    }
+
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
+        mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
         return mfaSettings;
     }
 
@@ -57,6 +67,7 @@ public class MFASettingsMongo {
         MFASettingsMongo mfaSettingsMongo = new MFASettingsMongo();
         mfaSettingsMongo.setLoginRule(mfaSettings.getLoginRule());
         mfaSettingsMongo.setStepUpAuthenticationRule(mfaSettings.getStepUpAuthenticationRule());
+        mfaSettingsMongo.setAdaptiveAuthenticationRule(mfaSettings.getAdaptiveAuthenticationRule());
         return mfaSettingsMongo;
     }
 }

@@ -46,6 +46,7 @@ export class ApplicationFactorsComponent implements OnInit {
   factors: any[];
   editMode: boolean;
   mfaStepUpRule: string;
+  adaptiveMfaRule: string;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -60,6 +61,7 @@ export class ApplicationFactorsComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     const applicationMfaSettings = this.application.settings == null ? {} : this.application.settings.mfa || {};
     this.mfaStepUpRule = applicationMfaSettings.stepUpAuthenticationRule;
+    this.adaptiveMfaRule = applicationMfaSettings.adaptiveAuthenticationRule;
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
   }
@@ -68,7 +70,7 @@ export class ApplicationFactorsComponent implements OnInit {
     const data: any = {};
     data.factors = this.application.factors;
     data.settings = {};
-    data.settings.mfa = { 'stepUpAuthenticationRule': this.mfaStepUpRule };
+    data.settings.mfa = { 'stepUpAuthenticationRule': this.mfaStepUpRule, 'adaptiveAuthenticationRule' : this.adaptiveMfaRule };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
       this.formChanged = false;
@@ -108,9 +110,14 @@ export class ApplicationFactorsComponent implements OnInit {
     return 'Custom';
   }
 
-  openDialog(event) {
+  openStepUpDialog(event) {
     event.preventDefault();
     this.dialog.open(MfaStepUpDialog, { width : '700px' });
+  }
+
+  openAMFADialog(event) {
+    event.preventDefault();
+    this.dialog.open(AdaptiveMfaDialog, { width : '700px' });
   }
 }
 
@@ -120,4 +127,12 @@ export class ApplicationFactorsComponent implements OnInit {
 })
 export class MfaStepUpDialog {
   constructor(public dialogRef: MatDialogRef<MfaStepUpDialog>) {}
+}
+
+@Component({
+  selector: 'adaptive-mfa-dialog',
+  templateUrl: './dialog/adaptive-mfa-info.component.html',
+})
+export class AdaptiveMfaDialog {
+  constructor(public dialogRef: MatDialogRef<AdaptiveMfaDialog>) {}
 }
