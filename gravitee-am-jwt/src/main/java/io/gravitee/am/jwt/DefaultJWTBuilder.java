@@ -66,7 +66,7 @@ public class DefaultJWTBuilder implements JWTBuilder {
         } else {
             throw new InvalidKeyException("No matching JWT signer for key : " + key);
         }
-        header = new JWSHeader.Builder(new JWSAlgorithm(signatureAlgorithm)).keyID(keyId).build();
+        header = new JWSHeader.Builder(new JWSAlgorithm(signatureAlgorithm)).keyID(keyId).type(JOSEObjectType.JWT).build();
     }
 
     public DefaultJWTBuilder(final Key key,
