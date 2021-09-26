@@ -18,8 +18,6 @@ package io.gravitee.am.management.handlers.management.api.authentication.manager
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.IdentityProvider;
 
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,7 +28,4 @@ public interface IdentityProviderManager {
     AuthenticationProvider get(String id);
 
     IdentityProvider getIdentityProvider(String id);
-
-    List<String> getAuthenticationProviderFor(String organizationId);
-
 }
