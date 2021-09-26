@@ -195,7 +195,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
 
         // Authorization endpoint
-        oauth2Router.route(HttpMethod.GET,"/authorize")
+        oauth2Router.route(HttpMethod.OPTIONS, "/authorize")
+                .handler(corsHandler);
+        oauth2Router.route(HttpMethod.GET, "/authorize")
+                .handler(corsHandler)
                 .handler(new AuthorizationRequestTransactionHandler(transactionHeader))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
