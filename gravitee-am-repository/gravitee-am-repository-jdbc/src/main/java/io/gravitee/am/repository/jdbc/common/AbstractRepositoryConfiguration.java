@@ -132,7 +132,6 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         try {
             final Liquibase liquibase = new Liquibase("liquibase/master.yml"
                     , new ClassLoaderResourceAccessor(this.getClass().getClassLoader()), new JdbcConnection(connection));
-            liquibase.setIgnoreClasspathPrefix(true);
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
             LOGGER.error("Failed to set up database: ", ex);
