@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/425?closed=1[AM - 3.5.9 (2021-09-27)]
+
+=== Bug fixes
+
+*_Management_*
+
+- [gateway] http proxy host exclusion does not work when url contains invalid characters https://github.com/gravitee-io/issues/issues/6032[#6032]
+
+=== Improvements
+
+*_Gateway_*
+
+- [jwt] add type header parameter https://github.com/gravitee-io/issues/issues/6239[#6239]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/424?closed=1[AM - 3.10.3 (2021-09-19)]
 
 === Bug fixes
