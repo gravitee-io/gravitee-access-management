@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.services;
 
+import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -46,4 +47,8 @@ public interface AccountService {
     Single<List<Factor>> getFactors(String domain);
 
     Maybe<Factor> getFactor(String id);
+
+    Single<List<Credential>> getWebAuthnCredentials(User user);
+
+    Single<Credential> getWebAuthnCredential(String id);
 }

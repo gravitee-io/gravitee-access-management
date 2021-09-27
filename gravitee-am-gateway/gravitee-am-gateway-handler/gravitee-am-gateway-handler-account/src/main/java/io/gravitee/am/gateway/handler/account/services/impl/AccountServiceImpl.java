@@ -21,17 +21,16 @@ import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
@@ -74,6 +73,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private AuditReporterManager auditReporterManager;
+
+    @Autowired
+    private CredentialService credentialService;
 
     @Override
     public Maybe<User> get(String userId) {
@@ -144,6 +146,26 @@ public class AccountServiceImpl implements AccountService {
         return userService.removeFactor(userId, factorId, principal);
     }
 
+    @Override
+    public Single<List<Credential>> getWebAuthnCredentials(User user) {
+        return credentialService.findByUserId(ReferenceType.DOMAIN, user.getReferenceId(), user.getId())
+                .map(credential -> {
+                    removeSensitiveData(credential);
+                    return credential;
+                })
+                .toList();
+    }
+
+    @Override
+    public Single<Credential> getWebAuthnCredential(String id) {
+        return credentialService.findById(id)
+                .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
+                .map(credential -> {
+                    removeSensitiveData(credential);
+                    return credential;
+                });
+    }
+
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {
         DefaultUser idpUser = new DefaultUser(user.getUsername());
         idpUser.setId(user.getExternalId());
@@ -167,6 +189,14 @@ public class AccountServiceImpl implements AccountService {
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
+    }
+
+    private void removeSensitiveData(Credential credential) {
+        credential.setReferenceType(null);
+        credential.setReferenceId(null);
+        credential.setUserId(null);
+        credential.setUsername(null);
+        credential.setCounter(null);
     }
 
 }

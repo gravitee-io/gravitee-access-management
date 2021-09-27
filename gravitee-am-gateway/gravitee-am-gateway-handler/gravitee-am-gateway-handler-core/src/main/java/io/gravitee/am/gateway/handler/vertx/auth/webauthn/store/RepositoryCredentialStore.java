@@ -171,7 +171,9 @@ public class RepositoryCredentialStore {
         Authenticator authenticator = new Authenticator();
         authenticator.setUserName(credential.getUsername());
         authenticator.setCredID(credential.getCredentialId());
-        authenticator.setCounter(credential.getCounter());
+        if (credential.getCounter() != null) {
+            authenticator.setCounter(credential.getCounter());
+        }
         authenticator.setPublicKey(credential.getPublicKey());
 
         return authenticator;

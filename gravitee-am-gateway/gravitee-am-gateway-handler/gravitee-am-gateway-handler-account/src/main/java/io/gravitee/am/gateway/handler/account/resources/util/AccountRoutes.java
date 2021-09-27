@@ -28,7 +28,9 @@ public enum AccountRoutes {
     FACTORS_CATALOG("/api/factors/catalog"),
     FACTORS_BY_ID("/api/factors/:factorId"),
     FACTORS_OTP_QR("/api/factors/:factorId/qr"),
-    FACTORS_VERIFY("/api/factors/:factorId/verify");
+    FACTORS_VERIFY("/api/factors/:factorId/verify"),
+    WEBAUTHN_CREDENTIALS("/api/webauthn/credentials"),
+    WEBAUTHN_CREDENTIALS_BY_ID("/api/webauthn/credentials/:credentialId");
 
     private String route;
 
