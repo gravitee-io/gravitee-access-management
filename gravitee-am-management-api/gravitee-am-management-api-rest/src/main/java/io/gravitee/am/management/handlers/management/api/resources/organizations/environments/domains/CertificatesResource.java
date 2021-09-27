@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
+import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
@@ -27,7 +30,10 @@ import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -38,6 +44,7 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.util.HashMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -51,6 +58,9 @@ public class CertificatesResource extends AbstractResource {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Autowired
+    private CertificateManager certificateManager;
 
     @Autowired
     private DomainService domainService;
@@ -69,12 +79,23 @@ public class CertificatesResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
+            @QueryParam("use") String use,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapPublisher(__ -> certificateService.findByDomain(domain))
+                        .filter(c -> {
+                            if (!StringUtils.isEmpty(use)) {
+                                final JsonObject config = JsonObject.mapFrom(Json.decodeValue(c.getConfiguration(), HashMap.class));
+                                if (config != null && config.getJsonArray("use") != null) {
+                                    return config.getJsonArray("use").contains(use);
+                                }
+                            }
+                            // no value, return true as sig should be the default
+                            return true;
+                        })
                         .map(this::filterCertificateInfos)
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                         .toList()

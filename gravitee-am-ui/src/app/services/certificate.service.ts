@@ -28,6 +28,10 @@ export class CertificateService {
     return this.http.get<any>(this.certificatesURL + domainId + "/certificates");
   }
 
+  findByDomainAndUse(domainId, use): Observable<any> {
+    return this.http.get<any>(this.certificatesURL + domainId + "/certificates?use="+use);
+  }
+
   get(domainId, id): Observable<any> {
     return this.http.get<any>(this.certificatesURL + domainId + "/certificates/" + id);
   }
