@@ -141,6 +141,7 @@ import {BreadcrumbComponent} from './components/breadcrumb/breadcrumb.component'
 import {CertificateCreationComponent} from './domain/settings/certificates/creation/certificate-creation.component';
 import {CertificateComponent} from './domain/settings/certificates/certificate/certificate.component';
 import {CertificatesResolver} from './resolvers/certificates.resolver';
+import {SignCertificatesResolver} from './resolvers/sign-certificates.resolver';
 import {CertificateService} from './services/certificate.service';
 import {CertificateCreationStep1Component} from './domain/settings/certificates/creation/steps/step1/step1.component';
 import {CertificateCreationStep2Component} from 'app/domain/settings/certificates/creation/steps/step2/step2.component';
@@ -622,6 +623,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     ProvidersResolver,
     ProviderResolver,
     CertificatesResolver,
+    SignCertificatesResolver,
     CertificateResolver,
     EnvironmentResolver,
     RolesResolver,

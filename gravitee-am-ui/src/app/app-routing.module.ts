@@ -56,6 +56,7 @@ import {ProviderRolesComponent} from './domain/settings/providers/provider/roles
 import {ProviderSettingsComponent} from './domain/settings/providers/provider/settings/settings.component';
 import {ProviderMappersComponent} from './domain/settings/providers/provider/mappers/mappers.component';
 import {CertificatesResolver} from './resolvers/certificates.resolver';
+import {SignCertificatesResolver} from './resolvers/sign-certificates.resolver';
 import {CertificateCreationComponent} from './domain/settings/certificates/creation/certificate-creation.component';
 import {CertificateComponent} from './domain/settings/certificates/certificate/certificate.component';
 import {CertificateResolver} from './resolvers/certificate.resolver';
@@ -1125,7 +1126,7 @@ export const routes: Routes = [
                                 path: 'certificates',
                                 component: ApplicationCertificatesComponent,
                                 canActivate: [AuthGuard],
-                                resolve: {certificates: CertificatesResolver},
+                                resolve: {certificates: SignCertificatesResolver},
                                 data: {
                                   menu: {
                                     label: 'Certificates',
