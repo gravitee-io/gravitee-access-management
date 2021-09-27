@@ -176,7 +176,9 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
         credentialMongo.setUsername(credential.getUsername());
         credentialMongo.setCredentialId(credential.getCredentialId());
         credentialMongo.setPublicKey(credential.getPublicKey());
-        credentialMongo.setCounter(credential.getCounter());
+        if (credential.getCounter() != null) {
+            credentialMongo.setCounter(credential.getCounter());
+        }
         credentialMongo.setAaguid(credential.getAaguid());
         credentialMongo.setAttestationStatementFormat(credential.getAttestationStatementFormat());
         credentialMongo.setAttestationStatement(credential.getAttestationStatement());

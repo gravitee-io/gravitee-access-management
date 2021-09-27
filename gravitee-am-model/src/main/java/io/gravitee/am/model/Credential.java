@@ -32,7 +32,7 @@ public class Credential {
     private String username;
     private String credentialId;
     private String publicKey;
-    private long counter;
+    private Long counter;
     private String aaguid;
     private String attestationStatementFormat;
     private String attestationStatement;
@@ -98,11 +98,11 @@ public class Credential {
         this.publicKey = publicKey;
     }
 
-    public long getCounter() {
+    public Long getCounter() {
         return counter;
     }
 
-    public void setCounter(long counter) {
+    public void setCounter(Long counter) {
         this.counter = counter;
     }
 

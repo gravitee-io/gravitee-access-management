@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.account;
 
 import io.gravitee.am.gateway.handler.account.resources.AccountEndpointHandler;
 import io.gravitee.am.gateway.handler.account.resources.AccountFactorsEndpointHandler;
+import io.gravitee.am.gateway.handler.account.resources.AccountWebAuthnCredentialsEndpointHandler;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
@@ -114,6 +115,16 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
                     .handler(BodyHandler.create())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::verifyFactor);
+
+            // WebAuthn credentials routes
+            AccountWebAuthnCredentialsEndpointHandler accountWebAuthnCredentialsEndpointHandler =
+                    new AccountWebAuthnCredentialsEndpointHandler(accountService);
+            accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountWebAuthnCredentialsEndpointHandler::listEnrolledWebAuthnCredentials);
+            accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountWebAuthnCredentialsEndpointHandler::getEnrolledWebAuthnCredential);
 
             // error handler
             accountRouter.route().failureHandler(new ErrorHandler());
