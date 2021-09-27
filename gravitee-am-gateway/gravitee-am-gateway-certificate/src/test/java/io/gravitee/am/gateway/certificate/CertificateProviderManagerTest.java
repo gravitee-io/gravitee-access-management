@@ -73,7 +73,7 @@ public class CertificateProviderManagerTest {
 
         assertEquals(
                 "non matching jwt with default certificateProvider",
-                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.ih3-kQgeGAQrL2H8pZMy979gVP0HWOH7p8-_7Ar0Lbs",
+                "eyJraWQiOiJkZWZhdWx0LWdyYXZpdGVlLUFNLWtleSIsInR5cCI6IkpXVCIsImFsZyI6IkhTMjU2In0.eyJzdWIiOiJzdWIiLCJpc3MiOiJpc3MifQ.Ti366cJSMVSnvFW1wHYFMdc63zTdIpa42O6AOTWyGKk",
                 certificateProvider.getJwtBuilder().sign(jwt)
         );
     }
