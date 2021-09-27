@@ -393,6 +393,13 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.policy</groupId>
+            <artifactId>gravitee-policy-latency</artifactId>
+            <version>${gravitee-policy-latency.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -701,6 +708,12 @@
                                     <groupId>io.gravitee.policy</groupId>
                                     <artifactId>gravitee-policy-request-validation</artifactId>
                                     <version>${gravitee-policy-request-validation.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-latency</artifactId>
+                                    <version>${gravitee-policy-latency.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>
