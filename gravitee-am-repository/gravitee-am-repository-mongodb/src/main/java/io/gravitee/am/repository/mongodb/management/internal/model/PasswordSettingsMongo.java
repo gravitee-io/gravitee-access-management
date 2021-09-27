@@ -34,6 +34,11 @@ public class PasswordSettingsMongo {
     private Integer minLength;
 
     /**
+     * password max length
+     */
+    private Integer maxLength;
+
+    /**
      * Must include numbers
      */
     private Boolean includeNumbers;
@@ -67,6 +72,14 @@ public class PasswordSettingsMongo {
 
     public void setMinLength(Integer minLength) {
         this.minLength = minLength;
+    }
+
+    public Integer getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(Integer maxLength) {
+        this.maxLength = maxLength;
     }
 
     public Boolean isIncludeNumbers() {
@@ -105,6 +118,7 @@ public class PasswordSettingsMongo {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(isInherited());
         passwordSettings.setMinLength(getMinLength());
+        passwordSettings.setMaxLength(getMaxLength() == null ? PasswordSettings.PASSWORD_MAX_LENGTH : getMaxLength());
         passwordSettings.setIncludeNumbers(isIncludeNumbers());
         passwordSettings.setIncludeSpecialCharacters(isIncludeSpecialCharacters());
         passwordSettings.setLettersInMixedCase(getLettersInMixedCase());
@@ -119,6 +133,7 @@ public class PasswordSettingsMongo {
         PasswordSettingsMongo passwordSettings = new PasswordSettingsMongo();
         passwordSettings.setInherited(other.isInherited());
         passwordSettings.setMinLength(other.getMinLength());
+        passwordSettings.setMaxLength(other.getMaxLength());
         passwordSettings.setIncludeNumbers(other.isIncludeNumbers());
         passwordSettings.setIncludeSpecialCharacters(other.isIncludeSpecialCharacters());
         passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());

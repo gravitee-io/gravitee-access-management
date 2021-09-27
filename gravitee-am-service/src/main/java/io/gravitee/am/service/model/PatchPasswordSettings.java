@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Optional;
@@ -28,6 +29,7 @@ public class PatchPasswordSettings {
 
     private Optional<Boolean> inherited;
     private Optional<Integer> minLength;
+    private Optional<Integer> maxLength;
     private Optional<Boolean> includeNumbers;
     private Optional<Boolean> includeSpecialCharacters;
     private Optional<Boolean> lettersInMixedCase;
@@ -39,6 +41,14 @@ public class PatchPasswordSettings {
 
     public void setMinLength(Optional<Integer> minLength) {
         this.minLength = minLength;
+    }
+
+    public Optional<Integer> getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(Optional<Integer> maxLength) {
+        this.maxLength = maxLength;
     }
 
     public Optional<Boolean> getIncludeNumbers() {
@@ -86,10 +96,18 @@ public class PatchPasswordSettings {
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
         SetterUtils.safeSet(toPatch::setInherited, this.inherited);
         SetterUtils.safeSet(toPatch::setMinLength, this.minLength);
+        SetterUtils.safeSet(toPatch::setMaxLength, this.maxLength);
         SetterUtils.safeSet(toPatch::setIncludeNumbers, this.includeNumbers);
         SetterUtils.safeSet(toPatch::setIncludeSpecialCharacters, this.includeSpecialCharacters);
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
+
+        if (toPatch.getMinLength() != null && toPatch.getMaxLength() != null) {
+            if (toPatch.getMinLength() > toPatch.getMaxLength()) {
+                throw new InvalidParameterException("Min password length must be inferior to max password length");
+            }
+        }
+
         return toPatch;
     }
 }

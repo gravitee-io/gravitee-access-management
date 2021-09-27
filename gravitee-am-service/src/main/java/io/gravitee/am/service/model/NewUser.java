@@ -20,13 +20,10 @@ import io.gravitee.am.model.IUser;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.Map;
 
 import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.PasswordValidator.PASSWORD_MAX_LENGTH;
-import static io.gravitee.am.service.validators.UserValidator.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,7 +34,6 @@ public class NewUser implements IUser {
     @NotBlank
     private String username;
 
-    @Size(max = PASSWORD_MAX_LENGTH, message = "must not be greater than "+ PASSWORD_MAX_LENGTH)
     private String password;
 
     @NotBlank

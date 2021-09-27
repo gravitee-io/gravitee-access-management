@@ -33,7 +33,8 @@ export class PasswordPolicyComponent implements OnInit {
   editMode: boolean;
 
   passwordSettings: any = {};
-  minLength: string;
+  minLength: number;
+  maxLength: number;
   includeNumbers: boolean;
   includeSpecialCharacters: boolean;
   lettersInMixedCase: boolean;
@@ -57,6 +58,7 @@ export class PasswordPolicyComponent implements OnInit {
     } else {
       this.inherited = this.passwordSettings.inherited;
       this.minLength = this.passwordSettings.minLength;
+      this.maxLength = this.passwordSettings.maxLength;
       this.includeNumbers = this.passwordSettings.includeNumbers;
       this.includeSpecialCharacters = this.passwordSettings.includeSpecialCharacters;
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
@@ -91,6 +93,7 @@ export class PasswordPolicyComponent implements OnInit {
     data.settings.passwordSettings = {
       'inherited': this.inherited,
       'minLength': this.minLength,
+      'maxLength': this.maxLength,
       'includeNumbers': this.includeNumbers,
       'includeSpecialCharacters': this.includeSpecialCharacters,
       'lettersInMixedCase': this.lettersInMixedCase,
