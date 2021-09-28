@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account.resources;
 
+import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
@@ -170,7 +171,11 @@ public class AccountFactorsEndpointHandler {
                 // enroll factor
                 enrollFactor(factor, factorProvider, account, user, eh -> {
                     if (eh.failed()) {
-                        routingContext.fail(eh.cause());
+                        if (eh.cause() instanceof InvalidFactorAttributeException) {
+                            routingContext.fail(400, eh.cause());
+                        } else {
+                            routingContext.fail(eh.cause());
+                        }
                         return;
                     }
 
@@ -351,7 +356,13 @@ public class AccountFactorsEndpointHandler {
                               User endUser,
                               Handler<AsyncResult<EnrolledFactor>> handler) {
         factorProvider.enroll(endUser.getUsername())
-                .map(enrollment -> buildEnrolledFactor(factor, enrollment, account, endUser))
+                .map(enrollment -> {
+                    final EnrolledFactor enrolledFactor = buildEnrolledFactor(factor, enrollment, account, endUser);
+                    if (factorProvider.checkSecurityFactor(enrolledFactor)) {
+                        return enrolledFactor;
+                    }
+                    throw new InvalidFactorAttributeException("Invalid account information");
+                })
                 .subscribe(
                         enrolledFactor -> handler.handle(Future.succeededFuture(enrolledFactor)),
                         error -> handler.handle(Future.failedFuture(error))

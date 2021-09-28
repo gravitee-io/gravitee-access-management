@@ -46,7 +46,9 @@ public class EnrolledFactor {
         this.factorId = other.factorId;
         this.appId = other.appId;
         this.status = other.status;
-        this.security = new EnrolledFactorSecurity(other.security);
+        if (other.security != null) {
+            this.security = new EnrolledFactorSecurity(other.security);
+        }
         this.channel = other.channel;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
