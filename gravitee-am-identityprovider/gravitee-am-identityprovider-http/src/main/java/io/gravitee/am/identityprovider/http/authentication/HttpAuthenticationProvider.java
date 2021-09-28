@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.http.configuration.HttpAuthResourcePathsC
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
+import io.gravitee.am.identityprovider.http.utils.SanitizeUtils;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -83,17 +84,23 @@ public class HttpAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         try {
-            // prepare context
-            TemplateEngine templateEngine = authentication.getContext().getTemplateEngine();
-            templateEngine.getTemplateContext().setVariable(PRINCIPAL_CONTEXT_KEY, authentication.getPrincipal());
-            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, passwordEncoder.encode((String) authentication.getCredentials()));
-
             // prepare request
             final HttpResourceConfiguration resourceConfiguration = configuration.getAuthenticationResource();
-            final String authenticationURI = templateEngine.getValue(resourceConfiguration.getBaseURL(), String.class);
             final HttpMethod authenticationHttpMethod = HttpMethod.valueOf(resourceConfiguration.getHttpMethod().toString());
             final List<HttpHeader> authenticationHttpHeaders = resourceConfiguration.getHttpHeaders();
             final String authenticationBody = resourceConfiguration.getHttpBody();
+
+            final Object principal = authentication.getPrincipal();
+            final String encodedCredentials = passwordEncoder.encode((String) authentication.getCredentials());
+            final Object credentials = SanitizeUtils.sanitize(encodedCredentials, authenticationBody, authenticationHttpHeaders);
+
+            // prepare context
+            TemplateEngine templateEngine = authentication.getContext().getTemplateEngine();
+            templateEngine.getTemplateContext().setVariable(PRINCIPAL_CONTEXT_KEY, principal);
+            templateEngine.getTemplateContext().setVariable(CREDENTIALS_CONTEXT_KEY, credentials);
+
+            // process request
+            final String authenticationURI = templateEngine.getValue(resourceConfiguration.getBaseURL(), String.class);
             final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, authenticationURI, authenticationHttpMethod, authenticationHttpHeaders, authenticationBody);
 
             return requestHandler

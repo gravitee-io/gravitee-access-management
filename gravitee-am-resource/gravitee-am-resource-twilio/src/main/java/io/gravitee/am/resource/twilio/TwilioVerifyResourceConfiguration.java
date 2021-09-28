@@ -25,6 +25,7 @@ public class TwilioVerifyResourceConfiguration implements ResourceConfiguration 
     private String sid;
     private String accountSid;
     private String authToken;
+    private boolean useSystemProxy;
 
     public String getSid() {
         return sid;
@@ -48,5 +49,13 @@ public class TwilioVerifyResourceConfiguration implements ResourceConfiguration 
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
+    }
+
+    public boolean isUseSystemProxy() {
+        return useSystemProxy;
+    }
+
+    public void setUseSystemProxy(boolean useSystemProxy) {
+        this.useSystemProxy = useSystemProxy;
     }
 }

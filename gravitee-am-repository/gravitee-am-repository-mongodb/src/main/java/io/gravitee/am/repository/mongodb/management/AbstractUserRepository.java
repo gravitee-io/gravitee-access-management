@@ -142,6 +142,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
             Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
             return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
         } catch (Exception ex) {
+            if (ex instanceof IllegalArgumentException) {
+                return Single.error(ex);
+            }
             logger.error("An error has occurred while searching users with criteria {}", criteria, ex);
             return Single.error(new TechnicalException("An error has occurred while searching users with filter criteria", ex));
         }
