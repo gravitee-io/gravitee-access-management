@@ -1,6 +1,35 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/431?closed=1[AM - 3.10.4 (2021-09-28)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [oauth2] add CORS handler to the authorize endpoint https://github.com/gravitee-io/issues/issues/6236[#6236]
+
+*_General_*
+
+- Merge 3.5.9 https://github.com/gravitee-io/issues/issues/6244[#6244]
+
+*_Management_*
+
+- Filter disabled identity providers during login https://github.com/gravitee-io/issues/issues/6181[#6181]
+
+*_Management-ui_*
+
+- Not possible to override the password length in the UI https://github.com/gravitee-io/issues/issues/6212[#6212]
+
+=== Improvements
+
+*_Gateway_*
+
+- [oidc] unknown (use) is currently not supported. https://github.com/gravitee-io/issues/issues/6184[#6184]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/425?closed=1[AM - 3.5.9 (2021-09-27)]
 
 === Bug fixes
