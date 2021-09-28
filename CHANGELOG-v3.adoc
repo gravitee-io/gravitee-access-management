@@ -1,6 +1,18 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/434?closed=1[AM - 3.11.1 (2021-09-28)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.10.3 https://github.com/gravitee-io/issues/issues/6261[#6261]
+- Merge 3.10.4 https://github.com/gravitee-io/issues/issues/6263[#6263]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/431?closed=1[AM - 3.10.4 (2021-09-28)]
 
 === Bug fixes
