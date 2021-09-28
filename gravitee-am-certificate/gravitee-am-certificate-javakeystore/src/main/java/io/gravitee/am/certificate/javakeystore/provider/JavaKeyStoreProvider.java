@@ -16,6 +16,7 @@
 package io.gravitee.am.certificate.javakeystore.provider;
 
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.certificate.api.*;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
@@ -135,21 +136,31 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     }
 
     private Set<JWK> getKeys() {
-        return jwkSet.toPublicJWKSet().getKeys().stream().map(this::convert).collect(Collectors.toSet());
+        return jwkSet.toPublicJWKSet().getKeys().stream().flatMap(this::convert).collect(Collectors.toSet());
     }
 
     // TODO : should be moved to the gravitee-am-jwt module
-    private JWK convert(com.nimbusds.jose.jwk.JWK nimbusJwk) {
+    private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk) {
+        final Set<String> useFor = configuration.getUse() == null || configuration.getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : configuration.getUse();
+        return useFor.stream().map(use -> createRSAKey(nimbusJwk, use));
+    }
+
+    private JWK createRSAKey(com.nimbusds.jose.jwk.JWK nimbusJwk, String use) {
         RSAKey jwk = new RSAKey();
         if (nimbusJwk.getKeyType() != null) {
             jwk.setKty(nimbusJwk.getKeyType().getValue());
         }
+
         if (nimbusJwk.getKeyUse() != null) {
             jwk.setUse(nimbusJwk.getKeyUse().identifier());
+        } else {
+            jwk.setUse(use);
         }
+
         if (nimbusJwk.getKeyOperations() != null) {
             jwk.setKeyOps(nimbusJwk.getKeyOperations().stream().map(keyOperation -> keyOperation.identifier()).collect(Collectors.toSet()));
         }
+
         if (configuration.getAlgorithm() != null && !configuration.getAlgorithm().isEmpty()) {
             jwk.setAlg(configuration.getAlgorithm());
         } else if (nimbusJwk.getAlgorithm() != null) {

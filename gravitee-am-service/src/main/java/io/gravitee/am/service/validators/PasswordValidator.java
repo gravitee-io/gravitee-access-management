@@ -30,10 +30,6 @@ import java.util.regex.Pattern;
 @Component
 public class PasswordValidator {
 
-    /**
-     * See https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
-     */
-    public static final int PASSWORD_MAX_LENGTH = 64;
     private static final Pattern SPECIAL_CHARACTER_PATTERN = Pattern.compile("[^a-zA-Z0-9]");
     private static final Pattern NUMBER_PATTERN = Pattern.compile("[0-9]");
     private final Pattern defaultPasswordPattern;
@@ -52,7 +48,7 @@ public class PasswordValidator {
         }
 
         // check password settings
-        if (password.length() > PASSWORD_MAX_LENGTH) {
+        if (password.length() > passwordSettings.getMaxLength()) {
             throw InvalidPasswordException.of("invalid password maximum length", "invalid_password_value");
         }
 
@@ -101,7 +97,7 @@ public class PasswordValidator {
     }
 
     public boolean isValid(String password) {
-        return password.length() <= PASSWORD_MAX_LENGTH
+        return password.length() <= PasswordSettings.PASSWORD_MAX_LENGTH
                 && defaultPasswordPattern.matcher(password).matches();
     }
 

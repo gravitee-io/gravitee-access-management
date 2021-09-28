@@ -19,9 +19,15 @@ import java.util.Optional;
 
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class PasswordSettings {
+
+    /**
+     * See https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html
+     */
+    public static final int PASSWORD_MAX_LENGTH = 64;
 
     /**
      * Account settings configuration inherited ?
@@ -32,6 +38,11 @@ public class PasswordSettings {
      * Password min length
      */
     private Integer minLength;
+
+    /**
+     * Password max length
+     */
+    private Integer maxLength = PASSWORD_MAX_LENGTH;
 
     /**
      * Must include numbers
@@ -60,6 +71,7 @@ public class PasswordSettings {
     public PasswordSettings(PasswordSettings other) {
         this.inherited = other.inherited;
         this.minLength = other.minLength;
+        this.maxLength = other.maxLength;
         this.includeNumbers = other.includeNumbers;
         this.includeSpecialCharacters = other.includeSpecialCharacters;
         this.lettersInMixedCase = other.lettersInMixedCase;
@@ -72,6 +84,14 @@ public class PasswordSettings {
 
     public void setMinLength(Integer minLength) {
         this.minLength = minLength;
+    }
+
+    public Integer getMaxLength() {
+        return maxLength;
+    }
+
+    public void setMaxLength(Integer maxLength) {
+        this.maxLength = maxLength;
     }
 
     public Boolean isIncludeNumbers() {

@@ -31,6 +31,7 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -58,6 +59,10 @@ public class DefaultJWTParserTest {
         jwt.setIat(Instant.now().plus(24 * 365, ChronoUnit.HOURS).getEpochSecond());
         jwt.setExp(Instant.now().plus(24 * 365 * 2, ChronoUnit.HOURS).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
+
+        // check header
+        String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), "UTF-8");
+        assertTrue(header.equals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"RS256\"}"));
 
         JWT parsedJWT = jwtParser.parse(signedJWT);
         assertEquals("alice", parsedJWT.getSub());
@@ -156,6 +161,10 @@ public class DefaultJWTParserTest {
         jwt.setIat(Instant.now().getEpochSecond());
         jwt.setExp(Instant.now().plus(60, ChronoUnit.MINUTES).getEpochSecond());
         String signedJWT = jwtBuilder.sign(jwt);
+
+        // check header
+        String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), "UTF-8");
+        assertTrue(header.equals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"HS256\"}"));
 
         JWT parsedJWT = jwtParser.parse(signedJWT);
         assertEquals("alice", parsedJWT.getSub());
