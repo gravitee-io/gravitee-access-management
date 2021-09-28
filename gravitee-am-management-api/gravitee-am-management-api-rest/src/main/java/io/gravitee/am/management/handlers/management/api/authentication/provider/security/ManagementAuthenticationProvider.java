@@ -74,7 +74,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         if (organization == null) {
             throw new InternalAuthenticationServiceException("No organization found when trying to authenticate the end-user");
         }
-        List<String> identities = organization.getIdentities() == null ? new ArrayList<>() : organization.getIdentities();
+        List<String> identities = organization.getIdentities() == null ? new ArrayList<>() : new ArrayList<>(organization.getIdentities());
         // Gravitee IDP must be always available as this IDP is loaded at runtime
         // when the AM instance start whatever is the list of IDP configured for the organization
         identities.add(IdentityProviderManagerImpl.IDP_GRAVITEE);
