@@ -17,6 +17,8 @@ package io.gravitee.am.certificate.pkcs12;
 
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 
+import java.util.Set;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -26,6 +28,7 @@ public class PKCS12Configuration implements CertificateConfiguration {
     private String content;
     private String storepass;
     private String alias;
+    private Set<String> use;
     private String keypass;
     private String algorithm;
 
@@ -67,5 +70,13 @@ public class PKCS12Configuration implements CertificateConfiguration {
 
     public void setAlgorithm(String algorithm) {
         this.algorithm = algorithm;
+    }
+
+    public Set<String> getUse() {
+        return use;
+    }
+
+    public void setUse(Set<String> use) {
+        this.use = use;
     }
 }

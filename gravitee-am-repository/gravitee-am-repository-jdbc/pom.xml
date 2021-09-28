@@ -48,8 +48,8 @@
         <dozer.version>6.5.0</dozer.version>
 
         <testcontainers.version>1.15.1</testcontainers.version>
-        <liquibase.version>3.8.0</liquibase.version>
-        <liquibase-slf4j.version>2.0.0</liquibase-slf4j.version>
+        <liquibase.version>4.4.3</liquibase.version>
+        <liquibase-slf4j.version>4.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>
 
@@ -335,6 +335,20 @@
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
+
+        <!--
+        https://mvnrepository.com/artifact/org.yaml/snakeyaml
+        SnakeYaml required by liquibase to parse changelogs.
+        this dependency is provided by gravitee-node but we have to
+        add it in the test scope to run JUnit with TestContainer...
+        -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.29</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <profiles>

@@ -73,6 +73,14 @@
 #  csrf:
     # Allows to enable or disable the CSRF protection (default is enabled).
 #    enabled: true
+#  login:
+#      Allows to configure the allowed callback urls during login process (default value: *)
+#      '*' is a valid value but is considered as a security risk as it will be opened to open redirection issues.
+#    allow-redirect-urls: https://am-console.mycompany.com/login/callback
+#  logout:
+#      Allows to configure the allowed callback urls during logout process (default value: *)
+#      '*' is a valid value but is considered as a security risk as it will be opened to open redirection issues.
+#    allow-redirect-urls: https://am-console.mycompany.com/logout/callback
 
 # Path to plugins repository
 #plugins:

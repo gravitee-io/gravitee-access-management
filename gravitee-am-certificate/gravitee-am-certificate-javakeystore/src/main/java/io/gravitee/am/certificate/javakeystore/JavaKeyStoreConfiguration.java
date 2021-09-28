@@ -17,6 +17,8 @@ package io.gravitee.am.certificate.javakeystore;
 
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 
+import java.util.Set;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -26,6 +28,7 @@ public class JavaKeyStoreConfiguration implements CertificateConfiguration {
     private String jks;
     private String storepass;
     private String alias;
+    private Set<String> use;
     private String keypass;
     private String algorithm;
 
@@ -67,5 +70,13 @@ public class JavaKeyStoreConfiguration implements CertificateConfiguration {
 
     public void setAlgorithm(String algorithm) {
         this.algorithm = algorithm;
+    }
+
+    public Set<String> getUse() {
+        return use;
+    }
+
+    public void setUse(Set<String> use) {
+        this.use = use;
     }
 }

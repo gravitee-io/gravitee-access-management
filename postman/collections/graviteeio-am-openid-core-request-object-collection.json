@@ -2142,7 +2142,7 @@
 									"    var location = postman.getResponseHeader('Location');",
 									"    let domain = pm.environment.get(\"domainHrid\");",
 									"    ",
-									"    tests['Redirect to redirect_uri'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
+									"    tests['Redirect to default error page (invalid redirect_uri)'] = location.startsWith(pm.environment.get('gateway_url') + '/' + domain + '/oauth/error');",
 									"    tests['Contains an error query-parameter'] = location.includes('error=invalid_request_object');",
 									"    tests['Contains an error description query-parameter'] = location.includes('error_description=Malformed+request+object');",
 									"});"

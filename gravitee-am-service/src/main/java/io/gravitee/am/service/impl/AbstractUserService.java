@@ -27,10 +27,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserAlreadyExistsException;
-import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -107,6 +104,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         LOGGER.debug("Search users for {} {} with filter {}", referenceType, referenceId, filterCriteria);
         return getUserRepository().search(referenceType, referenceId, filterCriteria, page, size)
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof IllegalArgumentException) {
+                        return Single.error(new InvalidParameterException(ex.getMessage()));
+                    }
                     LOGGER.error("An error occurs while trying to search users for {} {} and filter {}", referenceType, referenceId, filterCriteria, ex);
                     return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find users for %s %s and filter %s", referenceType, referenceId, filterCriteria), ex));
                 });
@@ -230,6 +230,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
                     oldUser.setLastName(updateUser.getLastName());
+                    oldUser.setDisplayName(updateUser.getDisplayName());
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
                     oldUser.setLoggedAt(updateUser.getLoggedAt());

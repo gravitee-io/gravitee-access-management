@@ -19,7 +19,7 @@ package io.gravitee.am.service.exception;
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class InvalidPasswordException extends RuntimeException {
+public class InvalidPasswordException extends InvalidParameterException {
 
     private final String errorKey;
 

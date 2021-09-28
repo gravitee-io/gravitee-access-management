@@ -75,8 +75,8 @@
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
-        <spring-security.version>5.3.9.RELEASE</spring-security.version>
-        <spring-integration.version>5.2.6.RELEASE</spring-integration.version>
+        <spring-security.version>5.4.8</spring-security.version>
+        <spring-integration.version>5.2.11.RELEASE</spring-integration.version>
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
@@ -101,6 +101,8 @@
         <bouncycastle.version>1.69</bouncycastle.version>
         <wiremock.version>2.6.0</wiremock.version>
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
+        <json-smart.version>2.4.7</json-smart.version>
+        <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
@@ -119,6 +121,22 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Security upgrades -->
+            <dependency>
+                <groupId>net.minidev</groupId>
+                <artifactId>json-smart</artifactId>
+                <version>${json-smart.version}</version>
+            </dependency>
+
+            <!-- Security upgrades -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Import bom to properly inherit all dependencies -->
             <dependency>
                 <groupId>io.gravitee</groupId>
@@ -362,10 +380,12 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

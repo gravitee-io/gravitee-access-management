@@ -22,6 +22,7 @@ import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfigurat
 import io.gravitee.am.identityprovider.http.configuration.HttpResponseErrorCondition;
 import io.gravitee.am.identityprovider.http.configuration.HttpUsersResourceConfiguration;
 import io.gravitee.am.identityprovider.http.user.spring.HttpUserProviderConfiguration;
+import io.gravitee.am.identityprovider.http.utils.SanitizeUtils;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -95,15 +96,6 @@ public class HttpUserProvider implements UserProvider {
     @Override
     public Single<User> create(User user) {
         try {
-            // prepare context
-            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
-            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
-            // encode password
-            if (!StringUtils.isEmpty(user.getCredentials())) {
-                ((DefaultUser) user).setCredentials(passwordEncoder.encode(user.getCredentials()));
-            }
-            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
-
             // prepare request
             final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
             final HttpResourceConfiguration createResourceConfiguration = usersResourceConfiguration.getPaths().getCreateResource();
@@ -111,6 +103,17 @@ public class HttpUserProvider implements UserProvider {
             final HttpMethod createUserHttpMethod = HttpMethod.valueOf(createResourceConfiguration.getHttpMethod().toString());
             final List<HttpHeader> createUserHttpHeaders = createResourceConfiguration.getHttpHeaders();
             final String createUserBody = createResourceConfiguration.getHttpBody();
+
+            // prepare context
+            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
+            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+            // sanitize password
+            if (!StringUtils.isEmpty(user.getCredentials())) {
+                ((DefaultUser) user).setCredentials(SanitizeUtils.sanitize(passwordEncoder.encode(user.getCredentials()), createUserBody, createUserHttpHeaders));
+            }
+            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
+
+            // process request
             final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, createUserURI, createUserHttpMethod, createUserHttpHeaders, createUserBody);
 
             return requestHandler
@@ -135,16 +138,6 @@ public class HttpUserProvider implements UserProvider {
     @Override
     public Single<User> update(String id, User updateUser) {
         try {
-            // prepare context
-            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
-            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
-            ((DefaultUser) updateUser).setId(id);
-            // encode password
-            if (!StringUtils.isEmpty(updateUser.getCredentials())) {
-                ((DefaultUser) updateUser).setCredentials(passwordEncoder.encode(updateUser.getCredentials()));
-            }
-            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, updateUser);
-
             // prepare request
             final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
             final HttpResourceConfiguration updateResourceConfiguration = usersResourceConfiguration.getPaths().getUpdateResource();
@@ -152,6 +145,18 @@ public class HttpUserProvider implements UserProvider {
             final HttpMethod updateUserHttpMethod = HttpMethod.valueOf(updateResourceConfiguration.getHttpMethod().toString());
             final List<HttpHeader> updateUserHttpHeaders = updateResourceConfiguration.getHttpHeaders();
             final String updateUserBody = updateResourceConfiguration.getHttpBody();
+
+            // prepare context
+            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
+            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+            ((DefaultUser) updateUser).setId(id);
+            // sanitize password
+            if (!StringUtils.isEmpty(updateUser.getCredentials())) {
+                ((DefaultUser) updateUser).setCredentials(SanitizeUtils.sanitize(passwordEncoder.encode(updateUser.getCredentials()), updateUserBody, updateUserHttpHeaders));
+            }
+            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, updateUser);
+
+            // process request
             final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, updateUserURI, updateUserHttpMethod, updateUserHttpHeaders, updateUserBody);
 
             return requestHandler

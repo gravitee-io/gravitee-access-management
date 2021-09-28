@@ -37,7 +37,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.data.util.StreamUtils;
@@ -150,7 +149,6 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
-        Criteria referenceClause = where("reference_id").is(referenceId).and(where("reference_type").is(referenceType.name()));
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");

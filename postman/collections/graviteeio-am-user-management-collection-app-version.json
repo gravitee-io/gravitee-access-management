@@ -1284,7 +1284,7 @@
 													"",
 													"pm.test(\"UM - create user - password too long\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: must not be greater than 64]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Field [password] is invalid\");",
 													"});"
 												],
 												"type": "text/javascript"

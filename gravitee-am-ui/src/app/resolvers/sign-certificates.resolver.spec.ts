@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.authentication.manager.idp;
+import {inject, TestBed} from "@angular/core/testing";
+import {SignCertificatesResolver} from "./sign-certificates.resolver";
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.IdentityProvider;
+describe('SignCertificatesResolver', () => {
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [SignCertificatesResolver]
+    });
+  });
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface IdentityProviderManager {
-
-    AuthenticationProvider get(String id);
-
-    IdentityProvider getIdentityProvider(String id);
-}
+  it('should ...', inject([SignCertificatesResolver], (service: SignCertificatesResolver) => {
+    expect(service).toBeTruthy();
+  }));
+});

@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.jwk.impl;
 
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
-import io.gravitee.am.common.web.UriBuilder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;

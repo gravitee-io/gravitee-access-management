@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
+import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -44,7 +46,7 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
     private final Logger logger = LoggerFactory.getLogger(ManagementAuthenticationProvider.class);
 
     /**
-     * Constant to use while setting identity provider used to authenticate a user
+     * Constant to use when setting identity provider used to authenticate a user
      */
     private static final String SOURCE = "source";
 
@@ -67,12 +69,15 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         details.putIfAbsent(Claims.organization, Organization.DEFAULT);
         String organizationId = details.get(Claims.organization);
 
-        List<String> identities = identityProviderManager.getAuthenticationProviderFor(organizationId);
+        // get organization identity providers
         Organization organization = organizationService.findById(organizationId).blockingGet();
-        if (organization.getIdentities() != null) {
-            identities.addAll(organization.getIdentities());
+        if (organization == null) {
+            throw new InternalAuthenticationServiceException("No organization found when trying to authenticate the end-user");
         }
-
+        List<String> identities = organization.getIdentities() == null ? new ArrayList<>() : new ArrayList<>(organization.getIdentities());
+        // Gravitee IDP must be always available as this IDP is loaded at runtime
+        // when the AM instance start whatever is the list of IDP configured for the organization
+        identities.add(IdentityProviderManagerImpl.IDP_GRAVITEE);
         Iterator<String> iter = identities.iterator();
         io.gravitee.am.identityprovider.api.User user = null;
         AuthenticationException lastException = null;

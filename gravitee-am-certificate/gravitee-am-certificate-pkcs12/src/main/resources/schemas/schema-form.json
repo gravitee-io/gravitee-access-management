@@ -46,6 +46,24 @@
           "PS512": "PS512 (RSASSA-PSS using SHA-512 and MGF1 with SHA-512)"
         }
       }
+    },
+    "use" : {
+      "title": "Usage",
+      "description": "The intended use of the public key (Signature or Encryption : see https://datatracker.ietf.org/doc/html/rfc7517#section-4.2)",
+      "type" : "array",
+      "items":
+      {
+        "type": "string",
+        "enum": [
+          "sig",
+          "enc"]
+      },
+      "x-schema-form": {
+        "titleMap": {
+          "sig": "Signature",
+          "enc": "Encryption"
+        }
+      }
     }
   },
   "required": [

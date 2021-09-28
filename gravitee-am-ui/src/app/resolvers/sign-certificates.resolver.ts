@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.authentication.manager.idp;
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {CertificateService} from '../services/certificate.service';
 
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.model.IdentityProvider;
+@Injectable()
+export class SignCertificatesResolver implements Resolve<any> {
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface IdentityProviderManager {
+  constructor(private certificateService: CertificateService) { }
 
-    AuthenticationProvider get(String id);
-
-    IdentityProvider getIdentityProvider(String id);
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    const domainId = route.parent.data['domain'].id;
+    return this.certificateService.findByDomainAndUse(domainId, "sig");
+  }
 }
