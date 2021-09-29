@@ -1,6 +1,43 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/418?closed=1[AM - 3.12.0 (2021-09-29)]
+
+=== Bug fixes
+
+*_Fapi_*
+
+- [par] request_object not read from the consent endpoint https://github.com/gravitee-io/issues/issues/6214[#6214]
+
+*_General_*
+
+- Merge 3.11.1 https://github.com/gravitee-io/issues/issues/6278[#6278]
+
+=== Features
+
+*_Fapi_*
+
+- Brazil Open Banking implementation https://github.com/gravitee-io/issues/issues/5994[#5994]
+
+*_Gateway_*
+
+- Self account management add webauthn credentials endpoints https://github.com/gravitee-io/issues/issues/6247[#6247]
+- Self account management factors endpoint https://github.com/gravitee-io/issues/issues/5853[#5853]
+- Self account management https://github.com/gravitee-io/issues/issues/5492[#5492]
+
+*_Management_*
+
+- Redirect to  internal/external provider depending on the account/username https://github.com/gravitee-io/issues/issues/5388[#5388]
+
+=== Improvements
+
+*_Management_*
+
+- [gateway] add request timeout configuration option on IdP https://github.com/gravitee-io/issues/issues/3505[#3505]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/434?closed=1[AM - 3.11.1 (2021-09-28)]
 
 === Bug fixes
