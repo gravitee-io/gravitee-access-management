@@ -19,6 +19,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.*;
 import com.nimbusds.jose.crypto.impl.*;
 import com.nimbusds.jose.jwk.KeyType;
+import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.OctetSequenceKey;
 import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
@@ -37,11 +38,13 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
@@ -192,13 +195,23 @@ public class JWEServiceImpl implements JWEService {
 
     private Single<JWT> decrypt(JWEObject jwe, Client client, Predicate<JWK> filter, JWEDecrypterFunction<JWK, JWEDecrypter> function) {
         final Maybe<JWKSet> jwks = client != null ? jwkService.getKeys(client) : jwkService.getDomainPrivateKeys();
-        return jwks.flatMap(jwkSet -> jwkService.filter(jwkSet, filter))
-                .switchIfEmpty(Maybe.error(new InvalidClientMetadataException("no matching key found to decrypt")))
-                .flatMapSingle(jwk -> Single.just(function.apply(jwk)))
+        return jwks
+                .flatMapPublisher(jwkset -> Flowable.fromIterable(jwkset.getKeys()))
+                .filter(filter::test)
+                .filter(jwk -> jwk.getUse() == null || jwk.getUse().equals(KeyUse.ENCRYPTION.getValue()))
+                .filter(jwk -> jwe.getHeader().getKeyID() == null || jwe.getHeader().getKeyID().equals(jwk.getKid()))
+                .map(jwk -> function.apply(jwk))
                 .map(decrypter -> {
-                    jwe.decrypt(decrypter);
-                    return jwe.getPayload().toSignedJWT();
-                });
+                    try {
+                        jwe.decrypt(decrypter);
+                        return Optional.<JWT>ofNullable(jwe.getPayload().toSignedJWT());
+                    } catch (Exception e) {
+                        return Optional.<JWT>empty();
+                    }
+                }).filter(Optional::isPresent)
+                .map(Optional::get)
+                .firstElement()
+                .toSingle();
     }
 
     public Single<String> encryptAuthorization(String signedJwt, Client client) {
