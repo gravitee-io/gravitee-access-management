@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
-import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
@@ -38,8 +37,6 @@ import org.springframework.util.StringUtils;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 
@@ -56,21 +53,6 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 public class AuthorizationRequestParseRequestObjectHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
     private static final String HTTPS_SCHEME  = "https";
 
-    // When the request parameter is used, the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
-    // However, parameters MAY also be passed using the OAuth 2.0 request syntax even when a Request Object is used;
-    // this would typically be done to enable a cached, pre-signed (and possibly pre-encrypted) Request Object value to be used containing the fixed request parameters,
-    // while parameters that can vary with each request, such as state and nonce, are passed as OAuth 2.0 parameters.
-    // See https://openid.net/specs/openid-connect-core-1_0.html#RequestObject
-    private static final List<String> OVERRIDABLE_PARAMETERS =
-            Stream.of(Parameters.values,
-                    Arrays.asList(
-                            io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI,
-                            io.gravitee.am.common.oauth2.Parameters.SCOPE,
-                            io.gravitee.am.common.oauth2.Parameters.RESPONSE_MODE,
-                            io.gravitee.am.common.oauth2.Parameters.STATE,
-                            io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE,
-                            io.gravitee.am.common.oauth2.Parameters.CODE_CHALLENGE_METHOD
-                            )).flatMap(Collection::stream).collect(Collectors.toList());
     public static final int ONE_HOUR_IN_MILLIS = 3600 * 1000;
 
     private final RequestObjectService requestObjectService;
@@ -132,7 +114,6 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                             try {
                                 // Check OAuth2 parameters
                                 checkOAuthParameters(context, jwt);
-                                overrideRequestParameters(context, jwt);
                                 context.next();
                             } catch (Exception ex) {
                                 context.fail(ex);
@@ -181,6 +162,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         if (request != null) {
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST);
+
 
             return requestObjectService
                     .readRequestObject(request, context.get(CLIENT_CONTEXT_KEY), domain.useFapiBrazilProfile())
@@ -267,9 +249,6 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                 }
 
             } catch (OAuth2Exception e) {
-                // in case of OAuth2 Exception related to the request object validation,
-                // we override parameters to use then in redirect (like the state one)
-                overrideRequestParameters(context, jwt);
                 return Single.error(e);
             } catch (ParseException e) {
                 return Single.error(new InvalidRequestObjectException());
@@ -333,22 +312,6 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                 throw new InvalidRequestObjectException("response_type does not match request parameter");
             }
 
-        } catch (ParseException pe) {
-            throw new InvalidRequestObjectException();
-        }
-    }
-
-    private void overrideRequestParameters(RoutingContext context, JWT jwt) {
-        try {
-            Map<String, Object> claims = jwt.getJWTClaimsSet().getClaims();
-
-            OVERRIDABLE_PARAMETERS
-                    .forEach(key -> {
-                        Object property = claims.get(key);
-                        if (property != null) {
-                            context.request().params().set(key, property.toString());
-                        }
-                    });
         } catch (ParseException pe) {
             throw new InvalidRequestObjectException();
         }
