@@ -93,6 +93,26 @@ public final class AuthorizationRequestFactory {
         String prompt = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.PROMPT);
         authorizationRequest.setPrompts(prompt != null ? new HashSet<>(Arrays.asList(prompt.split("\\s+"))) : Collections.emptySet());
 
+        if (authorizationRequest.getParameters() == null) {
+            authorizationRequest.setParameters(new LinkedMultiValueMap<>());
+        }
+
+        String nonce = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.NONCE);
+        if (nonce != null) {
+            authorizationRequest.getParameters().put(io.gravitee.am.common.oidc.Parameters.NONCE, List.of(nonce));
+        }
+
+        String codeChallenge = getOAuthParameter(context, Parameters.CODE_CHALLENGE);
+        if (codeChallenge != null) {
+            authorizationRequest.getParameters().put(Parameters.CODE_CHALLENGE, List.of(codeChallenge));
+        }
+
+        String codeChallengeMethod = getOAuthParameter(context, Parameters.CODE_CHALLENGE_METHOD);
+        if (codeChallengeMethod != null) {
+            authorizationRequest.getParameters().put(Parameters.CODE_CHALLENGE_METHOD, List.of(codeChallengeMethod));
+        }
+
+        // store authorization request in context for later use
         context.put(ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
 
         return authorizationRequest;
