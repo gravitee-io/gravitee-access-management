@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery;
 import io.gravitee.am.common.oidc.AcrValues;
 import io.gravitee.am.common.oidc.BrazilAcrValues;
 import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
@@ -31,7 +32,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,14 +62,15 @@ public class OpenIDDiscoveryServiceTest {
 
     @Before
     public void prepare() {
-        Mockito.when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(false);
-        Mockito.when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("none");
+        when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(false);
+        when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("none");
     }
 
     private void enableMtls() {
         Mockito.reset(environment);
-        Mockito.when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(true);
-        Mockito.when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("required");
+        when(environment.getProperty("http.secured", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("http.ssl.clientAuth", String.class, "none")).thenReturn("required");
+        when(environment.getProperty(ConstantKeys.HTTP_SSL_ALIASES_BASE_URL, String.class, "/")).thenReturn("/");
     }
 
     @Test
@@ -89,7 +98,7 @@ public class OpenIDDiscoveryServiceTest {
 
     @Test
     public void shouldContain_brazil_claim_supported() {
-        Mockito.when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(openIDProviderMetadata.getClaimsSupported().contains(Claims.acr));
         assertTrue(openIDProviderMetadata.getClaimsSupported().containsAll(OpenIDDiscoveryServiceImpl.BRAZIL_CLAIMS));
@@ -103,7 +112,7 @@ public class OpenIDDiscoveryServiceTest {
 
     @Test
     public void shouldContain_brazil_acr_values_supported() {
-        Mockito.when(domain.useFapiBrazilProfile()).thenReturn(true);
+        when(domain.useFapiBrazilProfile()).thenReturn(true);
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertTrue(openIDProviderMetadata.getAcrValuesSupported().containsAll(AcrValues.values()));
         assertTrue(openIDProviderMetadata.getAcrValuesSupported().containsAll(BrazilAcrValues.values()));
@@ -122,7 +131,17 @@ public class OpenIDDiscoveryServiceTest {
     }
 
     @Test
-    public void shouldContain_tls_client_certificate_bound_access_tokens() {
+    public void shouldContain_tls_client_certificate_bound_access_tokens() throws Exception {
+        ((OpenIDDiscoveryServiceImpl)openIDDiscoveryService).setMtlsAliasEndpoints(Arrays.asList(
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_TOKEN,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_AUTHORIZATION,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_PAR,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REGISTRATION,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_USERINFO,
+                ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION));
+
         OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
         assertFalse(openIDProviderMetadata.getTlsClientCertificateBoundAccessTokens());
         assertNull(openIDProviderMetadata.getMtlsAliases());
@@ -141,4 +160,3 @@ public class OpenIDDiscoveryServiceTest {
     }
 
 }
-
