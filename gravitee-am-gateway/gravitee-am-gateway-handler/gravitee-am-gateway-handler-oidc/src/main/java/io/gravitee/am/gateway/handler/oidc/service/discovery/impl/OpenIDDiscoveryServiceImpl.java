@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.MtlsEndpointAliases;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -27,18 +28,15 @@ import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP;
-import static com.nimbusds.jose.JWEAlgorithm.RSA_OAEP_256;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
 
 /**
@@ -46,7 +44,7 @@ import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.*;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
+public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, InitializingBean {
 
     private static final String AUTHORIZATION_ENDPOINT = "/oauth/authorize";
     private static final String TOKEN_ENDPOINT = "/oauth/token";
@@ -60,6 +58,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
     private static final String OIDC_ENDPOINT = "/oidc";
     private static final String REQUEST_OBJECT_ENDPOINT = "/oidc/ros";
     public static final List<String> BRAZIL_CLAIMS = Arrays.asList("cpf", "cnpj");
+
     @Autowired
     private Domain domain;
 
@@ -68,6 +67,30 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
 
     @Autowired
     private Environment env;
+
+    private List<String> mtlsAliasEndpoints;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        String key = String.format(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS+"[%s]", 0);
+        List<String> endpoints = new ArrayList<>();
+
+        while (env.containsProperty(key)) {
+            String endpoint = env.getProperty(key);
+            endpoints.add(endpoint);
+            key = String.format(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS+"[%s]", endpoints.size());
+        }
+
+        this.mtlsAliasEndpoints = endpoints;
+    }
+
+    public List<String> getMtlsAliasEndpoints() {
+        return mtlsAliasEndpoints;
+    }
+
+    public void setMtlsAliasEndpoints(List<String> mtlsAliasEndpoints) {
+        this.mtlsAliasEndpoints = mtlsAliasEndpoints;
+    }
 
     @Override
     public OpenIDProviderMetadata getConfiguration(String basePath) {
@@ -148,22 +171,57 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService {
         // certificate bound accessToken requires TLS & Client Auth
         final Boolean secured = env.getProperty("http.secured", Boolean.class, false);
         final String clientAuth = env.getProperty("http.ssl.clientAuth", String.class, "none");
-        openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(secured && !clientAuth.equalsIgnoreCase("none"));
+        final String clientCert = env.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER, String.class);
 
-        if (secured && !clientAuth.equalsIgnoreCase("none")) {
+        final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
+        openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(mtlsEnabled);
+
+        if (mtlsEnabled && this.mtlsAliasEndpoints != null && !this.mtlsAliasEndpoints.isEmpty()) {
             MtlsEndpointAliases  aliases = new MtlsEndpointAliases();
-            aliases.setAuthorizationEndpoint(openIDProviderMetadata.getAuthorizationEndpoint());
-            aliases.setEndSessionEndpoint(openIDProviderMetadata.getEndSessionEndpoint());
-            aliases.setIntrospectionEndpoint(openIDProviderMetadata.getIntrospectionEndpoint());
-            aliases.setParEndpoint(openIDProviderMetadata.getParEndpoint());
-            aliases.setRegistrationEndpoint(openIDProviderMetadata.getRegistrationEndpoint());
-            aliases.setTokenEndpoint(openIDProviderMetadata.getTokenEndpoint());
-            aliases.setRevocationEndpoint(openIDProviderMetadata.getRevocationEndpoint());
-            aliases.setUserinfoEndpoint(openIDProviderMetadata.getUserinfoEndpoint());
+
+            final String endpoint = getMtlsAliasFor(ConstantKeys.HTTP_SSL_ALIASES_BASE_URL, basePath);
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_TOKEN)) {
+                aliases.setTokenEndpoint(getEndpointAbsoluteURL(endpoint, TOKEN_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_AUTHORIZATION)) {
+                aliases.setAuthorizationEndpoint(getEndpointAbsoluteURL(endpoint, AUTHORIZATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION)) {
+                aliases.setEndSessionEndpoint(getEndpointAbsoluteURL(endpoint, ENDSESSION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION)) {
+                aliases.setIntrospectionEndpoint(getEndpointAbsoluteURL(endpoint, INTROSPECTION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_PAR)) {
+                aliases.setParEndpoint(getEndpointAbsoluteURL(endpoint, PAR_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REGISTRATION)) {
+                aliases.setRegistrationEndpoint(getEndpointAbsoluteURL(endpoint, REGISTRATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION)) {
+                aliases.setRevocationEndpoint(getEndpointAbsoluteURL(endpoint, REVOCATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_USERINFO)) {
+                aliases.setUserinfoEndpoint(getEndpointAbsoluteURL(endpoint, USERINFO_ENDPOINT));
+            }
+
             openIDProviderMetadata.setMtlsAliases(aliases);
         }
 
         return openIDProviderMetadata;
+    }
+
+    private String getMtlsAliasFor(String endpoint, String defaultBaseUrl) {
+        String aliasBasePath = env.getProperty(endpoint, String.class, defaultBaseUrl);
+        if (!defaultBaseUrl.equals(aliasBasePath)) {
+            aliasBasePath = aliasBasePath.trim();
+            aliasBasePath = aliasBasePath.endsWith("/") ? aliasBasePath + domain.getHrid() : aliasBasePath + "/" + domain.getHrid();
+        }
+        return aliasBasePath;
+    }
+
+    private boolean isMtlsAliasEnabledFor(String endpoint) {
+        return this.mtlsAliasEndpoints.contains(endpoint);
     }
 
     @Override
