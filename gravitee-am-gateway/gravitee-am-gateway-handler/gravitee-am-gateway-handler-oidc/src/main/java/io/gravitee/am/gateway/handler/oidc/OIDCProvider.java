@@ -19,6 +19,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
@@ -50,6 +51,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
 
@@ -60,6 +62,7 @@ import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
  * @author GraviteeSource Team
  */
 public class OIDCProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
+
 
     @Autowired
     private Vertx vertx;
@@ -111,6 +114,9 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private RequestObjectService requestObjectService;
+
+    @Autowired
+    private Environment environment;
 
     @Override
     protected void doStart() throws Exception {
@@ -255,7 +261,8 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(dynamicClientAccessEndpoint::renewClientSecret);
 
         // client auth handler
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain);
+        final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, certificateHeader);
 
         // Request object registration
         oidcRouter
