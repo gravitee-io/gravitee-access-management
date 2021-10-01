@@ -101,4 +101,6 @@ public interface ConstantKeys {
     String REQUEST_URI_ID_KEY = "requestUriId";
     String REQUEST_OBJECT_FROM_URI = "request-object-from-uri";
 
+    // Header name that will contain the Peer Certificate
+    String HTTP_SSL_CERTIFICATE_HEADER = "http.ssl.certificateHeader";
 }

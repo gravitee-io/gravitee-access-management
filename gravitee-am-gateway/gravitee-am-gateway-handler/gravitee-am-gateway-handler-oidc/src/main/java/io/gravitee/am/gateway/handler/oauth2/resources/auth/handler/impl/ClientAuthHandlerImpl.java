@@ -29,19 +29,20 @@ import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.bouncycastle.asn1.x509.GeneralName;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateParsingException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.extractPeerCertificate;
 import static io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.CertificateUtils.getThumbprint;
 
 /**
@@ -52,11 +53,13 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
     private final ClientSyncService clientSyncService;
     private final List<ClientAuthProvider> clientAuthProviders;
     private final Domain domain;
+    private final String certificateHeader;
 
-    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain) {
+    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader) {
         this.clientSyncService = clientSyncService;
         this.clientAuthProviders = clientAuthProviders;
         this.domain = domain;
+        this.certificateHeader = certificateHeader;
     }
 
     @Override
@@ -89,16 +92,14 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
                 // get SSL certificate thumbprint to bind with access token
                 try {
-                    SSLSession sslSession = routingContext.request().sslSession();
-                    if (sslSession != null) {
-                        Certificate[] peerCertificates = sslSession.getPeerCertificates();
-                        X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
-                        routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate, "SHA-256"));
-                    } else if (sslSession == null && (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile())) {
+                    Optional<X509Certificate> peerCertificate = extractPeerCertificate(routingContext, this.certificateHeader);
+                    if (peerCertificate.isPresent()) {
+                        routingContext.put(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT, getThumbprint(peerCertificate.get(), "SHA-256"));
+                    } else if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         routingContext.fail(new InvalidClientException("Missing or invalid peer certificate"));
                         return;
                     }
-                } catch (SSLPeerUnverifiedException | CertificateEncodingException | NoSuchAlgorithmException ce ) {
+                } catch (SSLPeerUnverifiedException | NoSuchAlgorithmException | CertificateException ce ) {
                     if (authenticatedClient.isTlsClientCertificateBoundAccessTokens() || domain.usePlainFapiProfile()) {
                         routingContext.fail(new InvalidClientException("Missing or invalid peer certificate"));
                         return;

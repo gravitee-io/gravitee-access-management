@@ -60,7 +60,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         super.setUp();
 
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, null))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }
