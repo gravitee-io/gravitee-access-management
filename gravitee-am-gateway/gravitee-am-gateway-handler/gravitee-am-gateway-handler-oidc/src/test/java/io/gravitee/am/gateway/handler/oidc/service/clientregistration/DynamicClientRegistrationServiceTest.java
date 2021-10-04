@@ -1281,9 +1281,12 @@ public class DynamicClientRegistrationServiceTest {
         request.setTokenEndpointAuthMethod(Optional.of(ClientAuthenticationMethod.TLS_CLIENT_AUTH));
         request.setTlsClientAuthSubjectDn(Optional.of("Subject DN"));
         request.setTlsClientAuthSanEmail(Optional.empty());
-        request.setTlsClientAuthSanDns(Optional.empty());
-        request.setTlsClientAuthSanIp(Optional.empty());
+        // request.setTlsClientAuthSanDns(Optional.empty()); // DO NOT provide, empty should be present at the end
+        // request.setTlsClientAuthSanIp(Optional.empty()); // DO NOT provide it, empty should be present at the end
         request.setTlsClientAuthSanUri(Optional.empty());
+
+        assertNull(request.getTlsClientAuthSanDns());
+        assertNull(request.getTlsClientAuthSanIp());
 
         final RSAKey rsaKey = generateRSAKey();
         request.setSoftwareStatement(Optional.of(generateSoftwareStatement(rsaKey, JWSAlgorithm.PS256, Instant.now())));
@@ -1302,6 +1305,11 @@ public class DynamicClientRegistrationServiceTest {
         verify(clientService).create(argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
                 && client.getRefreshTokenValiditySeconds() == 1000
                 && client.getIdTokenValiditySeconds() == 1100));
+
+        assertNotNull(request.getTlsClientAuthSanDns());
+        assertTrue(request.getTlsClientAuthSanDns().isEmpty());
+        assertNotNull(request.getTlsClientAuthSanIp());
+        assertTrue(request.getTlsClientAuthSanIp().isEmpty());
     }
 
     private RSAKey generateRSAKey() throws Exception {
