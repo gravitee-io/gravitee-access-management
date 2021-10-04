@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -73,6 +74,8 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
+    private static final String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
+    private static final String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
 
     private final FactorManager factorManager;
     private final UserService userService;
@@ -112,14 +115,18 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final Factor factor = getFactor(routingContext, client, endUser);
             final String error = routingContext.request().getParam(ConstantKeys.ERROR_PARAM_KEY);
 
+            // prepare context
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             routingContext.put(ConstantKeys.FACTOR_KEY, factor);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
+            if (endUser.getFactors() != null && endUser.getFactors().size() > 1) {
+                routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
+                routingContext.put(MFA_ALTERNATIVES_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge/alternatives", queryParams, true));
+            }
 
             final FactorProvider factorProvider = factorManager.get(factor.getId());
-
             // send challenge
             sendChallenge(factorProvider, routingContext, factor, endUser, resChallenge -> {
                 if (resChallenge.failed()) {
@@ -245,9 +252,13 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     }
 
     private Factor getFactor(RoutingContext routingContext, Client client, User endUser) {
-        // factor can be either in session (if user come from mfa/enroll page)
+        // factor can be either in session (if user come from mfa/enroll or mfa/challenge/alternatives page)
         // or from the user enrolled factor list
-        final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+        final String savedFactorId =
+                routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null ?
+                        routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) :
+                        routingContext.session().get(ConstantKeys.ALTERNATIVE_FACTOR_ID_KEY);
+
         if (savedFactorId != null) {
             return factorManager.getFactor(savedFactorId);
         }
@@ -256,12 +267,24 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             throw new FactorNotFoundException("No factor found for the end user");
         }
 
-        return endUser.getFactors()
+        // get the primary enrolled factor
+        // if there is no primary, select the first created
+        List<EnrolledFactor> enrolledFactors = endUser.getFactors()
                 .stream()
                 .filter(enrolledFactor -> client.getFactors().contains(enrolledFactor.getFactorId()))
-                .findFirst()
+                .sorted(Comparator.comparing(EnrolledFactor::getCreatedAt))
+                .collect(Collectors.toList());
+
+        if (enrolledFactors.isEmpty()) {
+            throw new FactorNotFoundException("No factor found for the end user");
+        }
+
+        return enrolledFactors
+                .stream()
+                .filter(e -> Boolean.TRUE.equals(e.isPrimary()))
                 .map(enrolledFactor -> factorManager.getFactor(enrolledFactor.getFactorId()))
-                .orElseThrow(() -> new FactorNotFoundException("No factor found for the end user"));
+                .findFirst()
+                .orElse(factorManager.getFactor(enrolledFactors.get(0).getFactorId()));
     }
 
     private EnrolledFactor getEnrolledFactor(RoutingContext routingContext, Factor factor, User endUser) {

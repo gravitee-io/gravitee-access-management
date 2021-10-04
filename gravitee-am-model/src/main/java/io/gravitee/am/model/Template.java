@@ -33,6 +33,7 @@ public enum Template {
     OAUTH2_USER_CONSENT("oauth2_user_consent", "/oauth/confirm_access"),
     MFA_ENROLL("mfa_enroll", "/mfa/enroll"),
     MFA_CHALLENGE("mfa_challenge", "/mfa/challenge"),
+    MFA_CHALLENGE_ALTERNATIVES("mfa_challenge_alternatives", "/mfa/challenge/alternatives"),
     BLOCKED_ACCOUNT("blocked_account", "/resetPassword"),
     COMPLETE_PROFILE("complete_profile", "/completeProfile"),
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),

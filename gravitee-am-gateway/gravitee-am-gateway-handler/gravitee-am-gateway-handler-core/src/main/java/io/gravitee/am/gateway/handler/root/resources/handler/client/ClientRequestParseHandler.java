@@ -46,11 +46,11 @@ public class ClientRequestParseHandler implements Handler<RoutingContext> {
         final String clientId = context.request().getParam(Parameters.CLIENT_ID);
         if (clientId == null || clientId.isEmpty()) {
             if (required) {
-                throw new InvalidRequestException("Missing parameter: client_id is required");
+                context.fail(new InvalidRequestException("Missing parameter: client_id is required"));
             } else {
                 context.next();
-                return;
             }
+            return;
         }
 
         authenticate(clientId, authHandler -> {

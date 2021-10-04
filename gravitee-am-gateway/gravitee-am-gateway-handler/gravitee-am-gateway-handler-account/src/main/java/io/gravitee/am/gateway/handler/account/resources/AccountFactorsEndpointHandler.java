@@ -23,6 +23,7 @@ import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.account.model.EnrollmentAccount;
+import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
@@ -296,8 +297,9 @@ public class AccountFactorsEndpointHandler {
     }
 
     /**
+     * Get QR code for the selected enrolled factor (TOTP only)
      *
-     * @param routingContext
+     * @param routingContext the routingContext holding the current user
      */
     public void getEnrolledFactorQrCode(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
@@ -329,6 +331,49 @@ public class AccountFactorsEndpointHandler {
                         error -> routingContext.fail(error),
                         () -> routingContext.fail(404)
                 );
+    }
+
+    public void updateEnrolledFactor(RoutingContext routingContext) {
+        try {
+            if (routingContext.getBodyAsString() == null) {
+                routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+                return;
+            }
+
+            final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+            final String factorId = routingContext.request().getParam("factorId");
+            final UpdateEnrolledFactor updateEnrolledFactor = Json.decodeValue(routingContext.getBodyAsString(), UpdateEnrolledFactor.class);
+
+            // find factor
+            findFactor(factorId, h -> {
+                if (h.failed()) {
+                    routingContext.fail(h.cause());
+                    return;
+                }
+
+                // get enrolled factor for the current user
+                Optional<EnrolledFactor> optionalEnrolledFactor = user.getFactors()
+                        .stream()
+                        .filter(enrolledFactor -> factorId.equals(enrolledFactor.getFactorId()))
+                        .findFirst();
+
+                if (optionalEnrolledFactor.isEmpty()) {
+                    routingContext.fail(new FactorNotFoundException(factorId));
+                    return;
+                }
+
+                // update the factor
+                final EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+                enrolledFactor.setPrimary(updateEnrolledFactor.isPrimary());
+                accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
+                        .subscribe(
+                            __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                            error -> routingContext.fail(error)
+                        );
+                });
+        } catch (DecodeException ex) {
+            routingContext.fail(new InvalidRequestException("Unable to parse body message"));
+        }
     }
 
     public void removeFactor(RoutingContext routingContext) {

@@ -197,6 +197,10 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                     if (enrolledFactors == null || enrolledFactors.isEmpty()) {
                         enrolledFactors = Collections.singletonList(enrolledFactor);
                     } else {
+                        // if current factor is primary, set the others to secondary
+                        if (Boolean.TRUE.equals(enrolledFactor.isPrimary())) {
+                            enrolledFactors.forEach(e -> e.setPrimary(false));
+                        }
                         // if the Factor already exists, update the target and the security value
                         Optional<EnrolledFactor> optFactor = enrolledFactors.stream()
                                 .filter(existingFactor -> existingFactor.getFactorId().equals(enrolledFactor.getFactorId()))
@@ -206,6 +210,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                             factorToUpdate.setStatus(enrolledFactor.getStatus());
                             factorToUpdate.setChannel(enrolledFactor.getChannel());
                             factorToUpdate.setSecurity(enrolledFactor.getSecurity());
+                            factorToUpdate.setPrimary(enrolledFactor.isPrimary());
                             // update the factor
                             enrolledFactors.removeIf(ef -> factorToUpdate.getFactorId().equals(ef.getFactorId()));
                             enrolledFactors.add(factorToUpdate);
@@ -319,13 +324,15 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                                 if (oldEnrolledFactor.getStatus().equals(FactorStatus.PENDING_ACTIVATION)) {
                                     return true;
                                 }
-                                // check if email has changed
-                                if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
-                                    return emailInformationHasChanged(newUser, oldUser);
-                                }
-                                // check if phoneNumber has changed
-                                if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
-                                    return phoneNumberInformationHasChanged(newUser, oldUser);
+                                if (oldEnrolledFactor.getChannel() != null) {
+                                    // check if email has changed
+                                    if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
+                                        return emailInformationHasChanged(newUser, oldUser);
+                                    }
+                                    // check if phoneNumber has changed
+                                    if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
+                                        return phoneNumberInformationHasChanged(newUser, oldUser);
+                                    }
                                 }
                                 return false;
                             });

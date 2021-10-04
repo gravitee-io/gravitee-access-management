@@ -30,6 +30,8 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.util.StringUtils;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -48,6 +50,8 @@ public class SmtpResourceProvider implements EmailSenderProvider {
 
     private EmailSender mailSender;
 
+    private ExecutorService executorService;
+
     @Override
     public ResourceProvider start() throws Exception {
         String templatePath = env.getProperty("templates.path");
@@ -55,6 +59,15 @@ public class SmtpResourceProvider implements EmailSenderProvider {
             templatePath = env.getProperty("gravitee.home") + "/templates";
         }
         this.mailSender = new EmailSender(createJavaMail(), templatePath);
+        this.executorService = Executors.newCachedThreadPool();
+        return this;
+    }
+
+    @Override
+    public ResourceProvider stop() throws Exception {
+        if (executorService != null) {
+            executorService.shutdown();
+        }
         return this;
     }
 
@@ -83,14 +96,13 @@ public class SmtpResourceProvider implements EmailSenderProvider {
 
     @Override
     public Completable sendMessage(Email message) {
-        return Completable.create(emitter -> {
+        executorService.execute(() -> {
             try {
                 this.mailSender.send(message);
-                emitter.onComplete();
             } catch (Exception e) {
                 LOGGER.error("Message emission fails", e);
-                emitter.onError(e);
             }
         });
+        return Completable.complete();
     }
 }

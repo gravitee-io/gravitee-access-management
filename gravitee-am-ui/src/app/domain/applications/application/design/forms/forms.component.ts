@@ -115,6 +115,13 @@ export class ApplicationFormsComponent implements OnInit {
         'enabled': this.applicationSettingsValid()
       },
       {
+        'name': 'MFA Challenge alternatives',
+        'description': 'Multi-factor authentication alternatives page',
+        'template': 'MFA_CHALLENGE_ALTERNATIVES',
+        'icon': 'swap_horiz',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
         'name': 'Error',
         'description': 'Error page to display a message describing the problem',
         'template': 'ERROR',
