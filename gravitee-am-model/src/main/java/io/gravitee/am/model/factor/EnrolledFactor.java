@@ -35,6 +35,8 @@ public class EnrolledFactor {
 
     private EnrolledFactorChannel channel;
 
+    private Boolean primary;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -50,6 +52,7 @@ public class EnrolledFactor {
             this.security = new EnrolledFactorSecurity(other.security);
         }
         this.channel = other.channel;
+        this.primary = other.primary;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -92,6 +95,14 @@ public class EnrolledFactor {
 
     public void setChannel(EnrolledFactorChannel channel) {
         this.channel = channel;
+    }
+
+    public Boolean isPrimary() {
+        return primary;
+    }
+
+    public void setPrimary(Boolean primary) {
+        this.primary = primary;
     }
 
     public Date getCreatedAt() {

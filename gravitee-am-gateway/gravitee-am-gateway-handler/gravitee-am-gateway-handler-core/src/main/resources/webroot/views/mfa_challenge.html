@@ -60,6 +60,11 @@
                     <div class="mfa-challenge-form-actions">
                         <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Verify</button>
                     </div>
+                    <div class="mfa-challenge-form-additional-actions">
+                        <div  th:if="${mfaAlternativesEnabled}">
+                            <a th:href="${mfaAlternativesAction}">Having trouble ? Try other options</a>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

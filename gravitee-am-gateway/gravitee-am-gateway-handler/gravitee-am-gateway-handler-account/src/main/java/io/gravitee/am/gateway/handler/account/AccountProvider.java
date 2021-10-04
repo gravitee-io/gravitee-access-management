@@ -101,6 +101,9 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
             accountRouter.get(AccountRoutes.FACTORS_BY_ID.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::getEnrolledFactor);
+            accountRouter.put(AccountRoutes.FACTORS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::updateEnrolledFactor);
             accountRouter.get(AccountRoutes.FACTORS_OTP_QR.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::getEnrolledFactorQrCode);

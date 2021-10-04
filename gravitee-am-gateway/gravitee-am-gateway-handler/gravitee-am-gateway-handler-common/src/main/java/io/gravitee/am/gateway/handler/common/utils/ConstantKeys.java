@@ -68,6 +68,8 @@ public interface ConstantKeys {
     String ENROLLED_FACTOR_SECURITY_VALUE_KEY = "enrolledFactorSecurityValue";
     String ENROLLED_FACTOR_PHONE_NUMBER = "enrolledFactorPhoneNumber";
     String ENROLLED_FACTOR_EMAIL_ADDRESS = "enrolledFactorEmailAddress";
+    String ALTERNATIVE_FACTOR_ID_KEY = "alternativeFactorId";
+    String FACTORS_KEY = "factors";
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
 

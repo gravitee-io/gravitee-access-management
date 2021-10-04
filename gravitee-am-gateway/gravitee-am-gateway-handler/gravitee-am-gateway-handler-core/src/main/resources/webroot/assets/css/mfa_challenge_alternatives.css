@@ -2,55 +2,55 @@
     display: block;
     background-color: #f7f7f7;
     color: #333;
-    font-size: 14px;
+    font-size: 12px;
 }
 
-.mfa-challenge-container {
-    max-width: 480px;
+.mfa-challenge-alternatives-container {
+    max-width: 720px;
     margin: auto;
     padding: 8% 0 0;
 }
 
-.mfa-challenge-form {
+.mfa-challenge-alternatives-form {
     background: #fff;
     padding: 45px;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
 }
 
-.mfa-challenge-form form {
+.mfa-challenge-alternatives-form form {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-top: 30px;
 }
 
-.mfa-challenge-form-title {
+.mfa-challenge-alternatives-form-title {
     text-align:center;
 }
 
-.mfa-challenge-form-title > label {
+.mfa-challenge-alternatives-form-title > label {
     font-size: 28px;
     font-weight: 400;
     margin: 0 auto;
 }
 
-.mfa-challenge-form-actions {
+.mfa-challenge-alternatives-form-description {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.mfa-challenge-alternatives-form-actions {
     display: flex;
     flex-direction: row;
     width: 100%;
-    justify-content: flex-end;
 }
 
-.mfa-challenge-form-additional-actions {
-    display:flex;
-    flex-direction: column;
-    margin-top: 10px;
-    width: 100%;
-    justify-content: start;
-}
-
-.mfa-challenge-form-additional-actions > div {
-    margin: 5px;
+.mfa-challenge-alternatives-form-actions button.button--skipped {
+    border: none;
+    font-size: 14px;
+    color: rgb(68,138,255);
+    cursor: pointer;
 }
 
 .mdl-textfield__label.mdl-required:after {
@@ -77,7 +77,7 @@
     width: calc(100% - 48px);
 }
 
-.mfa-challenge-error-info {
+.mfa-challenge-alternatives-error-info {
     font-weight: bold;
     color: #EF3B3A;
     padding: 20px;
@@ -86,11 +86,11 @@
     margin-bottom: 20px;
 }
 
-.mfa-challenge-error-info .error {
+.mfa-challenge-alternatives-error-info .error {
     font-weight: bold;
 }
 
-.mfa-challenge-error-info .error_description:before {
+.mfa-challenge-alternatives-error-info .error_description:before {
     content: " : ";
 }
 

@@ -416,6 +416,48 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE_ALTERNATIVES'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Challenge alternatives</title>
+        </head>
+        <body>
+            <form role="form" th:action="${action}" method="post">
+                <ul>
+                    <li th:each="factor : ${factors}">
+                        <!-- TOTP FACTOR -->
+                        <span th:if="${factor.factorType == 'TOTP'}">
+                            <span>Mobile app</span>
+                            <span>Use a verification code displayed on your multi-factor authenticator app from your device.</span>
+                        </span>
+                        <!-- SMS FACTOR -->
+                        <span th:if="${factor.factorType == 'SMS'}">
+                            <span>SMS</span>
+                            <span>Text <b th:text="${factor.target}"></b>.</span>
+                        </span>
+                        <!-- EMAIL FACTOR -->
+                        <span th:if="${factor.factorType == 'EMAIL'}">
+                            <span>Email</span>
+                            <span>Send an email to <b th:text="${factor.target}"></b>.</span>
+                        </span>
+                        <span>
+                          <label th:for="'list-factor-' + ${factor.id}">
+                            <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" />
+                          </label>
+                        </span>
+                    </li>
+                </ul>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <button type="submit">Next</button>
+                </div>
+            </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>
