@@ -20,8 +20,8 @@ import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.SystemTaskTypes;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.annotations.NonNull;
@@ -59,8 +59,7 @@ public class ApplicationScopeSettingsUpgrader implements Upgrader, Ordered {
     private SystemTaskRepository systemTaskRepository;
 
     @Autowired
-    @Lazy
-    private ApplicationRepository applicationRepository;
+    private ApplicationService applicationService;
 
     @Override
     public boolean upgrade() {
@@ -127,7 +126,9 @@ public class ApplicationScopeSettingsUpgrader implements Upgrader, Ordered {
     }
 
     private Single<Boolean> migrateScopeSettings(SystemTask task) {
-        return applicationRepository.findAll().flatMapSingle(app -> {
+        return applicationService.findAll()
+                .flatMapPublisher(apps -> Flowable.fromIterable(apps))
+                .flatMapSingle(app -> {
                     logger.debug("Process application '{}'", app.getId());
                     if (app.getSettings() != null && app.getSettings().getOauth() != null) {
                         final ApplicationOAuthSettings oauthSettings = app.getSettings().getOauth();
@@ -152,7 +153,7 @@ public class ApplicationScopeSettingsUpgrader implements Upgrader, Ordered {
                             oauthSettings.setScopeApprovals(null);
 
                             logger.debug("Update settings for application '{}'", app.getId());
-                            return applicationRepository.update(app);
+                            return applicationService.update(app);
                         } else {
                             logger.debug("No scope to process for application '{}'", app.getId());
                         }
