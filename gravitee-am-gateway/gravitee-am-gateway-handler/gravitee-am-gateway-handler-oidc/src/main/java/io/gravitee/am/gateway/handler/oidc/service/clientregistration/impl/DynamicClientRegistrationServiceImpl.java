@@ -762,25 +762,64 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             }
 
             if (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent() && (
-                    request.getTlsClientAuthSanDns().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                    (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
+                            (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
+                            (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
+                            (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             } else if (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanEmail().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                    (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
+                            (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
+                            (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
+                            (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             } else if (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanEmail().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                    (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
+                            (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
+                            (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) ||
+                            (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             } else if (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanUri().isPresent())) {
+                    (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
+                            (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
+                            (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
+                            (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
             } else if (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent() && (
-                    request.getTlsClientAuthSubjectDn().isPresent() || request.getTlsClientAuthSanDns().isPresent() ||
-                            request.getTlsClientAuthSanIp().isPresent() || request.getTlsClientAuthSanEmail().isPresent())) {
+                    (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) ||
+                            (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) ||
+                            (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) ||
+                            (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()))) {
                 return Single.error(new InvalidClientMetadataException("The tls_client_auth must use exactly one of the TLS parameters."));
+            }
+
+            // because only TLS parameter is authorized, we force the missing options to empty to avoid
+            // remaining values during an update as the null value for a field do not reset the field...
+            if (request.getTlsClientAuthSubjectDn() != null && request.getTlsClientAuthSubjectDn().isPresent()) {
+                request.setTlsClientAuthSanDns(Optional.empty());
+                request.setTlsClientAuthSanEmail(Optional.empty());
+                request.setTlsClientAuthSanIp(Optional.empty());
+                request.setTlsClientAuthSanUri(Optional.empty());
+            } else if (request.getTlsClientAuthSanDns() != null && request.getTlsClientAuthSanDns().isPresent()) {
+                request.setTlsClientAuthSubjectDn(Optional.empty());
+                request.setTlsClientAuthSanEmail(Optional.empty());
+                request.setTlsClientAuthSanIp(Optional.empty());
+                request.setTlsClientAuthSanUri(Optional.empty());
+            } else if (request.getTlsClientAuthSanIp() != null && request.getTlsClientAuthSanIp().isPresent()) {
+                request.setTlsClientAuthSubjectDn(Optional.empty());
+                request.setTlsClientAuthSanEmail(Optional.empty());
+                request.setTlsClientAuthSanDns(Optional.empty());
+                request.setTlsClientAuthSanUri(Optional.empty());
+            } else if (request.getTlsClientAuthSanEmail() != null && request.getTlsClientAuthSanEmail().isPresent()) {
+                request.setTlsClientAuthSubjectDn(Optional.empty());
+                request.setTlsClientAuthSanIp(Optional.empty());
+                request.setTlsClientAuthSanDns(Optional.empty());
+                request.setTlsClientAuthSanUri(Optional.empty());
+            } else if (request.getTlsClientAuthSanUri() != null && request.getTlsClientAuthSanUri().isPresent()) {
+                request.setTlsClientAuthSubjectDn(Optional.empty());
+                request.setTlsClientAuthSanIp(Optional.empty());
+                request.setTlsClientAuthSanDns(Optional.empty());
+                request.setTlsClientAuthSanEmail(Optional.empty());
             }
         }
 
