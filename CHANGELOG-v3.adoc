@@ -1,6 +1,24 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/436?closed=1[AM - 3.12.1 (2021-10-04)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Use ApplicationService to migrate scopes https://github.com/gravitee-io/issues/issues/6308[#6308]
+
+=== Improvements
+
+*_Gateway_*
+
+- [oidc] get client SSL certificate from HTTP proxy https://github.com/gravitee-io/issues/issues/6296[#6296]
+- [oidc] override mtls_endpoint_aliases https://github.com/gravitee-io/issues/issues/6297[#6297]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/418?closed=1[AM - 3.12.0 (2021-09-29)]
 
 === Bug fixes
