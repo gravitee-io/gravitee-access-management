@@ -319,13 +319,15 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                                 if (oldEnrolledFactor.getStatus().equals(FactorStatus.PENDING_ACTIVATION)) {
                                     return true;
                                 }
-                                // check if email has changed
-                                if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
-                                    return emailInformationHasChanged(newUser, oldUser);
-                                }
-                                // check if phoneNumber has changed
-                                if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
-                                    return phoneNumberInformationHasChanged(newUser, oldUser);
+                                if (oldEnrolledFactor.getChannel() != null) {
+                                    // check if email has changed
+                                    if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
+                                        return emailInformationHasChanged(newUser, oldUser);
+                                    }
+                                    // check if phoneNumber has changed
+                                    if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
+                                        return phoneNumberInformationHasChanged(newUser, oldUser);
+                                    }
                                 }
                                 return false;
                             });
