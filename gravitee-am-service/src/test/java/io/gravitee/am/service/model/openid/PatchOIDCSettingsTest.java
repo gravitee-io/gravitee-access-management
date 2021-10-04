@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model.openid;
 
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import org.junit.Test;
@@ -45,6 +46,28 @@ public class PatchOIDCSettingsTest {
         assertFalse("should be disabled by default", result.getClientRegistrationSettings().isDynamicClientRegistrationEnabled());
     }
 
+    @Test
+    public void testPatchToCIBA() {
+        //Build patcher
+        PatchOIDCSettings patchOIDCSettings = new PatchOIDCSettings();
+        PatchCIBASettings patchCiba = new PatchCIBASettings();
+        patchCiba.setEnabled(Optional.of(true));
+        patchOIDCSettings.setCibaSettings(Optional.of(patchCiba));
+
+        // build settings to patch
+        OIDCSettings settings = new OIDCSettings();
+        final CIBASettings cibaSettings = new CIBASettings();
+        cibaSettings.setEnabled(false);
+        settings.setCibaSettings(cibaSettings);
+        assertFalse("CIBA settings shall be false before update", settings.getCibaSettings().isEnabled());
+
+        //apply patch on null object
+        OIDCSettings result = patchOIDCSettings.patch(settings);
+
+        assertNotNull(result);
+        assertNotNull(result.getCibaSettings());
+        assertTrue("CIBA settings shall be true after update", result.getCibaSettings().isEnabled());
+    }
 
     @Test
     public void testPatchToEmptyValue() {

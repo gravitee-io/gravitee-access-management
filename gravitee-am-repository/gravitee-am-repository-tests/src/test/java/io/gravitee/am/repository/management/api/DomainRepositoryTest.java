@@ -22,6 +22,7 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -92,7 +93,11 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         domain.setAccountSettings(new AccountSettings());
         domain.setLoginSettings(new LoginSettings());
-        domain.setOidc(new OIDCSettings());
+        final OIDCSettings oidc = new OIDCSettings();
+        final CIBASettings cibaSettings = new CIBASettings();
+        cibaSettings.setEnabled(true);
+        oidc.setCibaSettings(cibaSettings);
+        domain.setOidc(oidc);
         domain.setScim(new SCIMSettings());
         domain.setUma(new UMASettings());
         domain.setWebAuthnSettings(new WebAuthnSettings());
@@ -174,6 +179,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getLoginSettings() != null);
         testObserver.assertValue(d -> d.getUma() != null);
         testObserver.assertValue(d -> d.getOidc() != null);
+        testObserver.assertValue(d -> d.getOidc().getCibaSettings() != null && d.getOidc().getCibaSettings().isEnabled());
         testObserver.assertValue(d -> d.getScim() != null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);

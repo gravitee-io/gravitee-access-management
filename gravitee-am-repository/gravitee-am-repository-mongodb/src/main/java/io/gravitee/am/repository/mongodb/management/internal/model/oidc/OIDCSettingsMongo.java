@@ -27,6 +27,7 @@ public class OIDCSettingsMongo {
     private SecurityProfileSettingsMongo securityProfileSettings;
     private boolean redirectUriStrictMatching;
     private List<String> postLogoutRedirectUris;
+    private CIBASettingsMongo cibaSettings;
 
     public ClientRegistrationSettingsMongo getClientRegistrationSettings() {
         return clientRegistrationSettings;
@@ -58,5 +59,13 @@ public class OIDCSettingsMongo {
 
     public void setSecurityProfileSettings(SecurityProfileSettingsMongo securityProfileSettings) {
         this.securityProfileSettings = securityProfileSettings;
+    }
+
+    public CIBASettingsMongo getCibaSettings() {
+        return cibaSettings;
+    }
+
+    public void setCibaSettings(CIBASettingsMongo cibaSettings) {
+        this.cibaSettings = cibaSettings;
     }
 }

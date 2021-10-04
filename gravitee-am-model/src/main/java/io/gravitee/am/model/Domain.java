@@ -435,6 +435,12 @@ public class Domain implements Resource {
                 this.getOidc().getSecurityProfileSettings().isEnableFapiBrazil();
     }
 
+    public boolean useCiba() {
+        return this.getOidc() != null &&
+                this.getOidc().getCibaSettings() != null &&
+                this.getOidc().getCibaSettings().isEnabled();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

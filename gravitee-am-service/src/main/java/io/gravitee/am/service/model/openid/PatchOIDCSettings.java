@@ -16,11 +16,13 @@
 package io.gravitee.am.service.model.openid;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.netty.channel.ChannelInboundInvoker;
 
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +42,9 @@ public class PatchOIDCSettings {
 
     @JsonProperty("securityProfileSettings")
     private Optional<PatchSecurityProfileSettings> securityProfileSettings;
+
+    @JsonProperty("cibaSettings")
+    private Optional<PatchCIBASettings> cibaSettings;
 
     private Optional<Boolean> redirectUriStrictMatching;
 
@@ -77,6 +82,14 @@ public class PatchOIDCSettings {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
+    public Optional<PatchCIBASettings> getCibaSettings() {
+        return cibaSettings;
+    }
+
+    public void setCibaSettings(Optional<PatchCIBASettings> cibaSettings) {
+        this.cibaSettings = cibaSettings;
+    }
+
     public OIDCSettings patch(OIDCSettings toPatch) {
 
         //If source may be null, in such case init with default values
@@ -104,6 +117,16 @@ public class PatchOIDCSettings {
                 toPatch.setSecurityProfileSettings(patcher.patch(source));
             } else {
                 toPatch.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
+            }
+        }
+
+        if (getCibaSettings() != null) {
+            if (getCibaSettings().isPresent()) {
+                final PatchCIBASettings patcher = getCibaSettings().get();
+                final CIBASettings source = toPatch.getCibaSettings();
+                toPatch.setCibaSettings(patcher.patch(source));
+            } else {
+                toPatch.setCibaSettings(CIBASettings.defaultSettings());
             }
         }
 

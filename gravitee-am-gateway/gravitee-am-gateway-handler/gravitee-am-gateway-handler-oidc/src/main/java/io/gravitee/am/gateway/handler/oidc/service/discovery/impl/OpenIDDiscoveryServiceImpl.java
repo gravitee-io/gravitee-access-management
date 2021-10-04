@@ -55,6 +55,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
     private static final String INTROSPECTION_ENDPOINT = "/oauth/introspect";
     private static final String ENDSESSION_ENDPOINT = "/logout";
     private static final String REGISTRATION_ENDPOINT = "/oidc/register";
+    private static final String CIBA_AUTHENTICATION_ENDPOINT = "/ciba/authenticate";
     private static final String OIDC_ENDPOINT = "/oidc";
     private static final String REQUEST_OBJECT_ENDPOINT = "/oidc/ros";
     public static final List<String> BRAZIL_CLAIMS = Arrays.asList("cpf", "cnpj");
@@ -173,6 +174,14 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
         final String clientAuth = env.getProperty("http.ssl.clientAuth", String.class, "none");
         final String clientCert = env.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER, String.class);
 
+        if (domain.useCiba()) {
+            openIDProviderMetadata.setBackchannelAuthenticationSigningAlg(JWAlgorithmUtils.getSupportedBackchannelAuthenticationSigningAl());
+            openIDProviderMetadata.setBackchannelTokenDeliveryModesSupported(List.of(CIBADeliveryMode.POLL));
+            openIDProviderMetadata.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(basePath, CIBA_AUTHENTICATION_ENDPOINT));
+            openIDProviderMetadata.setBackchannelUserCodeSupported(false);
+        }
+
+        if (secured && !clientAuth.equalsIgnoreCase("none")) {
         final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
         openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(mtlsEnabled);
 
@@ -204,7 +213,9 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
             if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_USERINFO)) {
                 aliases.setUserinfoEndpoint(getEndpointAbsoluteURL(endpoint, USERINFO_ENDPOINT));
             }
-
+            if (domain.useCiba() && isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_CIBA)) {
+                aliases.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(endpoint, CIBA_AUTHENTICATION_ENDPOINT));
+            }
             openIDProviderMetadata.setMtlsAliases(aliases);
         }
 

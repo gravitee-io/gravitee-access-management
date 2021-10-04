@@ -23,6 +23,7 @@ import io.reactivex.Single;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.oauth2.GrantType.*;
 import static io.gravitee.am.common.oauth2.ResponseType.CODE;
@@ -38,7 +39,7 @@ public class GrantTypeUtils {
     private static final String AM_V2_VERSION = "AM_V2_VERSION";
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private static final Set<String> SUPPORTED_GRANT_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA//, DEVIDE_CODE, SAML2_BEARER
+            AUTHORIZATION_CODE, IMPLICIT, REFRESH_TOKEN, CLIENT_CREDENTIALS, PASSWORD, JWT_BEARER, UMA, CIBA_GRANT_TYPE//, DEVIDE_CODE, SAML2_BEARER
     )));
 
     /**

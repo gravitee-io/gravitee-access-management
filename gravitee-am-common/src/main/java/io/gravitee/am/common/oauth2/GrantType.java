@@ -80,4 +80,11 @@ public interface GrantType {
      * See <a href="https://docs.kantarainitiative.org/uma/wg/rec-oauth-uma-grant-2.0.html#uma-grant-type">3.3.1 Client Request to Authorization Server for RPT</a>
      */
     String UMA = "urn:ietf:params:oauth:grant-type:uma-ticket";
+
+    /**
+     * CIBA grant type
+     *
+     * See <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.4"> 4. Registration and Discovery Metadata </a>
+     */
+    String CIBA_GRANT_TYPE = "urn:openid:params:grant-type:ciba";
 }

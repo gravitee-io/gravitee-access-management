@@ -221,6 +221,7 @@ import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
 import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
 import {UserDevicesComponent} from "./domain/settings/users/user/devices/devices.component";
 import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
+import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -2312,6 +2313,20 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'Security Profile',
+                            section: 'Openid'
+                          },
+                          perms: {
+                            only: ['domain_openid_read']
+                          }
+                        }
+                      },
+                      {
+                        path: 'ciba',
+                        component: CibaComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'CIBA',
                             section: 'Openid'
                           },
                           perms: {

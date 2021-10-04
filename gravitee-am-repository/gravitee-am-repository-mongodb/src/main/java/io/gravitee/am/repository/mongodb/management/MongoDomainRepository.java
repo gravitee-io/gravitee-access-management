@@ -28,6 +28,7 @@ import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.oidc.SecurityProfileSettings;
@@ -36,6 +37,7 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
@@ -227,6 +229,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setRedirectUriStrictMatching(oidcMongo.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidcMongo.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidcMongo.getSecurityProfileSettings()));
+        oidcSettings.setCibaSettings(convert(oidcMongo.getCibaSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidcMongo.getPostLogoutRedirectUris());
 
         return oidcSettings;
@@ -273,6 +276,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
+    private static CIBASettings convert(CIBASettingsMongo profiles) {
+        if (profiles == null) {
+            return null;
+        }
+
+        CIBASettings result = new CIBASettings();
+        result.setEnabled(profiles.isEnabled());
+
+        return result;
+    }
+
     private static OIDCSettingsMongo convert(OIDCSettings oidc) {
         if (oidc == null) {
             return null;
@@ -282,6 +296,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         oidcSettings.setRedirectUriStrictMatching(oidc.isRedirectUriStrictMatching());
         oidcSettings.setClientRegistrationSettings(convert(oidc.getClientRegistrationSettings()));
         oidcSettings.setSecurityProfileSettings(convert(oidc.getSecurityProfileSettings()));
+        oidcSettings.setCibaSettings(convert(oidc.getCibaSettings()));
         oidcSettings.setPostLogoutRedirectUris(oidc.getPostLogoutRedirectUris());
 
         return oidcSettings;
@@ -324,6 +339,17 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         SecurityProfileSettingsMongo result = new SecurityProfileSettingsMongo();
         result.setEnablePlainFapi(profile.isEnablePlainFapi());
         result.setEnableFapiBrazil(profile.isEnableFapiBrazil());
+
+        return result;
+    }
+
+    private static CIBASettingsMongo convert(CIBASettings profile) {
+        if (profile == null) {
+            return null;
+        }
+
+        CIBASettingsMongo result = new CIBASettingsMongo();
+        result.setEnabled(profile.isEnabled());
 
         return result;
     }
