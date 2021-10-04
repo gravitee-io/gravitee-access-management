@@ -48,7 +48,7 @@ public class SecurityProfileSettings {
     }
 
     public static SecurityProfileSettings defaultSettings() {
-        //By default all boolean are set to false.
+        //By default, all boolean are set to false.
         return new SecurityProfileSettings();
     }
 }

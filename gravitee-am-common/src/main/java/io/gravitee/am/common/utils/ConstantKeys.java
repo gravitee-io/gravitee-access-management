@@ -137,4 +137,5 @@ public interface ConstantKeys {
     String HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION = "end_session_endpoint";
     String HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION = "revocation_endpoint";
     String HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION = "introspection_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_CIBA = "backchannel_authentication_endpoint";
 }

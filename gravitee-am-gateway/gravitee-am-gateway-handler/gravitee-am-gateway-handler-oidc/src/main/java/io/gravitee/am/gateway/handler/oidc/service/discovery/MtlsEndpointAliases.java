@@ -47,6 +47,9 @@ public class MtlsEndpointAliases {
     @JsonProperty("pushed_authorization_request_endpoint")
     private String parEndpoint;
 
+    @JsonProperty("backchannel_authentication_endpoint")
+    private String backchannelAuthenticationEndpoint;
+
     public String getAuthorizationEndpoint() {
         return authorizationEndpoint;
     }
@@ -109,5 +112,13 @@ public class MtlsEndpointAliases {
 
     public void setParEndpoint(String parEndpoint) {
         this.parEndpoint = parEndpoint;
+    }
+
+    public String getBackchannelAuthenticationEndpoint() {
+        return backchannelAuthenticationEndpoint;
+    }
+
+    public void setBackchannelAuthenticationEndpoint(String backchannelAuthenticationEndpoint) {
+        this.backchannelAuthenticationEndpoint = backchannelAuthenticationEndpoint;
     }
 }

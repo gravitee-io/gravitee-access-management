@@ -177,6 +177,18 @@ public class OpenIDProviderMetadata {
     @JsonProperty("mtls_endpoint_aliases")
     private MtlsEndpointAliases mtlsAliases;
 
+    @JsonProperty("backchannel_token_delivery_modes_supported")
+    private List<String> backchannelTokenDeliveryModesSupported;
+
+    @JsonProperty("backchannel_authentication_endpoint")
+    private String backchannelAuthenticationEndpoint;
+
+    @JsonProperty("backchannel_authentication_request_signing_alg_values_supported")
+    private List<String> backchannelAuthenticationSigningAlg;
+
+    @JsonProperty("backchannel_user_code_parameter_supported")
+    private boolean backchannelUserCodeSupported;
+
     public void setIssuer(String issuer) {
         this.issuer = issuer;
     }
@@ -555,5 +567,37 @@ public class OpenIDProviderMetadata {
 
     public void setMtlsAliases(MtlsEndpointAliases mtlsAliases) {
         this.mtlsAliases = mtlsAliases;
+    }
+
+    public List<String> getBackchannelTokenDeliveryModesSupported() {
+        return backchannelTokenDeliveryModesSupported;
+    }
+
+    public void setBackchannelTokenDeliveryModesSupported(List<String> backchannelTokenDeliveryModesSupported) {
+        this.backchannelTokenDeliveryModesSupported = backchannelTokenDeliveryModesSupported;
+    }
+
+    public String getBackchannelAuthenticationEndpoint() {
+        return backchannelAuthenticationEndpoint;
+    }
+
+    public void setBackchannelAuthenticationEndpoint(String backchannelAuthenticationEndpoint) {
+        this.backchannelAuthenticationEndpoint = backchannelAuthenticationEndpoint;
+    }
+
+    public List<String> getBackchannelAuthenticationSigningAlg() {
+        return backchannelAuthenticationSigningAlg;
+    }
+
+    public void setBackchannelAuthenticationSigningAlg(List<String> backchannelAuthenticationSigningAlg) {
+        this.backchannelAuthenticationSigningAlg = backchannelAuthenticationSigningAlg;
+    }
+
+    public boolean isBackchannelUserCodeSupported() {
+        return backchannelUserCodeSupported;
+    }
+
+    public void setBackchannelUserCodeSupported(boolean backchannelUserCodeSupported) {
+        this.backchannelUserCodeSupported = backchannelUserCodeSupported;
     }
 }

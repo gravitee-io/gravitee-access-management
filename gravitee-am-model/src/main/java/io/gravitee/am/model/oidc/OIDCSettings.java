@@ -38,6 +38,8 @@ public class OIDCSettings {
      */
     private List<String> postLogoutRedirectUris;
 
+    private CIBASettings cibaSettings;
+
     public ClientRegistrationSettings getClientRegistrationSettings() {
         return clientRegistrationSettings!=null?clientRegistrationSettings: ClientRegistrationSettings.defaultSettings();
     }
@@ -70,11 +72,20 @@ public class OIDCSettings {
         this.securityProfileSettings = securityProfileSettings;
     }
 
+    public CIBASettings getCibaSettings() {
+        return cibaSettings;
+    }
+
+    public void setCibaSettings(CIBASettings cibaSettings) {
+        this.cibaSettings = cibaSettings;
+    }
+
     public static OIDCSettings defaultSettings() {
         OIDCSettings defaultSettings = new OIDCSettings();
         defaultSettings.setClientRegistrationSettings(ClientRegistrationSettings.defaultSettings());
         defaultSettings.setSecurityProfileSettings(SecurityProfileSettings.defaultSettings());
         defaultSettings.setRedirectUriStrictMatching(false);
+        defaultSettings.setCibaSettings(CIBASettings.defaultSettings());
         return defaultSettings;
     }
 

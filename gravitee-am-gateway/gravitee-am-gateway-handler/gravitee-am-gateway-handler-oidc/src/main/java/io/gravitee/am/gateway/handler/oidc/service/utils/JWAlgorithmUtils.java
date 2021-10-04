@@ -294,4 +294,11 @@ public class JWAlgorithmUtils {
         return EncryptionMethod.A128CBC_HS256.getName();
     }
 
+    public static List<String> getSupportedBackchannelAuthenticationSigningAl() {
+        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+    }
+
+    public static boolean isValidBackchannelAuthenticationSigningAl(String algorithm) {
+        return SUPPORTED_SIGNING_ALG.contains(algorithm);
+    }
 }
