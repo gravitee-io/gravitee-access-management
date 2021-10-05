@@ -169,6 +169,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth().getGrantTypes().containsAll(Arrays.asList("authorization_code")));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getBackchannelAuthRequestSignAlg().equals("test"));
+        testObserver.assertValue(a -> a.getSettings().getOauth().isBackchannelUserCodeParameter());
+        testObserver.assertValue(a -> a.getSettings().getOauth().getBackchannelClientNotificationEndpoint().equals("ciba_endpoint"));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getBackchannelTokenDeliveryMode().equals("poll"));
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().size() == 1);
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).isDefaultScope());
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScopeApproval() == 42);
@@ -204,6 +208,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         oauth.setGrantTypes(Collections.singletonList("authorization_code"));
         settings.setOauth(oauth);
+        oauth.setBackchannelAuthRequestSignAlg("test");
+        oauth.setBackchannelUserCodeParameter(true);
+        oauth.setBackchannelTokenDeliveryMode("poll");
+        oauth.setBackchannelClientNotificationEndpoint("ciba_endpoint");
         ApplicationScopeSettings scopeSettings = new ApplicationScopeSettings();
         scopeSettings.setScope("scopename");
         scopeSettings.setDefaultScope(true);

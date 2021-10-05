@@ -200,6 +200,22 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("post_logout_redirect_uris")
     private Optional<List<String>> postLogoutRedirectUris;
 
+    /*******************************************************************************
+     * OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
+     * https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#registration
+     ********************************************************************************/
+    @JsonProperty("backchannel_token_delivery_mode")
+    private Optional<String> backchannelTokenDeliveryMode;
+
+    @JsonProperty("backchannel_client_notification_endpoint")
+    private Optional<String> backchannelClientNotificationEndpoint;
+
+    @JsonProperty("backchannel_authentication_request_signing_alg")
+    private Optional<String> backchannelAuthRequestSignAlg;
+
+    @JsonProperty("backchannel_user_code_parameter")
+    private Optional<Boolean> backchannelUserCodeParameter;
+
     // GETTER AND SETTERS //
 
     public Optional<List<String>> getRedirectUris() {
@@ -566,6 +582,38 @@ public class DynamicClientRegistrationRequest {
         this.requireParRequest = requireParRequest;
     }
 
+    public Optional<String> getBackchannelTokenDeliveryMode() {
+        return backchannelTokenDeliveryMode;
+    }
+
+    public void setBackchannelTokenDeliveryMode(Optional<String> backchannelTokenDeliveryMode) {
+        this.backchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+    }
+
+    public Optional<String> getBackchannelClientNotificationEndpoint() {
+        return backchannelClientNotificationEndpoint;
+    }
+
+    public void setBackchannelClientNotificationEndpoint(Optional<String> backchannelClientNotificationEndpoint) {
+        this.backchannelClientNotificationEndpoint = backchannelClientNotificationEndpoint;
+    }
+
+    public Optional<String> getBackchannelAuthRequestSignAlg() {
+        return backchannelAuthRequestSignAlg;
+    }
+
+    public void setBackchannelAuthRequestSignAlg(Optional<String> backchannelAuthRequestSignAlg) {
+        this.backchannelAuthRequestSignAlg = backchannelAuthRequestSignAlg;
+    }
+
+    public Optional<Boolean> getBackchannelUserCodeParameter() {
+        return backchannelUserCodeParameter;
+    }
+
+    public void setBackchannelUserCodeParameter(Optional<Boolean> backchannelUserCodeParameter) {
+        this.backchannelUserCodeParameter = backchannelUserCodeParameter;
+    }
+
     @Override
     public String toString() {
         return "ClientPayload{clientName='" + (clientName!=null?clientName.orElse(""):"") + "\'}";
@@ -627,6 +675,11 @@ public class DynamicClientRegistrationRequest {
 
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
+
+        SetterUtils.safeSet(client::setBackchannelTokenDeliveryMode, this.getBackchannelTokenDeliveryMode());
+        SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
+        SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
+        SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
 
         return client;
     }
@@ -691,6 +744,12 @@ public class DynamicClientRegistrationRequest {
 
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
+
+        /* set OpenID Connect Client-Initiated Backchannel Authentication Flow - Client Metadata  */
+        SetterUtils.safeSet(client::setBackchannelTokenDeliveryMode, this.getBackchannelTokenDeliveryMode());
+        SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
+        SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
+        SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
 
         return client;
     }
