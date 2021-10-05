@@ -176,7 +176,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
 
         if (domain.useCiba()) {
             openIDProviderMetadata.setBackchannelAuthenticationSigningAlg(JWAlgorithmUtils.getSupportedBackchannelAuthenticationSigningAl());
-            openIDProviderMetadata.setBackchannelTokenDeliveryModesSupported(List.of(CIBADeliveryMode.POLL));
+            openIDProviderMetadata.setBackchannelTokenDeliveryModesSupported(CIBADeliveryMode.SUPPORTED_DELIVERY_MODES);
             openIDProviderMetadata.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(basePath, CIBA_AUTHENTICATION_ENDPOINT));
             openIDProviderMetadata.setBackchannelUserCodeSupported(false);
         }

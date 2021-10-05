@@ -20,6 +20,8 @@ import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -326,7 +328,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::validateAuthorizationEncryptionAlgorithm)
                 .flatMap(this::validateRequestObjectSigningAlgorithm)
                 .flatMap(this::validateRequestObjectEncryptionAlgorithm)
-                .flatMap(this::enforceWithSoftwareStatement);
+                .flatMap(this::enforceWithSoftwareStatement)
+                .flatMap(this::validateCibaSettings);
     }
 
     private Single<DynamicClientRegistrationRequest> enforceWithSoftwareStatement(DynamicClientRegistrationRequest request) {
@@ -846,6 +849,37 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 return Single.error(new InvalidClientMetadataException("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
             }
         }
+        return Single.just(request);
+    }
+
+    private Single<DynamicClientRegistrationRequest> validateCibaSettings(DynamicClientRegistrationRequest request) {
+        final boolean useCibaGrantType = request.getGrantTypes() != null && request.getGrantTypes().isPresent() && request.getGrantTypes().get().contains(GrantType.CIBA_GRANT_TYPE);
+
+        if(!domain.useCiba() && useCibaGrantType) {
+            return Single.error(new InvalidClientMetadataException("CIBA flow not supported"));
+        }
+
+        if(domain.useCiba() && useCibaGrantType) {
+            if (request.getBackchannelTokenDeliveryMode() == null || request.getBackchannelTokenDeliveryMode().isEmpty()) {
+                return Single.error(new InvalidClientMetadataException("The backchannel_token_delivery_mode is required for CIBA Flow."));
+            }
+
+            final String deliveryMode = request.getBackchannelTokenDeliveryMode().get();
+            if (!CIBADeliveryMode.SUPPORTED_DELIVERY_MODES.contains(deliveryMode)) {
+                return Single.error(new InvalidClientMetadataException("Unsupported backchannel_token_delivery_mode"));
+            }
+
+            if ((deliveryMode.equals(CIBADeliveryMode.PING) || deliveryMode.equals(CIBADeliveryMode.PUSH)) &&
+                    ((request.getBackchannelClientNotificationEndpoint() == null || request.getBackchannelClientNotificationEndpoint().isEmpty()) ||
+                            (!request.getBackchannelClientNotificationEndpoint().get().startsWith("https")) )) {
+                return Single.error(new InvalidClientMetadataException("Missing or Invalid backchannel_client_notification_endpoint"));
+            }
+
+            if (request.getBackchannelUserCodeParameter() != null && request.getBackchannelUserCodeParameter().isPresent() && request.getBackchannelUserCodeParameter().get()) {
+                return Single.error(new InvalidClientMetadataException("Unsupported backchannel_user_code_parameter"));
+            }
+        }
+
         return Single.just(request);
     }
 

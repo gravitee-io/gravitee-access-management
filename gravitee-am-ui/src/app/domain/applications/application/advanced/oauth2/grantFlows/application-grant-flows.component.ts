@@ -27,6 +27,7 @@ import * as _ from "lodash";
 })
 
 export class ApplicationGrantFlowsComponent implements OnInit {
+  private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
   private domainId: string;
   formChanged: boolean;
   application: any;
@@ -47,7 +48,8 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     { name: 'REFRESH TOKEN', value: 'refresh_token', checked: false, disabled: false  },
     { name: 'PASSWORD', value: 'password', checked: false },
     { name: 'CLIENT CREDENTIALS', value: 'client_credentials', checked: false, disabled: false  },
-    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false  }
+    { name: 'UMA TICKET', value: 'urn:ietf:params:oauth:grant-type:uma-ticket', checked: false, disabled: false  },
+    { name: 'CIBA', value: this.CIBA_GRANT_TYPE, checked: false, disabled: false  }
   ];
   customGrantTypes: any[];
 
@@ -160,6 +162,10 @@ export class ApplicationGrantFlowsComponent implements OnInit {
         'none' === this.applicationOauthSettings.tokenEndpointAuthMethod &&
         'client_credentials' === grantType.value) {
         grantType.disabled = true;
+      }
+      if (this.CIBA_GRANT_TYPE === grantType.value && this.route.snapshot.data['domain']) {
+        let domain = this.route.snapshot.data['domain'];
+        grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
       }
     })
   }

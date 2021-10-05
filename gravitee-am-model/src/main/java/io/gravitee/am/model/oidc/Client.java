@@ -204,6 +204,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean requireParRequest;
 
+    private String backchannelTokenDeliveryMode;
+
+    private String backchannelClientNotificationEndpoint;
+
+    private String backchannelAuthRequestSignAlg;
+
+    private boolean backchannelUserCodeParameter;
+
     public Client() {
     }
 
@@ -278,6 +286,10 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.silentReAuthentication = other.silentReAuthentication;
         this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
         this.requireParRequest = other.requireParRequest;
+        this.backchannelTokenDeliveryMode = other.backchannelTokenDeliveryMode;
+        this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
+        this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
+        this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
     }
 
     public String getId() {
@@ -883,6 +895,38 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setRequireParRequest(boolean requireParRequest) {
         this.requireParRequest = requireParRequest;
+    }
+
+    public String getBackchannelTokenDeliveryMode() {
+        return backchannelTokenDeliveryMode;
+    }
+
+    public void setBackchannelTokenDeliveryMode(String backchannelTokenDeliveryMode) {
+        this.backchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+    }
+
+    public String getBackchannelClientNotificationEndpoint() {
+        return backchannelClientNotificationEndpoint;
+    }
+
+    public void setBackchannelClientNotificationEndpoint(String backchannelClientNotificationEndpoint) {
+        this.backchannelClientNotificationEndpoint = backchannelClientNotificationEndpoint;
+    }
+
+    public String getBackchannelAuthRequestSignAlg() {
+        return backchannelAuthRequestSignAlg;
+    }
+
+    public void setBackchannelAuthRequestSignAlg(String backchannelAuthRequestSignAlg) {
+        this.backchannelAuthRequestSignAlg = backchannelAuthRequestSignAlg;
+    }
+
+    public boolean getBackchannelUserCodeParameter() {
+        return backchannelUserCodeParameter;
+    }
+
+    public void setBackchannelUserCodeParameter(boolean backchannelUserCodeParameter) {
+        this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
     @Override

@@ -20,6 +20,8 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oidc.CIBADeliveryMode;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
@@ -66,6 +68,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -1310,6 +1313,90 @@ public class DynamicClientRegistrationServiceTest {
         assertTrue(request.getTlsClientAuthSanDns().isEmpty());
         assertNotNull(request.getTlsClientAuthSanIp());
         assertTrue(request.getTlsClientAuthSanIp().isEmpty());
+    }
+
+    @Test
+    public void create_Ciba_success() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+        request.setGrantTypes(Optional.of(List.of(GrantType.CIBA_GRANT_TYPE)));
+
+        request.setBackchannelAuthRequestSignAlg(Optional.of(JWSAlgorithm.RS256.getName()));
+        request.setBackchannelClientNotificationEndpoint(Optional.of("https://127.0.0..1/ciba/notif"));
+        request.setBackchannelTokenDeliveryMode(Optional.of(CIBADeliveryMode.POLL));
+
+        when(domain.useCiba()).thenReturn(true);
+
+        when(domain.useFapiBrazilProfile()).thenReturn(false);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(client -> !client.getBackchannelUserCodeParameter());
+        testObserver.assertValue(client -> client.getBackchannelAuthRequestSignAlg() != null && client.getBackchannelAuthRequestSignAlg().equals(JWSAlgorithm.RS256.getName()));
+        testObserver.assertValue(client -> client.getBackchannelClientNotificationEndpoint() != null && client.getBackchannelClientNotificationEndpoint().equals("https://127.0.0..1/ciba/notif"));
+        testObserver.assertValue(client -> client.getBackchannelTokenDeliveryMode() != null && client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.POLL));
+    }
+
+    @Test
+    public void create_Ciba_InvalidDeliveryMode() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+        request.setGrantTypes(Optional.of(List.of(GrantType.CIBA_GRANT_TYPE)));
+
+        request.setBackchannelAuthRequestSignAlg(Optional.of(JWSAlgorithm.RS256.getName()));
+        request.setBackchannelClientNotificationEndpoint(Optional.of("https://127.0.0..1/ciba/notif"));
+        request.setBackchannelTokenDeliveryMode(Optional.of("invalid"));
+
+        when(domain.useCiba()).thenReturn(true);
+
+        when(domain.useFapiBrazilProfile()).thenReturn(false);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidClientMetadataException.class);
+    }
+
+    @Test
+    public void create_Ciba_MissingDeliveryMode() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.empty());
+        request.setRequireParRequest(Optional.of(false));
+        request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
+        request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
+        request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
+        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+        request.setGrantTypes(Optional.of(List.of(GrantType.CIBA_GRANT_TYPE)));
+
+        request.setBackchannelAuthRequestSignAlg(Optional.of(JWSAlgorithm.RS256.getName()));
+        request.setBackchannelClientNotificationEndpoint(Optional.of("https://127.0.0..1/ciba/notif"));
+
+        request.setBackchannelTokenDeliveryMode(null);
+
+        when(domain.useCiba()).thenReturn(true);
+
+        when(domain.useFapiBrazilProfile()).thenReturn(false);
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(InvalidClientMetadataException.class);
     }
 
     private RSAKey generateRSAKey() throws Exception {

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.common.oidc;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -23,4 +25,6 @@ public interface CIBADeliveryMode {
     String POLL = "poll";
     String PING = "ping";
     String PUSH = "push";
+
+    List<String> SUPPORTED_DELIVERY_MODES = List.of(POLL);
 }

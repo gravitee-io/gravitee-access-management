@@ -211,6 +211,22 @@ public class DynamicClientRegistrationResponse {
     private String authorizationEncryptedResponseEnc;
 
     /*******************************************************************************
+     * OpenID Connect Client-Initiated Backchannel Authentication Flow - Core 1.0
+     * https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#registration
+     ********************************************************************************/
+    @JsonProperty("backchannel_token_delivery_mode")
+    private String backchannelTokenDeliveryMode;
+
+    @JsonProperty("backchannel_client_notification_endpoint")
+    private String backchannelClientNotificationEndpoint;
+
+    @JsonProperty("backchannel_authentication_request_signing_alg")
+    private String backchannelAuthRequestSignAlg;
+
+    @JsonProperty("backchannel_user_code_parameter")
+    private boolean backchannelUserCodeParameter;
+
+    /*******************************************************************************
      * Additional metadata
      ********************************************************************************/
 
@@ -605,6 +621,38 @@ public class DynamicClientRegistrationResponse {
         this.authorizationEncryptedResponseEnc = authorizationEncryptedResponseEnc;
     }
 
+    public String getBackchannelTokenDeliveryMode() {
+        return backchannelTokenDeliveryMode;
+    }
+
+    public void setBackchannelTokenDeliveryMode(String backchannelTokenDeliveryMode) {
+        this.backchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+    }
+
+    public String getBackchannelClientNotificationEndpoint() {
+        return backchannelClientNotificationEndpoint;
+    }
+
+    public void setBackchannelClientNotificationEndpoint(String backchannelClientNotificationEndpoint) {
+        this.backchannelClientNotificationEndpoint = backchannelClientNotificationEndpoint;
+    }
+
+    public String getBackchannelAuthRequestSignAlg() {
+        return backchannelAuthRequestSignAlg;
+    }
+
+    public void setBackchannelAuthRequestSignAlg(String backchannelAuthRequestSignAlg) {
+        this.backchannelAuthRequestSignAlg = backchannelAuthRequestSignAlg;
+    }
+
+    public boolean isBackchannelUserCodeParameter() {
+        return backchannelUserCodeParameter;
+    }
+
+    public void setBackchannelUserCodeParameter(boolean backchannelUserCodeParameter) {
+        this.backchannelUserCodeParameter = backchannelUserCodeParameter;
+    }
+
     public static DynamicClientRegistrationResponse fromClient(Client client) {
         DynamicClientRegistrationResponse response = new DynamicClientRegistrationResponse();
 
@@ -656,7 +704,10 @@ public class DynamicClientRegistrationResponse {
         response.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
         response.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
         response.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
-
+        response.setBackchannelTokenDeliveryMode(client.getBackchannelTokenDeliveryMode());
+        response.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
+        response.setBackchannelAuthRequestSignAlg(client.getBackchannelAuthRequestSignAlg());
+        response.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
         return response;
     }
 
