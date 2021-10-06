@@ -67,6 +67,17 @@ public class DomainValidator {
             chain.add(PathValidator.validate(domain.getPath()));
         }
 
+        if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getCertificates() != null) {
+            boolean containsInvalidCertFormat = domain.getWebAuthnSettings()
+                    .getCertificates()
+                    .values()
+                    .stream()
+                    .anyMatch(cert -> !(cert instanceof String) || (((String) cert).startsWith("-----") || ((String) cert).endsWith("-----")));
+            if (containsInvalidCertFormat) {
+                return Completable.error(new InvalidDomainException("WebAuthnSettings contains certificates with boundaries"));
+            }
+        }
+
         return Completable.merge(chain);
     }
 }

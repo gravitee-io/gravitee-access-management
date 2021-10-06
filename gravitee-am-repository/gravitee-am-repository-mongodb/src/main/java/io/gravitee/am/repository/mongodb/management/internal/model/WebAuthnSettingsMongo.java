@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import org.bson.Document;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -29,6 +31,7 @@ public class WebAuthnSettingsMongo {
     private String authenticatorAttachment;
     private String attestationConveyancePreference;
     private boolean forceRegistration;
+    private Document certificates;
 
     public String getOrigin() {
         return origin;
@@ -92,5 +95,13 @@ public class WebAuthnSettingsMongo {
 
     public void setForceRegistration(boolean forceRegistration) {
         this.forceRegistration = forceRegistration;
+    }
+
+    public Document getCertificates() {
+        return certificates;
+    }
+
+    public void setCertificates(Document certificates) {
+        this.certificates = certificates;
     }
 }

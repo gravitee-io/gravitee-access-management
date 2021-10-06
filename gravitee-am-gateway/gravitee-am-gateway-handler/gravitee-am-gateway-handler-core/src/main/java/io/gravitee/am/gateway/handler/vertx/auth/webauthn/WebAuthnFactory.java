@@ -62,15 +62,22 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
             return defaultWebAuthn();
         }
 
-        return WebAuthn.create(
-                vertx,
-                new WebAuthnOptions()
-                        .setRelyingParty(getRelyingParty())
-                        .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
-                        .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
-                        .setRequireResidentKey(webAuthnSettings.isRequireResidentKey())
-                        .setAttestation(getAttestation(webAuthnSettings.getAttestationConveyancePreference()))
-                        .setTransports(getTransports(webAuthnSettings.getAuthenticatorAttachment())))
+        // create WebAuthn options
+        WebAuthnOptions webAuthnOptions = new WebAuthnOptions()
+                .setRelyingParty(getRelyingParty())
+                .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
+                .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
+                .setRequireResidentKey(webAuthnSettings.isRequireResidentKey())
+                .setAttestation(getAttestation(webAuthnSettings.getAttestationConveyancePreference()))
+                .setTransports(getTransports(webAuthnSettings.getAuthenticatorAttachment()));
+
+        // register custom certificates if any
+        if (webAuthnSettings.getCertificates() != null && !webAuthnSettings.getCertificates().isEmpty()) {
+            webAuthnSettings.getCertificates()
+                    .forEach((k, v) -> webAuthnOptions.putRootCertificate(k, (String) v));
+        }
+
+        return WebAuthn.create(vertx, webAuthnOptions)
                 .authenticatorFetcher(credentialStore::fetch)
                 .authenticatorUpdater(credentialStore::store);
     }

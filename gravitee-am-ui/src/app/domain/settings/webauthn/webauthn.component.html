@@ -19,34 +19,34 @@
   <h1>WebAuthn</h1>
   <div class="gv-page-content">
     <div fxFlex="70">
-      <form (ngSubmit)="save()" #webAuthnForm="ngForm" fxLayout="column">
+      <form (ngSubmit)="save()" fxLayout="column">
         <div class="gv-form-section">
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Origin</mat-label>
-            <input matInput type="text" name="origin" placeholder="Origin" [(ngModel)]="domain.webAuthnSettings.origin" required pattern="https?://.+" [readonly]="readonly">
+            <input matInput type="text" name="origin" placeholder="Origin" [(ngModel)]="domain.webAuthnSettings.origin" (ngModelChange)="updateFormState()" required pattern="https?://.+" [readonly]="readonly">
             <mat-hint>This value needs to match `window.location.origin` evaluated by the User Agent during registration and authentication ceremonies.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Relying Party ID</mat-label>
-            <input matInput type="text" name="relyingPartyId" placeholder="Relying Party ID" [(ngModel)]="domain.webAuthnSettings.relyingPartyId" [readonly]="readonly">
+            <input matInput type="text" name="relyingPartyId" placeholder="Relying Party ID" [(ngModel)]="domain.webAuthnSettings.relyingPartyId" (ngModelChange)="updateFormState()" [readonly]="readonly">
             <mat-hint>Optional. Relying Party identifier. By default, the RP ID for a WebAuthn operation is set to the caller’s origin's effective domain.</mat-hint>
           </mat-form-field>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Relying Party name</mat-label>
-            <input matInput type="text" name="relyingPartyName" placeholder="Relying Party name" [(ngModel)]="domain.webAuthnSettings.relyingPartyName" [readonly]="readonly">
+            <input matInput type="text" name="relyingPartyName" placeholder="Relying Party name" [(ngModel)]="domain.webAuthnSettings.relyingPartyName" (ngModelChange)="updateFormState()" [readonly]="readonly">
             <mat-hint>Optional. Relying Party name for display purposes.</mat-hint>
           </mat-form-field>
 
           <div style="display: flex; flex-direction: column; padding: 10px 5px;">
-            <mat-checkbox name="requireResidentKey" [(ngModel)]="domain.webAuthnSettings.requireResidentKey">Require resident key</mat-checkbox>
+            <mat-checkbox name="requireResidentKey" [(ngModel)]="domain.webAuthnSettings.requireResidentKey" (ngModelChange)="updateFormState()">Require resident key</mat-checkbox>
             <mat-hint style="font-size: 75%;">Optional. This member describes the Relying Party's requirements regarding resident credentials. If the parameter is set to true, the authenticator MUST create a client-side-resident public key credential source when creating a public key credential.</mat-hint>
           </div>
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>User Verification</mat-label>
-            <mat-select name="userVerification" [(ngModel)]="domain.webAuthnSettings.userVerification">
+            <mat-select name="userVerification" [(ngModel)]="domain.webAuthnSettings.userVerification" (ngModelChange)="updateFormState()">
               <mat-option>unspecified</mat-option>
               <mat-option *ngFor="let userVerification of userVerifications" [value]="userVerification">
                 {{userVerification}}
@@ -59,7 +59,7 @@
 
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Authenticator Attachment</mat-label>
-            <mat-select name="authenticatorAttachment" [(ngModel)]="domain.webAuthnSettings.authenticatorAttachment">
+            <mat-select name="authenticatorAttachment" [(ngModel)]="domain.webAuthnSettings.authenticatorAttachment" (ngModelChange)="updateFormState()">
               <mat-option>unspecified</mat-option>
               <mat-option *ngFor="let authenticatorAttachment of authenticatorAttachments" [value]="authenticatorAttachment">
                 {{authenticatorAttachment}}
@@ -73,7 +73,7 @@
 
           <mat-form-field appearance="outline" floatLabel="always" style="margin-top: 15px;">
             <mat-label>Attestation Conveyance Preference</mat-label>
-            <mat-select name="attestationConveyancePreference" [(ngModel)]="domain.webAuthnSettings.attestationConveyancePreference">
+            <mat-select name="attestationConveyancePreference" [(ngModel)]="domain.webAuthnSettings.attestationConveyancePreference" (ngModelChange)="updateFormState()">
               <mat-option>unspecified</mat-option>
               <mat-option *ngFor="let attestationConveyancePreference of attestationConveyancePreferences" [value]="attestationConveyancePreference">
                 {{attestationConveyancePreference}}
@@ -85,12 +85,79 @@
           </mat-form-field>
 
           <div style="display: flex; flex-direction: column; padding: 10px 5px; margin-top: 10px;">
-            <mat-checkbox name="forceRegistration" [(ngModel)]="domain.webAuthnSettings.forceRegistration">Force registration</mat-checkbox>
+            <mat-checkbox name="forceRegistration" [(ngModel)]="domain.webAuthnSettings.forceRegistration" (ngModelChange)="updateFormState()">Force registration</mat-checkbox>
             <mat-hint style="font-size: 75%;">Optional. If the parameter is set to true, the Relying Party accepts the registration instead of failing the registration ceremony.</mat-hint>
           </div>
         </div>
+        <div class="gv-form-section">
+          <div class="gv-form-section-title">
+            <h5>Certificates</h5>
+            <small>If your application needs to update a certificate on it’s own, use a more up to date one, or another with a different cypher, then you can replace the default root certificates.</small>
+          </div>
+          <div fxLayout="row" fxLayoutGap="10px" style="padding: 15px; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 4px;">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-select placeholder="Type" [(ngModel)]="attestation.name" name="attestationName">
+                <mat-option *ngFor="let attestationName of attestationNames" [value]="attestationName">{{ attestationName }}</mat-option>
+              </mat-select>
+              <mat-hint>The attestation's name.</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always">
+              <input matInput name="certificate" placeholder="Certificate" [(ngModel)]="attestation.value"/>
+              <mat-hint>The certificate's value (pem format without boundaries).</mat-hint>
+            </mat-form-field>
+            <div>
+              <button style="margin-top: 7px;" mat-stroked-button (click)="addCertificate($event)" [disabled]="!attestation.name || !attestation.value">+ ADD</button>
+            </div>
+          </div>
+          <div *ngIf="!certificatesIsEmpty()">
+            <small style="display: block; margin-top: 10px;">
+              <i>Double click to edit and press enter to save changes</i>
+            </small>
+          </div>
+          <ngx-datatable class="material"
+                         [columnMode]="'flex'"
+                         [headerHeight]="40"
+                         [footerHeight]="40"
+                         [rowHeight]="55"
+                         [messages]="{emptyMessage:'There is no certificate'}"
+                         [rows]='attestationCertificates'>
+            <ngx-datatable-column name="Attestation name" [flexGrow]="2">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <span (dblclick)="editing[row.id + '-name'] = true" *ngIf="!editing[row.id + '-name']">
+                    {{row.name}}
+                  </span>
+                <mat-form-field *ngIf="editing[row.id + '-name']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Attestation name"
+                         (keyup.enter)="updateCertificate($event, 'name', row.id)"
+                         (blur)="editing[row.id + '-name'] = false"
+                         [value]="row.name" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="4">
+              <ng-template let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                  <pre style="margin: 0px; white-space: normal; font-size: 12px;" (dblclick)="editing[row.id + '-value'] = true" *ngIf="!editing[row.id + '-value']">
+                    {{row.value}}
+                  </pre>
+                <mat-form-field *ngIf="editing[row.id + '-value']" class="datatable-input">
+                  <input matInput type="text" required autofocus placeholder="Certificate"
+                         (keyup.enter)="updateCertificate($event, 'value', row.id)"
+                         (blur)="editing[row.id + '-value'] = false"
+                         [value]="row.value" />
+                </mat-form-field>
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="" [flexGrow]="1">
+              <ng-template let-row="row" ngx-datatable-cell-template>
+                <div fxLayout="row" class="gv-table-cell-actions">
+                  <button mat-icon-button (click)="deleteCertificate(row.id, $event)"><mat-icon>close</mat-icon></button>
+                </div>
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+        </div>
         <div fxLayout="row" *hasPermission="['domain_settings_update']">
-          <button mat-raised-button color="primary" [disabled]="(!webAuthnForm.valid || webAuthnForm.pristine)" type="submit">SAVE</button>
+          <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
         </div>
       </form>
     </div>
