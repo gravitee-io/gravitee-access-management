@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.spring;
 
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
+import io.gravitee.am.gateway.handler.ciba.spring.CIBAConfiguration;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.impl.PushedAuthorizationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.spring.OAuth2Configuration;
@@ -47,7 +48,7 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@Import({OAuth2Configuration.class, UMAConfiguration.class})
+@Import({OAuth2Configuration.class, UMAConfiguration.class, CIBAConfiguration.class})
 public class OIDCConfiguration implements ProtocolConfiguration {
 
     @Bean

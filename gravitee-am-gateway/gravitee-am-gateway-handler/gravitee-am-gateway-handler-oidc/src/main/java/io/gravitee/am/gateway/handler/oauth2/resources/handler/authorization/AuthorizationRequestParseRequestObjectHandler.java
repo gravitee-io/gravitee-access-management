@@ -39,6 +39,7 @@ import java.text.ParseException;
 import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.splitScopes;
 
 /**
  * The request Authorization Request parameter enables OpenID Connect requests to be passed in a single,

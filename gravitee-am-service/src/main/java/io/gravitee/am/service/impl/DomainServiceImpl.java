@@ -67,6 +67,12 @@ import java.util.stream.Collectors;
  */
 @Component
 public class DomainServiceImpl implements DomainService {
+    /**
+     * According to https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#auth_request
+     * the binding_message value SHOULD be relatively short and use a limited set of plain text characters.
+     * Arbitrarily fix the maximum value to 2048 characters that seems enough to display a message on a mobile device.
+     */
+    private static final int CIBA_MAX_BINDING_MESSAGE_LENGTH = 2048;
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
@@ -526,6 +532,24 @@ public class DomainServiceImpl implements DomainService {
     private Completable validateDomain(Domain domain) {
         if (domain.getReferenceType() != ReferenceType.ENVIRONMENT) {
             return Completable.error(new InvalidDomainException("Domain must be attached to an environment"));
+        }
+
+        if (domain.useCiba()) {
+            if (domain.getOidc().getCibaSettings().getAuthReqExpiry() <= 0) {
+                return Completable.error(new InvalidDomainException("CIBA settings are invalid: auth_req_id expiry must be higher than 0"));
+            }
+
+            if (domain.getOidc().getCibaSettings().getTokenReqInterval() <= 0) {
+                return Completable.error(new InvalidDomainException("CIBA settings are invalid: token request interval must be higher than 0"));
+            }
+
+            if (domain.getOidc().getCibaSettings().getBindingMessageLength() <= 0) {
+                return Completable.error(new InvalidDomainException("CIBA settings are invalid: maLength of binding_message must be higher than 0"));
+            }
+
+            if (domain.getOidc().getCibaSettings().getBindingMessageLength() > CIBA_MAX_BINDING_MESSAGE_LENGTH) {
+                return Completable.error(new InvalidDomainException("CIBA settings are invalid: binding_message length too high"));
+            }
         }
 
         // check the uniqueness of the domain

@@ -33,6 +33,18 @@ public class PatchCIBASettings {
      * true if CIBA flow is enabled for the domain
      */
     private Optional<Boolean> enabled;
+    /**
+     * validity (in sec) of the auth_req_id
+     */
+    private Optional<Integer> authReqExpiry;
+    /**
+     * Delay between two calls on the token endpoint using the same auth_req_id
+     */
+    private Optional<Integer> tokenReqInterval;
+    /**
+     * MaxLength of the binding_message parameter
+     */
+    private Optional<Integer> bindingMessageLength;
 
     public Optional<Boolean> getEnabled() {
         return enabled;
@@ -42,10 +54,37 @@ public class PatchCIBASettings {
         this.enabled = enabled;
     }
 
+    public Optional<Integer> getAuthReqExpiry() {
+        return authReqExpiry;
+    }
+
+    public void setAuthReqExpiry(Optional<Integer> authReqExpiry) {
+        this.authReqExpiry = authReqExpiry;
+    }
+
+    public Optional<Integer> getTokenReqInterval() {
+        return tokenReqInterval;
+    }
+
+    public void setTokenReqInterval(Optional<Integer> tokenReqInterval) {
+        this.tokenReqInterval = tokenReqInterval;
+    }
+
+    public Optional<Integer> getBindingMessageLength() {
+        return bindingMessageLength;
+    }
+
+    public void setBindingMessageLength(Optional<Integer> bindingMessageLength) {
+        this.bindingMessageLength = bindingMessageLength;
+    }
+
     public CIBASettings patch(CIBASettings toPatch) {
         CIBASettings result=toPatch!=null? toPatch: CIBASettings.defaultSettings();
 
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
+        SetterUtils.safeSet(result::setAuthReqExpiry, this.getAuthReqExpiry(), int.class);
+        SetterUtils.safeSet(result::setTokenReqInterval, this.getTokenReqInterval(), int.class);
+        SetterUtils.safeSet(result::setBindingMessageLength, this.getBindingMessageLength(), int.class);
 
         return result;
     }

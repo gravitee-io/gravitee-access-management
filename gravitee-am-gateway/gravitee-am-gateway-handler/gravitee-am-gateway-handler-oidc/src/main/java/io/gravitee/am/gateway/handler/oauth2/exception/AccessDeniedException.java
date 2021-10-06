@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.exception;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
  * The resource owner or authorization server denied the request.
@@ -38,5 +39,10 @@ public class AccessDeniedException extends OAuth2Exception {
     @Override
     public String getOAuth2ErrorCode() {
         return "access_denied";
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.FORBIDDEN_403;
     }
 }

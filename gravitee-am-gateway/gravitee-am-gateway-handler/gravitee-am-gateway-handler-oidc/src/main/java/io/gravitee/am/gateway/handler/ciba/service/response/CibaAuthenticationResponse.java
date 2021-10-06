@@ -1,0 +1,56 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.ciba.service.response;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public class CibaAuthenticationResponse {
+    @JsonProperty("auth_req_id")
+    private String authReqId;
+
+    @JsonProperty("expires_in")
+    private long expiresIn;
+
+    private Integer interval;
+
+    public String getAuthReqId() {
+        return authReqId;
+    }
+
+    public void setAuthReqId(String authReqId) {
+        this.authReqId = authReqId;
+    }
+
+    public long getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(long expiresIn) {
+        this.expiresIn = expiresIn;
+    }
+
+    public Integer getInterval() {
+        return interval;
+    }
+
+    public void setInterval(Integer interval) {
+        this.interval = interval;
+    }
+}

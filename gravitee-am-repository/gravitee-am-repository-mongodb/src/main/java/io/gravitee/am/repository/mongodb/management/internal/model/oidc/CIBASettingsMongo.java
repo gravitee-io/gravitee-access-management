@@ -21,6 +21,9 @@ package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
  */
 public class CIBASettingsMongo {
     private boolean enabled;
+    private int authReqExpiry;
+    private int tokenReqInterval;
+    private int bindingMessageLength;
 
     public boolean isEnabled() {
         return enabled;
@@ -28,5 +31,29 @@ public class CIBASettingsMongo {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getAuthReqExpiry() {
+        return authReqExpiry;
+    }
+
+    public void setAuthReqExpiry(int authReqExpiry) {
+        this.authReqExpiry = authReqExpiry;
+    }
+
+    public int getTokenReqInterval() {
+        return tokenReqInterval;
+    }
+
+    public void setTokenReqInterval(int tokenReqInterval) {
+        this.tokenReqInterval = tokenReqInterval;
+    }
+
+    public int getBindingMessageLength() {
+        return bindingMessageLength;
+    }
+
+    public void setBindingMessageLength(int bindingMessageLength) {
+        this.bindingMessageLength = bindingMessageLength;
     }
 }

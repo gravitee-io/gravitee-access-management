@@ -276,13 +276,16 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
-    private static CIBASettings convert(CIBASettingsMongo profiles) {
-        if (profiles == null) {
+    private static CIBASettings convert(CIBASettingsMongo cibaSettings) {
+        if (cibaSettings == null) {
             return null;
         }
 
         CIBASettings result = new CIBASettings();
-        result.setEnabled(profiles.isEnabled());
+        result.setEnabled(cibaSettings.isEnabled());
+        result.setAuthReqExpiry(cibaSettings.getAuthReqExpiry());
+        result.setTokenReqInterval(cibaSettings.getTokenReqInterval());
+        result.setBindingMessageLength(cibaSettings.getBindingMessageLength());
 
         return result;
     }
@@ -343,13 +346,16 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return result;
     }
 
-    private static CIBASettingsMongo convert(CIBASettings profile) {
-        if (profile == null) {
+    private static CIBASettingsMongo convert(CIBASettings cibaSettings) {
+        if (cibaSettings == null) {
             return null;
         }
 
         CIBASettingsMongo result = new CIBASettingsMongo();
-        result.setEnabled(profile.isEnabled());
+        result.setEnabled(cibaSettings.isEnabled());
+        result.setAuthReqExpiry(cibaSettings.getAuthReqExpiry());
+        result.setTokenReqInterval(cibaSettings.getTokenReqInterval());
+        result.setBindingMessageLength(cibaSettings.getBindingMessageLength());
 
         return result;
     }

@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.services.purge;
+package io.gravitee.am.gateway.handler.ciba.service.request;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum TableName {
-    access_tokens,
-    authorization_codes,
-    refresh_tokens,
-    scope_approvals,
-    request_objects,
-    login_attempts,
-    uma_permission_ticket,
-    auth_flow_ctx,
-    pushed_authorization_requests,
-    ciba_auth_requests,
-    devices
+public enum AuthenticationRequestStatus {
+    ONGOING,
+    SUCCESS,
+    FAILURE;
 }

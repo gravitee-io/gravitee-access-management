@@ -20,7 +20,23 @@ package io.gravitee.am.model.oidc;
  * @author GraviteeSource Team
  */
 public class CIBASettings {
+    public static final int DEFAULT_EXPIRY_IN_SEC = 600;
+    public static final int DEFAULT_INTERVAL_IN_SEC = 5;
+    public static final int DEFAULT_MSG_LENGTH = 256;
+
     private boolean enabled;
+    /**
+     * validity (in sec) of the auth_req_id
+     */
+    private int authReqExpiry = DEFAULT_EXPIRY_IN_SEC;
+    /**
+     * Delay between two calls on the token endpoint using the same auth_req_id
+     */
+    private int tokenReqInterval = DEFAULT_INTERVAL_IN_SEC;
+    /**
+     * MaxLength of the binding_message parameter
+     */
+    private int bindingMessageLength = DEFAULT_MSG_LENGTH;
 
     public boolean isEnabled() {
         return enabled;
@@ -28,6 +44,30 @@ public class CIBASettings {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getAuthReqExpiry() {
+        return authReqExpiry;
+    }
+
+    public void setAuthReqExpiry(int authReqExpiry) {
+        this.authReqExpiry = authReqExpiry;
+    }
+
+    public int getTokenReqInterval() {
+        return tokenReqInterval;
+    }
+
+    public void setTokenReqInterval(int tokenReqInterval) {
+        this.tokenReqInterval = tokenReqInterval;
+    }
+
+    public int getBindingMessageLength() {
+        return bindingMessageLength;
+    }
+
+    public void setBindingMessageLength(int bindingMessageLength) {
+        this.bindingMessageLength = bindingMessageLength;
     }
 
     public static CIBASettings defaultSettings() {

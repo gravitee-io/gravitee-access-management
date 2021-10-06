@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.*;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -41,6 +42,16 @@ import static java.util.Objects.nonNull;
  */
 public class ParamUtils {
     private static Logger LOGGER = LoggerFactory.getLogger(ParamUtils.class);
+
+    public static Set<String> splitScopes(String scope) {
+        HashSet<String> scopes = scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
+        return scopes;
+    }
+
+    public static List<String> splitAcrValues(String values) {
+        List<String> acrValues = values != null && !values.isEmpty() ? Arrays.asList(values.split("\\s+")) : null;
+        return acrValues;
+    }
 
     public static String getOAuthParameter(RoutingContext context, String paramName) {
         Optional<String> value = Optional.empty();
