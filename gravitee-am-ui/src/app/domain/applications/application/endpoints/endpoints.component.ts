@@ -55,6 +55,10 @@ export class ApplicationEndpointsComponent implements OnInit {
     return this.domain.uma && this.domain.uma.enabled;
   }
 
+  cibaEnabled() {
+    return this.domain.oidc.cibaSettings && this.domain.oidc.cibaSettings.enabled;
+  }
+
   scimEnabled() {
     return this.domain.scim && this.domain.scim.enabled;
   }

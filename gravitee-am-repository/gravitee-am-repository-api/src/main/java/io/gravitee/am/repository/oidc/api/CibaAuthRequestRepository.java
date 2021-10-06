@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.services.purge;
+package io.gravitee.am.repository.oidc.api;
+
+import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum TableName {
-    access_tokens,
-    authorization_codes,
-    refresh_tokens,
-    scope_approvals,
-    request_objects,
-    login_attempts,
-    uma_permission_ticket,
-    auth_flow_ctx,
-    pushed_authorization_requests,
-    ciba_auth_requests,
-    devices
+public interface CibaAuthRequestRepository {
+
+    Maybe<CibaAuthRequest> findById(String id);
+
+    Single<CibaAuthRequest> create(CibaAuthRequest authreq);
+
+    Single<CibaAuthRequest> update(CibaAuthRequest authreq);
+
+    Completable delete(String id);
+
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }

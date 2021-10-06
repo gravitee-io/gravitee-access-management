@@ -28,6 +28,27 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Enable Client-Initiated Backchannel Authentication</mat-hint>
         </div>
+        <div class="gv-form-section" fxLayout="column" *ngIf="isCIBAEnabled()">
+          <div class="gv-form-section-title">
+            <h5>CIBA Settings</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>timer</mat-icon>
+            <input matInput type="number" placeholder="Authentication Request Expiry" name="authReqExpiry" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.authReqExpiry" [disabled]="!editMode" />
+            <mat-hint>Default validity period for the auth_req_id (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>timer</mat-icon>
+            <input matInput type="number" placeholder="Token Request Interval" name="tokenReqInterval" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.tokenReqInterval" [disabled]="!editMode" />
+            <mat-hint>Delay between two calls for token in POLL or PING mode (seconds).</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-icon matPrefix>textsms</mat-icon>
+            <input matInput type="number" placeholder="Binding Message maximum length" name="bindingMessageLength" min="0" max="1000" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.bindingMessageLength" [disabled]="!editMode" />
+            <mat-hint>Maximum number of characters for the binding_message parameter.</mat-hint>
+          </mat-form-field>
+        </div>
         <div fxLayout="row" *ngIf="editMode">
           <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
         </div>

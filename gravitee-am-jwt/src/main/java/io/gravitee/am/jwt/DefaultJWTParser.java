@@ -86,33 +86,15 @@ public class DefaultJWTParser implements JWTParser {
                     .stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             JWT jwt = new JWT(claims);
+
             // verify exp and nbf values
             // https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-30#section-4.1.4
             // token MUST NOT be accepted on or after any specified exp time
             Instant now = Instant.now();
-            if (jwt.getExp() > 0) {
-                Instant exp = Instant.ofEpochSecond(jwt.getExp());
-                if (now.isAfter(exp)) {
-                    long differenceMillis = now.toEpochMilli() - exp.toEpochMilli();
-                    String msg = "JWT expired at " + exp + ". Current time: " + now + ", a difference of " +
-                            differenceMillis + " milliseconds.  Allowed clock skew: " +
-                            this.allowedClockSkewMillis + " milliseconds.";
-                    throw new ExpiredJWTException(msg);
-                }
-            }
+            evaluateExp(jwt.getExp(), now, this.allowedClockSkewMillis);
             // https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-30#section-4.1.5
             // token MUST NOT be accepted before any specified nbf time
-            if (jwt.getNbf() > 0) {
-                Instant nbf = Instant.ofEpochSecond(jwt.getNbf());
-                if (now.isBefore(nbf)) {
-                    long differenceMillis = nbf.toEpochMilli() - now.toEpochMilli();
-                    String msg = "JWT must not be accepted before " + nbf + ". Current time: " + now +
-                            ", a difference of " +
-                            differenceMillis + " milliseconds.  Allowed clock skew: " +
-                            this.allowedClockSkewMillis + " milliseconds.";
-                    throw new PrematureJWTException(msg);
-                }
-            }
+            evaluateNbf(jwt.getNbf(), now, this.allowedClockSkewMillis);
             return jwt;
         } catch (ParseException ex) {
             logger.debug("The following JWT token : {} is malformed", payload);
@@ -129,6 +111,45 @@ public class DefaultJWTParser implements JWTParser {
         } catch (Exception ex) {
             logger.error("An error occurs while parsing JWT token : {}", payload, ex);
             throw ex;
+        }
+    }
+
+    /**
+     * Throw {@link ExpiredJWTException} if now is before nbf
+     *
+     * @param nbf
+     * @param now
+     */
+    public static void evaluateNbf(long nbf, Instant now, long clockSkew) {
+        if (nbf > 0) {
+            Instant nbfInstant = Instant.ofEpochSecond(nbf);
+            if (now.isBefore(nbfInstant)) {
+                long differenceMillis = nbfInstant.toEpochMilli() - now.toEpochMilli();
+                String msg = "JWT must not be accepted before " + nbfInstant + ". Current time: " + now +
+                        ", a difference of " +
+                        differenceMillis + " milliseconds.  Allowed clock skew: " +
+                        clockSkew + " milliseconds.";
+                throw new PrematureJWTException(msg);
+            }
+        }
+    }
+
+    /**
+     * Throw {@link ExpiredJWTException} if exp is after now
+     *
+     * @param exp
+     * @param now
+     */
+    public static void evaluateExp(long exp, Instant now, long clockSkew) {
+        if (exp > 0) {
+            Instant expInstant = Instant.ofEpochSecond(exp);
+            if (now.isAfter(expInstant)) {
+                long differenceMillis = now.toEpochMilli() - expInstant.toEpochMilli();
+                String msg = "JWT expired at " + expInstant + ". Current time: " + now + ", a difference of " +
+                        differenceMillis + " milliseconds.  Allowed clock skew: " +
+                        clockSkew + " milliseconds.";
+                throw new ExpiredJWTException(msg);
+            }
         }
     }
 }
