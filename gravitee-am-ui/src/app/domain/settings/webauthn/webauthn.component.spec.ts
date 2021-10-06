@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { DomainSettingsLoginComponent } from './login.component';
+import { DomainSettingsWebAuthnComponent } from './webauthn.component';
 
-describe('DomainSettingsLoginComponent', () => {
-  let component: DomainSettingsLoginComponent;
-  let fixture: ComponentFixture<DomainSettingsLoginComponent>;
+describe('DomainSettingsWebAuthnComponent', () => {
+  let component: DomainSettingsWebAuthnComponent;
+  let fixture: ComponentFixture<DomainSettingsWebAuthnComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsLoginComponent ]
+      declarations: [ DomainSettingsWebAuthnComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(DomainSettingsLoginComponent);
+    fixture = TestBed.createComponent(DomainSettingsWebAuthnComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
