@@ -105,7 +105,7 @@
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
-        <gravitee-policy-callout-http.version>1.13.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-callout-http.version>1.13.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>1.14.1</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
