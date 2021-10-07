@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -35,8 +36,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
  */
 public class UserEndpoint extends AbstractUserEndpoint {
 
-    public UserEndpoint(UserService userService, ObjectMapper objectMapper) {
-        super(userService, objectMapper);
+    public UserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
+        super(domain, userService, objectMapper);
     }
 
     public void get(RoutingContext context) {
@@ -112,7 +113,10 @@ public class UserEndpoint extends AbstractUserEndpoint {
                 return;
             }
 
-            userService.update(userId, user, location(context.request()))
+            // handle identity provider source
+            final String source = userSource(context);
+
+            userService.update(userId, user, source, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -174,7 +178,10 @@ public class UserEndpoint extends AbstractUserEndpoint {
                 return;
             }
 
-            userService.patch(userId, patchOp, location(context.request()))
+            // handle identity provider source
+            final String source = userSource(context);
+
+            userService.patch(userId, patchOp, source, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")

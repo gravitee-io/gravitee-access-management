@@ -16,18 +16,22 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,8 +42,8 @@ public class UsersEndpoint extends AbstractUserEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public UsersEndpoint(UserService userService, ObjectMapper objectMapper) {
-        super(userService, objectMapper);
+    public UsersEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
+        super(domain, userService, objectMapper);
     }
 
     public void list(RoutingContext context) {
@@ -149,7 +153,10 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                 return;
             }
 
-            userService.create(user, location(context.request()))
+            // handle identity provider source
+            final String source = userSource(context);
+
+            userService.create(user, source, location(context.request()))
                     .subscribe(
                             user1 -> context.response()
                                     .setStatusCode(201)

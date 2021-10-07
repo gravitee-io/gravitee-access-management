@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
@@ -126,11 +127,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> create(User user, String baseUrl) {
+    public Single<User> create(User user, String idp, String baseUrl) {
         LOGGER.debug("Create a new user {} for domain {}", user.getUserName(), domain.getName());
 
         // set user idp source
-        final String source = user.getSource() == null ? DEFAULT_IDP_PREFIX + domain.getId() : user.getSource();
+        final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());
 
         // check password
         if (isInvalidUserPassword(user)) {
@@ -149,9 +150,7 @@ public class UserServiceImpl implements UserService {
                 // check roles
                 .flatMapCompletable(__ -> checkRoles(user.getRoles()))
                 // and create the user
-                .andThen(Maybe.defer(() -> identityProviderManager.getUserProvider(source)))
-                .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(source)))
-                .flatMapSingle(userProvider -> {
+                .andThen(Single.defer(() -> {
                     io.gravitee.am.model.User userModel = convert(user);
                     // set technical ID
                     userModel.setId(RandomString.generate());
@@ -163,8 +162,17 @@ public class UserServiceImpl implements UserService {
                     userModel.setUpdatedAt(userModel.getCreatedAt());
                     userModel.setEnabled(userModel.getPassword() != null);
 
-                    // store user in its identity provider
-                    return userValidator.validate(userModel).andThen(userProvider.create(convert(userModel))
+                    // store user
+                    return userValidator.validate(userModel)
+                            .andThen(Single.defer(() -> {
+                                        final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(source);
+                                        if (identityProvider == null) {
+                                            return Single.error(new IdentityProviderNotFoundException(source));
+                                        }
+                                        return identityProviderManager.getUserProvider(source)
+                                        .switchIfEmpty(Single.error(new UserProviderNotFoundException(source)))
+                                        .flatMap(userProvider -> userProvider.create(convert(userModel)));
+                            })
                             .flatMap(idpUser -> {
                                 // AM 'users' collection is not made for authentication (but only management stuff)
                                 // clear password
@@ -174,12 +182,19 @@ public class UserServiceImpl implements UserService {
                                 return userRepository.create(userModel);
                             })
                             .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserProviderNotFoundException) {
+                                    // just store in AM
+                                    userModel.setPassword(null);
+                                    // set external id
+                                    userModel.setExternalId(user.getExternalId() != null ? user.getExternalId() : userModel.getId());
+                                    return userRepository.create(userModel);
+                                }
                                 if (ex instanceof UserAlreadyExistsException) {
                                     return Single.error(new UniquenessException("User with username [" + user.getUserName() + "] already exists"));
                                 }
                                 return Single.error(ex);
                             }));
-                })
+                }))
                 .map(user1 -> convert(user1, baseUrl, true))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractNotFoundException) {
@@ -196,7 +211,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> update(String userId, User user, String baseUrl) {
+    public Single<User> update(String userId, User user, String idp, String baseUrl) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
         // check password
@@ -218,23 +233,32 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setUsername(existingUser.getUsername());
                                 userToUpdate.setReferenceType(existingUser.getReferenceType());
                                 userToUpdate.setReferenceId(existingUser.getReferenceId());
-                                userToUpdate.setSource(existingUser.getSource());
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());
                                 userToUpdate.setFactors(existingUser.getFactors());
-
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
 
-                                return userValidator.validate(userToUpdate).andThen(identityProviderManager.getUserProvider(userToUpdate.getSource())
-                                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(userToUpdate.getSource())))
-                                        .flatMapSingle(userProvider -> {
-                                            // no idp user check if we need to create it
-                                            if (userToUpdate.getExternalId() == null) {
-                                                return userProvider.create(convert(userToUpdate));
-                                            } else {
-                                                return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
-                                            }
-                                        })
+                                // set source
+                                String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : existingUser.getSource());
+                                userToUpdate.setSource(source);
+
+                                return userValidator.validate(userToUpdate)
+                                        .andThen(Single.defer(() -> {
+                                                    final IdentityProvider identityProvider = identityProviderManager.getIdentityProvider(source);
+                                                    if (identityProvider == null) {
+                                                        return Single.error(new IdentityProviderNotFoundException(source));
+                                                    }
+                                                    return identityProviderManager.getUserProvider(userToUpdate.getSource())
+                                                            .switchIfEmpty(Single.error(new UserProviderNotFoundException(userToUpdate.getSource())))
+                                                            .flatMap(userProvider -> {
+                                                                // no idp user check if we need to create it
+                                                                if (userToUpdate.getExternalId() == null) {
+                                                                    return userProvider.create(convert(userToUpdate));
+                                                                } else {
+                                                                    return userProvider.update(userToUpdate.getExternalId(), convert(userToUpdate));
+                                                                }
+                                                            });
+                                                })
                                         .flatMap(idpUser -> {
                                             // AM 'users' collection is not made for authentication (but only management stuff)
                                             // clear password
@@ -248,7 +272,9 @@ public class UserServiceImpl implements UserService {
                                             return userRepository.update(userToUpdate);
                                         })
                                         .onErrorResumeNext(ex -> {
-                                            if (ex instanceof UserNotFoundException || ex instanceof UserInvalidException) {
+                                            if (ex instanceof UserNotFoundException ||
+                                                    ex instanceof UserInvalidException ||
+                                                    ex instanceof UserProviderNotFoundException) {
                                                 // idp user does not exist, only update AM user
                                                 // clear password
                                                 userToUpdate.setPassword(null);
@@ -280,7 +306,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> patch(String userId, PatchOp patchOp, String baseUrl) {
+    public Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl) {
         LOGGER.debug("Patch user {}", userId);
         return get(userId, baseUrl)
                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
@@ -294,7 +320,7 @@ public class UserServiceImpl implements UserService {
                         return Single.error(new InvalidValueException("Field [password] is invalid"));
                     }
 
-                    return update(userId, userToPatch, baseUrl);
+                    return update(userId, userToPatch, idp, baseUrl);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

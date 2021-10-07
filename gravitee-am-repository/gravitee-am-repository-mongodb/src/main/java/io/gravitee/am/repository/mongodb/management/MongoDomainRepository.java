@@ -307,6 +307,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SCIMSettings scimSettings = new SCIMSettings();
         scimSettings.setEnabled(scimMongo.isEnabled());
+        scimSettings.setIdpSelectionEnabled(scimMongo.isIdpSelectionEnabled());
+        scimSettings.setIdpSelectionRule(scimMongo.getIdpSelectionRule());
         return scimSettings;
     }
 
@@ -317,6 +319,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SCIMSettingsMongo scimMongo = new SCIMSettingsMongo();
         scimMongo.setEnabled(scim.isEnabled());
+        scimMongo.setIdpSelectionEnabled(scim.isIdpSelectionEnabled());
+        scimMongo.setIdpSelectionRule(scim.getIdpSelectionRule());
         return scimMongo;
     }
 

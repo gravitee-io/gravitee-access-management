@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -88,11 +89,14 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.get("/ServiceProviderConfig").handler(serviceProviderConfigurationEndpointHandler);
 
             // SCIM resources routes are OAuth 2.0 secured
-            scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
+            OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "scim");
+            oAuth2AuthHandler.extractToken(true);
+            oAuth2AuthHandler.extractClient(true);
+            scimRouter.route().handler(oAuth2AuthHandler);
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
-            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
+            UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);

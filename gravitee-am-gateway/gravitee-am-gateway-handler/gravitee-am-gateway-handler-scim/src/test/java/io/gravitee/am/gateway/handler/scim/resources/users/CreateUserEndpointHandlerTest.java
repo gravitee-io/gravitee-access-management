@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -24,6 +26,8 @@ import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.Single;
@@ -37,6 +41,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -55,8 +61,11 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private ObjectWriter objectWriter;
 
+    @Mock
+    private Domain domain;
+
     @InjectMocks
-    private final UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
+    private final UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
 
     @Override
     public void setUp() throws Exception {
@@ -74,7 +83,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
 
         testRequest(
                 HttpMethod.POST,
@@ -96,7 +105,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMCreateUserEndpoint_valid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.just(getUser()));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.POST,
@@ -115,7 +124,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
         user.setSource("unknown-idp");
 
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
 
         testRequest(
                 HttpMethod.POST,
@@ -137,7 +146,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
                 HttpMethod.POST,
@@ -159,7 +168,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn409WhenUsernameAlreadyExists() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
 
         testRequest(
                 HttpMethod.POST,
@@ -181,7 +190,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidUserException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
                 HttpMethod.POST,
@@ -203,7 +212,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
                 HttpMethod.POST,
@@ -220,6 +229,32 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
                         "  \"detail\" : \"Value [Invalid email] is not a valid email.\",\n" +
                         "  \"schemas\" : [ \"urn:ietf:params:scim:api:messages:2.0:Error\" ]\n" +
                         "}");
+    }
+
+    @Test
+    public void shouldUseASelectedIdp() throws Exception {
+        SCIMSettings scimSettings = mock(SCIMSettings.class);
+        when(scimSettings.isIdpSelectionEnabled()).thenReturn(true);
+        when(scimSettings.getIdpSelectionRule()).thenReturn("{#context.attributes['token']['idp']}");
+        when(domain.getScim()).thenReturn(scimSettings);
+        router.route("/Users").handler(rc -> {
+            JWT token = new JWT();
+            token.put("idp", "123456");
+            rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+            rc.next();
+        });
+        router.route("/Users").handler(usersEndpoint::create);
+        when(userService.create(any(), eq("123456"), any())).thenReturn(Single.just(getUser()));
+
+        testRequest(
+                HttpMethod.POST,
+                "/Users",
+                req -> {
+                    req.setChunked(true);
+                    req.write(Json.encode(getUser()));
+                },
+                201,
+                "Created", null);
     }
 
     private User getUser() {
