@@ -59,7 +59,7 @@ public class DefaultIdentityProviderMapper implements IdentityProviderMapper {
             String sanitizedAttr = StringUtils.isEmpty(attribute) ? attribute : attribute.trim();
             if (sanitizedAttr.startsWith("{") && sanitizedAttr.endsWith("}") && templateEngine != null) {
                 try {
-                    additionalInformation.put(userClaim, templateEngine.getValue(sanitizedAttr, String.class));
+                    additionalInformation.put(userClaim, templateEngine.getValue(sanitizedAttr, Object.class));
                 } catch (Exception e) {
                     LOGGER.warn("User mapper can't evaluate the expression [{}] as String", userClaim);
                 }
