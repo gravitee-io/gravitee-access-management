@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
@@ -49,8 +50,11 @@ public class UsersEndpointTest extends RxWebTestBase {
     @Mock
     private ObjectWriter objectWriter;
 
+    @Mock
+    private Domain domain;
+
     @InjectMocks
-    private UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
+    private UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
 
     @Override
     public void setUp() throws Exception {

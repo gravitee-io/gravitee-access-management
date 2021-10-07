@@ -21,7 +21,20 @@ package io.gravitee.am.model.scim;
  */
 public class SCIMSettings {
 
+    /**
+     * Enable/disable SCIM feature
+     */
     private boolean enabled;
+
+    /**
+     * Enable/disable IdP selection feature
+     */
+    private boolean idpSelectionEnabled;
+
+    /**
+     * Identity provider selection rule
+     */
+    private String idpSelectionRule;
 
     public boolean isEnabled() {
         return enabled;
@@ -29,5 +42,21 @@ public class SCIMSettings {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isIdpSelectionEnabled() {
+        return idpSelectionEnabled;
+    }
+
+    public void setIdpSelectionEnabled(boolean idpSelectionEnabled) {
+        this.idpSelectionEnabled = idpSelectionEnabled;
+    }
+
+    public String getIdpSelectionRule() {
+        return idpSelectionRule;
+    }
+
+    public void setIdpSelectionRule(String idpSelectionRule) {
+        this.idpSelectionRule = idpSelectionRule;
     }
 }
