@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/433?closed=1[AM - 3.10.5 (2021-10-08)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Login flow may never respond https://github.com/gravitee-io/issues/issues/6328[#6328]
+
+=== Improvements
+
+*_Gateway_*
+
+- [identity-provider] enhance mapper https://github.com/gravitee-io/issues/issues/6329[#6329]
+- [scim] specify identity provider for user provisioning https://github.com/gravitee-io/issues/issues/6322[#6322]
+- [webauthn] upgrading certificates https://github.com/gravitee-io/issues/issues/6324[#6324]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/436?closed=1[AM - 3.12.1 (2021-10-04)]
 
 === Bug fixes
