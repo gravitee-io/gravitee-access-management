@@ -76,4 +76,8 @@ public class PluginsResource {
         return resourceContext.getResource(BotDetectionsPluginResource.class);
     }
 
+    @Path("device-identifiers")
+    public DeviceIdentifiersPluginResource getDeviceIdentifiersPlugins() {
+        return resourceContext.getResource(DeviceIdentifiersPluginResource.class);
+    }
 }

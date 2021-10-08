@@ -33,3 +33,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_12_0/schema-app-scope-settings.yml
   - include:
       - file: liquibase/changelogs/v3_12_0/schema-system-tasks.yml
+  - include:
+      - file: liquibase/changelogs/v3_13_0/schema.yml

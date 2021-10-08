@@ -212,6 +212,12 @@ import { BotDetectionComponent } from './domain/settings/botdetections/bot-detec
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
 import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import {DomainSettingsDeviceIdentifiersComponent} from "./domain/settings/deviceidentifiers/device-identifiers.component";
+import {DeviceIdentifierPluginsResolver} from "./resolvers/device-identifier-plugins.resolver";
+import {DeviceIdentifierCreationComponent} from "./domain/settings/deviceidentifiers/creation/device-identifier-creation.component";
+import {DeviceIdentifiersResolver} from "./resolvers/device-identifiers.resolver";
+import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
+import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1764,6 +1770,64 @@ export const routes: Routes = [
                               },
                               perms: {
                                 only: ['domain_bot_detection_read']
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        path: 'device-identifier',
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Device Identifier',
+                            section: 'Security'
+                          },
+                          perms: {
+                            only: ['domain_device_identifier_list']
+                          }
+                        },
+                        children: [
+                          {
+                            path: '',
+                            pathMatch: 'full',
+                            component: DomainSettingsDeviceIdentifiersComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              deviceIdentifiers: DeviceIdentifiersResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_device_identifier_list']
+                              }
+                            }
+                          },
+                          {
+                            path: 'new',
+                            component: DeviceIdentifierCreationComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              deviceIdentifierPlugins: DeviceIdentifierPluginsResolver,
+                            },
+                            data: {
+                              perms: {
+                                only: ['domain_device_identifier_create']
+                              }
+                            }
+                          },
+                          {
+                            path: ':deviceIdentifierId',
+                            component: DeviceIdentifierComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              deviceIdentifier: DeviceIdentifierResolver,
+                            },
+                            data: {
+                              breadcrumb: {
+                                label: "deviceIdentifier.name",
+                              },
+                              perms: {
+                                only: ['domain_device_identifier_read']
                               }
                             }
                           }

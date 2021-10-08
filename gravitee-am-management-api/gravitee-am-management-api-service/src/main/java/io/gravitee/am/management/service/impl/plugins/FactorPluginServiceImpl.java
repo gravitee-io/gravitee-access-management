@@ -70,7 +70,7 @@ public class FactorPluginServiceImpl implements FactorPluginService {
 
     @Override
     public Maybe<String> getSchema(String factorId) {
-        LOGGER.debug("Find authenticator plugin schema by ID: {}", factorId);
+        LOGGER.debug("Find factor plugin schema by ID: {}", factorId);
         return Maybe.create(emitter -> {
             try {
                 String schema = factorPluginManager.getSchema(factorId);

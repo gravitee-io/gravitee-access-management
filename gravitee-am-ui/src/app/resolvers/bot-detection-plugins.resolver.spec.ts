@@ -15,15 +15,16 @@
  */
 import {inject, TestBed} from '@angular/core/testing';
 import {FactorPluginsResolver} from './factor-plugins.resolver';
+import {BotDetectionPluginsResolver} from "./bot-detection-plugins.resolver";
 
-describe('FactorPluginsResolver', () => {
+describe('BotDetectionPluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FactorPluginsResolver]
+      providers: [BotDetectionPluginsResolver]
     });
   });
 
-  it('should ...', inject([FactorPluginsResolver], (service: FactorPluginsResolver) => {
+  it('should ...', inject([BotDetectionPluginsResolver], (service: BotDetectionPluginsResolver) => {
     expect(service).toBeTruthy();
   }));
 });

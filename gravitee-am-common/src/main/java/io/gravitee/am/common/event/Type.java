@@ -42,4 +42,5 @@ public enum Type {
     ALERT_TRIGGER,
     ALERT_NOTIFIER,
     BOT_DETECTION,
+    DEVICE_IDENTIFIER
 }

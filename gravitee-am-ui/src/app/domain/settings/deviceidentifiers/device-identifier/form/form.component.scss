@@ -1,0 +1,7 @@
+::ng-deepul.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  li:after {
+    content: '';
+  }
+}

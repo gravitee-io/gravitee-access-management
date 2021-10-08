@@ -17,7 +17,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { BotDetectionCreationComponent } from './bot-detection-creation.component';
 
 
-describe('FactorCreationComponent', () => {
+describe('BotDetectionCreationComponent', () => {
   let component: BotDetectionCreationComponent;
   let fixture: ComponentFixture<BotDetectionCreationComponent>;
 

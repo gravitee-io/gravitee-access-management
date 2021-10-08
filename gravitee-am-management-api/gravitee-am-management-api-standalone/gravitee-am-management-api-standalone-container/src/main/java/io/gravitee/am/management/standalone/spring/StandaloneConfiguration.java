@@ -26,6 +26,7 @@ import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
+import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.common.event.EventManager;
@@ -63,7 +64,8 @@ import org.springframework.context.annotation.Import;
         FactorConfiguration.class,
         ResourceConfiguration.class,
         AlertPluginConfiguration.class,
-        BotDetectionConfiguration.class
+        BotDetectionConfiguration.class,
+        DeviceIdentifierConfiguration.class
 })
 public class StandaloneConfiguration {
 

@@ -374,6 +374,16 @@ import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-d
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
 import { GvFormControlDirective } from "./directives/gv-form-control.directive";
+import {DomainSettingsDeviceIdentifiersComponent} from "./domain/settings/deviceidentifiers/device-identifiers.component";
+import {DeviceIdentifierCreationComponent} from "./domain/settings/deviceidentifiers/creation/device-identifier-creation.component";
+import {DeviceIdentifierCreationStep1Component} from "./domain/settings/deviceidentifiers/creation/steps/step1/step1.component";
+import {DeviceIdentifierCreationStep2Component} from "./domain/settings/deviceidentifiers/creation/steps/step2/step2.component";
+import {DeviceIdentifierPluginsResolver} from "./resolvers/device-identifier-plugins.resolver";
+import {DeviceIdentifierFormComponent} from "./domain/settings/deviceidentifiers/device-identifier/form/form.component";
+import {DeviceIdentifiersResolver} from "./resolvers/device-identifiers.resolver";
+import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
+import {DeviceIdentifierService} from "./services/device-identifier.service";
+import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
 
 @NgModule({
   declarations: [
@@ -412,6 +422,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     DomainSettingsResourcesComponent,
     DomainSettingsWebAuthnComponent,
     DomainSettingsFlowsComponent,
+    DomainSettingsDeviceIdentifiersComponent,
     ConfirmComponent,
     EmptystateComponent,
     DomainCreationComponent,
@@ -451,6 +462,11 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     ResourceCreationComponent,
     ResourceCreationStep1Component,
     ResourceCreationStep2Component,
+    DeviceIdentifierComponent,
+    DeviceIdentifierCreationComponent,
+    DeviceIdentifierCreationStep1Component,
+    DeviceIdentifierCreationStep2Component,
+    DeviceIdentifierFormComponent,
     ResourceFormComponent,
     SnackbarComponent,
     NavbarComponent,
@@ -618,6 +634,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     UserService,
     ExtensionGrantService,
     InstallationService,
+    DeviceIdentifierService,
     AlertService,
     AppConfig,
     DomainsResolver,
@@ -703,6 +720,9 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     BotDetectionResolver,
     BotDetectionPluginsResolver,
     ScopesAllResolver,
+    DeviceIdentifierPluginsResolver,
+    DeviceIdentifiersResolver,
+    DeviceIdentifierResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

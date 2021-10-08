@@ -76,7 +76,7 @@ export class OrganizationService {
 
   identityProviders(userProvider?: boolean): Observable<any> {
     if (userProvider) {
-      return this.http.get<any>(this.organizationURL + '/identities?userProvider='+userProvider);  
+      return this.http.get<any>(this.organizationURL + '/identities?userProvider='+userProvider);
     }
     return this.http.get<any>(this.organizationURL + '/identities');
   }
@@ -312,11 +312,11 @@ export class OrganizationService {
   createUser(user): Observable<any> {
     return this.http.post<any>(this.organizationURL + '/users/', user);
   }
-  
+
   updateUser(userId, user): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/users/' + userId, user);
-  } 
-  
+  }
+
   userRoles(userId): Observable<any> {
     return this.http.get<any>(this.organizationURL + '/users/' + userId + '/roles');
   }
@@ -408,6 +408,14 @@ export class OrganizationService {
 
   botDetectionsSchema(id): Observable<any> {
     return this.http.get<any>(this.platformURL + '/plugins/bot-detections/' + id + '/schema');
+  }
+
+  deviceIdentifiers(): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/device-identifiers');
+  }
+
+  deviceIdentifiersSchema(id): Observable<any> {
+    return this.http.get<any>(`${this.platformURL}/plugins/device-identifiers/${id}/schema`);
   }
 
   spelGrammar(): Observable<any> {

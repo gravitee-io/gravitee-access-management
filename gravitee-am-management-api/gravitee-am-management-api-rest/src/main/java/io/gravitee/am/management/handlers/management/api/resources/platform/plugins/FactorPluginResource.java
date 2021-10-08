@@ -45,17 +45,17 @@ public class FactorPluginResource {
     private ResourceContext resourceContext;
 
     @Inject
-    private FactorPluginService authenticatorPluginService;
+    private FactorPluginService factorPluginService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Get a factor plugin",
             notes = "There is no particular permission needed. User must be authenticated.")
-    public void get(@PathParam("factor") String authenticatorId,
+    public void get(@PathParam("factor") String factorId,
                     @Suspended final AsyncResponse response) {
 
-        authenticatorPluginService.findById(authenticatorId)
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(authenticatorId)))
+        factorPluginService.findById(factorId)
+                .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
                 .map(policyPlugin -> Response.ok(policyPlugin).build())
                 .subscribe(response::resume, response::resume);
     }
@@ -69,9 +69,9 @@ public class FactorPluginResource {
                           @Suspended final AsyncResponse response) {
 
         // Check that the authenticator exists
-        authenticatorPluginService.findById(factorId)
+        factorPluginService.findById(factorId)
                 .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
-                .flatMap(irrelevant -> authenticatorPluginService.getSchema(factorId))
+                .flatMap(irrelevant -> factorPluginService.getSchema(factorId))
                 .switchIfEmpty(Maybe.error(new AuthenticatorPluginSchemaNotFoundException(factorId)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
                 .subscribe(response::resume, response::resume);

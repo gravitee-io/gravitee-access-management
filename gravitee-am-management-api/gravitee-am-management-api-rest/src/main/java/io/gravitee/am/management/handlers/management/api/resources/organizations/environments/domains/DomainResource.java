@@ -257,6 +257,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(BotDetectionsResource.class);
     }
 
+    @Path("device-identifiers")
+    public DeviceIdentifiersResource getDeviceIdentifiersResource() {
+        return resourceContext.getResource(DeviceIdentifiersResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
