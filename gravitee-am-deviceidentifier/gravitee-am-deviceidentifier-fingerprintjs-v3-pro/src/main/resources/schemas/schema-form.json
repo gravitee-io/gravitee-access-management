@@ -1,0 +1,18 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:am:deviceidentifier:fingerprintjs:FingerprintJsV3Pro",
+  "properties": {
+    "browserToken": {
+      "title": "Browser token",
+      "type" : "string",
+      "description": "Browser subscription token"
+    },
+    "region": {
+      "title": "Registration region",
+      "type" : "string",
+      "description": "(optional) set the region of your FingerprintJS registration",
+      "placeholder" : ["e.g: eu"]
+    }
+  },
+  "required": ["browserToken"]
+}

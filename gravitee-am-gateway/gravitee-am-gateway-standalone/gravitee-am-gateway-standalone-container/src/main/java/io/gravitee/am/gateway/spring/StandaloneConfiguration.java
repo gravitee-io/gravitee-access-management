@@ -31,6 +31,7 @@ import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
+import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -40,7 +41,6 @@ import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -66,7 +66,8 @@ import org.springframework.context.annotation.Import;
         AlertPluginConfiguration.class,
         FactorConfiguration.class,
         ResourceConfiguration.class,
-        BotDetectionConfiguration.class
+        BotDetectionConfiguration.class,
+        DeviceIdentifierConfiguration.class
 })
 public class StandaloneConfiguration {
 

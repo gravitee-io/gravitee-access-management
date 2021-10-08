@@ -176,8 +176,15 @@ public abstract class JerseySpringTest {
     @Autowired
     protected BotDetectionPluginService botDetectionPluginService;
 
+
     @Autowired
     protected BotDetectionService botDetectionService;
+
+    @Autowired
+    protected DeviceIdentifierPluginService deviceIdentifierPluginService;
+
+    @Autowired
+    protected DeviceIdentifierService deviceIdentifierService;
 
     @Before
     public void init() {
@@ -376,6 +383,16 @@ public abstract class JerseySpringTest {
         @Bean
         public BotDetectionService botDetectionService() {
             return mock(BotDetectionService.class);
+        }
+
+        @Bean
+        public DeviceIdentifierPluginService deviceIdentifierPluginService() {
+            return mock(DeviceIdentifierPluginService.class);
+        }
+
+        @Bean
+        public DeviceIdentifierService deviceIdentifierService() {
+            return mock(DeviceIdentifierService.class);
         }
     }
 

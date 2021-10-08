@@ -43,7 +43,7 @@ public class FactorsPluginResource {
     private ResourceContext resourceContext;
 
     @Inject
-    private FactorPluginService authenticatorPluginService;
+    private FactorPluginService factorPluginService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -51,7 +51,7 @@ public class FactorsPluginResource {
             notes = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 
-        authenticatorPluginService.findAll()
+        factorPluginService.findAll()
                 .map(authenticatorPlugins -> authenticatorPlugins.stream()
                         .sorted(Comparator.comparing(FactorPlugin::getName))
                         .collect(Collectors.toList()))

@@ -22,70 +22,51 @@ package io.gravitee.am.common.event;
 public abstract class Event {
 
     public static Enum valueOf(Type type, Action action) {
-        Enum event1 = null;
         switch (type) {
             case DOMAIN:
-                event1 =  DomainEvent.actionOf(action);
-                break;
+                return DomainEvent.actionOf(action);
             case APPLICATION:
-                event1 =  ApplicationEvent.actionOf(action);
-                break;
+                return ApplicationEvent.actionOf(action);
             case CERTIFICATE:
-                event1 =  CertificateEvent.actionOf(action);
-                break;
+                return CertificateEvent.actionOf(action);
             case EXTENSION_GRANT:
-                event1 =  ExtensionGrantEvent.actionOf(action);
-                break;
+                return ExtensionGrantEvent.actionOf(action);
             case IDENTITY_PROVIDER:
-                event1 =  IdentityProviderEvent.actionOf(action);
-                break;
+                return IdentityProviderEvent.actionOf(action);
             case ROLE:
-                event1 =  RoleEvent.actionOf(action);
-                break;
+                return RoleEvent.actionOf(action);
             case SCOPE:
-                event1 =  ScopeEvent.actionOf(action);
-                break;
+                return ScopeEvent.actionOf(action);
             case FORM:
-                event1 =  FormEvent.actionOf(action);
-                break;
+                return FormEvent.actionOf(action);
             case EMAIL:
-                event1 =  EmailEvent.actionOf(action);
-                break;
+                return EmailEvent.actionOf(action);
             case REPORTER:
-                event1 =  ReporterEvent.actionOf(action);
-                break;
+                return ReporterEvent.actionOf(action);
             case POLICY:
-                event1 =  PolicyEvent.actionOf(action);
-                break;
+                return PolicyEvent.actionOf(action);
             case USER:
-                event1 =  UserEvent.actionOf(action);
-                break;
+                return UserEvent.actionOf(action);
             case GROUP:
-                event1 =  GroupEvent.actionOf(action);
-                break;
+                return GroupEvent.actionOf(action);
             case MEMBERSHIP:
-                event1 =  MembershipEvent.actionOf(action);
-                break;
+                return MembershipEvent.actionOf(action);
             case FACTOR:
-                event1 =  FactorEvent.actionOf(action);
-                break;
+                return FactorEvent.actionOf(action);
             case FLOW:
-                event1 =  FlowEvent.actionOf(action);
-                break;
+                return FlowEvent.actionOf(action);
             case ALERT_TRIGGER:
-                event1 =  AlertTriggerEvent.actionOf(action);
-                break;
+                return AlertTriggerEvent.actionOf(action);
             case ALERT_NOTIFIER:
-                event1 =  AlertNotifierEvent.actionOf(action);
-                break;
+                return AlertNotifierEvent.actionOf(action);
             case RESOURCE:
-                event1 =  ResourceEvent.actionOf(action);
-                break;
+                return ResourceEvent.actionOf(action);
             case BOT_DETECTION:
-                event1 =  BotDetectionEvent.actionOf(action);
-                break;
+                return BotDetectionEvent.actionOf(action);
+            case DEVICE_IDENTIFIER:
+                return DeviceIdentifierEvent.actionOf(action);
+            default:
+                return null;
         }
-
-        return event1;
     }
 }
