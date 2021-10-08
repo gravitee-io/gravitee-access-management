@@ -72,7 +72,7 @@
         <gravitee-node.version>1.16.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.27.1</gravitee-gateway-api.version>
-        <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
+        <gravitee-expression-language.version>1.5.1</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
         <spring-security.version>5.4.8</spring-security.version>
@@ -106,7 +106,7 @@
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
-        <gravitee-policy-callout-http.version>1.13.0</gravitee-policy-callout-http.version>
+        <gravitee-policy-callout-http.version>1.13.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>1.14.1</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>

@@ -33,11 +33,11 @@ public interface UserService {
 
     Maybe<User> get(String userId, String baseUrl);
 
-    Single<User> create(User user, String baseUrl);
+    Single<User> create(User user, String idp, String baseUrl);
 
-    Single<User> update(String userId, User user, String baseUrl);
+    Single<User> update(String userId, User user, String idp, String baseUrl);
 
-    Single<User> patch(String userId, PatchOp patchOp, String baseUrl);
+    Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl);
 
     Completable delete(String userId);
 }

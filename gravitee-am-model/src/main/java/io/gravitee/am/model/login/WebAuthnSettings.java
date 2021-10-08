@@ -19,6 +19,8 @@ import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
 
+import java.util.Map;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -76,6 +78,11 @@ public class WebAuthnSettings {
      * the Relying Party SHOULD fail this registration ceremony, or it MAY decide to accept the registration.
      */
     private boolean forceRegistration;
+
+    /**
+     * Device attestations X509 Certificates
+     */
+    private Map<String, Object> certificates;
 
     public String getOrigin() {
         return origin;
@@ -139,5 +146,13 @@ public class WebAuthnSettings {
 
     public void setForceRegistration(boolean forceRegistration) {
         this.forceRegistration = forceRegistration;
+    }
+
+    public Map<String, Object> getCertificates() {
+        return certificates;
+    }
+
+    public void setCertificates(Map<String, Object> certificates) {
+        this.certificates = certificates;
     }
 }

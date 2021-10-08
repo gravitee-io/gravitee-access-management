@@ -333,6 +333,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SCIMSettings scimSettings = new SCIMSettings();
         scimSettings.setEnabled(scimMongo.isEnabled());
+        scimSettings.setIdpSelectionEnabled(scimMongo.isIdpSelectionEnabled());
+        scimSettings.setIdpSelectionRule(scimMongo.getIdpSelectionRule());
         return scimSettings;
     }
 
@@ -343,6 +345,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         SCIMSettingsMongo scimMongo = new SCIMSettingsMongo();
         scimMongo.setEnabled(scim.isEnabled());
+        scimMongo.setIdpSelectionEnabled(scim.isIdpSelectionEnabled());
+        scimMongo.setIdpSelectionRule(scim.getIdpSelectionRule());
         return scimMongo;
     }
 
@@ -371,6 +375,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         webAuthnSettings.setAttestationConveyancePreference(webAuthnSettingsMongo.getAttestationConveyancePreference() != null ?
                 AttestationConveyancePreference.fromString(webAuthnSettingsMongo.getAttestationConveyancePreference()) : null);
         webAuthnSettings.setForceRegistration(webAuthnSettingsMongo.isForceRegistration());
+        webAuthnSettings.setCertificates(webAuthnSettingsMongo.getCertificates());
+
         return webAuthnSettings;
     }
 
@@ -388,6 +394,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         webAuthnSettingsMongo.setAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment() != null ? webAuthnSettings.getAuthenticatorAttachment().getValue() : null);
         webAuthnSettingsMongo.setAttestationConveyancePreference(webAuthnSettings.getAttestationConveyancePreference() != null ? webAuthnSettings.getAttestationConveyancePreference().getValue() : null);
         webAuthnSettingsMongo.setForceRegistration(webAuthnSettings.isForceRegistration());
+        webAuthnSettingsMongo.setCertificates(webAuthnSettings.getCertificates() != null ? new Document(webAuthnSettings.getCertificates()) : null);
         return webAuthnSettingsMongo;
     }
 
