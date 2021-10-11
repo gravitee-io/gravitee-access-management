@@ -40,6 +40,7 @@ public class UserProperties {
     private String lastName;
     private String email;
     private String source;
+    private String preferredLanguage;
     private Set<String> roles;
     private List<String> groups;
     private Map<String, Object> claims;
@@ -71,6 +72,7 @@ public class UserProperties {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
         this.source = user.getSource();
+        this.preferredLanguage = user.getPreferredLanguage();
     }
 
     public String getId() {
@@ -159,5 +161,13 @@ public class UserProperties {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 }

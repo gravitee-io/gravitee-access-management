@@ -328,6 +328,12 @@ public class User implements IUser {
     }
 
     public String getPreferredLanguage() {
+        if (preferredLanguage == null) {
+            // fall back to OIDC standard claims
+            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
+                preferredLanguage = (String) getAdditionalInformation().get(StandardClaims.LOCALE);
+            }
+        }
         return preferredLanguage;
     }
 
