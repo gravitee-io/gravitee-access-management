@@ -16,19 +16,27 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -116,7 +124,13 @@ public class UserEndpoint extends AbstractUserEndpoint {
             // handle identity provider source
             final String source = userSource(context);
 
-            userService.update(userId, user, source, location(context.request()))
+            final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+            final String baseUrl = location(context.request());
+            userService.get(accessToken.getSub(), baseUrl)
+                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+                    .map(Optional::ofNullable)
+                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                    .flatMapSingle(optPrincipal -> userService.update(userId, user, source, baseUrl, optPrincipal.orElse(null)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -181,7 +195,13 @@ public class UserEndpoint extends AbstractUserEndpoint {
             // handle identity provider source
             final String source = userSource(context);
 
-            userService.patch(userId, patchOp, source, location(context.request()))
+            final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+            final String baseUrl = location(context.request());
+            userService.get(accessToken.getSub(), baseUrl)
+                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+                    .map(Optional::ofNullable)
+                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                    .flatMapSingle(optPrincipal -> userService.patch(userId, patchOp, source, baseUrl, optPrincipal.orElse(null)))
                     .subscribe(
                             user1 -> context.response()
                                     .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -214,7 +234,14 @@ public class UserEndpoint extends AbstractUserEndpoint {
      */
     public void delete(RoutingContext context) {
         final String userId = context.request().getParam("id");
-        userService.delete(userId)
+        final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+
+        final String baseUrl = location(context.request());
+        userService.get(accessToken.getSub(), baseUrl)
+                .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+                .map(Optional::ofNullable)
+                .switchIfEmpty(Maybe.just(Optional.empty()))
+                .flatMapCompletable(optPrincipal -> userService.delete(userId, optPrincipal.orElse(null)))
                 .subscribe(
                         () -> context.response().setStatusCode(204).end(),
                         context::fail);

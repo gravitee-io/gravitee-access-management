@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
@@ -48,8 +49,11 @@ public class GroupsEndpointTest extends RxWebTestBase {
     @Mock
     private ObjectWriter objectWriter;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
-    private GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
+    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
 
     @Override
     public void setUp() throws Exception {
