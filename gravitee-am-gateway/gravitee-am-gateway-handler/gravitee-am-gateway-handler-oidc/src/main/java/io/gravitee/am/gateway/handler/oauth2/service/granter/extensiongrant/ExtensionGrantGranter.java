@@ -117,10 +117,14 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                     })
                                     .map(idpUser -> {
                                         User user = new User();
-                                        user.setId(idpUser.getId());
+                                        user.setId(endUser.getId());
+                                        user.setExternalId(idpUser.getId());
                                         user.setUsername(endUser.getUsername());
 
                                         Map<String, Object> extraInformation = new HashMap<>(idpUser.getAdditionalInformation());
+                                        if (endUser.getAdditionalInformation() != null) {
+                                            extraInformation.putAll(endUser.getAdditionalInformation());
+                                        }
                                         if (user.getLoggedAt() != null) {
                                             extraInformation.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
                                         }
