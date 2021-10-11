@@ -134,7 +134,7 @@ export class AuditsComponent implements OnInit {
       routerLink.push('/environments');
       routerLink.push(this.route.snapshot.paramMap.get('envHrid'));
       routerLink.push('domains');
-      routerLink.push(row.target.referenceId);
+      routerLink.push(this.route.snapshot.paramMap.get('domainId'));
 
       if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
         routerLink.push('settings');
