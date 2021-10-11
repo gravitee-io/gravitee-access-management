@@ -70,6 +70,8 @@ public class NewUser implements IUser {
 
     private Date loggedAt;
 
+    private String preferredLanguage;
+
     private Map<String, Object> additionalInformation;
 
     private Date createdAt;
@@ -230,6 +232,14 @@ public class NewUser implements IUser {
 
     public void setLoggedAt(Date loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public String getPreferredLanguage() {
+        return preferredLanguage;
+    }
+
+    public void setPreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = preferredLanguage;
     }
 
     public Map<String, Object> getAdditionalInformation() {

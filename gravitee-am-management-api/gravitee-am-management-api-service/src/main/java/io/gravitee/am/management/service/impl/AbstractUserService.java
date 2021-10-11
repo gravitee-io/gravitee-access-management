@@ -206,6 +206,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setInternal(newUser.isInternal());
         user.setPreRegistration(newUser.isPreRegistration());
         user.setRegistrationCompleted(newUser.isRegistrationCompleted());
+        user.setPreferredLanguage(newUser.getPreferredLanguage());
         user.setAdditionalInformation(newUser.getAdditionalInformation());
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());

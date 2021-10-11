@@ -39,6 +39,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -175,6 +176,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                         user.setInternal(true);
                         user.setPreRegistration(newUser.isPreRegistration());
                         user.setRegistrationCompleted(newUser.isRegistrationCompleted());
+                        user.setPreferredLanguage(newUser.getPreferredLanguage());
                         user.setAdditionalInformation(newUser.getAdditionalInformation());
                         user.setCreatedAt(new Date());
                         user.setUpdatedAt(user.getCreatedAt());
@@ -235,6 +237,9 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     oldUser.setEnabled(updateUser.isEnabled());
                     oldUser.setLoggedAt(updateUser.getLoggedAt());
                     oldUser.setLoginsCount(updateUser.getLoginsCount());
+                    if (!StringUtils.isEmpty(updateUser.getPreferredLanguage())) {
+                        oldUser.setPreferredLanguage(updateUser.getPreferredLanguage());
+                    }
                     oldUser.setUpdatedAt(new Date());
                     oldUser.setAdditionalInformation(updateUser.getAdditionalInformation());
 
