@@ -29,6 +29,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.AuditService;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -67,6 +68,9 @@ public class GroupServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private AuditService auditService;
+
     @Test
     public void shouldCreateGroup() {
         final String domainId = "domain";
@@ -81,7 +85,7 @@ public class GroupServiceTest {
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "/").test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
@@ -110,7 +114,7 @@ public class GroupServiceTest {
         when(userRepository.findByIdIn(any())).thenReturn(Flowable.just(user));
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups").test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
@@ -127,7 +131,7 @@ public class GroupServiceTest {
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.just(new io.gravitee.am.model.Group()));
 
-        TestObserver<Group> testObserver = groupService.create(newGroup, "/").test();
+        TestObserver<Group> testObserver = groupService.create(newGroup, "/", null).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UniquenessException.class);
         verify(groupRepository, never()).create(any());
@@ -167,7 +171,7 @@ public class GroupServiceTest {
             return Single.just(groupToUpdate);
         }).when(groupRepository).update(any());
 
-        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/").test();
+        TestObserver<Group> testObserver = groupService.patch(groupId, patchOp, "/", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my group 2".equals(g.getDisplayName()));
