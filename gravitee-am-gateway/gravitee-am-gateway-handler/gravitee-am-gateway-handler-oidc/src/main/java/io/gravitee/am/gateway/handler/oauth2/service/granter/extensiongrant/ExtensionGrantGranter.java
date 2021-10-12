@@ -21,6 +21,7 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
@@ -39,6 +40,9 @@ import io.reactivex.Maybe;
 import io.reactivex.MaybeSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -53,20 +57,22 @@ import java.util.Map;
  * @author GraviteeSource Team
  */
 public class ExtensionGrantGranter extends AbstractTokenGranter {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantGranter.class);
     private static final String EXTENSION_GRANT_SEPARATOR = "~";
     private final ExtensionGrantProvider extensionGrantProvider;
     private final ExtensionGrant extensionGrant;
     private final UserAuthenticationManager userAuthenticationManager;
     private final IdentityProviderManager identityProviderManager;
     private Date minDate;
+    private UserService userService;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
                                  UserAuthenticationManager userAuthenticationManager,
                                  TokenService tokenService,
                                  TokenRequestResolver tokenRequestResolver,
-                                 IdentityProviderManager identityProviderManager) {
+                                 IdentityProviderManager identityProviderManager,
+                                 UserService userService) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
@@ -75,6 +81,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         this.extensionGrant = extensionGrant;
         this.userAuthenticationManager = userAuthenticationManager;
         this.identityProviderManager = identityProviderManager;
+        this.userService = userService;
     }
 
     @Override
@@ -110,11 +117,17 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                             }
                             return identityProviderManager
                                     .get(extensionGrant.getIdentityProvider())
-                                    .flatMap((Function<AuthenticationProvider, MaybeSource<io.gravitee.am.identityprovider.api.User>>) authProvider -> {
-                                        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
-                                        final Authentication authentication = new EndUserAuthentication(convert(endUser), null, authenticationContext);
-                                        return authProvider.loadPreAuthenticatedUser(authentication);
-                                    })
+                                    .flatMap(prov -> retrieveUserByUsernameFromIdp(prov, tokenRequest, convert(endUser))
+                                            .switchIfEmpty(Maybe.defer(() -> {
+                                                LOGGER.debug("User name '{}' not found, try as the userId", endUser.getUsername());
+                                                if (endUser.getId() != null) {
+                                                    // MongoIDP & JDBC IDP, set the userId as SUB claim, this claim is used as username by extensionGrantProvider.grant()
+                                                    // so the search by ID should be done with the username...
+                                                    return userService.findById(endUser.getUsername())
+                                                            .flatMap(user -> retrieveUserByUsernameFromIdp(prov, tokenRequest, user));
+                                                }
+                                                return Maybe.empty();
+                                            })))
                                     .map(idpUser -> {
                                         User user = new User();
                                         user.setId(idpUser.getId());
@@ -146,6 +159,12 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                 .onErrorResumeNext(ex -> {
                     return Maybe.error(new InvalidGrantException(ex.getMessage()));
                 });
+    }
+
+    private Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
+        SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
+        final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
+        return provider.loadPreAuthenticatedUser(authentication);
     }
 
     private User convert(io.gravitee.am.identityprovider.api.User idpUser) {
