@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.ExtensionGrantEvent;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.CompositeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.ExtensionGrantGranter;
@@ -82,6 +83,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private EventManager eventManager;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public void afterPropertiesSet() {
@@ -164,7 +168,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
             }
             ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
             ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
-                    userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager);
+                    userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager, userService);
             // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients
             extensionGrantGranter.setMinDate(minDate);
             ((CompositeTokenGranter) tokenGranter).addTokenGranter(extensionGrant.getId(), extensionGrantGranter);
