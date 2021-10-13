@@ -127,7 +127,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
 
     @Override
     public Client get(String clientId) {
-        return clients.get(clientId);
+        return clientId != null ? clients.get(clientId) : null;
     }
 
     @Override
