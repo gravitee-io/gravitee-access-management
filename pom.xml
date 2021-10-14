@@ -65,7 +65,7 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>1.4</gravitee-bom.version>
+        <gravitee-bom.version>1.0</gravitee-bom.version>
         <gravitee-common.version>1.16.2</gravitee-common.version>
         <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
         <gravitee-node.version>1.16.1</gravitee-node.version>
