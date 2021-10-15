@@ -17,14 +17,17 @@ package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
-import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.service.exception.InvalidGroupException;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -54,8 +57,11 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private ObjectWriter objectWriter;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
-    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
+    private final GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
 
     @Override
     public void setUp() throws Exception {
@@ -64,16 +70,22 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("GroupObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(userService.get(any(), any())).thenReturn(Maybe.empty());
 
         router.route()
                 .handler(BodyHandler.create())
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldInvokeSCIMCreateGroupsEndpoint() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any())).thenReturn(Single.just(getGroup()));
+        when(groupService.create(any(), any(), any())).thenReturn(Single.just(getGroup()));
 
         testRequest(
                 HttpMethod.POST,
@@ -90,7 +102,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn409WhenNameAlreadyExists() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any())).thenReturn(Single.error(new UniquenessException("Display name already exists")));
+        when(groupService.create(any(), any(), any())).thenReturn(Single.error(new UniquenessException("Display name already exists")));
 
         testRequest(
                 HttpMethod.POST,
@@ -112,7 +124,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidGroupException() throws Exception {
         router.route("/Groups").handler(groupsEndpoint::create);
-        when(groupService.create(any(), any())).thenReturn(Single.error(new InvalidGroupException("Invalid group infos")));
+        when(groupService.create(any(), any(), any())).thenReturn(Single.error(new InvalidGroupException("Invalid group infos")));
 
         testRequest(
                 HttpMethod.POST,

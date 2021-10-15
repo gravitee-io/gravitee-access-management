@@ -16,8 +16,10 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CSRFHandlerImpl;
+import io.vertx.core.Vertx;
 import io.vertx.reactivex.ext.web.handler.CSRFHandler;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
@@ -29,9 +31,12 @@ public class CSRFHandlerFactory implements FactoryBean<CSRFHandler> {
     @Value("${http.csrf.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String csrfSecret;
 
+    @Autowired
+    private Vertx vertx;
+
     @Override
     public CSRFHandler getObject() {
-        return CSRFHandler.newInstance(new CSRFHandlerImpl(csrfSecret));
+        return CSRFHandler.newInstance(new CSRFHandlerImpl(vertx, csrfSecret));
     }
 
     @Override

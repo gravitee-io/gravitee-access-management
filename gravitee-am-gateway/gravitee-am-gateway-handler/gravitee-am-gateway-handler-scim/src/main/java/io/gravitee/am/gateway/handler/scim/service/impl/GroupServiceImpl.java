@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -26,9 +27,12 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.GroupAuditBuilder;
 import io.reactivex.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +63,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AuditService auditService;
 
     @Override
     public Single<ListResponse<Group>> list(int page, int size, String baseUrl) {
@@ -113,8 +120,16 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<Group> create(Group group, String baseUrl) {
+    public Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Create a new group {} for domain {}", group.getDisplayName(), domain.getName());
+
+        io.gravitee.am.model.Group groupModel = convert(group);
+        // set technical ID
+        groupModel.setId(RandomString.generate());
+        groupModel.setReferenceType(ReferenceType.DOMAIN);
+        groupModel.setReferenceId(domain.getId());
+        groupModel.setCreatedAt(new Date());
+        groupModel.setUpdatedAt(groupModel.getCreatedAt());
 
         // check if user is unique
         return groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), group.getDisplayName())
@@ -128,15 +143,9 @@ public class GroupServiceImpl implements GroupService {
                 // set members
                 .flatMap(__ -> setMembers(group, baseUrl))
                 .flatMap(group1 -> {
-                    io.gravitee.am.model.Group groupModel = convert(group1);
-                    // set technical ID
-                    groupModel.setId(RandomString.generate());
-                    groupModel.setReferenceType(ReferenceType.DOMAIN);
-                    groupModel.setReferenceId(domain.getId());
-                    groupModel.setCreatedAt(new Date());
-                    groupModel.setUpdatedAt(groupModel.getCreatedAt());
                     return groupRepository.create(groupModel);
                 })
+                .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(grp)))
                 .map(group1 -> convert(group1, baseUrl, true))
                 // set members
                 .flatMap(group1 -> setMembers(group1, baseUrl))
@@ -147,11 +156,12 @@ public class GroupServiceImpl implements GroupService {
                         LOGGER.error("An error occurs while trying to router a group", ex);
                         return Single.error(new TechnicalManagementException("An error occurs while trying to router a group", ex));
                     }
-                });
+                })
+                .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_CREATED).group(groupModel).throwable(error)));
     }
 
     @Override
-    public Single<Group> update(String groupId, Group group, String baseUrl) {
+    public Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Update a group {} for domain {}", groupId, domain.getName());
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
@@ -175,7 +185,9 @@ public class GroupServiceImpl implements GroupService {
                             groupToUpdate.setCreatedAt(existingGroup.getCreatedAt());
                             groupToUpdate.setUpdatedAt(new Date());
                             return groupRepository.update(groupToUpdate);
-                        }))
+                        })
+                        .doOnSuccess(grp -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).oldValue(existingGroup).group(grp)))
+                        .doOnError(error -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_UPDATED).group(existingGroup).throwable(error))))
                 .map(group1 -> convert(group1, baseUrl, false))
                 // set members
                 .flatMap(group1 -> setMembers(group1, baseUrl))
@@ -190,14 +202,14 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl) {
+    public Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Patch a group {} for domain {}", groupId, domain.getName());
         return get(groupId, baseUrl)
                 .switchIfEmpty(Single.error(new GroupNotFoundException(groupId)))
                 .flatMap(group -> {
                     ObjectNode node = objectMapper.convertValue(group, ObjectNode.class);
                     patchOp.getOperations().forEach(operation -> operation.apply(node));
-                    return update(groupId, objectMapper.treeToValue(node, Group.class), baseUrl);
+                    return update(groupId, objectMapper.treeToValue(node, Group.class), baseUrl, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -211,11 +223,19 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
-    public Completable delete(String groupId) {
+    public Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Delete group {}", groupId);
         return groupRepository.findById(groupId)
                 .switchIfEmpty(Maybe.error(new GroupNotFoundException(groupId)))
-                .flatMapCompletable(user -> groupRepository.delete(groupId))
+                .flatMapCompletable(group -> groupRepository.delete(groupId)
+                        .andThen(Completable.fromAction(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))))
+                .doOnError(error -> {
+                    io.gravitee.am.model.Group group = new io.gravitee.am.model.Group();
+                    group.setId(groupId);
+                    group.setReferenceId(domain.getId());
+                    group.setReferenceType(ReferenceType.DOMAIN);
+                    auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group).throwable(error));
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

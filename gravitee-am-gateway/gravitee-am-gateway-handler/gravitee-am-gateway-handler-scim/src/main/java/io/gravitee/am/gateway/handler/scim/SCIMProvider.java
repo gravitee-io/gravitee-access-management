@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.scim;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
@@ -106,8 +105,8 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.delete("/Users/:id").handler(userEndpoint::delete);
 
             // Groups resource
-            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
-            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper);
+            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
+            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService);
 
             scimRouter.get("/Groups").handler(groupsEndpoint::list);
             scimRouter.get("/Groups/:id").handler(groupEndpoint::get);

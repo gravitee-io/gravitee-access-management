@@ -30,6 +30,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -74,16 +75,22 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(userService.get(any(), any())).thenReturn(Maybe.empty());
 
         router.route()
                 .handler(BodyHandler.create())
+                .handler(rc -> {
+                    JWT token = new JWT();
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
 
         testRequest(
                 HttpMethod.POST,
@@ -105,7 +112,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMCreateUserEndpoint_valid_password() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.just(getUser()));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.POST,
@@ -124,7 +131,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
         user.setSource("unknown-idp");
 
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidValueException("User provider [unknown-idp] can not be found.")));
 
         testRequest(
                 HttpMethod.POST,
@@ -146,7 +153,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMCreateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
                 HttpMethod.POST,
@@ -168,7 +175,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn409WhenUsernameAlreadyExists() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new UniquenessException("Username already exists")));
 
         testRequest(
                 HttpMethod.POST,
@@ -190,7 +197,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidUserException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
                 HttpMethod.POST,
@@ -212,7 +219,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq(null), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+        when(userService.create(any(), eq(null), any(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
                 HttpMethod.POST,
@@ -244,7 +251,7 @@ public class CreateUserEndpointHandlerTest extends RxWebTestBase {
             rc.next();
         });
         router.route("/Users").handler(usersEndpoint::create);
-        when(userService.create(any(), eq("123456"), any())).thenReturn(Single.just(getUser()));
+        when(userService.create(any(), eq("123456"), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.POST,

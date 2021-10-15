@@ -29,6 +29,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
@@ -73,16 +74,22 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         // object mapper
         when(objectWriter.writeValueAsString(any())).thenReturn("UserObject");
         when(objectMapper.writerWithDefaultPrettyPrinter()).thenReturn(objectWriter);
+        when(userService.get(any(), any())).thenReturn(Maybe.empty());
 
         router.route()
-                .handler(BodyHandler.create())
+                .handler(BodyHandler.create()).handler(rc -> {
+                    JWT token = new JWT();
+                    token.put("idp", "123456");
+                    rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
+                    rc.next();
+                })
                 .failureHandler(new ErrorHandler());
     }
 
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_password() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(eq(null), any(), eq(null), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
+        when(userService.update(eq(null), any(), eq(null), any(), any())).thenReturn(Single.error(new InvalidValueException("Field [password] is invalid")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -104,7 +111,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvokeSCIMUpdateUserEndpoint_valid_password() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), any())).thenReturn(Single.just(getUser()));
+        when(userService.update(any(), any(), eq(null), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.PUT,
@@ -120,7 +127,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeSCIMUpdateUserEndpoint_invalid_roles() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
+        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new InvalidValueException("Role [role-1] can not be found.")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -142,7 +149,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenInvalidUserException() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
+        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new InvalidUserException("Invalid user infos")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -164,7 +171,7 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldReturn400WhenEmailFormatInvalidException() throws Exception {
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq(null), anyString())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
+        when(userService.update(any(), any(), eq(null), anyString(), any())).thenReturn(Single.error(new EmailFormatInvalidException("Invalid email")));
 
         testRequest(
                 HttpMethod.PUT,
@@ -189,14 +196,8 @@ public class UpdateUserEndpointHandlerTest extends RxWebTestBase {
         when(scimSettings.isIdpSelectionEnabled()).thenReturn(true);
         when(scimSettings.getIdpSelectionRule()).thenReturn("{#context.attributes['token']['idp']}");
         when(domain.getScim()).thenReturn(scimSettings);
-        router.route("/Users").handler(rc -> {
-            JWT token = new JWT();
-            token.put("idp", "123456");
-            rc.put(ConstantKeys.TOKEN_CONTEXT_KEY, token);
-            rc.next();
-        });
         router.route("/Users").handler(userEndpoint::update);
-        when(userService.update(any(), any(), eq("123456"), any())).thenReturn(Single.just(getUser()));
+        when(userService.update(any(), any(), eq("123456"), any(), any())).thenReturn(Single.just(getUser()));
 
         testRequest(
                 HttpMethod.PUT,
