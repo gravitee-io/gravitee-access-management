@@ -1,6 +1,33 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/440?closed=1[AM - 3.10.6 (2021-10-15)]
+
+=== Bug fixes
+
+*_Am_*
+
+- Backport remove test dependencies from distribution (#6262) https://github.com/gravitee-io/issues/issues/6346[#6346]
+
+*_Gateway_*
+
+- CSRF validation error https://github.com/gravitee-io/issues/issues/6389[#6389]
+- Error on logout for pre registered users https://github.com/gravitee-io/issues/issues/6381[#6381]
+- Sub claims may change according extension grants configuration https://github.com/gravitee-io/issues/issues/6352[#6352]
+- [scim] no audit log for user and group provisioning https://github.com/gravitee-io/issues/issues/6348[#6348]
+
+*_General_*
+
+- Improve user search https://github.com/gravitee-io/issues/issues/6355[#6355]
+- Unable to validate password on confirm registration https://github.com/gravitee-io/issues/issues/6382[#6382]
+
+*_Management_*
+
+- Wrong link on audit logs https://github.com/gravitee-io/issues/issues/6356[#6356]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/433?closed=1[AM - 3.10.5 (2021-10-08)]
 
 === Bug fixes
