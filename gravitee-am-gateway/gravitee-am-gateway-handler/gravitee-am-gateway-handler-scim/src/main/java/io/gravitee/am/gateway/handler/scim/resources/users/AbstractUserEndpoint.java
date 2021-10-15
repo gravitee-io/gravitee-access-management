@@ -16,11 +16,20 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -32,10 +41,13 @@ import java.util.Set;
  */
 public class AbstractUserEndpoint {
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractUserEndpoint.class);
     protected UserService userService;
     protected ObjectMapper objectMapper;
+    private Domain domain;
 
-    public AbstractUserEndpoint(UserService userService, ObjectMapper objectMapper) {
+    public AbstractUserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
+        this.domain = domain;
         this.userService = userService;
         this.objectMapper = objectMapper;
     }
@@ -58,5 +70,20 @@ public class AbstractUserEndpoint {
 
     protected String location(HttpServerRequest request) {
         return UriBuilderRequest.resolveProxyRequest(request, request.path());
+    }
+
+    protected String userSource(RoutingContext context) {
+        if (domain.getScim() != null
+                && domain.getScim().isIdpSelectionEnabled()
+                && !StringUtils.isEmpty(domain.getScim().getIdpSelectionRule())) {
+            try {
+                SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
+                authenticationContext.attributes().putAll(context.data());
+                return authenticationContext.getTemplateEngine().getValue(domain.getScim().getIdpSelectionRule(), String.class);
+            } catch (Exception ex) {
+                logger.error("An error has occurred when evaluating IdP selection rule", ex);
+            }
+        }
+        return null;
     }
 }

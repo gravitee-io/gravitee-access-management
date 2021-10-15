@@ -16,18 +16,37 @@
 package io.gravitee.am.gateway.handler.scim.resources.users;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EntityType;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.scim.parser.SCIMFilterParser;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
-import io.gravitee.am.gateway.handler.scim.model.User;
+import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
+import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.springframework.util.StringUtils;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -38,8 +57,8 @@ public class UsersEndpoint extends AbstractUserEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public UsersEndpoint(UserService userService, ObjectMapper objectMapper) {
-        super(userService, objectMapper);
+    public UsersEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper) {
+        super(domain, userService, objectMapper);
     }
 
     public void list(RoutingContext context) {
@@ -129,7 +148,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
      */
     public void create(RoutingContext context) {
         try {
-            if(context.getBodyAsString() == null) {
+            if (context.getBodyAsString() == null) {
                 context.fail(new InvalidSyntaxException("Unable to parse body message"));
                 return;
             }
@@ -149,7 +168,15 @@ public class UsersEndpoint extends AbstractUserEndpoint {
                 return;
             }
 
-            userService.create(user, location(context.request()))
+            // handle identity provider source
+            final String source = userSource(context);
+            final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+            final String baseUrl = location(context.request());
+            userService.get(accessToken.getSub(), baseUrl)
+                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+                    .map(Optional::ofNullable)
+                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                    .flatMapSingle(optPrincipal -> userService.create(user, source, baseUrl, optPrincipal.orElse(null)))
                     .subscribe(
                             user1 -> context.response()
                                     .setStatusCode(201)
@@ -163,4 +190,5 @@ public class UsersEndpoint extends AbstractUserEndpoint {
             context.fail(new InvalidSyntaxException("Unable to parse body message", ex));
         }
     }
+
 }

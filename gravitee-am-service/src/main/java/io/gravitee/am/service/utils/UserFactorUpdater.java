@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.utils;
 
-import com.google.common.collect.Collections2;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;

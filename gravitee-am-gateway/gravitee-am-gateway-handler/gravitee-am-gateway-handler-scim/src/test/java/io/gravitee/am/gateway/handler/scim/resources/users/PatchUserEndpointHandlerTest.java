@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.model.Domain;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
@@ -45,8 +46,11 @@ public class PatchUserEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private Domain domain;
+
     @InjectMocks
-    private UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper);
+    private UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
 
     @Override
     public void setUp() throws Exception {

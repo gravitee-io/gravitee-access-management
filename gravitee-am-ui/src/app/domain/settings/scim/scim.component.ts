@@ -15,10 +15,10 @@
  */
 import {Component, OnInit} from '@angular/core';
 import {SnackbarService} from "../../../services/snackbar.service";
-import {ActivatedRoute, Router} from "@angular/router";
-import {AppConfig} from "../../../../config/app.config";
+import {ActivatedRoute} from "@angular/router";
 import {DomainService} from "../../../services/domain.service";
 import {AuthService} from "../../../services/auth.service";
+import {MatDialog, MatDialogRef} from "@angular/material/dialog";
 
 @Component({
   selector: 'app-scim',
@@ -35,11 +35,12 @@ export class ScimComponent implements OnInit {
               private snackbarService: SnackbarService,
               private authService: AuthService,
               private route: ActivatedRoute,
-              private router: Router) {
+              public dialog: MatDialog) {
   }
 
   ngOnInit() {
     this.domain = this.route.snapshot.data['domain'];
+    this.domain.scim = this.domain.scim || {};
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_scim_update']);
   }
@@ -53,11 +54,45 @@ export class ScimComponent implements OnInit {
   }
 
   enableSCIM(event) {
-    this.domain.scim = { 'enabled': (event.checked) };
+    this.domain.scim['enabled'] = (event.checked);
+    this.formChanged = true;
+  }
+
+  enableIdpSelection(event) {
+    this.domain.scim['idpSelectionEnabled'] = (event.checked);
     this.formChanged = true;
   }
 
   isSCIMEnabled() {
     return this.domain.scim && this.domain.scim.enabled;
   }
+
+  isIdpSelectionEnabled() {
+    return this.isSCIMEnabled() && this.domain.scim.idpSelectionEnabled;
+  }
+
+  formChange() {
+    this.formChanged = true;
+  }
+
+  openDialog(event) {
+    event.preventDefault();
+    this.dialog.open(IdpSelectionInfoDialog, {});
+  }
+
+  formInvalid() {
+    if (this.isIdpSelectionEnabled()) {
+      return !this.domain.scim.idpSelectionRule;
+    }
+    return false;
+  }
+
+}
+
+@Component({
+  selector: 'idp-selection-info-dialog',
+  templateUrl: './dialog/scim-info.component.html',
+})
+export class IdpSelectionInfoDialog {
+  constructor(public dialogRef: MatDialogRef<IdpSelectionInfoDialog>) {}
 }

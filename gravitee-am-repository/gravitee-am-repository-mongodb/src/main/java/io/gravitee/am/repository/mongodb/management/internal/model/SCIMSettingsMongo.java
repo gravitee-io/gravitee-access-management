@@ -22,6 +22,8 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 public class SCIMSettingsMongo {
 
     private boolean enabled;
+    private boolean idpSelectionEnabled;
+    private String idpSelectionRule;
 
     public boolean isEnabled() {
         return enabled;
@@ -29,5 +31,21 @@ public class SCIMSettingsMongo {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public boolean isIdpSelectionEnabled() {
+        return idpSelectionEnabled;
+    }
+
+    public void setIdpSelectionEnabled(boolean idpSelectionEnabled) {
+        this.idpSelectionEnabled = idpSelectionEnabled;
+    }
+
+    public String getIdpSelectionRule() {
+        return idpSelectionRule;
+    }
+
+    public void setIdpSelectionRule(String idpSelectionRule) {
+        this.idpSelectionRule = idpSelectionRule;
     }
 }

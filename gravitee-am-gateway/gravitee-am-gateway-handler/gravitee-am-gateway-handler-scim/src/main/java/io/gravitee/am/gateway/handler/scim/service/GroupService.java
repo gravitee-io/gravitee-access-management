@@ -37,11 +37,11 @@ public interface GroupService {
 
     Maybe<Group> get(String groupId, String baseUrl);
 
-    Single<Group> create(Group group, String baseUrl);
+    Single<Group> create(Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<Group> update(String groupId, Group group, String baseUrl);
+    Single<Group> update(String groupId, Group group, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl);
+    Single<Group> patch(String groupId, PatchOp patchOp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable delete(String groupId);
+    Completable delete(String groupId, io.gravitee.am.identityprovider.api.User principal);
 }

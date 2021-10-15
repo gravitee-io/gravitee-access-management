@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.auth.VertxContextPRNG;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.CSRFHandler;
 import io.vertx.ext.web.handler.SessionHandler;
@@ -30,6 +32,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -37,8 +40,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
-import static io.vertx.core.http.HttpMethod.*;
 
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
@@ -52,7 +53,7 @@ public class CSRFHandlerImpl implements CSRFHandler {
 
     private static final Base64.Encoder BASE64 = Base64.getMimeEncoder();
 
-    private final Random RAND = new SecureRandom();
+    private final VertxContextPRNG RAND;
     private final Mac mac;
 
     private boolean nagHttps;
@@ -63,7 +64,8 @@ public class CSRFHandlerImpl implements CSRFHandler {
     private String origin;
     private boolean httpOnly;
 
-    public CSRFHandlerImpl(final String secret) {
+    public CSRFHandlerImpl(Vertx vertx, final String secret) {
+        this.RAND = VertxContextPRNG.current(vertx);
         try {
             mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(), "HmacSHA256"));
@@ -118,10 +120,14 @@ public class CSRFHandlerImpl implements CSRFHandler {
         byte[] salt = new byte[32];
         RAND.nextBytes(salt);
 
-        String saltPlusToken = BASE64.encodeToString(salt) + "." + Long.toString(System.currentTimeMillis());
-        String signature = BASE64.encodeToString(mac.doFinal(saltPlusToken.getBytes()));
+        final String plainJwt = BASE64.encodeToString(salt) + "." + System.currentTimeMillis();
+        byte[] saltPlusToken = plainJwt.getBytes(StandardCharsets.US_ASCII);
+        synchronized (mac) {
+            saltPlusToken = mac.doFinal(saltPlusToken);
+        }
+        String signature = BASE64.encodeToString(saltPlusToken);
 
-        return saltPlusToken + "." + signature;
+        return plainJwt + "." + signature;
     }
 
     private boolean validateToken(String header, Cookie cookie) {
@@ -135,8 +141,11 @@ public class CSRFHandlerImpl implements CSRFHandler {
             return false;
         }
 
-        String saltPlusToken = tokens[0] + "." + tokens[1];
-        String signature = BASE64.encodeToString(mac.doFinal(saltPlusToken.getBytes()));
+        byte[] saltPlusToken = (tokens[0] + "." + tokens[1]).getBytes(StandardCharsets.US_ASCII);
+        synchronized (mac) {
+            saltPlusToken = mac.doFinal(saltPlusToken);
+        }
+        String signature = BASE64.encodeToString(saltPlusToken);
 
         if (!signature.equals(tokens[2])) {
             return false;

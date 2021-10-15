@@ -23,6 +23,8 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.security.Principal;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -33,11 +35,11 @@ public interface UserService {
 
     Maybe<User> get(String userId, String baseUrl);
 
-    Single<User> create(User user, String baseUrl);
+    Single<User> create(User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> update(String userId, User user, String baseUrl);
+    Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> patch(String userId, PatchOp patchOp, String baseUrl);
+    Single<User> patch(String userId, PatchOp patchOp, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal);
 
-    Completable delete(String userId);
+    Completable delete(String userId, io.gravitee.am.identityprovider.api.User principal);
 }
