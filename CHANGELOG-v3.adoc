@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/444?closed=1[AM - 3.12.2 (2021-10-17)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.11.2 https://github.com/gravitee-io/issues/issues/6409[#6409]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/441?closed=1[AM - 3.11.2 (2021-10-15)]
 
 === Bug fixes
