@@ -16,15 +16,23 @@
 package io.gravitee.am.gateway.handler.scim.resources.groups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
+import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Maybe;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,8 +43,8 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public GroupsEndpoint(GroupService groupService, ObjectMapper objectMapper) {
-        super(groupService, objectMapper);
+    public GroupsEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService) {
+        super(groupService, objectMapper, userService);
     }
 
     public void list(RoutingContext context) {
@@ -135,8 +143,13 @@ public class GroupsEndpoint extends AbstractGroupEndpoint {
                 context.fail(ex);
                 return;
             }
-
-            groupService.create(group, location(context.request()))
+            final JWT accessToken = context.get(ConstantKeys.TOKEN_CONTEXT_KEY);
+            final String baseUrl = location(context.request());
+            userService.get(accessToken.getSub(), baseUrl)
+                    .map(scimUser -> new DefaultUser(UserMapper.convert(scimUser)))
+                    .map(Optional::ofNullable)
+                    .switchIfEmpty(Maybe.just(Optional.empty()))
+                    .flatMapSingle(optPrincipal ->  groupService.create(group, baseUrl, optPrincipal.orElse(null)))
                     .subscribe(
                             group1 -> context.response()
                                     .setStatusCode(201)

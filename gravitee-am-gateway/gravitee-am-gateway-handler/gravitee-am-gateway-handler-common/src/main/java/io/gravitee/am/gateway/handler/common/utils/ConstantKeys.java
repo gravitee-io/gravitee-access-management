@@ -107,4 +107,22 @@ public interface ConstantKeys {
     String GEOIP_KEY = "geoip";
     //login attempts
     String LOGIN_ATTEMPT_KEY = "login_attempts";
+
+    // ------
+    // Values used to find key into gravitee.yaml
+    // ------
+
+    // Header name that will contain the Peer Certificate
+    String HTTP_SSL_CERTIFICATE_HEADER = "http.ssl.certificateHeader";
+    // Base Url for mtls_endpoint_aliases on which the domain HRID and the oauth endpoints will be appended
+    String HTTP_SSL_ALIASES_BASE_URL = "http.ssl.mtls_aliases.base_url";
+    String HTTP_SSL_ALIASES_ENDPOINTS = "http.ssl.mtls_aliases.endpoints";
+    String HTTP_SSL_ALIASES_ENDPOINTS_TOKEN = "token_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_AUTHORIZATION = "authorization_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_REGISTRATION = "registration_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_USERINFO = "userinfo_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_PAR = "pushed_authorization_request_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION = "end_session_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION = "revocation_endpoint";
+    String HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION = "introspection_endpoint";
 }

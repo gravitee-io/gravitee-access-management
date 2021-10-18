@@ -44,7 +44,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ClientCertificateAuthProviderTest {
 
-    private ClientCertificateAuthProvider authProvider = new ClientCertificateAuthProvider();
+    private ClientCertificateAuthProvider authProvider = new ClientCertificateAuthProvider(null);
 
     @Test
     public void unauthorized_client_SSLPeerUnverifiedException() throws Exception {

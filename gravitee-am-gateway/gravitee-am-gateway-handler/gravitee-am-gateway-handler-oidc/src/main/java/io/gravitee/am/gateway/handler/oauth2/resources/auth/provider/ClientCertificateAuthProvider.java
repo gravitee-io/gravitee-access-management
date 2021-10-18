@@ -26,12 +26,12 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.GeneralName;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
-import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Client Authentication method : tls_client_auth
@@ -50,33 +50,36 @@ import java.util.List;
  */
 public class ClientCertificateAuthProvider implements ClientAuthProvider {
 
+    private final String certificateHeader;
+
+    public ClientCertificateAuthProvider(String certificateHeader) {
+        this.certificateHeader = certificateHeader;
+    }
+
     @Override
     public boolean canHandle(Client client, RoutingContext context) {
         // client_id is a required parameter for tls_client_auth so we are sure to have a client here
         return client != null
-                && context.request().sslSession() != null
+                && CertificateUtils.hasPeerCertificate(context, certificateHeader)
                 && ClientAuthenticationMethod.TLS_CLIENT_AUTH.equals(client.getTokenEndpointAuthMethod());
     }
 
     @Override
     public void handle(Client client, RoutingContext context, Handler<AsyncResult<Client>> handler) {
         // We ensure that the authentication is done over TLS thanks to the canHandle method which checks for an SSL
-        // session
-        SSLSession sslSession = context.request().sslSession();
-
+        // session or certificate provided through the Headers
         try {
-            Certificate[] peerCertificates = sslSession.getPeerCertificates();
-            X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
-            if ((client.getTlsClientAuthSubjectDn() != null && validateSubjectDn(client, peerCertificate)) ||
-                    (client.getTlsClientAuthSanDns() != null && validateSAN(peerCertificate, GeneralName.dNSName, client.getTlsClientAuthSanDns())) ||
-                    (client.getTlsClientAuthSanEmail() != null && validateSAN(peerCertificate, GeneralName.rfc822Name, client.getTlsClientAuthSanEmail())) ||
-                    (client.getTlsClientAuthSanIp() != null && validateSAN(peerCertificate, GeneralName.iPAddress, client.getTlsClientAuthSanIp())) ||
-                    (client.getTlsClientAuthSanUri() != null && validateSAN(peerCertificate, GeneralName.uniformResourceIdentifier, client.getTlsClientAuthSanUri()))) {
+            final Optional<X509Certificate> peerCertificate = CertificateUtils.extractPeerCertificate(context, certificateHeader);
+            if (peerCertificate.isPresent() && (client.getTlsClientAuthSubjectDn() != null && validateSubjectDn(client, peerCertificate.get())) ||
+                    (client.getTlsClientAuthSanDns() != null && validateSAN(peerCertificate.get(), GeneralName.dNSName, client.getTlsClientAuthSanDns())) ||
+                    (client.getTlsClientAuthSanEmail() != null && validateSAN(peerCertificate.get(), GeneralName.rfc822Name, client.getTlsClientAuthSanEmail())) ||
+                    (client.getTlsClientAuthSanIp() != null && validateSAN(peerCertificate.get(), GeneralName.iPAddress, client.getTlsClientAuthSanIp())) ||
+                    (client.getTlsClientAuthSanUri() != null && validateSAN(peerCertificate.get(), GeneralName.uniformResourceIdentifier, client.getTlsClientAuthSanUri()))) {
                 handler.handle(Future.succeededFuture(client));
             } else {
                 handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing TLS configuration")));
             }
-        } catch (SSLPeerUnverifiedException | CertificateParsingException ce ) {
+        } catch (SSLPeerUnverifiedException | CertificateException ce ) {
             handler.handle(Future.failedFuture(new InvalidClientException("Invalid client: missing or unsupported certificate")));
         }
     }

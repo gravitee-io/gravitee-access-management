@@ -42,6 +42,17 @@
 #  secured: false
 #  alpn: false
 #  ssl:
+#    certificateHeader: X-ClientCert # header where the peer certificate is read if there are no sslSession (default is null)
+#    # mtls_aliases allows to override some endpoints regarding https://tools.ietf.org/id/draft-ietf-oauth-mtls-13.html#endpointAliases
+#    # The base_url contains the common url for each overrode endpoints.
+#    # The list of endpoint that support the mtls_aliases is : token_endpoint, authorization_endpoint, registration_endpoint, userinfo_endpoint, pushed_authorization_request_endpoint, end_session_endpoint, revocation_endpoint, introspection_endpoint
+#    mtls_aliases: # base URL for mtls_endpoint_aliases (default is null and the standard endpoints will be used)
+#      base_url: https://mycompany.mlts.com
+#      endpoints:
+#        - token_endpoint
+#        - registration_endpoint
+#        - userinfo_endpoint
+#        - pushed_authorization_request_endpoint
 #    clientAuth: request # Supports none, request, required
 #    ciphers: TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 , TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 , TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 #    tlsProtocols: TLSv1.2, TLSv1.3
@@ -60,6 +71,16 @@
 #      timeout: 1800000 # (in milliseconds)
 #  csrf:
 #    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
+#  cors:
+#      Allows to configure the header Access-Control-Allow-Origin (default value: *)
+#      '*' is a valid value but is considered as a security risk as it will be opened to cross origin requests from anywhere.
+#    allow-origin: http://developer.mycompany.com
+#      Allows to define how long the result of the preflight request should be cached for (default value; 1728000 [20 days])
+#    max-age: 864000
+#      Which methods to allow (default value: OPTIONS, GET, POST, PUT, DELETE, PATCH)
+#    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE, PATCH'
+#      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, X-Xsrf-Token)
+#    allow-headers: 'X-Requested-With'
 
 # Path to plugins repository
 #plugins:

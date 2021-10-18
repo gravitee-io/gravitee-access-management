@@ -210,7 +210,7 @@ import {GroupResolver} from './resolvers/group.resolver';
 import {GroupMembersResolver} from './resolvers/group-members.resolver';
 import {AddGroupRolesComponent, GroupRolesComponent} from './domain/settings/groups/group/roles/roles.component';
 import {GroupRolesResolver} from './resolvers/group-roles.resolver';
-import {ScimComponent} from './domain/settings/scim/scim.component';
+import {IdpSelectionInfoDialog, ScimComponent} from './domain/settings/scim/scim.component';
 import {EmailsComponent} from './domain/components/emails/emails.component';
 import {EmailComponent, EmailInfoDialog} from './domain/components/emails/email/email.component';
 import {EmailService} from './services/email.service';
@@ -583,7 +583,8 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     BotDetectionFormComponent,
     MfaStepUpDialog,
     AdaptiveMfaDialog,
-    GvFormControlDirective
+    GvFormControlDirective,
+    IdpSelectionInfoDialog
   ],
   imports: [
     BrowserModule,

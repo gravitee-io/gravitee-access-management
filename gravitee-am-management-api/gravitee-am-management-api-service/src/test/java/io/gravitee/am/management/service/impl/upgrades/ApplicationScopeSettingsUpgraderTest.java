@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.SystemTask;
+import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.oauth2.Scope;
-import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.common.util.Maps;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.mockito.Mockito.*;
@@ -53,7 +53,7 @@ public class ApplicationScopeSettingsUpgraderTest {
     private SystemTaskRepository systemTaskRepository;
 
     @Mock
-    private ApplicationRepository applicationRepository;
+    private ApplicationService applicationService;
 
     @Test
     public void shouldIgnore_IfTaskCompleted() {
@@ -64,7 +64,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(any());
-        verify(applicationRepository, never()).findAll();
+        verify(applicationService, never()).findAll();
     }
 
     @Test
@@ -101,8 +101,8 @@ public class ApplicationScopeSettingsUpgraderTest {
         settingsWithScopes.setOauth(oauthWithOptions);
         appScopesWithOptions.setSettings(settingsWithScopesWithOptions);
 
-        when(applicationRepository.findAll()).thenReturn(Flowable.fromArray(appNoSettings, appNoOauthSetings, appNoScopes, appScopes, appScopesWithOptions));
-        when(applicationRepository.update(any())).thenReturn(Single.just(new Application()));
+        when(applicationService.findAll()).thenReturn(Single.just(Set.of(appNoSettings, appNoOauthSetings, appNoScopes, appScopes, appScopesWithOptions)));
+        when(applicationService.update(any())).thenReturn(Single.just(new Application()));
         when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer((args) -> {
             SystemTask sysTask = args.getArgument(0);
             sysTask.setOperationId(args.getArgument(1));
@@ -112,17 +112,17 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(anyString());
-        verify(applicationRepository).findAll();
+        verify(applicationService).findAll();
 
-        verify(applicationRepository, atMost(2)).update(argThat(app -> {
+        verify(applicationService, atMost(2)).update(argThat(app -> {
             return app.getSettings() == null || app.getSettings().getOauth() == null;
         }));
 
-        verify(applicationRepository, atMost(1)).update(argThat(app -> {
+        verify(applicationService, atMost(1)).update(argThat(app -> {
             return app.getSettings() != null && app.getSettings().getOauth() != null && app.getSettings().getOauth().getScopeSettings() == null;
         }));
 
-        verify(applicationRepository, atMost(1)).update(argThat(app -> {
+        verify(applicationService, atMost(1)).update(argThat(app -> {
             final boolean withScopeSettings = app.getSettings() != null && app.getSettings().getOauth() != null && app.getSettings().getOauth().getScopeSettings() != null;
             return withScopeSettings && app.getSettings().getOauth().getScopeSettings().stream().allMatch(a -> {
                 return (a.getScope().equalsIgnoreCase(SCOPE_OPENID) || a.getScope().equalsIgnoreCase(SCOPE_PROFILE))
@@ -131,7 +131,7 @@ public class ApplicationScopeSettingsUpgraderTest {
             });
         }));
 
-        verify(applicationRepository, atMost(1)).update(argThat(app -> {
+        verify(applicationService, atMost(1)).update(argThat(app -> {
             final boolean withScopeSettings = app.getSettings() != null && app.getSettings().getOauth() != null && app.getSettings().getOauth().getScopeSettings() != null;
             return withScopeSettings && app.getSettings().getOauth().getScopeSettings().stream().allMatch(a -> {
                 return (a.getScope().equalsIgnoreCase(SCOPE_OPENID)
@@ -166,7 +166,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(3)).findById(anyString());
-        verify(applicationRepository, never()).findAll();
+        verify(applicationService, never()).findAll();
 
         verify(systemTaskRepository, never()).updateIf(argThat( t -> t.getStatus().equalsIgnoreCase(SystemTaskStatus.SUCCESS.name())), anyString());
     }

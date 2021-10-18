@@ -88,11 +88,14 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.get("/ServiceProviderConfig").handler(serviceProviderConfigurationEndpointHandler);
 
             // SCIM resources routes are OAuth 2.0 secured
-            scimRouter.route().handler(OAuth2AuthHandler.create(oAuth2AuthProvider, "scim"));
+            OAuth2AuthHandler oAuth2AuthHandler = OAuth2AuthHandler.create(oAuth2AuthProvider, "scim");
+            oAuth2AuthHandler.extractToken(true);
+            oAuth2AuthHandler.extractClient(true);
+            scimRouter.route().handler(oAuth2AuthHandler);
 
             // Users resource
-            UsersEndpoint usersEndpoint = new UsersEndpoint(userService, objectMapper);
-            UserEndpoint userEndpoint = new UserEndpoint(userService, objectMapper);
+            UsersEndpoint usersEndpoint = new UsersEndpoint(domain, userService, objectMapper);
+            UserEndpoint userEndpoint = new UserEndpoint(domain, userService, objectMapper);
 
             scimRouter.get("/Users").handler(usersEndpoint::list);
             scimRouter.get("/Users/:id").handler(userEndpoint::get);
@@ -102,8 +105,8 @@ public class SCIMProvider extends AbstractService<ProtocolProvider> implements P
             scimRouter.delete("/Users/:id").handler(userEndpoint::delete);
 
             // Groups resource
-            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper);
-            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper);
+            GroupsEndpoint groupsEndpoint = new GroupsEndpoint(groupService, objectMapper, userService);
+            GroupEndpoint groupEndpoint = new GroupEndpoint(groupService, objectMapper, userService);
 
             scimRouter.get("/Groups").handler(groupsEndpoint::list);
             scimRouter.get("/Groups/:id").handler(groupEndpoint::get);

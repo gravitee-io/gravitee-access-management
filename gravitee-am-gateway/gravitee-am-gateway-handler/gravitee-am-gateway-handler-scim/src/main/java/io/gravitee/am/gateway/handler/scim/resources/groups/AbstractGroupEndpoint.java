@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
+import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import java.util.HashSet;
@@ -32,12 +33,14 @@ import java.util.Set;
  */
 public class AbstractGroupEndpoint {
 
+    protected UserService userService;
     protected GroupService groupService;
     protected ObjectMapper objectMapper;
 
-    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper) {
+    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService) {
         this.groupService = groupService;
         this.objectMapper = objectMapper;
+        this.userService = userService;
     }
 
     protected String location(HttpServerRequest request) {
