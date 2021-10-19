@@ -1,0 +1,17 @@
+:host {
+  ::ng-deep.ngx-datatable.fixed-header .datatable-header .datatable-header-inner .datatable-header-cell {
+    &:first-child {
+      padding-left: 42px;
+    }
+  }
+
+  ::ng-deep.row-disabled {
+    background: #f1f1f1;
+    border: 1px solid #fafafa;
+    datatable-body-cell {
+      color: grey !important;
+      font-size: 85% !important;
+      font-style: italic !important;
+    }
+  }
+}

@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.model;
 
+import java.util.Objects;
+
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -24,6 +28,7 @@ public class MFASettings {
     private String loginRule;
     private String stepUpAuthenticationRule;
     private String adaptiveAuthenticationRule;
+    private RememberDeviceSettings rememberDevice;
 
     public MFASettings() {
     }
@@ -32,6 +37,10 @@ public class MFASettings {
         this.loginRule = other.loginRule;
         this.stepUpAuthenticationRule = other.stepUpAuthenticationRule;
         this.adaptiveAuthenticationRule = other.adaptiveAuthenticationRule;
+        this.rememberDevice = ofNullable(other.rememberDevice)
+                .filter(Objects::nonNull)
+                .map(RememberDeviceSettings::new)
+                .orElse(new RememberDeviceSettings());
     }
 
     public String getLoginRule() {
@@ -56,5 +65,13 @@ public class MFASettings {
 
     public void setAdaptiveAuthenticationRule(String adaptiveAuthenticationRule) {
         this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
+    }
+
+    public RememberDeviceSettings getRememberDevice() {
+        return rememberDevice;
+    }
+
+    public void setRememberDevice(RememberDeviceSettings rememberDevice) {
+        this.rememberDevice = rememberDevice;
     }
 }

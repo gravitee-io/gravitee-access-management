@@ -213,9 +213,15 @@ public interface EventType {
      * Device Identifier audit log actions
      * ----------
      */
-    String DEVICE_IDENTIFIER_CREATED = "BOT_DETECTION_CREATED";
-    String DEVICE_IDENTIFIER_UPDATED = "BOT_DETECTION_UPDATED";
-    String DEVICE_IDENTIFIER_DELETED = "BOT_DETECTION_DELETED";
+    String DEVICE_IDENTIFIER_CREATED = "DEVICE_IDENTIFIER_CREATED";
+    String DEVICE_IDENTIFIER_UPDATED = "DEVICE_IDENTIFIER_UPDATED";
+    String DEVICE_IDENTIFIER_DELETED = "DEVICE_IDENTIFIER_DELETED";
+    /**
+     * ----------
+     *  Device audit log actions
+     * ----------
+     */
+    String DEVICE_DELETED = "DEVICE_DELETED";
 
     /**
      * ----------

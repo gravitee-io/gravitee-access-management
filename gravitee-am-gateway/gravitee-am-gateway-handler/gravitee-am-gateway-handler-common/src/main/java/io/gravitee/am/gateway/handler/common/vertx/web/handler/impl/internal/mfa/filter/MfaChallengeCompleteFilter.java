@@ -37,6 +37,7 @@ public class MfaChallengeCompleteFilter implements Supplier<Boolean> {
 
     @Override
     public Boolean get() {
-        return TRUE.equals(session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY));
+        return session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY) != null &&
+                TRUE.equals(session.get(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY));
     }
 }

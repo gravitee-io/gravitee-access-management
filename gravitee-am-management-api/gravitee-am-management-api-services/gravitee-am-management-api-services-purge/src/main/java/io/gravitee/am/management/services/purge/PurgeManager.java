@@ -16,6 +16,7 @@
 package io.gravitee.am.management.services.purge;
 
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.management.api.DeviceRepository;
 import io.gravitee.am.repository.management.api.LoginAttemptRepository;
 import io.gravitee.am.repository.management.api.PermissionTicketRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
@@ -68,6 +69,9 @@ public class PurgeManager {
     @Lazy
     @Autowired
     protected AuthenticationFlowContextRepository authenticationFlowContextRepository;
+    @Lazy
+    @Autowired
+    protected DeviceRepository deviceRepository;
 
     protected List<TableName> tables = asList(TableName.values());
 
@@ -102,6 +106,9 @@ public class PurgeManager {
                     break;
                 case auth_flow_ctx:
                     authenticationFlowContextRepository.purgeExpiredData().subscribe();
+                    break;
+                case devices:
+                    deviceRepository.purgeExpiredData().subscribe();
                     break;
             }
         }

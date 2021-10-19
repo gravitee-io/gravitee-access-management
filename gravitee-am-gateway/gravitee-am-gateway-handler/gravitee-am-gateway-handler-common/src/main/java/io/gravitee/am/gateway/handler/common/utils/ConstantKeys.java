@@ -54,6 +54,8 @@ public interface ConstantKeys {
     String TRANSACTION_ID_KEY = "tid";
     String OIDC_PROVIDER_ID_TOKEN_KEY = "op_id_token";
     String PEER_CERTIFICATE_THUMBPRINT = "x509_thumbprint_s256";
+    String DEVICE_TYPE = "deviceType";
+    String DEVICE_ID = "deviceId";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
@@ -105,8 +107,13 @@ public interface ConstantKeys {
 
     //geoip
     String GEOIP_KEY = "geoip";
+
     //login attempts
     String LOGIN_ATTEMPT_KEY = "login_attempts";
+
+    //remember device
+    String DEVICE_ALREADY_EXISTS_KEY = "deviceAlreadyExists";
+    String REMEMBER_DEVICE_CONSENT_TIME_SECONDS = "rememberDeviceConsentTimeSeconds";
 
     // ------
     // Values used to find key into gravitee.yaml

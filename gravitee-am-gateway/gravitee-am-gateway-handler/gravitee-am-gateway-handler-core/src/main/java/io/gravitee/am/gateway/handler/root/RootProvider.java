@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandle
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
@@ -61,6 +62,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.logout.LogoutCallbackParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.PostLoginRememberDeviceHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
@@ -189,6 +192,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private DeviceIdentifierManager deviceIdentifierManager;
+
+    @Autowired
+    private DeviceService deviceService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -219,6 +228,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);
+        Handler<RoutingContext> getRememberDeviceHandler = new RememberDeviceHandler();
 
         // Root policy chain handler
         rootRouter.route()
@@ -235,13 +245,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
-                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
 
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
+                .handler(new PostLoginRememberDeviceHandler(deviceService))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
 
@@ -291,7 +302,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, applicationContext));
+                .handler(getRememberDeviceHandler)
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));

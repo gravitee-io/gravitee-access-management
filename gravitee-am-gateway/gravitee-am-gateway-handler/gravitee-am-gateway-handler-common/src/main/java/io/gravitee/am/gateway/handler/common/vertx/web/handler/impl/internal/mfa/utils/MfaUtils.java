@@ -18,11 +18,13 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.ext.web.Session;
 
-import java.util.Optional;
+import java.util.Objects;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 
@@ -46,5 +48,15 @@ public class MfaUtils {
 
     public static String getAdaptiveMfaStepUpRule(Client client) {
         return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getAdaptiveAuthenticationRule();
+    }
+
+    public static RememberDeviceSettings getRememberDeviceSettings(Client client) {
+        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+                .map(MFASettings::getRememberDevice)
+                .orElse(new RememberDeviceSettings());
+    }
+
+    public static boolean deviceAlreadyExists(Session session) {
+        return TRUE.equals(session.get(DEVICE_ALREADY_EXISTS_KEY));
     }
 }

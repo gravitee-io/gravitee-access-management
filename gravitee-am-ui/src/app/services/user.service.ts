@@ -108,6 +108,10 @@ export class UserService {
     return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/roles');
   }
 
+  devices(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/devices');
+  }
+
   revokeRole(domainId, userId, roleId, organizationContext): Observable<any> {
     if (organizationContext) {
       return this.organizationService.revokeUserRole(userId, roleId);
@@ -141,4 +145,9 @@ export class UserService {
   removeCredential(domainId, userId, credentialId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/credentials/' + credentialId);
   }
+
+  removeDevice(domainId, userId, deviceId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/devices/' + deviceId);
+  }
+
 }

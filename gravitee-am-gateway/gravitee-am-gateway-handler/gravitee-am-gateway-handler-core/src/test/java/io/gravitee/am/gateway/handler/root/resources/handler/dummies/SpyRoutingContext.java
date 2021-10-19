@@ -16,12 +16,12 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
+import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -30,8 +30,9 @@ import java.util.Map;
 public class SpyRoutingContext extends RoutingContext {
 
     Map<String, Object> data = new HashMap<>();
-    private final DummyHttpRequest delegate = new DummyHttpRequest();
-    private final HttpServerRequest httpServerRequest = new HttpServerRequest(delegate);
+    private final DummyHttpRequest dummyHttpRequest = new DummyHttpRequest();
+    private final HttpServerRequest httpServerRequest = new HttpServerRequest(dummyHttpRequest);
+    private final DummySession dummySession = new DummySession();
 
     public SpyRoutingContext() {
         super(null);
@@ -56,7 +57,11 @@ public class SpyRoutingContext extends RoutingContext {
 
     @Override
     public Session session() {
-        return new DummySession();
+        return dummySession;
+    }
+
+    @Override
+    public void next() {
     }
 
     @Override
@@ -65,6 +70,11 @@ public class SpyRoutingContext extends RoutingContext {
     }
 
     public void putParam(String key, Object value) {
-        delegate.putParam(key, value);
+        dummyHttpRequest.putParam(key, value);
+    }
+
+
+    public void setMethod(HttpMethod method) {
+        this.dummyHttpRequest.setMethod(method);
     }
 }

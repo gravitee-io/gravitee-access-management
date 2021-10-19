@@ -41,6 +41,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     private final MultiMap headers = MultiMap.caseInsensitiveMultiMap();
     private final MultiMap params = MultiMap.caseInsensitiveMultiMap();
+    private HttpMethod method;
 
     @Override
     public HttpServerRequest exceptionHandler(Handler<Throwable> handler) {
@@ -94,7 +95,11 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public HttpMethod method() {
-        return null;
+        return method;
+    }
+
+    public void setMethod(HttpMethod method) {
+        this.method = method;
     }
 
     @Override
@@ -157,7 +162,7 @@ public class DummyHttpRequest implements HttpServerRequest {
         return params;
     }
 
-    public void putParam(String key, Object value){
+    public void putParam(String key, Object value) {
         params.add(key, String.valueOf(value));
     }
 

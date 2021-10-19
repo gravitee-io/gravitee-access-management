@@ -364,6 +364,23 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- AM Device Identifier -->
+        <dependency>
+            <groupId>io.gravitee.am.deviceidentifier</groupId>
+            <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-community</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.deviceidentifier</groupId>
+            <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-pro</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- External Plugins -->
         <dependency>
             <groupId>io.gravitee.policy</groupId>
@@ -681,6 +698,21 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.botdetection</groupId>
                                     <artifactId>gravitee-am-botdetection-recaptcha-v3</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- AM Device Identifier -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.deviceidentifier</groupId>
+                                    <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-community</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.deviceidentifier</groupId>
+                                    <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-pro</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

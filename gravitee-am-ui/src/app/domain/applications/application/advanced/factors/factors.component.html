@@ -22,7 +22,8 @@
         <div class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>MFA</h5>
-            <small>Multi-factor Authentication adds an additional factor to the login process in order to grant user access.</small>
+            <small>Multi-factor Authentication adds an additional factor to the login process in order to grant user
+              access.</small>
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
@@ -62,39 +63,91 @@
           </div>
         </div>
 
-        <div *ngIf="hasFactors()" class="gv-form-section">
+        <div *ngIf="hasFactors() && hasSelectedFactors()" class="gv-form-section">
           <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
               <h5>Adaptive MFA</h5>
-              <button mat-icon-button (click)="openAMFADialog($event)"><mat-icon>info_outline</mat-icon></button>
+              <button mat-icon-button (click)="openAMFADialog($event)">
+                <mat-icon>info_outline</mat-icon>
+              </button>
             </div>
-            <small>Adaptive MFA skips Multi-factor authentication based on the user's information and enforces factors otherwise.</small>
-            <small class="danger">You need to install the <b>gravitee-service-geoip</b> plugin to use the geoip based variables.</small>
+            <small>Adaptive MFA skips Multi-factor authentication based on the user's information and enforces factors
+              otherwise.</small>
+            <small class="danger">You need to install the <b>gravitee-service-geoip</b> plugin to use the geoip based
+              variables.</small>
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
-            <input matInput placeholder="Adaptive MFA rule" name="adaptiveMfaRule" [(ngModel)]="adaptiveMfaRule" (ngModelChange)="formChanged = true;" />
+            <input matInput placeholder="Adaptive MFA rule" name="adaptiveMfaRule" [(ngModel)]="adaptiveMfaRule"
+                   (ngModelChange)="formChanged = true;"/>
             <mat-hint>
               MFA challenge page will be displayed if the condition above is <b>false</b> in addition to the login step.
             </mat-hint>
           </mat-form-field>
         </div>
 
-        <div *ngIf="hasFactors()" class="gv-form-section">
+        <div *ngIf="hasFactors() && hasSelectedFactors()" class="gv-form-section">
           <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
               <h5 style="margin: 0;">Step up authentication</h5>
-              <button mat-icon-button (click)="openStepUpDialog($event)"><mat-icon>info_outline</mat-icon></button>
+              <button mat-icon-button (click)="openStepUpDialog($event)">
+                <mat-icon>info_outline</mat-icon>
+              </button>
             </div>
-            <small>Step up authentication may be required in certain situations where it is asked to provide access to a resource that is determined to be very sensitive.</small>
+            <small>Step up authentication may be required in certain situations where it is asked to provide access to a
+              resource that is determined to be very sensitive.</small>
             <mat-divider></mat-divider>
           </div>
           <div fxLayout="column">
             <mat-form-field appearance="outline" floatLabel="always">
-              <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule" [(ngModel)]="mfaStepUpRule" (ngModelChange)="formChanged = true;">
-              <mat-hint>MFA challenge page will be displayed if the conditions are met in addition of the login step.</mat-hint>
+              <input matInput placeholder="Step up authentication rule" name="mfaSelectionRule"
+                     [(ngModel)]="mfaStepUpRule" (ngModelChange)="formChanged = true;">
+              <mat-hint>MFA challenge page will be displayed if the conditions are met in addition of the login step.
+              </mat-hint>
             </mat-form-field>
           </div>
+        </div>
+
+        <div *ngIf="hasFactors() && hasSelectedFactors() && deviceIdentifiers && deviceIdentifiers.length > 0" class="gv-form-section">
+          <div class="gv-form-section-title">
+            <div fxLayout="row" style="align-items: center;">
+              <h5>Remember Device</h5>
+            </div>
+            <small>Remember Device will skip MFA if the user's device is known.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div  class="gv-form-section-description">
+            <mat-slide-toggle matInput placeholder="Step up authentication rule" name="mfaRememberDevice"
+                              (change)="changeActive()" [checked]="rememberDevice.active">
+              Enable Remember Device
+            </mat-slide-toggle>
+          </div>
+          <br />
+          <form *ngIf="rememberDevice.active">
+            <mat-form-field appearance="outline" floatLabel="always"  style="margin-left: 5px;">
+              <mat-label>Select your device identifier provider</mat-label>
+              <mat-select (selectionChange)="updateDeviceIdentifierId($event)" [(value)]="rememberDevice.deviceIdentifierId" name="deviceIdentifierId">
+                <mat-option *ngFor="let rd of deviceIdentifiers; index as i;" [value]="rd.id">{{rd.name}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="35">
+              <input matInput type="number" placeholder="Duration" name="expirationTimeSeconds" min="0" [min]="0"
+                     [value]="displayExpiresIn()"
+                     (change)="onExpiresInEvent($event)">
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px;">
+              <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()"
+                          (selectionChange)="onUnitTimeEvent($event)">
+                <mat-option value="seconds">SECONDS</mat-option>
+                <mat-option value="minutes">MINUTES</mat-option>
+                <mat-option value="hours">HOURS</mat-option>
+                <mat-option value="days">DAYS</mat-option>
+                <mat-option value="weeks">WEEKS</mat-option>
+                <mat-option value="months">MONTHS</mat-option>
+                <mat-option value="years">YEARS</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </form>
         </div>
 
         <div fxLayout="row" style="margin-top: 20px;" *hasPermission="['application_factor_update']">
@@ -105,7 +158,8 @@
     <div class="gv-page-description" fxFlex>
       <h3>Multi-factor Authentication</h3>
       <div class="gv-page-description-content">
-        <p>By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after he has been authenticated.</p>
+        <p>By selecting a MFA authentication method, the end-user will be prompted to process the MFA verification after
+          he has been authenticated.</p>
       </div>
     </div>
   </div>

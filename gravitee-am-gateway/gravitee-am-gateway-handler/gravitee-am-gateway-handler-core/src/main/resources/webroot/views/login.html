@@ -125,5 +125,30 @@
             $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
         });
     </script>
+
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+            th:src="@{assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}">
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if(fp.visitorId){
+                $( "#form" )
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+        });
+    </script>
+
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+            th:src="@{assets/js/remember-device/fingerprintjs-v3.js}"></script>
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}">
+        loadFingerprintJsV3(fp => {
+            if (fp.visitorId) {
+                $("#form")
+                    .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#form").append('<input type="hidden" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    </script>
 </body>
 </html>

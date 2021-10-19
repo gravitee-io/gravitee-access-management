@@ -23,24 +23,22 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
@@ -51,7 +49,6 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
-import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -62,10 +59,13 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -76,16 +76,20 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
     private static final String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
     private static final String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
+    private static final String REMEMBER_DEVICE_CONSENT = "rememberDeviceConsent";
+    public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
 
     private final FactorManager factorManager;
     private final UserService userService;
     private final ApplicationContext applicationContext;
+    private final DeviceService deviceService;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, ApplicationContext applicationContext) {
+    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService, ApplicationContext applicationContext) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
         this.userService = userService;
+        this.deviceService = deviceService;
     }
 
     @Override
@@ -201,15 +205,28 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                     // update user strong auth status
                     routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                     routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                    doRedirect(routingContext.request().response(), returnURL);
+
+                    redirect(routingContext, client, returnURL);
                 });
             } else {
                 // update user strong auth status
                 routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                 routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                doRedirect(routingContext.request().response(), returnURL);
+                redirect(routingContext, client, returnURL);
             }
         });
+    }
+
+    private void redirect(RoutingContext routingContext, Client client, String returnURL) {
+        //Register device if the device is active
+        var rememberDeviceSettings = getRememberDeviceSettings(client);
+        boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
+        if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
+            var user = routingContext.user().principal();
+            saveDeviceAndRedirect(routingContext, client, user.getString("id"), rememberDeviceSettings, returnURL);
+        } else {
+            doRedirect(routingContext.request().response(), returnURL);
+        }
     }
 
     private void verify(FactorProvider factorProvider, FactorContext factorContext, Handler<AsyncResult<Void>> handler) {
@@ -369,5 +386,41 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         parameters.put("error", "mfa_challenge_failed");
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
         doRedirect(resp, uri);
+    }
+
+    private RememberDeviceSettings getRememberDeviceSettings(Client client) {
+        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+                .map(MFASettings::getRememberDevice)
+                .orElse(new RememberDeviceSettings());
+    }
+
+    private void saveDeviceAndRedirect(RoutingContext routingContext, Client client, String userId, RememberDeviceSettings settings, String redirectUrl) {
+        var domain = client.getDomain();
+        var deviceId = routingContext.session().<String>get(DEVICE_ID);
+        var rememberDeviceId = settings.getDeviceIdentifierId();
+        if (isNullOrEmpty(deviceId)) {
+            routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            doRedirect(routingContext.response(), redirectUrl);
+        } else {
+            this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
+                if (!isEmpty) {
+                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+                    return Maybe.empty();
+                }
+                var deviceType = routingContext.session().<String>get(DEVICE_TYPE);
+                return this.deviceService.create(
+                        domain,
+                        client.getClientId(),
+                        userId,
+                        rememberDeviceId,
+                        isNullOrEmpty(deviceType) ? "Unknown" : deviceType,
+                        settings.getExpirationTimeSeconds(), deviceId).toMaybe();
+            }).doFinally(() -> {
+                        routingContext.session().remove(DEVICE_ID);
+                        routingContext.session().remove(DEVICE_TYPE);
+                        doRedirect(routingContext.response(), redirectUrl);
+                    }
+            ).subscribe();
+        }
     }
 }

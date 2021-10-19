@@ -42,6 +42,7 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     public static final String COLLECTION_NAME = "device_identifiers";
     private MongoCollection<DeviceIdentifierMongo> deviceIdentifierMongoMongoCollection;
 
+
     @PostConstruct
     public void init() {
         deviceIdentifierMongoMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, DeviceIdentifierMongo.class);

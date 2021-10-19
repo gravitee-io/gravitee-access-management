@@ -16,33 +16,40 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
-import io.gravitee.am.model.oidc.Client;
-import io.vertx.reactivex.ext.web.Session;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 
 import java.util.function.Supplier;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MfaSkipUserStronglyAuthFilter implements Supplier<Boolean> {
+public class MfaSkipUserStronglyAuthFilter extends MfaContextHolder implements Supplier<Boolean> {
 
-    private final Client client;
-    private final Session session;
 
-    public MfaSkipUserStronglyAuthFilter(Client client, Session session) {
-        this.client = client;
-        this.session = session;
+    public MfaSkipUserStronglyAuthFilter(MfaFilterContext context) {
+        super(context);
     }
 
     @Override
     public Boolean get() {
-        String mfaStepUpRule = MfaUtils.getMfaStepUpRule(client);
-        String adaptiveMfaStepUpRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
-        return isNullOrEmpty(mfaStepUpRule) && isNullOrEmpty(adaptiveMfaStepUpRule) &&
-                (MfaUtils.isUserStronglyAuth(session) || MfaUtils.isMfaSkipped(session));
+        final boolean userStronglyAuth = context.isUserStronglyAuth();
+        // We need to check whether the AMFA, Device and Step Up rule is false since we don't know of other MFA return False
+        final boolean mfaSkipped = context.isMfaSkipped();
+        if (    // Whether Adaptive MFA is not true
+                context.isAmfaActive() && !context.isAmfaRuleTrue() ||
+                // Or We don't remember the device and that mfa is not skipped
+                context.getRememberDeviceSettings().isActive() && !context.deviceAlreadyExists() && !mfaSkipped ||
+                // Or that Step up authentication is active and user is strongly auth or mfa is skipped
+                context.isStepUpActive() && context.isStepUpRuleTrue() && (userStronglyAuth || mfaSkipped)) {
+            return false;
+        } else if (
+                // Adaptive MFA may be active and may return true, we return true
+                context.isAmfaActive() && context.isAmfaRuleTrue()
+        ) {
+            return true;
+        }
+        // We check then if StepUp is not active and of user is strongly auth or mfa is skipped to skip MFA
+        return !context.isStepUpActive() && (userStronglyAuth || mfaSkipped);
     }
 }

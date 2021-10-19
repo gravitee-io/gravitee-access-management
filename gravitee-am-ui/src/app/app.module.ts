@@ -384,6 +384,8 @@ import {DeviceIdentifiersResolver} from "./resolvers/device-identifiers.resolver
 import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
 import {DeviceIdentifierService} from "./services/device-identifier.service";
 import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
+import { UserDevicesComponent } from './domain/settings/users/user/devices/devices.component';
+import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
 
 @NgModule({
   declarations: [
@@ -487,6 +489,7 @@ import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/dev
     UserFactorsComponent,
     UserCredentialsComponent,
     UserCredentialComponent,
+    UserDevicesComponent,
     AddUserRolesComponent,
     ScopeCreationComponent,
     ScopeComponent,
@@ -656,6 +659,7 @@ import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/dev
     UserRolesResolver,
     UserCredentialsResolver,
     UserCredentialResolver,
+    UserDevicesResolver,
     ExtensionGrantsResolver,
     ExtensionGrantResolver,
     ScopesResolver,

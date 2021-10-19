@@ -218,6 +218,8 @@ import {DeviceIdentifierCreationComponent} from "./domain/settings/deviceidentif
 import {DeviceIdentifiersResolver} from "./resolvers/device-identifiers.resolver";
 import {DeviceIdentifierResolver} from "./resolvers/device-identifier.resolver";
 import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
+import {UserDevicesComponent} from "./domain/settings/users/user/devices/devices.component";
+import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1099,6 +1101,9 @@ export const routes: Routes = [
                                 path: 'factors',
                                 component: ApplicationFactorsComponent,
                                 canActivate: [AuthGuard],
+                                resolve: {
+                                  deviceIdentifiers: DeviceIdentifiersResolver
+                                },
                                 data: {
                                   menu: {
                                     label: 'Multifactor Auth',
@@ -2007,6 +2012,15 @@ export const routes: Routes = [
                                 path: 'roles',
                                 component: UserRolesComponent,
                                 resolve: {roles: UserRolesResolver}
+                              },
+                              {
+                                path: 'devices',
+                                component: UserDevicesComponent,
+                                resolve: {
+                                  devices: UserDevicesResolver,
+                                  deviceIdentifiers: DeviceIdentifiersResolver,
+                                  consents: ConsentsResolver
+                                }
                               }
                             ]
                           },

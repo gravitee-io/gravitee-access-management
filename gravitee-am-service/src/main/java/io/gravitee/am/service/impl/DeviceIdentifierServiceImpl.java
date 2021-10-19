@@ -59,12 +59,6 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     private DeviceIdentifierRepository deviceIdentifierRepository;
 
     @Autowired
-    private ApplicationService applicationService;
-
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
     private EventService eventService;
 
     @Autowired

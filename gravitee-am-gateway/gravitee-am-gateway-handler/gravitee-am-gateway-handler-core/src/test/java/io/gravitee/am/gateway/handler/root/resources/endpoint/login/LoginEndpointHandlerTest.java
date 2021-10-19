@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -43,15 +44,12 @@ import java.util.Map;
 import java.util.UUID;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static java.lang.Boolean.TRUE;
-import static java.util.stream.Collectors.toMap;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -77,6 +75,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private BotDetectionManager botDetectionManager;
 
     @Mock
+    private DeviceIdentifierManager deviceIdentifierManager;
+
+    @Mock
     private ClientSyncService clientSyncService;
     private Client appClient;
     private LoginEndpoint loginEndpoint;
@@ -93,13 +94,15 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         appClient = new Client();
         appClient.setClientId(UUID.randomUUID().toString());
 
+
         domain = new Domain();
         domain.setId(UUID.randomUUID().toString());
         domain.setPath("/login-domain");
         domain.setLoginSettings(loginSettings);
         appClient.setDomain(domain.getId());
-        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager);
+        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager, deviceIdentifierManager);
         appClient.setLoginSettings(loginSettings);
+        doReturn(Map.of()).when(deviceIdentifierManager).getTemplateVariables(any());
 
         router.route(HttpMethod.GET, "/login")
                 .handler(routingContext -> {
