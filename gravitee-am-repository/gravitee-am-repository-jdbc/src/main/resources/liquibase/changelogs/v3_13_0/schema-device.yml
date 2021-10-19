@@ -1,0 +1,70 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.13.0
+      author: GraviteeSource Team
+      changes:
+        # Remember Devices
+        ##############
+        - createTable:
+            tableName: devices
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: client, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: device_identifier_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: device_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_devices
+            columnNames: id
+            tableName: devices
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+              - column:
+                  name: device_identifier_id
+              - column:
+                  name: device_id
+            indexName: idx_devices_domain_client_user_remember_device_device_id
+            tableName: devices
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+            indexName: idx_devices_domain_client_user
+            tableName: devices
+            unique: false
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_DEVICE_IDENTIFIER}', '[\"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_DEVICE_IDENTIFIER', JSON_ARRAY('DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_DEVICE_IDENTIFIER', JSON_QUERY('[\"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+

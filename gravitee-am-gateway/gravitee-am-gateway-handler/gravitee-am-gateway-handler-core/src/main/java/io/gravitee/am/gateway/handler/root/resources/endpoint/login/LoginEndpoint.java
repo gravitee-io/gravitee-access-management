@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -33,7 +34,10 @@ import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
@@ -45,7 +49,6 @@ import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginS
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,11 +71,13 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
 
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
+    private final DeviceIdentifierManager deviceIdentifierManager;
 
-    public LoginEndpoint(TemplateEngine templateEngine, Domain domain, BotDetectionManager botDetectionManager) {
+    public LoginEndpoint(TemplateEngine templateEngine, Domain domain, BotDetectionManager botDetectionManager, DeviceIdentifierManager deviceIdentifierManager) {
         super(templateEngine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.deviceIdentifierManager = deviceIdentifierManager;
     }
 
     @Override
@@ -150,6 +155,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         } else {
             var data = new HashMap<>(routingContext.data());
             data.putAll(botDetectionManager.getTemplateVariables(domain, client));
+            data.putAll(deviceIdentifierManager.getTemplateVariables(client));
 
             //we render the page if no redirect is set
             final boolean identifierFirstLoginEnabled = TRUE.equals(routingContext.get(IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY));

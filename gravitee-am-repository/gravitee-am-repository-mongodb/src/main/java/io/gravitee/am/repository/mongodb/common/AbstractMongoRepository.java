@@ -37,13 +37,15 @@ public abstract class AbstractMongoRepository {
     protected static final String FIELD_REFERENCE_ID = "referenceId";
     protected static final String FIELD_ORGANIZATION_ID = "organizationId";
     protected static final String FIELD_NAME = "name";
+    protected static final String FIELD_USER_ID = "userId";
+
 
     protected void init(MongoCollection<?> collection) {
         this.createIndex(collection, new Document(FIELD_ID, 1), new IndexOptions(), true);
     }
 
     protected void createIndex(MongoCollection<?> collection, Document document, boolean ensure) {
-       this.createIndex(collection, document, new IndexOptions(), ensure);
+        this.createIndex(collection, document, new IndexOptions(), ensure);
     }
 
     protected void createIndex(MongoCollection<?> collection, Document document, IndexOptions indexOptions, boolean ensure) {

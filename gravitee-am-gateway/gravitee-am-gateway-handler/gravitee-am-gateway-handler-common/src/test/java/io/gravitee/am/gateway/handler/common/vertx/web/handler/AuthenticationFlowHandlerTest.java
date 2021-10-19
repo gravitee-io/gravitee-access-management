@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
@@ -45,6 +46,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -137,6 +139,36 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldRedirectToMFAEnrollmentPage_device_unknown() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            rc.getDelegate().setUser(new User(endUser));
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/enroll"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldRedirectToMFAChallengePage_nominalCase() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
@@ -170,6 +202,37 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+
+    @Test
+    public void shouldContinue_user_device_known() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
             // set user
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId("factor-1");
@@ -257,7 +320,108 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_adaptiveMFA_with_step_up_true_strong_auth_true() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login?scope=write",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldContinue_adaptiveMFA_with_step_up_false_strong_auth_true_device_known() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0].contains('write')}");
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "FR").getMap());
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login?scope=read",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_rememberDevice() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
             rc.next();
         });
 
@@ -320,17 +484,39 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
             endUser.setFactors(Collections.singletonList(enrolledFactor));
             rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
+            rc.next();
+        });
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_adaptiveMFA_2_strongly_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['geoip']['country_iso_code'] == 'FR'}");
+            rc.put(ConstantKeys.GEOIP_KEY, new JsonObject().put("country_iso_code", "US").getMap());
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
             rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
             rc.next();
         });
 
         testRequest(
-                HttpMethod.GET, "/login?scope=read%20write",
+                HttpMethod.GET, "/login",
                 null,
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/mfa/challenge?scope=read+write"));
+                    assertTrue(location.endsWith("/mfa/challenge"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

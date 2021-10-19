@@ -16,9 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
-import io.gravitee.am.model.oidc.Client;
-import io.vertx.reactivex.ext.web.Session;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 
 import java.util.function.Supplier;
 
@@ -28,20 +26,22 @@ import static com.google.common.base.Strings.isNullOrEmpty;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MfaSkipFilter implements Supplier<Boolean> {
+public class MfaSkipFilter extends MfaContextHolder implements Supplier<Boolean> {
 
-    private final Client client;
-    private final Session session;
-
-    public MfaSkipFilter(Client client, Session session) {
-        this.client = client;
-        this.session = session;
+    public MfaSkipFilter(MfaFilterContext context) {
+        super(context);
     }
 
     @Override
     public Boolean get() {
-        String mfaStepUpRule = MfaUtils.getMfaStepUpRule(client);
-        String adaptiveMfaStepUpRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
-        return isNullOrEmpty(mfaStepUpRule) && isNullOrEmpty(adaptiveMfaStepUpRule) && MfaUtils.isMfaSkipped(session);
+        // We need to check whether the AMFA rule is false since we don't know
+        // If other MFA features passed or skipped MFA
+        if (context.isAmfaActive() && !context.isAmfaRuleTrue()) {
+            return false;
+        }
+        String mfaStepUpRule = context.getStepUpRule();
+        return isNullOrEmpty(mfaStepUpRule) && context.isMfaSkipped();
     }
+
+
 }

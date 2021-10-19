@@ -15,13 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.spring;
 
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
-import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
-import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
-import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
-import io.gravitee.am.gateway.handler.manager.domain.impl.CrossDomainManagerImpl;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
+import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
+import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl;
+import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
+import io.gravitee.am.gateway.handler.manager.domain.impl.CrossDomainManagerImpl;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
@@ -97,6 +99,11 @@ public class HandlerConfiguration {
     @Bean
     public BotDetectionManager botDetectionManager() {
         return new BotDetectionManagerImpl();
+    }
+
+    @Bean
+    public DeviceIdentifierManager rememberDeviceManager() {
+        return new DeviceIdentifierManagerImpl();
     }
 
 }

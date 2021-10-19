@@ -17,41 +17,31 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.Session;
 
 import java.util.Map;
 import java.util.function.Supplier;
-
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.Boolean.TRUE;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class StepUpAuthenticationFilter implements Supplier<Boolean> {
+public class StepUpAuthenticationFilter extends MfaContextHolder implements Supplier<Boolean> {
 
-    private final Client client;
-    private final Session session;
     private final RuleEngine ruleEngine;
     private final HttpServerRequest request;
     private final Map<String, Object> data;
 
     public StepUpAuthenticationFilter(
-            Client client,
-            Session session,
+            MfaFilterContext context,
             RuleEngine ruleEngine,
             HttpServerRequest request,
             Map<String, Object> data) {
-        this.client = client;
-        this.session = session;
+        super(context);
         this.ruleEngine = ruleEngine;
         this.request = request;
         this.data = data;
@@ -59,10 +49,18 @@ public class StepUpAuthenticationFilter implements Supplier<Boolean> {
 
     @Override
     public Boolean get() {
-        String mfaStepUpRule = MfaUtils.getMfaStepUpRule(client);
-        return !isNullOrEmpty(mfaStepUpRule) &&
-                !isStepUpAuthentication(mfaStepUpRule) &&
-                (MfaUtils.isUserStronglyAuth(session) || MfaUtils.isMfaSkipped(session));
+        // If Adaptive MFA is active and KO (rule == false) we bypass this filter
+        // Because it could return true and skip MFA
+        if (context.isAmfaActive() && !context.isAmfaRuleTrue()) {
+            return false;
+        }
+        String mfaStepUpRule = context.getStepUpRule();
+        if (context.isStepUpActive()) {
+            context.setStepUpRuleTrue(isStepUpAuthentication(mfaStepUpRule));
+        }
+        return context.isStepUpActive() &&
+                !context.isStepUpRuleTrue() &&
+                (context.isUserStronglyAuth() || context.isMfaSkipped());
     }
 
     protected boolean isStepUpAuthentication(String selectionRule) {

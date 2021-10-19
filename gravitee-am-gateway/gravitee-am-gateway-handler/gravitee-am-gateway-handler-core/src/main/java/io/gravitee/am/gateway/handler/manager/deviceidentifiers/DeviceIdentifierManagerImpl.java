@@ -15,15 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.manager.deviceidentifiers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.DeviceIdentifierEvent;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.DeviceIdentifier;
-import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
+import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
+import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -33,8 +34,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -43,6 +51,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DeviceIdentifierManagerImpl extends AbstractService implements DeviceIdentifierManager, InitializingBean, EventListener<DeviceIdentifierEvent, Payload> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierManagerImpl.class);
+    public static final String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";
 
     private ConcurrentMap<String, DeviceIdentifierProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, DeviceIdentifier> deviceIdentifiers = new ConcurrentHashMap<>();
@@ -59,11 +68,11 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     @Autowired
     private DeviceIdentifierPluginManager deviceIdentifierPluginManager;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     public ConcurrentMap<String, DeviceIdentifier> getDeviceIdentifiers() {
         return deviceIdentifiers;
+    }
+    public ConcurrentMap<String, DeviceIdentifierProvider> getDeviceIdentifiersProviders() {
+        return providers;
     }
 
     @Override
@@ -134,5 +143,21 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
             this.providers.remove(detection.getId());
             LOGGER.error("Unable to create Device identifier provider for domain {}", domain.getName(), ex);
         }
+    }
+
+    @Override
+    public Map<String, ?> getTemplateVariables(Client client) {
+        Map<String, Object> variables = new HashMap<>();
+        var mfaSettings = ofNullable(client).orElse(new Client()).getMfaSettings();
+        var rememberDeviceSettings = ofNullable(mfaSettings).orElse(new MFASettings()).getRememberDevice();
+        variables.put(REMEMBER_DEVICE_IS_ACTIVE, nonNull(rememberDeviceSettings) && !isNullOrEmpty(rememberDeviceSettings.getDeviceIdentifierId()) && rememberDeviceSettings.isActive());
+        if (TRUE.equals(variables.get(REMEMBER_DEVICE_IS_ACTIVE))) {
+            var rememberDevice = this.deviceIdentifiers.get(rememberDeviceSettings.getDeviceIdentifierId());
+            var provider = this.providers.get(rememberDeviceSettings.getDeviceIdentifierId());
+            if(nonNull(provider) && nonNull(rememberDevice)) {
+                provider.addConfigurationVariables(variables, rememberDevice.getConfiguration());
+            }
+        }
+        return variables;
     }
 }

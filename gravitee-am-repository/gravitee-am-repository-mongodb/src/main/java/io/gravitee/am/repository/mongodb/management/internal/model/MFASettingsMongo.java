@@ -16,6 +16,11 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
+
+import java.util.Objects;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,6 +31,7 @@ public class MFASettingsMongo {
     private String loginRule;
     private String stepUpAuthenticationRule;
     private String adaptiveAuthenticationRule;
+    private RememberDeviceSettingsMongo rememberDevice;
 
     public String getLoginRule() {
         return loginRule;
@@ -51,23 +57,31 @@ public class MFASettingsMongo {
         this.adaptiveAuthenticationRule = adaptiveAuthenticationRule;
     }
 
+    public RememberDeviceSettingsMongo getRememberDevice() {
+        return rememberDevice;
+    }
+
+    public void setRememberDevice(RememberDeviceSettingsMongo rememberDevice) {
+        this.rememberDevice = rememberDevice;
+    }
+
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
         mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
+        mfaSettings.setRememberDevice(ofNullable(rememberDevice).orElse(new RememberDeviceSettingsMongo()).convert());
         return mfaSettings;
     }
 
     public static MFASettingsMongo convert(MFASettings mfaSettings) {
-        if (mfaSettings == null) {
-            return null;
-        }
-
-        MFASettingsMongo mfaSettingsMongo = new MFASettingsMongo();
-        mfaSettingsMongo.setLoginRule(mfaSettings.getLoginRule());
-        mfaSettingsMongo.setStepUpAuthenticationRule(mfaSettings.getStepUpAuthenticationRule());
-        mfaSettingsMongo.setAdaptiveAuthenticationRule(mfaSettings.getAdaptiveAuthenticationRule());
-        return mfaSettingsMongo;
+        return ofNullable(mfaSettings).filter(Objects::nonNull).map(settings -> {
+            MFASettingsMongo mfaSettingsMongo = new MFASettingsMongo();
+            mfaSettingsMongo.setLoginRule(settings.getLoginRule());
+            mfaSettingsMongo.setStepUpAuthenticationRule(settings.getStepUpAuthenticationRule());
+            mfaSettingsMongo.setAdaptiveAuthenticationRule(settings.getAdaptiveAuthenticationRule());
+            mfaSettingsMongo.setRememberDevice(RememberDeviceSettingsMongo.convert(ofNullable(mfaSettings.getRememberDevice()).orElse(new RememberDeviceSettings())));
+            return mfaSettingsMongo;
+        }).orElse(null);
     }
 }

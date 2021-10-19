@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.manager.deviceidentifiers;
 
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
+
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface DeviceIdentifierManager extends Service {
-
+    Map<String, ?> getTemplateVariables(Client client);
 }

@@ -15,9 +15,15 @@
  */
 package io.gravitee.am.deviceidentifier.api;
 
+import java.util.Map;
+
 /**
  * @author Rémi Sultan (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface DeviceIdentifierProvider {
+    String DEVICE_IDENTIFIER_PROVIDER_KEY = "deviceIdentifierProvider";
+
+    void addConfigurationVariables(Map<String, Object> variables, String configuration);
+
 }

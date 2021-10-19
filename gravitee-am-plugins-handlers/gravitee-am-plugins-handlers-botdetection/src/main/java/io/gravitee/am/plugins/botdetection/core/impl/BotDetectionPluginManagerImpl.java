@@ -58,7 +58,6 @@ public class BotDetectionPluginManagerImpl implements BotDetectionPluginManager 
     @Autowired
     private BotDetectionConfigurationFactory botDetectionConfigurationFactory;
 
-
     @Override
     public void register(BotDetectionDefinition definition) {
         botDetections.putIfAbsent(definition.getPlugin().id(), definition.getBotDetection());

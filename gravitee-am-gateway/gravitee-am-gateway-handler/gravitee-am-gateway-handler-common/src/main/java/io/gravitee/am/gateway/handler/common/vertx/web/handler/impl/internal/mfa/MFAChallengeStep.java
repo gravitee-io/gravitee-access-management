@@ -40,15 +40,17 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
+        var context = new MfaFilterContext(client, session);
 
         // Rules that makes you skip MFA challenge
         var mfaFilterChain = new MfaFilterChain(
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors()),
                 new MfaChallengeCompleteFilter(session),
-                new StepUpAuthenticationFilter(client, session, ruleEngine, routingContext.request(), routingContext.data()),
-                new AdaptiveMfaFilter(client, session, ruleEngine, routingContext.request(), routingContext.data()),
-                new MfaSkipUserStronglyAuthFilter(client, session)
+                new AdaptiveMfaFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
+                new StepUpAuthenticationFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
+                new RememberDeviceFilter(context),
+                new MfaSkipUserStronglyAuthFilter(context)
         );
         mfaFilterChain.doFilter(this, flow, routingContext);
     }

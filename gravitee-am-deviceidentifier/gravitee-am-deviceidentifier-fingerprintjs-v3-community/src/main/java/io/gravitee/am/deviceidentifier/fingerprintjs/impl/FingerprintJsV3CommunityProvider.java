@@ -17,10 +17,27 @@
 package io.gravitee.am.deviceidentifier.fingerprintjs.impl;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
+import io.gravitee.am.deviceidentifier.fingerprintjs.FingerprintJsV3Community;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+
+import static java.util.Objects.nonNull;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class FingerprintJsV3CommunityProvider implements DeviceIdentifierProvider {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(FingerprintJsV3CommunityProvider.class);
+
+    @Override
+    public void addConfigurationVariables(Map<String, Object> variables, String configuration) {
+        LOGGER.debug("fingerprintJsV3CommunityProvider.addConfigurationVariables");
+        if (nonNull(variables)) {
+            variables.put(DEVICE_IDENTIFIER_PROVIDER_KEY, FingerprintJsV3Community.class.getSimpleName());
+        }
+    }
 }

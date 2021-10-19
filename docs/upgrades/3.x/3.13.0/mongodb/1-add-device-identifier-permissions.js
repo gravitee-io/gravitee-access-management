@@ -22,4 +22,3 @@ db.getCollection("roles").updateMany(
         $set: {"permissionAcls.DOMAIN_DEVICE_IDENTIFIER": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
     }
 );
-

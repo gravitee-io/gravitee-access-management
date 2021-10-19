@@ -24,7 +24,7 @@
                 <div class="mfa-challenge-form-title">
                     <label>Multi-Factor Auth Verification</label>
                 </div>
-                <form role="form" th:action="${action}" method="post">
+                <form id="form" role="form" th:action="${action}" method="post">
                     <div>
                         <ul class="mdl-list">
                             <li class="mdl-list__item mdl-list__item--three-line">
@@ -58,7 +58,13 @@
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                     <div class="mfa-challenge-form-actions">
-                        <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Verify</button>
+                        <div th:if="${rememberDeviceIsActive && rememberDeviceConsentTimeSeconds != null && !deviceAlreadyExists}" style="align-content:flex-start;margin-top:10px;margin-right:40px">
+                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-typography--text-center">
+                                <input class="mdl-checkbox__input" type="checkbox" id="rememberDeviceConsent" name="rememberDeviceConsent">
+                                <span id="#label" class="mdl-checkboxm__label">Remember my device for [[${rememberDeviceConsentTimeSeconds >= 2629746 ? (rememberDeviceConsentTimeSeconds / 2629746) + " month(s)" : (rememberDeviceConsentTimeSeconds >= 86400 ? (rememberDeviceConsentTimeSeconds / 86400) + " day(s)" : (rememberDeviceConsentTimeSeconds >= 3600 ? (rememberDeviceConsentTimeSeconds / 3600) + " hours(s)" : (rememberDeviceConsentTimeSeconds >= 60 ? (rememberDeviceConsentTimeSeconds / 60) + " minute(s)" : (rememberDeviceConsentTimeSeconds + " second(s)"))))}]]</span>
+                            </label>
+                        </div>
+                            <button type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Verify</button>
                     </div>
                     <div class="mfa-challenge-form-additional-actions">
                         <div  th:if="${mfaAlternativesEnabled}">

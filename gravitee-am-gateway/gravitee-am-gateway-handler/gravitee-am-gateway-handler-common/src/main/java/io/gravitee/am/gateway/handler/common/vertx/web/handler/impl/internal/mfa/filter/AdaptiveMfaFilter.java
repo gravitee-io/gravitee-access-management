@@ -18,17 +18,14 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.core.http.HttpServerRequest;
-import io.vertx.reactivex.ext.web.Session;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 import static java.util.Objects.isNull;
 
@@ -37,17 +34,20 @@ import static java.util.Objects.isNull;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AdaptiveMfaFilter implements Supplier<Boolean> {
+public class AdaptiveMfaFilter extends MfaContextHolder implements Supplier<Boolean> {
 
     private final RuleEngine ruleEngine;
-    private final Client client;
     private final Map<String, Object> data;
-    private final Session session;
     private final HttpServerRequest request;
 
-    public AdaptiveMfaFilter(Client client, Session session, RuleEngine ruleEngine, HttpServerRequest request, Map<String, Object> data) {
-        this.client = client;
-        this.session = session;
+    private Boolean isRuleTrue = null;
+
+    public AdaptiveMfaFilter(
+            MfaFilterContext context,
+            RuleEngine ruleEngine,
+            HttpServerRequest request,
+            Map<String, Object> data) {
+        super(context);
         this.ruleEngine = ruleEngine;
         this.data = data;
         this.request = request;
@@ -55,16 +55,24 @@ public class AdaptiveMfaFilter implements Supplier<Boolean> {
 
     @Override
     public Boolean get() {
-        String adaptiveAuthenticationRule = MfaUtils.getAdaptiveMfaStepUpRule(client);
-        if (isNullOrEmpty(adaptiveAuthenticationRule) || adaptiveAuthenticationRule.isBlank()) {
-            return false;
+        if (isNull(isRuleTrue)) {
+            if (!context.isAmfaActive()) {
+                context.setAmfaRuleTrue(false);
+                return false;
+            }
+
+            final Object loginAttempt = context.getLoginAttempt();
+            data.put(LOGIN_ATTEMPT_KEY, isNull(loginAttempt) ? 0 : loginAttempt);
+            var parameters = Map.of(
+                    "request", new EvaluableRequest(new VertxHttpServerRequest(request.getDelegate())),
+                    "context", new EvaluableExecutionContext(data)
+            );
+            // We are retaining the value since other features will use it in the chain
+            context.setAmfaRuleTrue(ruleEngine.evaluate(context.getAmfaRule(), parameters, Boolean.class, false));
         }
-        final Object loginAttempt = session.get(LOGIN_ATTEMPT_KEY);
-        data.put(LOGIN_ATTEMPT_KEY, isNull(loginAttempt) ? 0 : loginAttempt);
-        var parameters = Map.of(
-                "request", new EvaluableRequest(new VertxHttpServerRequest(request.getDelegate())),
-                "context", new EvaluableExecutionContext(data)
-        );
-        return ruleEngine.evaluate(adaptiveAuthenticationRule, parameters, Boolean.class, false);
+        // If one of the other filter chains are active. We want to make sure that
+        // if Adaptive MFA skips (rule == true) we want other MFA methods to trigger
+        var rememberDevice = context.getRememberDeviceSettings();
+        return !rememberDevice.isActive() && !context.isStepUpActive() && context.isAmfaRuleTrue();
     }
 }

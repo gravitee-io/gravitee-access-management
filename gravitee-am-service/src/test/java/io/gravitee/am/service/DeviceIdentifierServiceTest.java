@@ -56,7 +56,7 @@ public class DeviceIdentifierServiceTest {
     private EventService eventService;
 
     @Mock
-    private DeviceIdentifierRepository botDetectionRepository;
+    private DeviceIdentifierRepository deviceIdentifierRepository;
 
     @Mock
     private AuditService auditService;
@@ -65,7 +65,7 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindById() {
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
         TestObserver testObserver = deviceIdentifierService.findById("device-identifier").test();
 
         testObserver.awaitTerminalEvent();
@@ -76,7 +76,7 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindById_notExistingDeviceIdentifier() {
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.empty());
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.empty());
         TestObserver testObserver = deviceIdentifierService.findById("device-identifier").test();
         testObserver.awaitTerminalEvent();
 
@@ -85,7 +85,7 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindById_technicalException() {
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
         deviceIdentifierService.findById("device-identifier").subscribe(testObserver);
 
@@ -95,7 +95,7 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(botDetectionRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new DeviceIdentifier()));
+        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new DeviceIdentifier()));
         TestSubscriber<DeviceIdentifier> testSubscriber = deviceIdentifierService.findByDomain(DOMAIN).test();
         testSubscriber.awaitTerminalEvent();
 
@@ -106,7 +106,7 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(botDetectionRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
+        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
 
         TestSubscriber testSubscriber = deviceIdentifierService.findByDomain(DOMAIN).test();
 
@@ -117,7 +117,7 @@ public class DeviceIdentifierServiceTest {
     @Test
     public void shouldCreate() {
         NewDeviceIdentifier newDeviceIdentifier = Mockito.mock(NewDeviceIdentifier.class);
-        when(botDetectionRepository.create(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
+        when(deviceIdentifierRepository.create(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).test();
@@ -128,13 +128,13 @@ public class DeviceIdentifierServiceTest {
 
         verify(eventService).create(any());
         verify(auditService).report(any(DeviceIdentifierAuditBuilder.class));
-        verify(botDetectionRepository).create(any(DeviceIdentifier.class));
+        verify(deviceIdentifierRepository).create(any(DeviceIdentifier.class));
     }
 
     @Test
     public void shouldCreate_technicalException() {
         NewDeviceIdentifier newDeviceIdentifier = Mockito.mock(NewDeviceIdentifier.class);
-        when(botDetectionRepository.create(any())).thenReturn(Single.error(TechnicalException::new));
+        when(deviceIdentifierRepository.create(any())).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<DeviceIdentifier> testObserver = new TestObserver<>();
         deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).subscribe(testObserver);
@@ -150,8 +150,8 @@ public class DeviceIdentifierServiceTest {
     public void shouldUpdate() {
         UpdateDeviceIdentifier updateDeviceIdentifier = Mockito.mock(UpdateDeviceIdentifier.class);
         when(updateDeviceIdentifier.getName()).thenReturn("device-identifier");
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
-        when(botDetectionRepository.update(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(new DeviceIdentifier()));
+        when(deviceIdentifierRepository.update(any(DeviceIdentifier.class))).thenReturn(Single.just(new DeviceIdentifier()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
@@ -160,41 +160,41 @@ public class DeviceIdentifierServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(botDetectionRepository).findById(anyString());
+        verify(deviceIdentifierRepository).findById(anyString());
         verify(auditService).report(any(DeviceIdentifierAuditBuilder.class));
-        verify(botDetectionRepository).update(any(DeviceIdentifier.class));
+        verify(deviceIdentifierRepository).update(any(DeviceIdentifier.class));
     }
 
     @Test
     public void shouldUpdate_technicalException() {
         UpdateDeviceIdentifier updateDeviceIdentifier = Mockito.mock(UpdateDeviceIdentifier.class);
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
-        verify(botDetectionRepository).findById(anyString());
-        verify(botDetectionRepository, never()).update(any(DeviceIdentifier.class));
+        verify(deviceIdentifierRepository).findById(anyString());
+        verify(deviceIdentifierRepository, never()).update(any(DeviceIdentifier.class));
         verify(auditService, never()).report(any(DeviceIdentifierAuditBuilder.class));
     }
 
     @Test
     public void shouldDelete_notDeviceIdentifier() {
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.empty());
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, "device-identifier").test();
 
         testObserver.assertError(DeviceIdentifierNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(botDetectionRepository, never()).delete(anyString());
+        verify(deviceIdentifierRepository, never()).delete(anyString());
         verify(auditService, never()).report(any(DeviceIdentifierAuditBuilder.class));
     }
 
     @Test
     public void shouldDelete_technicalException() {
-        when(botDetectionRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
+        when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, "device-identifier").test();
 
@@ -206,8 +206,8 @@ public class DeviceIdentifierServiceTest {
     public void shouldDelete() {
         DeviceIdentifier detection = new DeviceIdentifier();
         detection.setId("detection-id");
-        when(botDetectionRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
-        when(botDetectionRepository.delete(detection.getId())).thenReturn(Completable.complete());
+        when(deviceIdentifierRepository.findById(detection.getId())).thenReturn(Maybe.just(detection));
+        when(deviceIdentifierRepository.delete(detection.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, detection.getId()).test();
@@ -216,7 +216,7 @@ public class DeviceIdentifierServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(botDetectionRepository).delete(detection.getId());
+        verify(deviceIdentifierRepository).delete(detection.getId());
         verify(auditService).report(any(DeviceIdentifierAuditBuilder.class));
     }
 }

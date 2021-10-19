@@ -48,5 +48,4 @@ public interface EntityType {
     String RESOURCE = "RESOURCE";
     String BOT_DETECTION = "BOT_DETECTION";
     String DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
-
 }

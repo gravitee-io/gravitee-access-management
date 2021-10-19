@@ -27,5 +27,6 @@ public enum TableName {
     request_objects,
     login_attempts,
     uma_permission_ticket,
-    auth_flow_ctx
+    auth_flow_ctx,
+    devices
 }
