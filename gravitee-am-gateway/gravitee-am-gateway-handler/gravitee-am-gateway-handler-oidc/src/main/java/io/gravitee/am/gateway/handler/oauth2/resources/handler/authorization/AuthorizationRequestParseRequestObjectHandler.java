@@ -104,7 +104,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
             if (this.domain.usePlainFapiProfile()) {
                 // according to https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server
                 // Authorization Server shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter;
-                context.fail(new InvalidRequestException());
+                context.fail(new InvalidRequestException("RequestObject expected when FAPI profile is enabled"));
                 return;
             }
 
