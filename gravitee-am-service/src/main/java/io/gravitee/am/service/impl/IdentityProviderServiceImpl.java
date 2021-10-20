@@ -47,9 +47,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -143,7 +144,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setType(newIdentityProvider.getType());
         identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
         identityProvider.setExternal(newIdentityProvider.isExternal());
-        identityProvider.setDomainWhitelist(newIdentityProvider.getDomainWhitelist());
+        identityProvider.setDomainWhitelist(ofNullable(newIdentityProvider.getDomainWhitelist()).orElse(List.of()));
         identityProvider.setCreatedAt(new Date());
         identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
 
@@ -179,7 +180,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
-                    identityToUpdate.setDomainWhitelist(updateIdentityProvider.getDomainWhitelist());
+                    identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
 
                     return identityProviderRepository.update(identityToUpdate)
