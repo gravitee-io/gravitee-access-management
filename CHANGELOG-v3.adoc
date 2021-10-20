@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/445?closed=1[AM - 3.12.3 (2021-10-20)]
+
+=== Bug fixes
+
+*_Management_*
+
+- When creating inline user, I get "domainWhitelistmust not be null" https://github.com/gravitee-io/issues/issues/6416[#6416]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/444?closed=1[AM - 3.12.2 (2021-10-17)]
 
 === Bug fixes
