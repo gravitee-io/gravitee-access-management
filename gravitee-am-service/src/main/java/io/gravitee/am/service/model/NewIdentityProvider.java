@@ -35,7 +35,6 @@ public class NewIdentityProvider {
     @NotNull
     private String configuration;
 
-    @NotNull
     private List<String> domainWhitelist;
 
     private boolean external;

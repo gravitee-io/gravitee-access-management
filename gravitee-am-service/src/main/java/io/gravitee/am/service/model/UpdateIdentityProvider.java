@@ -35,7 +35,6 @@ public class UpdateIdentityProvider {
 
     private Map<String, String[]> roleMapper;
 
-    @NotNull
     private List<String> domainWhitelist;
 
     public String getName() {
