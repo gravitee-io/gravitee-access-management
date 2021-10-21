@@ -43,12 +43,12 @@ class CreateUsers extends Simulation {
     .exec(login)
     .exec(retrieveDomainId(DOMAIN_NAME))
     .exec(retrieveIdentityProviderId(IDENTITY_PROVIDER_NAME))
-    .feed(userFeeder)
+    .feed(userFeeder(DATALOAD))
     .doWhile(session => session("index").as[Int] < MAX_USER_INDEX) (
         exec(createUser)
-          .feed(userFeeder)
+          .feed(userFeeder(DATALOAD))
     )
 
-  setUp(scn.inject(atOnceUsers(Integer.getInteger("agents", 10))).protocols(httpProtocol))
+  setUp(scn.inject(atOnceUsers(AGENTS)).protocols(httpProtocol))
 
 }
