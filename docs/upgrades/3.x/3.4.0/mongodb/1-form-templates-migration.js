@@ -50,7 +50,7 @@ db.getCollection("forms")
             "${skipAction}"
         );
 
-        db.getCollection("forms").update(
+        db.getCollection("forms").updateOne(
             {_id: form._id},
             {$set: {content: content}}
         );

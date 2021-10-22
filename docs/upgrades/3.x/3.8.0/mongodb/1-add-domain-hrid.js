@@ -16,6 +16,6 @@
 db.getCollection("domains")
     .find({"hrid": {"$exists": false}})
     .forEach(function (domain) {
-        db.getCollection("domains").update({_id: domain._id}, { "$set": { "hrid" : domain._id } });
+        db.getCollection("domains").updateOne({_id: domain._id}, { "$set": { "hrid" : domain._id } });
     });
 
