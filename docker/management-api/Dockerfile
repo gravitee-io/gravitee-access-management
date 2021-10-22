@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM adoptopenjdk/openjdk11:jre-11.0.11_9-alpine
+FROM eclipse-temurin:11-jre-focal
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
