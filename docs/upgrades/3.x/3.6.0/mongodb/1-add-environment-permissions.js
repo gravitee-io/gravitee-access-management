@@ -28,7 +28,7 @@ organization = db.getCollection('organizations').findOne({"_id": "DEFAULT"});
 
 if (!organization.hrids || organization.hrids.length === 0) {
     organization.hrids = ['default'];
-    db.getCollection('organizations').update({"_id": "DEFAULT"}, organization);
+    db.getCollection('organizations').replaceOne({"_id": "DEFAULT"}, organization);
 }
 
 // Set 'default' hrid on the default environment.
@@ -36,7 +36,7 @@ environment = db.getCollection('environments').findOne({"_id": "DEFAULT"});
 
 if (!environment.hrids || environment.hrids.length === 0) {
     environment.hrids = ['default'];
-    db.getCollection('environments').update({"_id": "DEFAULT"}, environment);
+    db.getCollection('environments').replaceOne({"_id": "DEFAULT"}, environment);
 }
 
 // Update ORGANIZATION_USER role adding the ENVIRONMENT['LIST'] permission.
@@ -49,7 +49,7 @@ if (organizationUserRole != null) {
     } else if (!organizationUserRole.permissionAcls['ENVIRONMENT'].includes('LIST')) {
         organizationUserRole.permissionAcls['ENVIRONMENT'].push('LIST');
     }
-    db.getCollection("roles").update({'_id': organizationUserRole._id}, organizationUserRole);
+    db.getCollection("roles").replaceOne({'_id': organizationUserRole._id}, organizationUserRole);
 }
 
 // Create ENVIRONMENT_USER role if not already exists.
@@ -58,7 +58,7 @@ environmentUserRole = db.getCollection("roles")
 
 if (environmentUserRole == null) {
     let environmentUserRoleId = createUUID();
-    db.getCollection("roles").insert({
+    db.getCollection("roles").insertOne({
         _id: environmentUserRoleId,
         assignableType: "ENVIRONMENT",
         createdAt: ISODate(),
@@ -78,7 +78,7 @@ if (environmentUserRole == null) {
     db.getCollection('users')
         .find({"referenceType": "ORGANIZATION", "referenceId": "DEFAULT"})
         .forEach(function (user) {
-            db.getCollection("memberships").insert({
+            db.getCollection("memberships").insertOne({
                 "_id": createUUID(),
                 "createdAt": ISODate(),
                 "memberId": user._id,
@@ -96,7 +96,7 @@ environmentOwnerRole = db.getCollection("roles")
     .findOne({"name": "ENVIRONMENT_OWNER", "referenceType": "ORGANIZATION", "referenceId": "DEFAULT"});
 
 if (environmentOwnerRole == null) {
-    db.getCollection("roles").insert({
+    db.getCollection("roles").insertOne({
         _id: createUUID(),
         assignableType: "ENVIRONMENT",
         createdAt: ISODate(),
@@ -148,4 +148,3 @@ if (environmentOwnerRole == null) {
         updatedAt: ISODate(),
     });
 }
-

@@ -15,7 +15,7 @@
  */
 
 db.getCollection('users').find({ 'referenceType' : 'ORGANIZATION' }).forEach(function(docs){
-    db.getCollection('organization_users').insert(docs);
+    db.getCollection('organization_users').insertOne(docs);
 });
 
 db.getCollection('users').deleteMany({ 'referenceType' : 'ORGANIZATION' })
