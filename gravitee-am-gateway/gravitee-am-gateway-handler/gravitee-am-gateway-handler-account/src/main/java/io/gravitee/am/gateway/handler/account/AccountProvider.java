@@ -82,11 +82,14 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
             accountRouter.route().handler(oAuth2AuthHandler);
 
             // Account profile routes
-            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService);
+            final AccountEndpointHandler accountHandler = new AccountEndpointHandler(accountService, domain);
             accountRouter.get(AccountRoutes.PROFILE.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getProfile);
             accountRouter.put(AccountRoutes.PROFILE.getRoute()).handler(BodyHandler.create()).handler(accountHandler::getUser).handler(accountHandler::updateProfile);
             accountRouter.get(AccountRoutes.ACTIVITIES.getRoute()).handler(accountHandler::getUser).handler(accountHandler::getActivity);
             accountRouter.get(AccountRoutes.CHANGE_PASSWORD.getRoute()).handler(accountHandler::redirectForgotPassword);
+            accountRouter.post(AccountRoutes.CHANGE_PASSWORD.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountHandler::changePassword);
 
             // Account factors routes
             AccountFactorsEndpointHandler accountFactorsEndpointHandler =
