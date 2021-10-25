@@ -35,6 +35,7 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <jib-maven-plugin.version>3.1.4</jib-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -54,4 +55,42 @@
             <version>8.17</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <to>
+                        <image>localhost:5000/gravitee-am-fapi-resource</image>
+                    </to>
+                    <container>
+                        <jvmFlags>
+                            <jvmFlag>-Xmx128m</jvmFlag>
+                        </jvmFlags>
+                        <mainClass>io.gravitee.sample.fapi.api.FapiApi</mainClass>
+                        <args>
+                            <arg>trustStorePath</arg>
+                            <arg>trustStoreType</arg>
+                            <arg>trustStorePassword</arg>
+                            <arg>keyStorePath</arg>
+                            <arg>keyStoreType</arg>
+                            <arg>keyStorePassword</arg>
+                            <arg>certificateHeader</arg>
+                        </args>
+                        <ports>
+                            <port>9443</port>
+                        </ports>
+                        <volumes>
+                            <volume>/var/fapi/keystore</volume>
+                            <volume>/var/fapi/truststore</volume>
+                        </volumes>
+                        <format>OCI</format>
+                    </container>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
