@@ -18,21 +18,19 @@ package io.gravitee.sample.fapi.api;
 import com.nimbusds.jose.util.Base64URL;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.impl.jose.JWT;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.commons.cli.MissingArgumentException;
 
-import javax.net.ssl.SSLSession;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
 
 public class FapiResourceApiHandler implements Handler<RoutingContext> {
@@ -40,11 +38,9 @@ public class FapiResourceApiHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         try {
-            final SSLSession sslSession = routingContext.request().sslSession();
-            Certificate[] peerCertificates = sslSession.getPeerCertificates();
-            X509Certificate peerCertificate = (X509Certificate) peerCertificates[0];
-
-            String thumbprint256 = getThumbprint(peerCertificate, "SHA-256");
+            final Optional<X509Certificate> x509Certificate = CertUtils.extractPeerCertificate(routingContext);
+            if (x509Certificate.isEmpty()) throw new MissingArgumentException("PeerCertificate is missing");
+            String thumbprint256 = getThumbprint(x509Certificate.get(), "SHA-256");
 
             final String auth = routingContext.request().getHeader(HttpHeaders.AUTHORIZATION);
             if (auth != null && auth.startsWith("Bearer ")) {

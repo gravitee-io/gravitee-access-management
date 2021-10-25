@@ -182,6 +182,24 @@ jobs:
             echo "Run only repositories and reporters tests, other JUnit tests have been run by the 'pull_request' job"
             mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.circleci.settings.xml
 
+  publish-fapi-resource-images-azure-registry:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Build & Publish FAPI Resource API Docker Image to Azure Registry
+          command: |
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-fapi-resource-api:${TAG}
+            mvn -pl gravitee-am-fapi-resource-api package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+
   publish-images-azure-registry:
     docker:
       - image: circleci/openjdk:11.0.3-jdk-stretch
