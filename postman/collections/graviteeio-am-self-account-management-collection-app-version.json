@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "cf17867d-bd28-4005-a32d-3ba8cec13cb5",
+		"_postman_id": "604d9360-2cac-4e31-a089-23697e918ec8",
 		"name": "Gravitee.io - AM - Self Account Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -873,6 +873,167 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "Profile",
+					"item": [
+						{
+							"name": "Request Update Password - Invalid Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"//Fails if auto redirects are enabled",
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.http_status).to.be.equals(400);",
+											"    pm.expect(body.message).to.be.equals(\"Field [password] is invalid\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"password\" : \"123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"changePassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Update Password - Body is null",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"//Fails if auto redirects are enabled",
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.http_status).to.be.equals(400);",
+											"    pm.expect(body.message).to.be.equals(\"Body is null or empty\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"changePassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Update Password - Body is Empty",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"//Fails if auto redirects are enabled",
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.http_status).to.be.equals(400);",
+											"    pm.expect(body.message).to.be.equals(\"Body is null or empty\");",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"changePassword"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},
@@ -984,7 +1145,7 @@
 							"response": []
 						},
 						{
-							"name": "Change Password",
+							"name": "Get Redirect URL for Change Password",
 							"event": [
 								{
 									"listen": "test",
@@ -1066,6 +1227,138 @@
 										"account",
 										"api",
 										"activity"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Request Update Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 204\", function () {",
+											"    pm.response.to.have.status(204);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{access_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"password\" : \"#CoMpL3X-P@SsW0Rd123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/account/api/changePassword",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"account",
+										"api",
+										"changePassword"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate gateway token After Password Update",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Has an access_token\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body).to.have.property('access_token');",
+											"    pm.expect(body).to.have.property('token_type');",
+											"    pm.expect(body.token_type).to.eql('bearer');",
+											"    pm.expect(body).to.have.property('expires_in');",
+											"    // pm.expect(body).to.have.property('refresh_token');",
+											"    pm.expect(body).to.have.property('scope');",
+											"    pm.expect(body.scope).to.eql('openid');",
+											"    ",
+											"    pm.environment.set('access_token', body.access_token);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disabledSystemHeaders": {}
+							},
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{clientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{clientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "jensen.barbara",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "#CoMpL3X-P@SsW0Rd123",
+											"type": "text"
+										},
+										{
+											"key": "scope",
+											"value": "scope1",
+											"type": "text",
+											"disabled": true
+										}
+									]
+								},
+								"url": {
+									"raw": "{{tokenEndpoint}}",
+									"host": [
+										"{{tokenEndpoint}}"
 									]
 								}
 							},

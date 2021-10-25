@@ -20,10 +20,12 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -34,6 +36,7 @@ import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -69,6 +72,12 @@ public class AccountServiceImpl implements AccountService {
     private UserService userService;
 
     @Autowired
+    private io.gravitee.am.gateway.handler.root.service.user.UserService gatewayUserService;
+
+    @Autowired
+    private PasswordValidator passwordValidator;
+
+    @Autowired
     private FactorService factorService;
 
     @Autowired
@@ -87,7 +96,7 @@ public class AccountServiceImpl implements AccountService {
         try {
             Single<Page<Audit>> reporter = auditReporterManager.getReporter().search(ReferenceType.DOMAIN, user.getReferenceId(), criteria, page, size);
             return reporter.map(result -> {
-                if(Objects.isNull(result) || Objects.isNull(result.getData())){
+                if (Objects.isNull(result) || Objects.isNull(result.getData())) {
                     return new Page<>(new ArrayList<>(), 0, 0);
                 }
                 return result;
@@ -124,6 +133,16 @@ public class AccountServiceImpl implements AccountService {
                     return Single.error(ex);
                 }));
 
+    }
+
+    @Override
+    public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal) {
+        return Single.defer(() -> {
+            PasswordSettings passwordSettings = PasswordSettings.getInstance(client, this.domain).orElse(null);
+            passwordValidator.validate(password, passwordSettings);
+            user.setPassword(password);
+            return gatewayUserService.resetPassword(client, user, principal);
+        });
     }
 
     @Override
@@ -185,7 +204,7 @@ public class AccountServiceImpl implements AccountService {
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
-            user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
