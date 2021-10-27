@@ -195,6 +195,10 @@ export class ApplicationFactorsComponent implements OnInit {
     this.rememberDevice.deviceIdentifierId = $event.value
     this.formChanged = true;
   }
+
+  hasDeviceIdentifierPlugins() {
+    return this.deviceIdentifiers && this.deviceIdentifiers.length > 0;
+  }
 }
 
 @Component({

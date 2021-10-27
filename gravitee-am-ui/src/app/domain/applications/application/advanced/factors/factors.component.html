@@ -73,8 +73,11 @@
             </div>
             <small>Adaptive MFA skips Multi-factor authentication based on the user's information and enforces factors
               otherwise.</small>
-            <small class="danger">You need to install the <b>gravitee-service-geoip</b> plugin to use the geoip based
-              variables.</small>
+            <blockquote class="warning">
+              <p>
+                <mat-icon>warning_outline</mat-icon> You need to install a <b> GeoIP service </b> plugin to use the geoip based variables.
+              </p>
+            </blockquote>
             <mat-divider></mat-divider>
           </div>
           <mat-form-field appearance="outline" floatLabel="always">
@@ -108,29 +111,34 @@
           </div>
         </div>
 
-        <div *ngIf="hasFactors() && hasSelectedFactors() && deviceIdentifiers && deviceIdentifiers.length > 0" class="gv-form-section">
+        <div *ngIf="hasFactors() && hasSelectedFactors()" class="gv-form-section">
           <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
               <h5>Remember Device</h5>
             </div>
             <small>Remember Device will skip MFA if the user's device is known.</small>
+            <blockquote class="warning" *ngIf="!hasDeviceIdentifierPlugins()">
+              <p>
+                <mat-icon>warning_outline</mat-icon> You need to create a <b> device identifier </b> plugin to use the remember device feature.
+              </p>
+            </blockquote>
             <mat-divider></mat-divider>
           </div>
-          <div  class="gv-form-section-description">
+          <div class="gv-form-section-description">
             <mat-slide-toggle matInput placeholder="Step up authentication rule" name="mfaRememberDevice"
-                              (change)="changeActive()" [checked]="rememberDevice.active">
+                              (change)="changeActive()" [checked]="rememberDevice.active" [disabled]="!hasDeviceIdentifierPlugins()">
               Enable Remember Device
             </mat-slide-toggle>
           </div>
           <br />
           <form *ngIf="rememberDevice.active">
-            <mat-form-field appearance="outline" floatLabel="always"  style="margin-left: 5px;">
+            <mat-form-field appearance="outline" floatLabel="always" style="margin-left: 5px;">
               <mat-label>Select your device identifier provider</mat-label>
               <mat-select (selectionChange)="updateDeviceIdentifierId($event)" [(value)]="rememberDevice.deviceIdentifierId" name="deviceIdentifierId">
                 <mat-option *ngFor="let rd of deviceIdentifiers; index as i;" [value]="rd.id">{{rd.name}}</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field appearance="outline" floatLabel="always" fxFlex="35">
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="35" style="margin-left: 5px;">
               <input matInput type="number" placeholder="Duration" name="expirationTimeSeconds" min="0" [min]="0"
                      [value]="displayExpiresIn()"
                      (change)="onExpiresInEvent($event)">
@@ -146,6 +154,7 @@
                 <mat-option value="months">MONTHS</mat-option>
                 <mat-option value="years">YEARS</mat-option>
               </mat-select>
+              <mat-hint>Period of time users can trust devices</mat-hint>
             </mat-form-field>
           </form>
         </div>
