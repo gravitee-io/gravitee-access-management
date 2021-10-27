@@ -26,7 +26,11 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+
+import static java.util.Objects.nonNull;
 
 /**
  * This utility class is used to extract OAuth parameters either from the query parameters
@@ -61,28 +65,57 @@ public class ParamUtils {
 
     public static boolean redirectMatches(String requestedRedirect, String registeredClientUri, boolean uriStrictMatch) {
         if (uriStrictMatch) {
-            return requestedRedirect.equals(registeredClientUri);
+            return Objects.equals(requestedRedirect, registeredClientUri);
         }
 
         // nominal case
         try {
-            URL req = new URL(requestedRedirect);
-            URL reg = new URL(registeredClientUri);
+            var requestedUrl = new URL(requestedRedirect);
+            var registeredUrl = new URL(registeredClientUri);
 
-            int requestedPort = req.getPort() != -1 ? req.getPort() : req.getDefaultPort();
-            int registeredPort = reg.getPort() != -1 ? reg.getPort() : reg.getDefaultPort();
+            final String requestedProtocol = requestedUrl.getProtocol();
+            final String requestHost = requestedUrl.getHost();
 
+            int requestedPort = requestedUrl.getPort() != -1 ? requestedUrl.getPort() : requestedUrl.getDefaultPort();
+            int registeredPort = registeredUrl.getPort() != -1 ? registeredUrl.getPort() : registeredUrl.getDefaultPort();
+
+            final String hostPattern = buildPattern(registeredUrl.getHost());
             boolean portsMatch = registeredPort == requestedPort;
 
-            if (reg.getProtocol().equals(req.getProtocol()) &&
-                    reg.getHost().equals(req.getHost()) &&
-                    portsMatch) {
-                return req.getPath().startsWith(reg.getPath());
+            if (registeredUrl.getProtocol().equals(requestedProtocol) && portsMatch) {
+                // We keep the logic from previous behaviour not to break the configuration
+                if (!registeredClientUri.contains("*") && Objects.equals(requestHost, registeredUrl.getHost())) {
+                    return requestedUrl.getPath().startsWith(registeredUrl.getPath());
+                }
+                // else we use the enhanced wildcard feature
+                else if (nonNull(hostPattern) && requestHost.matches(hostPattern)) {
+                    String pathPattern = buildPattern(registeredUrl.getPath());
+                    return requestedUrl.getPath().matches(pathPattern);
+                }
             }
         } catch (MalformedURLException e) {
-
+            LOGGER.debug("An unexpected error has occurred", e);
         }
+        return Objects.equals(requestedRedirect, registeredClientUri);
+    }
 
-        return requestedRedirect.equals(registeredClientUri);
+    private static String buildPattern(String patternPath) {
+        if (patternPath == null) {
+            return null;
+        }
+        var patternBuilder = new StringBuilder();
+        final char[] patternArray = patternPath.toCharArray();
+        int firstIndex = 0;
+        for (int i = 0; i < patternArray.length; i++) {
+            char c = patternArray[i];
+            if (c == '*') {
+                if (firstIndex != i) {
+                    patternBuilder.append(Pattern.quote(patternPath.substring(firstIndex, i)));
+                }
+                patternBuilder.append(".*");
+                firstIndex = i + 1;
+            }
+        }
+        return patternBuilder.toString();
     }
 }
