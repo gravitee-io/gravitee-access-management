@@ -69,7 +69,7 @@ public class DefaultIdentityProviderRoleMapper implements IdentityProviderRoleMa
                         if (userInfo.containsKey(userAttribute)) {
                             if (userInfo.get(userAttribute) instanceof Collection && ((Collection<?>) userInfo.get(userAttribute)).contains(userValue)) {
                                 mappedRoles.add(role);
-                            } else if (userValue.equals(userInfo.get(userAttribute))) {
+                            } else if (userValue.equals(String.valueOf(userInfo.get(userAttribute)))) {
                                 mappedRoles.add(role);
                             }
                         }
