@@ -164,5 +164,3 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         context.addCookie(cookie);
     }
 }
-
-

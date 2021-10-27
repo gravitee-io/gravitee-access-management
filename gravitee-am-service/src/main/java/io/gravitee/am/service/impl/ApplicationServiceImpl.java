@@ -62,6 +62,9 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.web.UriBuilder.isHttp;
+import static java.util.Objects.nonNull;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -178,7 +181,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Single<Set<Application>> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
         LOGGER.debug("Find applications by domain {} and extension grant : {}", domain, extensionGrant);
         return applicationRepository.findByDomainAndExtensionGrant(domain, extensionGrant)
-                .collect(() -> (Set<Application>)new HashSet(), Set::add) // TODO CHECK IF FLOWABLE is useful...
+                .collect(() -> (Set<Application>) new HashSet(), Set::add) // TODO CHECK IF FLOWABLE is useful...
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find applications by extension grant", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to find applications by extension grant", ex));
@@ -647,15 +650,17 @@ public class ApplicationServiceImpl implements ApplicationService {
                     //check redirect_uri content
                     if (oAuthSettings.getRedirectUris() != null) {
                         for (String redirectUri : oAuthSettings.getRedirectUris()) {
-
                             try {
-                                URI uri = UriBuilder.fromURIString(redirectUri).build();
+                                URI uri = redirectUri.contains("*") ? new URI(redirectUri) : UriBuilder.fromURIString(redirectUri).build();
 
                                 if (uri.getScheme() == null) {
                                     return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + " is malformed"));
                                 }
 
-                                if (!domain.isRedirectUriLocalhostAllowed() && UriBuilder.isHttp(uri.getScheme()) && UriBuilder.isLocalhost(uri.getHost())) {
+                                final String host = isHttp(uri.getScheme()) ? uri.toURL().getHost() : uri.getHost();
+
+                                //check localhost allowed
+                                if (!domain.isRedirectUriLocalhostAllowed() && isHttp(uri.getScheme()) && UriBuilder.isLocalhost(host)) {
                                     return Single.error(new InvalidRedirectUriException("localhost is forbidden"));
                                 }
                                 //check http scheme
@@ -663,7 +668,8 @@ public class ApplicationServiceImpl implements ApplicationService {
                                     return Single.error(new InvalidRedirectUriException("Unsecured http scheme is forbidden"));
                                 }
                                 //check wildcard
-                                if (!domain.isRedirectUriWildcardAllowed() && uri.getPath().contains("*")) {
+                                if (!domain.isRedirectUriWildcardAllowed() &&
+                                        (nonNull(uri.getPath()) && uri.getPath().contains("*") || nonNull(host) && host.contains("*"))) {
                                     return Single.error(new InvalidRedirectUriException("Wildcard are forbidden"));
                                 }
                                 // check fragment
