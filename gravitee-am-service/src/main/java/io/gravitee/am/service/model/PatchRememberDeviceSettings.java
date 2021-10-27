@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -67,7 +68,7 @@ public class PatchRememberDeviceSettings {
         RememberDeviceSettings toPatch = _toPatch == null ? new RememberDeviceSettings() : new RememberDeviceSettings(_toPatch);
         SetterUtils.safeSet(toPatch::setDeviceIdentifierId, this.getDeviceIdentifierId());
         SetterUtils.safeSet(toPatch::setActive, this.getActive());
-        SetterUtils.safeSet(toPatch::setExpirationTimeSeconds, this.getExpirationTimeSeconds());
+        SetterUtils.safeSet(toPatch::setExpirationTimeSeconds, this.getExpirationTimeSeconds().filter(Objects::nonNull).map(Math::abs));
         return toPatch;
     }
 }

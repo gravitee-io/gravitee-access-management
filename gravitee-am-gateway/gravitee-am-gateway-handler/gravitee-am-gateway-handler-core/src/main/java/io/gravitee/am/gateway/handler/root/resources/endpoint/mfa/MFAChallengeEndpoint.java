@@ -125,6 +125,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             routingContext.put(ConstantKeys.FACTOR_KEY, factor);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
+            //Include deviceId, so we can show/hide the "save my device" checkbox
+            var deviceId = routingContext.session().get(ConstantKeys.DEVICE_ID);
+            if (deviceId != null) {
+                routingContext.put(ConstantKeys.DEVICE_ID, deviceId);
+            }
             if (endUser.getFactors() != null && endUser.getFactors().size() > 1) {
                 routingContext.put(MFA_ALTERNATIVES_ENABLE_KEY, true);
                 routingContext.put(MFA_ALTERNATIVES_ACTION_KEY, resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/mfa/challenge/alternatives", queryParams, true));
@@ -414,7 +419,10 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         userId,
                         rememberDeviceId,
                         isNullOrEmpty(deviceType) ? "Unknown" : deviceType,
-                        settings.getExpirationTimeSeconds(), deviceId).toMaybe();
+                        settings.getExpirationTimeSeconds(), deviceId)
+                        .doOnSuccess(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true))
+                        .doOnError(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false))
+                        .toMaybe();
             }).doFinally(() -> {
                         routingContext.session().remove(DEVICE_ID);
                         routingContext.session().remove(DEVICE_TYPE);

@@ -82,6 +82,7 @@ export class ApplicationFactorsComponent implements OnInit {
     data.factors = this.application.factors;
     data.settings = {};
     if (this.rememberDevice.active && this.rememberDeviceTime.expirationTime) {
+      this.rememberDeviceTime.expirationTime = Math.abs(this.rememberDeviceTime.expirationTime);
       this.rememberDevice.expirationTimeSeconds =
         moment.duration(this.rememberDeviceTime.expirationTime, this.rememberDeviceTime.expirationTimeUnit).asSeconds();
     }
