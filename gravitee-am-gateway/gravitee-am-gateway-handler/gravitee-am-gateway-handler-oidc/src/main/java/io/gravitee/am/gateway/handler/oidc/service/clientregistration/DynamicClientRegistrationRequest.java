@@ -622,6 +622,9 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
         SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
 
+        /* set client require_pushed_authorization_requests : https://datatracker.ietf.org/doc/html/draft-ietf-oauth-par#page-16 */
+        SetterUtils.safeSet(client::setRequireParRequest, this.getRequireParRequest());
+
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
 
@@ -682,6 +685,9 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setTlsClientAuthSanIp, this.getTlsClientAuthSanIp());
         SetterUtils.safeSet(client::setTlsClientAuthSanUri, this.getTlsClientAuthSanUri());
         SetterUtils.safeSet(client::setTlsClientCertificateBoundAccessTokens, this.getTlsClientCertificateBoundAccessTokens());
+
+        /* set client require_pushed_authorization_requests : https://datatracker.ietf.org/doc/html/draft-ietf-oauth-par#page-16 */
+        SetterUtils.safeSet(client::setRequireParRequest, this.getRequireParRequest());
 
         /* set OpenID Connect RP-Initiated Logout metadata */
         SetterUtils.safeSet(client::setPostLogoutRedirectUris, this.getPostLogoutRedirectUris());
