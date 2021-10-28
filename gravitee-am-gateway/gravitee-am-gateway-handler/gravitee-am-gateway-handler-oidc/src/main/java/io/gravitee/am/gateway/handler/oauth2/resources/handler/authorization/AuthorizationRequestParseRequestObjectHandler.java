@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
-import com.nimbusds.jwt.EncryptedJWT;
 import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
@@ -24,11 +23,11 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestUriException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
-import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
@@ -86,44 +85,39 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
 
     @Override
     public void handle(RoutingContext context) {
-        // Even if a scope parameter is present in the Request Object value, a scope parameter MUST always be passed
-        // using the OAuth 2.0 request syntax containing the openid scope value to indicate to the underlying OAuth 2.0
-        // logic that this is an OpenID Connect request.
-        // NOTE: In FAPI specification (https://github.com/gravitee-io/issues/issues/5975), scope may come from the RequestObject
-        String scope = context.request().getParam(io.gravitee.am.common.oauth2.Parameters.SCOPE);
-        HashSet<String> scopes = scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null;
-        if (!domain.usePlainFapiProfile() && (scopes == null || !scopes.contains(Scope.OPENID.getKey()))) {
-            context.next();
-            return;
-        }
-
-        // if there is no request or request_uri parameters, continue
-        if ((context.request().getParam(Parameters.REQUEST) == null || context.request().getParam(Parameters.REQUEST).isEmpty())
-                && ((context.request().getParam(Parameters.REQUEST_URI) == null || context.request().getParam(Parameters.REQUEST_URI).isEmpty()))) {
-
-            if (this.domain.usePlainFapiProfile()) {
-                // according to https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server
-                // Authorization Server shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter;
-                context.fail(new InvalidRequestException());
+        final String request = context.request().getParam(Parameters.REQUEST);
+        final String requestUri = context.request().getParam(Parameters.REQUEST_URI);
+        final Client client = context.get(CLIENT_CONTEXT_KEY);
+        if (StringUtils.isEmpty(requestUri)) {
+            if (client != null && client.isRequireParRequest()) {
+                context.fail(new InvalidRequestException("Client requires pushed authorization requests, request_uri is expected"));
                 return;
             }
-
-            context.next();
-            return;
+            if (StringUtils.isEmpty(request)) {
+                if (this.domain.usePlainFapiProfile()) {
+                    // according to https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-server
+                    // Authorization Server shall require a JWS signed JWT request object passed by value with the request parameter or by reference with the request_uri parameter;
+                    context.fail(new InvalidRequestException("Missing parameter: request or request_uri is required for FAPI"));
+                    return;
+                }
+                // if there is no request or request_uri parameters, continue
+                context.next();
+                return;
+            }
         }
 
         // check request object parameters
-        checkRequestObjectParameters(context);
+        checkRequestObjectParameters(request, requestUri);
 
         // Proceed request and request_uri parameters
-        Maybe<JWT> requestObject = null;
+        Maybe<JWT> requestObject;
 
-        if (context.request().getParam(Parameters.REQUEST) != null) {
+        if (!StringUtils.isEmpty(request)) {
             context.put(REQUEST_OBJECT_FROM_URI, false);
-            requestObject = handleRequestObjectValue(context);
-        } else if (context.request().getParam(Parameters.REQUEST_URI) != null) {
+            requestObject = handleRequestObjectValue(context, request);
+        } else {
             context.put(REQUEST_OBJECT_FROM_URI, true);
-            requestObject = handleRequestObjectURI(context);
+            requestObject = handleRequestObjectURI(context, requestUri);
         }
 
         requestObject
@@ -142,14 +136,11 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
                         context::next);
     }
 
-    private void checkRequestObjectParameters(RoutingContext context) {
+    private void checkRequestObjectParameters(String request, String requestUri) {
         // Requests using these parameters are represented as JWTs, which are respectively passed by value or by
         // reference. The ability to pass requests by reference is particularly useful for large requests. If one of
         // these parameters is used, the other MUST NOT be used in the same request.
-        String request = context.request().getParam(Parameters.REQUEST);
-        String requestUri = context.request().getParam(Parameters.REQUEST_URI);
-
-        if (request != null && requestUri != null && !request.isEmpty() && !requestUri.isEmpty()) {
+        if (!StringUtils.isEmpty(request) && !StringUtils.isEmpty(requestUri)) {
             throw new InvalidRequestException("request and request_uri parameters must not be use in the same request");
         }
 
@@ -175,9 +166,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         }
     }
 
-    private Maybe<JWT> handleRequestObjectValue(RoutingContext context) {
-        final String request = context.request().getParam(Parameters.REQUEST);
-
+    private Maybe<JWT> handleRequestObjectValue(RoutingContext context, String request) {
         if (request != null) {
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST);
@@ -284,9 +273,7 @@ public class AuthorizationRequestParseRequestObjectHandler extends AbstractAutho
         return throwUriException ? new InvalidRequestUriException(msg) : new InvalidRequestObjectException(msg);
     }
 
-    private Maybe<JWT> handleRequestObjectURI(RoutingContext context) {
-        final String requestUri = context.request().getParam(Parameters.REQUEST_URI);
-
+    private Maybe<JWT> handleRequestObjectURI(RoutingContext context, String requestUri) {
         if (requestUri != null) {
             // Ensure that the request_uri is not propagated to the next authorization flow step
             context.request().params().remove(Parameters.REQUEST_URI);
