@@ -48,6 +48,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 
+import static java.util.Objects.nonNull;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -55,9 +57,13 @@ import java.util.*;
 @Component
 public class FactorServiceImpl implements FactorService {
 
-    public static final String SMS_AM_FACTOR = "sms-am-factor";
-    public static final String CONFIG_KEY_COUNTRY_CODES = "countryCodes";
+    private static final String SMS_AM_FACTOR = "sms-am-factor";
+    private static final String CALL_AM_FACTOR = "call-am-factor";
+    private static final List<String> COUNTRY_CODE_FACTORS = List.of(SMS_AM_FACTOR, CALL_AM_FACTOR);
+    private static final String CONFIG_KEY_COUNTRY_CODES = "countryCodes";
     private static final List<String> COUNTRY_CODES = Arrays.asList(Locale.getISOCountries());
+    private static final String COUNTRY_CODES_SEPARATOR = ",";
+
     /**
      * Logger.
      */
@@ -131,17 +137,21 @@ public class FactorServiceImpl implements FactorService {
     }
 
     private Single<Factor> checkFactorConfiguration(Factor factor) {
-        if (SMS_AM_FACTOR.equalsIgnoreCase(factor.getType())) {
-            // for SMS Factor, check that countries code provided into the configuration are valid
+        // for SMS|CALL Factor, check that countries code provided into the configuration are valid
+        if (isCountryCodeFactor(factor)) {
             final JsonObject configuration = (JsonObject) Json.decodeValue(factor.getConfiguration());
             String countryCodes = configuration.getString(CONFIG_KEY_COUNTRY_CODES);
-            for(String code : countryCodes.split(",")) {
+            for (String code : countryCodes.split(COUNTRY_CODES_SEPARATOR)) {
                 if (!COUNTRY_CODES.contains(code.trim().toUpperCase(Locale.ROOT))) {
                     return Single.error(new FactorConfigurationException(CONFIG_KEY_COUNTRY_CODES, code));
                 }
             }
         }
         return Single.just(factor);
+    }
+
+    private boolean isCountryCodeFactor(Factor factor) {
+        return nonNull(factor) && nonNull(factor.getType()) && COUNTRY_CODE_FACTORS.contains(factor.getType().toLowerCase(Locale.ROOT));
     }
 
     @Override
@@ -156,7 +166,7 @@ public class FactorServiceImpl implements FactorService {
                     factorToUpdate.setConfiguration(updateFactor.getConfiguration());
                     factorToUpdate.setUpdatedAt(new Date());
 
-                    return  checkFactorConfiguration(factorToUpdate)
+                    return checkFactorConfiguration(factorToUpdate)
                             .flatMap(factor1 -> factorRepository.update(factor1))
                             .flatMap(factor1 -> {
                                 // create event for sync process
@@ -194,7 +204,7 @@ public class FactorServiceImpl implements FactorService {
                     Event event = new Event(Type.FACTOR, new Payload(factorId, ReferenceType.DOMAIN, domain, Action.DELETE));
                     return factorRepository.delete(factorId)
                             .andThen(eventService.create(event))
-                            .toCompletable()
+                            .ignoreElement()
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).factor(factor)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(FactorAuditBuilder.class).principal(principal).type(EventType.FACTOR_DELETED).throwable(throwable)));
                 })

@@ -23,10 +23,19 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class DomainSettingsFactorsComponent implements OnInit {
   private factorTypes: any = {
-    'otp-am-factor' : 'Generic OTP Factor',
-    'email-am-factor' : 'EMAIL Factor',
-    'sms-am-factor' : 'SMS Factor'
+    'otp' : 'Generic OTP Factor',
+    'email' : 'EMAIL Factor',
+    'sms' : 'SMS Factor',
+    'call' : 'Call Factor'
   };
+
+  private factorIcons: any = {
+    'otp': 'mobile_friendly',
+    'email': 'sms',
+    'sms': 'email',
+    'call': 'call'
+  };
+
   factors: any[];
   domainId: any;
 
@@ -36,6 +45,7 @@ export class DomainSettingsFactorsComponent implements OnInit {
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.factors = this.route.snapshot.data['factors'];
+    console.log(this.factors)
   }
 
   isEmpty() {
@@ -47,5 +57,12 @@ export class DomainSettingsFactorsComponent implements OnInit {
       return this.factorTypes[type];
     }
     return type;
+  }
+
+  displayIcons(type) {
+    if (this.factorIcons[type]) {
+      return this.factorIcons[type];
+    }
+    return "donut_large";
   }
 }

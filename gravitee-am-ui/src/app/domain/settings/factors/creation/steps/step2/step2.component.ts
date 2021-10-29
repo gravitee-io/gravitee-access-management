@@ -41,24 +41,25 @@ export class FactorCreationStep2Component implements OnInit {
     this.factorPlugins = this.route.snapshot.data['factorPlugins'];
     this.resourcePlugins = this.route.snapshot.data['resourcePlugins'];
     this.resources = this.route.snapshot.data['resources'];
-    
+
     this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value
       if (this.factorSchema.properties.factorType) {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }
-      
+
       if (this.factorSchema.properties.graviteeResource) {
         if (this.resources && this.resources.length > 0) {
+          console.log(this.resourcePlugins);
           const resourcePluginTypeToCategories = this.resourcePlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.categories}), {});
           const factorPluginTypeToCategories = this.factorPlugins.reduce((accumulator, currentPlugin) => ({ ...accumulator, [currentPlugin.id]: currentPlugin.category}), {});
           const factorCategory = factorPluginTypeToCategories[this.factor.type];
           // filter resources with category compatible with the Factor Plugin one
-          const filteredResources = this.resources.filter(r => 
+          const filteredResources = this.resources.filter(r =>
             resourcePluginTypeToCategories[r.type].filter(resourceCategory => resourceCategory === factorCategory).length > 0
           );
-          
+
           this.factorSchema.properties.graviteeResource['x-schema-form'] = { 'type' : 'select' };
           if (filteredResources.length > 0) {
             this.factorSchema.properties.graviteeResource.enum = filteredResources.map(r => r.id);

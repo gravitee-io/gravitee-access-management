@@ -26,8 +26,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gravitee-am-factor-sms</artifactId>
-    <name>Gravitee IO - Access Management - Factor - SMS</name>
+    <artifactId>gravitee-am-factor-call</artifactId>
+    <name>Gravitee IO - Access Management - Factor - Call</name>
 
     <properties>
         <libphonenumber.version>8.12.20</libphonenumber.version>
@@ -63,13 +63,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Check hone number syntax : https://mvnrepository.com/artifact/com.googlecode.libphonenumber/libphonenumber -->
         <dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
             <version>${libphonenumber.version}</version>
         </dependency>
-
     </dependencies>
 
     <build>

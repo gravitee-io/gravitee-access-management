@@ -165,7 +165,7 @@ public class TwilioVerifyResourceProvider implements MFAResourceProvider {
 
 
     @Override
-    public ResourceProvider stop() throws Exception {
+    public ResourceProvider stop() {
         Twilio.destroy();
         return this;
     }
@@ -180,6 +180,9 @@ public class TwilioVerifyResourceProvider implements MFAResourceProvider {
             case EMAIL:
                 channel = "email";
                 break;
+            case CALL:
+                channel = "call";
+                break;
             default:
                 return Completable.error(new IllegalArgumentException("Unsupported verification channel '" + target.getChannel() + "'"));
         }
@@ -187,9 +190,9 @@ public class TwilioVerifyResourceProvider implements MFAResourceProvider {
         return Completable.create((emitter) -> {
             try {
                 Verification verification = Verification.creator(
-                        configuration.getSid(),
-                        target.getTarget(),
-                        channel)
+                                configuration.getSid(),
+                                target.getTarget(),
+                                channel)
                         .create();
 
                 LOGGER.debug("Twilio Verification code asked with ID '{}'", verification.getSid());
@@ -251,6 +254,5 @@ public class TwilioVerifyResourceProvider implements MFAResourceProvider {
             Proxy proxy = new Proxy(Proxy.Type.SOCKS, socksaddr);
             return new Socket(proxy);
         }
-
     }
 }

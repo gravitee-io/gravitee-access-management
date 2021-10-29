@@ -24,7 +24,7 @@ package io.gravitee.am.gateway.handler.account.model;
 public class EnrollmentAccount {
 
     /**
-     * User phone number (if factor type is SMS)
+     * User phone number (if factor type is SMS or CALL)
      */
     private String phoneNumber;
 
