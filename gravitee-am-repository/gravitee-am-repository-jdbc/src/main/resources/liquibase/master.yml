@@ -34,6 +34,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_12_0/schema-system-tasks.yml
   - include:
+      - file: liquibase/changelogs/v3_12_4/schema-reset-default-scope-approval.yml
+  - include:
       - file: liquibase/changelogs/v3_13_0/schema.yml
   - include:
       - file: liquibase/changelogs/v3_13_0/schema-device.yml

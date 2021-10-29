@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.12.4-reset-default-scope-approval
+      author: GraviteeSource Team
+      changes:
+        - sql:
+            sql: "UPDATE application_scope_settings SET scope_approval = null where scope_approval <= 0;"

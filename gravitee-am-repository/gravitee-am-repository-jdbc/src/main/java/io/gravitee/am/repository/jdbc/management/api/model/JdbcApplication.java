@@ -219,7 +219,7 @@ public class JdbcApplication {
         @Column("is_default")
         private boolean defaultScope;
         @Column("scope_approval")
-        private int scopeApproval;
+        private Integer scopeApproval;
 
         public String getApplicationId() {
             return applicationId;
@@ -245,11 +245,11 @@ public class JdbcApplication {
             this.defaultScope = defaultScope;
         }
 
-        public int getScopeApproval() {
+        public Integer getScopeApproval() {
             return scopeApproval;
         }
 
-        public void setScopeApproval(int scopeApproval) {
+        public void setScopeApproval(Integer scopeApproval) {
             this.scopeApproval = scopeApproval;
         }
     }
