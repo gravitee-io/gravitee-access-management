@@ -27,6 +27,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -143,7 +144,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
         Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> optFactor = factors.entrySet().stream().filter(factor -> factorId.equals(factor.getKey().getId())).findFirst();
-        if (!optFactor.isPresent()) {
+        if (optFactor.isEmpty()) {
             logger.warn("Factor not found - did you send a valid factor id ?");
             routingContext.fail(400);
             return;
@@ -185,11 +186,14 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 break;
             case SMS:
-                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, params.get("phone")));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.SMS, params.get("phone")));
+                break;
+            case CALL:
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.CALL, params.get("phone")));
                 break;
             case EMAIL:
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
-                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, params.get("email")));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
         }
         return enrolledFactor;

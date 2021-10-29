@@ -24,7 +24,8 @@ import java.util.NoSuchElementException;
 public enum FactorType {
     OTP("TOTP"),
     SMS("SMS"),
-    EMAIL("EMAIL");
+    EMAIL("EMAIL"),
+    CALL("CALL");
 
     FactorType(String type) {
         this.type = type;
@@ -35,6 +36,7 @@ public enum FactorType {
         if (OTP.getType().equalsIgnoreCase(type) || "OTP".equalsIgnoreCase(type)) return OTP;
         if (SMS.getType().equalsIgnoreCase(type)) return SMS;
         if (EMAIL.getType().equalsIgnoreCase(type)) return EMAIL;
+        if (CALL.getType().equalsIgnoreCase(type)) return CALL;
         throw new NoSuchElementException(String.format("No factor type for provided string of %s", type));
     }
 

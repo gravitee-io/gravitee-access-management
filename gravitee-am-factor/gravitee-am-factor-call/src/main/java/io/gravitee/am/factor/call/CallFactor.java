@@ -13,14 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.resource.api.mfa;
+package io.gravitee.am.factor.call;
+
+import io.gravitee.am.factor.api.Factor;
+import io.gravitee.am.factor.api.FactorConfiguration;
+import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.factor.call.provider.CallFactorProvider;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum MFAType {
-    SMS,
-    EMAIL,
-    CALL
+public class CallFactor implements Factor {
+    
+    @Override
+    public Class<? extends FactorConfiguration> configuration() {
+        return CallFactorConfiguration.class;
+    }
+
+    @Override
+    public Class<? extends FactorProvider> factorProvider() {
+        return CallFactorProvider.class;
+    }
 }

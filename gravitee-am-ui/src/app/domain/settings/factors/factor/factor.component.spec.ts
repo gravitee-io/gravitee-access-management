@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { FactorComponent } from './factor.component';
 
-import { FactorComponent } from './extension-grant.component';
 
 describe('ExtensionGrantComponent', () => {
   let component: FactorComponent;

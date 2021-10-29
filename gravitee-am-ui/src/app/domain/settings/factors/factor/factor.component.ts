@@ -61,6 +61,7 @@ export class FactorComponent implements OnInit {
     this.organizationService.factorSchema(this.factor.type).subscribe(data => {
       this.factorSchema = data;
       // set the grant_type value
+
       if (this.factorSchema.properties.factorType) {
         this.factor.factorType = this.factorSchema.properties.factorType.default;
       }

@@ -25,7 +25,8 @@ export class FactorCreationStep1Component implements OnInit {
   private factorTypes: any = {
     'otp-am-factor' : 'Generic OTP Factor',
     'email-am-factor' : 'EMAIL Factor',
-    'sms-am-factor' : 'SMS Factor'
+    'sms-am-factor' : 'SMS Factor',
+    'call-am-factor' : 'Call Factor'
   };
   @Input() factor: any;
   factors: any[];
@@ -35,7 +36,9 @@ export class FactorCreationStep1Component implements OnInit {
   }
 
   ngOnInit() {
-    this.organizationService.factors().subscribe(data => this.factors = data);
+    this.organizationService.factors().subscribe(data => {
+      this.factors = data
+    });
   }
 
   selectFactorType() {

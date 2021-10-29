@@ -29,6 +29,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
@@ -322,7 +323,11 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                     break;
                 case SMS:
-                    enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS,
+                    enrolledFactor.setChannel(new EnrolledFactorChannel(Type.SMS,
+                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
+                    break;
+                case CALL:
+                    enrolledFactor.setChannel(new EnrolledFactorChannel(Type.CALL,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER)));
                     break;
                 case EMAIL:
@@ -337,7 +342,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                     enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY),
                             additionalData));
-                    enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL,
+                    enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS)));
                     break;
             }
@@ -414,12 +419,12 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 }
                 var deviceType = routingContext.session().<String>get(DEVICE_TYPE);
                 return this.deviceService.create(
-                        domain,
-                        client.getClientId(),
-                        userId,
-                        rememberDeviceId,
-                        isNullOrEmpty(deviceType) ? "Unknown" : deviceType,
-                        settings.getExpirationTimeSeconds(), deviceId)
+                                domain,
+                                client.getClientId(),
+                                userId,
+                                rememberDeviceId,
+                                isNullOrEmpty(deviceType) ? "Unknown" : deviceType,
+                                settings.getExpirationTimeSeconds(), deviceId)
                         .doOnSuccess(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true))
                         .doOnError(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false))
                         .toMaybe();

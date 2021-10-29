@@ -37,6 +37,9 @@
                                     <span th:if="${factor.factorType.type == 'SMS'}" class="mdl-list__item-text-body">
                                         Please type in the code sent by SMS on your mobile phone.
                                     </span>
+                                    <span th:if="${factor.factorType.type == 'CALL'}" class="mdl-list__item-text-body">
+                                        You will receive a call shortly. Follow the instructions and type in the given code.
+                                    </span>
                                     <span th:if="${factor.factorType.type == 'EMAIL'}" class="mdl-list__item-text-body">
                                         Please type in the code sent by Email.
                                     </span>

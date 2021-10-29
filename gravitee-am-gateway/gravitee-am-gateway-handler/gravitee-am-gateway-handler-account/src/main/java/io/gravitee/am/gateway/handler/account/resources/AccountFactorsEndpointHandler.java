@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.account.resources;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
-import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -33,6 +32,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -47,15 +47,22 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.springframework.context.ApplicationContext;
-import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static java.util.Objects.isNull;
+import static org.springframework.util.StringUtils.isEmpty;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -117,7 +124,7 @@ public class AccountFactorsEndpointHandler {
                     Json.decodeValue(routingContext.getBodyAsString(), io.gravitee.am.gateway.handler.account.model.Enrollment.class);
 
             // factorId is required
-            if (StringUtils.isEmpty(enrollment.getFactorId())) {
+            if (isEmpty(enrollment.getFactorId())) {
                 routingContext.fail(new InvalidRequestException("Field [factorId] is required"));
                 return;
             }
@@ -141,17 +148,25 @@ public class AccountFactorsEndpointHandler {
                 }
 
                 // check request body parameters
-                if (FactorType.EMAIL.equals(factor.getFactorType())
-                        && StringUtils.isEmpty(account.getEmail())) {
-                    routingContext.fail(new InvalidRequestException("Field [email] is required"));
-                    return;
+                switch (factor.getFactorType()) {
+                    case CALL:
+                    case SMS:
+                        if (isNull(account) || isEmpty(account.getPhoneNumber())) {
+                            routingContext.fail(new InvalidRequestException("Field [phoneNumber] is required"));
+                            return;
+                        }
+                        break;
+                    case EMAIL:
+                        if (isNull(account) || isEmpty(account.getEmail())) {
+                            routingContext.fail(new InvalidRequestException("Field [email] is required"));
+                            return;
+                        }
+                        break;
+                    default:
+                        //Do nothing
+                        break;
                 }
 
-                if (FactorType.SMS.equals(factor.getFactorType())
-                        && StringUtils.isEmpty(account.getPhoneNumber())) {
-                    routingContext.fail(new InvalidRequestException("Field [phoneNumber] is required"));
-                    return;
-                }
 
                 // check if the current factor is already enrolled
                 if (user.getFactors() != null) {
@@ -215,7 +230,7 @@ public class AccountFactorsEndpointHandler {
             final String code = routingContext.getBodyAsJson().getString("code");
 
             // code is required
-            if (StringUtils.isEmpty(code)) {
+            if (isEmpty(code)) {
                 routingContext.fail(new InvalidRequestException("Field [code] is required"));
                 return;
             }
@@ -289,7 +304,7 @@ public class AccountFactorsEndpointHandler {
 
         final Optional<EnrolledFactor> optionalEnrolledFactor = getEnrolledFactor(factorId, user);
 
-        if (!optionalEnrolledFactor.isPresent()) {
+        if (optionalEnrolledFactor.isEmpty()) {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
@@ -319,7 +334,7 @@ public class AccountFactorsEndpointHandler {
 
         Optional<EnrolledFactor> optionalEnrolledFactor = getEnrolledFactor(factorId, user);
 
-        if (!optionalEnrolledFactor.isPresent()) {
+        if (optionalEnrolledFactor.isEmpty()) {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
@@ -367,10 +382,10 @@ public class AccountFactorsEndpointHandler {
                 enrolledFactor.setPrimary(updateEnrolledFactor.isPrimary());
                 accountService.upsertFactor(user.getId(), enrolledFactor, new DefaultUser(user))
                         .subscribe(
-                            __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
-                            error -> routingContext.fail(error)
+                                __ -> AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor),
+                                error -> routingContext.fail(error)
                         );
-                });
+            });
         } catch (DecodeException ex) {
             routingContext.fail(new InvalidRequestException("Unable to parse body message"));
         }
@@ -466,7 +481,10 @@ public class AccountFactorsEndpointHandler {
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollment.getKey()));
                 break;
             case SMS:
-                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.SMS, account.getPhoneNumber()));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.SMS, account.getPhoneNumber()));
+                break;
+            case CALL:
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.CALL, account.getPhoneNumber()));
                 break;
             case EMAIL:
                 Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
@@ -478,7 +496,7 @@ public class AccountFactorsEndpointHandler {
                     additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
                 });
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET, enrollment.getKey(), additionalData));
-                enrolledFactor.setChannel(new EnrolledFactorChannel(EnrolledFactorChannel.Type.EMAIL, account.getEmail()));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, account.getEmail()));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + factor.getFactorType().getType());

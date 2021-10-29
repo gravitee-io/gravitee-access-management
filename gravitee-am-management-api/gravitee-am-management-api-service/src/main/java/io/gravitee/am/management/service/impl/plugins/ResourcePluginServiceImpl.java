@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
-import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -38,6 +37,7 @@ import java.util.List;
 @Component
 public class ResourcePluginServiceImpl implements ResourcePluginService {
 
+    private static final String MANIFEST_KEY_CATEGORIES_SEPARATOR = ",";
     private final Logger LOGGER = LoggerFactory.getLogger(ResourcePluginServiceImpl.class);
 
     @Autowired
@@ -117,7 +117,7 @@ public class ResourcePluginServiceImpl implements ResourcePluginService {
         plugin.setVersion(resourcePlugin.manifest().version());
         String tags = resourcePlugin.manifest().properties().get(MANIFEST_KEY_CATEGORIES);
         if (tags != null) {
-            plugin.setCategories(tags.split(","));
+            plugin.setCategories(tags.split(MANIFEST_KEY_CATEGORIES_SEPARATOR));
         } else {
             plugin.setCategories(new String[0]);
         }

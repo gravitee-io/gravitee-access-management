@@ -46,6 +46,10 @@
     width: 100%;
 }
 
+.mdl-list {
+    width:100%;
+}
+
 .mfa-challenge-alternatives-form-actions button.button--skipped {
     border: none;
     font-size: 14px;

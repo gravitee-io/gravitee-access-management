@@ -37,5 +37,6 @@
         <module>gravitee-am-factor-otp</module>
         <module>gravitee-am-factor-sms</module>
         <module>gravitee-am-factor-email</module>
+        <module>gravitee-am-factor-call</module>
     </modules>
 </project>

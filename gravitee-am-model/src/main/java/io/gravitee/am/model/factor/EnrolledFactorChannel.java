@@ -49,6 +49,7 @@ public class EnrolledFactorChannel {
 
     public enum Type {
         SMS,
-        EMAIL;
+        EMAIL,
+        CALL
     }
 }

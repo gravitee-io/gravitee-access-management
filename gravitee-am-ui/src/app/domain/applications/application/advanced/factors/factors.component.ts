@@ -31,15 +31,17 @@ export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;
 
   private factorTypes: any = {
-    'TOTP': 'OTP',
+    'OTP': 'TOTP',
     'SMS': 'SMS',
-    'EMAIL': 'EMAIL'
+    'EMAIL': 'EMAIL',
+    'CALL': 'CALL'
   };
 
   private factorIcons: any = {
-    'TOTP': 'mobile_friendly',
+    'OTP': 'mobile_friendly',
     'SMS': 'sms',
-    'EMAIL': 'email'
+    'EMAIL': 'email',
+    'CALL': 'call'
   };
 
   application: any;
@@ -121,15 +123,17 @@ export class ApplicationFactorsComponent implements OnInit {
   }
 
   getFactorTypeIcon(type) {
-    if (this.factorIcons[type]) {
-      return this.factorIcons[type];
+    const factorType = type.toUpperCase();
+    if (this.factorIcons[factorType]) {
+      return this.factorIcons[factorType];
     }
     return 'donut_large';
   }
 
   displayFactorType(type) {
-    if (this.factorTypes[type]) {
-      return this.factorTypes[type];
+    const factorType = type.toUpperCase();
+    if (this.factorTypes[factorType]) {
+      return this.factorTypes[factorType];
     }
     return 'Custom';
   }
