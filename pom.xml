@@ -30,7 +30,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>3.13.0-SNAPSHOT</version>
+    <version>3.13.0</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -68,11 +68,11 @@
 
     <properties>
         <gravitee-bom.version>1.0</gravitee-bom.version>
-        <gravitee-common.version>1.22.0</gravitee-common.version>
+        <gravitee-common.version>1.22.1</gravitee-common.version>
         <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
-        <gravitee-node.version>1.17.0</gravitee-node.version>
+        <gravitee-node.version>1.17.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
-        <gravitee-gateway-api.version>1.27.1</gravitee-gateway-api.version>
+        <gravitee-gateway-api.version>1.27.2</gravitee-gateway-api.version>
         <gravitee-expression-language.version>1.5.1</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
