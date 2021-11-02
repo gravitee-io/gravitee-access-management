@@ -1,6 +1,45 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/428?closed=1[AM - 3.13.0 (2021-11-01)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.12.2 https://github.com/gravitee-io/issues/issues/6410[#6410]
+- Merge 3.12.3 https://github.com/gravitee-io/issues/issues/6436[#6436]
+
+*_Oidc_*
+
+- [DCR] some optional parameters are required https://github.com/gravitee-io/issues/issues/5986[#5986]
+
+=== Features
+
+*_Management_*
+
+- [mfa] Behavior detection - risk based rules engine https://github.com/gravitee-io/issues/issues/6194[#6194]
+- [mfa] Behavior detection https://github.com/gravitee-io/issues/issues/6185[#6185]
+- [mfa] multi-factors challenge step https://github.com/gravitee-io/issues/issues/6189[#6189]
+- [mfa] remember device https://github.com/gravitee-io/issues/issues/6186[#6186]
+
+=== Improvements
+
+*_Gateway_*
+
+- Improve error message when FAPI is enabled https://github.com/gravitee-io/issues/issues/6420[#6420]
+
+*_Management_*
+
+- Add preferred language for the users https://github.com/gravitee-io/issues/issues/6351[#6351]
+
+*_Oidc_*
+
+- Improve request object management https://github.com/gravitee-io/issues/issues/6266[#6266]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/445?closed=1[AM - 3.12.3 (2021-10-20)]
 
 === Bug fixes
