@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/443?closed=1[AM - 3.10.7 (2021-11-04)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Expression language does not support whitespaces https://github.com/gravitee-io/issues/issues/6463[#6463]
+- Handle prompt login parameter to the underlying OIDC IdP https://github.com/gravitee-io/issues/issues/6477[#6477]
+- [identity provider] Consider the userInfo type when testing a mapping condition https://github.com/gravitee-io/issues/issues/6445[#6445]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/428?closed=1[AM - 3.13.0 (2021-11-01)]
 
 === Bug fixes
