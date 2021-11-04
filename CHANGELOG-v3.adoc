@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/450?closed=1[AM - 3.10.8 (2021-11-04)]
+
+=== Bug fixes
+
+*_Am_*
+
+- Major error - 3.10.7 distribution is broken https://github.com/gravitee-io/issues/issues/6504[#6504]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/443?closed=1[AM - 3.10.7 (2021-11-04)]
 
 === Bug fixes
