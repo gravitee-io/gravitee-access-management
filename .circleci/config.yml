@@ -47,7 +47,7 @@ parameters:
     description: "Release version number to use to publish the Docker nightly images ?"
 
 orbs:
-  gravitee: gravitee-io/gravitee@1.0
+  gravitee: gravitee-io/gravitee@dev:1.0.40
   secrethub: secrethub/cli@1.1.0
   slack: circleci/slack@4.2.1
 
