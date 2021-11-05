@@ -49,7 +49,7 @@ db.getCollection("forms")
     .find({"template": "oauth2_user_consent"})
     .forEach(function (form) {
         var content = form.content.replace("@{authorize}","@{consent}");
-        db.getCollection("forms").update({_id: form._id}, { "$set": { "content" : content } });
+        db.getCollection("forms").updateOne({_id: form._id}, { "$set": { "content" : content } });
     });
 
 // Admin reporters can be deleted in favor of internal reporter used for organization audits.
@@ -85,7 +85,7 @@ db.getCollection("emails").updateMany({"referenceType": {"$exists": false}}, {"$
 db.getCollection("roles")
     .find({"referenceType": {"$exists": false}, "$or": [{"system": {"$exists": false}}, {"system": false}]})
     .forEach(function (role) {
-        db.getCollection("roles").update({_id: role._id}, {
+        db.getCollection("roles").updateOne({_id: role._id}, {
             "$set": {
                 "referenceType": "DOMAIN",
                 "oauthScopes": role.permissions ? role.permissions : [],

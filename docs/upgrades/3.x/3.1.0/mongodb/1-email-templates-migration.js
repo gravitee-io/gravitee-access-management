@@ -23,5 +23,5 @@ db.getCollection("emails")
         } else if (email.template === "reset_password") {
             content = email.content.replace("${resetPasswordUrl}","${url}");
         }
-        db.getCollection("emails").update({_id: email._id}, { "$set": { "content" : content } });
+        db.getCollection("emails").updateOne({_id: email._id}, { "$set": { "content" : content } });
     });
