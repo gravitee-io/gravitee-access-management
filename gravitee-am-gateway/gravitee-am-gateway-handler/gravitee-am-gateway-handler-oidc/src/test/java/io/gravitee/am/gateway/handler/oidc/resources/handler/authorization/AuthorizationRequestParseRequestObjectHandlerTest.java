@@ -25,11 +25,25 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.PlainJWT;
 import com.nimbusds.jwt.SignedJWT;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
+import io.gravitee.am.gateway.handler.oidc.resources.endpoint.ProviderJWKSetEndpoint;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.http.HttpStatusCode;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -46,7 +60,7 @@ import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.*;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -54,6 +68,75 @@ import static org.mockito.Mockito.doNothing;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationRequestParseRequestObjectHandlerTest {
+
+    @Mock
+    private RequestObjectService roService;
+
+    @Mock
+    private PushedAuthorizationRequestService parService;
+
+    @Mock
+    private Domain domain;
+
+    private AuthorizationRequestParseRequestObjectHandler handler;
+
+    @Before
+    public void setUp() throws Exception {
+        handler = new AuthorizationRequestParseRequestObjectHandler(roService, domain, parService);
+    }
+
+    @Test
+    public void shouldExistWithoutProcessing() {
+        when(domain.usePlainFapiProfile()).thenReturn(false);
+
+        final RoutingContext context = mock(RoutingContext.class);
+        final Client client = new Client();
+        client.setRequireParRequest(false);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        final HttpServerRequest request = mock(HttpServerRequest.class);
+        when(request.getParam(Parameters.REQUEST)).thenReturn(null);
+        when(request.getParam(Parameters.REQUEST_URI)).thenReturn(null);
+
+        when(context.request()).thenReturn(request);
+        handler.handle(context);
+
+        verify(context).next();
+    }
+
+    @Test
+    public void shouldFailsWithout_Request_FapiMode() {
+        when(domain.usePlainFapiProfile()).thenReturn(true);
+
+        final RoutingContext context = mock(RoutingContext.class);
+        final Client client = new Client();
+        client.setRequireParRequest(false);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        final HttpServerRequest request = mock(HttpServerRequest.class);
+        when(request.getParam(Parameters.REQUEST)).thenReturn(null);
+        when(request.getParam(Parameters.REQUEST_URI)).thenReturn(null);
+
+        when(context.request()).thenReturn(request);
+        handler.handle(context);
+
+        verify(context, never()).next();
+        verify(context).fail(argThat(e -> e instanceof  InvalidRequestException));
+    }
+
+    @Test
+    public void shouldFailsWithout_Request_ParRequired() {
+        final RoutingContext context = mock(RoutingContext.class);
+        final Client client = new Client();
+        client.setRequireParRequest(true);
+        when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
+        final HttpServerRequest request = mock(HttpServerRequest.class);
+        when(request.getParam(Parameters.REQUEST_URI)).thenReturn(null);
+
+        when(context.request()).thenReturn(request);
+        handler.handle(context);
+
+        verify(context, never()).next();
+        verify(context).fail(argThat(e -> e instanceof  InvalidRequestException));
+    }
 
     private RSAKey getRSAKey() throws Exception {
         File file = new File(getClass().getClassLoader().getResource("postman_request_object/request_object.key").toURI());

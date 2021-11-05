@@ -88,6 +88,7 @@ public class ApplicationOAuthSettingsMongo {
     private boolean singleSignOut;
     private boolean silentReAuthentication;
     private List<ApplicationScopeSettingsMongo> scopeSettings;
+    private boolean requireParRequest;
 
     public String getClientId() {
         return clientId;
@@ -583,5 +584,13 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setScopeSettings(List<ApplicationScopeSettingsMongo> scopeSettings) {
         this.scopeSettings = scopeSettings;
+    }
+
+    public boolean isRequireParRequest() {
+        return requireParRequest;
+    }
+
+    public void setRequireParRequest(boolean requireParRequest) {
+        this.requireParRequest = requireParRequest;
     }
 }

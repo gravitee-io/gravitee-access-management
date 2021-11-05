@@ -23,6 +23,8 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnauthorizedClientException;
@@ -43,6 +45,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
@@ -67,7 +70,9 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
 
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
     private final static String LOGIN_ENDPOINT = "/login";
-    private final static String MFA_ENDPOINT = "/mfa/challenge";
+    private final static String LOGIN_CALLBACK_ENDPOINT = "/login/callback";
+    private final static String MFA_ENROLL_ENDPOINT = "/mfa/enroll";
+    private final static String MFA_CHALLENGE_ENDPOINT = "/mfa/challenge";
     private final static String USER_CONSENT_ENDPOINT = "/oauth/consent";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private final Domain domain;
@@ -328,10 +333,18 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
                 return false;
             }
 
-            final String refererPath = UriBuilder.fromURIString(referer).build().getPath();
+            final URI refererURI = UriBuilder.fromURIString(referer).build();
+            final String refererPath = refererURI.getPath();
+            final String socialAuthCallback = RequestUtils
+                    .getQueryParams(refererURI.getQuery(), false)
+                    .get(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
+            // check if the user has just completed its login flow
+            // or if he's coming from a social authentication
             return refererPath.contains(context.get(CONTEXT_PATH) + LOGIN_ENDPOINT)
-                    || refererPath.contains(context.get(CONTEXT_PATH) + MFA_ENDPOINT)
-                    || refererPath.contains(context.get(CONTEXT_PATH) + USER_CONSENT_ENDPOINT);
+                    || (refererPath.contains(context.get(CONTEXT_PATH) + MFA_ENROLL_ENDPOINT) && MfaUtils.isMfaSkipped(context.session()))
+                    || refererPath.contains(context.get(CONTEXT_PATH) + MFA_CHALLENGE_ENDPOINT)
+                    || refererPath.contains(context.get(CONTEXT_PATH) + USER_CONSENT_ENDPOINT)
+                    || (socialAuthCallback != null && socialAuthCallback.contains(context.get(CONTEXT_PATH) + LOGIN_CALLBACK_ENDPOINT));
         } catch (URISyntaxException e) {
             logger.debug("Unable to calculate referer url : {}", referer, e);
             return false;

@@ -119,11 +119,13 @@ public class RequestUtils {
      * @return all query parameters as a {@link MultiMap}.
      */
     public static MultiMap getQueryParams(String queryString, boolean hasPath) {
+        MultiMap queryParams = MultiMap.caseInsensitiveMultiMap();
+        if (queryString == null) {
+            return queryParams;
+        }
 
         QueryStringDecoder queryStringDecoder = new QueryStringDecoder(queryString, hasPath);
-        MultiMap queryParams = MultiMap.caseInsensitiveMultiMap();
         queryStringDecoder.parameters().forEach(queryParams::add);
-
         return queryParams;
     }
 
