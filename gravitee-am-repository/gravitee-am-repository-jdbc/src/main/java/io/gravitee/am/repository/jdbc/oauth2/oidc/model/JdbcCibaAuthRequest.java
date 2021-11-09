@@ -39,6 +39,8 @@ public class JdbcCibaAuthRequest {
     private String client;
     @Column("created_at")
     private LocalDateTime createdAt;
+    @Column("last_access_at")
+    private LocalDateTime lastAccessAt;
     @Column("expire_at")
     private LocalDateTime expireAt;
 
@@ -104,5 +106,13 @@ public class JdbcCibaAuthRequest {
 
     public void setExpireAt(LocalDateTime expireAt) {
         this.expireAt = expireAt;
+    }
+
+    public LocalDateTime getLastAccessAt() {
+        return lastAccessAt;
+    }
+
+    public void setLastAccessAt(LocalDateTime lastAccessAt) {
+        this.lastAccessAt = lastAccessAt;
     }
 }

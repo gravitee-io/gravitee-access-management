@@ -83,9 +83,10 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                 // login_hint is provided (look for username or email)
                 final FilterCriteria criteria = new FilterCriteria();
 
-                criteria.setQuoteFilterValue(false);
+                criteria.setQuoteFilterValue(true);
                 criteria.setFilterName(authRequest.getLoginHint().contains("@") ? "email" : "username");
                 criteria.setFilterValue(authRequest.getLoginHint());
+                criteria.setOperator("eq");
 
                 return userService.findByDomainAndCriteria(domain.getId(), criteria).map(users -> {
                     if (users.size() != 1) {

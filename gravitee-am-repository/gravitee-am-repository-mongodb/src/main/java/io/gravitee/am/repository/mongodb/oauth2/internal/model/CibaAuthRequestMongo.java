@@ -44,6 +44,9 @@ public class CibaAuthRequestMongo {
     @BsonProperty("created_at")
     private Date createdAt;
 
+    @BsonProperty("last_acess_at")
+    private Date lastAccessAt;
+
     @BsonProperty("expire_at")
     private Date expireAt;
 
@@ -109,6 +112,14 @@ public class CibaAuthRequestMongo {
 
     public void setExpireAt(Date expireAt) {
         this.expireAt = expireAt;
+    }
+
+    public Date getLastAccessAt() {
+        return lastAccessAt;
+    }
+
+    public void setLastAccessAt(Date lastAccessAt) {
+        this.lastAccessAt = lastAccessAt;
     }
 
     @Override

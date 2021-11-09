@@ -37,6 +37,10 @@ public class CibaAuthRequest {
      * The auth_req_id creation date
      */
     private Date createdAt;
+    /**
+     * The auth_req_id last access date
+     */
+    private Date lastAccessAt;
 
     /**
      * The auth_req_id expiration date
@@ -125,5 +129,13 @@ public class CibaAuthRequest {
 
     public void setUserCode(String userCode) {
         this.userCode = userCode;
+    }
+
+    public Date getLastAccessAt() {
+        return lastAccessAt;
+    }
+
+    public void setLastAccessAt(Date lastAccessAt) {
+        this.lastAccessAt = lastAccessAt;
     }
 }

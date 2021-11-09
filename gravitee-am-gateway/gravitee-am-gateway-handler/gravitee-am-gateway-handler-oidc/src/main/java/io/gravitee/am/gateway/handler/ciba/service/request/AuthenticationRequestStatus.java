@@ -22,5 +22,5 @@ package io.gravitee.am.gateway.handler.ciba.service.request;
 public enum AuthenticationRequestStatus {
     ONGOING,
     SUCCESS,
-    FAILURE;
+    REJECTED;
 }

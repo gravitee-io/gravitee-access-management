@@ -44,4 +44,8 @@ public interface Parameters {
      * A positive integer allowing the client to request the expires_in value for the auth_req_id the server will return
      */
     String REQUESTED_EXPIRY = "requested_expiry";
+    /**
+     * The unique identifier to identify the authentication request (transaction) made by the Client.
+     */
+    String AUTH_REQ_ID = "auth_req_id";
 }

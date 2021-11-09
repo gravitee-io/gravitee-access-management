@@ -95,6 +95,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReqMongo.setUserCode(authReq.getUserCode());
         authReqMongo.setExpireAt(authReq.getExpireAt());
         authReqMongo.setCreatedAt(authReq.getCreatedAt());
+        authReqMongo.setLastAccessAt(authReq.getLastAccessAt());
 
         return authReqMongo;
     }
@@ -113,6 +114,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReq.setUserCode(authReqMongo.getUserCode());
         authReq.setCreatedAt(authReqMongo.getCreatedAt());
         authReq.setExpireAt(authReqMongo.getExpireAt());
+        authReq.setLastAccessAt(authReqMongo.getLastAccessAt());
 
         return authReq;
     }

@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.ciba.service;
+package io.gravitee.am.gateway.handler.ciba.exception;
 
-import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.reactivex.Single;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationRequestService {
-
-    Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client);
-
-    /**
-     * @param authReqId
-     * @return
-     */
-    Single<CibaAuthRequest> retrieve(Domain domain, String authReqId);
+public class AuthenticationRequestNotFoundException extends InvalidRequestException {
+    public AuthenticationRequestNotFoundException(String authReqId) {
+        super(String.format("Authentication Request %s not found", authReqId));
+    }
 }
