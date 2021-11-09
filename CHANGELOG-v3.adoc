@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/451?closed=1[AM - 3.12.4 (2021-11-05)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [par] request_uri should be accepted without scope parameter https://github.com/gravitee-io/issues/issues/6464[#6464]
+
+*_General_*
+
+- Merge 3.10.7 https://github.com/gravitee-io/issues/issues/6503[#6503]
+- Merge 3.10.8 https://github.com/gravitee-io/issues/issues/6505[#6505]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/450?closed=1[AM - 3.10.8 (2021-11-04)]
 
 === Bug fixes
