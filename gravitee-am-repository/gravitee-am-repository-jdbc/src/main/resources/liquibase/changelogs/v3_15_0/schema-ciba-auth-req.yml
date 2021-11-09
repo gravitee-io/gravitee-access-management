@@ -13,8 +13,9 @@ databaseChangeLog:
               - column: { name: client, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: subject, type: nvarchar(320), constraints: { nullable: false } }
               - column: { name: status, type: nvarchar(32), constraints: { nullable: false } }
-              - column: {name: created_at, type: timestamp(6), constraints: { nullable: false } }
-              - column: {name: expire_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: last_access_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: false } }
               - column: { name: user_code, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: scopes, type: clob, constraints: { nullable: true } }
 

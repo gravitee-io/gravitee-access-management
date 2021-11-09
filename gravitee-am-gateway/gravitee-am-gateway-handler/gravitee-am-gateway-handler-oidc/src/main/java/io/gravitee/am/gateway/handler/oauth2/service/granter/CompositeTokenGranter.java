@@ -16,11 +16,13 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter;
 
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
+import io.gravitee.am.gateway.handler.oauth2.service.granter.ciba.CibaTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
@@ -93,6 +95,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private ScopeManager scopeManager;
 
+    @Autowired
+    private AuthenticationRequestService authenticationRequestService;
+
     public CompositeTokenGranter() { }
 
     @Override
@@ -129,5 +134,6 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment));
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager));
         addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, rulesEngine, executionContextFactory));
+        addTokenGranter(GrantType.CIBA_GRANT_TYPE, new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain));
     }
 }

@@ -15,8 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.ciba.service;
 
+import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
+import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
+import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
@@ -61,10 +65,37 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         entity.setUserCode(request.getUserCode());
         entity.setStatus(AuthenticationRequestStatus.ONGOING.name());
         entity.setCreatedAt(new Date(now.toEpochMilli()));
+        entity.setLastAccessAt(new Date(now.toEpochMilli()));
         entity.setExpireAt(new Date(now.plusSeconds(ttl).toEpochMilli()));
 
         LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds", entity.getId(), ttl);
 
         return authRequestRepository.create(entity);
+    }
+
+    @Override
+    public Single<CibaAuthRequest> retrieve(Domain domain, String authReqId) {
+        LOGGER.debug("Search for authentication request with id '{}'", authReqId);
+        return this.authRequestRepository.findById(authReqId)
+                .switchIfEmpty(Single.error(new AuthenticationRequestNotFoundException(authReqId)))
+                .flatMap(request -> {
+                    switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
+                        case ONGOING:
+                            // Check if the request interval is respected by the client
+                            // if the client request to often the endpoint, throws a SlowDown error
+                            // otherwise, update the last Access date before sending the pending exception
+                            final int interval = domain.getOidc().getCibaSettings().getTokenReqInterval();
+                            if (request.getLastAccessAt().toInstant().plusSeconds(interval).isAfter(Instant.now())) {
+                                return Single.error(new SlowDownException());
+                            }
+                            request.setLastAccessAt(new Date());
+                            return this.authRequestRepository.update(request).flatMap(__ -> Single.error(new AuthorizationPendingException()));
+                        case REJECTED:
+                            return this.authRequestRepository.delete(authReqId).toSingle(() -> { throw new AccessDeniedException(); });
+                        default:
+                            return this.authRequestRepository.delete(authReqId).toSingle(() -> request);
+                    }
+                });
+
     }
 }

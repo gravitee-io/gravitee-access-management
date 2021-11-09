@@ -55,6 +55,7 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         authRequest.setId(id);
         authRequest.setStatus("ONGOING");
         authRequest.setCreatedAt(new Date());
+        authRequest.setLastAccessAt(new Date());
         authRequest.setExpireAt(new Date(System.currentTimeMillis() + 60_000));
         authRequest.setScopes(Set.of("openid"));
         authRequest.setSubject("subjectvalue");
@@ -79,6 +80,7 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         authRequest.setId(id);
         authRequest.setStatus("ONGOING");
         authRequest.setCreatedAt(new Date());
+        authRequest.setLastAccessAt(new Date());
         authRequest.setExpireAt(new Date(System.currentTimeMillis() + 60_000));
         authRequest.setScopes(Set.of("openid"));
         authRequest.setSubject("subjectvalue");
@@ -116,6 +118,7 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         authRequest.setId(id);
         authRequest.setStatus("ONGOING");
         authRequest.setCreatedAt(new Date());
+        authRequest.setLastAccessAt(new Date());
         authRequest.setExpireAt(new Date(System.currentTimeMillis() + 60_000));
         authRequest.setScopes(Set.of("openid"));
         authRequest.setSubject("subjectvalue");
