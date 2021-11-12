@@ -305,6 +305,15 @@ gateway:
 #  retryInterval: 1000 # delay in ms between two retries (default: 1000)
 #  expirationTimeOut: 300 # the end of validity of the data in seconds (default 300 = 5 minutes)
 
+# Configuration of geoip (requires geoip-plugin)
+#geoip:
+#  database:
+#    city:
+#      filename: /path/to/GeoLite2-City.mmdb #if null defaults to the embedded db
+#      watch: true  #if null defaults to false
+#      cache:
+#        capacity: 8200  #if null defaults to 4096
+
 # Referenced properties
 ds:
   mongodb:
