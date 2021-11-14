@@ -55,8 +55,8 @@
             </div>
         </div>
     </div>
-    <script th:src="@{../assets/js/webauthn.auth.js}"></script>
-    <script th:src="@{../assets/js/webauthn-login.js}"></script>
+    <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+    <script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
     <script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 
     <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"

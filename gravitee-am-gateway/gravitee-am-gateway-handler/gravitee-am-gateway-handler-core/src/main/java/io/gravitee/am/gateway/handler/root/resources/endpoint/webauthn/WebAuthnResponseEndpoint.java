@@ -47,6 +47,9 @@ import org.slf4j.LoggerFactory;
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
  *
+ *  // TODO : This endpoint exists only because of https://github.com/gravitee-io/issues/issues/7158
+ *  // should be removed in a future version of AM
+ *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
