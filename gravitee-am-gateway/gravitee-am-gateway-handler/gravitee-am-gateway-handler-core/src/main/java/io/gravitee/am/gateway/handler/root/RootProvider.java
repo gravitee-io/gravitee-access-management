@@ -57,9 +57,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
@@ -132,8 +130,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_CONFIRM_REGISTRATION = "/confirmRegistration";
     public static final String PATH_RESET_PASSWORD = "/resetPassword";
     public static final String PATH_WEBAUTHN_REGISTER = "/webauthn/register";
+    public static final String PATH_WEBAUTHN_REGISTER_CREDENTIALS = "/webauthn/register/credentials";
     public static final String PATH_WEBAUTHN_RESPONSE = "/webauthn/response";
     public static final String PATH_WEBAUTHN_LOGIN = "/webauthn/login";
+    public static final String PATH_WEBAUTHN_LOGIN_CREDENTIALS = "/webauthn/login/credentials";
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
@@ -368,11 +368,19 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine));
+                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, credentialService));
+        rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
+                .handler(clientRequestParseHandler)
+                .handler(webAuthnAccessHandler)
+                .handler(new WebAuthnRegisterCredentialsEndpoint(userAuthenticationManager, domain, webAuthn));
         rootRouter.route(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, deviceIdentifierManager, deviceService));
+                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, deviceIdentifierManager, deviceService, credentialService));
+        rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
+                .handler(clientRequestParseHandler)
+                .handler(webAuthnAccessHandler)
+                .handler(new WebAuthnLoginCredentialsEndpoint(userAuthenticationManager, webAuthn));
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -513,10 +521,16 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .route(PATH_WEBAUTHN_REGISTER)
                 .handler(sessionHandler);
         router
+                .route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
+                .handler(sessionHandler);
+        router
                 .route(PATH_WEBAUTHN_RESPONSE)
                 .handler(sessionHandler);
         router
                 .route(PATH_WEBAUTHN_LOGIN)
+                .handler(sessionHandler);
+        router
+                .route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(sessionHandler);
 
         // Identifier First login endpoint
