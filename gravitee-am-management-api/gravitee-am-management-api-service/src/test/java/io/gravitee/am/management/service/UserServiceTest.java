@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -28,13 +27,12 @@ import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.user.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,8 +45,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -66,7 +64,7 @@ public class UserServiceTest {
     private final UserService userService = new UserServiceImpl();
 
     @Mock
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -102,7 +100,12 @@ public class UserServiceTest {
     private MembershipService membershipService;
 
     @Spy
-    private UserValidator userValidator = new UserValidator();
+    private UserValidator userValidator = new UserValidatorImpl(
+            NAME_STRICT_PATTERN,
+            NAME_LAX_PATTERN,
+            USERNAME_PATTERN,
+            new EmailValidatorImpl()
+    );
 
     @Before
     public void setUp() {
@@ -423,7 +426,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordValidator).isValid(password);
+        doReturn(true).when(passwordService).isValid(password, null);
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -452,7 +455,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordValidator).isValid(password);
+        doReturn(true).when(passwordService).isValid(password, null);
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -574,7 +577,7 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(InvalidPasswordException.class);
-        verify(passwordValidator, times(1)).isValid(password);
+        verify(passwordService, times(1)).isValid(password, null);
     }
 
     @Test
@@ -593,6 +596,6 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(InvalidPasswordException.class);
-        verify(passwordValidator, times(1)).isValid(password);
+        verify(passwordService, times(1)).isValid(password, null);
     }
 }

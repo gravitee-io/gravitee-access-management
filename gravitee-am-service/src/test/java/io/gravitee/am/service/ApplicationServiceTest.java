@@ -37,6 +37,7 @@ import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
 import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -68,6 +69,9 @@ public class ApplicationServiceTest {
 
     @InjectMocks
     private final ApplicationService applicationService = new ApplicationServiceImpl();
+
+    @Mock
+    private AccountSettingsValidator accountSettingsValidator;
 
     @Mock
     private ApplicationRepository applicationRepository;
@@ -546,6 +550,7 @@ public class ApplicationServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
@@ -582,6 +587,7 @@ public class ApplicationServiceTest {
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -746,6 +752,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -792,6 +799,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -832,6 +840,7 @@ public class ApplicationServiceTest {
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
+        doReturn(false).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -863,6 +872,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -893,6 +903,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();
@@ -1012,6 +1023,7 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1038,6 +1050,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1063,6 +1076,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1088,6 +1102,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1113,6 +1128,7 @@ public class ApplicationServiceTest {
         when(patchClient.patch(any())).thenReturn(client);
         when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -1136,6 +1152,7 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
+        doReturn(true).when(accountSettingsValidator).validate(any());
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
@@ -1162,6 +1179,7 @@ public class ApplicationServiceTest {
 
         when(patchClient.patch(any())).thenReturn(client);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.assertError(InvalidClientMetadataException.class);
@@ -1191,6 +1209,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(new Application()));
         when(scopeService.validateScope(DOMAIN, Collections.emptyList())).thenReturn(Single.just(true));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
         testObserver.awaitTerminalEvent();

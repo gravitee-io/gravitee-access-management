@@ -23,7 +23,7 @@ import javax.validation.constraints.Pattern;
 import java.util.Date;
 import java.util.Map;
 
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

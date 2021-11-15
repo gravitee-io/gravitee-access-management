@@ -34,6 +34,7 @@ public class PatchPasswordSettings {
     private Optional<Boolean> includeSpecialCharacters;
     private Optional<Boolean> lettersInMixedCase;
     private Optional<Integer> maxConsecutiveLetters;
+    private Optional<Boolean> excludePasswordsInDictionary;
 
     public Optional<Integer> getMinLength() {
         return minLength;
@@ -91,6 +92,14 @@ public class PatchPasswordSettings {
         this.inherited = inherited;
     }
 
+    public Optional<Boolean> getExcludePasswordsInDictionary() {
+        return excludePasswordsInDictionary;
+    }
+
+    public void setExcludePasswordsInDictionary(Optional<Boolean> excludePasswordsInDictionary) {
+        this.excludePasswordsInDictionary = excludePasswordsInDictionary;
+    }
+
     public PasswordSettings patch(PasswordSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
@@ -101,6 +110,7 @@ public class PatchPasswordSettings {
         SetterUtils.safeSet(toPatch::setIncludeSpecialCharacters, this.includeSpecialCharacters);
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
+        SetterUtils.safeSet(toPatch::setExcludePasswordsInDictionary, this.excludePasswordsInDictionary);
 
         if (toPatch.getMinLength() != null && toPatch.getMaxLength() != null) {
             if (toPatch.getMinLength() > toPatch.getMaxLength()) {

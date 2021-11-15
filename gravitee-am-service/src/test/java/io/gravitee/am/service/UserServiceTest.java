@@ -26,7 +26,8 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -43,6 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -57,7 +59,12 @@ public class UserServiceTest {
     private UserService userService = new UserServiceImpl();
 
     @Spy
-    private UserValidator userValidator = new UserValidator();
+    private UserValidatorImpl userValidator = new UserValidatorImpl(
+            NAME_STRICT_PATTERN,
+            NAME_LAX_PATTERN,
+            USERNAME_PATTERN,
+            new EmailValidatorImpl()
+    );
 
     @Mock
     private UserRepository userRepository;
@@ -69,13 +76,6 @@ public class UserServiceTest {
     private CredentialService credentialService;
 
     private final static String DOMAIN = "domain1";
-
-    /*
-    @Before
-    public void setUp() {
-        doReturn(Completable.complete()).when(userValidator).validate(any());
-    }
-     */
 
     @Test
     public void shouldFindById() {

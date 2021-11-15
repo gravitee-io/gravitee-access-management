@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.email;
+
+import org.springframework.stereotype.Component;
 
 import java.util.regex.Pattern;
 
@@ -24,7 +26,8 @@ import java.util.regex.Pattern;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailValidator {
+@Component
+public class EmailValidatorImpl implements EmailValidator {
 
     public static final int EMAIL_MAX_LENGTH = 320;
     public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
@@ -38,7 +41,8 @@ public class EmailValidator {
      * @param email the email to validate
      * @return <code>true</code> if email is valid, <code>false</code> else.
      */
-    public static boolean isValid(String email) {
+    @Override
+    public Boolean validate(String email) {
         return email == null || (email.length() <= EMAIL_MAX_LENGTH && PATTERN.matcher(email).matches());
     }
 }

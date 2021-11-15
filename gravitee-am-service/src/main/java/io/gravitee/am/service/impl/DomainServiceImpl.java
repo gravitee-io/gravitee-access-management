@@ -39,9 +39,9 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.DomainAuditBuilder;
-import io.gravitee.am.service.validators.AccountSettingsValidator;
-import io.gravitee.am.service.validators.DomainValidator;
-import io.gravitee.am.service.validators.VirtualHostValidator;
+import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.domain.DomainValidator;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
 import io.reactivex.*;
 import org.slf4j.Logger;
@@ -78,6 +78,15 @@ public class DomainServiceImpl implements DomainService {
     @Lazy
     @Autowired
     private DomainRepository domainRepository;
+
+    @Autowired
+    private DomainValidator domainValidator;
+
+    @Autowired
+    private VirtualHostValidator virtualHostValidator;
+
+    @Autowired
+    private AccountSettingsValidator accountSettingsValidator;
 
     @Autowired
     private ApplicationService applicationService;
@@ -320,7 +329,7 @@ public class DomainServiceImpl implements DomainService {
                 .flatMapSingle(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
-                    if (AccountSettingsValidator.hasInvalidResetPasswordFields(accountSettings)) {
+                    if (!accountSettingsValidator.validate(accountSettings)) {
                        return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     toPatch.setHrid(IdGenerator.generate(toPatch.getName()));
@@ -537,9 +546,9 @@ public class DomainServiceImpl implements DomainService {
     private Completable validateDomain(Domain domain, Environment environment) {
 
         // Get environment domain restrictions and validate all data are correctly defined.
-        return DomainValidator.validate(domain, environment.getDomainRestrictions())
+        return domainValidator.validate(domain, environment.getDomainRestrictions())
                 .andThen(findAll()
-                        .flatMapCompletable(domains -> VirtualHostValidator.validateDomainVhosts(domain, domains)));
+                        .flatMapCompletable(domains -> virtualHostValidator.validateDomainVhosts(domain, domains)));
     }
 
     private void setDeployMode(Domain domain, Environment environment) {

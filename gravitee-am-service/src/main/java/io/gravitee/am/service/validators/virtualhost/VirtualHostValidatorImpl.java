@@ -13,30 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.virtualhost;
 
 import com.google.common.net.InternetDomainName;
 import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.service.exception.InvalidVirtualHostException;
+import io.gravitee.am.service.validators.path.PathValidator;
 import io.reactivex.Completable;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class VirtualHostValidator {
+@Component
+public class VirtualHostValidatorImpl implements VirtualHostValidator {
 
-    public static Completable validate(VirtualHost vhost, List<String> domainRestrictions) {
+    private final PathValidator pathValidator;
 
-        String host = vhost.getHost();
+    public VirtualHostValidatorImpl(PathValidator pathValidator) {
+        this.pathValidator = pathValidator;
+    }
+
+    @Override
+    public Completable validate(VirtualHost virtualHost, List<String> domainRestrictions) {
+
+        String host = virtualHost.getHost();
 
         if (host == null || "".equals(host)) {
             return Completable.error(new InvalidVirtualHostException("Host is required"));
@@ -49,7 +58,7 @@ public class VirtualHostValidator {
             return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + "] is invalid"));
         }
 
-        if(!isValidDomainOrSubDomain(hostWithoutPort, domainRestrictions)) {
+        if (!isValidDomainOrSubDomain(hostWithoutPort, domainRestrictions)) {
             return Completable.error(new InvalidVirtualHostException("Host [" + hostWithoutPort + "] must be a subdomain of " + domainRestrictions));
         }
 
@@ -68,10 +77,11 @@ public class VirtualHostValidator {
             }
         }
 
-        return PathValidator.validate(vhost.getPath());
+        return pathValidator.validate(virtualHost.getPath());
     }
 
-    public static Completable validateDomainVhosts(Domain domain, List<Domain> domains) {
+    @Override
+    public Completable validateDomainVhosts(Domain domain, List<Domain> domains) {
 
         List<VirtualHost> otherVhosts = domains.stream()
                 .filter(d -> !d.getId().equals(domain.getId()))
@@ -98,22 +108,15 @@ public class VirtualHostValidator {
 
                 List<String> pathsToCheck = paths;
 
-                if(!vhost.getPath().equals("/")) {
+                if (!vhost.getPath().equals("/")) {
                     // Check against other path of domains in context path mode when trying to use '/'.
                     pathsToCheck = new ArrayList<>(paths);
                     pathsToCheck.addAll(otherPaths);
                 }
 
                 // Check is the domain context path overlap a path of another domain.
-                for (String otherPath : pathsToCheck) {
-                    if (overlap(vhost.getPath(), otherPath)) {
-                        return Completable.error(new InvalidVirtualHostException("Path [" + vhost.getPath() + "] overlap path defined in another security domain"));
-                    }
-
-                    if (overlap(otherPath, vhost.getPath())) {
-                        return Completable.error(new InvalidVirtualHostException("Path [" + vhost.getPath() + "] is overlapped by another security domain"));
-                    }
-                }
+                var completableError = checkIfOverlaps(vhost.getPath(), pathsToCheck);
+                if (completableError != null) return completableError;
             }
         } else {
             // Domain listen on every hosts. Need to check if path overlap (or is overlapped) with all other domain path (including vhost path).
@@ -121,18 +124,24 @@ public class VirtualHostValidator {
             paths.addAll(otherVhosts.stream().map(VirtualHost::getPath).filter(path -> !"/".equals(path)).collect(Collectors.toList()));
 
             // Check is the domain context path overlap a path of another domain.
-            for (String otherPath : paths) {
-                if (overlap(domain.getPath(), otherPath)) {
-                    return Completable.error(new InvalidVirtualHostException("Path [" + domain.getPath() + "] overlap path defined in another security domain"));
-                }
-
-                if (overlap(otherPath, domain.getPath())) {
-                    return Completable.error(new InvalidVirtualHostException("Path [" + domain.getPath() + "] is overlapped by another security domain"));
-                }
-            }
+            var completableError = checkIfOverlaps(domain.getPath(), paths);
+            if (completableError != null) return completableError;
         }
 
         return Completable.complete();
+    }
+
+    private static Completable checkIfOverlaps(String sourcePath, List<String> pathsToCheck) {
+        for (String otherPath : pathsToCheck) {
+            if (overlap(sourcePath, otherPath)) {
+                return Completable.error(new InvalidVirtualHostException("Path [" + sourcePath + "] overlap path defined in another security domain"));
+            }
+
+            if (overlap(otherPath, sourcePath)) {
+                return Completable.error(new InvalidVirtualHostException("Path [" + sourcePath + "] is overlapped by another security domain"));
+            }
+        }
+        return null;
     }
 
     private static boolean overlap(String path, String other) {
@@ -146,7 +155,7 @@ public class VirtualHostValidator {
         return sanitizedOther.startsWith(sanitizedPath);
     }
 
-    public static boolean isValidDomainOrSubDomain(String domain, List<String> domainRestrictions) {
+    public boolean isValidDomainOrSubDomain(String domain, List<String> domainRestrictions) {
 
         boolean isSubDomain = false;
 
@@ -159,7 +168,7 @@ public class VirtualHostValidator {
             InternetDomainName domainIDN = InternetDomainName.from(domain);
             InternetDomainName parentIDN = InternetDomainName.from(domainRestriction);
 
-            if(domainIDN.equals(parentIDN)) {
+            if (domainIDN.equals(parentIDN)) {
                 return true;
             }
 

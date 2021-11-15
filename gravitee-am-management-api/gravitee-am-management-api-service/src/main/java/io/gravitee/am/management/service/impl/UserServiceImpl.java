@@ -26,10 +26,12 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -425,8 +427,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     private boolean isInvalidUserPassword(String password, Application application, Domain domain) {
         return PasswordSettings.getInstance(application, domain)
-                .map(ps -> !passwordValidator.isValid(password, ps))
-                .orElseGet(() -> !passwordValidator.isValid(password));
+                .map(ps -> !passwordService.isValid(password, ps))
+                .orElseGet(() -> !passwordService.isValid(password, null));
     }
 
     private String getUserRegistrationToken(User user) {

@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.service.validators;
 
+import io.gravitee.am.service.validators.email.EmailValidator;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -50,19 +53,24 @@ public class EmailValidatorTest {
             "email@gravitee",
             "email@gravitee..io"
     };
+    private EmailValidator emailValidator;
+
+    @Before
+    public void before(){
+        emailValidator = new EmailValidatorImpl();
+    }
 
     @Test
     public void validate() {
-
         for (String email : VALID_EMAILS) {
-            assertTrue(email + " should be valid", EmailValidator.isValid(email));
+            assertTrue(email + " should be valid", emailValidator.validate(email));
         }
     }
 
     @Test
     public void validate_notValid() {
         for (String email : INVALID_EMAILS) {
-            assertFalse(email + " should be invalid", EmailValidator.isValid(email));
+            assertFalse(email + " should be invalid", emailValidator.validate(email));
         }
     }
 }

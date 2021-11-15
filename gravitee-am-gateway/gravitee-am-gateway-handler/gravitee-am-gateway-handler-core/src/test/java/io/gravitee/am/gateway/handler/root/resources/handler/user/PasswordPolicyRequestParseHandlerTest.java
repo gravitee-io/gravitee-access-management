@@ -18,8 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.user;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
@@ -30,7 +30,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,7 +41,7 @@ import static org.mockito.Mockito.*;
 public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
 
     @Mock
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordValidator;
 
     private PasswordPolicyRequestParseHandler passwordPolicyRequestParseHandler;
 

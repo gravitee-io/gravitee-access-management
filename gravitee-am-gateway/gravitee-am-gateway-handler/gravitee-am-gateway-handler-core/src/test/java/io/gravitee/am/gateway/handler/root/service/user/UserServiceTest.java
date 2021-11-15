@@ -32,10 +32,12 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -63,6 +65,9 @@ public class UserServiceTest {
     private Domain domain;
 
     @Mock
+    private EmailValidator emailValidator;
+
+    @Mock
     private IdentityProviderManager identityProviderManager;
 
     @Mock
@@ -76,6 +81,11 @@ public class UserServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Before
+    public void before(){
+        doReturn(true).when(emailValidator).validate(anyString());
+    }
 
     @Test
     public void shouldNotResetPassword_userInactive() {

@@ -29,7 +29,7 @@ import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.EntrypointAuditBuilder;
-import io.gravitee.am.service.validators.VirtualHostValidator;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -57,17 +57,18 @@ public class EntrypointServiceImpl implements EntrypointService {
     private final Logger LOGGER = LoggerFactory.getLogger(EntrypointServiceImpl.class);
 
     private final EntrypointRepository entrypointRepository;
-
     private final OrganizationService organizationService;
-
     private final AuditService auditService;
+    private final VirtualHostValidator virtualHostValidator;
 
     public EntrypointServiceImpl(@Lazy EntrypointRepository entrypointRepository,
                                  @Lazy OrganizationService organizationService,
-                                 AuditService auditService) {
+                                 AuditService auditService,
+                                 VirtualHostValidator virtualHostValidator) {
         this.entrypointRepository = entrypointRepository;
         this.organizationService = organizationService;
         this.auditService = auditService;
+        this.virtualHostValidator = virtualHostValidator;
     }
 
     @Override
@@ -205,7 +206,7 @@ public class EntrypointServiceImpl implements EntrypointService {
             return organizationService.findById(entrypoint.getOrganizationId())
                     .flatMapCompletable(organization -> {
                         String hostWithoutPort = url.getHost().split(":")[0];
-                        if (!VirtualHostValidator.isValidDomainOrSubDomain(hostWithoutPort, organization.getDomainRestrictions())) {
+                        if (!virtualHostValidator.isValidDomainOrSubDomain(hostWithoutPort, organization.getDomainRestrictions())) {
                             return Completable.error(new InvalidEntrypointException("Host [" + hostWithoutPort + "] must be a subdomain of " + organization.getDomainRestrictions()));
                         }
 

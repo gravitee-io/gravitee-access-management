@@ -16,6 +16,9 @@
 package io.gravitee.am.service.validators;
 
 import io.gravitee.am.service.exception.InvalidPathException;
+import io.gravitee.am.service.validators.path.PathValidator;
+import io.gravitee.am.service.validators.path.PathValidatorImpl;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -26,10 +29,17 @@ import static org.junit.Assert.*;
  */
 public class PathValidatorTest {
 
+    private PathValidator pathValidator;
+
+    @Before
+    public void before(){
+        pathValidator = new PathValidatorImpl();
+    }
+
     @Test
     public void validate() {
 
-        Throwable throwable = PathValidator.validate("/test").blockingGet();
+        Throwable throwable = pathValidator.validate("/test").blockingGet();
 
         assertNull(throwable);
     }
@@ -37,7 +47,7 @@ public class PathValidatorTest {
     @Test
     public void validateSpecialCharacters() {
 
-        Throwable throwable = PathValidator.validate("/test/subpath/subpath2_with-and.dot/AND_UPPERCASE").blockingGet();
+        Throwable throwable = pathValidator.validate("/test/subpath/subpath2_with-and.dot/AND_UPPERCASE").blockingGet();
 
         assertNull(throwable);
     }
@@ -45,7 +55,7 @@ public class PathValidatorTest {
     @Test
     public void validate_invalidEmptyPath() {
 
-        Throwable throwable = PathValidator.validate("").blockingGet();
+        Throwable throwable = pathValidator.validate("").blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidPathException);
@@ -54,7 +64,7 @@ public class PathValidatorTest {
     @Test
     public void validate_nullPath() {
 
-        Throwable throwable = PathValidator.validate(null).blockingGet();
+        Throwable throwable = pathValidator.validate(null).blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidPathException);
@@ -63,7 +73,7 @@ public class PathValidatorTest {
     @Test
     public void validate_multipleSlashesPath() {
 
-        Throwable throwable = PathValidator.validate("/////test////").blockingGet();
+        Throwable throwable = pathValidator.validate("/////test////").blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidPathException);
@@ -72,7 +82,7 @@ public class PathValidatorTest {
     @Test
     public void validate_invalidCharacters() {
 
-        Throwable throwable = PathValidator.validate("/test$:\\;,+").blockingGet();
+        Throwable throwable = pathValidator.validate("/test$:\\;,+").blockingGet();
 
         assertNotNull(throwable);
         assertTrue(throwable instanceof InvalidPathException);

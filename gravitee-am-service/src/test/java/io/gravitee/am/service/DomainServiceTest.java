@@ -40,6 +40,9 @@ import io.gravitee.am.service.impl.DomainServiceImpl;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
+import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.domain.DomainValidator;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -88,6 +91,15 @@ public class DomainServiceTest {
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
+
+    @Mock
+    private DomainValidator domainValidator;
+
+    @Mock
+    private VirtualHostValidator virtualHostValidator;
+
+    @Mock
+    private AccountSettingsValidator accountSettingsValidator;
 
     @Mock
     private Domain domain;
@@ -287,6 +299,8 @@ public class DomainServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(new Role()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
         TestObserver testObserver = domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain, new DefaultUser("username")).test();
         testObserver.awaitTerminalEvent();
@@ -324,7 +338,6 @@ public class DomainServiceTest {
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when((domainRepository.findAll())).thenReturn(Flowable.empty());
-        when(domainRepository.create(any(Domain.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
         domainService.create(ORGANIZATION_ID, ENVIRONMENT_ID, newDomain).subscribe(testObserver);
@@ -380,6 +393,9 @@ public class DomainServiceTest {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.awaitTerminalEvent();
@@ -412,6 +428,9 @@ public class DomainServiceTest {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.awaitTerminalEvent();
@@ -447,6 +466,9 @@ public class DomainServiceTest {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.awaitTerminalEvent();
@@ -477,6 +499,7 @@ public class DomainServiceTest {
         domain.setAccountSettings(accountSettings);
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
+        doReturn(false).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.awaitTerminalEvent();
@@ -512,6 +535,7 @@ public class DomainServiceTest {
         when(patchDomain.patch(any())).thenReturn(domain);
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, domain.getHrid())).thenReturn(Maybe.just(otherDomain));
+        doReturn(true).when(accountSettingsValidator).validate(any());
 
         TestObserver testObserver = domainService.patch("my-domain", patchDomain).test();
         testObserver.assertError(DomainAlreadyExistsException.class);

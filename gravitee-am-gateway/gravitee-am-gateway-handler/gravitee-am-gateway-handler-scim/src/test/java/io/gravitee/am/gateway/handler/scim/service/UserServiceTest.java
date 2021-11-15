@@ -31,9 +31,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.user.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -52,6 +54,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -68,7 +71,12 @@ public class UserServiceTest {
     private UserService userService = new UserServiceImpl();
 
     @Spy
-    private UserValidator userValidator = new UserValidator();
+    private UserValidator userValidator = new UserValidatorImpl(
+            NAME_STRICT_PATTERN,
+            NAME_LAX_PATTERN,
+            USERNAME_PATTERN,
+            new EmailValidatorImpl()
+    );
 
     @Mock
     private UserRepository userRepository;
@@ -86,7 +94,7 @@ public class UserServiceTest {
     private GroupService groupService;
 
     @Mock
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -197,7 +205,7 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
-        when(passwordValidator.isValid("user-password")).thenReturn(true);
+        when(passwordService.isValid("user-password", null)).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
         testObserver.assertNoErrors();
@@ -221,7 +229,7 @@ public class UserServiceTest {
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(null);
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(passwordValidator.isValid("user-password")).thenReturn(true);
+        when(passwordService.isValid("user-password", null)).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
         testObserver.assertError(InvalidValueException.class);

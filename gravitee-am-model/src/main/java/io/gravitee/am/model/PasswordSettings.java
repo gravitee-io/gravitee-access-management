@@ -64,6 +64,11 @@ public class PasswordSettings {
      */
     private Integer maxConsecutiveLetters;
 
+    /**
+     * Excludes passwords contained within password dictionary
+     */
+    private Boolean excludePasswordsInDictionary;
+
     public PasswordSettings() {
 
     }
@@ -132,6 +137,14 @@ public class PasswordSettings {
 
     public void setInherited(boolean inherited) {
         this.inherited = inherited;
+    }
+
+    public Boolean isExcludePasswordsInDictionary() {
+        return excludePasswordsInDictionary;
+    }
+
+    public void setExcludePasswordsInDictionary(Boolean excludePasswordsInDictionary) {
+        this.excludePasswordsInDictionary = excludePasswordsInDictionary;
     }
 
     public static Optional<PasswordSettings> getInstance(PasswordSettingsAware passwordSettingsAware, Domain domain) {

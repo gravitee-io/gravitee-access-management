@@ -24,8 +24,8 @@ import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.Map;
 
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_MAX_LENGTH;
-import static io.gravitee.am.service.validators.EmailValidator.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_MAX_LENGTH;
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compisegne at graviteesource.com)

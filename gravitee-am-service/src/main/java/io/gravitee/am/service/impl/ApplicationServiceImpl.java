@@ -46,7 +46,7 @@ import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
-import io.gravitee.am.service.validators.AccountSettingsValidator;
+import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.reactivex.Observable;
 import io.reactivex.*;
 import org.slf4j.Logger;
@@ -81,6 +81,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationTemplateManager applicationTemplateManager;
+
+    @Autowired
+    private AccountSettingsValidator accountSettingsValidator;
 
     @Autowired
     private AuditService auditService;
@@ -321,7 +324,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     Application toPatch = patchApplication.patch(existingApplication);
                     applicationTemplateManager.apply(toPatch);
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();
-                    if (AccountSettingsValidator.hasInvalidResetPasswordFields(accountSettings)) {
+                    if (!accountSettingsValidator.validate(accountSettings)) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
                     }
                     return update0(domain, existingApplication, toPatch, principal);

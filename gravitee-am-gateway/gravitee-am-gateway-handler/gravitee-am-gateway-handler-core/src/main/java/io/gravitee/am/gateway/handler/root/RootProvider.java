@@ -72,7 +72,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAc
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -135,7 +134,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private ThymeleafTemplateEngine thymeleafTemplateEngine;
 
     @Autowired
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Autowired
     private AuditService auditService;
@@ -224,7 +223,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
-        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordValidator, domain);
+        Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, domain);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);

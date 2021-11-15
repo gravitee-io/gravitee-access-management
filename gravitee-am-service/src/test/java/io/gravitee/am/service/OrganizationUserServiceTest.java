@@ -25,7 +25,9 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.OrganizationUserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.user.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -39,6 +41,7 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -53,7 +56,12 @@ public class OrganizationUserServiceTest {
     private OrganizationUserService userService = new OrganizationUserServiceImpl();
 
     @Spy
-    private UserValidator userValidator = new UserValidator();
+    private UserValidator userValidator = new UserValidatorImpl(
+            NAME_STRICT_PATTERN,
+            NAME_LAX_PATTERN,
+            USERNAME_PATTERN,
+            new EmailValidatorImpl()
+    );
 
     @Mock
     private OrganizationUserRepository userRepository;

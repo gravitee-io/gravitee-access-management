@@ -252,7 +252,14 @@ user:
         #(?=.*[@#$%^&+=])  # a special character must occur at least once
         #(?=\S+$)          # no whitespace allowed in the entire string
         #.{8,}             # anything, at least eight places though
-      #$                 # end-of-string
+        #$                 # end-of-string
+
+      ## Password dictionary to exclude most commons passwords
+      ## You need to enable the feature in the AM management console
+
+      #dictionary:
+      #  filename: /path/to/dictionary  # if null `resources/dictionaries/10k-most-common.txt` will be loaded
+      #  watch: true #if true, watches periodically for any changes in the file
   name:
     strict:
       policy:
