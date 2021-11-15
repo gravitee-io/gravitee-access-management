@@ -24,10 +24,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -42,6 +43,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.HashMap;
 
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,7 +61,7 @@ public class OrganizationUserServiceTest {
     private final OrganizationUserService organizationUserService = new OrganizationUserServiceImpl();
 
     @Mock
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -74,7 +76,12 @@ public class OrganizationUserServiceTest {
     private MembershipService membershipService;
 
     @Spy
-    private UserValidator userValidator = new UserValidator();
+    private UserValidatorImpl userValidator = new UserValidatorImpl(
+            NAME_STRICT_PATTERN,
+            NAME_LAX_PATTERN,
+            USERNAME_PATTERN,
+            new EmailValidatorImpl()
+    );
 
     @Test
     public void shouldDeleteUser_without_membership() {
@@ -145,7 +152,7 @@ public class OrganizationUserServiceTest {
         newUser.setSource("gravitee");
         newUser.setPassword("Test123!");
         newUser.setEmail("email@acme.fr");
-        when(passwordValidator.isValid(any())).thenReturn(true);
+        when(passwordService.isValid(any())).thenReturn(true);
         when(commonUserService.findByUsernameAndSource(any(), any(), anyString(), anyString())).thenReturn(Maybe.empty());
         final UserProvider provider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(provider));
@@ -343,7 +350,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotResetPassword_invalidPwd() {
-        when(passwordValidator.isValid(anyString())).thenReturn(false);
+        when(passwordService.isValid(anyString())).thenReturn(false);
         final TestObserver<Void> testObserver = organizationUserService.resetPassword("org#1", new User(), "simple", null).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertError(InvalidPasswordException.class);
@@ -351,7 +358,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldResetPassword() {
-        when(passwordValidator.isValid(anyString())).thenReturn(true);
+        when(passwordService.isValid(anyString())).thenReturn(true);
 
         final User user = new User();
         user.setUsername("username");
@@ -368,7 +375,7 @@ public class OrganizationUserServiceTest {
 
     @Test
     public void shouldNotResetPassword_InvalidSource() {
-        when(passwordValidator.isValid(anyString())).thenReturn(true);
+        when(passwordService.isValid(anyString())).thenReturn(true);
 
         final User user = new User();
         user.setUsername("username");

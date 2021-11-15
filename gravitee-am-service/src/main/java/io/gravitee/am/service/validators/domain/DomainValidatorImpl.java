@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.domain;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.service.exception.InvalidDomainException;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
+import io.gravitee.am.service.validators.path.PathValidator;
 import io.reactivex.Completable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -29,9 +34,20 @@ import java.util.stream.Collectors;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainValidator {
+@Component
+public class DomainValidatorImpl implements DomainValidator {
 
-    public static Completable validate(Domain domain, List<String> domainRestrictions) {
+    private final PathValidator pathValidator;
+    private final VirtualHostValidator virtualHostValidator;
+
+    @Autowired
+    public DomainValidatorImpl(PathValidator pathValidator, VirtualHostValidator virtualHostValidator){
+        this.pathValidator = pathValidator;
+        this.virtualHostValidator = virtualHostValidator;
+    }
+
+    @Override
+    public Completable validate(Domain domain, List<String> domainRestrictions) {
 
         List<Completable> chain = new ArrayList<>();
 
@@ -39,7 +55,7 @@ public class DomainValidator {
             return Completable.error(new InvalidDomainException("Domain name cannot contain '/' character"));
         }
 
-        if(!CollectionUtils.isEmpty(domainRestrictions) && !domain.isVhostMode()) {
+        if (!CollectionUtils.isEmpty(domainRestrictions) && !domain.isVhostMode()) {
             return Completable.error(new InvalidDomainException("Domain can only work in vhost mode"));
         }
 
@@ -50,21 +66,21 @@ public class DomainValidator {
 
             // Check at there is only one vhost flagged with override entrypoint.
             long count = domain.getVhosts().stream().filter(VirtualHost::isOverrideEntrypoint).count();
-            if(count > 1) {
+            if (count > 1) {
                 return Completable.error(new InvalidDomainException("Only one vhost can be used to override entrypoint"));
-            } else if(count == 0) {
+            } else if (count == 0) {
                 return Completable.error(new InvalidDomainException("You must select one vhost to override entrypoint"));
             }
 
             chain.addAll(domain.getVhosts().stream()
-                    .map(vhost -> VirtualHostValidator.validate(vhost, domainRestrictions))
+                    .map(vhost -> virtualHostValidator.validate(vhost, domainRestrictions))
                     .collect(Collectors.toList()));
         } else {
-            if("/".equals(domain.getPath())) {
+            if ("/".equals(domain.getPath())) {
                 return Completable.error(new InvalidDomainException("'/' path is not allowed in context-path mode"));
             }
 
-            chain.add(PathValidator.validate(domain.getPath()));
+            chain.add(pathValidator.validate(domain.getPath()));
         }
 
         if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getCertificates() != null) {
@@ -80,4 +96,5 @@ public class DomainValidator {
 
         return Completable.merge(chain);
     }
+
 }

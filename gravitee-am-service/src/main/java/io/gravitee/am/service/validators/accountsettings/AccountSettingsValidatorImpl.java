@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.accountsettings;
 
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static java.util.Arrays.asList;
 
@@ -28,16 +29,23 @@ import static java.util.Arrays.asList;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountSettingsValidator {
+@Component
+public class AccountSettingsValidatorImpl implements AccountSettingsValidator {
 
     public static final String EMAIL = "email";
     public static final String USERNAME = "username";
+    private static final HashSet<String> AUTHORIZED_FIELDS = new HashSet<>(asList(EMAIL, USERNAME));
 
-    public static boolean hasInvalidResetPasswordFields(AccountSettings settings) {
+    @Override
+    public Boolean validate(AccountSettings element) {
+        return !hasInvalidResetPasswordFields(element);
+    }
+
+    private boolean hasInvalidResetPasswordFields(AccountSettings settings) {
         if (settings != null && settings.isResetPasswordCustomForm()) {
-            Set<String> authorizedFields = new HashSet<>(asList(EMAIL, USERNAME));
-            final Optional<FormField> unexpectedField = settings.getResetPasswordCustomFormFields().stream().filter(field -> !authorizedFields.contains(field.getKey())).findFirst();
-            return unexpectedField.isPresent();
+            final List<FormField> fields = Optional.ofNullable(settings.getResetPasswordCustomFormFields())
+                    .orElse(List.of());
+            return fields.stream().anyMatch(field -> !AUTHORIZED_FIELDS.contains(field.getKey()));
         }
         return false;
     }

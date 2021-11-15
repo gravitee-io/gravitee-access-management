@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
-import io.gravitee.am.service.validators.PasswordValidator;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -35,11 +35,11 @@ import java.util.Optional;
  */
 public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
 
-    private final PasswordValidator passwordValidator;
+    private final PasswordService passwordService;
     private final Domain domain;
 
-    public PasswordPolicyRequestParseHandler(PasswordValidator passwordValidator, Domain domain) {
-        this.passwordValidator = passwordValidator;
+    public PasswordPolicyRequestParseHandler(PasswordService passwordService, Domain domain) {
+        this.passwordService = passwordService;
         this.domain = domain;
     }
 
@@ -53,7 +53,7 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, this.domain);
 
         try {
-            passwordValidator.validate(password, passwordSettings.orElse(null));
+            passwordService.validate(password, passwordSettings.orElse(null));
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));

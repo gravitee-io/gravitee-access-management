@@ -21,6 +21,7 @@ package io.gravitee.am.service.exception;
  */
 public class InvalidPasswordException extends InvalidParameterException {
 
+    private static final String INVALID_PASSWORD_VALUE = "invalid_password_value";
     private final String errorKey;
 
     private InvalidPasswordException(String message, String errorKey) {
@@ -33,6 +34,7 @@ public class InvalidPasswordException extends InvalidParameterException {
     }
 
     public String getErrorKey() {
-        return errorKey != null ? errorKey : "invalid_password_value";
+        return errorKey != null ? errorKey : INVALID_PASSWORD_VALUE;
     }
+
 }

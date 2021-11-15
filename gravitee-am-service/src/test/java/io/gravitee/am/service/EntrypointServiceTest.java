@@ -29,6 +29,7 @@ import io.gravitee.am.service.exception.InvalidEntrypointException;
 import io.gravitee.am.service.impl.EntrypointServiceImpl;
 import io.gravitee.am.service.model.NewEntrypoint;
 import io.gravitee.am.service.model.UpdateEntrypoint;
+import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -42,6 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,12 +69,15 @@ public class EntrypointServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private VirtualHostValidator virtualHostValidator;
+
     private EntrypointService cut;
 
     @Before
     public void before() {
 
-        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService);
+        cut = new EntrypointServiceImpl(entrypointRepository, organizationService, auditService, virtualHostValidator);
     }
 
     @Test
@@ -118,6 +123,7 @@ public class EntrypointServiceTest {
 
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
 
         TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
@@ -146,6 +152,8 @@ public class EntrypointServiceTest {
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(argThat(e -> e != null && e.getUrl().equals("https://domain1.gravitee.io") && e.isDefaultEntrypoint()))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(entrypointRepository.create(argThat(e -> e != null && e.getUrl().equals("https://domain2.gravitee.io") && !e.isDefaultEntrypoint()))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("domain1.gravitee.io", List.of("domain1.gravitee.io", "domain2.gravitee.io"));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("domain2.gravitee.io", List.of("domain1.gravitee.io", "domain2.gravitee.io"));
 
         TestSubscriber<Entrypoint> obs = cut.createDefaults(organization).test();
 
@@ -183,7 +191,7 @@ public class EntrypointServiceTest {
 
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(organization));
         when(entrypointRepository.create(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
-
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
         TestObserver<Entrypoint> obs = cut.create(ORGANIZATION_ID, newEntrypoint, user).test();
 
         obs.awaitTerminalEvent();
@@ -225,7 +233,7 @@ public class EntrypointServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(InvalidEntrypointException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -247,6 +255,7 @@ public class EntrypointServiceTest {
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
         when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
         when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("auth.company.com", null);
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 
@@ -295,7 +304,7 @@ public class EntrypointServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(InvalidEntrypointException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -311,7 +320,7 @@ public class EntrypointServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(EntrypointNotFoundException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -337,6 +346,7 @@ public class EntrypointServiceTest {
         when(organizationService.findById(ORGANIZATION_ID)).thenReturn(Single.just(new Organization()));
         when(entrypointRepository.findById(ENTRYPOINT_ID, ORGANIZATION_ID)).thenReturn(Maybe.just(existingEntrypoint));
         when(entrypointRepository.update(any(Entrypoint.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+        doReturn(true).when(virtualHostValidator).isValidDomainOrSubDomain("changed.com", null);
 
         TestObserver<Entrypoint> obs = cut.update(ENTRYPOINT_ID, ORGANIZATION_ID, updateEntrypoint, user).test();
 
@@ -404,7 +414,7 @@ public class EntrypointServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(InvalidEntrypointException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 
     @Test
@@ -450,6 +460,6 @@ public class EntrypointServiceTest {
         obs.awaitTerminalEvent();
         obs.assertError(EntrypointNotFoundException.class);
 
-        verifyZeroInteractions(auditService);
+        verify(auditService, times(0)).report(any());
     }
 }

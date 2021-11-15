@@ -64,6 +64,7 @@
         <module>gravitee-am-botdetection</module>
         <module>gravitee-am-fapi-resource-api</module>
         <module>gravitee-am-deviceidentifier</module>
+        <module>gravitee-am-password-dictionary</module>
     </modules>
 
     <properties>

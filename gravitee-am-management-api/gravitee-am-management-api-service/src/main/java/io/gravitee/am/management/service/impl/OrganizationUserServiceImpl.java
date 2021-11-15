@@ -121,7 +121,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                     // user is flagged as internal user
                                     newUser.setInternal(true);
                                     String password = newUser.getPassword();
-                                    if (password == null || !passwordValidator.isValid(password)) {
+                                    if (password == null || !passwordService.isValid(password)) {
                                         return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
                                     }
                                     newUser.setRegistrationCompleted(true);
@@ -161,7 +161,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
     }
 
     public Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal) {
-        if (password == null || !passwordValidator.isValid(password)) {
+        if (password == null || !passwordService.isValid(password)) {
             return Completable.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
         }
 

@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.path;
 
 import io.gravitee.am.service.exception.InvalidPathException;
 import io.reactivex.Completable;
+import org.springframework.stereotype.Component;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,13 +26,15 @@ import java.util.regex.Pattern;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PathValidator {
+@Component
+public class PathValidatorImpl implements PathValidator {
 
     private static final Pattern PATH_PATTERN = Pattern.compile("/?[a-z0-9-._]+(?:/[a-z0-9-._]+)*/?|/", Pattern.CASE_INSENSITIVE);
 
-    public static Completable validate(String path) {
+    @Override
+    public Completable validate(String path) {
 
-        if (path == null || "".equals(path)) {
+        if (path == null || path.isEmpty()) {
             return Completable.error(new InvalidPathException("Path must not be null or empty"));
         }
 

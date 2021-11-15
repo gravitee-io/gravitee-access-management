@@ -25,14 +25,15 @@ import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
+import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
+import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
-import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -69,7 +70,8 @@ import org.springframework.context.annotation.Import;
         FactorConfiguration.class,
         ResourceConfiguration.class,
         BotDetectionConfiguration.class,
-        DeviceIdentifierConfiguration.class
+        DeviceIdentifierConfiguration.class,
+        PasswordDictionaryConfiguration.class
 })
 public class StandaloneConfiguration {
 

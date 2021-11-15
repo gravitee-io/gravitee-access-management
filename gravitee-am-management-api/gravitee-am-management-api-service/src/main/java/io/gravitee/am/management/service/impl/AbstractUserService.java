@@ -27,14 +27,14 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -56,7 +56,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     protected IdentityProviderManager identityProviderManager;
 
     @Autowired
-    protected PasswordValidator passwordValidator;
+    protected PasswordService passwordService;
 
     @Autowired
     protected UserValidator userValidator;

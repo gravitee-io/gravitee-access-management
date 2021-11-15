@@ -58,6 +58,11 @@ public class PasswordSettingsMongo {
      */
     private Integer maxConsecutiveLetters;
 
+    /**
+     * Max consecutive letters
+     */
+    private Boolean excludePasswordsInDictionary;
+
     public boolean isInherited() {
         return inherited;
     }
@@ -114,6 +119,14 @@ public class PasswordSettingsMongo {
         this.maxConsecutiveLetters = maxConsecutiveLetters;
     }
 
+    public Boolean isExcludePasswordsInDictionary() {
+        return excludePasswordsInDictionary;
+    }
+
+    public void setExcludePasswordsInDictionary(Boolean excludePasswordsInDictionary) {
+        this.excludePasswordsInDictionary = excludePasswordsInDictionary;
+    }
+
     public PasswordSettings convert() {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(isInherited());
@@ -123,6 +136,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setIncludeSpecialCharacters(isIncludeSpecialCharacters());
         passwordSettings.setLettersInMixedCase(getLettersInMixedCase());
         passwordSettings.setMaxConsecutiveLetters(getMaxConsecutiveLetters());
+        passwordSettings.setExcludePasswordsInDictionary(isExcludePasswordsInDictionary());
         return passwordSettings;
     }
 
@@ -138,6 +152,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setIncludeSpecialCharacters(other.isIncludeSpecialCharacters());
         passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
         passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
+        passwordSettings.setExcludePasswordsInDictionary(other.isExcludePasswordsInDictionary());
         return passwordSettings;
     }
 }

@@ -19,14 +19,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Single;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -176,7 +175,6 @@ public abstract class JerseySpringTest {
     @Autowired
     protected BotDetectionPluginService botDetectionPluginService;
 
-
     @Autowired
     protected BotDetectionService botDetectionService;
 
@@ -299,8 +297,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public PasswordValidator passwordValidator() {
-            return mock(PasswordValidator.class);
+        public PasswordService passwordService() {
+            return mock(PasswordService.class);
         }
 
         @Bean

@@ -43,8 +43,8 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
-import io.gravitee.am.service.validators.EmailValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.email.EmailValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Observable;
 import io.reactivex.*;
 import io.reactivex.functions.Predicate;
@@ -94,16 +94,15 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserValidator userValidator;
 
+    @Autowired
+    private EmailValidator emailValidator;
+
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
-                .flatMap(jwt -> {
-                    return userService.findById(jwt.getSub())
-                            .zipWith(clientSource(jwt.getAud()),
-                                    (user, optionalClient) -> {
-                                return new UserToken(user, optionalClient.orElse(null), jwt);
-                            });
-                });
+                .flatMap(jwt -> userService.findById(jwt.getSub())
+                        .zipWith(clientSource(jwt.getAud()),
+                                (user, optionalClient) -> new UserToken(user, optionalClient.orElse(null), jwt)));
     }
 
     @Override
@@ -169,18 +168,16 @@ public class UserServiceImpl implements UserService {
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> {
-                    return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserNotFoundException) {
-                                    // idp user not found, create its account
-                                    return userProvider.create(convert(user));
-                                }
-                                return Single.error(ex);
-                            });
-                })
+                .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                        .flatMapSingle(idpUser -> userProvider.update(idpUser.getId(), convert(user)))
+                        .onErrorResumeNext(ex -> {
+                            if (ex instanceof UserNotFoundException) {
+                                // idp user not found, create its account
+                                return userProvider.create(convert(user));
+                            }
+                            return Single.error(ex);
+                        }))
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
                     user.setPassword(null);
@@ -222,22 +219,20 @@ public class UserServiceImpl implements UserService {
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> {
-                    return userProvider.findByUsername(user.getUsername())
-                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                            .flatMapSingle(idpUser -> {
-                                // set password
-                                ((DefaultUser) idpUser).setCredentials(user.getPassword());
-                                return userProvider.update(idpUser.getId(), idpUser);
-                            })
-                            .onErrorResumeNext(ex -> {
-                                if (ex instanceof UserNotFoundException) {
-                                    // idp user not found, create its account
-                                    return userProvider.create(convert(user));
-                                }
-                                return Single.error(ex);
-                            });
-                })
+                .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
+                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                        .flatMapSingle(idpUser -> {
+                            // set password
+                            ((DefaultUser) idpUser).setCredentials(user.getPassword());
+                            return userProvider.update(idpUser.getId(), idpUser);
+                        })
+                        .onErrorResumeNext(ex -> {
+                            if (ex instanceof UserNotFoundException) {
+                                // idp user not found, create its account
+                                return userProvider.create(convert(user));
+                            }
+                            return Single.error(ex);
+                        }))
                 // update the user in the AM repository
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
@@ -289,7 +284,7 @@ public class UserServiceImpl implements UserService {
     public Completable forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
 
         final String email = params.getEmail();
-        if (email != null && !EmailValidator.isValid(email)) {
+        if (email != null && !emailValidator.validate(email)) {
             return Completable.error(new EmailFormatInvalidException(email));
         }
 

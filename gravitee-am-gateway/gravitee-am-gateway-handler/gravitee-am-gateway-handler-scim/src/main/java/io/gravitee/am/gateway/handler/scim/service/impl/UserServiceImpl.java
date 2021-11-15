@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -26,10 +25,12 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.Member;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -38,13 +39,13 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -53,9 +54,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.isNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,7 +91,7 @@ public class UserServiceImpl implements UserService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Autowired
     private AuditService auditService;
@@ -111,7 +114,7 @@ public class UserServiceImpl implements UserService {
                         return Observable.fromIterable(userPage.getData())
                                 .map(user1 -> UserMapper.convert(user1, baseUrl, true))
                                 // set groups
-                                .flatMapSingle(user1 -> setGroups(user1))
+                                .flatMapSingle(this::setGroups)
                                 .toList()
                                 .map(users -> new ListResponse<>(users, userPage.getCurrentPage() + 1, userPage.getTotalCount(), users.size()));
                     }
@@ -270,31 +273,31 @@ public class UserServiceImpl implements UserService {
                                                                 }
                                                             });
                                                 })
-                                        .flatMap(idpUser -> {
-                                            // AM 'users' collection is not made for authentication (but only management stuff)
-                                            // clear password
-                                            userToUpdate.setPassword(null);
-                                            // set external id
-                                            userToUpdate.setExternalId(idpUser.getId());
-                                            // if password has been changed, update last update date
-                                            if (user.getPassword() != null) {
-                                                userToUpdate.setLastPasswordReset(new Date());
-                                            }
-                                            return userRepository.update(userToUpdate);
-                                        })
-                                        .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
-                                        .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))
-                                        .onErrorResumeNext(ex -> {
-                                            if (ex instanceof UserNotFoundException ||
-                                                    ex instanceof UserInvalidException ||
-                                                    ex instanceof UserProviderNotFoundException) {
-                                                // idp user does not exist, only update AM user
-                                                // clear password
-                                                userToUpdate.setPassword(null);
-                                                return userRepository.update(userToUpdate);
-                                            }
-                                            return Single.error(ex);
-                                        }));
+                                                .flatMap(idpUser -> {
+                                                    // AM 'users' collection is not made for authentication (but only management stuff)
+                                                    // clear password
+                                                    userToUpdate.setPassword(null);
+                                                    // set external id
+                                                    userToUpdate.setExternalId(idpUser.getId());
+                                                    // if password has been changed, update last update date
+                                                    if (user.getPassword() != null) {
+                                                        userToUpdate.setLastPasswordReset(new Date());
+                                                    }
+                                                    return userRepository.update(userToUpdate);
+                                                })
+                                                .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
+                                                .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))
+                                                .onErrorResumeNext(ex -> {
+                                                    if (ex instanceof UserNotFoundException ||
+                                                            ex instanceof UserInvalidException ||
+                                                            ex instanceof UserProviderNotFoundException) {
+                                                        // idp user does not exist, only update AM user
+                                                        // clear password
+                                                        userToUpdate.setPassword(null);
+                                                        return userRepository.update(userToUpdate);
+                                                    }
+                                                    return Single.error(ex);
+                                                }));
                             }));
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
@@ -382,13 +385,10 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean isInvalidUserPassword(User user) {
-        String password = user.getPassword();
-        if (password == null) {
+        if (isNull(user.getPassword())) {
             return false;
         }
-        return Optional.ofNullable(domain.getPasswordSettings())
-                .map(ps -> !passwordValidator.isValid(password, ps))
-                .orElseGet(() -> !passwordValidator.isValid(password));
+        return !passwordService.isValid(user.getPassword(), domain.getPasswordSettings());
     }
 
     private Single<User> setGroups(User scimUser) {

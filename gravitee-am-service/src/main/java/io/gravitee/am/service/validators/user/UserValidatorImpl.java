@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.validators;
+package io.gravitee.am.service.validators.user;
 
 import io.gravitee.am.model.IUser;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,30 +37,26 @@ import java.util.regex.Pattern;
  * @author GraviteeSource Team
  */
 @Component
-public class UserValidator {
+public class UserValidatorImpl implements UserValidator {
 
     public static final int DEFAULT_MAX_LENGTH = 100;
 
-    private static final String NAME_STRICT_PATTERN = "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\\\/<>?:;|=.,]{0," + DEFAULT_MAX_LENGTH + "}$";
-    private static final String NAME_LAX_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?|=]{0," + DEFAULT_MAX_LENGTH + "}$";
-    private static final String USERNAME_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?:;|=,]{1," + DEFAULT_MAX_LENGTH + "}$";
+    public static final String NAME_STRICT_PATTERN = "^[^±!@£$%^&*_+§¡€#¢¶•ªº«»\\\\/<>?:;|=.,]{0," + DEFAULT_MAX_LENGTH + "}$";
+    public static final String NAME_LAX_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?|=]{0," + DEFAULT_MAX_LENGTH + "}$";
+    public static final String USERNAME_PATTERN = "^[^±!£$%^&*§¡€¢¶•ªº«»\\\\/<>?:;|=,]{1," + DEFAULT_MAX_LENGTH + "}$";
 
     private final Pattern nameStrictPattern, nameLaxPattern, usernamePattern;
-
-    public UserValidator() {
-        this(NAME_STRICT_PATTERN, NAME_LAX_PATTERN, USERNAME_PATTERN);
-    }
+    private final EmailValidator emailValidator;
 
     @Autowired
-    public UserValidator(@Value("${user.name.strict.policy.pattern:" + NAME_STRICT_PATTERN + "}")
-                                     String nameStrictPattern,
-                         @Value("${user.name.lax.policy.pattern:" + NAME_LAX_PATTERN + "}")
-                                 String nameLaxPattern,
-                         @Value("${user.username.policy.pattern:" + USERNAME_PATTERN + "}")
-                                     String usernamePattern) {
+    public UserValidatorImpl(@Value("${user.name.strict.policy.pattern:" + NAME_STRICT_PATTERN + "}") String nameStrictPattern,
+                             @Value("${user.name.lax.policy.pattern:" + NAME_LAX_PATTERN + "}") String nameLaxPattern,
+                             @Value("${user.username.policy.pattern:" + USERNAME_PATTERN + "}") String usernamePattern,
+                             EmailValidator emailValidator) {
         this.nameStrictPattern = Pattern.compile(nameStrictPattern);
         this.nameLaxPattern = Pattern.compile(nameLaxPattern);
         this.usernamePattern = Pattern.compile(usernamePattern);
+        this.emailValidator = emailValidator;
     }
 
     public Completable validate(IUser user) {
@@ -68,7 +65,7 @@ public class UserValidator {
             return Completable.error(new InvalidUserException(String.format("Username [%s] is not a valid value", user.getUsername())));
         }
 
-        if (!EmailValidator.isValid(user.getEmail())) {
+        if (!emailValidator.validate(user.getEmail())) {
             return Completable.error(new EmailFormatInvalidException(user.getEmail()));
         }
 

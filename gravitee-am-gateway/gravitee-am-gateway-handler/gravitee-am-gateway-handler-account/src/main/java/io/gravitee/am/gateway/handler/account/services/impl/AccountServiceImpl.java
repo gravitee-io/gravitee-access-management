@@ -31,13 +31,13 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
-import io.gravitee.am.service.validators.PasswordValidator;
-import io.gravitee.am.service.validators.UserValidator;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -75,7 +75,7 @@ public class AccountServiceImpl implements AccountService {
     private io.gravitee.am.gateway.handler.root.service.user.UserService gatewayUserService;
 
     @Autowired
-    private PasswordValidator passwordValidator;
+    private PasswordService passwordService;
 
     @Autowired
     private FactorService factorService;
@@ -139,7 +139,7 @@ public class AccountServiceImpl implements AccountService {
     public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal) {
         return Single.defer(() -> {
             PasswordSettings passwordSettings = PasswordSettings.getInstance(client, this.domain).orElse(null);
-            passwordValidator.validate(password, passwordSettings);
+            passwordService.validate(password, passwordSettings);
             user.setPassword(password);
             return gatewayUserService.resetPassword(client, user, principal);
         });
