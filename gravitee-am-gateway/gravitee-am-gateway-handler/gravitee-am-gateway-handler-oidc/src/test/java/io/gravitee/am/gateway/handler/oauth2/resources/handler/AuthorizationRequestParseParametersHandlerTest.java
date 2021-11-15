@@ -206,6 +206,50 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     }
 
     @Test
+    public void shouldAcceptRequest_redirect_URI_ok_5() throws Exception {
+        doReturn(false).when(domain).isRedirectUriStrictMatching();
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback/*"));
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback/auth&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldAcceptRequest_redirect_URI_ok_6() throws Exception {
+        doReturn(false).when(domain).isRedirectUriStrictMatching();
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setAcrValuesSupported(Collections.singletonList(AcrValues.IN_COMMON_SILVER));
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://call*ack:5892/*"));
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback:5892/auth&claims={\"id_token\":{\"acr\":{\"value\":\"urn:mace:incommon:iap:silver\",\"essential\":true}}}",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
     public void shouldNotAcceptRequest_redirect_URI_KO() throws Exception {
         doReturn(false).when(domain).isRedirectUriStrictMatching();
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
