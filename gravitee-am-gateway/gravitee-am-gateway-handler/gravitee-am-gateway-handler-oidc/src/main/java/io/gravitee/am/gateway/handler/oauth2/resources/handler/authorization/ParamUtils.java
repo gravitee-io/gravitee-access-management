@@ -116,6 +116,10 @@ public class ParamUtils {
                 firstIndex = i + 1;
             }
         }
+        //There is no wildcard so we need to add the whole string
+        if (firstIndex == 0){
+            patternBuilder.append(patternPath);
+        }
         return patternBuilder.toString();
     }
 }
