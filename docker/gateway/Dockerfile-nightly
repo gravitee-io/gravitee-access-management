@@ -14,25 +14,28 @@
 # limitations under the License.
 #
 
-FROM graviteeio/java:8
-MAINTAINER Gravitee Team <http://gravitee.io>
+FROM eclipse-temurin:11-jre-focal
+LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-ENV GRAVITEEAM_HOME /opt/graviteeio-am-gateway
+ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
 
-# Update to get support for Zip/Unzip, nc and wget
-RUN apk add --update zip unzip netcat-openbsd wget
-
-RUN wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://oss.sonatype.org/service/local/artifact/maven/content\?r\=snapshots\&g\=io.gravitee.am.gateway.standalone\&a\=gravitee-am-gateway-standalone-distribution-zip\&p\=zip\&v\=${GRAVITEEAM_VERSION} \
+RUN apt-get update \
+    && apt-get --yes upgrade \
+    && apt-get --yes install zip unzip netcat-openbsd wget \
+	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://oss.sonatype.org/service/local/artifact/maven/content\?r\=snapshots\&g\=io.gravitee.am.gateway.standalone\&a\=gravitee-am-gateway-standalone-distribution-zip\&p\=zip\&v\=${GRAVITEEAM_VERSION} \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-    && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} /opt/graviteeio-am-gateway \
-    && rm -rf /tmp/*
+	&& apt-get --yes remove zip unzip netcat-openbsd wget \
+    && apt autoremove --yes \
+    && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
+    && rm -rf /tmp/* \
+	&& chgrp -R 0 ${GRAVITEEIO_HOME} \
+    && chmod -R g=u ${GRAVITEEIO_HOME}
 
-RUN chgrp -R 0 ${GRAVITEEAM_HOME} && \
-    chmod -R g=u ${GRAVITEEAM_HOME}
+WORKDIR ${GRAVITEEIO_HOME}
 
-WORKDIR ${GRAVITEEAM_HOME}
+VOLUME ["/opt/gravitee-am-gateway/logs"]
 
 EXPOSE 8092
-VOLUME ["/opt/gravitee-am-gateway/logs"]
-CMD ["./bin/gravitee"]
+
+ENTRYPOINT ["./bin/gravitee"]
