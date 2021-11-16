@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.ciba.service.request;
 
 import io.gravitee.am.common.ciba.Parameters;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
@@ -115,40 +116,40 @@ public class CibaAuthenticationRequest extends OAuth2Request {
     public static CibaAuthenticationRequest createFrom(RoutingContext context) {
         final HttpServerRequest request = context.request();
 
-        CibaAuthenticationRequest oAuth2Request = new CibaAuthenticationRequest();
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
 
         // set technical information
-        oAuth2Request.setTimestamp(System.currentTimeMillis());
-        oAuth2Request.setId(RandomString.generate());
-        oAuth2Request.setUri(request.uri());
-        oAuth2Request.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
-        oAuth2Request.setPath(request.path());
-        oAuth2Request.setHeaders(extractHeaders(request));
-        oAuth2Request.setParameters(extractRequestParameters(request));
-        oAuth2Request.setSslSession(request.sslSession());
-        oAuth2Request.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
-        oAuth2Request.setScheme(request.scheme());
-        oAuth2Request.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
-        oAuth2Request.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
-        oAuth2Request.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
+        cibaRequest.setTimestamp(System.currentTimeMillis());
+        cibaRequest.setId(SecureRandomString.generate());
+        cibaRequest.setUri(request.uri());
+        cibaRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
+        cibaRequest.setPath(request.path());
+        cibaRequest.setHeaders(extractHeaders(request));
+        cibaRequest.setParameters(extractRequestParameters(request));
+        cibaRequest.setSslSession(request.sslSession());
+        cibaRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
+        cibaRequest.setScheme(request.scheme());
+        cibaRequest.setVersion(request.version() != null ? HttpVersion.valueOf(request.version().name()) : null);
+        cibaRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
+        cibaRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
 
         final Client client = context.get(CLIENT_CONTEXT_KEY);
-        oAuth2Request.setClientId(client.getClientId());
+        cibaRequest.setClientId(client.getClientId());
 
-        oAuth2Request.setScopes(splitScopes(getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.SCOPE)));
-        oAuth2Request.setClientNotificationToken(getOAuthParameter(context, Parameters.CLIENT_NOTIFICATION_TOKEN));
-        oAuth2Request.setLoginHintToken(getOAuthParameter(context, Parameters.LOGIN_HINT_TOKEN));
-        oAuth2Request.setIdTokenHint(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT));
-        oAuth2Request.setLoginHint(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.LOGIN_HINT));
-        oAuth2Request.setAcrValues(splitAcrValues(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.ACR_VALUES)));
-        oAuth2Request.setBindingMessage(getOAuthParameter(context, Parameters.BINDING_MESSAGE));
-        oAuth2Request.setUserCode(getOAuthParameter(context, Parameters.USER_CODE));
+        cibaRequest.setScopes(splitScopes(getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.SCOPE)));
+        cibaRequest.setClientNotificationToken(getOAuthParameter(context, Parameters.CLIENT_NOTIFICATION_TOKEN));
+        cibaRequest.setLoginHintToken(getOAuthParameter(context, Parameters.LOGIN_HINT_TOKEN));
+        cibaRequest.setIdTokenHint(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT));
+        cibaRequest.setLoginHint(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.LOGIN_HINT));
+        cibaRequest.setAcrValues(splitAcrValues(getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.ACR_VALUES)));
+        cibaRequest.setBindingMessage(getOAuthParameter(context, Parameters.BINDING_MESSAGE));
+        cibaRequest.setUserCode(getOAuthParameter(context, Parameters.USER_CODE));
         final String reqExpiry = getOAuthParameter(context, Parameters.REQUESTED_EXPIRY);
         if (reqExpiry != null) {
-            oAuth2Request.setRequestedExpiry(Integer.parseInt(reqExpiry));
+            cibaRequest.setRequestedExpiry(Integer.parseInt(reqExpiry));
         }
 
-        return oAuth2Request;
+        return cibaRequest;
     }
 
     private static MultiValueMap<String, String> extractRequestParameters(HttpServerRequest request) {

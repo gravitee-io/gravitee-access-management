@@ -98,6 +98,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-authdevice-notifier</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-webauthn</artifactId>
         </dependency>

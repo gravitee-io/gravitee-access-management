@@ -28,19 +28,13 @@ import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.gravitee.am.model.oidc.CIBASettings;
-import io.gravitee.am.model.oidc.ClientRegistrationSettings;
-import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.*;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.*;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
 import io.reactivex.*;
 import org.bson.BsonDocument;
@@ -51,6 +45,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
 
@@ -286,8 +281,23 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAuthReqExpiry(cibaSettings.getAuthReqExpiry());
         result.setTokenReqInterval(cibaSettings.getTokenReqInterval());
         result.setBindingMessageLength(cibaSettings.getBindingMessageLength());
+        if (cibaSettings.getDeviceNotifiers() != null) {
+            result.setDeviceNotifiers(cibaSettings.getDeviceNotifiers().stream().map(MongoDomainRepository::convert).collect(Collectors.toList()));
+        }
 
         return result;
+    }
+
+    private static CIBASettingNotifier convert(CIBASettingNotifierMongo entity) {
+        CIBASettingNotifier notifier = new CIBASettingNotifier();
+        notifier.setId(entity.getId());
+        return notifier;
+    }
+
+    private static CIBASettingNotifierMongo convert(CIBASettingNotifier entity) {
+        CIBASettingNotifierMongo notifier = new CIBASettingNotifierMongo();
+        notifier.setId(entity.getId());
+        return notifier;
     }
 
     private static OIDCSettingsMongo convert(OIDCSettings oidc) {
@@ -356,6 +366,9 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAuthReqExpiry(cibaSettings.getAuthReqExpiry());
         result.setTokenReqInterval(cibaSettings.getTokenReqInterval());
         result.setBindingMessageLength(cibaSettings.getBindingMessageLength());
+        if (cibaSettings.getDeviceNotifiers() != null) {
+            result.setDeviceNotifiers(cibaSettings.getDeviceNotifiers().stream().map(MongoDomainRepository::convert).collect(Collectors.toList()));
+        }
 
         return result;
     }

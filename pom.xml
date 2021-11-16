@@ -65,6 +65,7 @@
         <module>gravitee-am-fapi-resource-api</module>
         <module>gravitee-am-deviceidentifier</module>
         <module>gravitee-am-password-dictionary</module>
+        <module>gravitee-am-authdevice-notifier</module>
     </modules>
 
     <properties>

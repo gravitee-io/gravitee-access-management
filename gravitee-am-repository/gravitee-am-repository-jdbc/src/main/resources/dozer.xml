@@ -195,6 +195,11 @@
             <b>scopes</b>
             <a-hint>java.util.Set</a-hint>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>externalInformation</a>
+            <b>externalInformation</b>
+            <a-hint>java.util.Map</a-hint>
+        </field>
     </mapping>
 
     <mapping map-null="false">

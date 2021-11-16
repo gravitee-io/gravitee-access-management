@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.oidc;
 
-import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcCibaAuthRequest;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcRequestObject;
@@ -24,6 +24,7 @@ import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.data.relational.core.query.Update;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
@@ -59,8 +60,18 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
     }
 
     @Override
+    public Maybe<CibaAuthRequest> findByExternalId(String externalId) {
+        LOGGER.debug("findByExternalId({})", externalId);
+        LocalDateTime now = LocalDateTime.now(UTC);
+        return monoToMaybe(dbClient.select().from(JdbcCibaAuthRequest.class)
+                .matching(where("ext_transaction_id").is(externalId)).fetch().first())
+                .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
+                .map(this::toEntity);
+    }
+
+    @Override
     public Single<CibaAuthRequest> create(CibaAuthRequest authreq) {
-        authreq.setId(authreq.getId() == null ? RandomString.generate() : authreq.getId());
+        authreq.setId(authreq.getId() == null ? SecureRandomString.generate() : authreq.getId());
         LOGGER.debug("Create CibaAuthRequest with id {}", authreq.getId());
 
         Mono<Integer> action = dbClient.insert()
@@ -81,6 +92,17 @@ public class JdbcCibaAuthReqRepository extends AbstractJdbcRepository implements
                 .fetch().rowsUpdated();
 
         return monoToSingle(action).flatMap((i) -> findById(authreq.getId()).toSingle());
+    }
+
+    @Override
+    public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
+        LOGGER.debug("Update CibaAuthRequest {} with status {}", authReqId, status);
+        final Mono<Integer> action = dbClient.update()
+                .table("ciba_auth_requests")
+                .using(Update.update("status", status))
+                .matching(where("id").is(authReqId))
+                .fetch().rowsUpdated();
+        return monoToSingle(action).flatMap((i) -> findById(authReqId).toSingle());
     }
 
     @Override

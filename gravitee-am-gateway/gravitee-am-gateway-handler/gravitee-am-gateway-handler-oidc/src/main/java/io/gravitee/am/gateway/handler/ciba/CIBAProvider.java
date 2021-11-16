@@ -17,12 +17,15 @@ package io.gravitee.am.gateway.handler.ciba;
 
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestAcknowledgeHandler;
+import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestCallbackHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParametersHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseProviderConfigurationHandler;
@@ -38,8 +41,6 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
@@ -51,8 +52,8 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
 
     public static final String CIBA_PATH = "/ciba";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CIBAProvider.class);
     public static final String AUTHENTICATION_ENDPOINT = "/authenticate";
+    public static final String AUTHENTICATION_CALLBACK_ENDPOINT = "/authenticate/callback";
 
     @Autowired
     private Domain domain;
@@ -90,6 +91,9 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private JWTService jwtService;
+
     @Override
     public String path() {
         return CIBA_PATH;
@@ -115,7 +119,13 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
                 .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService, this.domain))
                 .handler(new AuthenticationRequestParametersHandler(domain, jwsService, jwkService, userService))
-                .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain));
+                .handler(new AuthenticationRequestAcknowledgeHandler(authService, domain, jwtService));
+
+        // To process the callback content we perform authentication of the caller that must be registered as AM client.
+        // If a plugin need a non authenticate webhook, we should create another endpoint without clientAuthHandler.
+        cibaRouter.route(HttpMethod.POST, AUTHENTICATION_CALLBACK_ENDPOINT)
+                .handler(clientAuthHandler)
+                .handler(new AuthenticationRequestCallbackHandler(authService));
 
         errorHandler(cibaRouter);
 

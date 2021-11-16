@@ -16,9 +16,10 @@
 package io.gravitee.am.service.model.openid;
 
 import io.gravitee.am.model.oidc.CIBASettings;
-import io.gravitee.am.model.oidc.SecurityProfileSettings;
+import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.service.utils.SetterUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,6 +46,10 @@ public class PatchCIBASettings {
      * MaxLength of the binding_message parameter
      */
     private Optional<Integer> bindingMessageLength;
+    /**
+     * Authentication Device Notifiers to use when the EndUser has to be notified
+     */
+    private Optional<List<CIBASettingNotifier>> deviceNotifiers;
 
     public Optional<Boolean> getEnabled() {
         return enabled;
@@ -78,13 +83,22 @@ public class PatchCIBASettings {
         this.bindingMessageLength = bindingMessageLength;
     }
 
+    public Optional<List<CIBASettingNotifier>> getDeviceNotifiers() {
+        return deviceNotifiers;
+    }
+
+    public void setDeviceNotifiers(Optional<List<CIBASettingNotifier>> deviceNotifiers) {
+        this.deviceNotifiers = deviceNotifiers;
+    }
+
     public CIBASettings patch(CIBASettings toPatch) {
-        CIBASettings result=toPatch!=null? toPatch: CIBASettings.defaultSettings();
+        CIBASettings result=toPatch!=null ? toPatch : CIBASettings.defaultSettings();
 
         SetterUtils.safeSet(result::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAuthReqExpiry, this.getAuthReqExpiry(), int.class);
         SetterUtils.safeSet(result::setTokenReqInterval, this.getTokenReqInterval(), int.class);
         SetterUtils.safeSet(result::setBindingMessageLength, this.getBindingMessageLength(), int.class);
+        SetterUtils.safeSet(result::setDeviceNotifiers, this.getDeviceNotifiers(), List.class);
 
         return result;
     }

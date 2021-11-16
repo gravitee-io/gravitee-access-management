@@ -25,52 +25,15 @@ import { SnackbarService } from 'app/services/snackbar.service';
   styleUrls: ['./ciba.component.scss']
 })
 export class CibaComponent implements OnInit {
-  domainId: string;
-  domain: any = {};
-  formChanged = false;
-  editMode: boolean;
+  private domainId: string;
+  navLinks: any = [
+    {'href': 'settings' , 'label': 'Settings'},
+    {'href': 'device-notifiers' , 'label': 'Device Notifiers'}
+  ];
 
-  constructor(private domainService: DomainService,
-              private snackbarService: SnackbarService,
-              private authService: AuthService,
-              private route: ActivatedRoute,
-              private router: Router) {
-  }
+  constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
-    this.domainId = this.domain.id;
-    this.editMode = this.authService.hasPermissions(['domain_openid_update']);
-    if (!this.domain.oidc.cibaSettings) {
-      this.domain.oidc.cibaSettings = {};
-    }
-  }
-
-  save() {
-    this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe(data => {
-      this.domain = data;
-      this.formChanged = false;
-      this.snackbarService.open('OpenID Profile configuration updated');
-    });
-  }
-
-  enableCIBA(event) {
-    if (!this.domain.oidc.cibaSettings) {
-      this.domain.oidc.cibaSettings = {};
-    }
-    this.domain.oidc.cibaSettings.enabled = event.checked;
-    if (!event.checked) {
-      // Disable Plain FAPI imply to disable FAPI Brazil
-      this.domain.oidc.cibaSettings.enabled = event.checked;
-    }
-    this.formChanged = true;
-  }
-
-  isCIBAEnabled() {
-    return this.domain.oidc.cibaSettings && this.domain.oidc.cibaSettings.enabled;
-  }
-  
-  modelChanged(event) {
-    this.formChanged = true;
+    this.domainId = this.route.snapshot.data['domain']?.id;
   }
 }

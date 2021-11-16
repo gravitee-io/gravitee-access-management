@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.gateway.handler.ciba.resources.handler;
 
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CIBADeliveryMode;
-import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.ciba.service.response.CibaAuthenticationResponse;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -30,6 +35,10 @@ import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
+
+import java.time.Instant;
+import java.util.List;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -45,9 +54,12 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
 
     private Domain domain;
 
-    public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain) {
+    private JWTService jwtService;
+
+    public AuthenticationRequestAcknowledgeHandler(AuthenticationRequestService authRequestService, Domain domain, JWTService jwtService) {
         this.authRequestService = authRequestService;
         this.domain = domain;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -56,16 +68,66 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
         if (authRequest != null) {
             final Client client = context.get(CLIENT_CONTEXT_KEY);
 
-            final String authReqId = RandomString.generate();
-            authRequest.setId(authReqId);
+            final List<CIBASettingNotifier> deviceNotifiers = this.domain.getOidc().getCibaSettings().getDeviceNotifiers();
+            if (CollectionUtils.isEmpty(deviceNotifiers)) {
+                LOGGER.warn("CIBA Authentication Request can't be processed without device notifier configured");
+                context.fail(new InvalidRequestException("Missing authentication request"));
+                return;
+            }
+
+            // as a first implementation, we only manage a single notifier
+            // in future release we may manage multiple one and select the right one
+            // base one context information.
+            final String authDeviceNotifierId = deviceNotifiers.get(0).getId();
+
+            if (authRequest.getId() == null) {
+                final String authReqId = SecureRandomString.generate();
+                authRequest.setId(authReqId);
+            }
 
             LOGGER.debug("CIBA Authentication Request linked to auth_req_id '{}'", authRequest);
 
-            this.authRequestService.register(authRequest, client)
-                    .subscribe(req -> {
+            final int expiresIn = authRequest.getRequestedExpiry() != null ? authRequest.getRequestedExpiry() : domain.getOidc().getCibaSettings().getAuthReqExpiry();
+            final String externalTrxId = SecureRandomString.generate();
+
+            // Forge a state token to validate the callback response
+            JWT jwt = new JWT();
+            jwt.setIss(client.getDomain());
+            final Instant now = Instant.now();
+            jwt.setIat(now.getEpochSecond());
+            jwt.setExp(now.plusSeconds(expiresIn).getEpochSecond());
+            jwt.setAud(client.getClientId());
+            jwt.setSub(authRequest.getSubject());
+            jwt.setJti(externalTrxId);
+            this.jwtService.encode(jwt, client)
+                    .flatMap(stateJwt ->
+                            this.authRequestService.register(authRequest, client)
+                                    .flatMap(req -> {
+
+                                        final ADNotificationRequest adRequest = new ADNotificationRequest();
+                                        adRequest.setExpiresIn(expiresIn);
+                                        adRequest.setAcrValues(authRequest.getAcrValues());
+                                        adRequest.setMessage(authRequest.getBindingMessage());
+                                        adRequest.setScopes(authRequest.getScopes());
+                                        adRequest.setSubject(authRequest.getSubject());
+                                        adRequest.setState(stateJwt);
+                                        adRequest.setTransactionId(externalTrxId);
+                                        adRequest.setDeviceNotifierId(authDeviceNotifierId);
+
+                                        return authRequestService.notify(adRequest)
+                                                .flatMap(adResponse -> {
+                                                    req.setExternalInformation(adResponse.getExtraData());
+                                                    req.setExternalTrxId(adResponse.getTransactionId());
+                                                    return authRequestService.updateAuthDeviceInformation(req);
+                                                });
+                                    })
+                    ).subscribe(req -> {
+
                         CibaAuthenticationResponse response = new CibaAuthenticationResponse();
                         response.setAuthReqId(req.getId());
                         response.setExpiresIn(req.getExpireAt().toInstant().minusMillis(req.getCreatedAt().getTime()).getEpochSecond());
+
+                        // specify rate limit for Poll and Ping mode
                         if (client.getBackchannelTokenDeliveryMode()!= null && !client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.PUSH)) {
                             response.setInterval(domain.getOidc().getCibaSettings().getTokenReqInterval());
                         }
@@ -86,7 +148,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
             return;
         } else {
             LOGGER.error("CIBA Authentication Request object is null");
-            context.fail(new IllegalArgumentException("Missing authentication request"));
+            context.fail(new InvalidRequestException("Missing authentication request"));
         }
     }
 }

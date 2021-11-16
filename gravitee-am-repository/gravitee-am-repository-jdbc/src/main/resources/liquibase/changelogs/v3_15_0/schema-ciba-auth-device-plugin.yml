@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.15.0-ciba-auth-device-plugin
+      author: GraviteeSource Team
+      changes:
+
+        # Authentication Device Notifier
+        ################################
+        - createTable:
+            tableName: authentication_device_notifiers
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: configuration, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_ad_notifier
+            columnNames: id
+            tableName: authentication_device_notifiers
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_ad_noitifier_domain
+            tableName:  authentication_device_notifiers
+            unique:  false
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_AUTHDEVICE_NOTIFIER}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_AUTHDEVICE_NOTIFIER', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_AUTHDEVICE_NOTIFIER', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"

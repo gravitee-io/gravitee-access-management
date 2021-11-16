@@ -20,8 +20,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -34,8 +32,8 @@ public class JdbcCibaAuthRequest {
     private String status;
     private String subject;
     private String scopes;
-    @Column("user_code")
-    private String userCode;
+    @Column("device_notifier_id")
+    private String deviceNotifierId;
     private String client;
     @Column("created_at")
     private LocalDateTime createdAt;
@@ -43,6 +41,10 @@ public class JdbcCibaAuthRequest {
     private LocalDateTime lastAccessAt;
     @Column("expire_at")
     private LocalDateTime expireAt;
+    @Column("ext_transaction_id")
+    private String externalTrxId;
+    @Column("external_information")
+    private String externalInformation;
 
     public String getId() {
         return id;
@@ -76,12 +78,12 @@ public class JdbcCibaAuthRequest {
         this.scopes = scopes;
     }
 
-    public String getUserCode() {
-        return userCode;
+    public String getDeviceNotifierId() {
+        return deviceNotifierId;
     }
 
-    public void setUserCode(String userCode) {
-        this.userCode = userCode;
+    public void setDeviceNotifierId(String deviceNotifierId) {
+        this.deviceNotifierId = deviceNotifierId;
     }
 
     public String getClient() {
@@ -114,5 +116,21 @@ public class JdbcCibaAuthRequest {
 
     public void setLastAccessAt(LocalDateTime lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    public String getExternalTrxId() {
+        return externalTrxId;
+    }
+
+    public void setExternalTrxId(String externalTrxId) {
+        this.externalTrxId = externalTrxId;
+    }
+
+    public String getExternalInformation() {
+        return externalInformation;
+    }
+
+    public void setExternalInformation(String externalInformation) {
+        this.externalInformation = externalInformation;
     }
 }

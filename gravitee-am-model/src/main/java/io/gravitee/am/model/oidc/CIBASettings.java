@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -37,6 +39,10 @@ public class CIBASettings {
      * MaxLength of the binding_message parameter
      */
     private int bindingMessageLength = DEFAULT_MSG_LENGTH;
+    /**
+     * Authentication Device Notifiers to use when the EndUser has to be notified
+     */
+    private List<CIBASettingNotifier> deviceNotifiers;
 
     public boolean isEnabled() {
         return enabled;
@@ -72,5 +78,13 @@ public class CIBASettings {
 
     public static CIBASettings defaultSettings() {
         return new CIBASettings();
+    }
+
+    public List<CIBASettingNotifier> getDeviceNotifiers() {
+        return deviceNotifiers;
+    }
+
+    public void setDeviceNotifiers(List<CIBASettingNotifier> deviceNotifiers) {
+        this.deviceNotifiers = deviceNotifiers;
     }
 }

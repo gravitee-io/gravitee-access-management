@@ -17,51 +17,16 @@
 -->
 <div class="gv-page-container">
   <h1>Client-Initiated Backchannel Authentication Flow</h1>
-  <div>
-    <div fxFlex="70">
-      <form (ngSubmit)="save()">
-        <div class="gv-form-section" fxLayout="column">
-          <mat-slide-toggle
-            (change)="enableCIBA($event)"
-            [checked]="isCIBAEnabled()" [disabled]="!editMode">
-            Enable CIBA
-          </mat-slide-toggle>
-          <mat-hint style="font-size: 75%;">Enable Client-Initiated Backchannel Authentication</mat-hint>
-        </div>
-        <div class="gv-form-section" fxLayout="column" *ngIf="isCIBAEnabled()">
-          <div class="gv-form-section-title">
-            <h5>CIBA Settings</h5>
-            <mat-divider></mat-divider>
-          </div>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>timer</mat-icon>
-            <input matInput type="number" placeholder="Authentication Request Expiry" name="authReqExpiry" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.authReqExpiry" [disabled]="!editMode" />
-            <mat-hint>Default validity period for the auth_req_id (seconds).</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>timer</mat-icon>
-            <input matInput type="number" placeholder="Token Request Interval" name="tokenReqInterval" min="0" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.tokenReqInterval" [disabled]="!editMode" />
-            <mat-hint>Delay between two calls for token in POLL or PING mode (seconds).</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-icon matPrefix>textsms</mat-icon>
-            <input matInput type="number" placeholder="Binding Message maximum length" name="bindingMessageLength" min="0" max="1000" (ngModelChange)="modelChanged($event)" [(ngModel)]="domain.oidc.cibaSettings.bindingMessageLength" [disabled]="!editMode" />
-            <mat-hint>Maximum number of characters for the binding_message parameter.</mat-hint>
-          </mat-form-field>
-        </div>
-        <div fxLayout="row" *ngIf="editMode">
-          <button mat-raised-button color="primary" [disabled]="!formChanged" type="submit">SAVE</button>
-        </div>
-      </form>
-    </div>
-    <div class="gv-page-description" fxFlex>
-      <h3>What is CIBA ?</h3>
-      <div class="gv-page-description-content">
-        <p>Client-Initiated Backchannel Authentication (<a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html">CIBA</a>) is a new authentication flow in which  Relying Parties (RP), 
-          that can obtain a valid identifier for the user they want to authenticate, 
-          will be able to initiate an interaction flow to authenticate their users without having end-user interaction from the consumption device. 
-          The flow involves direct communication from the Client to the OpenID Provider without redirect through the user's browser (consumption device)</p>
-      </div>
-    </div>
+  <nav mat-tab-nav-bar color="accent">
+    <a mat-tab-link
+       *ngFor="let link of navLinks"
+       [routerLink]="link.href"
+       routerLinkActive #rla="routerLinkActive"
+       [active]="rla.isActive">
+      {{link.label}}
+    </a>
+  </nav>
+  <div class="ciba-content">
+    <router-outlet></router-outlet>
   </div>
 </div>

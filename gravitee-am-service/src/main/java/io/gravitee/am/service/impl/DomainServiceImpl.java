@@ -154,6 +154,9 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private AlertNotifierService alertNotifierService;
 
+    @Autowired
+    private AuthenticationDeviceNotifierService authenticationDeviceNotifierService;
+
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("Find domain by ID: {}", id);
@@ -452,6 +455,11 @@ public class DomainServiceImpl implements DomainService {
                             // delete alert notifiers
                             .andThen(alertNotifierService.findByDomainAndCriteria(domainId, new AlertNotifierCriteria())
                                     .flatMapCompletable(alertNotifier -> alertNotifierService.delete(alertNotifier.getReferenceType(), alertNotifier.getReferenceId(), alertNotifier.getId(), principal)
+                                    )
+                            )
+                            // delete auth device notifier
+                            .andThen(authenticationDeviceNotifierService.findByDomain(domainId)
+                                    .flatMapCompletable(authDeviceNotifier -> authenticationDeviceNotifierService.delete(domainId, authDeviceNotifier.getId(), principal)
                                     )
                             )
                             .andThen(domainRepository.delete(domainId))

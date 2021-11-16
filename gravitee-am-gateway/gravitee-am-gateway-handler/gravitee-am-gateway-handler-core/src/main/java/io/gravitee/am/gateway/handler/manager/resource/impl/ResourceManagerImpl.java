@@ -17,15 +17,12 @@ package io.gravitee.am.gateway.handler.manager.resource.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ResourceEvent;
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.event.Event;
@@ -49,16 +46,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ResourceManagerImpl extends AbstractService implements ResourceManager, EventListener<ResourceEvent, Payload>, InitializingBean {
 
-    private static final Logger logger = LoggerFactory.getLogger(FactorManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(ResourceManagerImpl.class);
 
     @Autowired
     private ResourcePluginManager resourcePluginManager;
-
-    @Autowired
-    private FactorManager factorManager;
-
-    @Autowired
-    private FactorService factorService;
 
     @Autowired
     private Domain domain;

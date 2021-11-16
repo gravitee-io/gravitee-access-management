@@ -27,8 +27,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.*;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.nonNull;
@@ -60,10 +58,16 @@ public class ParamUtils {
             try {
                 // return parameter from the request object first as When the request parameter (or request_uri) is used,
                 // the OpenID Connect request parameter values contained in the JWT supersede those passed using the OAuth 2.0 request syntax.
-                if (Parameters.CLAIMS.equals(paramName) && requestObject.getJWTClaimsSet().getClaim(paramName) != null) {
-                    value = Optional.ofNullable(Json.encode(requestObject.getJWTClaimsSet().getClaim(paramName)));
+                final Object claim = requestObject.getJWTClaimsSet().getClaim(paramName);
+                if (Parameters.CLAIMS.equals(paramName) && claim != null) {
+                    value = Optional.ofNullable(Json.encode(claim));
                 } else {
-                    value = Optional.ofNullable(requestObject.getJWTClaimsSet().getStringClaim(paramName));
+                    if (claim != null) {
+                        // request_expiry may be an integer so get Generic object type and convert it in string
+                        value = Optional.ofNullable(claim.toString());
+                    } else {
+                        value = Optional.empty();
+                    }
                 }
             } catch (ParseException e) {
                 LOGGER.warn("Unable to extract parameter '{}' from RequestObject", paramName);

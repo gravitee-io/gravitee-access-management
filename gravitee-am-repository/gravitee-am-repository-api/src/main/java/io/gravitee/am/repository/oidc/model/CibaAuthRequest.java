@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.oidc.model;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -63,9 +65,16 @@ public class CibaAuthRequest {
     private Set<String> scopes;
 
     /**
-     * Verification user code
+     * Transaction identifier user instead of the auth_req_id to notify the authentication device
      */
-    private String userCode;
+    private String externalTrxId;
+
+    /**
+     * Information provided by the AuthenticationDeviceNotifier in the response
+     */
+    private Map<String, Object> externalInformation = new HashMap<>();
+
+    private String deviceNotifierId;
 
     public String getId() {
         return id;
@@ -123,19 +132,35 @@ public class CibaAuthRequest {
         this.scopes = scopes;
     }
 
-    public String getUserCode() {
-        return userCode;
-    }
-
-    public void setUserCode(String userCode) {
-        this.userCode = userCode;
-    }
-
     public Date getLastAccessAt() {
         return lastAccessAt;
     }
 
     public void setLastAccessAt(Date lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    public String getExternalTrxId() {
+        return externalTrxId;
+    }
+
+    public void setExternalTrxId(String externalTrxId) {
+        this.externalTrxId = externalTrxId;
+    }
+
+    public Map<String, Object> getExternalInformation() {
+        return externalInformation;
+    }
+
+    public void setExternalInformation(Map<String, Object> externalInformation) {
+        this.externalInformation = externalInformation;
+    }
+
+    public String getDeviceNotifierId() {
+        return deviceNotifierId;
+    }
+
+    public void setDeviceNotifierId(String deviceNotifierId) {
+        this.deviceNotifierId = deviceNotifierId;
     }
 }

@@ -46,7 +46,6 @@ public class CibaAuthRequestRepositoryPurgeTest extends AbstractOAuthTest {
         object1.setClientId("client");
         object1.setStatus("ONGOING");
         object1.setSubject("subject");
-        object1.setUserCode("usercode");
         object1.setScopes(Set.of("openid"));
         object1.setCreatedAt(new Date(now.toEpochMilli()));
         object1.setLastAccessAt(new Date(now.toEpochMilli()));
@@ -56,7 +55,6 @@ public class CibaAuthRequestRepositoryPurgeTest extends AbstractOAuthTest {
         object2.setClientId("client");
         object2.setStatus("ONGOING");
         object2.setSubject("subject");
-        object2.setUserCode("usercode");
         object2.setScopes(Set.of("openid"));
         object2.setCreatedAt(new Date(now.minus(2, ChronoUnit.MINUTES).toEpochMilli()));
         object2.setLastAccessAt(new Date(now.minus(2, ChronoUnit.MINUTES).toEpochMilli()));

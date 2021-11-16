@@ -115,6 +115,7 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
         tables.add("system_tasks");
 
         tables.add("ciba_auth_requests");
+        tables.add("authentication_device_notifiers");
 
         io.r2dbc.spi.Connection connection = Flowable.fromPublisher(connectionFactory.create()).blockingFirst();
         connection.beginTransaction();
