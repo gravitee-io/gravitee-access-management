@@ -24,7 +24,9 @@ loginForm.onsubmit = () => {
         })
         .then(res => {
             clearMessage();
-            window.location.replace(res.headers.get('Location'));
+            setTimeout(() => {
+                window.location.replace(res.headers.get('Location'));
+            }, 250);
         })
         .catch(err => {
             displayMessage(err instanceof DOMException ? err.message : 'Invalid user');
