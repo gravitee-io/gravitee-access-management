@@ -28,9 +28,13 @@ public interface CibaAuthRequestRepository {
 
     Maybe<CibaAuthRequest> findById(String id);
 
+    Maybe<CibaAuthRequest> findByExternalId(String externalId);
+
     Single<CibaAuthRequest> create(CibaAuthRequest authreq);
 
     Single<CibaAuthRequest> update(CibaAuthRequest authreq);
+
+    Single<CibaAuthRequest> updateStatus(String authReqId, String status);
 
     Completable delete(String id);
 

@@ -189,6 +189,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected DeviceService deviceService;
 
+    @Autowired
+    protected AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService;
+
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -421,6 +424,11 @@ public abstract class JerseySpringTest {
         @Bean
         public DeviceService deviceService() {
             return mock(DeviceService.class);
+        }
+
+        @Bean
+        public AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService() {
+            return mock(AuthenticationDeviceNotifierPluginService.class);
         }
     }
 

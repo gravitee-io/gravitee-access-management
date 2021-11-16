@@ -23,6 +23,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.CIBASettingNotifier;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -96,6 +97,9 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         final OIDCSettings oidc = new OIDCSettings();
         final CIBASettings cibaSettings = new CIBASettings();
         cibaSettings.setEnabled(true);
+        final CIBASettingNotifier notifier = new CIBASettingNotifier();
+        notifier.setId(UUID.randomUUID().toString());
+        cibaSettings.setDeviceNotifiers(Arrays.asList(notifier));
         oidc.setCibaSettings(cibaSettings);
         domain.setOidc(oidc);
         domain.setScim(new SCIMSettings());
@@ -180,6 +184,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> d.getUma() != null);
         testObserver.assertValue(d -> d.getOidc() != null);
         testObserver.assertValue(d -> d.getOidc().getCibaSettings() != null && d.getOidc().getCibaSettings().isEnabled());
+        testObserver.assertValue(d -> d.getOidc().getCibaSettings().getDeviceNotifiers() != null && d.getOidc().getCibaSettings().getDeviceNotifiers().size() == 1);
         testObserver.assertValue(d -> d.getScim() != null);
         testObserver.assertValue(d -> d.getWebAuthnSettings() != null);
         testObserver.assertValue(d -> d.getSelfServiceAccountManagementSettings() != null);

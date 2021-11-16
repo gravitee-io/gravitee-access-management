@@ -389,6 +389,15 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- AM Authentication Device Notifier -->
+        <dependency>
+            <groupId>io.gravitee.am.authdevice.notifier</groupId>
+            <artifactId>gravitee-am-authdevice-notifier-http</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- External Plugins -->
         <dependency>
             <groupId>io.gravitee.policy</groupId>
@@ -526,6 +535,14 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
                                     <artifactId>gravitee-am-identityprovider-linkedin</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- AM Authentication Device Notifier -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.authdevice.notifier</groupId>
+                                    <artifactId>gravitee-am-authdevice-notifier-http</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

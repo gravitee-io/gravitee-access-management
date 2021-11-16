@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model.oidc;
 
+import java.util.List;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -24,6 +26,7 @@ public class CIBASettingsMongo {
     private int authReqExpiry;
     private int tokenReqInterval;
     private int bindingMessageLength;
+    private List<CIBASettingNotifierMongo> deviceNotifiers;
 
     public boolean isEnabled() {
         return enabled;
@@ -55,5 +58,13 @@ public class CIBASettingsMongo {
 
     public void setBindingMessageLength(int bindingMessageLength) {
         this.bindingMessageLength = bindingMessageLength;
+    }
+
+    public List<CIBASettingNotifierMongo> getDeviceNotifiers() {
+        return deviceNotifiers;
+    }
+
+    public void setDeviceNotifiers(List<CIBASettingNotifierMongo> deviceNotifiers) {
+        this.deviceNotifiers = deviceNotifiers;
     }
 }

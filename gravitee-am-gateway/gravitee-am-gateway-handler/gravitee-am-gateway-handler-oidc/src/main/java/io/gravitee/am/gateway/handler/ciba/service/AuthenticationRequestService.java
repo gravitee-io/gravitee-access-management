@@ -15,10 +15,14 @@
  */
 package io.gravitee.am.gateway.handler.ciba.service;
 
+import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 /**
@@ -29,9 +33,12 @@ public interface AuthenticationRequestService {
 
     Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client);
 
-    /**
-     * @param authReqId
-     * @return
-     */
     Single<CibaAuthRequest> retrieve(Domain domain, String authReqId);
+
+    Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request);
+
+    Single<ADNotificationResponse> notify(ADNotificationRequest adRequest);
+
+    Completable validateUserResponse(ADCallbackContext context);
+
 }

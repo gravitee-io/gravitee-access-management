@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.oauth2.internal.model;
 
+import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
@@ -49,6 +50,15 @@ public class CibaAuthRequestMongo {
 
     @BsonProperty("expire_at")
     private Date expireAt;
+
+    @BsonProperty("ext_transaction_id")
+    private String externalTrxId;
+
+    @BsonProperty("external_information")
+    private Document externalInformation;
+
+    @BsonProperty("device_notifier_id")
+    private String deviceNotifierId;
 
     public String getId() {
         return id;
@@ -120,6 +130,30 @@ public class CibaAuthRequestMongo {
 
     public void setLastAccessAt(Date lastAccessAt) {
         this.lastAccessAt = lastAccessAt;
+    }
+
+    public String getExternalTrxId() {
+        return externalTrxId;
+    }
+
+    public void setExternalTrxId(String externalTrxId) {
+        this.externalTrxId = externalTrxId;
+    }
+
+    public Document getExternalInformation() {
+        return externalInformation;
+    }
+
+    public void setExternalInformation(Document externalInformation) {
+        this.externalInformation = externalInformation;
+    }
+
+    public String getDeviceNotifierId() {
+        return deviceNotifierId;
+    }
+
+    public void setDeviceNotifierId(String deviceNotifierId) {
+        this.deviceNotifierId = deviceNotifierId;
     }
 
     @Override

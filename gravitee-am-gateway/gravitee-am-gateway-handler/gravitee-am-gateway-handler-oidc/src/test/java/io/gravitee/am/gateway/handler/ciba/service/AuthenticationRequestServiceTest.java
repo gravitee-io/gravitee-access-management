@@ -15,13 +15,23 @@
  */
 package io.gravitee.am.gateway.handler.ciba.service;
 
+import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
+import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
+import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
@@ -29,6 +39,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.vertx.reactivex.core.MultiMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,12 +48,11 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Instant;
-import java.util.Date;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -55,11 +65,20 @@ public class AuthenticationRequestServiceTest {
 
     private CIBASettings cibaSettings;
 
+    @InjectMocks
+    private AuthenticationRequestServiceImpl service;
+
     @Mock
     private CibaAuthRequestRepository requestRepository;
 
-    @InjectMocks
-    private AuthenticationRequestServiceImpl service;
+    @Mock
+    private AuthenticationDeviceNotifierManager notifierManager;
+
+    @Mock
+    private JWTService jwtService;
+
+    @Mock
+    private ClientSyncService clientService;
 
     @Before
     public void init() {
@@ -136,4 +155,185 @@ public class AuthenticationRequestServiceTest {
         observer.awaitTerminalEvent();
         observer.assertValueCount(1);
     }
+
+    @Test
+    public void shouldNotUpdate() {
+        CibaAuthRequest request = mock(CibaAuthRequest.class);
+        when(requestRepository.findById(any())).thenReturn(Maybe.empty());
+        final TestObserver<CibaAuthRequest> observer = service.updateAuthDeviceInformation(request).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(AuthenticationRequestNotFoundException.class);
+
+        verify(requestRepository, never()).update(any());
+    }
+
+    @Test
+    public void shouldUpdate() {
+        CibaAuthRequest request = mock(CibaAuthRequest.class);
+        when(requestRepository.findById(any())).thenReturn(Maybe.just(request));
+        when(requestRepository.update(any())).thenReturn(Single.just(request));
+
+        final TestObserver<CibaAuthRequest> observer = service.updateAuthDeviceInformation(request).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertValueCount(1);
+
+        verify(request, never()).setLastAccessAt(any());
+        verify(request).setExternalTrxId(any());
+        verify(request).setExternalInformation(any());
+    }
+
+    @Test
+    public void shouldUpdateAuthReqStatus() {
+        final String STATE = "state";
+        final String EXTERNAL_ID = "externalId";
+        final String AUTH_REQ_ID = "auth_red_id";
+        final boolean requestValidated = new Random().nextBoolean();
+
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.of(new ADUserResponse(EXTERNAL_ID, STATE, requestValidated))));
+
+        final JWT stateJwt = new JWT();
+        stateJwt.setJti(EXTERNAL_ID);
+        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+
+        final CibaAuthRequest cibaRequest = new CibaAuthRequest();
+        cibaRequest.setId(AUTH_REQ_ID);
+        when(this.requestRepository.findByExternalId(EXTERNAL_ID)).thenReturn(Maybe.just(cibaRequest));
+
+        final String status = requestValidated ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
+        when(this.requestRepository.updateStatus(AUTH_REQ_ID, status)).thenReturn(Single.just(cibaRequest));
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+
+        verify(requestRepository).updateStatus(AUTH_REQ_ID, status);
+    }
+
+    @Test
+    public void shouldNotUpdateStatus_missingUserResponse() {
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.empty()));
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(NoSuchElementException.class);
+
+        verify(clientService, never()).findByClientId(any());
+        verify(requestRepository, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateStatus_UnknownClient() {
+        final String STATE = "state";
+        final String EXTERNAL_ID = "externalId";
+        final boolean requestValidated = new Random().nextBoolean();
+
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.of(new ADUserResponse(EXTERNAL_ID, STATE, requestValidated))));
+
+        final JWT stateJwt = new JWT();
+        stateJwt.setJti(EXTERNAL_ID);
+        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.clientService.findByClientId(any())).thenReturn(Maybe.empty());
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidRequestException.class);
+
+        verify(requestRepository, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateStatus_InvalidSignature() {
+        final String STATE = "state";
+        final String EXTERNAL_ID = "externalId";
+        final boolean requestValidated = new Random().nextBoolean();
+
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.of(new ADUserResponse(EXTERNAL_ID, STATE, requestValidated))));
+
+        final JWT stateJwt = new JWT();
+        stateJwt.setJti(EXTERNAL_ID);
+        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.error(new InvalidTokenException()));
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidRequestException.class);
+
+        verify(clientService).findByClientId(any());
+        verify(requestRepository, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateStatus_StateMismatch() {
+        final String STATE = "state";
+        final String EXTERNAL_ID = "externalId";
+        final boolean requestValidated = new Random().nextBoolean();
+
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.of(new ADUserResponse("unknown", STATE, requestValidated))));
+
+        final JWT stateJwt = new JWT();
+        stateJwt.setJti(EXTERNAL_ID);
+        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidRequestException.class);
+
+        verify(clientService).findByClientId(any());
+        verify(requestRepository, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateStatus_UnknownRequestId() {
+        final String STATE = "state";
+        final String EXTERNAL_ID = "externalId";
+        final String AUTH_REQ_ID = "auth_red_id";
+        final boolean requestValidated = new Random().nextBoolean();
+
+        AuthenticationDeviceNotifierProvider provider = mock(AuthenticationDeviceNotifierProvider.class);
+        when(notifierManager.getAuthDeviceNotifierProviders()).thenReturn(List.of(provider));
+        when(provider.extractUserResponse(any())).thenReturn(Single.just(Optional.of(new ADUserResponse(EXTERNAL_ID, STATE, requestValidated))));
+
+        final JWT stateJwt = new JWT();
+        stateJwt.setJti(EXTERNAL_ID);
+        when(this.jwtService.decode(STATE)).thenReturn(Single.just(stateJwt));
+        when(this.clientService.findByClientId(any())).thenReturn(Maybe.just(new Client()));
+        when(this.jwtService.decodeAndVerify(anyString(), any(Client.class))).thenReturn(Single.just(stateJwt));
+
+        final CibaAuthRequest cibaRequest = new CibaAuthRequest();
+        cibaRequest.setId(AUTH_REQ_ID);
+        when(this.requestRepository.findByExternalId(EXTERNAL_ID)).thenReturn(Maybe.empty());
+
+        final ADCallbackContext context = new ADCallbackContext(MultiMap.caseInsensitiveMultiMap(), MultiMap.caseInsensitiveMultiMap());
+        final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
+        observer.awaitTerminalEvent();
+        observer.assertError(InvalidRequestException.class);
+
+        verify(clientService).findByClientId(any());
+        verify(jwtService).decodeAndVerify(anyString(), any(Client.class));
+        verify(requestRepository, never()).updateStatus(any(), any());
+    }
+
 }

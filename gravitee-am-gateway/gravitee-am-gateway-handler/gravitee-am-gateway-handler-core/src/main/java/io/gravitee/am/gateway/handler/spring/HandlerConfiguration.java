@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.spring;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.factor.impl.FactorManagerImpl;
 import io.gravitee.am.gateway.handler.common.spring.CommonConfiguration;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.impl.AuthenticationDeviceNotifierManagerImpl;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -99,6 +101,11 @@ public class HandlerConfiguration {
     @Bean
     public BotDetectionManager botDetectionManager() {
         return new BotDetectionManagerImpl();
+    }
+
+    @Bean
+    public AuthenticationDeviceNotifierManager authenticationDeviceNotifierManager() {
+        return new AuthenticationDeviceNotifierManagerImpl();
     }
 
     @Bean

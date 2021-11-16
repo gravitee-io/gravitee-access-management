@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.ciba;
 import io.gravitee.am.common.ciba.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
@@ -34,12 +35,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static java.util.Collections.emptyMap;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -85,6 +80,13 @@ public class CibaTokenGranter extends AbstractTokenGranter {
 
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> authenticationRequestService.retrieve(domain, authReqId)
+                        .map(cibaRequest -> {
+                            if (!cibaRequest.getClientId().equals(client.getClientId())) {
+                                logger.warn("client_id '{}' requests token using not owned authentication request '{}'", client.getId(), authReqId);
+                                throw new AuthenticationRequestNotFoundException("Authentication request not found");
+                            }
+                            return cibaRequest;
+                        })
                         .map(cibaRequest -> {
                             // set resource owner
                             tokenRequest1.setSubject(cibaRequest.getSubject());

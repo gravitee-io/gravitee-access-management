@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 3.15.0
+      id: 3.15.0-ciba-auth-req
       author: GraviteeSource Team
       changes:
 
@@ -16,8 +16,10 @@ databaseChangeLog:
               - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
               - column: { name: last_access_at, type: timestamp(6), constraints: { nullable: false } }
               - column: { name: expire_at, type: timestamp(6), constraints: { nullable: false } }
-              - column: { name: user_code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: device_notifier_id, type: nvarchar(64), constraints: { nullable: true } }
               - column: { name: scopes, type: clob, constraints: { nullable: true } }
+              - column: { name: external_information, type: clob, constraints: { nullable: true } }
+              - column: { name: ext_transaction_id, type: nvarchar(128), constraints: { nullable: true } }
 
         - addPrimaryKey:
             constraintName: pk_ciba_auth_requests

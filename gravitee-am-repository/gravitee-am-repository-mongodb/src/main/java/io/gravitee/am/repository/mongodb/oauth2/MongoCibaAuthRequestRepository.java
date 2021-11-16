@@ -16,8 +16,9 @@
 package io.gravitee.am.repository.mongodb.oauth2;
 
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.CibaAuthRequestMongo;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
@@ -29,8 +30,11 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
@@ -43,6 +47,7 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     private MongoCollection<CibaAuthRequestMongo> cibaAuthRequestCollection;
 
     private static final String FIELD_EXPIRE_AT = "expire_at";
+    private static final String FIELD_EXTERNAL_ID = "ext_transaction_id";
 
     @PostConstruct
     public void init() {
@@ -62,8 +67,16 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
     }
 
     @Override
+    public Maybe<CibaAuthRequest> findByExternalId(String externalId) {
+        return Observable
+                .fromPublisher(cibaAuthRequestCollection.find(eq(FIELD_EXTERNAL_ID, externalId)).limit(1).first())
+                .firstElement()
+                .map(this::convert);
+    }
+
+    @Override
     public Single<CibaAuthRequest> create(CibaAuthRequest authreq) {
-        authreq.setId(authreq.getId() == null ? RandomString.generate() : authreq.getId());
+        authreq.setId(authreq.getId() == null ? SecureRandomString.generate() : authreq.getId());
         return Single
                 .fromPublisher(cibaAuthRequestCollection.insertOne(convert(authreq)))
                 .flatMap(success -> findById(authreq.getId()).toSingle());
@@ -74,6 +87,12 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         return Single
                 .fromPublisher(cibaAuthRequestCollection.replaceOne(eq(FIELD_ID, authreq.getId()), convert(authreq)))
                 .flatMap(success -> findById(authreq.getId()).toSingle());
+    }
+
+    @Override
+    public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
+        return Single.fromPublisher(cibaAuthRequestCollection.updateOne(and(eq(FIELD_ID, authReqId)), Updates.set("status", status)))
+                .flatMap(updateResult -> findById(authReqId).toSingle());
     }
 
     @Override
@@ -92,10 +111,15 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReqMongo.setSubject(authReq.getSubject());
         authReqMongo.setScopes(authReq.getScopes());
         authReqMongo.setClient(authReq.getClientId());
-        authReqMongo.setUserCode(authReq.getUserCode());
+        authReqMongo.setDeviceNotifierId(authReq.getDeviceNotifierId());
         authReqMongo.setExpireAt(authReq.getExpireAt());
         authReqMongo.setCreatedAt(authReq.getCreatedAt());
         authReqMongo.setLastAccessAt(authReq.getLastAccessAt());
+        authReqMongo.setExternalTrxId(authReq.getExternalTrxId());
+
+        if (authReq.getExternalInformation() != null) {
+            authReqMongo.setExternalInformation(new Document(authReq.getExternalInformation()));
+        }
 
         return authReqMongo;
     }
@@ -111,10 +135,15 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authReq.setClientId(authReqMongo.getClient());
         authReq.setSubject(authReqMongo.getSubject());
         authReq.setScopes(authReqMongo.getScopes());
-        authReq.setUserCode(authReqMongo.getUserCode());
         authReq.setCreatedAt(authReqMongo.getCreatedAt());
         authReq.setExpireAt(authReqMongo.getExpireAt());
         authReq.setLastAccessAt(authReqMongo.getLastAccessAt());
+        authReq.setExternalTrxId(authReqMongo.getExternalTrxId());
+        authReq.setDeviceNotifierId(authReqMongo.getDeviceNotifierId());
+
+        if (authReqMongo.getExternalInformation() != null) {
+            authReq.setExternalInformation(new HashMap<>(authReqMongo.getExternalInformation()));
+        }
 
         return authReq;
     }

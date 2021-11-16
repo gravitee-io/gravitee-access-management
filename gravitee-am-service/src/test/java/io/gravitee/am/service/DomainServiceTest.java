@@ -88,6 +88,7 @@ public class DomainServiceTest {
     public static final String ENVIRONMENT_ID = "env#1";
     private static final String ALERT_TRIGGER_ID = "alertTrigger#1";
     private static final String ALERT_NOTIFIER_ID = "alertNotifier#1";
+    private static final String AUTH_DEVICE_ID = "authdevice-Notifier#1";
 
     @InjectMocks
     private DomainService domainService = new DomainServiceImpl();
@@ -208,6 +209,9 @@ public class DomainServiceTest {
 
     @Mock
     private AlertNotifierService alertNotifierService;
+
+    @Mock
+    private AuthenticationDeviceNotifierService authenticationDeviceNotifierService;
 
     @Test
     public void shouldFindById() {
@@ -581,6 +585,9 @@ public class DomainServiceTest {
         alertNotifier.setReferenceType(ReferenceType.DOMAIN);
         alertNotifier.setReferenceId(DOMAIN_ID);
 
+        final AuthenticationDeviceNotifier authDeviceNotifier = new AuthenticationDeviceNotifier();
+        authDeviceNotifier.setId(AUTH_DEVICE_ID);
+
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(Completable.complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
@@ -630,6 +637,8 @@ public class DomainServiceTest {
         when(alertTriggerService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(Completable.complete());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.just(alertNotifier));
         when(alertNotifierService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_NOTIFIER_ID), isNull())).thenReturn(Completable.complete());
+        when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(authDeviceNotifier));
+        when(authenticationDeviceNotifierService.delete(any(), eq(AUTH_DEVICE_ID), any())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -676,6 +685,7 @@ public class DomainServiceTest {
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
+        when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();

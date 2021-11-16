@@ -15,16 +15,30 @@
  */
 package io.gravitee.am.gateway.handler.ciba.service;
 
+import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifierProvider;
+import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
+import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
+import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
 import io.gravitee.am.gateway.handler.ciba.service.request.AuthenticationRequestStatus;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
+import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +65,15 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     @Autowired
     private Domain domain;
 
+    @Autowired
+    private AuthenticationDeviceNotifierManager notifierManager;
+
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private ClientSyncService clientService;
+
     @Override
     public Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client) {
         Instant now = Instant.now();
@@ -58,11 +81,10 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         final long ttl = requestedExpiry != null ? requestedExpiry: domain.getOidc().getCibaSettings().getAuthReqExpiry();
 
         CibaAuthRequest entity = new CibaAuthRequest();
-        entity.setClientId(client.getId());
+        entity.setClientId(client.getClientId());
         entity.setId(request.getId());
         entity.setScopes(request.getScopes());
         entity.setSubject(request.getSubject());
-        entity.setUserCode(request.getUserCode());
         entity.setStatus(AuthenticationRequestStatus.ONGOING.name());
         entity.setCreatedAt(new Date(now.toEpochMilli()));
         entity.setLastAccessAt(new Date(now.toEpochMilli()));
@@ -96,6 +118,64 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
                             return this.authRequestRepository.delete(authReqId).toSingle(() -> request);
                     }
                 });
+    }
 
+    @Override
+    public Single<CibaAuthRequest> updateAuthDeviceInformation(CibaAuthRequest request) {
+        LOGGER.debug("Update authentication request '{}' with AuthenticationDeviceNotifier information", request.getId());
+        return this.authRequestRepository.findById(request.getId())
+                .switchIfEmpty(Single.error(new AuthenticationRequestNotFoundException(request.getId())))
+                .flatMap(existingReq -> {
+                    // update only information provided by the AD notifier
+                    existingReq.setExternalTrxId(request.getExternalTrxId());
+                    existingReq.setExternalInformation(request.getExternalInformation());
+                    existingReq.setDeviceNotifierId(request.getDeviceNotifierId());
+            return this.authRequestRepository.update(existingReq);
+        });
+    }
+
+    @Override
+    public Single<ADNotificationResponse> notify(ADNotificationRequest adRequest) {
+        final AuthenticationDeviceNotifierProvider notifier = this.notifierManager.getAuthDeviceNotifierProvider(adRequest.getDeviceNotifierId());
+
+        if (notifier == null) {
+            return Single.error(new InvalidRequestException("No authentication device notifier defined"));
+        }
+
+        return notifier.notify(adRequest);
+    }
+
+    @Override
+    public Completable validateUserResponse(ADCallbackContext context) {
+        return Flowable.fromIterable(this.notifierManager.getAuthDeviceNotifierProviders())
+                .flatMapSingle(provider -> provider.extractUserResponse(context))
+                .filter(opt -> opt.isPresent())
+                .firstOrError()
+                .map(opt -> opt.get())
+                .flatMap(userResponse -> {
+                    final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
+                    return this.jwtService.decode(userResponse.getState())
+                            .flatMap(jwtState -> verifyState(userResponse, jwtState.getAud())
+                            ).flatMap(verifiedJwtState -> updateRequestStatus(verifiedJwtState.getJti(), status));
+                }).ignoreElement();
+    }
+
+    private Single<JWT> verifyState(ADUserResponse userResponse, String clientId) {
+        LOGGER.debug("Prepare verification of state '{}' with client id '{}'", userResponse.getState(), clientId);
+        return this.clientService.findByClientId(clientId)
+                .switchIfEmpty(Single.error(new InvalidClientException()))
+                .flatMap(client -> Single.defer(() -> this.jwtService.decodeAndVerify(userResponse.getState(), client)))
+                .filter(verifiedJwt -> userResponse.getTid().equals(verifiedJwt.getJti()))
+                .switchIfEmpty(Single.error(new InvalidRequestException("state parameter mismatch with the transaction id")))
+                .onErrorResumeNext((error) -> {
+                    LOGGER.debug("Verification of state '{}' fails on CIBA callback with client id '{}'", userResponse.getState(), clientId, error);
+                    return Single.error(new InvalidRequestException("Invalid CIBA State"));
+                });
+    }
+
+    private Single<CibaAuthRequest> updateRequestStatus(String reqExtId, String status) {
+        return this.authRequestRepository.findByExternalId(reqExtId)
+                .switchIfEmpty(Single.error(new InvalidRequestException("Invalid CIBA State")))
+                .flatMap(cibaRequest -> this.authRequestRepository.updateStatus(cibaRequest.getId(), status));
     }
 }

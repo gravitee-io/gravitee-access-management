@@ -43,5 +43,6 @@
         <module>gravitee-am-plugins-handlers-resource</module>
         <module>gravitee-am-plugins-handlers-botdetection</module>
         <module>gravitee-am-plugins-handlers-deviceidentifier</module>
+        <module>gravitee-am-plugins-handlers-authdevice-notifier</module>
     </modules>
 </project>

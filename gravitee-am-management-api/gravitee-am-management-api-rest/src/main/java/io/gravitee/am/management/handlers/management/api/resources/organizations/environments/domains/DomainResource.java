@@ -262,6 +262,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(DeviceIdentifiersResource.class);
     }
 
+    @Path("auth-device-notifiers")
+    public AuthenticationDeviceNotifiersResource getDeviceNotifiersResource() {
+        return resourceContext.getResource(AuthenticationDeviceNotifiersResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

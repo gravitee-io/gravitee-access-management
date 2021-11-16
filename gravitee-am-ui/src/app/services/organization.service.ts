@@ -378,6 +378,22 @@ export class OrganizationService {
     return this.http.get<any>(this.platformURL + '/plugins/factors/' + id + '/schema');
   }
 
+  deviceNotifiers(expandIcon = false): Observable<any> {
+    let url = `${this.platformURL}/plugins/auth-device-notifiers`;
+    const expand = [];
+    if (expandIcon) {
+      expand.push('expand=icon');
+    }
+    if (expand.length > 0) {
+      url += `?${expand.join('&')}`;
+    }
+    return this.http.get<any>(url);
+  }
+
+  deviceNotifierSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/auth-device-notifiers/' + id + '/schema');
+  }
+
   resources(expandIcon = false): Observable<any> {
     let url = `${this.platformURL}/plugins/resources`;
     const expand = [];

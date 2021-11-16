@@ -65,6 +65,8 @@ public abstract class Event {
                 return BotDetectionEvent.actionOf(action);
             case DEVICE_IDENTIFIER:
                 return DeviceIdentifierEvent.actionOf(action);
+            case AUTH_DEVICE_NOTIFIER:
+                return AuthenticationDeviceNotifierEvent.actionOf(action);
             default:
                 return null;
         }

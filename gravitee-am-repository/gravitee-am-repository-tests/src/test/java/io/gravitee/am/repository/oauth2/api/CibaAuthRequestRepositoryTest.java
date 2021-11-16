@@ -17,15 +17,15 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
-import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
-import io.gravitee.common.util.LinkedMultiValueMap;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -50,17 +50,8 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
 
     @Test
     public void shouldFindById() {
-        CibaAuthRequest authRequest = new CibaAuthRequest();
         final String id = RandomString.generate();
-        authRequest.setId(id);
-        authRequest.setStatus("ONGOING");
-        authRequest.setCreatedAt(new Date());
-        authRequest.setLastAccessAt(new Date());
-        authRequest.setExpireAt(new Date(System.currentTimeMillis() + 60_000));
-        authRequest.setScopes(Set.of("openid"));
-        authRequest.setSubject("subjectvalue");
-        authRequest.setClientId("clientid");
-        authRequest.setUserCode("code");
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
         repository.create(authRequest).test().awaitTerminalEvent();
 
@@ -74,18 +65,25 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
     }
 
     @Test
-    public void shouldUpdate() {
-        CibaAuthRequest authRequest = new CibaAuthRequest();
+    public void shouldFindByExternalId() {
         final String id = RandomString.generate();
-        authRequest.setId(id);
-        authRequest.setStatus("ONGOING");
-        authRequest.setCreatedAt(new Date());
-        authRequest.setLastAccessAt(new Date());
-        authRequest.setExpireAt(new Date(System.currentTimeMillis() + 60_000));
-        authRequest.setScopes(Set.of("openid"));
-        authRequest.setSubject("subjectvalue");
-        authRequest.setClientId("clientid");
-        authRequest.setUserCode("code");
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+
+        repository.create(authRequest).test().awaitTerminalEvent();
+
+        TestObserver<CibaAuthRequest> observer = repository.findByExternalId(authRequest.getExternalTrxId()).test();
+
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertValueCount(1);
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldUpdate() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
         repository.create(authRequest).test().awaitTerminalEvent();
 
@@ -99,8 +97,36 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
 
         authRequest.setStatus("SUCCESS");
+        authRequest.setDeviceNotifierId("notifierId");
 
         repository.update(authRequest).test().awaitTerminalEvent();
+        observer = repository.findById(id).test();
+
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertValueCount(1);
+        observer.assertValue(req -> req.getStatus().equals("SUCCESS") && req.getDeviceNotifierId().equals("notifierId"));
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldUpdateStatus() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
+
+        repository.create(authRequest).test().awaitTerminalEvent();
+
+        TestObserver<CibaAuthRequest> observer = repository.findById(id).test();
+
+        observer.awaitTerminalEvent();
+
+        observer.assertComplete();
+        observer.assertValueCount(1);
+        observer.assertValue(req -> req.getStatus().equals("ONGOING"));
+        observer.assertNoErrors();
+
+        repository.updateStatus(authRequest.getId(), "SUCCESS").test().awaitTerminalEvent();
         observer = repository.findById(id).test();
 
         observer.awaitTerminalEvent();
@@ -111,10 +137,8 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         observer.assertNoErrors();
     }
 
-    @Test
-    public void shouldDelete() {
+    private CibaAuthRequest buildCibaAuthRequest(String id) {
         CibaAuthRequest authRequest = new CibaAuthRequest();
-        final String id = RandomString.generate();
         authRequest.setId(id);
         authRequest.setStatus("ONGOING");
         authRequest.setCreatedAt(new Date());
@@ -123,8 +147,16 @@ public class CibaAuthRequestRepositoryTest extends AbstractOAuthTest {
         authRequest.setScopes(Set.of("openid"));
         authRequest.setSubject("subjectvalue");
         authRequest.setClientId("clientid");
-        authRequest.setUserCode("code");
+        authRequest.setDeviceNotifierId("notifierid");
+        authRequest.setExternalTrxId("adtrxid"+id);
+        authRequest.setExternalInformation(Map.of("key1", "value1", "key2", Arrays.asList("a", "b")));
+        return authRequest;
+    }
 
+    @Test
+    public void shouldDelete() {
+        final String id = RandomString.generate();
+        CibaAuthRequest authRequest = buildCibaAuthRequest(id);
 
         TestObserver<CibaAuthRequest> observer = repository
                 .create(authRequest)

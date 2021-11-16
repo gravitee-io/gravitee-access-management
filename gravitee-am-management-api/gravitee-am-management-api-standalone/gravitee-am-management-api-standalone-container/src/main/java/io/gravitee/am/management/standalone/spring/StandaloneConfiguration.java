@@ -20,6 +20,7 @@ import io.gravitee.am.management.service.spring.ServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
+import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
@@ -69,7 +70,8 @@ import org.springframework.context.annotation.Import;
         AlertPluginConfiguration.class,
         BotDetectionConfiguration.class,
         DeviceIdentifierConfiguration.class,
-        PasswordDictionaryConfiguration.class
+        PasswordDictionaryConfiguration.class,
+        AuthenticationDeviceNotifierConfiguration.class
 })
 public class StandaloneConfiguration {
 

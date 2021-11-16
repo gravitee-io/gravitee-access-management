@@ -222,6 +222,13 @@ import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/dev
 import {UserDevicesComponent} from "./domain/settings/users/user/devices/devices.component";
 import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
+import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
+import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
+import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
+import { DeviceNotifierPluginsResolver } from './resolvers/device-notifier-plugins.resolver';
+import { DeviceNotifierResolver } from './resolvers/device-notifier.resolver';
+import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -2332,7 +2339,34 @@ export const routes: Routes = [
                           perms: {
                             only: ['domain_openid_read']
                           }
-                        }
+                        },
+                        children: [
+                          {path: '', redirectTo: 'settings', pathMatch: 'full'},
+                          {
+                            path: 'settings',
+                            component: CibaSettingsComponent
+                          },
+                          {
+                            path: 'device-notifiers',
+                            component: DeviceNotifiersComponent,
+                            resolve: {notifiers: DeviceNotifiersResolver}
+                          },
+                          {
+                            path: 'device-notifiers/new',
+                            component: DeviceNotifiersCreationComponent,
+                            resolve: {notifierPlugins: DeviceNotifierPluginsResolver}
+                          },
+                          {
+                            path: 'device-notifiers/:notifierId',
+                            component: DeviceNotifierComponent,
+                            resolve: {deviceNotifier: DeviceNotifierResolver},
+                            data: {
+                              breadcrumb: {
+                                label: 'detail'
+                              }
+                            }
+                          }
+                        ]
                       },
                       {
                         path: 'uma',
