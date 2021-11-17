@@ -75,9 +75,10 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
             throw new InternalAuthenticationServiceException("No organization found when trying to authenticate the end-user");
         }
         List<String> identities = organization.getIdentities() == null ? new ArrayList<>() : new ArrayList<>(organization.getIdentities());
-        // Gravitee IDP must be always available as this IDP is loaded at runtime
-        // when the AM instance start whatever is the list of IDP configured for the organization
-        identities.add(IdentityProviderManagerImpl.IDP_GRAVITEE);
+        // We add transient providers to the list as there are not persisted
+        // the gravitee provider and all providers defined into the gravitee.yaml
+        // will be added.
+        identities.addAll(identityProviderManager.getTransientProviders());
         Iterator<String> iter = identities.iterator();
         io.gravitee.am.identityprovider.api.User user = null;
         AuthenticationException lastException = null;

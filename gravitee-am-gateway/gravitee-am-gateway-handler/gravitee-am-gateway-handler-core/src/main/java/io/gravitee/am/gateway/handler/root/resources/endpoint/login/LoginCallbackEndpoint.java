@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import com.google.common.net.HttpHeaders;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
@@ -35,15 +36,20 @@ public class LoginCallbackEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
-
-        Session session = routingContext.session();
+        final Session session = routingContext.session();
         final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", (MultiMap) routingContext.get(PARAM_CONTEXT_KEY), true);
 
         // if we have an id_token, put in the session context for post step (mainly the user consent step)
-        if (session != null && routingContext.data().containsKey(ID_TOKEN_KEY)) {
-            session.put(ID_TOKEN_KEY, routingContext.get(ID_TOKEN_KEY));
+        if (session != null) {
+            if (routingContext.data().containsKey(ID_TOKEN_KEY)) {
+                session.put(ID_TOKEN_KEY, routingContext.get(ID_TOKEN_KEY));
+            }
+            // save that the user has just been signed in
+            session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
         }
 
+        // the login process is done
+        // redirect the user to the original request
         doRedirect(routingContext.response(), returnURL);
     }
 
