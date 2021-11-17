@@ -102,7 +102,7 @@ export class AuditsComponent implements OnInit {
     this.page.size = 10;
     this.userCtrl.valueChanges
       .subscribe(searchTerm => {
-        this.userService.search(this.domainId, searchTerm + '*', 0, 30, this.organizationContext).subscribe(response => {
+        this.userService.search(this.domainId, 'q='+searchTerm + '*', 0, 30, this.organizationContext).subscribe(response => {
           this.filteredUsers = response.data;
         });
       });
