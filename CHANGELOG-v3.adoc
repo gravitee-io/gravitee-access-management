@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/454?closed=1[AM - 3.10.9 (2021-11-17)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Infinite loop with prompt login parameter https://github.com/gravitee-io/issues/issues/6573[#6573]
+- [webauthn] FaceID/TouchID frame stick in the screen when user comes back to its native iOS application https://github.com/gravitee-io/issues/issues/6545[#6545]
+
+*_Management_*
+
+- Yaml users are not loaded anymore https://github.com/gravitee-io/issues/issues/6513[#6513]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/451?closed=1[AM - 3.12.4 (2021-11-05)]
 
 === Bug fixes
