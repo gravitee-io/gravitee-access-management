@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.common.http.HttpHeaders;
@@ -22,6 +23,7 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -33,10 +35,15 @@ public class LoginPostEndpoint implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-        // the login process is done
-        // redirect the user to the original request
+        final Session session = context.session();
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(context.request());
         final String redirectUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+
+        // save that the user has just been signed in
+        session.put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
+
+        // the login process is done
+        // redirect the user to the original request
         doRedirect(context.response(), redirectUri);
     }
 

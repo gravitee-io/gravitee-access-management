@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-FROM alpine:3 AS build-env
+FROM alpine:3.14 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -25,7 +24,7 @@ ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
 RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
 
-FROM adoptopenjdk/openjdk11:alpine-jre
+FROM eclipse-temurin:11-jre-focal
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
