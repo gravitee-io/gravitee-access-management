@@ -26,8 +26,12 @@
                 <label>Sign-up confirmation</label>
                 <span>Thanks for signing up, please complete the form to activate your account</span>
             </div>
-            <div th:if="${warning}" class="registration-confirmation-error-info">
-                <p>Invalid password value. It does not comply with the password policy.</p>
+            <div class="registration-confirmation-error-info" th:switch="${warning}" th:if="${warning}">
+                <p style="margin: 0;" th:case="invalid_password_value">Invalid password value. It does not comply with
+                    the password policy.
+                <p style="margin: 0;" th:case="invalid_user_information">Invalid first name, last name or username.</p>
+                <p style="margin: 0;" th:case="invalid_email">Invalid email address.</p>
+                <p style="margin: 0;" th:case="*">Some information are missing or invalid.</p>
             </div>
             <form role="form" th:action="${action}" method="post" style="display: flex; flex-direction: column; margin-top: 30px;">
                 <div class="registration-confirmation-form-content">
@@ -44,7 +48,8 @@
                         <p th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid">Contains a special character</p>
                         <p th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid">Contains letters in mixed case</p>
                         <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid">Max <span th:text="${passwordSettings.maxConsecutiveLetters}"/> consecutive letters or numbers</p>
-                        <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="advice">don't use common names or passwords</p>
+                        <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="advice">Don't use common names or passwords</p>
+                        <p th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="advice">Don't use your profile information in password</p>
                     </div>
                 </div>
 

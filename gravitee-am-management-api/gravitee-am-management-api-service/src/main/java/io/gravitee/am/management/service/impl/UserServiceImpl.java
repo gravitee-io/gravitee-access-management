@@ -156,19 +156,19 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                     newUser.setRegistrationCompleted(false);
                                                     newUser.setEnabled(false);
                                                 } else {
-                                                    String password = newUser.getPassword();
-                                                    if (password != null && isInvalidUserPassword(password, client, domain)) {
-                                                        return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
-                                                    }
                                                     newUser.setRegistrationCompleted(true);
                                                     newUser.setEnabled(true);
                                                     newUser.setDomain(domain.getId());
                                                 }
-
+                                                final User transform = transform(newUser);
+                                                String password = newUser.getPassword();
+                                                if (password != null && isInvalidUserPassword(password, client, domain, transform)) {
+                                                    return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
+                                                }
                                                 // store user in its identity provider:
                                                 // - perform first validation of user to avoid error status 500 when the IDP is based on relational databases
                                                 // - in case of error, trace the event otherwise continue the creation process
-                                                return userValidator.validate(transform(newUser))
+                                                return userValidator.validate(transform)
                                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))
                                                         .andThen(userProvider.create(convert(newUser)))
                                                         .map(idpUser -> {
@@ -254,7 +254,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             .defaultIfEmpty(Optional.empty())
                             .flatMapSingle(optClient -> {
                                 // check user password
-                                if (isInvalidUserPassword(password, optClient.orElse(null), domain)) {
+                                if (isInvalidUserPassword(password, optClient.orElse(null), domain, user)) {
                                     return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
                                 }
                                 return identityProviderManager.getUserProvider(user.getSource())
@@ -425,10 +425,10 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 }).toCompletable();
     }
 
-    private boolean isInvalidUserPassword(String password, Application application, Domain domain) {
+    private boolean isInvalidUserPassword(String password, Application application, Domain domain, User user) {
         return PasswordSettings.getInstance(application, domain)
-                .map(ps -> !passwordService.isValid(password, ps))
-                .orElseGet(() -> !passwordService.isValid(password, null));
+                .map(ps -> !passwordService.isValid(password, ps, user))
+                .orElseGet(() -> !passwordService.isValid(password, null, user));
     }
 
     private String getUserRegistrationToken(User user) {

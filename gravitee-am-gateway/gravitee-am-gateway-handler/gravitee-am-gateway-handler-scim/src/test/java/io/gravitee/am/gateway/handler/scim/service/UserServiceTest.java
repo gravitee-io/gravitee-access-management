@@ -205,7 +205,7 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
-        when(passwordService.isValid("user-password", null)).thenReturn(true);
+        when(passwordService.isValid(eq("user-password"), any(), any())).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
         testObserver.assertNoErrors();
@@ -219,7 +219,6 @@ public class UserServiceTest {
     public void shouldNotUpdateUser_unknownIdentityProvider() {
         io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
         when(existingUser.getId()).thenReturn("user-id");
-        when(existingUser.getSource()).thenReturn("user-idp");
         when(existingUser.getUsername()).thenReturn("username");
 
         User scimUser = mock(User.class);
@@ -227,9 +226,7 @@ public class UserServiceTest {
         when(scimUser.isActive()).thenReturn(true);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
-        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(null);
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
-        when(passwordService.isValid("user-password", null)).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
         testObserver.assertError(InvalidValueException.class);

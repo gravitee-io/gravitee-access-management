@@ -139,7 +139,7 @@ public class AccountServiceImpl implements AccountService {
     public Single<ResetPasswordResponse> resetPassword(User user, Client client, String password, io.gravitee.am.identityprovider.api.User principal) {
         return Single.defer(() -> {
             PasswordSettings passwordSettings = PasswordSettings.getInstance(client, this.domain).orElse(null);
-            passwordService.validate(password, passwordSettings);
+            passwordService.validate(password, passwordSettings, user);
             user.setPassword(password);
             return gatewayUserService.resetPassword(client, user, principal);
         });

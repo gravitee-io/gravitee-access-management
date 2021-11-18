@@ -17,6 +17,8 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -24,12 +26,19 @@ import io.gravitee.am.model.PasswordSettings;
  */
 public interface PasswordService {
 
-    default boolean isValid(String password){
-        return isValid(password, null);
+    default boolean isValid(String password) {
+        return isValid(password, null, null);
     }
 
-    boolean isValid(String password, PasswordSettings passwordSettings);
+    default boolean isValid(String password, PasswordSettings passwordSettings, User user) {
+        try {
+            validate(password, passwordSettings, user);
+            return true;
+        } catch (InvalidPasswordException e) {
+            return false;
+        }
+    }
 
-    void validate(String password, PasswordSettings passwordSettings);
+    void validate(String password, PasswordSettings passwordSettings, User user);
 
 }

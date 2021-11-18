@@ -1,12 +1,21 @@
 // this script need passwordSettings to be declared before including this script
 
+//Form elements
 const passwordInput = document.getElementById("password");
+const firstNameInput = document.getElementById("firstName");
+const lastNameInput = document.getElementById("lastName");
+const emailInput = document.getElementById("username");
+const submitBtn = document.getElementById("submitBtn");
+
+//Validation elements
 const length = document.getElementById("minLength");
 const number = document.getElementById("includeNumbers");
 const specialChar = document.getElementById("includeSpecialChar");
 const mixedCase = document.getElementById("mixedCase");
 const maxConsecutiveLetters = document.getElementById("maxConsecutiveLetters");
-const submitBtn = document.getElementById("submitBtn");
+const excludeUserProfileInfoInPassword = document.getElementById("excludeUserProfileInfoInPassword");
+
+
 
 /**
  * When the user starts to type something inside the password field
@@ -54,7 +63,19 @@ passwordInput.onkeyup = function () {
         isMaxConsecutiveLettersOk = !isOverMaxConsecutiveLetters(passwordInput.value, passwordSettings.maxConsecutiveLetters);
         validateMessageElement(maxConsecutiveLetters, isMaxConsecutiveLettersOk);
     }
-    submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk);
+
+    //validate user profile in password
+    let isExcludeUserProfileInfoInPasswordOk = true;
+    if (passwordSettings.excludeUserProfileInfoInPassword && firstNameInput && lastNameInput && emailInput) {
+        const lowerPassword = passwordInput.value ? passwordInput.value.toLowerCase() : passwordInput.value;
+        isExcludeUserProfileInfoInPasswordOk = (
+            (!firstNameInput.value || !lowerPassword.includes(firstNameInput.value.toLowerCase())) &&
+            (!lastNameInput.value || !lowerPassword.includes(lastNameInput.value.toLowerCase())) &&
+            (!emailInput.value || !lowerPassword.includes(emailInput.value.toLowerCase()))
+        )
+        validateMessageElement(excludeUserProfileInfoInPassword, isExcludeUserProfileInfoInPasswordOk);
+    }
+    submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk);
 }
 
 /**

@@ -16,9 +16,9 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.User;
 import io.gravitee.am.password.dictionary.PasswordDictionary;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.validators.password.PasswordValidator;
 import io.gravitee.am.service.validators.password.impl.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,16 +49,7 @@ public class PasswordServiceImpl implements PasswordService {
         this.passwordDictionary = passwordDictionary;
     }
 
-    public boolean isValid(String password, PasswordSettings passwordSettings) {
-        try {
-            validate(password, passwordSettings);
-            return true;
-        } catch (InvalidPasswordException e) {
-            return false;
-        }
-    }
-
-    public void validate(String password, PasswordSettings passwordSettings) {
+    public void validate(String password, PasswordSettings passwordSettings, User user) {
         // fallback to default regex
         if (passwordSettings == null) {
             if (!defaultPasswordValidator.validate(password)) {
@@ -73,8 +64,9 @@ public class PasswordServiceImpl implements PasswordService {
                     new IncludeSpecialCharactersPasswordValidator(passwordSettings.isIncludeSpecialCharacters()),
                     new MixedCasePasswordValidator(passwordSettings.getLettersInMixedCase()),
                     new ConsecutiveCharacterPasswordValidator(passwordSettings.getMaxConsecutiveLetters()),
-                    new DictionaryPasswordValidator(passwordSettings.isExcludePasswordsInDictionary(), passwordDictionary))
-            .filter(not(passwordValidator -> passwordValidator.validate(password)))
+                    new DictionaryPasswordValidator(passwordSettings.isExcludePasswordsInDictionary(), passwordDictionary),
+                    new UserProfilePasswordValidator(passwordSettings.isExcludeUserProfileInfoInPassword(), user)
+            ).filter(not(passwordValidator -> passwordValidator.validate(password)))
             .findFirst().ifPresent(validator -> {
                 throw validator.getCause();
             });

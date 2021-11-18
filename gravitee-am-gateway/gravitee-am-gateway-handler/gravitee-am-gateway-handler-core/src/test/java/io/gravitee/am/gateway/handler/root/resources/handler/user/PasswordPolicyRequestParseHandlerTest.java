@@ -28,8 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
@@ -61,7 +60,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(rc -> rc.response().end());
 
-        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(anyString(), eq(null));
+        doThrow(InvalidPasswordException.class).when(passwordValidator).validate(anyString(), eq(null), any());
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();
@@ -83,7 +82,7 @@ public class PasswordPolicyRequestParseHandlerTest extends RxWebTestBase {
                 .handler(rc -> rc.response().end());
 
 
-        doNothing().when(passwordValidator).validate(anyString(), eq(null));
+        doNothing().when(passwordValidator).validate(anyString(), eq(null), any());
 
         testRequest(HttpMethod.POST, "/", req -> {
             Buffer buffer = Buffer.buffer();

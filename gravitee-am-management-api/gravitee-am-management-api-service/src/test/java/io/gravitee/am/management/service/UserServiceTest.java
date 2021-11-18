@@ -426,7 +426,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordService).isValid(password, null);
+        doReturn(true).when(passwordService).isValid(eq(password), eq(null), any());
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -455,7 +455,7 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        doReturn(true).when(passwordService).isValid(password, null);
+        when(passwordService.isValid(eq(password), eq(null), any())).thenReturn(true);
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -562,7 +562,6 @@ public class UserServiceTest {
 
     @Test
     public void shouldNotCreate_invalid_password() {
-
         Domain domain = new Domain();
         domain.setId("domainId");
         String password = "myPassword";
@@ -577,7 +576,7 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(InvalidPasswordException.class);
-        verify(passwordService, times(1)).isValid(password, null);
+        verify(passwordService, times(1)).isValid(eq(password), eq(null), any());
     }
 
     @Test
@@ -596,6 +595,6 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(InvalidPasswordException.class);
-        verify(passwordService, times(1)).isValid(password, null);
+        verify(passwordService, times(1)).isValid(eq(password), eq(null), any());
     }
 }

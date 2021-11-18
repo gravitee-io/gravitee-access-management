@@ -59,9 +59,15 @@ public class PasswordSettingsMongo {
     private Integer maxConsecutiveLetters;
 
     /**
-     * Max consecutive letters
+     *  Excludes passwords contained in dictionary
      */
     private Boolean excludePasswordsInDictionary;
+
+
+    /**
+     * Excludes user profile information from password
+     */
+    private Boolean excludeUserProfileInfoInPassword;
 
     public boolean isInherited() {
         return inherited;
@@ -127,6 +133,14 @@ public class PasswordSettingsMongo {
         this.excludePasswordsInDictionary = excludePasswordsInDictionary;
     }
 
+    public Boolean isExcludeUserProfileInfoInPassword() {
+        return excludeUserProfileInfoInPassword;
+    }
+
+    public void setExcludeUserProfileInfoInPassword(Boolean excludeUserProfileInfoInPassword) {
+        this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
+    }
+
     public PasswordSettings convert() {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(isInherited());
@@ -137,6 +151,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setLettersInMixedCase(getLettersInMixedCase());
         passwordSettings.setMaxConsecutiveLetters(getMaxConsecutiveLetters());
         passwordSettings.setExcludePasswordsInDictionary(isExcludePasswordsInDictionary());
+        passwordSettings.setExcludeUserProfileInfoInPassword(isExcludeUserProfileInfoInPassword());
         return passwordSettings;
     }
 
@@ -153,6 +168,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setLettersInMixedCase(other.getLettersInMixedCase());
         passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
         passwordSettings.setExcludePasswordsInDictionary(other.isExcludePasswordsInDictionary());
+        passwordSettings.setExcludeUserProfileInfoInPassword(other.isExcludeUserProfileInfoInPassword());
         return passwordSettings;
     }
 }
