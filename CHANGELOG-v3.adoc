@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/462?closed=1[AM - 3.5.10 (2021-11-18)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- Some searchs on user resources are malformed https://github.com/gravitee-io/issues/issues/6584[#6584]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/455?closed=1[AM - 3.13.1 (2021-11-18)]
 
 === Bug fixes
