@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -53,12 +54,24 @@ public class PasswordPolicyRequestParseHandler extends UserRequestHandler {
         Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, this.domain);
 
         try {
-            passwordService.validate(password, passwordSettings.orElse(null));
+            User user = getUser(context);
+            passwordService.validate(password, passwordSettings.orElse(null), user);
             context.next();
         } catch (InvalidPasswordException e) {
             Optional.ofNullable(context.request().getParam(Parameters.CLIENT_ID)).ifPresent(t -> queryParams.set(Parameters.CLIENT_ID, t));
             warningRedirection(context, queryParams, e.getErrorKey());
         }
+    }
+
+    private User getUser(RoutingContext context) {
+        //User is connected
+        User user = context.get(ConstantKeys.USER_CONTEXT_KEY);
+        if (user != null) {
+            return user;
+        }
+        //We use contact information from the form
+        MultiMap params = context.request().formAttributes();
+        return convert(params);
     }
 
     private void warningRedirection(RoutingContext context, MultiMap queryParams, String warningMsgKey) {

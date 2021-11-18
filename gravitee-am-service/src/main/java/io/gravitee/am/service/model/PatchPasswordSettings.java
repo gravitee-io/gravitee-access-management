@@ -35,6 +35,7 @@ public class PatchPasswordSettings {
     private Optional<Boolean> lettersInMixedCase;
     private Optional<Integer> maxConsecutiveLetters;
     private Optional<Boolean> excludePasswordsInDictionary;
+    private Optional<Boolean> excludeUserProfileInfoInPassword;
 
     public Optional<Integer> getMinLength() {
         return minLength;
@@ -100,6 +101,14 @@ public class PatchPasswordSettings {
         this.excludePasswordsInDictionary = excludePasswordsInDictionary;
     }
 
+    public Optional<Boolean> getExcludeUserProfileInfoInPassword() {
+        return excludeUserProfileInfoInPassword;
+    }
+
+    public void setExcludeUserProfileInfoInPassword(Optional<Boolean> excludeUserProfileInfoInPassword) {
+        this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
+    }
+
     public PasswordSettings patch(PasswordSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
@@ -111,6 +120,7 @@ public class PatchPasswordSettings {
         SetterUtils.safeSet(toPatch::setLettersInMixedCase, this.lettersInMixedCase);
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
         SetterUtils.safeSet(toPatch::setExcludePasswordsInDictionary, this.excludePasswordsInDictionary);
+        SetterUtils.safeSet(toPatch::setExcludeUserProfileInfoInPassword, this.excludeUserProfileInfoInPassword);
 
         if (toPatch.getMinLength() != null && toPatch.getMaxLength() != null) {
             if (toPatch.getMinLength() > toPatch.getMaxLength()) {

@@ -95,16 +95,4 @@ public class RegisterProcessHandler extends UserRequestHandler {
         principal.setAdditionalInformation(additionalInformation);
         return principal;
     }
-
-    private User convert(MultiMap params) {
-        User user = new User();
-        user.setUsername(params.get("username"));
-        user.setFirstName(params.get("firstName"));
-        user.setLastName(params.get("lastName"));
-        user.setEmail(params.get("email"));
-        user.setPassword(params.get("password"));
-        user.setClient(params.get("client_id"));
-
-        return user;
-    }
 }

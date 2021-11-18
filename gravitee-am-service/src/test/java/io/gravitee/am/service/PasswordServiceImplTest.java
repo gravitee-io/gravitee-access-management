@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.User;
 import io.gravitee.am.password.dictionary.PasswordDictionaryImpl;
 import io.gravitee.am.service.impl.PasswordServiceImpl;
 import io.gravitee.am.service.validators.password.impl.DefaultPasswordValidatorImpl;
@@ -23,7 +24,11 @@ import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.Optional;
+
+import static io.gravitee.am.common.oidc.StandardClaims.EMAIL;
+import static io.gravitee.am.common.oidc.StandardClaims.PHONE_NUMBER;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -67,7 +72,7 @@ public class PasswordServiceImplTest {
 
     @Test
     public void testPassword_min_8_characters_max_10_characters_at_least_one_uppercase_letter_one_lowercase_letter_one_number_one_special_character() {
-        PasswordService passwordValidator = new PasswordServiceImpl(new DefaultPasswordValidatorImpl("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,10}$"),null);
+        PasswordService passwordValidator = new PasswordServiceImpl(new DefaultPasswordValidatorImpl("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,10}$"), null);
 
         Assert.assertFalse(passwordValidator.isValid("test"));
         Assert.assertFalse(passwordValidator.isValid("password"));
@@ -79,14 +84,14 @@ public class PasswordServiceImplTest {
 
     @Test
     public void invalidMinLength() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, null, null, null, null);
         Optional<String> result = getValidationErrorKey("AB", passwordSettings);
         Assertions.assertThat(result).hasValue("invalid password minimum length");
     }
 
     @Test
     public void includeNumber() {
-        PasswordSettings passwordSettings = buildPasswordSettings(2, true, null, null, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(2, true, null, null, null, null, null);
         Assertions.assertThat(getValidationErrorKey("ABC", passwordSettings)).hasValue("password must contains numbers");
         Assertions.assertThat(getValidationErrorKey("A234", passwordSettings)).isEmpty();
         Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).isEmpty();
@@ -94,7 +99,7 @@ public class PasswordServiceImplTest {
 
     @Test
     public void includeSpecialCharacters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, false, true, null, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, false, true, null, null, null, null);
         Assertions.assertThat(getValidationErrorKey("AB12", passwordSettings)).hasValue("password must contains special characters");
         Assertions.assertThat(getValidationErrorKey("1234", passwordSettings)).hasValue("password must contains special characters");
         Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains special characters");
@@ -103,7 +108,7 @@ public class PasswordServiceImplTest {
 
     @Test
     public void lettersInMixedCase() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, true, null, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, true, null, null, null);
         Assertions.assertThat(getValidationErrorKey("ABCD", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("abcd", passwordSettings)).hasValue("password must contains letters in mixed case");
         Assertions.assertThat(getValidationErrorKey("ABcd", passwordSettings)).isEmpty();
@@ -111,21 +116,113 @@ public class PasswordServiceImplTest {
 
     @Test
     public void maxConsecutiveLetters() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, 3, null);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, 3, null, null);
         Assertions.assertThat(getValidationErrorKey("ABBBBCD", passwordSettings)).hasValue("invalid max consecutive letters");
         Assertions.assertThat(getValidationErrorKey("ABBBcd", passwordSettings)).isEmpty();
     }
 
     @Test
     public void passwordInDictionary() {
-        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, true);
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, true, null);
         Assertions.assertThat(getValidationErrorKey("trustno1", passwordSettings)).hasValue("invalid password, try something else");
         Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings)).isEmpty();
     }
 
+    @Test
+    public void userProfileInPassword_username() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setUsername("myUsername");
+        Assertions.assertThat(getValidationErrorKey("MyUsErNaMe-and-a-suffix@@@", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_firstname() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setFirstName("myFirstname");
+        Assertions.assertThat(getValidationErrorKey("SomePaSSwordWith-myFiRsTnAmE", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_lastname() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setLastName("myLastName");
+        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myLaStNaMe", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_nickname() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setNickName("myNickName");
+        Assertions.assertThat(getValidationErrorKey("SomePasswordWith-myNiCkNaMe", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_middlename() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setAdditionalInformation(new HashMap<>());
+        user.setMiddleName("myMiddleName");
+        Assertions.assertThat(getValidationErrorKey("myMiDdLeNaMe-withsomething", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+
+    @Test
+    public void userProfileInPassword_email() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setEmail("user@email.com");
+        Assertions.assertThat(getValidationErrorKey("uSeR@eMaIl.com", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_emails() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setAdditionalInformation(new HashMap<>());
+        user.putAdditionalInformation(EMAIL, "email1@email.com");
+        user.putAdditionalInformation(EMAIL, "email2@email.com");
+        Assertions.assertThat(getValidationErrorKey("somePassword-email2@email.com", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_phonenumbers() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setAdditionalInformation(new HashMap<>());
+        user.putAdditionalInformation(PHONE_NUMBER, "0712345678");
+        user.putAdditionalInformation(PHONE_NUMBER, "0798765432");
+        Assertions.assertThat(getValidationErrorKey("somePassword-0798765432", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void userProfileInPassword_phonenumber() {
+        PasswordSettings passwordSettings = buildPasswordSettings(3, null, null, false, null, null, true);
+        User user = new User();
+        user.setAdditionalInformation(new HashMap<>());
+        user.setPhoneNumber("0712345678");
+        Assertions.assertThat(getValidationErrorKey("somePassword-0712345678", passwordSettings, user)).hasValue("invalid password user profile");
+        Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
     private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings) {
+        return getValidationErrorKey(password, passwordSettings, null);
+    }
+
+    private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings, User user) {
         try {
-            passwordService.validate(password, passwordSettings);
+            passwordService.validate(password, passwordSettings, user);
             return Optional.empty();
         } catch (Exception e) {
             return Optional.of(e.getMessage());
@@ -137,7 +234,8 @@ public class PasswordServiceImplTest {
                                                           Boolean includeSpecialCharacters,
                                                           Boolean lettersInMixedCase,
                                                           Integer maxConsecutiveLetters,
-                                                          Boolean excludePasswordInDictionary
+                                                          Boolean excludePasswordInDictionary,
+                                                          Boolean excludeUserProfile
     ) {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setMinLength(minLength);
@@ -146,6 +244,7 @@ public class PasswordServiceImplTest {
         passwordSettings.setLettersInMixedCase(lettersInMixedCase);
         passwordSettings.setMaxConsecutiveLetters(maxConsecutiveLetters);
         passwordSettings.setExcludePasswordsInDictionary(excludePasswordInDictionary);
+        passwordSettings.setExcludeUserProfileInfoInPassword(excludeUserProfile);
         return passwordSettings;
     }
 }

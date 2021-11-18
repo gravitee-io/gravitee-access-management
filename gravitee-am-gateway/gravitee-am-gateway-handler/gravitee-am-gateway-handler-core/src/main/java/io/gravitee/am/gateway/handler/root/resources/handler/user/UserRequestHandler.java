@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -59,7 +60,7 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
     }
 
     protected User getAuthenticatedUser(RoutingContext routingContext) {
-        io.gravitee.am.model.User user = routingContext.get("user");
+        io.gravitee.am.model.User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         if (user != null) {
             DefaultUser authenticatedUser = new DefaultUser(user.getUsername());
             authenticatedUser.setId(user.getId());
@@ -80,5 +81,16 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    protected io.gravitee.am.model.User convert(MultiMap params) {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setUsername(params.get("username"));
+        user.setFirstName(params.get("firstName"));
+        user.setLastName(params.get("lastName"));
+        user.setEmail(params.get("email"));
+        user.setPassword(params.get("password"));
+        user.setClient(params.get("client_id"));
+        return user;
     }
 }

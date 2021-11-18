@@ -41,6 +41,7 @@ export class PasswordPolicyComponent implements OnInit {
   inherited: boolean;
   maxConsecutiveLetters: number;
   excludePasswordsInDictionary: boolean;
+  excludeUserProfileInfoInPassword: boolean;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -65,6 +66,7 @@ export class PasswordPolicyComponent implements OnInit {
       this.lettersInMixedCase = this.passwordSettings.lettersInMixedCase;
       this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
       this.excludePasswordsInDictionary = this.passwordSettings.excludePasswordsInDictionary;
+      this.excludeUserProfileInfoInPassword = this.passwordSettings.excludeUserProfileInfoInPassword;
     }
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
   }
@@ -94,6 +96,10 @@ export class PasswordPolicyComponent implements OnInit {
     this.excludePasswordsInDictionary = e.checked;
   }
 
+  setExcludeUserProfileInfoInPassword(e) {
+    this.excludeUserProfileInfoInPassword = e.checked;
+  }
+
   update() {
     const data: any = {};
     data.settings = {};
@@ -105,7 +111,8 @@ export class PasswordPolicyComponent implements OnInit {
       'includeSpecialCharacters': this.includeSpecialCharacters,
       'lettersInMixedCase': this.lettersInMixedCase,
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
-      'excludePasswordsInDictionary': this.excludePasswordsInDictionary
+      'excludePasswordsInDictionary': this.excludePasswordsInDictionary,
+      'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword
     };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(response => {
       this.formChanged = false;

@@ -69,6 +69,11 @@ public class PasswordSettings {
      */
     private Boolean excludePasswordsInDictionary;
 
+    /**
+     * Excludes user profile information from password
+     */
+    private Boolean excludeUserProfileInfoInPassword;
+
     public PasswordSettings() {
 
     }
@@ -81,6 +86,8 @@ public class PasswordSettings {
         this.includeSpecialCharacters = other.includeSpecialCharacters;
         this.lettersInMixedCase = other.lettersInMixedCase;
         this.maxConsecutiveLetters = other.maxConsecutiveLetters;
+        this.excludePasswordsInDictionary = other.excludePasswordsInDictionary;
+        this.excludeUserProfileInfoInPassword = other.excludeUserProfileInfoInPassword;
     }
 
     public Integer getMinLength() {
@@ -145,6 +152,14 @@ public class PasswordSettings {
 
     public void setExcludePasswordsInDictionary(Boolean excludePasswordsInDictionary) {
         this.excludePasswordsInDictionary = excludePasswordsInDictionary;
+    }
+
+    public Boolean isExcludeUserProfileInfoInPassword() {
+        return excludeUserProfileInfoInPassword;
+    }
+
+    public void setExcludeUserProfileInfoInPassword(Boolean excludeUserProfileInfoInPassword) {
+        this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
     }
 
     public static Optional<PasswordSettings> getInstance(PasswordSettingsAware passwordSettingsAware, Domain domain) {

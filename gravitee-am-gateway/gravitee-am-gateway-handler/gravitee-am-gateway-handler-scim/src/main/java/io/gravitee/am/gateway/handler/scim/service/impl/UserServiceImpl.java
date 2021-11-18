@@ -145,10 +145,6 @@ public class UserServiceImpl implements UserService {
         // set user idp source
         final String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : DEFAULT_IDP_PREFIX + domain.getId());
 
-        // check password
-        if (isInvalidUserPassword(user)) {
-            return Single.error(new InvalidValueException("Field [password] is invalid"));
-        }
 
         io.gravitee.am.model.User userModel = UserMapper.convert(user);
         // set technical ID
@@ -160,6 +156,11 @@ public class UserServiceImpl implements UserService {
         userModel.setCreatedAt(new Date());
         userModel.setUpdatedAt(userModel.getCreatedAt());
         userModel.setEnabled(userModel.getPassword() != null);
+
+        // check password
+        if (isInvalidUserPassword(user.getPassword(), userModel)) {
+            return Single.error(new InvalidValueException("Field [password] is invalid"));
+        }
 
         // check if user is unique
         return userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source)
@@ -228,10 +229,6 @@ public class UserServiceImpl implements UserService {
     public Single<User> update(String userId, User user, String idp, String baseUrl, io.gravitee.am.identityprovider.api.User principal) {
         LOGGER.debug("Update a user {} for domain {}", user.getUserName(), domain.getName());
 
-        // check password
-        if (isInvalidUserPassword(user)) {
-            return Single.error(new InvalidValueException("Field [password] is invalid"));
-        }
 
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
@@ -260,6 +257,11 @@ public class UserServiceImpl implements UserService {
                                 }
 
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
+
+                                // check password
+                                if (isInvalidUserPassword(userToUpdate.getPassword(), userToUpdate)) {
+                                    return Single.error(new InvalidValueException("Field [password] is invalid"));
+                                }
 
                                 // set source
                                 String source = user.getSource() != null ? user.getSource() : (idp != null ? idp : existingUser.getSource());
@@ -341,7 +343,7 @@ public class UserServiceImpl implements UserService {
                     User userToPatch = objectMapper.treeToValue(node, User.class);
 
                     // check password
-                    if (isInvalidUserPassword(userToPatch)) {
+                    if (isInvalidUserPassword(userToPatch.getPassword(), UserMapper.convert(userToPatch))) {
                         return Single.error(new InvalidValueException("Field [password] is invalid"));
                     }
 
@@ -393,11 +395,11 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private boolean isInvalidUserPassword(User user) {
-        if (isNull(user.getPassword())) {
+    private boolean isInvalidUserPassword(String password, io.gravitee.am.model.User user) {
+        if (isNull(password)) {
             return false;
         }
-        return !passwordService.isValid(user.getPassword(), domain.getPasswordSettings());
+        return !passwordService.isValid(password, domain.getPasswordSettings(), user);
     }
 
     private Single<User> setGroups(User scimUser) {
