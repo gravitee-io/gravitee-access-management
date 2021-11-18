@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/460?closed=1[AM - 3.12.5 (2021-11-18)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.10.9 https://github.com/gravitee-io/issues/issues/6575[#6575]
+
+*_Par_*
+
+- Unable to authenticate user with new consent https://github.com/gravitee-io/issues/issues/6562[#6562]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/454?closed=1[AM - 3.10.9 (2021-11-17)]
 
 === Bug fixes
