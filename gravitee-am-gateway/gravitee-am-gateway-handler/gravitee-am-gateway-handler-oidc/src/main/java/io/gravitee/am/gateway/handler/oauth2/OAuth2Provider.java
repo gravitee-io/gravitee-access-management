@@ -229,6 +229,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler(clientSyncService);
         oauth2Router.route(HttpMethod.GET, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(userConsentPrepareContextHandler)
@@ -237,6 +238,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
         oauth2Router.route(HttpMethod.POST, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
+                .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(userConsentPrepareContextHandler)

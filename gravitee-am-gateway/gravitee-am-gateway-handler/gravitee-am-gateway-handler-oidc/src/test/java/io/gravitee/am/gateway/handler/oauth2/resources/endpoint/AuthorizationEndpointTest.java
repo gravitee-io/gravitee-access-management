@@ -22,6 +22,7 @@ import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.ResponseMode;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
@@ -39,7 +40,6 @@ import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -132,10 +132,16 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         when(openIDDiscoveryService.getConfiguration(anyString())).thenReturn(openIDProviderMetadata);
         when(environment.getProperty("authorization.code.validity", Integer.class, 60000)).thenReturn(60000);
 
-        // set Authorization endpoint routes
+        // set technical routes
         SessionHandler sessionHandler = SessionHandler.create(LocalSessionStore.create(vertx));
-        router.route("/oauth/authorize")
-                .handler(sessionHandler);
+        router.route().order(-1)
+                .handler(sessionHandler)
+                .handler(routingContext -> {
+                    routingContext.put(CONTEXT_PATH, "/test");
+                    routingContext.next();
+                });
+
+        // set Authorization endpoint routes
         router.route(HttpMethod.GET, "/oauth/authorize")
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(new AuthorizationRequestParseRequiredParametersHandler())
@@ -145,11 +151,6 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(authorizationEndpointHandler);
         router.route()
                 .failureHandler(new AuthorizationRequestFailureHandler(openIDDiscoveryService, jwtService, jweService, environment));
-
-        router.route().order(-1).handler(routingContext -> {
-            routingContext.put(CONTEXT_PATH, "/test");
-            routingContext.next();
-        });
 
         when(parService.deleteRequestUri(any())).thenReturn(Completable.complete());
     }
@@ -914,7 +915,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.request().headers().set(HttpHeaders.REFERER, "http://localhost:8092/" + routingContext.get(CONTEXT_PATH) + "/oauth/consent");
+            routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User())));
             routingContext.next();
         });
@@ -952,7 +953,45 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
         ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
 
         router.route().order(-1).handler(routingContext -> {
-            routingContext.request().headers().set(HttpHeaders.REFERER, "http://localhost:8092/" + routingContext.get(CONTEXT_PATH) + "/mfa/challenge");
+            routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
+            routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User())));
+            routingContext.next();
+        });
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(flow.run(any(), any(), any())).thenReturn(Single.just(authorizationResponse));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&prompt=login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertEquals("http://localhost:9999/callback?code=test-code", location);
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeAuthorizationEndpoint_prompt_login_social_auth_step() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setScopeSettings(Collections.singletonList(new ApplicationScopeSettings("read")));
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        AuthorizationResponse authorizationResponse = new AuthorizationCodeResponse();
+        authorizationResponse.setRedirectUri(authorizationRequest.getRedirectUri());
+        ((AuthorizationCodeResponse) authorizationResponse).setCode("test-code");
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
             routingContext.setUser(new User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new io.gravitee.am.model.User())));
             routingContext.next();
         });

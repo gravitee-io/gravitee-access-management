@@ -321,6 +321,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         if (other.getScopeSettings() != null) {
             applicationOAuthSettingsMongo.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
         }
+        applicationOAuthSettingsMongo.setRequireParRequest(other.isRequireParRequest());
         return applicationOAuthSettingsMongo;
     }
 
@@ -393,6 +394,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         if (other.getScopeSettings() != null) {
             applicationOAuthSettings.setScopeSettings(other.getScopeSettings().stream().map(MongoApplicationRepository::convert).collect(Collectors.toList()));
         }
+        applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
         return applicationOAuthSettings;
     }
 

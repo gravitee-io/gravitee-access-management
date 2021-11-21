@@ -33,6 +33,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -60,6 +62,11 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
 
     private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
+
+    /*
+     * Providers that are not persisted into the backend. ("gravitee" provider and the ones defined into the gravitee.yaml file)
+     */
+    private Set<String> transientProviders = new HashSet<>();
 
     @Override
     public AuthenticationProvider get(String id) {
@@ -89,6 +96,12 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Override
     public void registerAuthenticationProvider(IdentityProvider provider) {
         updateAuthenticationProvider(provider);
+        transientProviders.add(provider.getId());
+    }
+
+    @Override
+    public Set<String> getTransientProviders() {
+        return this.transientProviders;
     }
 
     @Override

@@ -202,6 +202,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean silentReAuthentication;
 
+    private boolean requireParRequest;
+
     public Client() {
     }
 
@@ -275,6 +277,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
         this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
+        this.requireParRequest = other.requireParRequest;
     }
 
     public String getId() {
@@ -874,6 +877,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public boolean isRequireParRequest() {
+        return requireParRequest;
+    }
+
+    public void setRequireParRequest(boolean requireParRequest) {
+        this.requireParRequest = requireParRequest;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -903,6 +914,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
+
         return clone;
     }
 }

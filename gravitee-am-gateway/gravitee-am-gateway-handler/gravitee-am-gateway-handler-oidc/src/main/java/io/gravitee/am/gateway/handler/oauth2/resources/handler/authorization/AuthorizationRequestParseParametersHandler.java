@@ -21,7 +21,6 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.LoginRequiredException;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
@@ -35,14 +34,12 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequestResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
@@ -65,10 +62,6 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.requireNonce;
  */
 public class AuthorizationRequestParseParametersHandler extends AbstractAuthorizationRequestHandler implements Handler<RoutingContext> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthorizationRequestParseParametersHandler.class);
-    private final static String LOGIN_ENDPOINT = "/login";
-    private final static String MFA_ENDPOINT = "/mfa/challenge";
-    private final static String USER_CONSENT_ENDPOINT = "/oauth/consent";
     private final ClaimsRequestResolver claimsRequestResolver = new ClaimsRequestResolver();
     private final Domain domain;
 
@@ -322,20 +315,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
     }
 
     private boolean returnFromLoginPage(RoutingContext context) {
-        String referer = context.request().headers().get(HttpHeaders.REFERER);
-        try {
-            if (referer == null) {
-                return false;
-            }
-
-            final String refererPath = UriBuilder.fromURIString(referer).build().getPath();
-            return refererPath.contains(context.get(CONTEXT_PATH) + LOGIN_ENDPOINT)
-                    || refererPath.contains(context.get(CONTEXT_PATH) + MFA_ENDPOINT)
-                    || refererPath.contains(context.get(CONTEXT_PATH) + USER_CONSENT_ENDPOINT);
-        } catch (URISyntaxException e) {
-            logger.debug("Unable to calculate referer url : {}", referer, e);
-            return false;
-        }
+       return Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_LOGIN_COMPLETED_KEY));
     }
 
     private boolean containsGrantType(List<String> authorizedGrantTypes) {

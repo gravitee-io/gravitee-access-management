@@ -290,6 +290,12 @@ public class ApplicationOAuthSettings {
      */
     private boolean silentReAuthentication;
 
+    /**
+     * Specify if the authorized request must contains the request_uri parameter
+     * https://datatracker.ietf.org/doc/html/draft-ietf-oauth-par#page-16
+     */
+    private boolean requireParRequest;
+
     public ApplicationOAuthSettings() {
     }
 
@@ -356,6 +362,7 @@ public class ApplicationOAuthSettings {
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
+        this.requireParRequest = other.requireParRequest;
     }
 
     public String getClientId() {
@@ -879,6 +886,14 @@ public class ApplicationOAuthSettings {
         this.tlsClientCertificateBoundAccessTokens = tlsClientCertificateBoundAccessTokens;
     }
 
+    public boolean isRequireParRequest() {
+        return requireParRequest;
+    }
+
+    public void setRequireParRequest(boolean requireParRequest) {
+        this.requireParRequest = requireParRequest;
+    }
+
     public void copyTo(Client client) {
         client.setClientId(this.clientId);
         client.setClientSecret(this.clientSecret);
@@ -938,5 +953,6 @@ public class ApplicationOAuthSettings {
         client.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
         client.setSingleSignOut(this.singleSignOut);
         client.setSilentReAuthentication(this.silentReAuthentication);
+        client.setRequireParRequest(this.requireParRequest);
     }
 }
