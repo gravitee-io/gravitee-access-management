@@ -44,6 +44,11 @@
       "default": true,
       "title": "Fetch user groups ?"
     },
+    "recursiveGroupFetch": {
+      "type": "boolean",
+      "default": false,
+      "title": "Search nested groups ?"
+    },
     "groupSearchBase" : {
       "type" : "string",
       "default": "ou=applications",

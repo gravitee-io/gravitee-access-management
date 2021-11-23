@@ -40,6 +40,8 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     private boolean fetchGroups = true;
 
+    private boolean recursiveGroupFetch = false;
+
     private String groupSearchBase = "";
 
     private String groupSearchFilter = "(uniqueMember={0})";
@@ -213,5 +215,13 @@ public class LdapIdentityProviderConfiguration implements IdentityProviderConfig
 
     public void setHashEncodedByThirdParty(boolean hashEncodedByThirdParty) {
         this.hashEncodedByThirdParty = hashEncodedByThirdParty;
+    }
+
+    public boolean isRecursiveGroupFetch() {
+        return recursiveGroupFetch;
+    }
+
+    public void setRecursiveGroupFetch(boolean recursiveGroupFetch) {
+        this.recursiveGroupFetch = recursiveGroupFetch;
     }
 }
