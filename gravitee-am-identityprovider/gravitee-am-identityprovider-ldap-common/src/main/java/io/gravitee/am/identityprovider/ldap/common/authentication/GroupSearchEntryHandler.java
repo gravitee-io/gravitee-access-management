@@ -17,12 +17,12 @@ package io.gravitee.am.identityprovider.ldap.common.authentication;
 
 import org.ldaptive.*;
 import org.ldaptive.handler.HandlerResult;
+import org.ldaptive.handler.RecursiveEntryHandler;
 import org.ldaptive.handler.SearchEntryHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,37 +40,80 @@ public class GroupSearchEntryHandler implements SearchEntryHandler {
     private SearchScope searchScope;
     private String[] returnAttributes;
 
+    private final boolean recursiveSearch;
+
+    public GroupSearchEntryHandler() {
+        this.recursiveSearch = false;
+    }
+
+    public GroupSearchEntryHandler(boolean recursiveSearch) {
+        this.recursiveSearch = recursiveSearch;
+    }
+
     @Override
     public HandlerResult<SearchEntry> handle(Connection conn, SearchRequest request, SearchEntry entry) throws LdapException {
         try {
-            final SearchFilter filter = new SearchFilter();
-            filter.setFilter(searchFilter);
-            filter.setParameter(0, entry.getDn());
+            Set<LdapEntry> allGroups = new HashSet<>();
+            // search groups where the user is directly referenced as a member
+            final Collection<LdapEntry> directGroups = groupSearch(conn, entry.getDn());
+            if (recursiveSearch) {
+                // for each group look for ancestor in order to retrieve all group hierarchy
+                recursiveGroupsSearch(conn, directGroups, allGroups);
+            } else {
+                allGroups.addAll(directGroups);
+            }
 
-            final SearchRequest searchRequest = new SearchRequest();
-            searchRequest.setBaseDn(baseDn);
-            searchRequest.setReturnAttributes(returnAttributes);
-            searchRequest.setSearchScope(searchScope);
-            searchRequest.setSearchFilter(filter);
-
-            final SearchOperation searchOperation = new SearchOperation(conn);
-            SearchResult searchResult = searchOperation.execute(searchRequest).getResult();
-
-            // update search entry
-            Collection<LdapEntry> groupEntries = searchResult.getEntries();
-            String[] groups = groupEntries.stream()
-                    .map(groupEntry -> groupEntry.getAttributes()
+            final String[] groupName = allGroups.stream().map(groupEntry -> groupEntry.getAttributes()
                             .stream()
                             .map(ldapAttribute -> ldapAttribute.getStringValue())
                             .collect(Collectors.toList()))
                     .flatMap(List::stream)
                     .toArray(size -> new String[size]);
-            entry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groups));
+
+            entry.addAttribute(new LdapAttribute(MEMBEROF_ATTRIBUTE, groupName));
         } catch (Exception ex) {
             LOGGER.warn("No group found for user {}", entry.getDn(), ex);
         } finally {
             return new HandlerResult<>(entry);
         }
+    }
+
+    private void recursiveGroupsSearch(Connection conn, Collection<LdapEntry> groupsToSearch, Set<LdapEntry> accGroups) throws LdapException {
+        List<LdapEntry> ancestors = new ArrayList<>();
+        Set<String> processedGroupDNs = accGroups.stream().map(LdapEntry::getDn).collect(Collectors.toSet());
+        for (LdapEntry grp: groupsToSearch) {
+            // check if the group is already pushed into the accumulator list to avoid infinite loops
+            if (!processedGroupDNs.contains(grp.getDn())) {
+                accGroups.add(grp);
+                processedGroupDNs.add(grp.getDn());
+                // look for group ancestors
+                final Collection<LdapEntry> foundGroups = groupSearch(conn, grp.getDn());
+                if (!foundGroups.isEmpty()) {
+                    ancestors.addAll(foundGroups);
+                }
+            }
+        }
+        if (!ancestors.isEmpty()) {
+            // for the current groups we found ancestors, search deep into the group tree
+            recursiveGroupsSearch(conn, ancestors, accGroups);
+        }
+    }
+
+    private Collection<LdapEntry> groupSearch(Connection conn, String dn) throws LdapException {
+        final SearchFilter filter = new SearchFilter();
+        filter.setFilter(searchFilter);
+        filter.setParameter(0, dn);
+
+        final SearchRequest searchRequest = new SearchRequest();
+        searchRequest.setBaseDn(baseDn);
+        searchRequest.setReturnAttributes(returnAttributes);
+        searchRequest.setSearchScope(searchScope);
+        searchRequest.setSearchFilter(filter);
+
+        final SearchOperation searchOperation = new SearchOperation(conn);
+        SearchResult searchResult = searchOperation.execute(searchRequest).getResult();
+
+        return searchResult.getEntries();
     }
 
     @Override
