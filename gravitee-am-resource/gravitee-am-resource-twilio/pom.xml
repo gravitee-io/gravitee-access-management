@@ -29,6 +29,9 @@
     <artifactId>gravitee-am-resource-twilio</artifactId>
     <name>Gravitee IO - Access Management - Resource - Twilio Verify</name>
 
+    <properties>
+        <commons-io.version>2.11.0</commons-io.version>
+    </properties>
 
     <dependencies>
 
@@ -64,7 +67,17 @@
                     <artifactId>jackson-databind</artifactId>
                     <groupId>com.fasterxml.jackson.core</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>commons-io</artifactId>
+                    <groupId>commons-io</groupId>
+                </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
         </dependency>
 
         <dependency>
