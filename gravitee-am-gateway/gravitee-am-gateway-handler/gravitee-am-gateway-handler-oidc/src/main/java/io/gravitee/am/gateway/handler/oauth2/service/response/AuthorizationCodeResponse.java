@@ -55,6 +55,6 @@ public class AuthorizationCodeResponse extends AuthorizationResponse {
         if (getState() != null) {
             uriBuilder.addParameter(Parameters.STATE, getState());
         }
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 }

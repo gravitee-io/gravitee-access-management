@@ -114,7 +114,7 @@ public class JWTOAuth2Exception extends OAuth2Exception {
             }
         }
 
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 
     @Override

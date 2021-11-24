@@ -68,6 +68,6 @@ public class ImplicitResponse extends AuthorizationResponse {
         if (accessToken.getAdditionalInformation() != null) {
             accessToken.getAdditionalInformation().forEach((k, v) -> uriBuilder.addFragmentParameter(k, String.valueOf(v)));
         }
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 }
