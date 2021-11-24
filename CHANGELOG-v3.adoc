@@ -1,6 +1,37 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/439?closed=1[AM - 3.14.0 (2021-11-24)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.13.1 https://github.com/gravitee-io/issues/issues/6592[#6592]
+
+=== Features
+
+*_Alerts_*
+
+- Add environment and organization on alert events https://github.com/gravitee-io/issues/issues/6459[#6459]
+
+*_Gateway_*
+
+- Self account management reset password endpoint https://github.com/gravitee-io/issues/issues/6398[#6398]
+
+*_Management_*
+
+- [mfa] voice call https://github.com/gravitee-io/issues/issues/6187[#6187]
+
+=== Improvements
+
+*_Gateway_*
+
+- [oauth2] improve wildcard support for allowed redirect_uris https://github.com/gravitee-io/issues/issues/6397[#6397]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/462?closed=1[AM - 3.5.10 (2021-11-18)]
 
 === Bug fixes
