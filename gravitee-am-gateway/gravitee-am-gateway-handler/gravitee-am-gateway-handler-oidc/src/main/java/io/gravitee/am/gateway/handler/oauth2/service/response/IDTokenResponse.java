@@ -50,6 +50,6 @@ public class IDTokenResponse extends AuthorizationResponse {
         if (getState() != null) {
             uriBuilder.addFragmentParameter(Parameters.STATE, getState());
         }
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 }

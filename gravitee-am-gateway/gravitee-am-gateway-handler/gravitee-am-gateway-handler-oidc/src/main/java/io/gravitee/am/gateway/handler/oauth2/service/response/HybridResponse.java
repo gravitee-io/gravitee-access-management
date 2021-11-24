@@ -89,6 +89,6 @@ public class HybridResponse extends ImplicitResponse {
             }
         }
 
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 }
