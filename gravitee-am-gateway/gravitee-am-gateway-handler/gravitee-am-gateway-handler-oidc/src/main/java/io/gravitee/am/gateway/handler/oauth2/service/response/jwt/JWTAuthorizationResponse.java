@@ -157,6 +157,6 @@ public abstract class JWTAuthorizationResponse<T extends AuthorizationResponse> 
             }
         }
 
-        return uriBuilder.build().toString();
+        return uriBuilder.buildString();
     }
 }

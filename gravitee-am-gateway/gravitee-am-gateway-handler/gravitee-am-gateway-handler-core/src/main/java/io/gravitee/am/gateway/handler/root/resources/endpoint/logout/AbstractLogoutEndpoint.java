@@ -212,7 +212,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         try {
             routingContext
                     .response()
-                    .putHeader(HttpHeaders.LOCATION, uriBuilder.build().toString())
+                    .putHeader(HttpHeaders.LOCATION, uriBuilder.buildString())
                     .setStatusCode(302)
                     .end();
         } catch (Exception ex) {
