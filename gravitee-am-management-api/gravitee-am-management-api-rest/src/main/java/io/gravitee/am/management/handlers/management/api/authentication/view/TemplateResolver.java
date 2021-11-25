@@ -77,7 +77,7 @@ public class TemplateResolver extends AbstractConfigurableTemplateResolver {
     }
 
     private ITemplateResolver defaultTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver(this.getClass().getClassLoader());
         templateResolver.setPrefix("/views/");
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
