@@ -1,6 +1,11 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/468?closed=1[AM - 3.5.11 (2021-11-25)]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/439?closed=1[AM - 3.14.0 (2021-11-24)]
 
 === Bug fixes
