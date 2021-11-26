@@ -26,10 +26,12 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -205,15 +207,17 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                             }
                                                         })
                                                         .flatMap(newUser1 -> {
-                                                            User user = transform(newUser1);
-                                                            AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                                                            if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
-                                                                user.setRegistrationAccessToken(getUserRegistrationToken(user));
-                                                            }
-                                                            return userService.create(user)
+                                                            return Single.fromCallable(() -> {
+                                                                User user = transform(newUser1);
+                                                                AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                                if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
+                                                                    user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
+                                                                    user.setRegistrationAccessToken(getUserRegistrationToken(user));
+                                                                }
+                                                                return user;
+                                                            }).flatMap(user -> userService.create(user)
                                                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable))));
                                                         })
                                                         .flatMap(user -> {
                                                             // end pre-registration user if required

@@ -21,6 +21,9 @@ import io.gravitee.am.management.service.impl.EmailManagerImpl;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.service.EmailTemplateService;
+import io.reactivex.Maybe;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +32,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
+
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -36,6 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class EmailManagerTest {
 
+    public static final String REFERENCE_ID = "domain1";
+    public static final String CLIENT = "client1";
     @InjectMocks
     private EmailManager emailManager = new EmailManagerImpl();
 
@@ -45,6 +55,9 @@ public class EmailManagerTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private EmailTemplateService emailTemplateService;
+
     @Before
     public void setUp() {
         ((EmailManagerImpl) emailManager).setSubject("defaultSubject");
@@ -53,7 +66,14 @@ public class EmailManagerTest {
 
     @Test
     public void shouldGetTemplate() {
-        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION.template(), "subject", 1000);
+        when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
+        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
+
+        final User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(REFERENCE_ID);
+        user.setClient(CLIENT);
+        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000);
 
         Assert.assertNotNull(email);
         Assert.assertEquals(Template.REGISTRATION_CONFIRMATION.template(), email.getTemplate());
@@ -69,13 +89,21 @@ public class EmailManagerTest {
         domainEmail.setExpiresAfter(10000);
         domainEmail.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
         domainEmail.setReferenceType(ReferenceType.DOMAIN);
-        domainEmail.setReferenceId("domain1");
+        domainEmail.setReferenceId(REFERENCE_ID);
         domainEmail.setSubject("Domain subject");
+        domainEmail.setUpdatedAt(new Date());
 
         ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
 
-        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
-        Email email = emailManager.getEmail(templateKey, "subject", 1000);
+        when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.just(domainEmail));
+        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.REGISTRATION_CONFIRMATION.template()))).thenReturn(Maybe.empty());
+
+        final User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(REFERENCE_ID);
+        user.setClient(CLIENT);
+        String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
+        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000);
 
         Assert.assertNotNull(email);
         Assert.assertEquals(templateKey, email.getTemplate());
@@ -89,27 +117,36 @@ public class EmailManagerTest {
         Email domainEmail = new Email();
         domainEmail.setEnabled(true);
         domainEmail.setExpiresAfter(10000);
+        domainEmail.setUpdatedAt(new Date());
         domainEmail.setTemplate(Template.RESET_PASSWORD.template());
         domainEmail.setReferenceType(ReferenceType.DOMAIN);
-        domainEmail.setReferenceId("domain1");
+        domainEmail.setReferenceId(REFERENCE_ID);
         domainEmail.setSubject("Domain subject");
 
         Email clientEmail = new Email();
         clientEmail.setEnabled(true);
+        clientEmail.setUpdatedAt(new Date());
         clientEmail.setExpiresAfter(10001);
         clientEmail.setTemplate(Template.RESET_PASSWORD.template());
         clientEmail.setReferenceType(ReferenceType.DOMAIN);
-        clientEmail.setReferenceId("domain1");
-        clientEmail.setClient("client1");
+        clientEmail.setReferenceId(REFERENCE_ID);
+        clientEmail.setClient(CLIENT);
         clientEmail.setSubject("Client subject");
 
         ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
         ((EmailManagerImpl) emailManager).loadEmail(clientEmail);
 
-        String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + "domain1";
-        String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + "client1";
+        when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.RESET_PASSWORD.template()))).thenReturn(Maybe.just(domainEmail));
+        when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.RESET_PASSWORD.template()))).thenReturn(Maybe.just(clientEmail));
 
-        Email email = emailManager.getEmail(templateClientKey, "subject", 1000);
+        final User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(REFERENCE_ID);
+        user.setClient(CLIENT);
+        String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
+        String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + CLIENT;
+
+        Email email = emailManager.getEmail(Template.RESET_PASSWORD, user, "subject", 1000);
 
         Assert.assertNotNull(email);
         Assert.assertEquals(templateClientKey, email.getTemplate());

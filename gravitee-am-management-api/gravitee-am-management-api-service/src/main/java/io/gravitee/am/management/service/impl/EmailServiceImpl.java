@@ -21,7 +21,6 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
@@ -62,9 +61,6 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.registration.token.expire-after:86400}")
     private Integer registrationExpireAfter;
 
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
-
     @Autowired
     private EmailManager emailManager;
 
@@ -98,7 +94,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
-        return emailManager.getEmail(getTemplateName(template, user), getDefaultSubject(template), getDefaultExpireAt(template));
+        return emailManager.getEmail(template, user, getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
     private void sendEmail(Email email, User user) {
