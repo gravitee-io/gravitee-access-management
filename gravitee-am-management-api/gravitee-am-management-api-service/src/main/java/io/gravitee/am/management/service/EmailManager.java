@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.User;
 import io.gravitee.common.service.Service;
 
 /**
@@ -26,5 +27,5 @@ public interface EmailManager extends Service<EmailManager> {
 
     String TEMPLATE_NAME_SEPARATOR = "|";
 
-    Email getEmail(String template, String defaultSubject, int defaultExpiresAfter);
+    Email getEmail(io.gravitee.am.model.Template template, User user, String defaultSubject, int defaultExpiresAfter);
 }

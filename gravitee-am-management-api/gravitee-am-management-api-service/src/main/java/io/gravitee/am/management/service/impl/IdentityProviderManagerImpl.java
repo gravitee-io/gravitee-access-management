@@ -71,7 +71,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // For postgres table name length is 63 (MySQL : 64 / SQL Server : 128) but the domain is prefixed by 'idp_users_' of length 10
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     public static final int TABLE_NAME_MAX_LENGTH = 50;
+
     private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
 
     @Value("${management.type:mongodb}")
     private String managementBackend;
@@ -137,13 +139,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
         switch (event.type()) {
-            case DEPLOY:
-            case UPDATE:
-                deployUserProvider(event.content().getId());
-                break;
             case UNDEPLOY:
                 removeUserProvider(event.content().getId());
                 break;
+            default:
+                logger.debug("{} event received for IdentityProvider {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 
@@ -205,8 +205,20 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         if (userProvider == null) {
             return Maybe.empty();
         }
-        UserProvider userProvider1 = userProviders.get(userProvider);
-        return (userProvider1 != null) ? Maybe.just(userProvider1) : Maybe.empty();
+
+        // Since https://github.com/gravitee-io/issues/issues/6590 we have to read the record in Identity Provider repository
+        return identityProviderService.findById(userProvider)
+                .flatMap(persistedUserProvider -> {
+                    UserProvider localUserProvider = userProviders.get(userProvider);
+                    if (localUserProvider != null &&
+                            identityProviders.containsKey(userProvider) &&
+                            identityProviders.get(userProvider).getUpdatedAt().getTime() >= persistedUserProvider.getUpdatedAt().getTime()) {
+                        return Maybe.just(localUserProvider);
+                    } else {
+                        this.removeUserProvider(userProvider);
+                        return this.loadUserProvider(persistedUserProvider);
+                    }
+                });
     }
 
     @Override
@@ -338,18 +350,10 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return userProviders.containsKey(identityProviderId);
     }
 
-    private void deployUserProvider(String identityProviderId) {
-        logger.info("Management API has received a deploy identity provider event for {}", identityProviderId);
-        identityProviderService.findById(identityProviderId)
-                .subscribe(
-                        identityProvider -> loadUserProvider(identityProvider),
-                        error -> logger.error("Unable to deploy user provider  {}", identityProviderId, error),
-                        () -> logger.error("No identity provider found with id {}", identityProviderId));
-    }
-
     private void removeUserProvider(String identityProviderId) {
         logger.info("Management API has received a undeploy identity provider event for {}", identityProviderId);
         UserProvider userProvider = userProviders.remove(identityProviderId);
+        identityProviders.remove(identityProviderId);
         if (userProvider != null) {
             // stop the user provider
             try {
@@ -360,20 +364,25 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         }
     }
 
-    private void loadUserProvider(IdentityProvider identityProvider) {
+    private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
         try {
             UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
             if (userProvider != null) {
                 logger.info("Initializing user provider : {}", identityProvider.getId());
                 userProvider.start();
                 userProviders.put(identityProvider.getId(), userProvider);
+                identityProviders.put(identityProvider.getId(), identityProvider);
+                return Maybe.just(userProvider);
             } else {
                 userProviders.remove(identityProvider.getId());
+                identityProviders.remove(identityProvider.getId());
             }
         } catch (Exception ex) {
             logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
             userProviders.remove(identityProvider.getId());
+            identityProviders.remove(identityProvider.getId());
         }
+        return Maybe.empty();
     }
 
 }
