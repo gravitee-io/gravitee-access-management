@@ -17,6 +17,8 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from "@angular/router";
 import { FormControl } from "@angular/forms";
 import { ApplicationService } from "../../../services/application.service";
+import {map, mergeMap, startWith} from "rxjs/operators";
+import {Observable, of} from "rxjs";
 
 @Component({
   selector: 'app-select-applications',
@@ -25,7 +27,7 @@ import { ApplicationService } from "../../../services/application.service";
 export class SelectApplicationsComponent implements OnInit {
   private domainId: string;
   appCtrl = new FormControl();
-  filteredApps: any[];
+  filteredApps: Observable<any>;
   @Input() selectedApp: any;
   @Output() onSelectApp = new EventEmitter<any>();
   @Output() onRemoveApp = new EventEmitter<any>();
@@ -36,15 +38,14 @@ export class SelectApplicationsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    this.appCtrl.valueChanges
-      .subscribe(searchTerm => {
-        if (typeof(searchTerm) === 'string' || searchTerm instanceof String) {
-          this.applicationService.search(this.domainId, searchTerm + '*').subscribe(response => {
-            this.filteredApps = response.data;
-          });
-        }
-      });
-
+    this.filteredApps = this.appCtrl.valueChanges.pipe(
+      startWith(''),
+      mergeMap(value => {
+        const searchTerm = (typeof(value) == 'string' || value instanceof String) ? value + '*' : '*';
+        return this.applicationService.search(this.domainId, searchTerm);
+      }),
+      map(value => value['data'])
+    );
     if (this.selectedApp) {
       this.appCtrl.setValue({name: this.selectedApp.name, clientId: this.selectedApp.clientId});
     }
