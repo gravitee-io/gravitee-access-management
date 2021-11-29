@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-db.getCollection("roles").updateMany(
-    {
-        name: {$in: ["ORGANIZATION_PRIMARY_ONWER", "ORGANIZATION_OWNER", "ENVIRONMENT_PRIMARY_OWNER", "ENVIRONMENT_OWNER", "DOMAIN_PRIMARY_OWNER", "DOMAIN_OWNER"]},
-        "permissionAcls.DOMAIN_ALERT": {$exists: false},
-    },
-    {
-        $set: {"permissionAcls.DOMAIN_ALERT": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
-    }
-);
 
 db.getCollection("roles").updateMany(
     {
         name: {$in: ["ORGANIZATION_PRIMARY_ONWER", "ORGANIZATION_OWNER", "ENVIRONMENT_PRIMARY_OWNER", "ENVIRONMENT_OWNER", "DOMAIN_PRIMARY_OWNER", "DOMAIN_OWNER"]},
-        "permissionAcls.DOMAIN_ALERT_NOTIFIER": {$exists: false},
+        "permissionAcls.APPLICATION_FLOW": {$exists: false},
     },
     {
-        $set: {"permissionAcls.DOMAIN_ALERT_NOTIFIER": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
+        $set: {"permissionAcls.APPLICATION_FLOW": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
     }
 );
