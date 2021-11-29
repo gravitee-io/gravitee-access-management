@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.15.0
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: dynamic_user_roles
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: role, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            tableName: dynamic_user_roles
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_dynamic_user_roles
+            unique: false
+
+        - createTable:
+            tableName: organization_dynamic_user_roles
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: role, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            tableName: organization_dynamic_user_roles
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_organization_dynamic_user_roles
+            unique: false

@@ -32,17 +32,13 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
-import io.reactivex.MaybeSource;
 import io.reactivex.Single;
-import io.reactivex.functions.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -146,7 +142,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                         user.setAdditionalInformation(extraInformation);
                                         user.setCreatedAt(idpUser.getCreatedAt());
                                         user.setUpdatedAt(idpUser.getUpdatedAt());
-                                        user.setRoles(idpUser.getRoles());
+                                        user.setDynamicRoles(idpUser.getRoles());
                                         return user;
                                     })
                                     .switchIfEmpty(Maybe.error(new InvalidGrantException("Unknown user: " + endUser.getId())));
@@ -168,7 +164,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     private Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
         final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
-        return provider.loadPreAuthenticatedUser(authentication);
+        final Maybe<io.gravitee.am.identityprovider.api.User> userMaybe = provider.loadPreAuthenticatedUser(authentication);
+        return userMaybe;
     }
 
     private User convert(io.gravitee.am.identityprovider.api.User idpUser) {

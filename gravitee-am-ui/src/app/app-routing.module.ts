@@ -81,6 +81,7 @@ import {UserApplicationsComponent} from './domain/settings/users/user/applicatio
 import {UserApplicationComponent} from './domain/settings/users/user/applications/application/application.component';
 import {UserRolesComponent} from './domain/settings/users/user/roles/roles.component';
 import {UserRolesResolver} from './resolvers/user-roles.resolver';
+import {DynamicUserRolesResolver} from './resolvers/dynamic-user-roles.resolver';
 import {UserFactorsComponent} from './domain/settings/users/user/factors/factors.component';
 import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
 import {UserCredentialResolver} from './resolvers/user-credential.resolver';
@@ -202,16 +203,16 @@ import {AlertNotifierResolver} from "./resolvers/alert-notifier.resolver";
 import {DomainAlertNotifierCreationComponent} from "./domain/alerts/notifiers/creation/notifier-creation.component";
 import {DomainAlertNotifierComponent} from "./domain/alerts/notifiers/notifier/notifier.component";
 import {PlatformAlertStatusResolver} from "./resolvers/platform-alert-status.resolver";
-import { FactorPluginsResolver } from './resolvers/factor-plugins.resolver';
-import { ResourcePluginsResolver } from './resolvers/resource-plugins.resolver';
-import { DomainSettingsBotDetectionsComponent } from './domain/settings/botdetections/bot-detections.component';
-import { BotDetectionsResolver } from './resolvers/bot-detections.resolver';
-import { BotDetectionCreationComponent } from './domain/settings/botdetections/creation/bot-detection-creation.component';
-import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.resolver';
-import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
-import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
-import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
-import { OIDCProfileComponent } from './domain/settings/openid/oidc-profile/oidc-profile.component';
+import {FactorPluginsResolver} from './resolvers/factor-plugins.resolver';
+import {ResourcePluginsResolver} from './resolvers/resource-plugins.resolver';
+import {DomainSettingsBotDetectionsComponent} from './domain/settings/botdetections/bot-detections.component';
+import {BotDetectionsResolver} from './resolvers/bot-detections.resolver';
+import {BotDetectionCreationComponent} from './domain/settings/botdetections/creation/bot-detection-creation.component';
+import {BotDetectionPluginsResolver} from './resolvers/bot-detection-plugins.resolver';
+import {BotDetectionComponent} from './domain/settings/botdetections/bot-detection/bot-detection.component';
+import {BotDetectionResolver} from './resolvers/bot-detection.resolver';
+import {ScopesAllResolver} from "./resolvers/scopes-all.resolver";
+import {OIDCProfileComponent} from './domain/settings/openid/oidc-profile/oidc-profile.component';
 import {DomainSettingsDeviceIdentifiersComponent} from "./domain/settings/deviceidentifiers/device-identifiers.component";
 import {DeviceIdentifierPluginsResolver} from "./resolvers/device-identifier-plugins.resolver";
 import {DeviceIdentifierCreationComponent} from "./domain/settings/deviceidentifiers/creation/device-identifier-creation.component";
@@ -2011,7 +2012,7 @@ export const routes: Routes = [
                               {
                                 path: 'roles',
                                 component: UserRolesComponent,
-                                resolve: {roles: UserRolesResolver}
+                                resolve: {roles: UserRolesResolver, dynamicRoles: DynamicUserRolesResolver}
                               },
                               {
                                 path: 'devices',
@@ -2438,7 +2439,7 @@ export const routes: Routes = [
   {path: 'login/callback', component: LoginCallbackComponent},
   {path: 'logout', component: LogoutComponent},
   {path: 'logout/callback', component: LogoutCallbackComponent},
-  {path: 'newsletter', component: NewsletterComponent, resolve: { taglines: NewsletterResolver }},
+  {path: 'newsletter', component: NewsletterComponent, resolve: {taglines: NewsletterResolver}},
   {path: 'dummy', component: DummyComponent},
   {path: '404', component: NotFoundComponent},
   {path: '', component: HomeComponent},

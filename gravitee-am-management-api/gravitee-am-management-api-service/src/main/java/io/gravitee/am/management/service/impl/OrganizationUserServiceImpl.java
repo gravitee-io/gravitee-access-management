@@ -25,7 +25,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
@@ -53,9 +52,6 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
 
     @Autowired
     private io.gravitee.am.service.OrganizationUserService userService;
-
-    @Autowired
-    private RoleService roleService;
 
     @Override
     protected io.gravitee.am.service.OrganizationUserService getUserService() {
@@ -147,12 +143,10 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                                 userToPersist.setExternalId(userToPersist.getId());
                                                 return userToPersist;
                                             })
-                                            .flatMap(newOrgUser -> {
-                                                return userService.create(newOrgUser)
-                                                        .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
-                                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                            })
+                                            .flatMap(newOrgUser -> userService.create(newOrgUser)
+                                                    .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
+                                                    .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable))))
                                             .map(this::setInternalStatus));
                                 });
 

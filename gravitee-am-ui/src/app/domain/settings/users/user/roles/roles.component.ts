@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {Component, Inject, OnInit} from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from "@angular/material/dialog";
+import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from "@angular/material/dialog";
 import {ActivatedRoute, Router} from "@angular/router";
 import {SnackbarService} from "../../../../../services/snackbar.service";
 import {DialogService} from "../../../../../services/dialog.service";
@@ -33,6 +33,7 @@ export class UserRolesComponent implements OnInit {
   private user: any;
   private organizationContext = false;
   userRoles: any[];
+  dynamicRoles: any[];
   editMode: boolean;
 
   constructor(private route: ActivatedRoute,
@@ -52,20 +53,47 @@ export class UserRolesComponent implements OnInit {
       this.editMode = this.authService.hasPermissions(['organization_user_update']);
     } else {
       this.editMode = this.authService.hasPermissions(['domain_user_update']);
+      this.dynamicRoles = this.route.snapshot.data['dynamicRoles'];
     }
     this.user = this.route.snapshot.data['user'];
     this.userRoles = this.route.snapshot.data['roles'];
   }
 
   get isEmpty() {
-    return !this.userRoles || this.userRoles.length === 0;
+    return this.isUserRoleEmpty && this.isDynamicUserRoleEmpty;
+  }
+
+  get isDynamicUserRoleEmpty() {
+    return UserRolesComponent.isCollectionEmpty(this.dynamicRoles);
+  }
+
+  get isUserRoleEmpty() {
+    return UserRolesComponent.isCollectionEmpty(this.userRoles);
+  }
+
+  get totalRoles() {
+    let count = 0;
+    if (!this.isUserRoleEmpty) {
+      count += this.userRoles.length
+    }
+    if (!this.isDynamicUserRoleEmpty) {
+      count += this.dynamicRoles.length
+    }
+    return count;
+  }
+
+  private static isCollectionEmpty(roles: any[]) {
+    return !roles || roles.length === 0;
   }
 
   add() {
-    let dialogRef = this.dialog.open(AddUserRolesComponent, { width : '700px', data: { domain: this.domainId, organizationContext: this.organizationContext, assignedRoles: this.userRoles }});
+    let dialogRef = this.dialog.open(AddUserRolesComponent, {
+      width: '700px',
+      data: {domain: this.domainId, organizationContext: this.organizationContext, assignedRoles: this.userRoles}
+    });
     dialogRef.afterClosed().subscribe(roles => {
       if (roles) {
-          this.assignRoles(roles);
+        this.assignRoles(roles);
       }
     });
   }
@@ -113,7 +141,7 @@ export class AddUserRolesComponent implements OnInit {
   roles: any[];
   initialSelectedRoles: any[];
   assignedRoles: string[] = [];
-  hasChanged: boolean =  false;
+  hasChanged: boolean = false;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<AddUserRolesComponent>,

@@ -179,7 +179,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
      * @return updated user
      */
     private Single<User> update(User existingUser, io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
-        LOGGER.debug("Updating user: username[%s]", principal.getUsername());
+        LOGGER.debug("Updating user: username[{}]", principal.getUsername());
         // set external id
         existingUser.setExternalId(principal.getId());
         if (afterAuthentication) {
@@ -187,15 +187,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
         }
         // set roles
-        if (existingUser.getRoles() == null) {
-            existingUser.setRoles(principal.getRoles());
-        } else if (principal.getRoles() != null) {
-            // filter roles
-            principal.getRoles().removeAll(existingUser.getRoles());
-            existingUser.getRoles().addAll(principal.getRoles());
-        }
-        Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
+        existingUser.setDynamicRoles(principal.getRoles());
 
+        Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
         removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
         extractAdditionalInformation(existingUser, additionalInformation);
 
@@ -204,7 +198,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     private void removeOriginalProviderOidcTokensIfNecessary(User existingUser, boolean afterAuthentication, Map<String, Object> additionalInformation) {
         if (afterAuthentication) {
-            // remove the op_id_token from existing user profile to avoid keep this information
+            // remove the op_id_token and op_access_token from existing user profile to avoid keeping this information
             // if the singleSignOut is disabled or provider does not retrieve oidc tokens
             if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_TOKEN_KEY)){
                 existingUser.removeAdditionalInformation(OIDC_PROVIDER_ID_TOKEN_KEY);
@@ -236,7 +230,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             newUser.setLoggedAt(new Date());
             newUser.setLoginsCount(1L);
         }
-        newUser.setRoles(principal.getRoles());
+        newUser.setDynamicRoles(principal.getRoles());
 
         Map<String, Object> additionalInformation = principal.getAdditionalInformation();
         extractAdditionalInformation(newUser, additionalInformation);

@@ -125,6 +125,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPassword().equals(user.getPassword()));
         testObserver.assertValue(u -> u.getExternalId().equals(user.getExternalId()));
         testObserver.assertValue(u -> u.getRoles().containsAll(user.getRoles()));
+        testObserver.assertValue(u -> u.getDynamicRoles().containsAll(user.getDynamicRoles()));
         testObserver.assertValue(u -> u.getEntitlements().containsAll(user.getEntitlements()));
         testObserver.assertValue(u -> u.getEmails().size() == 1);
         testObserver.assertValue(u -> u.getPhoneNumbers().size() == 1);
@@ -170,6 +171,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPassword().equals(user.getPassword()));
         testObserver.assertValue(u -> u.getExternalId().equals(user.getExternalId()));
         testObserver.assertValue(u -> u.getRoles().containsAll(user.getRoles()));
+        testObserver.assertValue(u -> u.getDynamicRoles().containsAll(user.getDynamicRoles()));
         testObserver.assertValue(u -> u.getEntitlements().containsAll(user.getEntitlements()));
         testObserver.assertValue(u -> u.getEmails().size() == 1);
         testObserver.assertValue(u -> u.getPhoneNumbers().size() == 1);
@@ -236,6 +238,7 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
 
         user.setEntitlements(Arrays.asList("ent"+random));
         user.setRoles(Arrays.asList("role"+random));
+        user.setDynamicRoles(Arrays.asList("dynamic_role"+random));
 
         Address addr = new Address();
         addr.setCountry("fr");

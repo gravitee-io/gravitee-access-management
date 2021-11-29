@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserService} from '../../../services/user.service';
@@ -23,8 +23,6 @@ import { OrganizationService } from '../../../services/organization.service';
 import { AuthService } from '../../../services/auth.service';
 import {ApplicationService} from "../../../services/application.service";
 import {ProviderService} from "../../../services/provider.service";
-import * as _ from "lodash";
-import {FormControl} from "@angular/forms";
 
 @Component({
   selector: 'app-users',

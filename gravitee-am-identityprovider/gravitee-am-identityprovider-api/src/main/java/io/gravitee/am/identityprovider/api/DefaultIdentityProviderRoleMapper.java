@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.el.TemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,13 +63,15 @@ public class DefaultIdentityProviderRoleMapper implements IdentityProviderRoleMa
                     } else {
                         // user/group have the following syntax userAttribute=userValue
                         String[] attributes = u.split("=", 2);
-                        String userAttribute = attributes[0];
-                        String userValue = attributes[1];
-                        if (userInfo.containsKey(userAttribute)) {
-                            if (userInfo.get(userAttribute) instanceof Collection && ((Collection<?>) userInfo.get(userAttribute)).contains(userValue)) {
-                                mappedRoles.add(role);
-                            } else if (userValue.equals(String.valueOf(userInfo.get(userAttribute)))) {
-                                mappedRoles.add(role);
+                        if (attributes.length == 2){
+                            String userAttribute = attributes[0];
+                            String userValue = attributes[1];
+                            if (userInfo.containsKey(userAttribute)) {
+                                if (userInfo.get(userAttribute) instanceof Collection && ((Collection<?>) userInfo.get(userAttribute)).contains(userValue)) {
+                                    mappedRoles.add(role);
+                                } else if (userValue.equals(String.valueOf(userInfo.get(userAttribute)))) {
+                                    mappedRoles.add(role);
+                                }
                             }
                         }
                     }

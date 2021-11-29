@@ -16,12 +16,10 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
+import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Group;
-import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,8 +32,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -148,12 +144,6 @@ public class UserAuthenticationServiceTest {
         String source = "SRC";
         String id = "id";
 
-        Role role1= new Role();
-        role1.setId("idp-role");
-        Role role2 = new Role();
-        role2.setId("idp2-role");
-        Set<Role> roles = new HashSet<>(Arrays.asList(role1, role2));
-
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);
         when(user.getId()).thenReturn(id);
@@ -187,12 +177,6 @@ public class UserAuthenticationServiceTest {
         String source = "SRC";
         String id = "id";
 
-        Role role1= new Role();
-        role1.setId("idp-role");
-        Role role2 = new Role();
-        role2.setId("idp2-role");
-        Set<Role> roles = new HashSet<>(Arrays.asList(role1, role2));
-
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);
         when(user.getId()).thenReturn(id);
@@ -225,13 +209,6 @@ public class UserAuthenticationServiceTest {
         String source = "SRC";
         String id = "id";
 
-        Group group = mock(Group.class);
-
-        Role role1= new Role();
-        role1.setId("idp-role");
-        Role role2 = new Role();
-        role2.setId("idp2-role");
-        Set<Role> roles = new HashSet<>(Arrays.asList(role1, role2));
 
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);

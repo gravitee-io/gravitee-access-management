@@ -304,14 +304,15 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     if (user.getRoles() != null && !user.getRoles().isEmpty()) {
                         roles.addAll(user.getRoles());
                     }
+                    if (user.getDynamicRoles() != null && !user.getDynamicRoles().isEmpty()) {
+                        roles.addAll(user.getDynamicRoles());
+                    }
                     // fetch roles information and enhance user data
                     if (!roles.isEmpty()) {
-                        return roleService.findByIdIn(new ArrayList<>(roles))
-                                .map(roles1 -> {
-                                    user.setRolesPermissions(roles1);
-                                    return user;
-                                });
-
+                        return roleService.findByIdIn(new ArrayList<>(roles)).map(foundRoles -> {
+                            user.setRolesPermissions(foundRoles);
+                            return user;
+                        });
                     }
                     return Single.just(user);
                 })
