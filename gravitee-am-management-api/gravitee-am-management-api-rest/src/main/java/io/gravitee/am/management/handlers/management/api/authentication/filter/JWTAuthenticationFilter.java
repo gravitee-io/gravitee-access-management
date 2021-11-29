@@ -17,10 +17,10 @@ package io.gravitee.am.management.handlers.management.api.authentication.filter;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
 import io.gravitee.common.http.HttpHeaders;
 import org.springframework.beans.factory.InitializingBean;
@@ -47,7 +47,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -102,26 +103,26 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
                         .findAny();
             }
 
-            if (!optionalStringToken.isPresent() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
+            if (optionalStringToken.isEmpty() || !optionalStringToken.get().getValue().startsWith("Bearer ")) {
                 throw new BadCredentialsException("No JWT token found");
             }
             authToken = optionalStringToken.get().getValue().substring(7);
         }
 
         try {
-            JWT payload = jwtParser.parse(authToken);;
+            JWT payload = jwtParser.parse(authToken);
             Map<String, Object> claims = new HashMap<>(payload);
             claims.put(Claims.ip_address, remoteAddress(request));
             claims.put(Claims.user_agent, userAgent(request));
+
             DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
             user.setId((String) claims.get(StandardClaims.SUB));
-            user.setRoles(user.getRoles() != null ? user.getRoles() : (List<String>) claims.get(CustomClaims.ROLES));
             user.setAdditionalInformation(claims);
-
+            user.setRoles((List<String>) claims.get(CustomClaims.ROLES));
             // check for roles
             List<GrantedAuthority> authorities;
             if (user.getRoles() != null) {
-                authorities = user.getRoles().stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+                authorities = user.getRoles().stream().map(SimpleGrantedAuthority::new).collect(toList());
             } else {
                 authorities = AuthorityUtils.NO_AUTHORITIES;
             }

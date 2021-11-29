@@ -72,6 +72,7 @@ public class UserMongo extends Auditable {
     private List<CertificateMongo> x509Certificates;
     private List<EnrolledFactor> factors;
     private List<String> roles;
+    private List<String> dynamicRoles;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */
@@ -387,6 +388,14 @@ public class UserMongo extends Auditable {
 
     public void setRoles(List<String> roles) {
         this.roles = roles;
+    }
+
+    public List<String> getDynamicRoles() {
+        return dynamicRoles;
+    }
+
+    public void setDynamicRoles(List<String> dynamicRoles) {
+        this.dynamicRoles = dynamicRoles;
     }
 
     public Document getAdditionalInformation() {

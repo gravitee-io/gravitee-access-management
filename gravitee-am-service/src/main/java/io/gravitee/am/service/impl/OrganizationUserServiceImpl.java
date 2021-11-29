@@ -30,12 +30,9 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.RoleNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -79,7 +76,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService implements 
 
         if (principal != null && principal.getRoles() != null && !principal.getRoles().isEmpty()) {
             // We allow only one role in AM portal. Get the first (should not append).
-            String roleId = principal.getRoles().get(0);
+            String roleId =  principal.getRoles().get(0);
 
             roleObs = roleService.findById(user.getReferenceType(), user.getReferenceId(), roleId)
                     .toMaybe()

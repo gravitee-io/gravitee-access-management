@@ -26,6 +26,9 @@ import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimUserSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.AbstractRole;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.DynamicRole;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser.Role;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.*;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -77,6 +80,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     protected SpringUserRoleRepository roleRepository;
 
     @Autowired
+    protected SpringDynamicUserRoleRepository dynamicRoleRepository;
+
+    @Autowired
     protected SpringUserAddressesRepository addressesRepository;
 
     @Autowired
@@ -115,7 +121,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<User>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -143,7 +149,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .bind("refType", referenceType.name())
                         .as(Long.class)
                         .fetch().first())
-                        .map(total -> new Page<User>(data, page, total)));
+                        .map(total -> new Page<>(data, page, total)));
     }
 
     @Override
@@ -440,15 +446,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             }).reduce(Integer::sum));
         }
 
-        final List<String> roles = item.getRoles();
-        if (roles != null && !roles.isEmpty()) {
-            actionFlow = actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
-                JdbcUser.Role jdbcRole = new JdbcUser.Role();
-                jdbcRole.setUserId(item.getId());
-                jdbcRole.setRole(role);
-                return dbClient.insert().into(JdbcUser.Role.class).using(jdbcRole).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
-        }
+        actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), Role.class);
+        actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), DynamicRole.class);
 
         final List<String> entitlements = item.getEntitlements();
         if (entitlements != null && !entitlements.isEmpty()) {
@@ -461,8 +460,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
 
         Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
-                convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
-                convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
+                                convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
+                        convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
                 convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
                 .map(jdbcAttr -> dbClient.insert().into(JdbcUser.Attribute.class).using(jdbcAttr).fetch().rowsUpdated())
                 .reduce(Mono::then);
@@ -470,6 +469,24 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             actionFlow = actionFlow.then(attributes.get());
         }
 
+        return actionFlow;
+    }
+
+    private <T extends AbstractRole> Mono<Integer> addJdbcRoles(Mono<Integer> actionFlow,
+                                                                User item, List<String> roles, Class<T> clazz) {
+        if (roles != null && !roles.isEmpty()) {
+            return actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
+                try {
+                    T jdbcRole = clazz.getConstructor().newInstance();
+                    jdbcRole.setUserId(item.getId());
+                    jdbcRole.setRole(role);
+                    return dbClient.insert().into(clazz).using(jdbcRole).fetch().rowsUpdated();
+                } catch (Exception e) {
+                    LOGGER.error("An unexpected error has occurred", e);
+                    return Mono.just(0);
+                }
+            }).reduce(Integer::sum));
+        }
         return actionFlow;
     }
 
@@ -487,10 +504,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     private Mono<Integer> deleteChildEntities(String userId) {
         Mono<Integer> deleteRoles = dbClient.delete().from(JdbcUser.Role.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
+        Mono<Integer> deleteDynamicRoles = dbClient.delete().from(JdbcUser.DynamicRole.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteAddresses = dbClient.delete().from(JdbcUser.Address.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteAttributes = dbClient.delete().from(JdbcUser.Attribute.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteEntitlements = dbClient.delete().from(JdbcUser.Entitlements.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+        return deleteRoles.then(deleteDynamicRoles).then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
     }
 
     private Single<User> completeUser(User userToComplete) {
@@ -498,6 +516,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user ->
                         roleRepository.findByUserId(user.getId()).map(JdbcUser.Role::getRole).toList().map(roles -> {
                             user.setRoles(roles);
+                            return user;
+                        }))
+                .flatMap(user ->
+                        dynamicRoleRepository.findByUserId(user.getId()).map(JdbcUser.DynamicRole::getRole).toList().map(roles -> {
+                            user.setDynamicRoles(roles);
                             return user;
                         }))
                 .flatMap(user ->
@@ -509,9 +532,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         addressesRepository.findByUserId(user.getId())
                                 .map(jdbcAddr -> mapper.map(jdbcAddr, Address.class))
                                 .toList().map(addresses -> {
-                            user.setAddresses(addresses);
-                            return user;
-                        }))
+                                    user.setAddresses(addresses);
+                                    return user;
+                                }))
                 .flatMap(user ->
                         attributesRepository.findByUserId(user.getId())
                                 .toList()

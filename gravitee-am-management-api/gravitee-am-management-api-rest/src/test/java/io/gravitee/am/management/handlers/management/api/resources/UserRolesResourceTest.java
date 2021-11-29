@@ -17,16 +17,21 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
@@ -37,35 +42,112 @@ import static org.mockito.Mockito.doReturn;
  */
 public class UserRolesResourceTest extends JerseySpringTest {
 
-    @Test
-    public void shouldGetUserRoles() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
+    private static Set<Role> roles = new HashSet<>();
+
+    private User mockUser;
+    private Domain mockDomain;
+    private String domainId;
+
+    @Before
+    public void before(){
+        domainId = "domain-1";
+        mockDomain = new Domain();
         mockDomain.setId(domainId);
 
-        final User mockUser = new User();
+        mockUser = new User();
         mockUser.setId("user-id-1");
-        mockUser.setRoles(Collections.singletonList("role-1"));
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
 
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setClientId("clientId");
         scopeApproval.setScope("scope");
         scopeApproval.setDomain(domainId);
+    }
 
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+    @Test
+    public void shouldGetUserRoles() {
+        mockUser.setRoles(Collections.singletonList("role-1"));
         doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockUser.getRoles());
+        doReturn(Single.just(List.of())).when(roleService).findByIdIn(mockUser.getDynamicRoles());
 
-        final Response response = target("domains")
-                .path(domainId)
-                .path("users")
-                .path(mockUser.getId())
-                .path("roles")
-                .request()
-                .get();
+        final Response response = getResponse(domainId, mockUser.getId());
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 1);
+    }
+
+    @Test
+    public void shouldGetUserRoles_dynamic() {
+        mockUser.setDynamicRoles(Collections.singletonList("role-1"));
+        doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockUser.getDynamicRoles());
+        doReturn(Single.just(List.of())).when(roleService).findByIdIn(mockUser.getRoles());
+
+        final Response response = getResponse(domainId, mockUser.getId(), true);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 1);
+    }
+
+    @Test
+    public void shouldGetUserRoles_emptyDynamic() {
+        mockUser.setRoles(Collections.singletonList("role-1"));
+        doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockUser.getRoles());
+        doReturn(Single.just(List.of())).when(roleService).findByIdIn(mockUser.getDynamicRoles());
+
+        final Response response = getResponse(domainId, mockUser.getId(), true);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+    }
+
+    @Test
+    public void shouldGetUserRoles_emptyRoles() {
+        mockUser.setDynamicRoles(Collections.singletonList("role-1"));
+        doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockUser.getRoles());
+        doReturn(Single.just(List.of())).when(roleService).findByIdIn(mockUser.getRoles());
+
+        final Response response = getResponse(domainId, mockUser.getId(), false);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+    }
+
+    @Test
+    public void shouldGetUserRoles_emptyBoth() {
+        mockUser.setRoles(List.of());
+        mockUser.setDynamicRoles(List.of());
+        final Response response = getResponse(domainId, mockUser.getId(), false);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+    }
+
+    @Test
+    public void shouldGetUserRoles_dynamicEmptyBoth() {
+        mockUser.setRoles(List.of());
+        mockUser.setDynamicRoles(List.of());
+        final Response response = getResponse(domainId, mockUser.getId(), true);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+    }
+
+    @Test
+    public void shouldGetUserRoles_nullBoth() {
+        final Response response = getResponse(domainId, mockUser.getId(), false);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
+    }
+
+    @Test
+    public void shouldGetUserRoles_dynamicNullBoth() {
+        final Response response = getResponse(domainId, mockUser.getId(), true);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals(response.readEntity(roles.getClass()).size(), 0);
     }
 
     @Test
@@ -73,12 +155,23 @@ public class UserRolesResourceTest extends JerseySpringTest {
         final String domainId = "domain-1";
         doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(domainService).findById(domainId);
 
-        final Response response = target("domains")
+        final Response response = getResponse(domainId, "user1");
+        assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+    }
+
+    private Response getResponse(String domainId, String id) {
+        return getResponse(domainId, id, false);
+    }
+
+    private Response getResponse(String domainId, String id, boolean isDynamic) {
+
+        return target("domains")
                 .path(domainId)
                 .path("users")
-                .path("user1")
+                .path(id)
                 .path("roles")
-                .request().get();
-        assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+                .queryParam("dynamic", isDynamic)
+                .request()
+                .get();
     }
 }

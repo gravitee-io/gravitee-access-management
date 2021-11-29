@@ -19,14 +19,17 @@
     <div fxFlex="70">
       <div fxLayout="row" fxLayoutAlign="center">
         <div fxFlex>
-          <span *ngIf="isEmpty">There are no</span><b *ngIf="!isEmpty">{{userRoles.length}}</b> role(s) assigned to this user.
+          <span *ngIf="isEmpty">There are no</span><b *ngIf="!isEmpty">{{ totalRoles }}</b> role(s) assigned to this user.
         </div>
         <div style="height: 40px;">
           <button *ngIf="editMode" color="primary" mat-stroked-button (click)="add()">Assign roles</button>
         </div>
       </div>
-      <mat-divider *ngIf="isEmpty" style="margin-bottom: 20px;"></mat-divider>
-      <ngx-datatable *ngIf="!isEmpty" class="material"
+      <mat-divider *ngIf="isUserRoleEmpty" style="margin-bottom: 20px;"></mat-divider>
+      <div *ngIf="!isUserRoleEmpty">
+        <span><b>Assigned Roles</b></span>
+      </div>
+      <ngx-datatable *ngIf="!isUserRoleEmpty" class="material"
                      [columnMode]="'flex'"
                      [headerHeight]="40"
                      [footerHeight]="40"
@@ -47,6 +50,26 @@
             <div fxLayout="row" class="gv-table-cell-actions" *ngIf="editMode">
               <button mat-icon-button (click)="revoke($event, row)"><mat-icon matTooltip="Revoke role">highlight_off</mat-icon></button>
             </div>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+      <div *ngIf="!isDynamicUserRoleEmpty">
+        <span><b>Dynamic Roles (via role mapper)</b></span>
+      </div>
+      <ngx-datatable *ngIf="!isDynamicUserRoleEmpty" class="material"
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [rows]='dynamicRoles'>
+        <ngx-datatable-column name="Name" [flexGrow]="2">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Description" [flexGrow]="4">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.description}}
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>

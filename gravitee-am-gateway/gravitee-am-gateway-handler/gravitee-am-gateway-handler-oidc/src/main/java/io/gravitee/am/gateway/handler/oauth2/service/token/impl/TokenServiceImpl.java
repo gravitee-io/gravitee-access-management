@@ -117,7 +117,7 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public Single<Token> introspect(String token) {
         return introspectionTokenService.introspect(token, false)
-                .map(jwt -> convertAccessToken(jwt));
+                .map(this::convertAccessToken);
     }
 
     @Override

@@ -24,7 +24,8 @@ export class UserService {
   private usersURL = AppConfig.settings.domainBaseURL;
 
   constructor(private http: HttpClient,
-              private organizationService: OrganizationService) { }
+              private organizationService: OrganizationService) {
+  }
 
   findByDomain(domainId, page, size): Observable<any> {
     return this.http.get<any>(this.usersURL + domainId + '/users?page=' + page + '&size=' + size);
@@ -40,13 +41,13 @@ export class UserService {
 
   update(domainId, id, user, organizationContext): Observable<any> {
     let updatedUserProfile = {
-      'firstName' : user.firstName,
-      'lastName' : user.lastName,
-      'displayName' : user.displayName,
-      'email' : user.email,
+      'firstName': user.firstName,
+      'lastName': user.lastName,
+      'displayName': user.displayName,
+      'email': user.email,
       'enabled': user.enabled,
-      'client' : user.client,
-      'additionalInformation' : user.additionalInformation
+      'client': user.client,
+      'additionalInformation': user.additionalInformation
     };
 
     if (organizationContext) {
@@ -57,7 +58,7 @@ export class UserService {
 
   updateStatus(domainId, id, status): Observable<any> {
     return this.http.put<any>(this.usersURL + domainId + '/users/' + id + '/status', {
-      'enabled' : status
+      'enabled': status
     });
   }
 
@@ -104,8 +105,8 @@ export class UserService {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/consents/' + consentId);
   }
 
-  roles(domainId, userId): Observable<any> {
-    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/roles');
+  roles(domainId, userId, dynamic = false): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/roles?dynamic=' + dynamic);
   }
 
   devices(domainId, userId): Observable<any> {

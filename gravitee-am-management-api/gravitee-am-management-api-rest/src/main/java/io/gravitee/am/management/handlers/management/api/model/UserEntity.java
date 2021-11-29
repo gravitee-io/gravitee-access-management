@@ -54,6 +54,7 @@ public class UserEntity extends User {
         setLoginsCount(user.getLoginsCount());
         setLoggedAt(user.getLoggedAt());
         setRoles(user.getRoles());
+        setDynamicRoles(user.getDynamicRoles());
         setRolesPermissions(user.getRolesPermissions());
         setAdditionalInformation(user.getAdditionalInformation());
         setCreatedAt(user.getCreatedAt());

@@ -386,6 +386,7 @@ import {DeviceIdentifierService} from "./services/device-identifier.service";
 import {DeviceIdentifierComponent} from "./domain/settings/deviceidentifiers/device-identifier/device-identifier.component";
 import { UserDevicesComponent } from './domain/settings/users/user/devices/devices.component';
 import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
+import { DynamicUserRolesResolver } from './resolvers/dynamic-user-roles.resolver';
 
 @NgModule({
   declarations: [
@@ -657,6 +658,7 @@ import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
     UsersResolver,
     UserResolver,
     UserRolesResolver,
+    DynamicUserRolesResolver,
     UserCredentialsResolver,
     UserCredentialResolver,
     UserDevicesResolver,

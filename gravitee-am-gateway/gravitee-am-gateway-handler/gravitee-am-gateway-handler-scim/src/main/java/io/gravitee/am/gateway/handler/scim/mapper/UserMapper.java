@@ -17,13 +17,15 @@ package io.gravitee.am.gateway.handler.scim.mapper;
 
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.scim.model.*;
-import io.gravitee.am.gateway.handler.scim.service.impl.UserServiceImpl;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -45,17 +47,17 @@ public class UserMapper {
         Name name = new Name();
         name.setGivenName(user.getFirstName());
         name.setFamilyName(user.getLastName());
-        name.setMiddleName(get(additionalInformation, StandardClaims.MIDDLE_NAME, String.class));
+        name.setMiddleName(get(additionalInformation, StandardClaims.MIDDLE_NAME));
         scimUser.setName(name.isNull() ? null : name);
         scimUser.setDisplayName(user.getDisplayName());
         scimUser.setNickName(user.getNickName());
 
-        scimUser.setProfileUrl(get(additionalInformation, StandardClaims.PROFILE, String.class));
+        scimUser.setProfileUrl(get(additionalInformation, StandardClaims.PROFILE));
         scimUser.setTitle(user.getTitle());
         scimUser.setUserType(user.getType());
         scimUser.setPreferredLanguage(user.getPreferredLanguage());
-        scimUser.setLocale(get(additionalInformation, StandardClaims.LOCALE, String.class));
-        scimUser.setTimezone(get(additionalInformation, StandardClaims.ZONEINFO, String.class));
+        scimUser.setLocale(get(additionalInformation, StandardClaims.LOCALE));
+        scimUser.setTimezone(get(additionalInformation, StandardClaims.ZONEINFO));
         scimUser.setActive(user.isEnabled());
         scimUser.setEmails(toScimAttributes(user.getEmails()));
         // set primary email
@@ -65,7 +67,7 @@ public class UserMapper {
             attribute.setPrimary(true);
             if (scimUser.getEmails() != null) {
                 Optional<Attribute> optional = scimUser.getEmails().stream().filter(attribute1 -> attribute1.getValue().equals(attribute.getValue())).findFirst();
-                if (!optional.isPresent()) {
+                if (optional.isEmpty()) {
                     scimUser.setEmails(Collections.singletonList(attribute));
                 }
             } else {
@@ -77,7 +79,7 @@ public class UserMapper {
         scimUser.setPhotos(toScimAttributes(user.getPhotos()));
         scimUser.setAddresses(toScimAddresses(user.getAddresses()));
         scimUser.setEntitlements(user.getEntitlements());
-        scimUser.setRoles(user.getRoles());
+        scimUser.setRoles(getRoles(user));
         scimUser.setX509Certificates(toScimCertificates(user.getX509Certificates()));
 
         // Meta
@@ -94,9 +96,16 @@ public class UserMapper {
         return scimUser;
     }
 
+    private static List<String> getRoles(io.gravitee.am.model.User user) {
+        return Stream.of(
+                ofNullable(user.getRoles()).orElse(List.of()),
+                ofNullable(user.getDynamicRoles()).orElse(List.of())
+        ).flatMap(List::stream).sorted().distinct().collect(toList());
+    }
+
     public static io.gravitee.am.model.User convert(User scimUser) {
         io.gravitee.am.model.User user = new io.gravitee.am.model.User();
-        Map<String, Object> additionalInformation = new HashMap();
+        Map<String, Object> additionalInformation = new HashMap<>();
         if (scimUser.getExternalId() != null) {
             user.setExternalId(scimUser.getExternalId());
             additionalInformation.put(StandardClaims.SUB, scimUser.getExternalId());
@@ -154,7 +163,7 @@ public class UserMapper {
         return user;
     }
 
-    public static <T> T get(Map<String, Object> additionalInformation, String key, Class<T> valueType) {
+    public static <T> T get(Map<String, Object> additionalInformation, String key) {
         if (!additionalInformation.containsKey(key)) {
             return null;
         }
@@ -203,7 +212,7 @@ public class UserMapper {
                     modelAttribute.setValue(scimAttribute.getValue());
                     modelAttribute.setType(scimAttribute.getType());
                     return modelAttribute;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 
     public static List<Attribute> toScimAttributes(List<io.gravitee.am.model.scim.Attribute> modelAttributes) {
@@ -218,7 +227,7 @@ public class UserMapper {
                     scimAttribute.setValue(modelAttribute.getValue());
                     scimAttribute.setType(modelAttribute.getType());
                     return scimAttribute;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 
     public static List<io.gravitee.am.model.scim.Address> toModelAddresses(List<Address> scimAddresses) {
@@ -238,7 +247,7 @@ public class UserMapper {
                     modelAddress.setRegion(scimAddress.getRegion());
                     modelAddress.setPrimary(scimAddress.isPrimary());
                     return modelAddress;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 
     public static List<Address> toScimAddresses(List<io.gravitee.am.model.scim.Address> modelAddresses) {
@@ -258,7 +267,7 @@ public class UserMapper {
                     scimAddress.setRegion(modelAddress.getRegion());
                     scimAddress.setPrimary(modelAddress.isPrimary());
                     return scimAddress;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 
     public static List<io.gravitee.am.model.scim.Certificate> toModelCertificates(List<Certificate> scimCertificates) {
@@ -271,7 +280,7 @@ public class UserMapper {
                     io.gravitee.am.model.scim.Certificate modelCertificate = new io.gravitee.am.model.scim.Certificate();
                     modelCertificate.setValue(scimCertificate.getValue());
                     return modelCertificate;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 
     public static List<Certificate> toScimCertificates(List<io.gravitee.am.model.scim.Certificate> modelCertificates) {
@@ -284,6 +293,6 @@ public class UserMapper {
                     Certificate scimCertificate = new Certificate();
                     scimCertificate.setValue(modelCertificate.getValue());
                     return scimCertificate;
-                }).collect(Collectors.toList());
+                }).collect(toList());
     }
 }

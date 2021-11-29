@@ -15,11 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -62,7 +59,14 @@ public class JdbcOrganizationUser extends AbstractUser {
     }
 
     @Table("organization_user_roles")
-    public static class Role {
+    public static class Role extends AbstractRole {
+    }
+
+    @Table("organization_dynamic_user_roles")
+    public static class DynamicRole extends AbstractRole {
+    }
+
+    public static abstract class AbstractRole {
         @Column("user_id")
         private String userId;
         private String role;

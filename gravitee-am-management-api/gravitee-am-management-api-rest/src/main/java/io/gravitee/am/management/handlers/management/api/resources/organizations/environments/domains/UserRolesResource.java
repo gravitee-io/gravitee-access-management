@@ -44,9 +44,6 @@ import javax.ws.rs.core.Context;
 import java.util.Collections;
 import java.util.List;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -79,6 +76,7 @@ public class UserRolesResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domain,
             @PathParam("user") String user,
+            @QueryParam(value = "dynamic") @DefaultValue(value = "false") boolean dynamic,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
@@ -87,10 +85,11 @@ public class UserRolesResource extends AbstractResource {
                         .flatMap(__ -> userService.findById(user))
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .flatMapSingle(endUser -> {
-                            if (endUser.getRoles() == null || endUser.getRoles().isEmpty()) {
+                            var roles = dynamic ? endUser.getDynamicRoles() : endUser.getRoles();
+                            if (roles == null || roles.isEmpty()) {
                                 return Single.just(Collections.emptyList());
                             }
-                            return roleService.findByIdIn(endUser.getRoles());
+                            return roleService.findByIdIn(roles);
                         }))
                 .subscribe(response::resume, response::resume);
     }

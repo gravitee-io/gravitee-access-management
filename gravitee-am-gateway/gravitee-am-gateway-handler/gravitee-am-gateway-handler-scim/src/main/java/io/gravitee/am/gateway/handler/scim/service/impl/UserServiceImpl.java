@@ -250,6 +250,15 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setCreatedAt(existingUser.getCreatedAt());
                                 userToUpdate.setUpdatedAt(new Date());
                                 userToUpdate.setFactors(existingUser.getFactors());
+                                userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+
+                                // We remove the dynamic roles from the user roles to be updated in order to preserve
+                                // the roles that were assigned by the RoleMappers so that whenever the rule from the
+                                // said RoleMapper does not apply anymore, user loses the role
+                                if (userToUpdate.getRoles() != null && userToUpdate.getDynamicRoles() != null) {
+                                    userToUpdate.getRoles().removeAll(userToUpdate.getDynamicRoles());
+                                }
+
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
 
                                 // set source

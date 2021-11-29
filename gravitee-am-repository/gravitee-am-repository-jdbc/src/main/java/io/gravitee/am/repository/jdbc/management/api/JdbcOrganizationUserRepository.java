@@ -76,6 +76,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     protected SpringOrganizationUserRoleRepository roleRepository;
 
     @Autowired
+    protected SpringOrganizationUserDynamicRoleRepository dynamicRoleRepository;
+
+    @Autowired
     protected SpringOrganizationUserAddressesRepository addressesRepository;
 
     @Autowired
@@ -345,15 +348,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             }).reduce(Integer::sum));
         }
 
-        final List<String> roles = item.getRoles();
-        if (roles != null && !roles.isEmpty()) {
-            actionFlow = actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
-                JdbcOrganizationUser.Role jdbcRole = new JdbcOrganizationUser.Role();
-                jdbcRole.setUserId(item.getId());
-                jdbcRole.setRole(role);
-                return dbClient.insert().into(JdbcOrganizationUser.Role.class).using(jdbcRole).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
-        }
+        actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), JdbcOrganizationUser.Role.class);
+        actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), JdbcOrganizationUser.DynamicRole.class);
 
         final List<String> entitlements = item.getEntitlements();
         if (entitlements != null && !entitlements.isEmpty()) {
@@ -366,8 +362,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         }
 
         Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
-                convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
-                convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
+                                convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
+                        convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
                 convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
                 .map(jdbcAttr -> dbClient.insert().into(JdbcOrganizationUser.Attribute.class).using(jdbcAttr).fetch().rowsUpdated())
                 .reduce(Mono::then);
@@ -375,6 +371,24 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             actionFlow = actionFlow.then(attributes.get());
         }
 
+        return actionFlow;
+    }
+
+    private <T extends JdbcOrganizationUser.AbstractRole> Mono<Integer> addJdbcRoles(
+            Mono<Integer> actionFlow, User item, List<String> roles, Class<T> clazz) {
+        if (roles != null && !roles.isEmpty()) {
+            return actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
+                try {
+                    T jdbcRole = clazz.getConstructor().newInstance();
+                    jdbcRole.setUserId(item.getId());
+                    jdbcRole.setRole(role);
+                    return dbClient.insert().into(clazz).using(jdbcRole).fetch().rowsUpdated();
+                } catch (Exception e) {
+                    LOGGER.error("An unexpected error has occurred", e);
+                    return Mono.just(0);
+                }
+            }).reduce(Integer::sum));
+        }
         return actionFlow;
     }
 
@@ -392,10 +406,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
     private Mono<Integer> deleteChildEntities(String userId) {
         Mono<Integer> deleteRoles = dbClient.delete().from(JdbcOrganizationUser.Role.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
+        Mono<Integer> deleteRolesDynamicRoles = dbClient.delete().from(JdbcOrganizationUser.DynamicRole.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteAddresses = dbClient.delete().from(JdbcOrganizationUser.Address.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteAttributes = dbClient.delete().from(JdbcOrganizationUser.Attribute.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
         Mono<Integer> deleteEntitlements = dbClient.delete().from(JdbcOrganizationUser.Entitlements.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+        return deleteRoles.then(deleteRolesDynamicRoles).then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
     }
 
     private Single<User> completeUser(User userToComplete) {
@@ -403,6 +418,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .flatMap(user ->
                         roleRepository.findByUserId(user.getId()).map(JdbcOrganizationUser.Role::getRole).toList().map(roles -> {
                             user.setRoles(roles);
+                            return user;
+                        }))
+                .flatMap(user ->
+                        dynamicRoleRepository.findByUserId(user.getId()).map(JdbcOrganizationUser.DynamicRole::getRole).toList().map(roles -> {
+                            user.setDynamicRoles(roles);
                             return user;
                         }))
                 .flatMap(user ->
@@ -414,9 +434,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                         addressesRepository.findByUserId(user.getId())
                                 .map(jdbcAddr -> mapper.map(jdbcAddr, Address.class))
                                 .toList().map(addresses -> {
-                            user.setAddresses(addresses);
-                            return user;
-                        }))
+                                    user.setAddresses(addresses);
+                                    return user;
+                                }))
                 .flatMap(user ->
                         attributesRepository.findByUserId(user.getId())
                                 .toList()
