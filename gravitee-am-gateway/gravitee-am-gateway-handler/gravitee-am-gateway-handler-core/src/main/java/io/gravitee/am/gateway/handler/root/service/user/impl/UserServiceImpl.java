@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.root.service.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
+import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -42,8 +44,10 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.EmailValidator;
 import io.gravitee.am.service.validators.UserValidator;
@@ -96,6 +100,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserValidator userValidator;
 
+    @Autowired
+    private JWTService jwtService;
+
+    @Autowired
+    private TokenService tokenService;
+
     @Override
     public Maybe<UserToken> verifyToken(String token) {
         return Maybe.fromCallable(() -> jwtParser.parse(token))
@@ -104,6 +114,31 @@ public class UserServiceImpl implements UserService {
                             .zipWith(clientSource(jwt.getAud()),
                                     (user, optionalClient) -> {
                                 return new UserToken(user, optionalClient.orElse(null), jwt);
+                            });
+                });
+    }
+
+    @Override
+    public Single<UserToken> extractSessionFromIdToken(String idToken) {
+        // The OP SHOULD accept ID Tokens when the RP identified by the ID Token's aud claim and/or sid claim has a current session
+        // or had a recent session at the OP, even when the exp time has passed.
+        return jwtService.decode(idToken)
+                .flatMap(jwt -> {
+                    return clientSyncService.findByClientId(jwt.getAud())
+                            .switchIfEmpty(Single.error(new ClientNotFoundException(jwt.getAud())))
+                            .flatMap(client -> {
+                                return jwtService.decodeAndVerify(idToken, client)
+                                        .onErrorResumeNext(ex -> (ex instanceof ExpiredJWTException) ? Single.just(jwt) : Single.error(ex))
+                                        .flatMap(jwt1 -> {
+                                            return userService.findById(jwt1.getSub())
+                                                    .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
+                                                    .map(user -> {
+                                                        if (!user.getReferenceId().equals(domain.getId())) {
+                                                            throw new UserNotFoundException(jwt.getSub());
+                                                        }
+                                                        return new UserToken(user, client, jwt);
+                                                    });
+                                        });
                             });
                 });
     }
@@ -405,6 +440,24 @@ public class UserServiceImpl implements UserService {
                 })
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
                 .ignoreElement();
+    }
+
+    @Override
+    public Completable logout(User user, boolean invalidateTokens, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.findById(user.getId())
+                .flatMapCompletable(user1 -> {
+                    user1.setLastLogoutAt(new Date());
+                    user1.setUpdatedAt(new Date());
+                    return userService.update(user1)
+                            .flatMapCompletable(user2 -> {
+                                if (invalidateTokens) {
+                                    return tokenService.deleteByUserId(user2.getId());
+                                }
+                                return Completable.complete();
+                            });
+                })
+                .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_LOGOUT)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_LOGOUT).throwable(throwable)));
     }
 
     @Override

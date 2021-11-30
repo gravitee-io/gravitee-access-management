@@ -118,6 +118,8 @@ public class User implements IUser {
 
     private Date lastPasswordReset;
 
+    private Date lastLogoutAt;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -184,6 +186,7 @@ public class User implements IUser {
         this.additionalInformation = other.additionalInformation != null ? new HashMap<>(other.additionalInformation) : null;
         this.loggedAt = other.loggedAt;
         this.lastPasswordReset = other.lastPasswordReset;
+        this.lastLogoutAt = other.lastLogoutAt;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -609,6 +612,14 @@ public class User implements IUser {
 
     public void setLastPasswordReset(Date lastPasswordReset) {
         this.lastPasswordReset = lastPasswordReset;
+    }
+
+    public Date getLastLogoutAt() {
+        return lastLogoutAt;
+    }
+
+    public void setLastLogoutAt(Date lastLogoutAt) {
+        this.lastLogoutAt = lastLogoutAt;
     }
 
     public Date getCreatedAt() {

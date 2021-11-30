@@ -15,18 +15,22 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
-import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.certificate.CertificateProvider;
+import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
-import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +38,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,30 +54,40 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
-    private TokenService tokenService;
+    private ClientSyncService clientSyncService;
     @Mock
-    private AuditService auditService;
+    private JWTService jwtService;
+    @Mock
+    private UserService userService;
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
+    @Mock
+    private CertificateManager certificateManager;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route(HttpMethod.GET, "/logout/callback")
-                .handler(new LogoutCallbackEndpoint(domain, tokenService, auditService, authenticationFlowContextService))
+                .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager))
                 .failureHandler(new ErrorHandler("/error"));
     }
 
     @Test
     public void shouldRedirect_using_state() throws Exception {
+        JWT state = new JWT();
+        state.put("q", "post_logout_redirect_uri=http://my-app&state=myappstate");
+        state.put("p", "provider-id");
+        state.put("c", "client-id");
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class))).thenReturn(Single.just(state));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(new Client()));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
             routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
-            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY,  RequestUtils.getQueryParams("post_logout_redirect_uri=http://my-app&state=myappstate", false));
-            routingContext.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, "provider-id");
-            routingContext.put(Parameters.CLIENT_ID, "client-id");
             routingContext.next();
         });
 
@@ -90,14 +109,19 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
         client.setPostLogoutRedirectUris(Arrays.asList("https://my-app"));
         client.setSingleSignOut(true);
 
+        JWT state = new JWT();
+        state.put("q", "post_logout_redirect_uri=http://my-invalid-app&state=myappstate");
+        state.put("p", "provider-id");
+        state.put("c", "client-id");
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.decodeAndVerify(any(String.class), any(CertificateProvider.class))).thenReturn(Single.just(state));
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
             endUser.setClient("client-id");
             routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
-            routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY,  RequestUtils.getQueryParams("post_logout_redirect_uri=http://my-invalid-app&state=myappstate", false));
-            routingContext.put(ConstantKeys.PROVIDER_ID_PARAM_KEY, "provider-id");
-            routingContext.put(Parameters.CLIENT_ID, "client-id");
-            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             routingContext.next();
         });
 

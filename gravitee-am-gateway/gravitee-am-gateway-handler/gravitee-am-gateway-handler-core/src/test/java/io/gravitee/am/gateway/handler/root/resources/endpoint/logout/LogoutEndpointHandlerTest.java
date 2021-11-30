@@ -25,19 +25,21 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.OIDCSettings;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -45,9 +47,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -61,26 +63,26 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
-    private TokenService tokenService;
-    @Mock
-    private AuditService auditService;
-    @Mock
     private ClientSyncService clientSyncService;
     @Mock
     private JWTService jwtService;
+    @Mock
+    private UserService userService;
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
     @Mock
     private IdentityProviderManager identityProviderManager;
     @Mock
     private CertificateManager certificateManager;
+    @Mock
+    private WebClient webClient;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         router.route(HttpMethod.GET, "/logout")
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService, identityProviderManager, certificateManager))
+                .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient))
                 .failureHandler(new ErrorHandler("/error"));
     }
 
@@ -112,9 +114,10 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_client_noRestriction() throws Exception {
-        Client client = mock(Client.class);
-        when(client.getPostLogoutRedirectUris()).thenReturn(null);
+        Client client = new Client();
+        client.setPostLogoutRedirectUris(null);
         when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
@@ -136,9 +139,10 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_client_restriction() throws Exception {
-        Client client = mock(Client.class);
-        when(client.getPostLogoutRedirectUris()).thenReturn(Arrays.asList("https://test"));
+        Client client = new Client();
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test"));
         when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
@@ -160,9 +164,10 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
 
     @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_client_restriction_2() throws Exception {
-        Client client = mock(Client.class);
-        when(client.getPostLogoutRedirectUris()).thenReturn(Arrays.asList("https://test", "https://dev"));
+        Client client = new Client();
+        client.setPostLogoutRedirectUris(Arrays.asList("https://test", "https://dev"));
         when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
@@ -188,6 +193,7 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         client.setClientId("client-id");
         client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
         when(clientSyncService.findById("client-id")).thenReturn(Maybe.just(client));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
             User endUser = new User();
@@ -215,13 +221,15 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
         Client client = new Client();
         client.setClientId("client-id");
         client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
-        when(jwtService.decode("idToken")).thenReturn(Single.just(jwt));
-        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
-        when(jwtService.decodeAndVerify("idToken", client)).thenReturn(Single.just(jwt));
+
+        User endUser = new User();
+        endUser.setId("user-id");
+        endUser.setClient("client-id");
+
+        when(userService.extractSessionFromIdToken("idToken")).thenReturn(Single.just(new UserToken(endUser, client)));
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
 
         router.route().order(-1).handler(routingContext -> {
-            User endUser = new User();
-            endUser.setClient("client-id");
             routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
             routingContext.next();
         });

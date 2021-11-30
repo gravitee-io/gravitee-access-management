@@ -138,4 +138,17 @@ public class RequestUtils {
             return null;
         }
     }
+
+    public static String getUrlWithoutParameters(String url) {
+        try {
+            URI uri = new URI(url);
+            return new URI(uri.getScheme(),
+                    uri.getAuthority(),
+                    uri.getPath(),
+                    null,
+                    uri.getFragment()).toString();
+        } catch (Exception ex) {
+            return url;
+        }
+    }
 }
