@@ -56,7 +56,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDet
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
-import io.gravitee.am.gateway.handler.root.resources.handler.logout.LogoutCallbackParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
@@ -64,10 +63,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
@@ -76,6 +73,7 @@ import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.CSRFHandler;
 import io.vertx.reactivex.ext.web.handler.StaticHandler;
@@ -132,9 +130,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private PasswordValidator passwordValidator;
 
     @Autowired
-    private AuditService auditService;
-
-    @Autowired
     private ClientSyncService clientSyncService;
 
     @Autowired
@@ -149,9 +144,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private PolicyChainHandler policyChainHandler;
@@ -182,6 +174,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private BotDetectionManager botDetectionManager;
+
+    @Autowired
+    private WebClient webClient;
 
     @Override
     protected void doStart() throws Exception {
@@ -239,11 +234,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService, identityProviderManager, certificateManager));
-
+                .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
-                .handler(new LogoutCallbackParseHandler(clientSyncService, jwtService, certificateManager))
-                .handler(new LogoutCallbackEndpoint(domain, tokenService, auditService, authenticationFlowContextService));
+                .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));

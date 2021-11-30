@@ -16,21 +16,19 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
 import io.gravitee.common.http.HttpHeaders;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
+import io.reactivex.Completable;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -39,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,15 +52,15 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     private static final String LOGOUT_URL_PARAMETER = "target_url";
     private static final String DEFAULT_TARGET_URL = "/";
 
-    private Domain domain;
-    private TokenService tokenService;
-    private AuditService auditService;
+    protected Domain domain;
     private AuthenticationFlowContextService authenticationFlowContextService;
+    protected UserService userService;
 
-    public AbstractLogoutEndpoint(Domain domain, TokenService tokenService, AuditService auditService, AuthenticationFlowContextService authenticationFlowContextService) {
+    public AbstractLogoutEndpoint(Domain domain,
+                                  UserService userService,
+                                  AuthenticationFlowContextService authenticationFlowContextService) {
         this.domain = domain;
-        this.tokenService = tokenService;
-        this.auditService = auditService;
+        this.userService = userService;
         this.authenticationFlowContextService = authenticationFlowContextService;
     }
 
@@ -139,65 +138,32 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     }
 
     /**
-     * Invalidate session for the current user.
+     * Invalidate session for the current user
      *
      * @param routingContext the routing context
-     * @param handler handler holding the potential End-User
      */
-    protected void invalidateSession(RoutingContext routingContext, Handler<AsyncResult<User>> handler) {
-        io.gravitee.am.model.User endUser = null;
+    protected void invalidateSession(RoutingContext routingContext) {
+        final User endUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY) != null ?
+                routingContext.get(ConstantKeys.USER_CONTEXT_KEY) :
+                (routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null);
+
         // clear context and session
-        if (routingContext.user() != null) {
-            endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            // audit event
-            report(endUser, routingContext.request());
-            // clear user
-            routingContext.clearUser();
-        }
+        Completable clearSessionCompletable = endUser != null ? userService.logout(endUser, Boolean.TRUE.valueOf(routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER)), getAuthenticatedUser(endUser, routingContext)) : Completable.complete();
+        Completable clearContextCompletable = routingContext.session() != null ? authenticationFlowContextService.clearContext(routingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY)) : Completable.complete();
 
-        if (routingContext.session() != null) {
-            // clear AuthenticationFlowContext. data of this context have a TTL so we can fire and forget in case on error.
-            authenticationFlowContextService.clearContext(routingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY))
-                    .doOnError((error) -> LOGGER.info("Deletion of some authentication flow data fails '{}'", error.getMessage()))
-                    .subscribe();
-
-            routingContext.session().destroy();
-        }
-
-        handler.handle(Future.succeededFuture(endUser));
-    }
-
-    /**
-     * Invalidate tokens for the current user.
-     *
-     * @param user the End-User
-     * @param handler handler holding the result
-     */
-    protected void invalidateTokens(User user, Handler<AsyncResult<Void>> handler) {
-        // if no user, continue
-        if (user == null) {
-            handler.handle(Future.succeededFuture());
-            return;
-        }
-        tokenService.deleteByUserId(user.getId())
+        clearSessionCompletable
+                .andThen(clearContextCompletable)
+                .onErrorComplete()
                 .subscribe(
-                        () -> handler.handle(Future.succeededFuture()),
-                        error -> handler.handle(Future.failedFuture(error)));
-    }
-
-    /**
-     * Report the logout action.
-     *
-     * @param endUser the End-User
-     * @param request the HTTP request
-     */
-    protected void report(User endUser, HttpServerRequest request) {
-        auditService.report(
-                AuditBuilder.builder(LogoutAuditBuilder.class)
-                        .domain(domain.getId())
-                        .user(endUser)
-                        .ipAddress(RequestUtils.remoteAddress(request))
-                        .userAgent(RequestUtils.userAgent(request)));
+                        () -> {
+                            routingContext.clearUser();
+                            if (routingContext.session() != null) {
+                                routingContext.session().destroy();
+                            }
+                            doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
+                        },
+                        error -> routingContext.fail(error)
+                );
     }
 
     private void doRedirect0(RoutingContext routingContext, String url) {
@@ -240,19 +206,14 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                 .anyMatch(registeredUri -> requestedRedirectUri.equals(registeredUri));
     }
 
-    protected Handler<AsyncResult<User>> invalidSessionHandler(RoutingContext routingContext, Client client) {
-        return invalidateSessionHandler -> {
-            // invalidate tokens if option is enabled
-            if (Boolean.TRUE.valueOf(routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER))) {
-                invalidateTokens(invalidateSessionHandler.result(), invalidateTokensHandler -> {
-                    if (invalidateTokensHandler.failed()) {
-                        LOGGER.error("An error occurs while invalidating user tokens", invalidateSessionHandler.cause());
-                    }
-                    doRedirect(client, routingContext);
-                });
-            } else {
-                doRedirect(client, routingContext);
-            }
-        };
+    private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(User endUser, RoutingContext routingContext) {
+        // override principal user
+        DefaultUser principal = new DefaultUser(endUser.getUsername());
+        Map<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        additionalInformation.put(Claims.domain, domain.getId());
+        principal.setAdditionalInformation(additionalInformation);
+        return principal;
     }
 }

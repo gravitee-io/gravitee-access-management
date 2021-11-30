@@ -355,9 +355,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = addQuotedField(insertSpec, "client", item.getClient(), String.class);
         insertSpec = addQuotedField(insertSpec, "logins_count", item.getLoginsCount(), Integer.class);
         insertSpec = addQuotedField(insertSpec, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "last_password_reset", dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, "last_logout_at", dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "last_password_reset", dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, "x509_certificates", item.getX509Certificates());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, "factors", item.getFactors());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, "additional_information", item.getAdditionalInformation());
@@ -407,9 +408,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         updateFields = addQuotedField(updateFields, "client", item.getClient(), String.class);
         updateFields = addQuotedField(updateFields, "logins_count", item.getLoginsCount(), Integer.class);
         updateFields = addQuotedField(updateFields, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "last_password_reset", dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
+        updateFields = addQuotedField(updateFields, "last_logout_at", dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
         updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "last_password_reset", dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
         updateFields = databaseDialectHelper.addJsonField(updateFields, "x509_certificates", item.getX509Certificates());
         updateFields = databaseDialectHelper.addJsonField(updateFields, "factors", item.getFactors());
         updateFields = databaseDialectHelper.addJsonField(updateFields, "additional_information", item.getAdditionalInformation());

@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.10.10-add-last-logout-date
+      author: GraviteeSource Team
+      changes:
+
+        # Users
+        ########################
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: last_logout_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: last_logout_at, type: timestamp(6), constraints: { nullable: true } }
