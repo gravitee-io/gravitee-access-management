@@ -29,4 +29,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_10_0/schema-add-default-scopes.yml
   - include:
       - file: liquibase/changelogs/v3_10_0/schema-add-self-service-account-settings.yml
+  - include:
+      - file: liquibase/changelogs/v3_10_10/schema-add-last-password-reset-date.yml
 
