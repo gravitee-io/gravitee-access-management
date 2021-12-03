@@ -70,36 +70,40 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
             try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
                  BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
 
-                List<String> sqlStatements = reader.lines()
-                        // remove empty line and comment
-                        .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
-                        .map(line -> {
-                            // update table & index names
-                            String finalLine = pattern.matcher(line).replaceAll(configuration.getUsersTable());
-                            LOGGER.debug("Statement to execute: {}", finalLine);
-                            return finalLine;
+                Single.fromPublisher(connectionPool.create())
+                        .flatMapPublisher(connection -> {
+                            final String tableExistsStatement = tableExists(configuration.getProtocol(), configuration.getUsersTable());
+                            return query(connection, tableExistsStatement, new Object[0])
+                                    .flatMap(Result::getRowsUpdated)
+                                    .first(0)
+                                    .flatMapPublisher(total -> {
+                                        if (total == 0) {
+                                            LOGGER.debug("SQL datatable {} doest not exists, initialize it.", configuration.getUsersTable());
+
+                                            final List<String> sqlStatements = reader.lines()
+                                                    // remove empty line and comment
+                                                    .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
+                                                    .map(line -> {
+                                                        // update table & index names
+                                                        String finalLine = pattern.matcher(line).replaceAll(configuration.getUsersTable());
+                                                        LOGGER.debug("Statement to execute: {}", finalLine);
+                                                        return finalLine;
+                                                    })
+                                                    .distinct()
+                                                    .collect(Collectors.toList());
+
+                                            LOGGER.debug("Found {} statements to execute", sqlStatements.size());
+                                            return Flowable.fromIterable(sqlStatements)
+                                                    .flatMap(statement -> query(connection, statement, new Object[0]))
+                                                    .flatMap(Result::getRowsUpdated);
+                                        } else {
+                                            return Flowable.empty();
+                                        }
+                                    })
+                                    .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
                         })
-                        .distinct()
-                        .collect(Collectors.toList());
-
-                LOGGER.debug("Found {} statements to execute", sqlStatements.size());
-
-                Flowable.just(tableExists(configuration.getProtocol(), configuration.getUsersTable()))
-                        .flatMapSingle(statement -> query(statement, new Object[0])
-                                .flatMap(Result::getRowsUpdated)
-                                .first(0)).flatMap(total -> {
-                                    if (total == 0) {
-                                        return Flowable.fromIterable(sqlStatements)
-                                                .flatMapSingle(statement -> query(statement, new Object[0])
-                                                        .flatMap(Result::getRowsUpdated)
-                                                        .first(0));
-                                    } else {
-                                        return Flowable.empty();
-                                    }
-                                })
-                        .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
-                        .subscribe();
-
+                        .ignoreElements()
+                        .blockingGet();
             } catch (Exception e) {
                 LOGGER.error("Unable to initialize the identity provider schema", e);
             }
