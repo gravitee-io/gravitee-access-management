@@ -38,6 +38,7 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 100;
+    private boolean storeOriginalTokens;
     private Environment environment = Environment.INTEGRATION;
 
     public String getClientId() {
@@ -126,6 +127,15 @@ public class FranceConnectIdentityProviderConfiguration implements SocialIdentit
 
     public void setEnvironment(Environment environment) {
         this.environment = environment;
+    }
+
+    @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalTokens;
+    }
+
+    public void setStoreOriginalTokens(boolean storeOriginalTokens) {
+        this.storeOriginalTokens = storeOriginalTokens;
     }
 
     @Override

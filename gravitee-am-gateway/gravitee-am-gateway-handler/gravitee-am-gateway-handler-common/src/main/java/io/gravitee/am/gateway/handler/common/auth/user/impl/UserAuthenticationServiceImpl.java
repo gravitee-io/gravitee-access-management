@@ -26,7 +26,6 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
@@ -51,6 +50,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -191,14 +194,25 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             principal.getRoles().removeAll(existingUser.getRoles());
             existingUser.getRoles().addAll(principal.getRoles());
         }
-        Map<String, Object> additionalInformation = principal.getAdditionalInformation();
-        if (afterAuthentication && !additionalInformation.containsKey(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY) && existingUser.getAdditionalInformation() != null) {
-            // remove the op_id_token from existing user profile to avoid keep this information
-            // if the singleSignOut is disabled
-            existingUser.getAdditionalInformation().remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
-        }
+        Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
+
+        removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
         extractAdditionalInformation(existingUser, additionalInformation);
+
         return userService.update(existingUser);
+    }
+
+    private void removeOriginalProviderOidcTokensIfNecessary(User existingUser, boolean afterAuthentication, Map<String, Object> additionalInformation) {
+        if (afterAuthentication) {
+            // remove the op_id_token from existing user profile to avoid keep this information
+            // if the singleSignOut is disabled or provider does not retrieve oidc tokens
+            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_TOKEN_KEY)){
+                existingUser.removeAdditionalInformation(OIDC_PROVIDER_ID_TOKEN_KEY);
+            }
+            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY)){
+                existingUser.removeAdditionalInformation(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
+            }
+        }
     }
 
     /**

@@ -51,6 +51,11 @@
       "minimum": 1,
       "title": "HTTP Client max pool size",
       "description": "Maximum pool of connections can grow to. (default 200)"
+    },
+    "storeOriginalTokens" : {
+      "type" : "boolean",
+      "default" : false,
+      "title": "Store Original Tokens"
     }
   },
   "required": [

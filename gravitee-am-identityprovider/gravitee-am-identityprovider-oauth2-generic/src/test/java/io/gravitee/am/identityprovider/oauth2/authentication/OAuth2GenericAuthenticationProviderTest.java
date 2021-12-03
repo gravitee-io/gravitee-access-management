@@ -43,7 +43,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { OAuth2GenericAuthenticationProviderTestConfiguration.class, OAuth2GenericAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {OAuth2GenericAuthenticationProviderTestConfiguration.class, OAuth2GenericAuthenticationProviderConfiguration.class}, loader = AnnotationConfigContextLoader.class)
 public class OAuth2GenericAuthenticationProviderTest {
 
     @Autowired
@@ -81,7 +81,9 @@ public class OAuth2GenericAuthenticationProviderTest {
             public AuthenticationContext getContext() {
                 DummyRequest dummyRequest = new DummyRequest();
                 dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
+                final HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("redirect_uri", "http://redirect_uri");
+                return new DummyAuthenticationContext(attributes, dummyRequest);
             }
         }).test();
 
@@ -114,7 +116,9 @@ public class OAuth2GenericAuthenticationProviderTest {
             public AuthenticationContext getContext() {
                 DummyRequest dummyRequest = new DummyRequest();
                 dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("wrong-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
+                final HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("redirect_uri", "http://redirect_uri");
+                return new DummyAuthenticationContext(attributes, dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -148,7 +152,9 @@ public class OAuth2GenericAuthenticationProviderTest {
             public AuthenticationContext getContext() {
                 DummyRequest dummyRequest = new DummyRequest();
                 dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
+                final HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("redirect_uri", "http://redirect_uri");
+                return new DummyAuthenticationContext(attributes, dummyRequest);
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -160,7 +166,7 @@ public class OAuth2GenericAuthenticationProviderTest {
     public void shouldLoadUserByUsername_roleMapping() {
         // configure role mapping
         Map<String, String[]> roles = new HashMap<>();
-        roles.put("admin", new String[] { "preferred_username=bob"});
+        roles.put("admin", new String[]{"preferred_username=bob"});
         roleMapper.setRoles(roles);
 
         stubFor(any(urlPathEqualTo("/oauth/token"))
@@ -187,7 +193,9 @@ public class OAuth2GenericAuthenticationProviderTest {
             public AuthenticationContext getContext() {
                 DummyRequest dummyRequest = new DummyRequest();
                 dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
-                return new DummyAuthenticationContext(Collections.singletonMap("redirect_uri", "http://redirect_uri"), dummyRequest);
+                final HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("redirect_uri", "http://redirect_uri");
+                return new DummyAuthenticationContext(attributes, dummyRequest);
             }
         }).test();
 

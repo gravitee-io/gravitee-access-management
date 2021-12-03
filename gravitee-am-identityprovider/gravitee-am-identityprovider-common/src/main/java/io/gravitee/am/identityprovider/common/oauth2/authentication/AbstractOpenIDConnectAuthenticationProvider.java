@@ -110,7 +110,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                 builder.addParameter(io.gravitee.am.common.oidc.Parameters.NONCE, SecureRandomString.generate());
             }
             // add state if provided.
-            if(!StringUtils.isEmpty(state)) {
+            if (!StringUtils.isEmpty(state)) {
                 builder.addParameter(Parameters.STATE, state);
             }
 
@@ -129,13 +129,19 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
 
     protected Maybe<Token> authenticate(Authentication authentication) {
         // implicit flow, retrieve the hashValue of the URL (#access_token=....&token_type=...)
-        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())){
+        if (AuthenticationFlow.IMPLICIT_FLOW.equals(authenticationFlow())) {
             final String hashValue = authentication.getContext().request().parameters().getFirst(HASH_VALUE_PARAMETER);
             Map<String, String> hashValues = getParams(hashValue.substring(1));
 
             // implicit flow was used with response_type=id_token token, access token is already fetched, continue
             if (ResponseType.ID_TOKEN_TOKEN.equals(getConfiguration().getResponseType())) {
                 String accessToken = hashValues.get(ACCESS_TOKEN_PARAMETER);
+                // We store the token is option is enabled
+                if (getConfiguration().isStoreOriginalTokens()) {
+                    if (!Strings.isNullOrEmpty(accessToken)) {
+                        authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
+                    }
+                }
                 // put the id_token in context for later use
                 authentication.getContext().set(ID_TOKEN_PARAMETER, hashValues.get(ID_TOKEN_PARAMETER));
                 return Maybe.just(new Token(accessToken, TokenTypeHint.ACCESS_TOKEN));
@@ -175,9 +181,15 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (httpResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpResponse.statusMessage());
                     }
-
                     JsonObject response = httpResponse.bodyAsJsonObject();
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
+                    // We store the token is option is enabled
+                    if (getConfiguration().isStoreOriginalTokens()) {
+                        if (!Strings.isNullOrEmpty(accessToken)) {
+                            authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
+                        }
+                    }
+                    // ID Token is always stored for SSO
                     String idToken = response.getString(ID_TOKEN_PARAMETER);
                     if (!Strings.isNullOrEmpty(idToken)) {
                         authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);

@@ -15,17 +15,28 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Single;
 
+import java.util.Set;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface IDTokenService {
+
+    /**
+     * Set of claims to exclude from the IDToken
+     */
+    Set<String> EXCLUDED_CLAIMS = Set.of(
+            ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY,
+            ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY
+    );
 
     default Single<String>  create(OAuth2Request oAuth2Request, Client client, User user) {
         return create(oAuth2Request, client, user, null);

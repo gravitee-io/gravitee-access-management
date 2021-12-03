@@ -29,7 +29,7 @@
             <mat-hint>Identity provider name</mat-hint>
           </mat-form-field>
           <div *ngIf="provider.external">
-              <div fxLayout="row" fxLayoutGap="10px">
+            <div fxLayout="row" fxLayoutGap="10px">
                   <mat-form-field appearance="outline" floatLabel="always">
                     <mat-label>Domain Whitelist</mat-label>
                     <mat-chip-list #chipList aria-label="domainWhitelist">
@@ -49,7 +49,7 @@
                     </mat-chip-list>
                     <mat-hint>Enables Identifier-first login automatic redirection to the provider when the user email domain matches the list</mat-hint>
                   </mat-form-field>
-              </div>
+            </div>
           </div>
         </div>
 

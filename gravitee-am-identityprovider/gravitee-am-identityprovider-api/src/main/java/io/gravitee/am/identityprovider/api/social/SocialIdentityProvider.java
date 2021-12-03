@@ -27,4 +27,5 @@ public interface SocialIdentityProvider extends IdentityProvider {
     default boolean external() {
         return true;
     }
+
 }

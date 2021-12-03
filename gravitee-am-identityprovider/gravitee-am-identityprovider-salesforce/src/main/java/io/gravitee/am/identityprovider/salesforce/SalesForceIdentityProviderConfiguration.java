@@ -46,6 +46,7 @@ public class SalesForceIdentityProviderConfiguration implements OpenIDConnectIde
     private Integer maxPoolSize = 200;
 
     private boolean useIdTokenForUserInfo;
+    private boolean storeOriginalToken;
 
     public String getClientId() {
         return clientId;
@@ -107,6 +108,15 @@ public class SalesForceIdentityProviderConfiguration implements OpenIDConnectIde
         this.maxPoolSize = maxPoolSize;
     }
 
+
+    @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalToken;
+    }
+
+    public void setStoreOriginalToken(boolean storeOriginalToken) {
+        this.storeOriginalToken = storeOriginalToken;
+    }
     @Override
     public String getWellKnownUri() {
         return null;

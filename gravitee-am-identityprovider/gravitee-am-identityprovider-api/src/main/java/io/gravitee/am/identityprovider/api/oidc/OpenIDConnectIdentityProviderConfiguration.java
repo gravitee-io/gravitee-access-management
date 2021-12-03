@@ -24,10 +24,16 @@ import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfigur
  * @author GraviteeSource Team
  */
 public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdentityProviderConfiguration {
-    public String getWellKnownUri();
-    public boolean isUseIdTokenForUserInfo();
-    public KeyResolver getPublicKeyResolver();
-    public SignatureAlgorithm getSignatureAlgorithm();
-    public String getResolverParameter();
-    public boolean isEncodeRedirectUri();
+    String getWellKnownUri();
+
+    boolean isUseIdTokenForUserInfo();
+
+    KeyResolver getPublicKeyResolver();
+
+    SignatureAlgorithm getSignatureAlgorithm();
+
+    String getResolverParameter();
+
+    boolean isEncodeRedirectUri();
+
 }

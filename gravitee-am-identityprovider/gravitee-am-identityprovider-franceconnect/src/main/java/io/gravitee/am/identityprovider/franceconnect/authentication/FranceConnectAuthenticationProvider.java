@@ -170,6 +170,11 @@ public class FranceConnectAuthenticationProvider extends AbstractSocialAuthentic
                     JsonObject response = httpResponse.bodyAsJsonObject();
                     String accessToken = response.getString(ACCESS_TOKEN_PARAMETER);
                     String idToken = response.getString(ID_TOKEN_PARAMETER);
+                    if (getConfiguration().isStoreOriginalTokens()) {
+                        if (!Strings.isNullOrEmpty(accessToken)) {
+                            authentication.getContext().set(ACCESS_TOKEN_PARAMETER, accessToken);
+                        }
+                    }
                     if (!Strings.isNullOrEmpty(idToken)) {
                         authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
                     }

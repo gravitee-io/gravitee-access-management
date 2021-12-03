@@ -204,7 +204,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
-
         return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
     }
 
@@ -244,7 +243,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Completable delete(String domain, String identityProviderId, User principal) {
-
         return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }
 }

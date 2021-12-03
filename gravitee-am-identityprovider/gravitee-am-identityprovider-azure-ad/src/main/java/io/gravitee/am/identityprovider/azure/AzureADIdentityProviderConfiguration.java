@@ -45,6 +45,7 @@ public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdenti
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+    private boolean storeOriginalTokens;
 
     public String getTenantId() {
         return tenantId;
@@ -115,6 +116,15 @@ public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdenti
     }
 
     @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalTokens;
+    }
+
+    public void setStoreOriginalTokens(boolean storeOriginalTokens) {
+        this.storeOriginalTokens = storeOriginalTokens;
+    }
+
+    @Override
     public String getWellKnownUri() {
         return null;
     }
@@ -163,5 +173,4 @@ public class AzureADIdentityProviderConfiguration implements OpenIDConnectIdenti
     public String getLogoutUri() {
         return HOST_MICROSOFT_LOGIN + getTenantId() + LOGOUT_PATH;
     }
-
 }
