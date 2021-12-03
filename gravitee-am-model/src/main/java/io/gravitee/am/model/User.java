@@ -127,7 +127,7 @@ public class User implements IUser {
 
     public User(boolean withDefaultValues) {
 
-        if(!withDefaultValues) {
+        if (!withDefaultValues) {
             this.accountNonExpired = null;
             this.accountNonLocked = null;
             this.credentialsNonExpired = null;
@@ -287,9 +287,9 @@ public class User implements IUser {
     }
 
     public String getMiddleName() {
-            if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.MIDDLE_NAME) != null) {
-                return (String) getAdditionalInformation().get(StandardClaims.MIDDLE_NAME);
-            }
+        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.MIDDLE_NAME) != null) {
+            return (String) getAdditionalInformation().get(StandardClaims.MIDDLE_NAME);
+        }
         return null;
     }
 
@@ -599,10 +599,25 @@ public class User implements IUser {
     }
 
     public User putAdditionalInformation(String key, Object value) {
-        if (getAdditionalInformation() != null){
-            additionalInformation.put(key,value);
+        if (getAdditionalInformation() == null) {
+            setAdditionalInformation(new HashMap<>());
+        }
+        additionalInformation.put(key, value);
+        return this;
+    }
+
+    public User removeAdditionalInformation(String key) {
+        if (getAdditionalInformation() != null) {
+            additionalInformation.remove(key);
         }
         return this;
+    }
+
+    public <T> T get(String claim) {
+        if (getAdditionalInformation() != null) {
+            return (T) getAdditionalInformation().get(claim);
+        }
+        return null;
     }
 
     public void setAdditionalInformation(Map<String, Object> additionalInformation) {
@@ -638,10 +653,7 @@ public class User implements IUser {
     }
 
     public String getProfile() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PROFILE) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.PROFILE);
-        }
-        return null;
+        return get(StandardClaims.PROFILE);
     }
 
     public void setProfile(String profile) {
@@ -649,10 +661,7 @@ public class User implements IUser {
     }
 
     public String getWebsite() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.WEBSITE) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.WEBSITE);
-        }
-        return null;
+        return get(StandardClaims.WEBSITE);
     }
 
     public void setWebsite(String website) {
@@ -660,10 +669,7 @@ public class User implements IUser {
     }
 
     public String getBirthdate() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.BIRTHDATE) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.BIRTHDATE);
-        }
-        return null;
+        return get(StandardClaims.BIRTHDATE);
     }
 
     public void setBirthdate(String birthdate) {
@@ -671,10 +677,7 @@ public class User implements IUser {
     }
 
     public String getZoneInfo() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.ZONEINFO) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.ZONEINFO);
-        }
-        return null;
+        return get(StandardClaims.ZONEINFO);
     }
 
     public void setZoneInfo(String zoneInfo) {
@@ -682,10 +685,7 @@ public class User implements IUser {
     }
 
     public String getLocale() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.LOCALE) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.LOCALE);
-        }
-        return null;
+        return get(StandardClaims.LOCALE);
     }
 
     public void setLocale(String locale) {
@@ -693,10 +693,7 @@ public class User implements IUser {
     }
 
     public String getPhoneNumber() {
-        if (getAdditionalInformation() != null && getAdditionalInformation().get(StandardClaims.PHONE_NUMBER) != null) {
-            return (String) getAdditionalInformation().get(StandardClaims.PHONE_NUMBER);
-        }
-        return null;
+        return get(StandardClaims.PHONE_NUMBER);
     }
 
     public void setPhoneNumber(String phoneNumber) {

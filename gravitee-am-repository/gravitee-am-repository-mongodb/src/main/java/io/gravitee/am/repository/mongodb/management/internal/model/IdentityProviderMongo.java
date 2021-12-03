@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import com.mongodb.BasicDBList;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.BsonArray;

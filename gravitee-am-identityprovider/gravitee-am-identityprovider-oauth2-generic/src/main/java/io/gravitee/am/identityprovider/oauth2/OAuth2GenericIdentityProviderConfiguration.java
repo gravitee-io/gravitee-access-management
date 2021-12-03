@@ -46,6 +46,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+    private boolean storeOriginalTokens;
 
     public String getClientId() {
         return clientId;
@@ -179,7 +180,14 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
         this.maxPoolSize = maxPoolSize;
     }
 
+    @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalTokens;
+    }
 
+    public void setStoreOriginalTokens(boolean storeOriginalTokens) {
+        this.storeOriginalTokens = storeOriginalTokens;
+    }
     @Override
     public SignatureAlgorithm getSignatureAlgorithm() {
         return this.signature == null ? null : this.signature.getAlg();

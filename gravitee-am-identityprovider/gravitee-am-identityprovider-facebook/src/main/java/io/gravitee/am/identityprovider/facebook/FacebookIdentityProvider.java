@@ -17,8 +17,6 @@ package io.gravitee.am.identityprovider.facebook;
 
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
-import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProvider;
 import io.gravitee.am.identityprovider.facebook.authentication.FacebookAuthenticationProvider;
 

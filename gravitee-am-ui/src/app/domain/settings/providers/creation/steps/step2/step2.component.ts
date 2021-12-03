@@ -83,5 +83,4 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
       this.provider.domainWhitelist.splice(index, 1);
     }
   }
-
 }

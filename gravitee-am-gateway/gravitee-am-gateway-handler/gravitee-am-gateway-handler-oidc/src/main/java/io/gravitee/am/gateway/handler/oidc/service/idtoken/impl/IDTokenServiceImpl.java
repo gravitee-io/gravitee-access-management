@@ -117,7 +117,7 @@ public class IDTokenServiceImpl implements IDTokenService {
                                 return jwtService.encode(idToken, certificateProvider);
                             })
                             .flatMap(signedIdToken -> {
-                                if(client.getIdTokenEncryptedResponseAlg()!=null) {
+                                if (client.getIdTokenEncryptedResponseAlg() != null) {
                                     return jweService.encryptIdToken(signedIdToken, client);
                                 }
                                 return Single.just(signedIdToken);
@@ -128,16 +128,14 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Override
     public Single<User> extractUser(String idToken, Client client) {
         return jwtService.decodeAndVerify(idToken, client)
-                .flatMap(jwt -> {
-                    return userService.findById(jwt.getSub())
-                            .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
-                            .map(user -> {
-                                if (!user.getReferenceId().equals(domain.getId())) {
-                                    throw new UserNotFoundException(jwt.getSub());
-                                }
-                                return user;
-                            });
-                });
+                .flatMap(jwt -> userService.findById(jwt.getSub())
+                        .switchIfEmpty(Single.error(new UserNotFoundException(jwt.getSub())))
+                        .map(user -> {
+                            if (!user.getReferenceId().equals(domain.getId())) {
+                                throw new UserNotFoundException(jwt.getSub());
+                            }
+                            return user;
+                        }));
     }
 
     public void setObjectMapper(ObjectMapper objectMapper) {
@@ -197,7 +195,11 @@ public class IDTokenServiceImpl implements IDTokenService {
 
             // 3. If no claims requested, grab all user claims
             if (!requestForSpecificClaims) {
-                userClaims.forEach((k, v) -> idToken.addAdditionalClaim(k, v));
+                userClaims.forEach((k, v) -> {
+                    if (!EXCLUDED_CLAIMS.contains(k)) {
+                        idToken.addAdditionalClaim(k, v);
+                    }
+                });
             }
         }
 

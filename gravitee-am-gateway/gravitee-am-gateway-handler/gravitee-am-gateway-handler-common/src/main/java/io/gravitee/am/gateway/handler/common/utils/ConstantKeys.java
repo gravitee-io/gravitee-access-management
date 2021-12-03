@@ -35,6 +35,7 @@ public interface ConstantKeys {
     String TOKEN_CONTEXT_KEY = "token";
     String RETURN_URL_KEY = "return_url";
     String ID_TOKEN_KEY = "id_token";
+    String ACCESS_TOKEN_KEY = "access_token";
     String ID_TOKEN_HINT_KEY = "id_token_hint";
     String EMAIL_PARAM_KEY = "email";
     String ERROR_PARAM_KEY = "error";
@@ -52,6 +53,7 @@ public interface ConstantKeys {
     String LOGIN_ACTION_KEY = "loginAction";
     String SKIP_ACTION_KEY = "skipAction";
     String TRANSACTION_ID_KEY = "tid";
+    String OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY = "op_access_token";
     String OIDC_PROVIDER_ID_TOKEN_KEY = "op_id_token";
     String PEER_CERTIFICATE_THUMBPRINT = "x509_thumbprint_s256";
     String DEVICE_TYPE = "deviceType";

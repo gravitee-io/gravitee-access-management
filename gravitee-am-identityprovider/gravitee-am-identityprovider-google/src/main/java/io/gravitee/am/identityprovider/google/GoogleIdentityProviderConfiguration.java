@@ -44,6 +44,7 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+    private boolean storeOriginalTokens;
 
     public String getClientId() {
         return clientId;
@@ -103,6 +104,15 @@ public class GoogleIdentityProviderConfiguration implements OpenIDConnectIdentit
 
     public void setMaxPoolSize(Integer maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+    }
+
+    @Override
+    public boolean isStoreOriginalTokens() {
+        return storeOriginalTokens;
+    }
+
+    public void setStoreOriginalTokens(boolean storeOriginalTokens) {
+        this.storeOriginalTokens = storeOriginalTokens;
     }
 
     @Override

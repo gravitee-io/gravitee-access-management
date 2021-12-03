@@ -22,8 +22,6 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import org.bson.codecs.BsonArrayCodec;
-import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.springframework.beans.factory.DisposableBean;
@@ -53,7 +51,7 @@ public class MongodbProvider implements InitializingBean, DisposableBean {
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"));
         mongoDBContainer.withEnv("MONGO_INITDB_DATABASE", databaseName);
         mongoDBContainer.start();

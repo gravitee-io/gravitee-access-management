@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -45,6 +44,9 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -53,14 +55,11 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
     private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
 
-    private UserAuthenticationManager userAuthenticationManager;
+    private final UserAuthenticationManager userAuthenticationManager;
 
-    private EventManager eventManager;
+    private final EventManager eventManager;
 
     private Domain domain;
-
-    public SocialAuthenticationProvider() {
-    }
 
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager, EventManager eventManager, Domain domain) {
         this.userAuthenticationManager = userAuthenticationManager;
@@ -70,11 +69,11 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
     @Override
     public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> resultHandler) {
-        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final AuthenticationProvider authenticationProvider = context.get(ConstantKeys.PROVIDER_CONTEXT_KEY);
-        final String authProvider = context.get(ConstantKeys.PROVIDER_ID_PARAM_KEY);
-        final String username = authInfo.getString(ConstantKeys.USERNAME_PARAM_KEY);
-        final String password = authInfo.getString(ConstantKeys.PASSWORD_PARAM_KEY);
+        final Client client = context.get(CLIENT_CONTEXT_KEY);
+        final AuthenticationProvider authenticationProvider = context.get(PROVIDER_CONTEXT_KEY);
+        final String authProvider = context.get(PROVIDER_ID_PARAM_KEY);
+        final String username = authInfo.getString(USERNAME_PARAM_KEY);
+        final String password = authInfo.getString(PASSWORD_PARAM_KEY);
 
         logger.debug("Authentication attempt using social identity provider {}", authProvider);
 
@@ -96,13 +95,29 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getClientId());
-                    if (client.isSingleSignOut() && endUserAuthentication.getContext().get(ConstantKeys.ID_TOKEN_KEY) != null) {
+
+                    var accessToken = ofNullable(endUserAuthentication.getContext().get(ACCESS_TOKEN_KEY));
+                    var idToken = ofNullable(endUserAuthentication.getContext().get(ID_TOKEN_KEY));
+
+                    accessToken.ifPresentOrElse(at -> {
+                        // If isStoreOriginalToken, we add both the access_token and id_token in profile since they are present
+                        additionalInformation.put(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, at);
+                        idToken.ifPresent(it -> additionalInformation.put(OIDC_PROVIDER_ID_TOKEN_KEY, it));
+                    }, () -> {
+                        // We remove both otherwise
+                        additionalInformation.remove(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
+                        additionalInformation.remove(OIDC_PROVIDER_ID_TOKEN_KEY);
+                    });
+
+                    // If id_token is present and SSO is enabled we add the id_token in profile
+                    if (client.isSingleSignOut() && idToken.isPresent()) {
                         logger.debug("Single SignOut enable for client '{}' store the id_token coming from the provider {} as additional information", client.getId(), authProvider);
-                        additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, endUserAuthentication.getContext().get(ConstantKeys.ID_TOKEN_KEY));
-                    } else {
-                        // clear the claim if the singleSignOut is disabled
-                        additionalInformation.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+                        additionalInformation.put(OIDC_PROVIDER_ID_TOKEN_KEY, idToken.get());
+                    } else if (accessToken.isEmpty()) {
+                        // unless isStoreOriginalToken is enabled (e.g access_token isPresent) we can remove id_token from the profile
+                        additionalInformation.remove(OIDC_PROVIDER_ID_TOKEN_KEY);
                     }
+
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user);
                 })
