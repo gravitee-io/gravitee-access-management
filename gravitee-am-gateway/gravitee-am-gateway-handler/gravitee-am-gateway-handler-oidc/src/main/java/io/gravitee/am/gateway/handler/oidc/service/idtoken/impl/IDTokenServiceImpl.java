@@ -87,6 +87,11 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Autowired
     private UserService userService;
 
+    /**
+     * Set of claims to exclude from the IDToken
+     */
+    private static final Set<String> EXCLUDED_CLAIMS = Set.of(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
         // use or create execution context
@@ -193,7 +198,11 @@ public class IDTokenServiceImpl implements IDTokenService {
 
             // 3. If no claims requested, grab all user claims
             if (!requestForSpecificClaims) {
-                userClaims.forEach((k, v) -> idToken.addAdditionalClaim(k, v));
+                userClaims.forEach((k, v) -> {
+                    if (!EXCLUDED_CLAIMS.contains(k)) {
+                        idToken.addAdditionalClaim(k, v);
+                    }
+                });
             }
         }
 
