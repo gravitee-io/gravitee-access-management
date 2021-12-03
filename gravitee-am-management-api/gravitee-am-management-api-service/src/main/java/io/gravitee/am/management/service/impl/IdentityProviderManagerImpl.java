@@ -206,6 +206,13 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             return Maybe.empty();
         }
 
+        if (IDP_GRAVITEE.equals(userProvider) && userProviders.containsKey(userProvider)) {
+            // The gravitee idp isn't persisted so before continuing,
+            // we try to get it from the map of providers
+            // if missing we switch to the default behaviour just in case
+            return Maybe.just(userProviders.get(userProvider));
+        }
+
         // Since https://github.com/gravitee-io/issues/issues/6590 we have to read the record in Identity Provider repository
         return identityProviderService.findById(userProvider)
                 .flatMap(persistedUserProvider -> {
