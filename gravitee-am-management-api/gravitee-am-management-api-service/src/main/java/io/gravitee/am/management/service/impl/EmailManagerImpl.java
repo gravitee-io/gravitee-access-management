@@ -167,7 +167,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
         }
         return emailTemplateService.findByClientAndTemplate(user.getReferenceType(), user.getReferenceId(), user.getClient(), templateDef.template())
                 .filter(Email::isEnabled)
-                .switchIfEmpty(emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template()))
+                .switchIfEmpty(Maybe.defer(() -> emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template())))
                 .filter(Email::isEnabled);
     }
 

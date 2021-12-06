@@ -136,7 +136,6 @@ public class EmailManagerTest {
         ((EmailManagerImpl) emailManager).loadEmail(domainEmail);
         ((EmailManagerImpl) emailManager).loadEmail(clientEmail);
 
-        when(emailTemplateService.findByTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(Template.RESET_PASSWORD.template()))).thenReturn(Maybe.just(domainEmail));
         when(emailTemplateService.findByClientAndTemplate(eq(ReferenceType.DOMAIN), eq(REFERENCE_ID), eq(CLIENT), eq(Template.RESET_PASSWORD.template()))).thenReturn(Maybe.just(clientEmail));
 
         final User user = new User();
