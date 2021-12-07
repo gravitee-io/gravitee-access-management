@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.sample.fapi.api;
+package io.gravitee.sample.ciba.notifier;
 
+import io.gravitee.sample.ciba.notifier.http.CibaNotifierApiHandler;
+import io.gravitee.sample.ciba.notifier.http.CibaNotifierWebSockerHandler;
+import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
+import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManagerHandler;
+import io.gravitee.sample.ciba.notifier.http.mock.CibaMockNotifierApiHandler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.*;
+import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
@@ -27,17 +35,19 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
-import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public class FapiApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FapiApi.class);
+public class CibaHttpNotifier {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CibaHttpNotifier.class);
 
     public static final String CONF_HOST = "host";
     public static final String CONF_PORT = "port";
+    public static final String CONF_SECURE = "secure";
+    public static final String CONF_BEARER = "bearer";
     public static final String CONF_TRUST_STORE_PATH = "trustStorePath";
     public static final String CONF_TRUST_STORE_TYPE = "trustStoreType";
     public static final String CONF_TRUST_STORE_PASSWORD = "trustStorePassword";
@@ -45,14 +55,11 @@ public class FapiApi {
     public static final String CONF_KEY_STORE_TYPE = "keyStoreType";
     public static final String CONF_KEY_STORE_PASSWORD = "keyStorePassword";
     public static final String CONF_CERT_HEADER = "certificateHeader";
+    public static final String PATH_CIBA_NOTIFY = "/ciba/notify";
+    public static final String PATH_CIBA_DOMAINS = "/ciba/domains";
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = parseArgs(args);
-
-        CertUtils.certHeader = cmd.getOptionValue(CONF_CERT_HEADER);
-        if (CertUtils.certHeader != null) {
-            System.out.println("PeerCertificate read from '" + CertUtils.certHeader + "' header");
-        }
 
         HttpServerOptions options = buildHttpOptions(cmd);
 
@@ -62,19 +69,40 @@ public class FapiApi {
         Router router = Router.router(vertx);
         router.route().handler(StaticHandler.create());
 
-        router.route("/fapi/api")
-                .method(GET)
-                .produces("application/json")
-                .handler(new FapiResourceApiHandler());
+        CibaDomainManager domainManager = new CibaDomainManager();
 
-        router.route("/fapi/api/consent")
+        router.route(PATH_CIBA_NOTIFY + "/accept-all")
+                .method(POST)
+                .consumes("application/x-www-form-urlencoded")
+                .produces("application/json")
+                .handler(BodyHandler.create())
+                .handler(new CibaMockNotifierApiHandler(true, cmd, domainManager, vertx));
+
+        router.route(PATH_CIBA_NOTIFY + "/reject-all")
+                .method(POST)
+                .consumes("application/x-www-form-urlencoded")
+                .produces("application/json")
+                .handler(BodyHandler.create())
+                .handler(new CibaMockNotifierApiHandler(false, cmd, domainManager, vertx));
+
+        router.route(PATH_CIBA_DOMAINS)
                 .method(POST)
                 .produces("application/json")
-                .handler(new FapiConsentResourceApiHandler());
+                .consumes("application/json")
+                .handler(new CibaDomainManagerHandler(domainManager));
+
+        router.route(PATH_CIBA_NOTIFY)
+                .method(POST)
+                .consumes("application/x-www-form-urlencoded")
+                .produces("application/json")
+                .handler(BodyHandler.create())
+                .handler(new CibaNotifierApiHandler(cmd, vertx));
+
+        server.webSocketHandler(new CibaNotifierWebSockerHandler(vertx, domainManager));
 
         server.requestHandler(router)
-
                 .listen();
+
         LOGGER.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, "9443"));
     }
 
@@ -82,7 +110,7 @@ public class FapiApi {
         HttpServerOptions options = new HttpServerOptions();
         options.setPort(Integer.parseInt(cmd.getOptionValue(CONF_PORT, "9443")));
         options.setHost(cmd.getOptionValue(CONF_HOST, "0.0.0.0"));
-        options.setSsl(CertUtils.certHeader == null); // ssl must be enable if Herder is missing
+        options.setSsl(Boolean.parseBoolean(cmd.getOptionValue(CONF_SECURE, "false")));
         options.setUseAlpn(false);
 
         if (options.isSsl()) {
@@ -127,6 +155,14 @@ public class FapiApi {
         port.setRequired(false);
         options.addOption(port);
 
+        Option bearer = new Option(CONF_BEARER, true, "Bearer used to authenticate the AM instance");
+        bearer.setRequired(false);
+        options.addOption(bearer);
+
+        Option secure = new Option(CONF_SECURE, true, "Use secured connection");
+        secure.setRequired(false);
+        options.addOption(secure);
+
         Option certHeader = new Option(CONF_CERT_HEADER, true, "Header With Peer Certificate");
         certHeader.setRequired(false);
         options.addOption(certHeader);
@@ -157,12 +193,6 @@ public class FapiApi {
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse( options, args);
-
-        if (!cmd.hasOption(CONF_CERT_HEADER) && !(cmd.hasOption(CONF_KEY_STORE_PATH) && cmd.hasOption(CONF_KEY_STORE_PATH))) {
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "java io.gravitee.sample.fapi.api.FapiApi ", options );
-            System.exit(1);
-        }
 
         return cmd;
     }
