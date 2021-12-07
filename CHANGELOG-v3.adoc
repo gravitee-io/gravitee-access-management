@@ -1,6 +1,45 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/456?closed=1[AM - 3.10.10 (2021-12-07)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Remove useless id_token claims https://github.com/gravitee-io/issues/issues/6674[#6674]
+
+*_General_*
+
+- Merge 3.5.11 https://github.com/gravitee-io/issues/issues/6628[#6628]
+
+*_Idp_*
+
+- [ldap] handle nested groups https://github.com/gravitee-io/issues/issues/6589[#6589]
+
+*_Maangement_*
+
+- Update audit logs on reset password email sent https://github.com/gravitee-io/issues/issues/6610[#6610]
+
+*_Management_*
+
+- Missing last_password_reset field for JDBC repository https://github.com/gravitee-io/issues/issues/6664[#6664]
+- Missing roles during migration https://github.com/gravitee-io/issues/issues/6648[#6648]
+- Remove event listeners in management part https://github.com/gravitee-io/issues/issues/6590[#6590]
+
+=== Improvements
+
+*_Gateway_*
+
+- Support POST method for the end_session_endpoint https://github.com/gravitee-io/issues/issues/6643[#6643]
+
+*_Management-ui_*
+
+- Select applications component is not very friendly https://github.com/gravitee-io/issues/issues/6644[#6644]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/468?closed=1[AM - 3.5.11 (2021-11-25)]
 
  
