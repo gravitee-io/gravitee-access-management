@@ -22,6 +22,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.impl.jose.JWT;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.cli.MissingArgumentException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,6 +36,7 @@ import java.util.UUID;
 
 
 public class FapiResourceApiHandler implements Handler<RoutingContext> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FapiResourceApiHandler.class);
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -67,7 +70,7 @@ public class FapiResourceApiHandler implements Handler<RoutingContext> {
                         .putHeader("content-type", "application/json")
                         .setStatusCode(401).end();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.warn("Unable to process the FAPI resource request", e);
             routingContext.fail(500, e);
         }
 

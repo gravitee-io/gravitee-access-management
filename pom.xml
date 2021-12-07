@@ -66,6 +66,7 @@
         <module>gravitee-am-deviceidentifier</module>
         <module>gravitee-am-password-dictionary</module>
         <module>gravitee-am-authdevice-notifier</module>
+        <module>gravitee-am-ciba-delegated-service</module>
     </modules>
 
     <properties>
