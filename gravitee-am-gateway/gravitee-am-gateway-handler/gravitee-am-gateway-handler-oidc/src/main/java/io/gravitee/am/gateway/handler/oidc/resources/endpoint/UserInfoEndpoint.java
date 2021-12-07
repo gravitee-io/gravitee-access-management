@@ -31,8 +31,6 @@ import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -44,6 +42,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * The Client sends the UserInfo Request using either HTTP GET or HTTP POST.
@@ -92,23 +92,23 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                 .map(user -> processClaims(user, accessToken))
                 // encode response
                 .flatMap(claims -> {
-                        if (!expectSignedOrEncryptedUserInfo(client)) {
-                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
-                            return Single.just(Json.encodePrettily(claims));
-                        } else {
-                            context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
+                            if (!expectSignedOrEncryptedUserInfo(client)) {
+                                context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+                                return Single.just(Json.encodePrettily(claims));
+                            } else {
+                                context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JWT);
 
-                            JWT jwt = new JWT(claims);
-                            jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
-                            jwt.setSub(accessToken.getSub());
-                            jwt.setAud(accessToken.getAud());
-                            jwt.setIat(new Date().getTime() / 1000l);
-                            jwt.setExp(accessToken.getExp() / 1000l);
+                                JWT jwt = new JWT(claims);
+                                jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
+                                jwt.setSub(accessToken.getSub());
+                                jwt.setAud(accessToken.getAud());
+                                jwt.setIat(new Date().getTime() / 1000l);
+                                jwt.setExp(accessToken.getExp() / 1000l);
 
-                            return jwtService.encodeUserinfo(jwt,client)//Sign if needed, else return unsigned JWT
-                                    .flatMap(userinfo -> jweService.encryptUserinfo(userinfo,client));//Encrypt if needed, else return JWT
+                                return jwtService.encodeUserinfo(jwt, client)//Sign if needed, else return unsigned JWT
+                                        .flatMap(userinfo -> jweService.encryptUserinfo(userinfo, client));//Encrypt if needed, else return JWT
+                            }
                         }
-                    }
                 )
                 .subscribe(
                         buffer -> context.response()
@@ -127,13 +127,14 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return user claims
      */
     private Map<String, Object> processClaims(User user, JWT accessToken) {
-        Map<String, Object> userClaims = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
-        if (userClaims.isEmpty() || !userClaims.containsKey(StandardClaims.SUB)) {
+        final Map<String, Object> fullProfileClaims = ofNullable(user.getAdditionalInformation()).orElse(Map.of());
+        if (!fullProfileClaims.containsKey(StandardClaims.SUB)) {
             // The sub (subject) Claim MUST always be returned in the UserInfo Response.
             // https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse
             throw new InvalidRequestException("UserInfo response is missing required claims");
         }
 
+        Map<String, Object> userClaims = new HashMap<>();
         // Exchange the sub claim from the identity provider to its technical id
         userClaims.put(StandardClaims.SUB, user.getId());
 
@@ -147,12 +148,12 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         // 1. process the request using scope values
         if (accessToken.getScope() != null) {
             final Set<String> scopes = new HashSet<>(Arrays.asList(accessToken.getScope().split("\\s+")));
-            requestForSpecificClaims = processScopesRequest(scopes, userClaims, requestedClaims);
+            requestForSpecificClaims = processScopesRequest(scopes, userClaims, requestedClaims, fullProfileClaims);
         }
         // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to any Claims that are being requested using scope values.
         // If not present, the Claims being requested from the UserInfo Endpoint are only those requested using scope values.)
         if (accessToken.getClaimsRequestParameter() != null) {
-            requestForSpecificClaims = processClaimsRequest((String) accessToken.getClaimsRequestParameter(), userClaims, requestedClaims);
+            requestForSpecificClaims = processClaimsRequest((String) accessToken.getClaimsRequestParameter(), fullProfileClaims, requestedClaims);
         }
 
         // remove technical claims that are useless for the calling app
@@ -165,18 +166,24 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * For OpenID Connect, scopes can be used to request that specific sets of information be made available as Claim Values.
      *
      * @param scopes scopes request parameter
-     * @param userClaims user full claims list
+     * @param userClaims requested claims from scope
      * @param requestedClaims requested claims
+     * @param fullProfileClaims full profile claims
      * @return true if OpenID Connect scopes have been found
      */
-    private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+    private boolean processScopesRequest(Set<String> scopes,
+                                         Map<String, Object> userClaims,
+                                         Map<String, Object> requestedClaims,
+                                         final Map<String, Object> fullProfileClaims
+    ) {
         // if full_profile requested, continue
         if (scopes.contains(Scope.FULL_PROFILE.getKey())) {
+            userClaims.putAll(fullProfileClaims);
             return false;
         }
 
         // get requested scopes claims
-        final List<String> scopesClaims = scopes.stream()
+        final List<String> scopesClaimKeys = scopes.stream()
                 .map(String::toUpperCase)
                 .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
                 .map(Scope::valueOf)
@@ -185,16 +192,16 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                 .collect(Collectors.toList());
 
         // no OpenID Connect scopes requested continue
-        if (scopesClaims.isEmpty()) {
+        if (scopesClaimKeys.isEmpty()) {
             return false;
         }
 
         // return specific available sets of information made by scope value request
-        scopesClaims.forEach(scopeClaim -> {
-            if (userClaims.containsKey(scopeClaim)) {
-                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
-            }
-        });
+        scopesClaimKeys.stream()
+                .filter(fullProfileClaims::containsKey)
+                .forEach(scopeClaim ->
+                        requestedClaims.putIfAbsent(scopeClaim, fullProfileClaims.get(scopeClaim))
+                );
 
         return true;
     }
@@ -202,17 +209,17 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     /**
      * Handle claims request previously made during the authorization request
      * @param claimsValue claims request parameter
-     * @param userClaims user full claims list
+     * @param fullProfileClaims user full claims list
      * @param requestedClaims requested claims
      * @return true if userinfo claims have been found
      */
-    private boolean processClaimsRequest(String claimsValue, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+    private boolean processClaimsRequest(String claimsValue, final Map<String, Object> fullProfileClaims, Map<String, Object> requestedClaims) {
         try {
             ClaimsRequest claimsRequest = Json.decodeValue(claimsValue, ClaimsRequest.class);
             if (claimsRequest != null && claimsRequest.getUserInfoClaims() != null) {
                 claimsRequest.getUserInfoClaims().forEach((key, value) -> {
-                    if (userClaims.containsKey(key)) {
-                        requestedClaims.putIfAbsent(key, userClaims.get(key));
+                    if (fullProfileClaims.containsKey(key)) {
+                        requestedClaims.putIfAbsent(key, fullProfileClaims.get(key));
                     }
                 });
                 return true;
@@ -256,7 +263,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return Return true if client request signed or encrypted (or both) userinfo.
      */
     private boolean expectSignedOrEncryptedUserInfo(Client client) {
-        return client.getUserinfoSignedResponseAlg()!=null || client.getUserinfoEncryptedResponseAlg()!=null;
+        return client.getUserinfoSignedResponseAlg() != null || client.getUserinfoEncryptedResponseAlg() != null;
     }
 
     private boolean loadRoles(User user, JWT accessToken) {

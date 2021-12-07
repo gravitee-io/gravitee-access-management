@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "af8d388e-b6d6-48da-a070-ee107dac0ee9",
+		"_postman_id": "3a61d154-1898-4e92-802e-80f9db047e76",
 		"name": "Gravitee.io - AM - Oauth2 - app version",
 		"description": "Test Oauth2 (RFC 6749) specifications",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -10487,7 +10487,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"grantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}]\n  \t}\n  },\n  \"certificate\": \"{{certificateJks}}\",\n  \"identities\": [\"{{idp.inmemory}}\"]\n}"
+											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"grantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}, { \"scope\" : \"email\" } ]\n  \t}\n  },\n  \"certificate\": \"{{certificateJks}}\",\n  \"identities\": [\"{{idp.inmemory}}\"]\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientJwtBearer}}",
@@ -10625,7 +10625,7 @@
 												},
 												{
 													"key": "scope",
-													"value": "openid",
+													"value": "openid email",
 													"type": "text"
 												}
 											]
@@ -10762,7 +10762,7 @@
 												},
 												{
 													"key": "scope",
-													"value": "openid",
+													"value": "openid email",
 													"type": "text"
 												}
 											]
@@ -10808,7 +10808,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"grantTypes\": [\"refresh_token\", \"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}]\n\t\t}\n\t}\n}"
+											"raw": "{\n\t\"settings\": {\n\t\t\"oauth\": {\n\t\t\t\"grantTypes\": [\"refresh_token\", \"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\t\"scopeSettings\":  [ {\"scope\" : \"openid\"}, { \"scope\" : \"email\" } ]\n\t\t}\n\t}\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientJwtBearer}}",
@@ -10953,7 +10953,7 @@
 												},
 												{
 													"key": "scope",
-													"value": "openid",
+													"value": "openid email",
 													"type": "text"
 												}
 											]
@@ -11153,7 +11153,7 @@
 												},
 												{
 													"key": "scope",
-													"value": "openid",
+													"value": "openid email",
 													"type": "text"
 												}
 											]

@@ -48,10 +48,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static io.gravitee.am.common.oidc.Scope.FULL_PROFILE;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -170,7 +173,7 @@ public class IDTokenServiceImpl implements IDTokenService {
         // we decided to always provide this claim during the Financial-grand API conformance implementation
         // since this claim was return by default in some cases even if conditions that require it were missing
         if (!oAuth2Request.isClientOnly() && user != null && user.getLoggedAt() != null) {
-            idToken.setAuthTime(user.getLoggedAt().getTime() / 1000l);
+            idToken.setAuthTime(user.getLoggedAt().getTime() / 1000L);
         }
 
         // set nonce
@@ -182,15 +185,16 @@ public class IDTokenServiceImpl implements IDTokenService {
         // processing claims list
         if (!oAuth2Request.isClientOnly() && user != null && user.getAdditionalInformation() != null) {
             boolean requestForSpecificClaims = false;
-            Map<String, Object> userClaims = user.getAdditionalInformation();
+            Map<String, Object> userClaims = new HashMap<>();
+            Map<String, Object> fullProfileClaims = user.getAdditionalInformation();
             // 1. process the request using scope values
             if (oAuth2Request.getScopes() != null) {
-                requestForSpecificClaims = processScopesRequest(oAuth2Request.getScopes(), userClaims, idToken);
+                requestForSpecificClaims = processScopesRequest(oAuth2Request.getScopes(), userClaims, fullProfileClaims, idToken);
             }
 
             // 2. process the request using the claims values (If present, the listed Claims are being requested to be added to the default Claims in the ID Token)
             if (oAuth2Request.parameters() != null && oAuth2Request.parameters().getFirst(Parameters.CLAIMS) != null) {
-                requestForSpecificClaims = processClaimsRequest(oAuth2Request.parameters().getFirst(Parameters.CLAIMS), userClaims, idToken);
+                requestForSpecificClaims = processClaimsRequest(oAuth2Request.parameters().getFirst(Parameters.CLAIMS), fullProfileClaims, idToken);
             }
 
             // 3. If no claims requested, grab all user claims
@@ -213,22 +217,24 @@ public class IDTokenServiceImpl implements IDTokenService {
      * For OpenID Connect, scopes can be used to request that specific sets of information be made available as Claim Values.
      *
      * @param scopes scopes request parameter
-     * @param userClaims user full claims list
+     * @param userClaims user claims list
+     * @param fullProfileClaims full claims list
      * @param requestedClaims requested claims
      * @return true if OpenID Connect scopes have been found
      */
-    private boolean processScopesRequest(Set<String> scopes, final Map<String, Object> userClaims, Map<String, Object> requestedClaims) {
+    private boolean processScopesRequest(Set<String> scopes, Map<String, Object> userClaims, final Map<String, Object> fullProfileClaims, Map<String, Object> requestedClaims) {
         // if full_profile requested, continue
-        if (scopes.contains(Scope.FULL_PROFILE.getKey())) {
+        if (scopes.contains(FULL_PROFILE.getKey())) {
+            userClaims.putAll(fullProfileClaims);
             return false;
         }
 
         // get requested scopes claims
         final List<String> scopesClaims = scopes.stream()
-                .map(scope -> scope.toUpperCase())
+                .map(String::toUpperCase)
                 .filter(scope -> Scope.exists(scope) && !Scope.valueOf(scope).getClaims().isEmpty())
-                .map(scope -> Scope.valueOf(scope))
-                .map(scope -> scope.getClaims())
+                .map(Scope::valueOf)
+                .map(Scope::getClaims)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
 
@@ -239,8 +245,8 @@ public class IDTokenServiceImpl implements IDTokenService {
 
         // return specific available sets of information made by scope value request
         scopesClaims.forEach(scopeClaim -> {
-            if (userClaims.containsKey(scopeClaim)) {
-                requestedClaims.putIfAbsent(scopeClaim, userClaims.get(scopeClaim));
+            if (fullProfileClaims.containsKey(scopeClaim)) {
+                requestedClaims.putIfAbsent(scopeClaim, fullProfileClaims.get(scopeClaim));
             }
         });
 
@@ -250,17 +256,17 @@ public class IDTokenServiceImpl implements IDTokenService {
     /**
      * Handle claims request previously made during the authorization request
      * @param claimsValue claims request parameter
-     * @param userClaims user full claims list
+     * @param fullProfileClaims user full claims list
      * @param idToken requested claims
      * @return true if id_token claims have been found
      */
-    private boolean processClaimsRequest(String claimsValue, final Map<String, Object> userClaims, IDToken idToken) {
+    private boolean processClaimsRequest(String claimsValue, final Map<String, Object> fullProfileClaims, IDToken idToken) {
         try {
             ClaimsRequest claimsRequest = objectMapper.readValue(claimsValue, ClaimsRequest.class);
             if (claimsRequest != null && claimsRequest.getIdTokenClaims() != null) {
                 claimsRequest.getIdTokenClaims().forEach((key, claimRequest) -> {
-                    if (userClaims.containsKey(key)) {
-                        idToken.addAdditionalClaim(key, userClaims.get(key));
+                    if (fullProfileClaims.containsKey(key)) {
+                        idToken.addAdditionalClaim(key, fullProfileClaims.get(key));
                     } else {
                         if (claimRequest.getValues() != null) {
                             idToken.addAdditionalClaim(key, claimRequest.getValues());
