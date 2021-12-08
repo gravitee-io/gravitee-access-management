@@ -41,6 +41,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
@@ -94,6 +95,9 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private JWTService jwtService;
 
+    @Autowired
+    private CorsHandler corsHandler;
+
     @Override
     public String path() {
         return CIBA_PATH;
@@ -114,7 +118,10 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
         final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, certificateHeader);
 
+        cibaRouter.route(HttpMethod.OPTIONS, AUTHENTICATION_ENDPOINT)
+                .handler(corsHandler);
         cibaRouter.route(HttpMethod.POST, AUTHENTICATION_ENDPOINT)
+                .handler(corsHandler)
                 .handler(clientAuthHandler)
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(this.openIDDiscoveryService))
                 .handler(new AuthenticationRequestParseRequestObjectHandler(this.requestObjectService, this.domain))
@@ -123,7 +130,10 @@ public class CIBAProvider extends AbstractService<ProtocolProvider> implements P
 
         // To process the callback content we perform authentication of the caller that must be registered as AM client.
         // If a plugin need a non authenticate webhook, we should create another endpoint without clientAuthHandler.
+        cibaRouter.route(HttpMethod.OPTIONS, AUTHENTICATION_CALLBACK_ENDPOINT)
+                .handler(corsHandler);
         cibaRouter.route(HttpMethod.POST, AUTHENTICATION_CALLBACK_ENDPOINT)
+                .handler(corsHandler)
                 .handler(clientAuthHandler)
                 .handler(new AuthenticationRequestCallbackHandler(authService));
 
