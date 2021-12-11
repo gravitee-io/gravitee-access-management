@@ -37,7 +37,7 @@
         <r2dbc-mssql.version>0.8.4.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
         <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
-        <reactor-netty.version>0.9.11.RELEASE</reactor-netty.version>
+        <reactor-netty.version>1.0.0</reactor-netty.version>
         <testcontainers.version>1.15.0</testcontainers.version>
 
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -293,8 +293,8 @@
                                 </excludes>
                             </artifactSet>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
