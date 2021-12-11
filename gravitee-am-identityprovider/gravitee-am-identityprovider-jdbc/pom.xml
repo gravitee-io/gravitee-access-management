@@ -41,7 +41,7 @@
         <r2dbc-postgresql.version>0.8.5.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mssql.version>0.8.4.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
-        <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
+        <r2dbc-mariadb.version>1.0.0</r2dbc-mariadb.version>
         <testcontainers.version>1.15.0</testcontainers.version>
     </properties>
 
@@ -232,8 +232,8 @@
                                 </excludes>
                             </artifactSet>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
