@@ -38,7 +38,7 @@
         <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
 
         <!-- /!\ when updating this version check the ReactorNetty class updates /!\ -->
-        <reactor-netty.version>0.9.11.RELEASE</reactor-netty.version>
+        <reactor-netty.version>1.0.0</reactor-netty.version>
 
         <jdbc-postgresql.version>42.2.16</jdbc-postgresql.version>
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -361,8 +361,8 @@
                                 </excludes>
                             </artifactSet>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
