@@ -40,7 +40,7 @@
         <r2dbc-postgresql.version>0.8.7.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mssql.version>0.8.5.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
-        <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
+        <r2dbc-mariadb.version>1.0.0</r2dbc-mariadb.version>
         <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
         <testcontainers.version>1.15.1</testcontainers.version>
     </properties>
