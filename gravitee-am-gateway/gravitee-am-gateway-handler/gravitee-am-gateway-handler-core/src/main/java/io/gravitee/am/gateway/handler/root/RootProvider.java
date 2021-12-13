@@ -270,10 +270,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // MFA route
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, applicationContext));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, applicationContext, domain));
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain);
@@ -347,7 +347,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService));
 
         // error handler
         errorHandler(rootRouter);
