@@ -87,11 +87,6 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Autowired
     private UserService userService;
 
-    /**
-     * Set of claims to exclude from the IDToken
-     */
-    private static final Set<String> EXCLUDED_CLAIMS = Set.of(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
-
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
         // use or create execution context
