@@ -71,6 +71,8 @@
     <script th:src="@{../assets/material/material.min.js}"></script>
     <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
     <script>
+
+     $(document).ready(function() {
         $(".mdl-textfield__input").focus(function (){
             if( !this.value ){
                 $(this).prop('required', true);
@@ -81,6 +83,7 @@
             $(this).siblings(".mdl-textfield").addClass('is-invalid');
             $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
         });
+     });
     </script>
 </body>
 </html>
