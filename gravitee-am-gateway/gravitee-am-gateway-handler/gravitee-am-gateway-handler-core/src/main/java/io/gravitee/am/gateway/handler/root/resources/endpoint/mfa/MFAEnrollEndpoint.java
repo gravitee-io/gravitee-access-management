@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -60,10 +62,12 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
 
     private final FactorManager factorManager;
     private final ThymeleafTemplateEngine engine;
+    private final Domain domain;
 
-    public MFAEnrollEndpoint(FactorManager factorManager, ThymeleafTemplateEngine engine) {
+    public MFAEnrollEndpoint(FactorManager factorManager, ThymeleafTemplateEngine engine, Domain domain) {
         this.factorManager = factorManager;
         this.engine = engine;
+        this.domain = domain;
     }
 
     @Override
@@ -120,7 +124,7 @@ public class MFAEnrollEndpoint implements Handler<RoutingContext>  {
                 }
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
-                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+                engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
                     if (res.succeeded()) {
                         routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                         routingContext.response().end(res.result());

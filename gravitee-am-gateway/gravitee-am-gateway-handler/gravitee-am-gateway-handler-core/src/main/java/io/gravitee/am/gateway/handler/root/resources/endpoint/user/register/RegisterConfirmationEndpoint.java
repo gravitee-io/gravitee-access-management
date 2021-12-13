@@ -36,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -92,7 +94,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path()));
 
         // render the registration confirmation page
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());

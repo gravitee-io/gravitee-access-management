@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
+import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.model.Domain;
@@ -40,8 +40,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -119,8 +119,7 @@ public class LoginEndpoint implements Handler<RoutingContext> {
 
     private void renderLoginPage(RoutingContext routingContext, Client client) {
         // render the login page
-        final Map<String, Object> data = new HashMap<>();
-        data.putAll(routingContext.data());
+        final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
         final List<IdentityProvider> providers = (List<IdentityProvider>)data.get(LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY);

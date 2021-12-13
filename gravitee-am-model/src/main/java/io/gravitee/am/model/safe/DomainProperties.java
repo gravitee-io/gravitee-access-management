@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.context.provider;
+package io.gravitee.am.model.safe;
+
+import io.gravitee.am.model.Domain;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -26,6 +28,15 @@ public class DomainProperties {
     private String name;
 
     private String path;
+
+    public DomainProperties() {
+    }
+
+    public DomainProperties(Domain domain) {
+        this.id = domain.getId();
+        this.name = domain.getName();
+        this.path = domain.getPath();
+    }
 
     public String getId() {
         return id;

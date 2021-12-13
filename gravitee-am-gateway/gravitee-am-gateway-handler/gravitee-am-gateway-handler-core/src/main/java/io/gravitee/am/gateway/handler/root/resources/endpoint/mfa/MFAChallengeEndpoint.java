@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
@@ -57,6 +58,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -71,12 +73,14 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
     private final UserService userService;
     private final ThymeleafTemplateEngine engine;
     private final ApplicationContext applicationContext;
+    private final Domain domain;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, ThymeleafTemplateEngine engine, ApplicationContext applicationContext) {
+    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, ThymeleafTemplateEngine engine, ApplicationContext applicationContext, Domain domain) {
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
         this.userService = userService;
         this.engine = engine;
+        this.domain = domain;
     }
 
     @Override
@@ -122,7 +126,7 @@ public class MFAChallengeEndpoint implements Handler<RoutingContext> {
                     return;
                 }
                 // render the mfa challenge page
-                engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+                engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
                     if (res.succeeded()) {
                         routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                         routingContext.response().end(res.result());

@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -101,8 +102,7 @@ public class ForgotPasswordEndpoint implements Handler<RoutingContext> {
             routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
         }
 
-        final Map<String, Object> data = new HashMap<>();
-        data.putAll(routingContext.data());
+        final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
 
         // render the forgot password page

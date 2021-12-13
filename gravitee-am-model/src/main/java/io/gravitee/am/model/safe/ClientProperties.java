@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.context.provider;
+package io.gravitee.am.model.safe;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.oidc.Client;
 
 import java.util.HashMap;
@@ -43,6 +44,10 @@ public class ClientProperties {
         this.clientName = client.getClientName();
         this.name = client.getClientName();
         this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
+    }
+
+    public ClientProperties(Application app) {
+        this(app.toClient());
     }
 
     public String getId() {

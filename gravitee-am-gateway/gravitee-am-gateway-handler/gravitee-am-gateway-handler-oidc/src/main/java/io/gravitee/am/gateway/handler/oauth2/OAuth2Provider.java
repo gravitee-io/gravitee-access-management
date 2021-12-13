@@ -44,7 +44,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseRequestObjectHandler;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -60,7 +59,9 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.handler.*;
+import io.vertx.reactivex.ext.web.handler.CSRFHandler;
+import io.vertx.reactivex.ext.web.handler.CorsHandler;
+import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -221,7 +222,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userConsentPrepareContextHandler)
                 .handler(authenticationFlowContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
-                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
+                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestResolveHandler())
@@ -259,7 +260,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, "/error")
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService));
 
         // error handler
         errorHandler(oauth2Router);

@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oidc.Client;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -48,10 +51,12 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
 
     private final UserConsentService userConsentService;
     private final ThymeleafTemplateEngine engine;
+    private final Domain domain;
 
-    public UserConsentEndpoint(UserConsentService userConsentService, ThymeleafTemplateEngine engine) {
+    public UserConsentEndpoint(UserConsentService userConsentService, ThymeleafTemplateEngine engine, Domain domain) {
         this.userConsentService = userConsentService;
         this.engine = engine;
+        this.domain = domain;
     }
 
     @Override
@@ -71,7 +76,7 @@ public class UserConsentEndpoint implements Handler<RoutingContext> {
             List<Scope> requestedScopes = h.result();
             routingContext.put(ConstantKeys.SCOPES_CONTEXT_KEY, requestedScopes);
             routingContext.put(ConstantKeys.ACTION_KEY, action);
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
                 if (res.succeeded()) {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(res.result());

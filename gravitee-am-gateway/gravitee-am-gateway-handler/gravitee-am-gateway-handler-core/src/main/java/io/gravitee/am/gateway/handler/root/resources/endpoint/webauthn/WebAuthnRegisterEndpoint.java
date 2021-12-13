@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.gateway.handler.context.provider.UserProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -120,7 +121,6 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
 
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
-            routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
@@ -129,7 +129,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             }
 
             // render the webauthn register page
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
                 if (res.succeeded()) {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(res.result());
