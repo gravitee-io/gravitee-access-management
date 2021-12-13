@@ -31,11 +31,13 @@ public class ScopeAuditBuilder extends ManagementAuditBuilder<ScopeAuditBuilder>
     }
 
     public ScopeAuditBuilder scope(Scope scope) {
-        if (EventType.SCOPE_CREATED.equals(getType()) || EventType.SCOPE_UPDATED.equals(getType())) {
-            setNewValue(scope);
+        if (scope != null) {
+            if (EventType.SCOPE_CREATED.equals(getType()) || EventType.SCOPE_UPDATED.equals(getType())) {
+                setNewValue(scope);
+            }
+            domain(scope.getDomain());
+            setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), ReferenceType.DOMAIN, scope.getDomain());
         }
-        domain(scope.getDomain());
-        setTarget(scope.getId(), EntityType.SCOPE, scope.getKey(), scope.getName(), ReferenceType.DOMAIN, scope.getDomain());
         return this;
     }
 }

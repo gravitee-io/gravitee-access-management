@@ -30,12 +30,14 @@ public class ServiceResourceAuditBuilder extends ManagementAuditBuilder<ServiceR
     }
 
     public ServiceResourceAuditBuilder resource(ServiceResource resource) {
-        if (EventType.RESOURCE_CREATED.equals(getType()) || EventType.RESOURCE_UPDATED.equals(getType())) {
-            setNewValue(resource);
+        if (resource != null) {
+            if (EventType.RESOURCE_CREATED.equals(getType()) || EventType.RESOURCE_UPDATED.equals(getType())) {
+                setNewValue(resource);
+            }
+            this.referenceId(resource.getReferenceId());
+            this.referenceType(resource.getReferenceType());
+            setTarget(resource.getId(), EntityType.RESOURCE, null, resource.getName(), resource.getReferenceType(), resource.getReferenceId());
         }
-        this.referenceId(resource.getReferenceId());
-        this.referenceType(resource.getReferenceType());
-        setTarget(resource.getId(), EntityType.RESOURCE, null, resource.getName(), resource.getReferenceType(), resource.getReferenceId());
         return this;
     }
 }

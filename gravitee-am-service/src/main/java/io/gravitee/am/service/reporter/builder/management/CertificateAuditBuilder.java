@@ -31,11 +31,13 @@ public class CertificateAuditBuilder extends ManagementAuditBuilder<CertificateA
     }
 
     public CertificateAuditBuilder certificate(Certificate certificate) {
-        if (EventType.CERTIFICATE_CREATED.equals(getType()) || EventType.CERTIFICATE_UPDATED.equals(getType())) {
-            setNewValue(certificate);
+        if (certificate != null) {
+            if (EventType.CERTIFICATE_CREATED.equals(getType()) || EventType.CERTIFICATE_UPDATED.equals(getType())) {
+                setNewValue(certificate);
+            }
+            domain(certificate.getDomain());
+            setTarget(certificate.getId(), EntityType.CERTIFICATE, null, certificate.getName(), ReferenceType.DOMAIN, certificate.getDomain());
         }
-        domain(certificate.getDomain());
-        setTarget(certificate.getId(), EntityType.CERTIFICATE, null, certificate.getName(), ReferenceType.DOMAIN, certificate.getDomain());
         return this;
     }
 }

@@ -31,14 +31,16 @@ public class OrganizationAuditBuilder extends ManagementAuditBuilder<Organizatio
     }
 
     public OrganizationAuditBuilder organization(Organization organization) {
-        if (EventType.ORGANIZATION_CREATED.equals(getType()) || EventType.ORGANIZATION_UPDATED.equals(getType())) {
-            setNewValue(organization);
+        if (organization != null) {
+            if (EventType.ORGANIZATION_CREATED.equals(getType()) || EventType.ORGANIZATION_UPDATED.equals(getType())) {
+                setNewValue(organization);
+            }
+
+            referenceType(ReferenceType.ORGANIZATION);
+            referenceId(organization.getId());
+
+            setTarget(organization.getId(), EntityType.ORGANIZATION, null, organization.getName(), ReferenceType.ORGANIZATION, organization.getId());
         }
-
-        referenceType(ReferenceType.ORGANIZATION);
-        referenceId(organization.getId());
-
-        setTarget(organization.getId(), EntityType.ORGANIZATION, null, organization.getName(), ReferenceType.ORGANIZATION, organization.getId());
         return this;
     }
 }

@@ -31,14 +31,16 @@ public class RoleAuditBuilder extends ManagementAuditBuilder<RoleAuditBuilder> {
     }
 
     public RoleAuditBuilder role(Role role) {
-        if (EventType.ROLE_CREATED.equals(getType()) || EventType.ROLE_UPDATED.equals(getType())) {
-            setNewValue(role);
+        if (role != null) {
+            if (EventType.ROLE_CREATED.equals(getType()) || EventType.ROLE_UPDATED.equals(getType())) {
+                setNewValue(role);
+            }
+
+            referenceType(role.getReferenceType());
+            referenceId(role.getReferenceId());
+
+            setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceType(), role.getReferenceId());
         }
-
-        referenceType(role.getReferenceType());
-        referenceId(role.getReferenceId());
-
-        setTarget(role.getId(), EntityType.ROLE, null, role.getName(), role.getReferenceType(), role.getReferenceId());
         return this;
     }
 }

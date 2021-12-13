@@ -111,9 +111,11 @@ public abstract class AuditBuilder<T> {
     }
 
     public T client(Client client) {
-        this.accessPointId = client.getId();
-        this.accessPointAlternativeId = client.getClientId();
-        this.accessPointName = client.getClientName();
+        if (client != null) {
+            this.accessPointId = client.getId();
+            this.accessPointAlternativeId = client.getClientId();
+            this.accessPointName = client.getClientName();
+        }
         return (T) this;
     }
 

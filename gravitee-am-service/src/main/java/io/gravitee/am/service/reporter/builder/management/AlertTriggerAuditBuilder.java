@@ -32,14 +32,16 @@ public class AlertTriggerAuditBuilder extends ManagementAuditBuilder<AlertTrigge
     }
 
     public AlertTriggerAuditBuilder alertTrigger(AlertTrigger alertTrigger) {
-    if (EventType.ALERT_TRIGGER_CREATED.equals(getType()) || EventType.ALERT_TRIGGER_UPDATED.equals(getType())) {
-            setNewValue(alertTrigger);
+        if (alertTrigger != null) {
+            if (EventType.ALERT_TRIGGER_CREATED.equals(getType()) || EventType.ALERT_TRIGGER_UPDATED.equals(getType())) {
+                setNewValue(alertTrigger);
+            }
+
+            referenceType(alertTrigger.getReferenceType());
+            referenceId(alertTrigger.getReferenceId());
+
+            setTarget(alertTrigger.getId(), EntityType.ALERT_TRIGGER, null, alertTrigger.getType().name(), alertTrigger.getReferenceType(), alertTrigger.getReferenceId());
         }
-
-        referenceType(alertTrigger.getReferenceType());
-        referenceId(alertTrigger.getReferenceId());
-
-        setTarget(alertTrigger.getId(), EntityType.ALERT_TRIGGER, null, alertTrigger.getType().name(), alertTrigger.getReferenceType(), alertTrigger.getReferenceId());
         return this;
     }
 }

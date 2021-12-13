@@ -34,13 +34,15 @@ public class TagAuditBuilder extends ManagementAuditBuilder<TagAuditBuilder> {
     }
 
     public TagAuditBuilder tag(Tag tag) {
-        if (EventType.TAG_CREATED.equals(getType()) || EventType.TAG_UPDATED.equals(getType())) {
-            setNewValue(tag);
+        if (tag != null) {
+            if (EventType.TAG_CREATED.equals(getType()) || EventType.TAG_UPDATED.equals(getType())) {
+                setNewValue(tag);
+            }
+
+            referenceId(tag.getOrganizationId());
+
+            setTarget(tag.getId(), EntityType.TAG, null, tag.getName(), ReferenceType.ORGANIZATION, tag.getOrganizationId());
         }
-
-        referenceId(tag.getOrganizationId());
-
-        setTarget(tag.getId(), EntityType.TAG, null, tag.getName(), ReferenceType.ORGANIZATION, tag.getOrganizationId());
         return this;
     }
 }

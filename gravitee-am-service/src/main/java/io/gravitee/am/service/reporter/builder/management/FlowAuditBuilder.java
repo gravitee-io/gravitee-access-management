@@ -30,14 +30,16 @@ public class FlowAuditBuilder extends ManagementAuditBuilder<FlowAuditBuilder> {
     }
 
     public FlowAuditBuilder flow(Flow flow) {
-        if (EventType.FLOW_CREATED.equals(getType()) || EventType.FLOW_UPDATED.equals(getType())) {
-            setNewValue(flow);
+        if (flow != null) {
+            if (EventType.FLOW_CREATED.equals(getType()) || EventType.FLOW_UPDATED.equals(getType())) {
+                setNewValue(flow);
+            }
+
+            referenceType(flow.getReferenceType());
+            referenceId(flow.getReferenceId());
+
+            setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId());
         }
-
-        referenceType(flow.getReferenceType());
-        referenceId(flow.getReferenceId());
-
-        setTarget(flow.getId(), EntityType.FLOW, null, flow.getName(), flow.getReferenceType(), flow.getReferenceId());
         return this;
     }
 }
