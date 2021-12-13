@@ -11,7 +11,7 @@ const submitBtn = document.getElementById("submitBtn");
 /**
  * When the user starts to type something inside the password field
  */
-passwordInput.onkeyup = function () {
+passwordInput.addEventListener('input', function () {
     if (passwordSettings == null) {
         return;
     }
@@ -55,7 +55,7 @@ passwordInput.onkeyup = function () {
         validateMessageElement(maxConsecutiveLetters, isMaxConsecutiveLettersOk);
     }
     submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk);
-}
+});
 
 /**
  *
