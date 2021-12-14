@@ -96,9 +96,36 @@ export class ProviderSettingsComponent implements OnInit {
     });
   }
 
-  update() {
+  update(event) {
+    if (this.provider.type !== "inline-am-idp"){
+      this._update();
+    } else {
+      event.preventDefault();
+      const originalConfig = JSON.parse(this.provider.configuration);
+      const updatedUsernames = this.updateProviderConfiguration.users.map(user => user.username);
+      const allOriginalUsernames = originalConfig.users.every(u => updatedUsernames.includes(u.username));
+
+      if (!allOriginalUsernames) {
+        const title = 'Update Provider: a user has been modified or deleted.';
+        const message = 'If you modified an existing user with another username make sure the password has been modified manually too. ' +
+          'Do you want to save your configuration ?';
+        this.dialogService.confirm(title, message).subscribe(res => {
+          if (res) {
+            this._update();
+          }
+        });
+      } else {
+        this._update();
+      }
+    }
+  }
+
+  private _update() {
     this.provider.configuration = this.updateProviderConfiguration;
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
+      this.provider = data;
+      this.providerConfiguration = JSON.parse(this.provider.configuration);
+      this.updateProviderConfiguration = this.providerConfiguration;
       this.snackbarService.open('Provider updated');
       this.configurationPristine = true;
       this.form.reset(data);

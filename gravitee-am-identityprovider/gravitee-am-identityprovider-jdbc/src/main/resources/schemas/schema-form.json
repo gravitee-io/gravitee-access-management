@@ -32,13 +32,15 @@
     "user" : {
       "type" : "string",
       "title": "Authentication user",
-      "description": "User to access database."
+      "description": "User to access database.",
+      "sensitive": true
     },
     "password" : {
       "type" : "string",
       "title": "Authentication password",
       "description": "User password.",
-      "widget": "password"
+      "widget": "password",
+      "sensitive": true
     },
     "selectUserByUsernameQuery" : {
       "type" : "string",

@@ -62,6 +62,9 @@ export class BotDetectionComponent implements OnInit {
   update() {
     this.botDetection.configuration = JSON.stringify(this.updatebotDetectionConfiguration);
     this.botDetectionService.update(this.domainId, this.botDetection.id, this.botDetection).subscribe(data => {
+      this.botDetection = data;
+      this.botDetectionConfiguration = JSON.parse(this.botDetection.configuration);
+      this.updatebotDetectionConfiguration = this.botDetectionConfiguration;
       this.snackbarService.open('Bot detection updated');
     })
   }
@@ -106,7 +109,7 @@ function onClick(event) {
   event.preventDefault();
   grecaptcha.ready(function() {
     grecaptcha.execute('`+ this.botDetectionConfiguration.siteKey +`', {action: 'submit'}).then(function(token) {
-      // Add your logic to submit 
+      // Add your logic to submit
       // to your backend server here
       // and assign the token variable
       // to the configured parameter ` + this.botDetectionConfiguration.tokenParameterName + `

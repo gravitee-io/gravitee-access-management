@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -64,7 +65,7 @@ public class GroupMembersResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private IdentityProviderService identityProviderService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

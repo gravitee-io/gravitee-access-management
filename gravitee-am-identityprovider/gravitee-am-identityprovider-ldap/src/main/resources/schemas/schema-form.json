@@ -20,13 +20,15 @@
     "contextSourceUsername" : {
       "type" : "string",
       "title": "Username",
-      "description": "The username (principal) to use when authenticating with the LDAP server. This will usually be the distinguished name of an admin user (e.g.cn=Administrator), but may differ depending on server and authentication method."
+      "description": "The username (principal) to use when authenticating with the LDAP server. This will usually be the distinguished name of an admin user (e.g.cn=Administrator), but may differ depending on server and authentication method.",
+      "sensitive": true
     },
     "contextSourcePassword" : {
       "type" : "string",
       "title": "Password",
       "description": "The password (credentials) to use when authenticating with the LDAP server.",
-      "widget": "password"
+      "widget": "password",
+      "sensitive": true
     },
     "userSearchFilter" : {
       "type" : "string",

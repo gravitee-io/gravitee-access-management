@@ -17,11 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.UpdateReporter;
@@ -49,7 +49,7 @@ import java.util.Optional;
 public class ReporterResource extends AbstractResource {
 
     @Autowired
-    private ReporterService reporterService;
+    private ReporterServiceProxy reporterService;
 
     @Autowired
     private DomainService domainService;

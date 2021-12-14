@@ -15,7 +15,8 @@
     "authToken": {
       "title": "Authentication Token",
       "description": "Authentication Token linked to your account",
-      "type": "string"
+      "type": "string",
+      "sensitive": true
     },
     "useSystemProxy": {
       "title": "Use system proxy",

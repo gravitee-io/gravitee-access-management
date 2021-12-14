@@ -36,14 +36,16 @@
       "type": "string",
       "title": "Username",
       "description": "Username used for authentication",
-      "condition": "model.authentication"
+      "condition": "model.authentication",
+      "sensitive": true
     },
     "password": {
       "type": "string",
       "title": "Password",
       "description": "Password used for authentication",
       "condition": "model.authentication",
-      "widget": "password"
+      "widget": "password",
+      "sensitive": true
     },
     "startTls": {
       "type": "boolean",

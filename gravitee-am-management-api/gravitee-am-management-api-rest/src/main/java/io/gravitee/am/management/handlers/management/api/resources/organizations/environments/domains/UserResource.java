@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -72,7 +73,7 @@ public class UserResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private IdentityProviderService identityProviderService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @Autowired
     private ApplicationService applicationService;

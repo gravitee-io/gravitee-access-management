@@ -25,8 +25,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
-
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,15 +46,9 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
 
-    Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal);
-
     Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
 
-    Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
-
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
-
-    Completable delete(String domain, String identityProviderId, User principal);
 
     default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
         return create(domain, identityProvider, null);
@@ -68,5 +60,17 @@ public interface IdentityProviderService {
 
     default Completable delete(String domain, String identityProviderId) {
         return delete(domain, identityProviderId, null);
+    }
+
+    default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal) {
+        return create(ReferenceType.DOMAIN, domain, identityProvider, principal);
+    }
+
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
+    }
+
+    default Completable delete(String domain, String identityProviderId, User principal) {
+        return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }
 }

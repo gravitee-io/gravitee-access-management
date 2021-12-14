@@ -54,6 +54,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -65,13 +66,16 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Date;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class CertificateServiceImpl implements CertificateService {
 
     /**
@@ -304,24 +308,6 @@ public class CertificateServiceImpl implements CertificateService {
                             })
                             .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(oldCertificate).certificate(certificate)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable)));
-                });
-    }
-
-    @Override
-    public Single<Certificate> update(Certificate certificate) {
-        // update date
-        certificate.setUpdatedAt(new Date());
-
-        return certificateRepository.update(certificate)
-                // create event for sync process
-                .flatMap(certificate1 -> {
-                    // Reload domain to take care about certificate update
-                    Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(certificate1));
-                })
-                .doOnError(ex -> {
-                    LOGGER.error("An error occurs while trying to update a certificate", ex);
-                    throw new TechnicalManagementException("An error occurs while trying to update a certificate", ex);
                 });
     }
 

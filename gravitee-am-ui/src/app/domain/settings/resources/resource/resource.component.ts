@@ -59,6 +59,8 @@ export class ResourceComponent implements OnInit {
   update() {
     this.resource.configuration = JSON.stringify(this.updateResourceConfiguration);
     this.resourceService.update(this.domainId, this.resource.id, this.resource).subscribe(data => {
+      this.resource = data;
+      this.resourceConfiguration = JSON.parse(this.resource.configuration);
       this.snackbarService.open('Resource updated');
     })
   }

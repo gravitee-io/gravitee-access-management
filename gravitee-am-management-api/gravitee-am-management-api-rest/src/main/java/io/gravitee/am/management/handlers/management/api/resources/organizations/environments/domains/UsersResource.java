@@ -16,13 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.common.http.MediaType;
@@ -68,7 +68,7 @@ public class UsersResource extends AbstractUsersResource {
     private DomainService domainService;
 
     @Autowired
-    private IdentityProviderService identityProviderService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

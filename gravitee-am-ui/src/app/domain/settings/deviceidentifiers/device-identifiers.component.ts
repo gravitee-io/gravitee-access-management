@@ -34,7 +34,6 @@ export class DomainSettingsDeviceIdentifiersComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
-    console.log(this.route.snapshot.data);
     this.deviceIdentifiers = this.route.snapshot.data['deviceIdentifiers'];
   }
 

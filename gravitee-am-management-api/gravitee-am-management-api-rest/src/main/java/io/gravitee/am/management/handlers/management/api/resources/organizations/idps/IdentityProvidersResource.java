@@ -18,15 +18,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Observable;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -51,7 +49,7 @@ public class IdentityProvidersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private IdentityProviderService identityProviderService;
+    private IdentityProviderServiceProxy identityProviderService;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;

@@ -15,15 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import com.nimbusds.jose.jwk.KeyUse;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.CertificateManager;
+import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
@@ -57,10 +54,7 @@ public class CertificatesResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private CertificateService certificateService;
-
-    @Autowired
-    private CertificateManager certificateManager;
+    private CertificateServiceProxy certificateService;
 
     @Autowired
     private DomainService domainService;
@@ -126,12 +120,10 @@ public class CertificatesResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.create(domain, newCertificate, authenticatedUser))
-                        .map(certificate -> {
-                            return Response
-                                    .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
-                                    .entity(certificate)
-                                    .build();
-                        }))
+                        .map(certificate -> Response
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
+                                .entity(certificate)
+                                .build()))
                 .subscribe(response::resume, response::resume);
     }
 

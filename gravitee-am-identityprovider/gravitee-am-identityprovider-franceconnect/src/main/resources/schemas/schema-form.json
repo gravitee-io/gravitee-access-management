@@ -30,7 +30,8 @@
     "clientSecret" : {
       "type" : "string",
       "title": "Client Secret",
-      "description": "Required. The client secret you received from FranceConnect for your FranceConnect App."
+      "description": "Required. The client secret you received from FranceConnect for your FranceConnect App.",
+      "sensitive": true
     },
     "scopes":{
       "type": "array",

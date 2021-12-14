@@ -11,7 +11,8 @@
     "clientSecret" : {
       "type" : "string",
       "title": "Client Secret",
-      "description": "Required. The client secret you received from LinkedIn for your LinkedIn App."
+      "description": "Required. The client secret you received from LinkedIn for your LinkedIn App.",
+      "sensitive": true
     },
     "scopes":{
       "type": "array",
