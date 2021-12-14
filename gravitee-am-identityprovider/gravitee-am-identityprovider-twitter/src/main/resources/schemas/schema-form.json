@@ -11,7 +11,8 @@
     "clientSecret" : {
       "type" : "string",
       "title": "Client Secret",
-      "description": "Required. The client secret you received from Twitter for your Twitter App."
+      "description": "Required. The client secret you received from Twitter for your Twitter App.",
+      "sensitive": true
     },
     "connectTimeout" : {
       "type" : "integer",

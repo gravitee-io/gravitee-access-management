@@ -19,9 +19,9 @@ import io.gravitee.am.management.handlers.management.api.model.ResourceEntity;
 import io.gravitee.am.management.handlers.management.api.model.ResourceListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ResourceService;
@@ -30,7 +30,6 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -39,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
-import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import java.util.Collections;
@@ -91,19 +89,16 @@ public class ApplicationResourcesResource extends AbstractResource {
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
                         .flatMapSingle(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
-                        .flatMap(pagedResources -> {
-                            return Observable.fromIterable(pagedResources.getData())
-                                    .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
-                                            .map(policies -> {
-                                                ResourceEntity resourceEntity = new ResourceEntity(r);
-                                                resourceEntity.setPolicies(policies);
-                                                return resourceEntity;
-                                            }))
-                                    .toList()
-                                    .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) -> {
-                                        return new Page(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount());
-                                    });
-                        })
+                        .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())
+                                .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
+                                        .map(policies -> {
+                                            ResourceEntity resourceEntity = new ResourceEntity(r);
+                                            resourceEntity.setPolicies(policies);
+                                            return resourceEntity;
+                                        }))
+                                .toList()
+                                .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) ->
+                                        new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount())))
                 )
                 .subscribe(response::resume, response::resume);
     }

@@ -11,7 +11,8 @@
     "storepass" : {
       "title": "Keystore password",
       "description": "The password which is used to protect the integrity of the keystore.",
-      "type" : "string"
+      "type" : "string",
+      "sensitive" : true
     },
     "alias" : {
       "title": "Key alias",
@@ -21,7 +22,8 @@
     "keypass" : {
       "title": "Key password",
       "description": "The password used to protect the private key of the generated key pair.",
-      "type" : "string"
+      "type" : "string",
+      "sensitive" : true
     },
     "algorithm" : {
       "title": "Signing algorithm",

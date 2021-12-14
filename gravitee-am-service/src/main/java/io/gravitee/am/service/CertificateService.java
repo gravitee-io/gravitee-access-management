@@ -24,8 +24,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -47,8 +45,6 @@ public interface CertificateService {
     Single<Certificate> create(String domain, NewCertificate newCertificate, User principal);
 
     Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
-
-    Single<Certificate> update(Certificate certificate);
 
     Completable delete(String certificateId, User principal);
 

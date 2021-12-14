@@ -63,6 +63,9 @@ export class DomainAlertNotifierComponent implements OnInit {
     this.alertNotifier.configuration = this.updateAlertNotifierConfiguration;
     this.alertService.patchAlertNotifier(this.domain.id, this.alertNotifier).subscribe(data => {
       this.snackbarService.open('Alert notifier updated');
+      this.alertNotifier = data;
+      this.alertNotifierConfiguration = JSON.parse(this.alertNotifier.configuration);
+      this.updateAlertNotifierConfiguration = this.alertNotifierConfiguration;
       this.configurationPristine = true;
     });
   }

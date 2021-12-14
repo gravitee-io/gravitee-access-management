@@ -17,12 +17,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.model.UpdateServiceResource;
@@ -53,7 +53,7 @@ public class ServiceResourceResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private ServiceResourceService resourceService;
+    private ServiceResourceServiceProxy resourceService;
 
     @Autowired
     private DomainService domainService;

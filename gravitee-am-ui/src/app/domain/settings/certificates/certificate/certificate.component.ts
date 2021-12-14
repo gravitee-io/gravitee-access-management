@@ -53,6 +53,9 @@ export class CertificateComponent implements OnInit {
     this.certificate.configuration = JSON.stringify(this.updateCertificateConfiguration);
     this.certificateService.update(this.domainId, this.certificate.id, this.certificate).subscribe(data => {
       this.snackbarService.open("Certificate updated");
+      this.certificate = data;
+      this.certificateConfiguration = JSON.parse(this.certificate.configuration);
+      this.updateCertificateConfiguration = this.certificateConfiguration;
     })
   }
 

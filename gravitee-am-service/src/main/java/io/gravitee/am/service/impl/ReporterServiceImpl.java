@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -67,6 +68,7 @@ import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDat
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class ReporterServiceImpl implements ReporterService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);

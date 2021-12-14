@@ -39,6 +39,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -48,6 +49,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNotifierService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AlertNotifierServiceImpl.class);

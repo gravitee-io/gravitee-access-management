@@ -16,7 +16,8 @@
     "clientSecret" : {
       "type" : "string",
       "title": "Client Secret",
-      "description": "OAuth 2.0 client secret"
+      "description": "OAuth 2.0 client secret",
+      "sensitive": true
     },
     "encodeRedirectUri": {
       "type": "boolean",

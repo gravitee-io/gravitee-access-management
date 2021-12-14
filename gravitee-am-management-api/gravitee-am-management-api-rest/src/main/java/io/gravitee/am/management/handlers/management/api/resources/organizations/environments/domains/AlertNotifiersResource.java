@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.service.AlertNotifierService;
+import io.gravitee.am.management.service.AlertNotifierServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
@@ -48,7 +48,7 @@ public class AlertNotifiersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Inject
-    private AlertNotifierService alertNotifierService;
+    private AlertNotifierServiceProxy alertNotifierService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

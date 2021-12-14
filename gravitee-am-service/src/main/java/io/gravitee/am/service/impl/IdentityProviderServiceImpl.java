@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -58,6 +59,7 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     /**
@@ -163,12 +165,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<IdentityProvider> create(String domain, NewIdentityProvider newIdentityProvider, User principal) {
-
-        return create(ReferenceType.DOMAIN, domain, newIdentityProvider, principal);
-    }
-
-    @Override
     public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
         LOGGER.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
 
@@ -203,11 +199,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
-        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
-    }
-
-    @Override
     public Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal) {
         LOGGER.debug("Delete identity provider {}", identityProviderId);
 
@@ -239,10 +230,5 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete identity provider: %s", identityProviderId), ex));
                 });
-    }
-
-    @Override
-    public Completable delete(String domain, String identityProviderId, User principal) {
-        return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
     }
 }

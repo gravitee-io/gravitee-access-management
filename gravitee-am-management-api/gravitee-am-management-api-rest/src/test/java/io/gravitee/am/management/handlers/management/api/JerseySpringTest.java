@@ -21,6 +21,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.*;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.AuditService;
@@ -89,13 +91,13 @@ public abstract class JerseySpringTest {
     protected RoleService roleService;
 
     @Autowired
-    protected IdentityProviderService identityProviderService;
+    protected IdentityProviderServiceProxy identityProviderService;
 
     @Autowired
     protected ExtensionGrantService extensionGrantService;
 
     @Autowired
-    protected CertificateService certificateService;
+    protected CertificateServiceProxy certificateService;
 
     @Autowired
     protected CertificatePluginService certificatePluginService;
@@ -137,7 +139,7 @@ public abstract class JerseySpringTest {
     protected AuditReporterManager AuditReporterManager;
 
     @Autowired
-    protected ReporterService reporterService;
+    protected ReporterServiceProxy reporterService;
 
     @Autowired
     protected TagService tagService;
@@ -176,7 +178,7 @@ public abstract class JerseySpringTest {
     protected BotDetectionPluginService botDetectionPluginService;
 
     @Autowired
-    protected BotDetectionService botDetectionService;
+    protected BotDetectionServiceProxy botDetectionService;
 
     @Autowired
     protected DeviceIdentifierPluginService deviceIdentifierPluginService;
@@ -237,6 +239,11 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
+        public IdentityProviderServiceProxy identityProviderServiceProxy() {
+            return mock(IdentityProviderServiceProxy.class);
+        }
+
+        @Bean
         public ExtensionGrantService extensionGrantService() {
             return mock(ExtensionGrantService.class);
         }
@@ -244,6 +251,11 @@ public abstract class JerseySpringTest {
         @Bean
         public CertificateService certificateService() {
             return mock(CertificateService.class);
+        }
+
+        @Bean
+        public CertificateServiceProxy certificateServiceProxy() {
+            return mock(CertificateServiceProxy.class);
         }
 
         @Bean
@@ -322,6 +334,11 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
+        public ReporterServiceProxy reporterServiceProxy() {
+            return mock(ReporterServiceProxy.class);
+        }
+
+        @Bean
         public ReporterService reporterService() {
             return mock(ReporterService.class);
         }
@@ -384,6 +401,11 @@ public abstract class JerseySpringTest {
         @Bean
         public BotDetectionService botDetectionService() {
             return mock(BotDetectionService.class);
+        }
+
+        @Bean
+        public BotDetectionServiceProxy botDetectionServiceProxy() {
+            return mock(BotDetectionServiceProxy.class);
         }
 
         @Bean

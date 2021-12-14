@@ -16,7 +16,8 @@
     "secretKey": {
       "title": "Secret Key",
       "type" : "string",
-      "description": "Secret Key link to the Site Key"
+      "description": "Secret Key link to the Site Key",
+      "sensitive": true
     },
     "serviceUrl": {
       "title": "Service Url",

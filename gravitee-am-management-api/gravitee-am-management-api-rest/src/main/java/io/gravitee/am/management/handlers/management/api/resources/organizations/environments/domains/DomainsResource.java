@@ -17,12 +17,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Single;
@@ -49,14 +49,13 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 @Api(tags = {"domain"})
 public class DomainsResource extends AbstractDomainResource {
 
-    private static final int MAX_DOMAINS_SIZE_PER_PAGE = 50;
     private static final String MAX_DOMAINS_SIZE_PER_PAGE_STRING = "50";
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
     @Autowired
-    private ReporterService reporterService;
+    private ReporterServiceProxy reporterService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

@@ -17,13 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.common.http.MediaType;
@@ -40,12 +38,8 @@ import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 import java.util.stream.Collectors;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,7 +52,7 @@ public class ReportersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private ReporterService reporterService;
+    private ReporterServiceProxy reporterService;
 
     @Autowired
     private DomainService domainService;

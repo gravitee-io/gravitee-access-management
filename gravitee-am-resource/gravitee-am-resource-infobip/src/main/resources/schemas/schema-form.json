@@ -15,7 +15,8 @@
     "apiKey": {
       "title": "Api Key",
       "description": "The api key",
-      "type": "string"
+      "type": "string",
+      "sensitive": true
     },
     "apiKeyPrefix": {
       "title": "Api Key Prefix",

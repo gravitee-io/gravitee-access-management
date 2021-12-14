@@ -26,13 +26,15 @@
     "username" : {
       "type": "string",
       "title": "Username",
-      "description": "User to access database."
+      "description": "User to access database.",
+      "sensitive": true
     },
     "password" : {
       "type": "string",
       "title": "Password",
       "description": "User password",
-      "widget": "password"
+      "widget": "password",
+      "sensitive": true
     },
     "acquireRetry" : {
       "type": "number",
