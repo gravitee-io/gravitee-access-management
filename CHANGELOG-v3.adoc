@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/464?closed=1[AM - 3.12.6 (2021-12-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Manage WebAuthn exception on startup https://github.com/gravitee-io/issues/issues/6745[#6745]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/470?closed=1[AM - 3.10.11 (2021-12-15)]
 
 === Bug fixes
