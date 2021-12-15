@@ -123,7 +123,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
                 sslBuilder.enabled(sslEnabled);
             if (keystore != null) {
                 try {
-                    SSLContext ctx = SSLContext.getInstance("TLS");
+                    SSLContext ctx = SSLContext.getInstance("TLSv1.3");
                     KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
                     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
                     ks.load(new FileInputStream(keystore), keystorePassword.toCharArray());
