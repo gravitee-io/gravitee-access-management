@@ -1,6 +1,35 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/470?closed=1[AM - 3.10.11 (2021-12-15)]
+
+=== Bug fixes
+
+*_Am_*
+
+- Missing parameters after social authentication error https://github.com/gravitee-io/issues/issues/6706[#6706]
+
+*_Gateway_*
+
+- Inline javascript in default HTML templates should wait for the DOM to load https://github.com/gravitee-io/issues/issues/6714[#6714]
+- Manage WebAuthn exception on startup https://github.com/gravitee-io/issues/issues/6737[#6737]
+- Password validation is not triggered if password is set dynamically https://github.com/gravitee-io/issues/issues/6715[#6715]
+
+*_Gw_*
+
+- Filter technical claims on userinfo endpoint https://github.com/gravitee-io/issues/issues/6725[#6725]
+
+*_Management_*
+
+- Missing application information for the USER_PASSWORD_RESET audit log https://github.com/gravitee-io/issues/issues/6688[#6688]
+
+*_Management-ui_*
+
+- Users > Sort by column is broken https://github.com/gravitee-io/issues/issues/6726[#6726]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/481?closed=1[AM - 3.5.12 (2021-12-15)]
 
 === Bug fixes
