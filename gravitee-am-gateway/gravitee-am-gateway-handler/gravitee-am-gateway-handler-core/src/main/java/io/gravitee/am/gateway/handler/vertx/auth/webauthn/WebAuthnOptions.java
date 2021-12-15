@@ -34,6 +34,8 @@ import io.gravitee.am.gateway.handler.vertx.auth.jose.JWS;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.webauthn.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
@@ -54,6 +56,7 @@ import static io.vertx.ext.auth.webauthn.UserVerification.DISCOURAGED;
  */
 // TODO to remove when updating to vert.x 4
 public class WebAuthnOptions {
+    private static Logger LOGGER = LoggerFactory.getLogger(WebAuthnOptions.class);
 
     /* Android Keystore Root is not published anywhere.
      * This certificate was extracted from one of the attestations
@@ -369,7 +372,8 @@ public class WebAuthnOptions {
             this.rootCertificates.put(key, cert);
             return this;
         } catch (CertificateException e) {
-            throw new IllegalArgumentException("Invalid root certificate", e);
+            LOGGER.warn("Root Certificate {} can't be loaded due to {}, please update the certificate.", key, e.getMessage(), e);
+            return this;
         }
     }
 
