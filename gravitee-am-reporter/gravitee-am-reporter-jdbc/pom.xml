@@ -38,7 +38,7 @@
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
         <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
         <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
-        <reactor-netty.version>0.9.19.RELEASE</reactor-netty.version>
+        <reactor-netty.version>1.0.14</reactor-netty.version>
         <testcontainers.version>1.15.1</testcontainers.version>
 
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -46,6 +46,8 @@
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
         <skip-reporters-tests>true</skip-reporters-tests>
+        <reactor-core.version>3.4.13</reactor-core.version>
+        <reactor-adapter.version>3.4.6</reactor-adapter.version>
     </properties>
 
     <dependencies>
@@ -102,7 +104,7 @@
         <dependency>
             <groupId>io.projectreactor.addons</groupId>
             <artifactId>reactor-adapter</artifactId>
-            <version>3.3.3.RELEASE</version>
+            <version>${reactor-adapter.version}</version>
         </dependency>
 
         <!-- R2DBC -->
@@ -281,6 +283,12 @@
             <artifactId>mssql-jdbc</artifactId>
             <version>${jdbc-mssql.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor-core.version}</version>
         </dependency>
 
     </dependencies>

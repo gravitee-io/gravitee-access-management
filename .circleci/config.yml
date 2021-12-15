@@ -87,7 +87,7 @@ jobs:
             - gravit33bot
   build:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: cimg/openjdk:17.0.1
     resource_class: xlarge
     steps:
       - attach_workspace:
@@ -113,7 +113,7 @@ jobs:
 
   run_postman_tests:
     docker:
-      - image: cimg/openjdk:11.0.10-node
+      - image: cimg/openjdk:17.0.1-node
       - image: mongo:4.2
     resource_class: small
     steps:
@@ -184,7 +184,7 @@ jobs:
 
   publish-fapi-resource-images-azure-registry:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: cimg/openjdk:17.0.1
     resource_class: small
     steps:
       - checkout
@@ -202,7 +202,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: cimg/openjdk:17.0.1
     resource_class: small
     steps:
       - checkout
@@ -375,9 +375,9 @@ workflows:
           maven_profile_id: 'gio-dev'
           # nexus_snapshots_url: 'https://oss.sonatype.org/content/repositories/snapshots'
           # nexus_snapshots_server_id: 'sonatype-nexus-snapshots'
-          # container_gun_image_org: 'circleci'
+          # container_gun_image_org: 'cimg'
           # container_gun_image_name: 'openjdk'
-          # container_gun_image_tag: '11.0.3-jdk-stretch'
+          # container_gun_image_tag: '17.0.1'
           container_size: 'xlarge'
           filters:
             branches:

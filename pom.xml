@@ -77,9 +77,9 @@
         <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
-        <spring.version>5.2.17.RELEASE</spring.version>
+        <spring.version>5.3.13</spring.version>
         <spring-security.version>5.4.8</spring-security.version>
-        <spring-integration.version>5.2.11.RELEASE</spring-integration.version>
+        <spring-integration.version>5.5.6</spring-integration.version>
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
@@ -120,6 +120,7 @@
         <gravitee-notifier-email.version>1.3.0</gravitee-notifier-email.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
+        <jdk.version>11</jdk.version>
     </properties>
 
     <dependencyManagement>
@@ -402,14 +403,23 @@
     </dependencies>
 
     <build>
-      <plugins>
+        <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+                <source>${jdk.version}</source>
+                <target>${jdk.version}</target>
+            </configuration>
+        </plugin>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <version>3.2.0</version>
             <configuration>
                 <doclint>none</doclint>
-                <source>11</source>
+                <source>${jdk.version}</source>
             </configuration>
         </plugin>
       </plugins>

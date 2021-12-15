@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM eclipse-temurin:11-jre-focal
+FROM openjdk:17-alpine
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
