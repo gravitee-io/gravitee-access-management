@@ -92,7 +92,7 @@
                         <jvmFlags>
                             <jvmFlag>-Xmx64m</jvmFlag>
                         </jvmFlags>
-                        <mainClass>io.gravitee.sample.fapi.api.FapiApi</mainClass>
+                        <mainClass>io.gravitee.sample.ciba.notifier.CibaHttpNotifier</mainClass>
                         <args>
                             <arg>secure</arg>
                             <arg>bearer</arg>
@@ -108,8 +108,8 @@
                             <port>8080</port>
                         </ports>
                         <volumes>
-                            <volume>/var/fapi/keystore</volume>
-                            <volume>/var/fapi/truststore</volume>
+                            <volume>/var/ciba/keystore</volume>
+                            <volume>/var/cibe/truststore</volume>
                         </volumes>
                         <format>OCI</format>
                     </container>

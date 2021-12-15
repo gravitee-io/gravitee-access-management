@@ -57,6 +57,7 @@ public class CibaHttpNotifier {
     public static final String CONF_CERT_HEADER = "certificateHeader";
     public static final String PATH_CIBA_NOTIFY = "/ciba/notify";
     public static final String PATH_CIBA_DOMAINS = "/ciba/domains";
+    public static final String DEFAULT_LISTENING_PORT = "8080";
 
     public static void main(String[] args) throws Exception {
         CommandLine cmd = parseArgs(args);
@@ -103,12 +104,12 @@ public class CibaHttpNotifier {
         server.requestHandler(router)
                 .listen();
 
-        LOGGER.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, "9443"));
+        LOGGER.info("Server listening on port {}", cmd.getOptionValue(CONF_PORT, DEFAULT_LISTENING_PORT));
     }
 
     private static HttpServerOptions buildHttpOptions(CommandLine cmd) {
         HttpServerOptions options = new HttpServerOptions();
-        options.setPort(Integer.parseInt(cmd.getOptionValue(CONF_PORT, "9443")));
+        options.setPort(Integer.parseInt(cmd.getOptionValue(CONF_PORT, DEFAULT_LISTENING_PORT)));
         options.setHost(cmd.getOptionValue(CONF_HOST, "0.0.0.0"));
         options.setSsl(Boolean.parseBoolean(cmd.getOptionValue(CONF_SECURE, "false")));
         options.setUseAlpn(false);
