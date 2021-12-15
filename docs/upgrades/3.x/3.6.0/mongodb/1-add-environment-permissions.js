@@ -28,7 +28,7 @@ organization = db.getCollection('organizations').findOne({"_id": "DEFAULT"});
 
 if (!organization.hrids || organization.hrids.length === 0) {
     organization.hrids = ['default'];
-    db.getCollection('organizations').update({"_id": "DEFAULT"}, organization);
+    db.getCollection('organizations').replaceOne({"_id": "DEFAULT"}, organization);
 }
 
 // Set 'default' hrid on the default environment.
@@ -36,7 +36,7 @@ environment = db.getCollection('environments').findOne({"_id": "DEFAULT"});
 
 if (!environment.hrids || environment.hrids.length === 0) {
     environment.hrids = ['default'];
-    db.getCollection('environments').update({"_id": "DEFAULT"}, environment);
+    db.getCollection('environments').replaceOne({"_id": "DEFAULT"}, environment);
 }
 
 // Update ORGANIZATION_USER role adding the ENVIRONMENT['LIST'] permission.
@@ -49,7 +49,7 @@ if (organizationUserRole != null) {
     } else if (!organizationUserRole.permissionAcls['ENVIRONMENT'].includes('LIST')) {
         organizationUserRole.permissionAcls['ENVIRONMENT'].push('LIST');
     }
-    db.getCollection("roles").update({'_id': organizationUserRole._id}, organizationUserRole);
+    db.getCollection("roles").replaceOne({'_id': organizationUserRole._id}, organizationUserRole);
 }
 
 // Create ENVIRONMENT_USER role if not already exists.
