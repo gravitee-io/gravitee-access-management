@@ -63,7 +63,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
         }
 
         // create WebAuthn options
-        WebAuthnOptions webAuthnOptions = new GraviteeWebAuthnOptions()
+        WebAuthnOptions webAuthnOptions = new WebAuthnOptions()
                 .setRelyingParty(getRelyingParty())
                 .setAuthenticatorAttachment(getAuthenticatorAttachment(webAuthnSettings.getAuthenticatorAttachment()))
                 .setUserVerification(getUserVerification(webAuthnSettings.getUserVerification()))
@@ -132,7 +132,7 @@ public class WebAuthnFactory implements FactoryBean<WebAuthn> {
 
     private WebAuthn defaultWebAuthn() {
         return WebAuthn.create(
-                vertx, new GraviteeWebAuthnOptions().setRelyingParty(getRelyingParty()))
+                vertx, new WebAuthnOptions().setRelyingParty(getRelyingParty()))
                 .authenticatorFetcher(credentialStore::fetch)
                 .authenticatorUpdater(credentialStore::store);
     }

@@ -77,6 +77,9 @@
         <spring.version>5.2.17.RELEASE</spring.version>
         <spring-security.version>5.4.8</spring-security.version>
         <spring-integration.version>5.2.11.RELEASE</spring-integration.version>
+
+        <vertx-auth-webauthn.version>4.1.7.1</vertx-auth-webauthn.version>
+
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
@@ -339,6 +342,11 @@
                 <version>${hibernate-validator.version}</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-auth-webauthn</artifactId>
+                <version>${vertx-auth-webauthn.version}</version>
+            </dependency>
             <!-- Test -->
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
