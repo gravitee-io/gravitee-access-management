@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "530f8399-e926-4205-9185-8a870d0c50d0",
+		"_postman_id": "d95c3eb2-fd64-48a7-8a13-16d30bc12af1",
 		"name": "Gravitee.io - AM - CIBA",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -834,6 +834,69 @@
 					"name": "Invalid Requests",
 					"item": [
 						{
+							"name": "Initialize CIBA Authentication Flow - Missing User Hints",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_request');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid profile",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"oidc",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Initialize CIBA Authentication Flow - Invalid Scope",
 							"event": [
 								{
@@ -887,74 +950,13 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
 										"{{domainHrid}}",
-										"ciba",
-										"authenticate"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Initialize CIBA Authentication Flow - Missing User Hints",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 400\", function () {",
-											"    pm.response.to.have.status(400);",
-											"});",
-											"",
-											"pm.test(\"Has default attributes\", function () {",
-											"    var body = pm.response.json();",
-											"    pm.expect(body.error).to.eql('invalid_request');",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"auth": {
-									"type": "basic",
-									"basic": [
-										{
-											"key": "password",
-											"value": "{{cibaClientSecret}}",
-											"type": "string"
-										},
-										{
-											"key": "username",
-											"value": "{{cibaClientId}}",
-											"type": "string"
-										}
-									]
-								},
-								"method": "POST",
-								"header": [],
-								"body": {
-									"mode": "urlencoded",
-									"urlencoded": [
-										{
-											"key": "scope",
-											"value": "openid profile",
-											"type": "text"
-										}
-									]
-								},
-								"url": {
-									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
-									"host": [
-										"{{gateway_url}}"
-									],
-									"path": [
-										"{{domainHrid}}",
+										"oidc",
 										"ciba",
 										"authenticate"
 									]
@@ -1021,12 +1023,13 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
 										"{{domainHrid}}",
+										"oidc",
 										"ciba",
 										"authenticate"
 									]
@@ -1048,6 +1051,7 @@
 											"pm.test(\"Has default attributes\", function () {",
 											"    var body = pm.response.json();",
 											"    pm.expect(body.error).to.eql('invalid_request');",
+											"    pm.expect(body.error_description).to.eql('Unsupported acr values');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -1086,19 +1090,20 @@
 											"type": "text"
 										},
 										{
-											"key": "acr",
+											"key": "acr_values",
 											"value": "invalid",
 											"type": "text"
 										}
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
 										"{{domainHrid}}",
+										"oidc",
 										"ciba",
 										"authenticate"
 									]
@@ -1165,12 +1170,13 @@
 									]
 								},
 								"url": {
-									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 									"host": [
 										"{{gateway_url}}"
 									],
 									"path": [
 										"{{domainHrid}}",
+										"oidc",
 										"ciba",
 										"authenticate"
 									]
@@ -1303,7 +1309,7 @@
 										"header": [],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"domainId\": \"{{domain}}\", \n    \"domainCallback\" : \"{{internal_gateway_url}}/{{domainHrid}}/ciba/authenticate/callback\",\n    \"clientId\": \"{{cibaClientId}}\",\n    \"clientSecret\": \"{{cibaClientSecret}}\"\n}",
+											"raw": "{\n    \"domainId\": \"{{domain}}\", \n    \"domainCallback\" : \"{{internal_gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate/callback\",\n    \"clientId\": \"{{cibaClientId}}\",\n    \"clientSecret\": \"{{cibaClientSecret}}\"\n}",
 											"options": {
 												"raw": {
 													"language": "json"
@@ -1389,12 +1395,13 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
 												"{{domainHrid}}",
+												"oidc",
 												"ciba",
 												"authenticate"
 											]
@@ -2006,12 +2013,13 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
 												"{{domainHrid}}",
+												"oidc",
 												"ciba",
 												"authenticate"
 											]
@@ -2265,12 +2273,13 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
 												"{{domainHrid}}",
+												"oidc",
 												"ciba",
 												"authenticate"
 											]
@@ -2572,12 +2581,13 @@
 											]
 										},
 										"url": {
-											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/ciba/authenticate",
 											"host": [
 												"{{gateway_url}}"
 											],
 											"path": [
 												"{{domainHrid}}",
+												"oidc",
 												"ciba",
 												"authenticate"
 											]

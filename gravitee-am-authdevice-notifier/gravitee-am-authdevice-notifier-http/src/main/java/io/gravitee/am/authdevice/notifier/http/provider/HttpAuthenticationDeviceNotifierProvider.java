@@ -98,16 +98,16 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                 .rxSendForm(formData)
                 .doOnError((error) -> LOGGER.warn("Unexpected error during device notification : {}", error.getMessage(), error))
                 .onErrorResumeNext(Single.error(new DeviceNotificationException("Unexpected error during device notification")))
-                .map(response -> {
+                .flatMap(response -> {
                     if (response.statusCode() != HttpStatusCode.OK_200) {
                         LOGGER.info("Device notification fails for tid '{}' with status '{}'", request.getTransactionId(), response.statusCode());
-                        throw new DeviceNotificationException("Device notification fails");
+                        return Single.error(new DeviceNotificationException("Device notification fails"));
                     }
 
                     final JsonObject result = response.bodyAsJsonObject();
                     if ( !request.getTransactionId().equals(result.getString(TRANSACTION_ID)) || !request.getState().equals(result.getString(STATE))) {
                         LOGGER.warn("Device notification response contains invalid tid or state", request.getTransactionId(), response.statusCode());
-                        throw new DeviceNotificationException("Invalid device notification response");
+                        return Single.error(new DeviceNotificationException("Invalid device notification response"));
                     }
 
                     final ADNotificationResponse notificationResponse = new ADNotificationResponse(request.getTransactionId());
@@ -115,7 +115,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
                     if (extraData != null) {
                         notificationResponse.setExtraData(extraData.getMap());
                     }
-                    return notificationResponse;
+                    return Single.just(notificationResponse);
                 });
     }
 

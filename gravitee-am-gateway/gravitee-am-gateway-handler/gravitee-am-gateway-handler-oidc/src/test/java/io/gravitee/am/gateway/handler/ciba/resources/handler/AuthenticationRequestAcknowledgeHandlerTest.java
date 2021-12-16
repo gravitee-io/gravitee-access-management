@@ -80,7 +80,7 @@ public class AuthenticationRequestAcknowledgeHandlerTest extends RxWebTestBase {
         when(domain.getOidc()).thenReturn(oidcSettings);
 
         handlerUnderTest = new AuthenticationRequestAcknowledgeHandler(authReqService, domain, jwtService);
-        router.route(HttpMethod.POST, "/ciba/authenticate")
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
                 .handler(handlerUnderTest)
                 .failureHandler(rc -> {
                     final Throwable failure = rc.failure();

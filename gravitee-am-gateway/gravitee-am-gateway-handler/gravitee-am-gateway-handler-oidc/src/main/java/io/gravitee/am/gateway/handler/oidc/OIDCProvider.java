@@ -64,7 +64,6 @@ import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
  */
 public class OIDCProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
-
     @Autowired
     private Vertx vertx;
 

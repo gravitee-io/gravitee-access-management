@@ -252,6 +252,12 @@ public class ClientServiceImpl implements ClientService {
         oAuthSettings.setTlsClientCertificateBoundAccessTokens((client.isTlsClientCertificateBoundAccessTokens()));
         oAuthSettings.setAccessTokenValiditySeconds(client.getAccessTokenValiditySeconds());
         oAuthSettings.setRequireParRequest(client.isRequireParRequest());
+        // CIBA settings
+        oAuthSettings.setBackchannelAuthRequestSignAlg(client.getBackchannelAuthRequestSignAlg());
+        oAuthSettings.setBackchannelClientNotificationEndpoint(client.getBackchannelClientNotificationEndpoint());
+        oAuthSettings.setBackchannelTokenDeliveryMode(client.getBackchannelTokenDeliveryMode());
+        oAuthSettings.setBackchannelUserCodeParameter(client.getBackchannelUserCodeParameter());
+
         ApplicationSettings applicationSettings = new ApplicationSettings();
         // oauth settings
         applicationSettings.setOauth(oAuthSettings);
