@@ -89,14 +89,18 @@ public class LogoutCallbackEndpoint extends AbstractLogoutEndpoint {
                     return;
                 }
                 final UserToken currentSession = sessionHandler.result();
-                // put current session in context for later use
-                if (currentSession.getClient() != null) {
-                    Client safeClient = new Client(currentSession.getClient());
-                    safeClient.setClientSecret(null);
-                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
-                }
-                if (currentSession.getUser() != null) {
-                    routingContext.put(ConstantKeys.USER_CONTEXT_KEY, currentSession.getUser());
+                // current session shouldn't be null in this logoutCallbackEndpoint
+                // but for safety we test it.
+                if (currentSession != null) {
+                    // put current session in context for later use
+                    if (currentSession.getClient() != null) {
+                        Client safeClient = new Client(currentSession.getClient());
+                        safeClient.setClientSecret(null);
+                        routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
+                    }
+                    if (currentSession.getUser() != null) {
+                        routingContext.put(ConstantKeys.USER_CONTEXT_KEY, currentSession.getUser());
+                    }
                 }
                 // invalidate session
                 invalidateSession(routingContext);

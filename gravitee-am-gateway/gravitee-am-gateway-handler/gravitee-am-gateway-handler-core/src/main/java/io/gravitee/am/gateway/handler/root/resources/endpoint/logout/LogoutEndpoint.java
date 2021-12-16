@@ -97,22 +97,26 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
         // restore the current session
         restoreCurrentSession(routingContext, sessionHandler -> {
             final UserToken currentSession = sessionHandler.result();
-            // put current session in context for later use
-            if (currentSession.getClient() != null) {
-                Client safeClient = new Client(currentSession.getClient());
-                safeClient.setClientSecret(null);
-                routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
+
+            if (currentSession != null) {
+                // put current session in context for later use
+                if (currentSession.getClient() != null) {
+                    Client safeClient = new Client(currentSession.getClient());
+                    safeClient.setClientSecret(null);
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, safeClient);
+                }
+                if (currentSession.getUser() != null) {
+                    routingContext.put(ConstantKeys.USER_CONTEXT_KEY, currentSession.getUser());
+                }
             }
-            if (currentSession.getUser() != null) {
-                routingContext.put(ConstantKeys.USER_CONTEXT_KEY, currentSession.getUser());
-            }
+
             evaluateSingleSignOut(routingContext, endpointHandler -> {
                 final String oidcEndSessionEndpoint = endpointHandler.result();
                 if (oidcEndSessionEndpoint != null) {
                     // redirect to the OIDC provider to logout the user
                     // this action will return to the AM logout callback to finally logout the user from AM
                     if ("GET".equals(routingContext.request().method().name())) {
-                        doRedirect(currentSession.getClient(), routingContext, oidcEndSessionEndpoint);
+                        doRedirect(currentSession != null ? currentSession.getClient() : null, routingContext, oidcEndSessionEndpoint);
                     } else {
                         // if the RP calls the OP with POST method we can't follow redirect
                         // we need to connect to the delegated OP via HTTP call
@@ -163,12 +167,14 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
 
         // get client from the user's last application
         final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        // whatever is the client search result, we have to return a UserToken with
+        // at least the user to manage properly the user's logout information
         clientSyncService.findById(endUser.getClient())
                 .switchIfEmpty(Maybe.defer(() -> clientSyncService.findByClientId(endUser.getClient())))
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(new UserToken(endUser, client, null))),
-                        error -> handler.handle(Future.succeededFuture()),
-                        () -> handler.handle(Future.succeededFuture()));
+                        error -> handler.handle(Future.succeededFuture(new UserToken(endUser, null, null))),
+                        () -> handler.handle(Future.succeededFuture(new UserToken(endUser, null, null))));
     }
 
     /**
