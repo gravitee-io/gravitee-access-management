@@ -37,10 +37,10 @@
         <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas</json-schema-generator-maven-plugin.outputDirectory>
         <r2dbc-pool.version>0.8.6.RELEASE</r2dbc-pool.version>
         <reactor-netty.version>0.9.19.RELEASE</reactor-netty.version>
-        <r2dbc-postgresql.version>0.8.7.RELEASE</r2dbc-postgresql.version>
-        <r2dbc-mssql.version>0.8.5.RELEASE</r2dbc-mssql.version>
+        <r2dbc-postgresql.version>0.8.9.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-mssql.version>0.8.7.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
-        <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
+        <r2dbc-mariadb.version>1.0.0</r2dbc-mariadb.version>
         <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
         <testcontainers.version>1.15.1</testcontainers.version>
     </properties>
