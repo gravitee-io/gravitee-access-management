@@ -21,6 +21,15 @@
 			"enabled": true
 		},
 		{
+			"key": "internal_gateway_url",
+			"value": "http://gateway:8092",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			},
+			"enabled": true
+		},
+		{
 			"key": "defaultOrganizationId",
 			"value": "DEFAULT",
 			"description": {
@@ -32,6 +41,24 @@
 		{
 			"key": "defaultEnvironmentId",
 			"value": "DEFAULT",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			},
+			"enabled": true
+		},
+		{
+			"key": "cibaExternalServiceNotifierBaseUrl",
+			"value": "http://localhost:8080/ciba",
+			"description": {
+				"content": "",
+				"type": "text/plain"
+			},
+			"enabled": true
+		},
+		{
+			"key": "cibaInternalDelegateServiceBaseUrl",
+			"value": "http://ciba:8080/ciba",
 			"description": {
 				"content": "",
 				"type": "text/plain"

@@ -1,0 +1,35 @@
+= Gravitee.io Access Management - CIBA Delegated Service
+
+== Overview
+
+This module contains a mock implementation of a delegated service used by CIBA flow.
+This service expose following endpoints:
+
+* `/ciba/domains` to declare domain's callback
+* `/ciba/notify` to request a notification (this implementation use WebSocket to notify users)
+* `/ciba/notify/accept-all` to bypass the end user notification but hit the domain callback to accept the request
+* `/ciba/notify/reject-all` to bypass the end user notification but hit the domain callback to reject the request
+
+To register a domain, you have to call the `/ciba/domains` endpoint with a JSON object
+
+```
+{
+    "domainId": "{{domain}}",
+    "domainCallback" : "{{gateway_url}}/{{domainHrid}}/ciba/authenticate/callback",
+    "clientId": "{{cibaClientId}}",
+    "clientSecret": "{{cibaClientSecret}}"
+}
+```
+
+== Build docker image
+
+```
+mvn compile com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild -Dimage=myimage
+```
+
+== Run docker image
+
+```
+docker run --rm -d -p 8080:8080 myimage
+```
+
