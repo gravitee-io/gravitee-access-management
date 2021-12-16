@@ -71,3 +71,9 @@ services:
       - MGMT_UI_URL=http://localhost:${NGINX_PORT}/am/ui
     volumes:
       - ./logs/am-webui:/var/log/httpd
+
+  ciba:
+    image: local/ciba-delegated-service:${GIO_AM_VERSION}
+    container_name: gio_am_ciba
+    ports:
+      - 8080:8080

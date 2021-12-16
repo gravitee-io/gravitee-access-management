@@ -145,6 +145,10 @@ jobs:
             # Start AM Gateway
             gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
 
+            # build & start CIBA Delegated Service
+            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
+
             sleep 30
 
             # Wait for AM to be up and running
@@ -160,6 +164,7 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
+
   run_testcontainer_tests:
     executor:
       name: gravitee/cicdmachine
@@ -197,6 +202,24 @@ jobs:
             export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
             export IMAGE_TAG=graviteeio.azurecr.io/am-fapi-resource-api:${TAG}
             mvn -pl gravitee-am-fapi-resource-api package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+
+  publish-ciba-resource-images-azure-registry:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Build & Publish CIBA Delegated Service Docker Image to Azure Registry
+          command: |
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-ciba-resource-api:${TAG}
+            mvn -f gravitee-am-ciba-delegated-service/pom.xml package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
 
@@ -541,3 +564,63 @@ workflows:
             - secrethub/env-export:
                 secret-path: graviteeio/cicd/azure/application-secret
                 var-name: AZURE_APPLICATION_SECRET
+
+#  build_ciba_container:
+#    when:
+#      and:
+#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+#    jobs:
+#      - secrethub:
+#          context:
+#            - cicd-orchestrator
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#      - publish-ciba-resource-images-azure-registry:
+#          context: cicd-orchestrator
+#          pre-steps:
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+#          requires:
+#            - secrethub
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+#  build_fapi_container:
+#    when:
+#      and:
+#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+#    jobs:
+#      - secrethub:
+#          context:
+#            - cicd-orchestrator
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#      - publish-fapi-resource-images-azure-registry:
+#          context: cicd-orchestrator
+#          pre-steps:
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+#          requires:
+#            - secrethub
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/

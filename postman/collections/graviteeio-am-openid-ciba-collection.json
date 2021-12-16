@@ -1,0 +1,2760 @@
+{
+	"info": {
+		"_postman_id": "530f8399-e926-4205-9185-8a870d0c50d0",
+		"name": "Gravitee.io - AM - CIBA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Prepare",
+			"item": [
+				{
+					"name": "PMUtils Lib install for JWT generation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code should be 200\", function () {",
+									"    pm.response.to.have.status(200)",
+									"    pm.globals.set(\"pmlib_code\", responseBody)",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://joolfe.github.io/postman-util-lib/dist/bundle.js",
+							"protocol": "https",
+							"host": [
+								"joolfe",
+								"github",
+								"io"
+							],
+							"path": [
+								"postman-util-lib",
+								"dist",
+								"bundle.js"
+							]
+						},
+						"description": "Load the postman-util-lib from github.io and load into postman global variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Generate admin token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var token = JSON.parse(responseBody);",
+									"pm.environment.set('token', token.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Basic YWRtaW46YWRtaW5hZG1pbg=="
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "adminadmin",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{management_url}}/management/auth/token",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('domain', jsonData.id);",
+									"pm.environment.set('domainHrid', jsonData.hrid);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"ciba\", \n\t\"description\": \"test OpenID Connect Client-Initiated Backchannel Authentication Flow specifications\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Not CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set('standardDomain', jsonData.id);",
+									"pm.environment.set('standardDomainHrid', jsonData.hrid);",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"name\": \"notciba\", \n\t\"description\": \"standard domain without CIBA enabled\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": true,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": true\n    },\n    \"cibaSettings\": {\n      \"authReqExpiry\": 600,\n      \"tokenReqInterval\": 5,\n      \"bindingMessageLength\": 256,\n      \"deviceNotifiers\": [],\n      \"enabled\": true\n    }\n  }\n}\n"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Configure Not CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": true,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": true\n    },\n    \"cibaSettings\": {\n      \"enabled\": false\n    }\n  }\n}\n"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{standardDomain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{standardDomain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									" ",
+									"if (responseCode.code === 201)",
+									"{",
+									"    var data = JSON.parse(responseBody);",
+									"    if (data!==null)",
+									"        {        ",
+									"        console.log(\"creation ok\");",
+									"        }",
+									"}else{",
+									"    pm.expect(responseCode.code).to.be.below(201,\"creation failed\");",
+									"        throw new Error(\"creation failed\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"firstName\":\"Alice\",\"lastName\":\"Wonder\",\"email\":\"alice@acme.fr\",\"username\":\"alice\",\"password\": \"Test123!\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/users",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Start Not CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// wait for sync process",
+									"setTimeout(function(){}, 10000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{standardDomain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{standardDomain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Create CIBA Application",
+			"item": [
+				{
+					"name": "Invalid Requests",
+					"item": [
+						{
+							"name": "CIBA App forbidden on Not CIBA domain",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.eql('CIBA flow not supported');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n        \"redirect_uris\": [\"https://callback\"], \n        \"client_name\": \"CIBA App\", \n        \"application_type\" : \"web\",\n        \"grant_types\": [ \"authorization_code\",\"refresh_token\",\"urn:openid:params:grant-type:ciba\"],         \n        \"response_types\" : [ \n                \"code\", \n                \"code id_token token\", \n                \"code id_token\", \n                \"code token\"\n        ],\n        \"scope\":\"openid\", \n        \"default_acr_values\" : [\"urn:mace:incommon:iap:silver\"],\n        \"token_endpoint_auth_method\" : \"client_secret_basic\",\n        \"backchannel_token_delivery_mode\" : \"poll\",\n        \"backchannel_authentication_request_signing_alg\": \"RS256\",\n        \"client_id\" : \"ciba\",\n        \"client_secret\" : \"ciba\"\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{standardDomainHrid}}/oidc/register",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{standardDomainHrid}}",
+										"oidc",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "No Backend Delivery Mode",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.eql('The backchannel_token_delivery_mode is required for CIBA Flow.');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n        \"redirect_uris\": [\"https://callback\"], \n        \"client_name\": \"CIBA App\", \n        \"application_type\" : \"web\",\n        \"grant_types\": [ \"authorization_code\",\"refresh_token\",\"urn:openid:params:grant-type:ciba\"],         \n        \"response_types\" : [ \n                \"code\", \n                \"code id_token token\", \n                \"code id_token\", \n                \"code token\"\n        ],\n        \"scope\":\"openid\", \n        \"default_acr_values\" : [\"urn:mace:incommon:iap:silver\"],\n        \"token_endpoint_auth_method\" : \"client_secret_basic\",\n        \"backchannel_authentication_request_signing_alg\": \"RS256\",\n        \"client_id\" : \"ciba\",\n        \"client_secret\" : \"ciba\"\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/register",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"oidc",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Not Supporter Backend Delivery Mode",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Redirect uris are missing\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_client_metadata');",
+											"    pm.expect(body.error_description).to.eql('Unsupported backchannel_token_delivery_mode');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n        \"redirect_uris\": [\"https://callback\"], \n        \"client_name\": \"CIBA App\", \n        \"application_type\" : \"web\",\n        \"grant_types\": [ \"authorization_code\",\"refresh_token\",\"urn:openid:params:grant-type:ciba\"],         \n        \"response_types\" : [ \n                \"code\", \n                \"code id_token token\", \n                \"code id_token\", \n                \"code token\"\n        ],\n        \"scope\":\"openid\", \n        \"default_acr_values\" : [\"urn:mace:incommon:iap:silver\"],\n        \"token_endpoint_auth_method\" : \"client_secret_basic\",\n        \"backchannel_token_delivery_mode\" : \"unsupported\",\n        \"backchannel_authentication_request_signing_alg\": \"RS256\",\n        \"client_id\" : \"ciba\",\n        \"client_secret\" : \"ciba\"\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/register",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"oidc",
+										"register"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Valid Requests",
+					"item": [
+						{
+							"name": "Create CIBA App",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 201\", function () {",
+											"    pm.response.to.have.status(201);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.client_name).to.eql('CIBA App');",
+											"    pm.expect(body.application_type).to.eql('web');",
+											"    pm.expect(body.grant_types[0]).to.eql('authorization_code');",
+											"    pm.expect(body.response_types[0]).to.eql('code');",
+											"    ",
+											"    pm.environment.set('cibaAppId', body.id);",
+											"    pm.environment.set('cibaClientId', body.client_id);",
+											"    pm.environment.set('cibaClientSecret', body.client_secret);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"eval(pm.globals.get('pmlib_code'));",
+											"",
+											"// JWK used to sign the RequestObject",
+											"const privateJWK = {\"p\":\"-JXCCIZsXZ5aNZNtwxMRO67QSycjCxuw6VFKUQL8Iavrnk08K7HWVmncqusAdJV9NZUlqzW8eVxjrbGoTn0WIX-sqwlf3-JJS6KY4vHXh_wxLfmyoKXDDbS3xCa0OOwSA1I9VcFHW73ETTCGjVlOdrtwoMLKhGiZLJJxkhGKiVM\",\"kty\":\"RSA\",\"q\":\"wCAgYZjSEVHJghRs29SuhgWHRUY6-R8NHVrxpw937DV1u11ERq6c41ffsGHfiQjyN_I9L_sy2UkmosCWLy_f6cyZHe_ZQseBob2tFVLgUmNIf1fwvLSOpkvmE95yZxAJCmEXkG4gvxMR8I2kVhCHxQIUYy_Gfhi0rVw6hQaKHs8\",\"d\":\"lNBn1je9USaIGDbTDC_xRBISfPajVfykVLNEfUJ5CLTFMyUfv59wecyga2Wlj7pCkn8kgQcHfyr_jGSM8lTD4pDuRMf9KD8zTywHBi2WO6DzbOxMwi3uUvam6aoMTqTrFLidOW05CWTsvbe9Odl9Mcz4zzC7ije-1Lx2iEAtilifluNwBL99UDFZg-3J6amXWZU42fwvmEVDx_aJn2Ehcuf1MhECGyBM4QMRasbCzzYFEaOARhsfOnyJvdTQyfeKIfa7FbSC7R2VqlVesOtxPzL9oc8qcdxE1wZ7l2Ux4J5stGwnpVrfB9dBqWJefdkq4Kv-bMOmvJgDd0NF8yObLQ\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123\",\"qi\":\"jPewLuOPDnZYvli0baqx1dEhVHjThF2OPRMTHP3v1zbWem4lWYkGUoz2qeXnBVejCdFsod9V9M6lTAsBwBj99dyS-y7n1rDuRWd__16KaXMA14OaB7lf-eE6gFah-PN5gVAKo71k1u-J_WOPkfBT-kcLbHHzQFqNPyPiy4HV_Rk\",\"dp\":\"5DVv1S267FNEk6zN9mlZx8Xb2TKLvFXmmruTEz4_Q5Y2D7TuCVsQ33H-MDbfyye1s-xBkaUaavvDUqEnVy8EkypH1RkdGEcAbNxPqQDGkkOWzpNORqcGo12F2yCBEUS_4KauQjzXCsTzIr3quHcFToETi7JoAxiXjlC-zI8n9Js\",\"dq\":\"SPOp-AUkNulcX6VL1IlEn6U3wQky2Wd9_liLC8lm2u1NwBBhHYmuDvFOAdaYH5ujBbVYoIB8xV7uabxBCrfeCRPkTCbH04CX64dvUnp-rSn_3ELTKYRR6jlFquO7gwDmvecyIGiAzKz8EeBmtztdomPww9zfPQA6kt1DZ0Gdbqc\",\"n\":\"uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ\"};",
+											"",
+											"// JWK with PublicKey used to create the CIBA App and validate the RequestObject Signature",
+											"const publicJWK = {\"kty\":\"RSA\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123\",\"n\":\"uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ\"};",
+											"",
+											"pm.environment.set(\"cibaClientJwk\", JSON.stringify(publicJWK) );",
+											"pm.environment.set(\"cibaClientPrivJwk\", privateJWK );",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{ \n        \"redirect_uris\": [\"https://callback\"], \n        \"client_name\": \"CIBA App\", \n        \"application_type\" : \"web\",\n        \"grant_types\": [ \"authorization_code\",\"refresh_token\",\"urn:openid:params:grant-type:ciba\"],         \n        \"response_types\" : [ \n                \"code\", \n                \"code id_token token\", \n                \"code id_token\", \n                \"code token\"\n        ],\n        \"scope\":\"openid profile\", \n        \"default_acr_values\" : [\"urn:mace:incommon:iap:silver\"],\n        \"token_endpoint_auth_method\" : \"client_secret_basic\",\n        \"backchannel_token_delivery_mode\" : \"poll\",\n        \"backchannel_authentication_request_signing_alg\": \"RS256\",\n        \"client_id\" : \"ciba\",\n        \"client_secret\" : \"ciba\",\n        \"jwks\": {\"keys\":[ {{cibaClientJwk}} ]},\n        \"request_object_signing_alg\": \"RS256\"\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/oidc/register",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"oidc",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Default IDP identifier",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Extract default Idp Identifier\", function () {",
+											"    pm.response.to.be.header('Content-Type', 'application/json');",
+											"    var body = pm.response.json();",
+											"    pm.environment.set('defaultIdp', body[0].id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/identities",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"identities"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Enable Default IDP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\"identities\":[\"{{defaultIdp}}\"]}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{cibaAppId}}",
+									"host": [
+										"{{management_url}}"
+									],
+									"path": [
+										"management",
+										"organizations",
+										"{{defaultOrganizationId}}",
+										"environments",
+										"{{defaultEnvironmentId}}",
+										"domains",
+										"{{domain}}",
+										"applications",
+										"{{cibaAppId}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "CIBA Flow",
+			"item": [
+				{
+					"name": "Invalid Requests",
+					"item": [
+						{
+							"name": "Initialize CIBA Authentication Flow - Invalid Scope",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_scope');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid unknown",
+											"type": "text"
+										},
+										{
+											"key": "login_hint",
+											"value": "alice",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Initialize CIBA Authentication Flow - Missing User Hints",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_request');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid profile",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Initialize CIBA Authentication Flow - Multiple Release User Hints",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_request');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid profile",
+											"type": "text"
+										},
+										{
+											"key": "login_hint",
+											"value": "alice",
+											"type": "text"
+										},
+										{
+											"key": "id_token_hint",
+											"value": "somevalue",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Initialize CIBA Authentication Flow - Invalid ACR",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_request');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid profile",
+											"type": "text"
+										},
+										{
+											"key": "login_hint",
+											"value": "alice",
+											"type": "text"
+										},
+										{
+											"key": "acr",
+											"value": "invalid",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Initialize CIBA Authentication Flow - Binding Message Too Long",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
+											"});",
+											"",
+											"pm.test(\"Has default attributes\", function () {",
+											"    var body = pm.response.json();",
+											"    pm.expect(body.error).to.eql('invalid_binding_message');",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "basic",
+									"basic": [
+										{
+											"key": "password",
+											"value": "{{cibaClientSecret}}",
+											"type": "string"
+										},
+										{
+											"key": "username",
+											"value": "{{cibaClientId}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "scope",
+											"value": "openid profile",
+											"type": "text"
+										},
+										{
+											"key": "login_hint",
+											"value": "alice",
+											"type": "text"
+										},
+										{
+											"key": "binding_message",
+											"value": "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+									"host": [
+										"{{gateway_url}}"
+									],
+									"path": [
+										"{{domainHrid}}",
+										"ciba",
+										"authenticate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Valid Flow",
+					"item": [
+						{
+							"name": "Prepare AcceptAll Notification Plugin",
+							"item": [
+								{
+									"name": "Create Always Accept Notifier plugin",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var jsonData = pm.response.json();",
+													"pm.environment.set('cibaNotifierPluginOK', jsonData.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\"type\":\"http-am-authdevice-notifier\",\"configuration\":\"{\\\"endpoint\\\":\\\"{{cibaInternalDelegateServiceBaseUrl}}/notify/accept-all\\\",\\\"headerName\\\":\\\"Authorization\\\",\\\"connectTimeout\\\":5000,\\\"idleTimeout\\\":10000,\\\"maxPoolSize\\\":10}\",\"name\":\"Always OK notifier\"}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8093/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/auth-device-notifiers",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8093",
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"auth-device-notifiers"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Link Notifier Plugin to domain",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 10000);",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": true,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": true\n    },\n    \"cibaSettings\": {\n      \"authReqExpiry\": 600,\n      \"tokenReqInterval\": 5,\n      \"bindingMessageLength\": 256,\n      \"deviceNotifiers\": [{\"id\": \"{{cibaNotifierPluginOK}}\"}],\n      \"enabled\": true\n    }\n  }\n}\n"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Define Domain On Delegate Notifier",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"domainId\": \"{{domain}}\", \n    \"domainCallback\" : \"{{internal_gateway_url}}/{{domainHrid}}/ciba/authenticate/callback\",\n    \"clientId\": \"{{cibaClientId}}\",\n    \"clientSecret\": \"{{cibaClientSecret}}\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{cibaExternalServiceNotifierBaseUrl}}/domains",
+											"host": [
+												"{{cibaExternalServiceNotifierBaseUrl}}"
+											],
+											"path": [
+												"domains"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "With login as Hint",
+							"item": [
+								{
+									"name": "Initialize CIBA Authentication Flow - Login Hint",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.auth_req_id).to.not.null;",
+													"    pm.expect(body.expires_in).to.not.null;",
+													"    pm.expect(body.interval).to.eq(5);",
+													"",
+													"    pm.environment.set('auth_req_id', body.auth_req_id);",
+													"});",
+													"",
+													"// wait 10 sec before new request",
+													"// to be sure that the callback has been done",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "scope",
+													"value": "openid profile",
+													"type": "text"
+												},
+												{
+													"key": "login_hint",
+													"value": "alice",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"ciba",
+												"authenticate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Request CIBA AccessToken",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"AccessToken should be delivered\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.access_token).to.not.null;",
+													"    pm.expect(body.id_token).to.not.null;",
+													"    pm.environment.set('ciba_access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token?auth_req_id={{auth_req_id}}&grant_type=urn:openid:params:grant-type:ciba",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"token"
+											],
+											"query": [
+												{
+													"key": "auth_req_id",
+													"value": "{{auth_req_id}}"
+												},
+												{
+													"key": "grant_type",
+													"value": "urn:openid:params:grant-type:ciba"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get UserProfile using CIBA Access Token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{ciba_access_token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{ciba_access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/userinfo",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oidc",
+												"userinfo"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "With id_token_hint as Hint",
+							"item": [
+								{
+									"name": "Access token - Initiate the flow",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to login page\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    let domain = pm.environment.get(\"domainHrid\");",
+													"    ",
+													"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('cibaClientId'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize?response_type=code id_token&client_id={{cibaClientId}}&redirect_uri=https://callback&scope=openid&nonce=321654987",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"authorize"
+											],
+											"query": [
+												{
+													"key": "response_type",
+													"value": "code id_token"
+												},
+												{
+													"key": "client_id",
+													"value": "{{cibaClientId}}"
+												},
+												{
+													"key": "redirect_uri",
+													"value": "https://callback"
+												},
+												{
+													"key": "scope",
+													"value": "openid"
+												},
+												{
+													"key": "nonce",
+													"value": "321654987"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"type": "text/javascript",
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												]
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"type": "text/javascript",
+												"exec": [
+													""
+												]
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Post login form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "client_id",
+													"value": "{{cibaClientId}}",
+													"type": "text"
+												},
+												{
+													"key": "username",
+													"value": "alice",
+													"type": "text"
+												},
+												{
+													"key": "password",
+													"value": "Test123!",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{action}}",
+											"host": [
+												"{{action}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Follow redirection Consent",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    ",
+													"    pm.response.to.be.header('Content-Length', '0');",
+													"    pm.response.to.have.header('Location');",
+													"    pm.response.to.have.header('Set-Cookie');",
+													"});",
+													"",
+													"pm.test(\"Should be redirected to consent page\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    let domain = pm.environment.get(\"domainHrid\");",
+													"    ",
+													"    tests['Redirect to consent page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/oauth/consent');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Display Consents page",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Should be ok\", function () {",
+													"    pm.response.to.be.ok;",
+													"    ",
+													"    // Extract the XSRF token to send it with the next request.",
+													"    var responseHTML = cheerio.load(pm.response.text());",
+													"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+													"    const action = responseHTML('form').attr('action');",
+													"    pm.environment.set('xsrf', xsrfToken);",
+													"    pm.environment.set('action', action);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Post authorize form",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/x-www-form-urlencoded"
+											}
+										],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "X-XSRF-TOKEN",
+													"value": "{{xsrf}}",
+													"type": "text"
+												},
+												{
+													"key": "scope.openid",
+													"value": "true",
+													"type": "text"
+												},
+												{
+													"key": "user_oauth_approval",
+													"value": "true",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{action}}",
+											"host": [
+												"{{action}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Follow redirection IdToken",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to redirect_uri with authorization_code\", function() {",
+													"    var location = postman.getResponseHeader('Location');",
+													"    tests['Redirect to redirect_uri'] = location.includes('https://callback#');",
+													"    ",
+													"    tests['Contains an id_token param'] = location.includes('id_token=');",
+													"",
+													"    var fragment = location.substr(location.indexOf('#') + 1);",
+													"    var idToken = fragment.split('&').filter(kv => kv.startsWith(\"id_token\")).map(kv => kv.split('=')[1])[0]",
+													" ",
+													"    pm.environment.set('ciba_id_token_hint', idToken);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								},
+								{
+									"name": "Initialize CIBA Authentication Flow - id_token_hint",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.auth_req_id).to.not.null;",
+													"    pm.expect(body.expires_in).to.not.null;",
+													"    pm.expect(body.interval).to.eq(5);",
+													"",
+													"    pm.environment.set('auth_req_id', body.auth_req_id);",
+													"});",
+													"",
+													"// wait 10 sec before new request",
+													"// to be sure that the callback has been done",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "scope",
+													"value": "openid profile",
+													"type": "text"
+												},
+												{
+													"key": "id_token_hint",
+													"value": "{{ciba_id_token_hint}}",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"ciba",
+												"authenticate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Request CIBA AccessToken",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"AccessToken should be delivered\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.access_token).to.not.null;",
+													"    pm.expect(body.id_token).to.not.null;",
+													"    pm.environment.set('ciba_access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token?auth_req_id={{auth_req_id}}&grant_type=urn:openid:params:grant-type:ciba",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"token"
+											],
+											"query": [
+												{
+													"key": "auth_req_id",
+													"value": "{{auth_req_id}}"
+												},
+												{
+													"key": "grant_type",
+													"value": "urn:openid:params:grant-type:ciba"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get UserProfile using CIBA Access Token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{ciba_access_token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{ciba_access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/userinfo",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oidc",
+												"userinfo"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Logout user",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/logout",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"logout"
+											]
+										},
+										"description": "The client does not have a redirect_uri define"
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "With login as Hint - RequestObject",
+							"item": [
+								{
+									"name": "Initialize CIBA Authentication Flow - Login Hint",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.auth_req_id).to.not.null;",
+													"    pm.expect(body.expires_in).to.not.null;",
+													"    pm.expect(body.interval).to.eq(5);",
+													"",
+													"    pm.environment.set('auth_req_id', body.auth_req_id);",
+													"});",
+													"",
+													"// wait 10 sec before new request",
+													"// to be sure that the callback has been done",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													"",
+													"// Create and Sign RequestObject (exp, iat, jti generated automatically by the lib)",
+													"const currentTime = +new Date(); // the current time in milliseconds",
+													"const header = {\"alg\": \"RS256\"};",
+													"const payload = { ",
+													"    aud: pm.environment.get('gateway_url')+'/'+pm.environment.get('domainHrid')+'/oidc', ",
+													"    iss: pm.environment.get('cibaClientId'), ",
+													"    nbf: currentTime,",
+													"    scope: 'openid profile', ",
+													"    login_hint: 'alice' };",
+													"const durationInSec = 3600;",
+													"",
+													"const requestObject = pmlib.jwtSign(pm.environment.get('cibaClientPrivJwk'), payload, header, durationInSec, 'RS256');",
+													"",
+													"pm.environment.set(\"cibaRequestObject\", requestObject);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "request",
+													"value": "{{cibaRequestObject}}",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"ciba",
+												"authenticate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Request CIBA AccessToken",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"AccessToken should be delivered\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.access_token).to.not.null;",
+													"    pm.expect(body.id_token).to.not.null;",
+													"    pm.environment.set('ciba_access_token', body.access_token);",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token?auth_req_id={{auth_req_id}}&grant_type=urn:openid:params:grant-type:ciba",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"token"
+											],
+											"query": [
+												{
+													"key": "auth_req_id",
+													"value": "{{auth_req_id}}"
+												},
+												{
+													"key": "grant_type",
+													"value": "urn:openid:params:grant-type:ciba"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Get UserProfile using CIBA Access Token",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{ciba_access_token}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "GET",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "{{ciba_access_token}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oidc/userinfo",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oidc",
+												"userinfo"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Prepare RejectAll Notification Plugin",
+							"item": [
+								{
+									"name": "Create Always Reject Notifier plugin",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 201\", function () {",
+													"    pm.response.to.have.status(201);",
+													"});",
+													"",
+													"var jsonData = pm.response.json();",
+													"pm.environment.set('cibaNotifierPluginKO', jsonData.id);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\"type\":\"http-am-authdevice-notifier\",\"configuration\":\"{\\\"endpoint\\\":\\\"{{cibaInternalDelegateServiceBaseUrl}}/notify/reject-all\\\",\\\"headerName\\\":\\\"Authorization\\\",\\\"connectTimeout\\\":5000,\\\"idleTimeout\\\":10000,\\\"maxPoolSize\\\":10}\",\"name\":\"Always Reject notifier\"}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:8093/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/auth-device-notifiers",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "8093",
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}",
+												"auth-device-notifiers"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Link Notifier Plugin to domain",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"// wait for sync process",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "PATCH",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Authorization",
+												"value": "Bearer {{token}}"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"oidc\": {\n    \"clientRegistrationSettings\": {\n      \"allowLocalhostRedirectUri\": true,\n      \"allowHttpSchemeRedirectUri\": true,\n      \"allowWildCardRedirectUri\": true,\n      \"isDynamicClientRegistrationEnabled\": true,\n      \"isOpenDynamicClientRegistrationEnabled\": true\n    },\n    \"cibaSettings\": {\n      \"authReqExpiry\": 600,\n      \"tokenReqInterval\": 5,\n      \"bindingMessageLength\": 256,\n      \"deviceNotifiers\": [{\"id\": \"{{cibaNotifierPluginKO}}\"}],\n      \"enabled\": true\n    }\n  }\n}\n"
+										},
+										"url": {
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+											"host": [
+												"{{management_url}}"
+											],
+											"path": [
+												"management",
+												"organizations",
+												"{{defaultOrganizationId}}",
+												"environments",
+												"{{defaultEnvironmentId}}",
+												"domains",
+												"{{domain}}"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Request Rejected by User",
+							"item": [
+								{
+									"name": "Initialize CIBA Authentication Flow - Login Hint",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Has default attributes\", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.auth_req_id).to.not.null;",
+													"    pm.expect(body.expires_in).to.not.null;",
+													"    pm.expect(body.interval).to.eq(5);",
+													"",
+													"    pm.environment.set('auth_req_id', body.auth_req_id);",
+													"});",
+													"",
+													"// wait 10 sec before new request",
+													"// to be sure that the callback has been done",
+													"setTimeout(function(){}, 10000);"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "scope",
+													"value": "openid profile",
+													"type": "text"
+												},
+												{
+													"key": "login_hint",
+													"value": "alice",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/ciba/authenticate",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"ciba",
+												"authenticate"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Request CIBA AccessToken",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 403\", function () {",
+													"    pm.response.to.have.status(403);",
+													"});",
+													"",
+													"pm.test(\"AccessToken should not be delivered because user has rejected the request \", function () {",
+													"    var body = pm.response.json();",
+													"    pm.expect(body.error).to.eq(\"access_denied\");",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"auth": {
+											"type": "basic",
+											"basic": [
+												{
+													"key": "password",
+													"value": "{{cibaClientSecret}}",
+													"type": "string"
+												},
+												{
+													"key": "username",
+													"value": "{{cibaClientId}}",
+													"type": "string"
+												}
+											]
+										},
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{gateway_url}}/{{domainHrid}}/oauth/token?auth_req_id={{auth_req_id}}&grant_type=urn:openid:params:grant-type:ciba",
+											"host": [
+												"{{gateway_url}}"
+											],
+											"path": [
+												"{{domainHrid}}",
+												"oauth",
+												"token"
+											],
+											"query": [
+												{
+													"key": "auth_req_id",
+													"value": "{{auth_req_id}}"
+												},
+												{
+													"key": "grant_type",
+													"value": "urn:openid:params:grant-type:ciba"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Cleanup",
+			"item": [
+				{
+					"name": "Delete CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Not CIBA domain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{standardDomain}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{standardDomain}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

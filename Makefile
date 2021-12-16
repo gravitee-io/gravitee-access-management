@@ -143,6 +143,7 @@ endif
 build: # Build docker images (require install to be run before)
 	cd .working/gateway && docker build --build-arg GRAVITEEAM_VERSION=$(GIO_AM_VERSION) -t $(GIO_AM_GATEWAY_IMAGE):$(GIO_AM_VERSION) .
 	cd .working/management-api && docker build --build-arg GRAVITEEAM_VERSION=$(GIO_AM_VERSION) -t $(GIO_AM_MANAGEMENT_API_IMAGE):$(GIO_AM_VERSION) .
+	cd gravitee-am-ciba-delegated-service && mvn compile com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild -Dimage=local/ciba-delegated-service:$(GIO_AM_VERSION)
 
 env: # Set up .env file for gravitee docker-compose
 	@mkdir -p .working/compose
@@ -155,12 +156,12 @@ network: # Create and add an external network to gravitee access management dock
 	@docker network inspect $(GIO_AM_NETWORK) &>/dev/null || docker network create --driver bridge $(GIO_AM_NETWORK)
 
 run: build env network ## Create .env and network then start gravitee access management
-	@cd .working/compose; docker-compose up -d gateway management
+	@cd .working/compose; docker-compose up -d gateway management ciba
 	@echo "To start and stop, use \"make stop; make start\" command"
 
 start: ## Start gravitee Access Management containers
 ifneq ($(wildcard .working/compose),)
-	@cd .working/compose; docker-compose start mongodb gateway management
+	@cd .working/compose; docker-compose start mongodb gateway management ciba
 else
 	@echo "Please use \"make run\" for the first time."
 endif
@@ -211,6 +212,9 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-vhost-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-environment-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-self-account-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
+    # Run CIBA tests, note that if this collection is executed against the docker-compose the docker.json must be used.
+    # (Delegated service and GW will see each other using the container names and not on localhost)
+	@newman run postman/collections/graviteeio-am-openid-ciba-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 
 oidctest-run: oidctest-install oidctest-start ## Run openid-certification tools, using same docker network
 
