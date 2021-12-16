@@ -30,6 +30,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 import java.util.stream.Stream;
@@ -41,6 +43,7 @@ import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
  * @author GraviteeSource Team
  */
 public class AuthenticationRequestParametersHandler implements Handler<RoutingContext> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestParametersHandler.class);
 
     private Domain domain;
     private JWSService jwsService;
@@ -65,22 +68,24 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
         final OpenIDProviderMetadata openIDProviderMetadata = context.get(PROVIDER_METADATA_CONTEXT_KEY);
         final Client client = context.get(CLIENT_CONTEXT_KEY);
 
-        validateScopes(request);
+        try {
+            validateScopes(request);
+            validateAcrValue(openIDProviderMetadata, request);
+            validateHints(request);
+            validateBindingMessage(request);
+            validateUserCode(client, request);
 
-        validateAcrValue(openIDProviderMetadata, request);
+            new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService)
+                    .resolve(request, client)
+                    .subscribe(requestValidated -> {
+                        context.put(CIBA_AUTH_REQUEST_KEY, requestValidated);
+                        context.next();
+                    }, context::fail);
 
-        validateHints(request);
-
-        validateBindingMessage(request);
-
-        validateUserCode(client, request);
-
-        new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService)
-                .resolve(request, client)
-                .subscribe(requestValidated -> {
-                    context.put(CIBA_AUTH_REQUEST_KEY, requestValidated);
-                    context.next();
-                }, context::fail);
+        } catch (Exception e) {
+            LOGGER.debug("CIBA Authentication Request parameter validation fails due to : {}", e.getMessage());
+            context.fail(e);
+        }
     }
 
     protected CibaAuthenticationRequest createCibaRequest(RoutingContext context) {

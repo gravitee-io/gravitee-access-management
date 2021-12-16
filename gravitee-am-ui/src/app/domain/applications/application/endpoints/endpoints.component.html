@@ -104,7 +104,7 @@
       </div><div *ngIf="cibaEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Backchannel Authentication endpoint</mat-label>
-          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('//ciba/authenticate')" disabled>
+          <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" disabled>
           <mat-hint>The Client Initiated Backchannel Authentication endpoint used to initiate an out-of-band authentication of the end-user</mat-hint>
           <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('//ciba/authenticate')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
         </mat-form-field>

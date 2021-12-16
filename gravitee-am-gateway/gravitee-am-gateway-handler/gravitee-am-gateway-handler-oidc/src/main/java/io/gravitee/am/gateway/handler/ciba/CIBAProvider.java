@@ -51,7 +51,7 @@ import org.springframework.core.env.Environment;
  */
 public class CIBAProvider extends AbstractService<ProtocolProvider> implements ProtocolProvider {
 
-    public static final String CIBA_PATH = "/ciba";
+    public static final String CIBA_PATH = "/oidc/ciba";
 
     public static final String AUTHENTICATION_ENDPOINT = "/authenticate";
     public static final String AUTHENTICATION_CALLBACK_ENDPOINT = "/authenticate/callback";

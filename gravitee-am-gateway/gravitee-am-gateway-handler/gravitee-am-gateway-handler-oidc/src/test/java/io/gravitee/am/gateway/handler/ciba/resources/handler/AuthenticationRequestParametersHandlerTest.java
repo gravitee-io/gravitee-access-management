@@ -84,7 +84,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
         when(domain.getOidc()).thenReturn(OIDCSettings.defaultSettings());
 
         handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService);
-        router.route(HttpMethod.POST, "/ciba/authenticate")
+        router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
                 .handler(handlerUnderTest)
                 .handler(rc -> rc.response().end())
                 .failureHandler(rc -> rc.response().setStatusCode(400).end());

@@ -71,7 +71,7 @@ public class AuthenticationRequestAcknowledgeHandler implements Handler<RoutingC
             final List<CIBASettingNotifier> deviceNotifiers = this.domain.getOidc().getCibaSettings().getDeviceNotifiers();
             if (CollectionUtils.isEmpty(deviceNotifiers)) {
                 LOGGER.warn("CIBA Authentication Request can't be processed without device notifier configured");
-                context.fail(new InvalidRequestException("Missing authentication request"));
+                context.fail(new InvalidRequestException("No Device notifier configure for the domain"));
                 return;
             }
 

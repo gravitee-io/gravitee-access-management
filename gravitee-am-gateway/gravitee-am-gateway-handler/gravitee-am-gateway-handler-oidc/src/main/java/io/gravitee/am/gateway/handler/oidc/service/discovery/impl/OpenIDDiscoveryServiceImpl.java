@@ -55,7 +55,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
     private static final String INTROSPECTION_ENDPOINT = "/oauth/introspect";
     private static final String ENDSESSION_ENDPOINT = "/logout";
     private static final String REGISTRATION_ENDPOINT = "/oidc/register";
-    private static final String CIBA_AUTHENTICATION_ENDPOINT = "/ciba/authenticate";
+    private static final String CIBA_AUTHENTICATION_ENDPOINT = "/oidc/ciba/authenticate";
     private static final String OIDC_ENDPOINT = "/oidc";
     private static final String REQUEST_OBJECT_ENDPOINT = "/oidc/ros";
     public static final List<String> BRAZIL_CLAIMS = Arrays.asList("cpf", "cnpj");
@@ -181,43 +181,41 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
             openIDProviderMetadata.setBackchannelUserCodeSupported(false);
         }
 
-        if (secured && !clientAuth.equalsIgnoreCase("none")) {
-            final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
-            openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(mtlsEnabled);
+        final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
+        openIDProviderMetadata.setTlsClientCertificateBoundAccessTokens(mtlsEnabled);
 
-            if (mtlsEnabled && this.mtlsAliasEndpoints != null && !this.mtlsAliasEndpoints.isEmpty()) {
-                MtlsEndpointAliases aliases = new MtlsEndpointAliases();
+        if (mtlsEnabled && this.mtlsAliasEndpoints != null && !this.mtlsAliasEndpoints.isEmpty()) {
+            MtlsEndpointAliases aliases = new MtlsEndpointAliases();
 
-                final String endpoint = getMtlsAliasFor(ConstantKeys.HTTP_SSL_ALIASES_BASE_URL, basePath);
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_TOKEN)) {
-                    aliases.setTokenEndpoint(getEndpointAbsoluteURL(endpoint, TOKEN_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_AUTHORIZATION)) {
-                    aliases.setAuthorizationEndpoint(getEndpointAbsoluteURL(endpoint, AUTHORIZATION_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION)) {
-                    aliases.setEndSessionEndpoint(getEndpointAbsoluteURL(endpoint, ENDSESSION_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION)) {
-                    aliases.setIntrospectionEndpoint(getEndpointAbsoluteURL(endpoint, INTROSPECTION_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_PAR)) {
-                    aliases.setParEndpoint(getEndpointAbsoluteURL(endpoint, PAR_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REGISTRATION)) {
-                    aliases.setRegistrationEndpoint(getEndpointAbsoluteURL(endpoint, REGISTRATION_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION)) {
-                    aliases.setRevocationEndpoint(getEndpointAbsoluteURL(endpoint, REVOCATION_ENDPOINT));
-                }
-                if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_USERINFO)) {
-                    aliases.setUserinfoEndpoint(getEndpointAbsoluteURL(endpoint, USERINFO_ENDPOINT));
-                }
-                if (domain.useCiba() && isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_CIBA)) {
-                    aliases.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(endpoint, CIBA_AUTHENTICATION_ENDPOINT));
-                }
-                openIDProviderMetadata.setMtlsAliases(aliases);
+            final String endpoint = getMtlsAliasFor(ConstantKeys.HTTP_SSL_ALIASES_BASE_URL, basePath);
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_TOKEN)) {
+                aliases.setTokenEndpoint(getEndpointAbsoluteURL(endpoint, TOKEN_ENDPOINT));
             }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_AUTHORIZATION)) {
+                aliases.setAuthorizationEndpoint(getEndpointAbsoluteURL(endpoint, AUTHORIZATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_END_SESSION)) {
+                aliases.setEndSessionEndpoint(getEndpointAbsoluteURL(endpoint, ENDSESSION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_INTROSPECTION)) {
+                aliases.setIntrospectionEndpoint(getEndpointAbsoluteURL(endpoint, INTROSPECTION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_PAR)) {
+                aliases.setParEndpoint(getEndpointAbsoluteURL(endpoint, PAR_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REGISTRATION)) {
+                aliases.setRegistrationEndpoint(getEndpointAbsoluteURL(endpoint, REGISTRATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_REVOCATION)) {
+                aliases.setRevocationEndpoint(getEndpointAbsoluteURL(endpoint, REVOCATION_ENDPOINT));
+            }
+            if (isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_USERINFO)) {
+                aliases.setUserinfoEndpoint(getEndpointAbsoluteURL(endpoint, USERINFO_ENDPOINT));
+            }
+            if (domain.useCiba() && isMtlsAliasEnabledFor(ConstantKeys.HTTP_SSL_ALIASES_ENDPOINTS_CIBA)) {
+                aliases.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(endpoint, CIBA_AUTHENTICATION_ENDPOINT));
+            }
+            openIDProviderMetadata.setMtlsAliases(aliases);
         }
 
         return openIDProviderMetadata;
