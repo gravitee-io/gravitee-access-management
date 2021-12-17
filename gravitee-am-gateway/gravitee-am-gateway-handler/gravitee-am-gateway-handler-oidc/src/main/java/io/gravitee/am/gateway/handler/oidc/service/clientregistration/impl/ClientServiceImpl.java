@@ -74,23 +74,23 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> create(Client client) {
         LOGGER.debug("Create a client {} for domain {}", client, client.getDomain());
 
-        if(client.getDomain()==null || client.getDomain().trim().isEmpty()) {
+        if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
         boolean clientIdGenerated = false;
         client.setId(client.getId() != null ? client.getId() : RandomString.generate());
         // client_id & client_secret may be already informed if created through UI
-        if(client.getClientId()==null) {
+        if (client.getClientId() == null) {
             client.setClientId(SecureRandomString.generate());
             clientIdGenerated = true;
         }
-        if(client.getClientSecret()==null || client.getClientSecret().trim().isEmpty()) {
+        if (client.getClientSecret() == null || client.getClientSecret().trim().isEmpty()) {
             client.setClientSecret(SecureRandomString.generate());
         }
-        if(client.getClientName()==null || client.getClientName().trim().isEmpty()) {
+        if (client.getClientName() == null || client.getClientName().trim().isEmpty()) {
 
-            if(clientIdGenerated) {
+            if (clientIdGenerated) {
                 client.setClientName(DEFAULT_CLIENT_NAME);
             } else {
                 // ClientId has been provided by user, reuse it as clientName.
@@ -114,7 +114,7 @@ public class ClientServiceImpl implements ClientService {
     public Single<Client> update(Client client) {
         LOGGER.debug("Update client {} for domain {}", client.getClientId(), client.getDomain());
 
-        if(client.getDomain()==null || client.getDomain().trim().isEmpty()) {
+        if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on client"));
         }
 
@@ -180,13 +180,13 @@ public class ClientServiceImpl implements ClientService {
         }
         // check application type
         switch (client.getApplicationType()) {
-            case io.gravitee.am.common.oidc.ApplicationType.WEB :
+            case io.gravitee.am.common.oidc.ApplicationType.WEB:
                 return ApplicationType.WEB;
-            case io.gravitee.am.common.oidc.ApplicationType.NATIVE :
+            case io.gravitee.am.common.oidc.ApplicationType.NATIVE:
                 return ApplicationType.NATIVE;
-            case io.gravitee.am.common.oidc.ApplicationType.BROWSER :
+            case io.gravitee.am.common.oidc.ApplicationType.BROWSER:
                 return ApplicationType.BROWSER;
-            default :
+            default:
                 return ApplicationType.SERVICE;
         }
     }
