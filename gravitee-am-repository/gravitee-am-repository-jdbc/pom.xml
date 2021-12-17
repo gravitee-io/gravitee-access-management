@@ -45,7 +45,7 @@
         <jdbc-mysql.version>8.0.17</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
-        <dozer.version>6.5.0</dozer.version>
+        <dozer.version>6.5.2</dozer.version>
 
         <testcontainers.version>1.15.1</testcontainers.version>
         <liquibase.version>4.4.3</liquibase.version>
