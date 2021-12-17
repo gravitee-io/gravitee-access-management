@@ -444,7 +444,7 @@ public class DynamicClientRegistrationRequest {
 
     public Optional<List<String>> getScope() {
         if (this.scope == null) return null; //Keep null to avoid patch...
-        if (!this.scope.isPresent() || this.scope.get().trim().isEmpty()) {
+        if (this.scope.isEmpty() || this.scope.get().trim().isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(Arrays.asList(scope.get().split(SCOPE_DELIMITER)));

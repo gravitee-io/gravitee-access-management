@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a71fb0bc-c2a9-447a-91ee-6444d68197f6",
+		"_postman_id": "b16190ea-dddf-468c-8ed6-18ee8fbd2620",
 		"name": "Gravitee.io - AM - Openid DCR - app version",
 		"description": "Test openid connect dynamc client registration specifications: https://openid.net/specs/openid-connect-registration-1_0.html",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -16748,10 +16748,7 @@
 													"    pm.expect(body.registration_access_token).to.not.eql(pm.environment.get('registrationAccessToken'));",
 													"    pm.environment.set('registrationAccessToken', body.registration_access_token);",
 													"    pm.environment.set('registrationClientUri', body.registration_client_uri);",
-													"});",
-													"",
-													"// wait for sync process",
-													"setTimeout(function(){}, 5000);"
+													"});"
 												],
 												"type": "text/javascript"
 											}

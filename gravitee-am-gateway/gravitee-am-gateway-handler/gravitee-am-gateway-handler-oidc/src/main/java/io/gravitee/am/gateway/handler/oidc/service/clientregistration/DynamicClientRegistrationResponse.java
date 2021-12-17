@@ -24,9 +24,9 @@ import io.gravitee.am.model.oidc.Client;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
+import static java.util.stream.Collectors.joining;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -638,7 +638,7 @@ public class DynamicClientRegistrationResponse {
         response.setDefaultACRvalues(client.getDefaultACRvalues());
         response.setInitiateLoginUri(client.getInitiateLoginUri());
         response.setRequestUris(client.getRequestUris());
-        response.setScope(client.getScopeSettings()!=null? client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.joining(SCOPE_DELIMITER)) : null);
+        response.setScope(extractScope(client));
         response.setSoftwareId(client.getSoftwareId());
         response.setSoftwareVersion(client.getSoftwareVersion());
         response.setSoftwareStatement(client.getSoftwareStatement());
@@ -658,5 +658,13 @@ public class DynamicClientRegistrationResponse {
         response.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
 
         return response;
+    }
+
+    private static String extractScope(Client client) {
+        if (client.getScopeSettings() == null){
+            return null;
+        }
+        final String scope = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(joining(SCOPE_DELIMITER));
+        return scope.trim().isEmpty() ? null : scope;
     }
 }
