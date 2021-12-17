@@ -87,7 +87,7 @@ jobs:
             - gravit33bot
   build:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
     resource_class: xlarge
     steps:
       - attach_workspace:
@@ -184,7 +184,7 @@ jobs:
 
   publish-fapi-resource-images-azure-registry:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
     resource_class: small
     steps:
       - checkout
@@ -202,7 +202,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: circleci/openjdk:11.0.3-jdk-stretch
+      - image: circleci/openjdk:11.0.6-jdk-stretch
     resource_class: small
     steps:
       - checkout
