@@ -61,7 +61,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.logout.LogoutCallbackParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.PostLoginRememberDeviceHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
@@ -80,6 +79,7 @@ import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.CSRFHandler;
 import io.vertx.reactivex.ext.web.handler.StaticHandler;
@@ -138,9 +138,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private PasswordValidator passwordValidator;
 
     @Autowired
-    private AuditService auditService;
-
-    @Autowired
     private ClientSyncService clientSyncService;
 
     @Autowired
@@ -155,9 +152,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private PolicyChainHandler policyChainHandler;
@@ -197,6 +191,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private WebClient webClient;
 
     @Override
     protected void doStart() throws Exception {
@@ -261,11 +258,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // logout route
         rootRouter.route(PATH_LOGOUT)
-                .handler(new LogoutEndpoint(domain, tokenService, auditService, clientSyncService, jwtService, authenticationFlowContextService, identityProviderManager, certificateManager));
-
+                .handler(new LogoutEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, identityProviderManager, certificateManager, webClient));
         rootRouter.route(PATH_LOGOUT_CALLBACK)
-                .handler(new LogoutCallbackParseHandler(clientSyncService, jwtService, certificateManager))
-                .handler(new LogoutCallbackEndpoint(domain, tokenService, auditService, authenticationFlowContextService));
+                .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
 
         // SSO/Social login route
         Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));

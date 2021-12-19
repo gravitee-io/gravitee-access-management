@@ -15,11 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
-
-import java.time.LocalDateTime;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

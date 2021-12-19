@@ -34,6 +34,8 @@ public interface UserService {
 
     Maybe<UserToken> verifyToken(String token);
 
+    Single<UserToken> extractSessionFromIdToken(String idToken);
+
     Single<RegistrationResponse> register(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
     Single<RegistrationResponse> confirmRegistration(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
@@ -41,6 +43,8 @@ public interface UserService {
     Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
     Completable forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
+
+    Completable logout(User user, boolean invalidateTokens, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
