@@ -31,11 +31,13 @@ public class ExtensionGrantAuditBuilder extends ManagementAuditBuilder<Extension
     }
 
     public ExtensionGrantAuditBuilder extensionGrant(ExtensionGrant extensionGrant) {
-        if (EventType.EXTENSION_GRANT_CREATED.equals(getType()) || EventType.EXTENSION_GRANT_UPDATED.equals(getType())) {
-            setNewValue(extensionGrant);
+        if (extensionGrant != null) {
+            if (EventType.EXTENSION_GRANT_CREATED.equals(getType()) || EventType.EXTENSION_GRANT_UPDATED.equals(getType())) {
+                setNewValue(extensionGrant);
+            }
+            domain(extensionGrant.getDomain());
+            setTarget(extensionGrant.getId(), EntityType.EXTENSION_GRANT, null, extensionGrant.getName(), ReferenceType.DOMAIN, extensionGrant.getDomain());
         }
-        domain(extensionGrant.getDomain());
-        setTarget(extensionGrant.getId(), EntityType.EXTENSION_GRANT, null, extensionGrant.getName(), ReferenceType.DOMAIN, extensionGrant.getDomain());
         return this;
     }
 }

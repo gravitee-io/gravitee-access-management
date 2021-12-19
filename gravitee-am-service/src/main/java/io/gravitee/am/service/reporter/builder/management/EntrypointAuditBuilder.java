@@ -19,7 +19,6 @@ import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Tag;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -33,13 +32,15 @@ public class EntrypointAuditBuilder extends ManagementAuditBuilder<EntrypointAud
     }
 
     public EntrypointAuditBuilder entrypoint(Entrypoint entrypoint) {
-        if (EventType.ENTRYPOINT_CREATED.equals(getType()) || EventType.ENTRYPOINT_UPDATED.equals(getType())) {
-            setNewValue(entrypoint);
+        if (entrypoint != null) {
+            if (EventType.ENTRYPOINT_CREATED.equals(getType()) || EventType.ENTRYPOINT_UPDATED.equals(getType())) {
+                setNewValue(entrypoint);
+            }
+
+            referenceId(entrypoint.getOrganizationId());
+
+            setTarget(entrypoint.getId(), EntityType.ENTRYPOINT, null, entrypoint.getName(), ReferenceType.ORGANIZATION, entrypoint.getOrganizationId());
         }
-
-        referenceId(entrypoint.getOrganizationId());
-
-        setTarget(entrypoint.getId(), EntityType.ENTRYPOINT, null, entrypoint.getName(), ReferenceType.ORGANIZATION, entrypoint.getOrganizationId());
         return this;
     }
 }

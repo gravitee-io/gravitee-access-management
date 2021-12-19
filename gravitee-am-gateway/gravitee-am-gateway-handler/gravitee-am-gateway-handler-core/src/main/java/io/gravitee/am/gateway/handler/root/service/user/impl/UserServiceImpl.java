@@ -45,7 +45,6 @@ import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.EmailValidator;
 import io.gravitee.am.service.validators.UserValidator;
@@ -316,8 +315,8 @@ public class UserServiceImpl implements UserService {
                 })
                 .flatMap(userService::enhance)
                 .map(user1 -> new ResetPasswordResponse(user1, accountSettings != null ? accountSettings.getRedirectUriAfterResetPassword() : null, accountSettings != null ? accountSettings.isAutoLoginAfterResetPassword() : false))
-                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(user.getClient()).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
+                .doOnSuccess(response -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
     }
 
     @Override

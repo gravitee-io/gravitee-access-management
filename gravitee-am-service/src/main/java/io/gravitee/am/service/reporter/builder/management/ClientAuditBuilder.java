@@ -31,11 +31,13 @@ public class ClientAuditBuilder extends ManagementAuditBuilder<ClientAuditBuilde
     }
 
     public ClientAuditBuilder client(Client client) {
-        if (EventType.CLIENT_CREATED.equals(getType()) || EventType.CLIENT_UPDATED.equals(getType())) {
-            setNewValue(client);
+        if (client != null) {
+            if (EventType.CLIENT_CREATED.equals(getType()) || EventType.CLIENT_UPDATED.equals(getType())) {
+                setNewValue(client);
+            }
+            domain(client.getDomain());
+            setTarget(client.getId(), EntityType.CLIENT, client.getClientId(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
         }
-        domain(client.getDomain());
-        setTarget(client.getId(), EntityType.CLIENT, client.getClientId(), client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
         return this;
     }
 }

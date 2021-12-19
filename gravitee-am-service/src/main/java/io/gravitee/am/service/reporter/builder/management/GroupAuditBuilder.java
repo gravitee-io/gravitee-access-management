@@ -31,16 +31,18 @@ public class GroupAuditBuilder extends ManagementAuditBuilder<GroupAuditBuilder>
     }
 
     public GroupAuditBuilder group(Group group) {
-        if (EventType.GROUP_CREATED.equals(getType())
-                || EventType.GROUP_UPDATED.equals(getType())
-                || EventType.GROUP_ROLES_ASSIGNED.equals(getType())) {
-            setNewValue(group);
+        if (group != null) {
+            if (EventType.GROUP_CREATED.equals(getType())
+                    || EventType.GROUP_UPDATED.equals(getType())
+                    || EventType.GROUP_ROLES_ASSIGNED.equals(getType())) {
+                setNewValue(group);
+            }
+
+            referenceType(group.getReferenceType());
+            referenceId(group.getReferenceId());
+
+            setTarget(group.getId(), EntityType.GROUP, null, group.getName(), group.getReferenceType(), group.getReferenceId());
         }
-
-        referenceType(group.getReferenceType());
-        referenceId(group.getReferenceId());
-
-        setTarget(group.getId(), EntityType.GROUP, null, group.getName(), group.getReferenceType(), group.getReferenceId());
         return this;
     }
 }

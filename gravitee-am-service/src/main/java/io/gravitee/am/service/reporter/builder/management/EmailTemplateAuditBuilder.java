@@ -31,14 +31,16 @@ public class EmailTemplateAuditBuilder extends ManagementAuditBuilder<EmailTempl
     }
 
     public EmailTemplateAuditBuilder email(Email email) {
-        if (EventType.EMAIL_TEMPLATE_CREATED.equals(getType()) || EventType.EMAIL_TEMPLATE_UPDATED.equals(getType())) {
-            setNewValue(email);
+        if (email != null) {
+            if (EventType.EMAIL_TEMPLATE_CREATED.equals(getType()) || EventType.EMAIL_TEMPLATE_UPDATED.equals(getType())) {
+                setNewValue(email);
+            }
+
+            referenceType(email.getReferenceType());
+            referenceId(email.getReferenceId());
+
+            setTarget(email.getId(), EntityType.EMAIL, null, email.getTemplate(), email.getReferenceType(), email.getReferenceId());
         }
-
-        referenceType(email.getReferenceType());
-        referenceId(email.getReferenceId());
-
-        setTarget(email.getId(), EntityType.EMAIL, null, email.getTemplate(), email.getReferenceType(), email.getReferenceId());
         return this;
     }
 }

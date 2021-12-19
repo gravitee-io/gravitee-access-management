@@ -31,15 +31,17 @@ public class IdentityProviderAuditBuilder extends ManagementAuditBuilder<Identit
     }
 
     public IdentityProviderAuditBuilder identityProvider(IdentityProvider identityProvider) {
-        if (EventType.IDENTITY_PROVIDER_CREATED.equals(getType()) || EventType.IDENTITY_PROVIDER_UPDATED.equals(getType())) {
-            setNewValue(identityProvider);
+        if (identityProvider != null) {
+            if (EventType.IDENTITY_PROVIDER_CREATED.equals(getType()) || EventType.IDENTITY_PROVIDER_UPDATED.equals(getType())) {
+                setNewValue(identityProvider);
+            }
+
+            referenceType(identityProvider.getReferenceType());
+            referenceId(identityProvider.getReferenceId());
+
+            setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(),
+                    identityProvider.getReferenceType(), identityProvider.getReferenceId());
         }
-
-        referenceType(identityProvider.getReferenceType());
-        referenceId(identityProvider.getReferenceId());
-
-        setTarget(identityProvider.getId(), EntityType.IDENTITY_PROVIDER, null, identityProvider.getName(),
-                identityProvider.getReferenceType(), identityProvider.getReferenceId());
         return this;
     }
 }
