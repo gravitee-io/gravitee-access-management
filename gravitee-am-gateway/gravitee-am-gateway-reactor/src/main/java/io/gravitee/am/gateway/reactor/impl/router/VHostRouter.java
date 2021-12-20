@@ -24,12 +24,10 @@ import io.vertx.ext.web.AllowForwardHeaders;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.reactivex.core.MultiMap;
 
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -136,6 +134,21 @@ public class VHostRouter implements Router {
         } else {
             context.put(CONTEXT_PATH, contextPath);
         }
+    }
+
+    @Override
+    public Router putMetadata(String key, Object value) {
+        return null;
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return null;
+    }
+
+    @Override
+    public <T> T getMetadata(String key) {
+        return Router.super.getMetadata(key);
     }
 
     @Override

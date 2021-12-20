@@ -68,7 +68,7 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>1.0</gravitee-bom.version>
+        <gravitee-bom.version>1.5-SNAPSHOT</gravitee-bom.version>
         <gravitee-common.version>1.23.0</gravitee-common.version>
         <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
         <gravitee-node.version>1.18.0</gravitee-node.version>
@@ -404,15 +404,6 @@
 
     <build>
         <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.1</version>
-            <configuration>
-                <source>${jdk.version}</source>
-                <target>${jdk.version}</target>
-            </configuration>
-        </plugin>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>

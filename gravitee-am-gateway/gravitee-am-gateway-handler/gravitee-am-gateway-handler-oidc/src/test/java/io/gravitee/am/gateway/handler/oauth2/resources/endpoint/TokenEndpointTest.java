@@ -29,13 +29,9 @@ import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.AbstractUser;
-import io.vertx.ext.auth.AuthProvider;
-import io.vertx.ext.auth.authorization.Authorization;
+import io.vertx.ext.auth.impl.UserImpl;
 import io.vertx.reactivex.ext.auth.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.junit.Test;
@@ -89,37 +85,9 @@ public class TokenEndpointTest extends RxWebTestBase {
 
     @Test
     public void shouldNotInvokeTokenEndpoint_invalidClient() throws Exception {
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.setUser(new User(new AbstractUser() {
-                    @Override
-                    protected void doIsPermitted(String s, Handler<AsyncResult<Boolean>> handler) {
-
-                    }
-
-                    @Override
-                    public JsonObject attributes() {
-                        return null;
-                    }
-
-                    @Override
-                    public io.vertx.ext.auth.User isAuthorized(Authorization authority, Handler<AsyncResult<Boolean>> resultHandler) {
-                        return null;
-                    }
-
-                    @Override
-                    public JsonObject principal() {
-                        return null;
-                    }
-
-                    @Override
-                    public void setAuthProvider(AuthProvider authProvider) {
-
-                    }
-                }));
-                routingContext.next();
-            }
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new User(new UserImpl()));
+            routingContext.next();
         });
 
         testRequest(
@@ -178,12 +146,9 @@ public class TokenEndpointTest extends RxWebTestBase {
         setting.setScope("read");
         client.setScopeSettings(Collections.singletonList(setting));
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
         });
 
         // Jackson is unable to generate a JSON from a mocked interface.
@@ -204,12 +169,9 @@ public class TokenEndpointTest extends RxWebTestBase {
         setting.setScope("read");
         client.setScopeSettings(Collections.singletonList(setting));
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
         });
 
         when(tokenGranter.grant(any(TokenRequest.class), any(io.gravitee.am.model.oidc.Client.class))).thenReturn(Single.error(new Exception()));
@@ -225,12 +187,9 @@ public class TokenEndpointTest extends RxWebTestBase {
         client.setClientId("my-client");
         client.setAuthorizedGrantTypes(null);
 
-        router.route().order(-1).handler(new Handler<RoutingContext>() {
-            @Override
-            public void handle(RoutingContext routingContext) {
-                routingContext.put("client", client);
-                routingContext.next();
-            }
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put("client", client);
+            routingContext.next();
         });
 
         testRequest(

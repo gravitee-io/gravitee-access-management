@@ -16,6 +16,7 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
+import io.netty.handler.codec.DecoderResult;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -28,10 +29,10 @@ import io.vertx.core.net.SocketAddress;
 import io.vertx.core.streams.Pipe;
 import io.vertx.core.streams.WriteStream;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -172,6 +173,11 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
+    public String getParam(String paramName, String defaultValue) {
+        return HttpServerRequest.super.getParam(paramName, defaultValue);
+    }
+
+    @Override
     public SocketAddress remoteAddress() {
         return null;
     }
@@ -187,7 +193,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
-    public X509Certificate[] peerCertificateChain() throws SSLPeerUnverifiedException {
+    public X509Certificate[] peerCertificateChain() {
         return new X509Certificate[0];
     }
 
@@ -297,8 +303,18 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
+    public DecoderResult decoderResult() {
+        return null;
+    }
+
+    @Override
     public @Nullable Cookie getCookie(String name) {
-        return HttpServerRequest.super.getCookie(name);
+        return getCookie(name, null, null);
+    }
+
+    @Override
+    public @Nullable Cookie getCookie(String name, String domain, String path) {
+        return null;
     }
 
     @Override
@@ -308,6 +324,16 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public Map<String, Cookie> cookieMap() {
+        return null;
+    }
+
+    @Override
+    public Set<Cookie> cookies(String name) {
+        return null;
+    }
+
+    @Override
+    public Set<Cookie> cookies() {
         return null;
     }
 
