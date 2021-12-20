@@ -68,7 +68,7 @@
     </modules>
 
     <properties>
-        <gravitee-bom.version>1.0</gravitee-bom.version>
+        <gravitee-bom.version>2.0</gravitee-bom.version>
         <gravitee-common.version>1.23.0</gravitee-common.version>
         <gravitee-plugin.version>1.18.0</gravitee-plugin.version>
         <gravitee-node.version>1.18.0</gravitee-node.version>
@@ -80,7 +80,6 @@
         <spring.version>5.3.13</spring.version>
         <spring-security.version>5.4.8</spring-security.version>
         <spring-integration.version>5.5.6</spring-integration.version>
-        <vertx-auth-webauthn.version>4.1.7.1</vertx-auth-webauthn.version>
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
@@ -111,7 +110,7 @@
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.13.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>1.14.2</gravitee-policy-groovy.version>
+        <gravitee-policy-groovy.version>2.0.0</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>1.4.0</gravitee-policy-latency.version>
@@ -344,12 +343,6 @@
                 <artifactId>hibernate-validator</artifactId>
                 <version>${hibernate-validator.version}</version>
             </dependency>
-            <dependency>
-                <groupId>io.vertx</groupId>
-                <artifactId>vertx-auth-webauthn</artifactId>
-                <version>${vertx-auth-webauthn.version}</version>
-            </dependency>
-
             <!-- Test -->
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
@@ -410,15 +403,6 @@
 
     <build>
         <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.8.1</version>
-            <configuration>
-                <source>${jdk.version}</source>
-                <target>${jdk.version}</target>
-            </configuration>
-        </plugin>
         <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>

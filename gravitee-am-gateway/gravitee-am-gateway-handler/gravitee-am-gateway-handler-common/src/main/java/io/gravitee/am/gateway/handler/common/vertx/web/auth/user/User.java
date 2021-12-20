@@ -15,11 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.auth.user;
 
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
 import io.vertx.ext.auth.authorization.Authorization;
+import io.vertx.ext.auth.authorization.Authorizations;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,6 +47,31 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
+    public boolean expired() {
+        return io.vertx.ext.auth.User.super.expired();
+    }
+
+    @Override
+    public boolean expired(int leeway) {
+        return io.vertx.ext.auth.User.super.expired(leeway);
+    }
+
+    @Override
+    public <T> @Nullable T get(String key) {
+        return io.vertx.ext.auth.User.super.get(key);
+    }
+
+    @Override
+    public boolean containsKey(String key) {
+        return io.vertx.ext.auth.User.super.containsKey(key);
+    }
+
+    @Override
+    public Authorizations authorizations() {
+        return io.vertx.ext.auth.User.super.authorizations();
+    }
+
+    @Override
     public io.vertx.ext.auth.User isAuthorized(Authorization authorization, Handler<AsyncResult<Boolean>> handler) {
         return null;
     }
@@ -55,7 +82,10 @@ public class User implements io.vertx.ext.auth.User {
     }
 
     @Override
-    public void setAuthProvider(AuthProvider authProvider) {
+    public void setAuthProvider(AuthProvider authProvider) {}
 
+    @Override
+    public io.vertx.ext.auth.User merge(io.vertx.ext.auth.User other) {
+        return null;
     }
 }
