@@ -1,13 +1,41 @@
 = Gravitee.io Access Management
 
-image:https://ci.gravitee.io/buildStatus/icon?job=gravitee-io/graviteeio-access-management/master["Build status", link="https://ci.gravitee.io/job/gravitee-io/job/graviteeio-access-management/"]
+image:https://img.shields.io/badge/License-Apache%202.0-blue.svg["License", link="https://github.com/gravitee-io/gravitee-access-management/blob/master/LICENSE.txt"]
+image:https://circleci.com/gh/gravitee-io/gravitee-access-management.svg?style=svg["CircleCI", link="https://circleci.com/gh/gravitee-io/gravitee-access-management"]
+
+image:./assets/gravitee-logo-cyan.svg["Gravitee.io",400]
 
 == Overview
 
 Gravitee.io AM aims to be a bridge between applications and identity providers to authenticate, authorize and getting information about user accounts.
 
-It relies on different protocols such as OAuth2 and OpenId Connect and supports many authentication/identity providers thanks to a plugin system that can specialized platform behavior to exactly fit your needs.
+=== Features
+
+- Access security : Control and secure enterprise data with industry standard protocols such as OpenID Connect and OAuth 2.0 and JWT.
+- Single sign-on (SSO): Centralized and strong authentication for your customers using out-of-the-box or custom identity providers.
+- Multi-factor authentication (MFA) : Enforce security and convenience by adding extra authentication factors.
+- Passwordless : Secure your apps and APIs with industry best-practice security using biometrics, tokens and further passwordless auth mechanisms.
+- Identity providers marketplace : Connect your application with your user resources such as LDAP, Database, Webservices, Azure AD, Social, ... .
+- Analytics dashboard: The out-of-the-box dashboards give you a 360-degree view of your applications and users. You can also use all metrics with external tools like Grafana or Kibana.
+- Plugins system : Specialize platform behavior to exactly fit your needs.
+
+=== Protocols
+
+Gravitee.io Access Management is OpenID Connect certified for the following profiles :
+
+- OpenID Provider : Basic OP, Implicit OP, Hybrid OP, Config OP, Dynamic OP
+- FAPI OpenID Provider : all profiles
+
+image:http://openid.net/wordpress-content/uploads/2016/04/oid-l-certification-mark-l-rgb-150dpi-90mm.png['OpenID Connect']
+
+Gravitee.io AM also supports the following protocols to help our customers to connect with 3rd party tools :
+
+- SAML 2.0 : Security Assertion Markup Language 2.0
+- SCIM 2.0 : System for Cross-domain Identity Management 2.0
+- CAS protocol : Central Authentication Service
+- Kerberos : Computer-network authentication protocol
+- JWT : JSON Web Tokens
 
 == Documentation
 
-You can find Gravitee.io Access Management documentation from https://docs.gravitee.io/[Gravitee.io website].
+You can find Gravitee.io Access Management's documentation on https://docs.gravitee.io/[Gravitee.io website].
