@@ -16,14 +16,12 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
+import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.reactivex.core.http.HttpServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -32,20 +30,17 @@ import org.springframework.beans.factory.annotation.Qualifier;
  */
 public class GraviteeVerticle extends AbstractVerticle {
 
-    /**
-     * Logger.
-     */
     private final Logger logger = LoggerFactory.getLogger(GraviteeVerticle.class);
 
-    @Autowired
-    @Qualifier("gatewayHttpServer")
-    private HttpServer httpServer;
+    private final HttpServer httpServer;
+    private final Reactor reactor;
+    private final HttpServerConfiguration httpServerConfiguration;
 
-    @Autowired
-    private Reactor reactor;
-
-    @Autowired
-    private VertxHttpServerConfiguration httpServerConfiguration;
+    public GraviteeVerticle(HttpServer httpServer, Reactor reactor, HttpServerConfiguration httpServerConfiguration) {
+        this.httpServer = httpServer;
+        this.reactor = reactor;
+        this.httpServerConfiguration = httpServerConfiguration;
+    }
 
     @Override
     public void start(Promise<Void> startPromise) {

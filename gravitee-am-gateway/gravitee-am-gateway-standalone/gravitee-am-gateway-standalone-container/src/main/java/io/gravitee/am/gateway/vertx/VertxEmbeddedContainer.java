@@ -32,9 +32,6 @@ import org.springframework.beans.factory.annotation.Value;
  */
 public class VertxEmbeddedContainer extends AbstractLifecycleComponent<VertxEmbeddedContainer> {
 
-    /**
-     * Logger.
-     */
     private final Logger logger = LoggerFactory.getLogger(VertxEmbeddedContainer.class);
 
     @Value("${http.instances:0}")

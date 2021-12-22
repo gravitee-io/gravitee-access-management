@@ -15,10 +15,17 @@
  */
 package io.gravitee.am.gateway.vertx;
 
+import io.gravitee.am.gateway.reactor.Reactor;
+import io.gravitee.node.vertx.ReactivexVertxHttpServerFactory;
+import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
+import io.vertx.reactivex.core.Vertx;
+import io.vertx.reactivex.core.http.HttpServer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import org.springframework.core.env.Environment;
 
 /**
  * @author David BRASSELY (david at graviteesource.com)
@@ -27,21 +34,32 @@ import org.springframework.context.annotation.Scope;
 @Configuration
 public class VertxServerConfiguration {
 
-    @Bean
-    public VertxHttpServerConfiguration httpServerConfiguration() {
-        return new VertxHttpServerConfiguration();
+    @Bean("httpServerConfiguration")
+    public HttpServerConfiguration httpServerConfiguration(Environment environment) {
+        return HttpServerConfiguration.builder().withEnvironment(environment)
+                .withDefaultPort(8092)
+                .withDefaultKeyStoreType(null)
+                .withDefaultTrustStoreType(null)
+                .withDefaultMaxFormAttributeSize(2048)
+                .build();
     }
 
     @Bean("gatewayHttpServer")
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public VertxHttpServerFactory vertxHttpServerFactory() {
-        return new VertxHttpServerFactory();
+    public ReactivexVertxHttpServerFactory vertxHttpServerFactory(
+            Vertx vertx,
+            @Qualifier("httpServerConfiguration")
+            HttpServerConfiguration httpServerConfiguration) {
+        return new ReactivexVertxHttpServerFactory(vertx, httpServerConfiguration);
     }
 
     @Bean
     @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-    public GraviteeVerticle graviteeVerticle() {
-        return new GraviteeVerticle();
+    public GraviteeVerticle graviteeVerticle(
+            @Qualifier("gatewayHttpServer") HttpServer httpServer,
+            Reactor reactor,
+            HttpServerConfiguration httpServerConfiguration) {
+        return new GraviteeVerticle(httpServer, reactor, httpServerConfiguration);
     }
 
     @Bean
