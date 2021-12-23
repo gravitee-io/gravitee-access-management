@@ -61,13 +61,13 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     public Single<Scope> create(Scope item) {
         ScopeMongo scope = convert(item);
         scope.setId(scope.getId() == null ? RandomString.generate() : scope.getId());
-        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> findById(scope.getId()).toSingle());
+        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> { item.setId(scope.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Scope> update(Scope item) {
         ScopeMongo scope = convert(item);
-        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> findById(scope.getId()).toSingle());
+        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

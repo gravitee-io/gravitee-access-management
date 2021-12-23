@@ -21,11 +21,9 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.OrganizationMongo;
 import io.reactivex.*;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
@@ -61,19 +59,18 @@ public class MongoOrganizationRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Single<Organization> create(Organization organization) {
+    public Single<Organization> create(Organization item) {
+        final OrganizationMongo organization = convert(item);
+        organization.setId(item.getId() == null ? RandomString.generate() : item.getId());
 
-        organization.setId(organization.getId() == null ? RandomString.generate() : organization.getId());
-
-        return Single.fromPublisher(collection.insertOne(convert(organization)))
-                .flatMap(success -> findById(organization.getId()).toSingle());
+        return Single.fromPublisher(collection.insertOne(organization))
+                .flatMap(success -> { item.setId(organization.getId()); return Single.just(item); });
     }
 
     @Override
-    public Single<Organization> update(Organization organization) {
-
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, organization.getId()), convert(organization)))
-                .flatMap(updateResult -> findById(organization.getId()).toSingle());
+    public Single<Organization> update(Organization item) {
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, item.getId()), convert(item)))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override

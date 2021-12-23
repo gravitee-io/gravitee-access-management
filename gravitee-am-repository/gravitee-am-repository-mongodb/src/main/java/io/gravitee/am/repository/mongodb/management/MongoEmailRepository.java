@@ -120,13 +120,13 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
     public Single<Email> create(Email item) {
         EmailMongo email = convert(item);
         email.setId(email.getId() == null ? RandomString.generate() : email.getId());
-        return Single.fromPublisher(emailsCollection.insertOne(email)).flatMap(success -> findById(email.getId()).toSingle());
+        return Single.fromPublisher(emailsCollection.insertOne(email)).flatMap(success -> { item.setId(email.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Email> update(Email item) {
         EmailMongo email = convert(item);
-        return Single.fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email)).flatMap(updateResult -> findById(email.getId()).toSingle());
+        return Single.fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

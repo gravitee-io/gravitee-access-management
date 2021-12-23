@@ -84,13 +84,18 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
     public Single<AccessPolicy> create(AccessPolicy item) {
         AccessPolicyMongo accessPolicy = convert(item);
         accessPolicy.setId(accessPolicy.getId() == null ? RandomString.generate() : accessPolicy.getId());
-        return Single.fromPublisher(accessPoliciesCollection.insertOne(accessPolicy)).flatMap(success -> findById(accessPolicy.getId()).toSingle());
+        return Single.fromPublisher(accessPoliciesCollection.insertOne(accessPolicy))
+                .flatMap(success -> {
+                    item.setId(accessPolicy.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<AccessPolicy> update(AccessPolicy item) {
         AccessPolicyMongo accessPolicy = convert(item);
-        return Single.fromPublisher(accessPoliciesCollection.replaceOne(eq(FIELD_ID, accessPolicy.getId()), accessPolicy)).flatMap(success -> findById(accessPolicy.getId()).toSingle());
+        return Single.fromPublisher(accessPoliciesCollection.replaceOne(eq(FIELD_ID, accessPolicy.getId()), accessPolicy))
+                .flatMap(success -> Single.just(item));
     }
 
     @Override

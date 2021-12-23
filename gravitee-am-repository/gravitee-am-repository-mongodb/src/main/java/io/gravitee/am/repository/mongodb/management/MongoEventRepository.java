@@ -71,13 +71,13 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     public Single<Event> create(Event item) {
         EventMongo event = convert(item);
         event.setId(event.getId() == null ? RandomString.generate() : event.getId());
-        return Single.fromPublisher(eventsCollection.insertOne(event)).flatMap(success -> findById(event.getId()).toSingle());
+        return Single.fromPublisher(eventsCollection.insertOne(event)).flatMap(success -> { item.setId(event.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Event> update(Event item) {
         EventMongo event = convert(item);
-        return Single.fromPublisher(eventsCollection.replaceOne(eq(FIELD_ID, event.getId()), event)).flatMap(updateResult -> findById(event.getId()).toSingle());
+        return Single.fromPublisher(eventsCollection.replaceOne(eq(FIELD_ID, event.getId()), event)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

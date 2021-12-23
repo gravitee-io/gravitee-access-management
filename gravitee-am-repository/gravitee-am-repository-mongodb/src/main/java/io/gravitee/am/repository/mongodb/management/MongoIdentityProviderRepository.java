@@ -82,13 +82,13 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     public Single<IdentityProvider> create(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
         identityProvider.setId(identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId());
-        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> findById(identityProvider.getId()).toSingle());
+        return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> { item.setId(identityProvider.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<IdentityProvider> update(IdentityProvider item) {
         IdentityProviderMongo identityProvider = convert(item);
-        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> findById(identityProvider.getId()).toSingle());
+        return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override
