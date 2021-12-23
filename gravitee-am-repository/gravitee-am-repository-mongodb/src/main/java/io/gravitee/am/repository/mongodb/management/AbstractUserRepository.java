@@ -154,10 +154,10 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
         return Observable.fromPublisher(
-                usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
-                        .limit(1)
-                        .first())
+                        usersCollection
+                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_USERNAME, username), eq(FIELD_SOURCE, source)))
+                                .limit(1)
+                                .first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -165,10 +165,10 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source) {
         return Observable.fromPublisher(
-                usersCollection
-                        .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
-                        .limit(1)
-                        .first())
+                        usersCollection
+                                .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_EXTERNAL_ID, externalId), eq(FIELD_SOURCE, source)))
+                                .limit(1)
+                                .first())
                 .firstElement()
                 .map(this::convert);
     }
@@ -192,13 +192,18 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     public Single<User> create(User item) {
         UserMongo user = convert(item);
         user.setId(user.getId() == null ? RandomString.generate() : user.getId());
-        return Single.fromPublisher(usersCollection.insertOne((T)user)).flatMap(success -> findById(user.getId()).toSingle());
+        return Single.fromPublisher(usersCollection.insertOne((T) user))
+                .flatMap(success -> {
+                    item.setId(user.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<User> update(User item) {
         UserMongo user = convert(item);
-        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T)user)).flatMap(updateResult -> findById(user.getId()).toSingle());
+        return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T) user))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override

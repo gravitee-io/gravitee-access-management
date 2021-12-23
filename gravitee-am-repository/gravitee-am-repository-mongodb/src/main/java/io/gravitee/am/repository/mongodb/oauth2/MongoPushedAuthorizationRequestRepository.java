@@ -69,7 +69,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
         par.setId(par.getId() == null ? RandomString.generate() : par.getId());
         return Single
                 .fromPublisher(parCollection.insertOne(convert(par)))
-                .flatMap(success -> findById(par.getId()).toSingle());
+                .flatMap(success -> Single.just(par));
     }
 
     @Override
@@ -91,9 +91,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
 
         if (par.getParameters() != null) {
             Document document = new Document();
-            par.getParameters().forEach((key, value) -> {
-                document.append(key, value);
-            });
+            par.getParameters().forEach(document::append);
             parMongo.setParameters(document);
         }
 
@@ -114,7 +112,7 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
 
         if (parMongo.getParameters() != null) {
             MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-            parMongo.getParameters().entrySet().forEach(entry -> parameters.put(entry.getKey(), (List<String>) entry.getValue()));
+            parMongo.getParameters().forEach((key, value) -> parameters.put(key, (List<String>) value));
             par.setParameters(parameters);
         }
 
