@@ -1,6 +1,29 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/480?closed=1[AM - 3.10.12 (2021-12-23)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Add missing data for email and HTML templates https://github.com/gravitee-io/issues/issues/6718[#6718]
+- Logout return an error after user registration https://github.com/gravitee-io/issues/issues/6752[#6752]
+- [chore] upgrade  vertx-auth to 4.1.7.1 https://github.com/gravitee-io/issues/issues/6746[#6746]
+
+*_Management_*
+
+- [audits] access point info aren't displayed in organization settings audit logs https://github.com/gravitee-io/issues/issues/6776[#6776]
+
+=== Improvements
+
+*_Management-api_*
+
+- Handle metadata when creating an application https://github.com/gravitee-io/issues/issues/6774[#6774]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/477?closed=1[AM - 3.14.1 (2021-12-15)]
 
 === Bug fixes
