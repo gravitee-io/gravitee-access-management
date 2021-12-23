@@ -161,13 +161,17 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public Single<Application> create(Application item) {
         ApplicationMongo application = convert(item);
         application.setId(application.getId() == null ? RandomString.generate() : application.getId());
-        return Single.fromPublisher(applicationsCollection.insertOne(application)).flatMap(success -> findById(application.getId()).toSingle());
+        return Single.fromPublisher(applicationsCollection.insertOne(application)).flatMap(success -> {
+            item.setId(application.getId());
+            return Single.just(item);
+        });
     }
 
     @Override
     public Single<Application> update(Application item) {
         ApplicationMongo application = convert(item);
-        return Single.fromPublisher(applicationsCollection.replaceOne(eq(FIELD_ID, application.getId()), application)).flatMap(success -> findById(application.getId()).toSingle());
+        return Single.fromPublisher(applicationsCollection.replaceOne(eq(FIELD_ID, application.getId()), application))
+                .flatMap(success -> Single.just(item));
     }
 
     @Override
@@ -500,12 +504,21 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         switch (KeyType.parse(jwkMongo.getKty())) {
             // @formatter:off
-            case EC: result = convertEC(jwkMongo);break;
-            case RSA:result = convertRSA(jwkMongo);break;
-            case OCT:result = convertOCT(jwkMongo);break;
-            case OKP:result = convertOKP(jwkMongo);break;
-            default: result = null;
-            // @formatter:on
+            case EC:
+                result = convertEC(jwkMongo);
+                break;
+            case RSA:
+                result = convertRSA(jwkMongo);
+                break;
+            case OCT:
+                result = convertOCT(jwkMongo);
+                break;
+            case OKP:
+                result = convertOKP(jwkMongo);
+                break;
+            default:
+                result = null;
+                // @formatter:on
         }
 
         result.setAlg(jwkMongo.getAlg());
@@ -587,12 +600,21 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         switch (KeyType.parse(jwk.getKty())) {
             // @formatter:off
-            case EC: result = convert((ECKey)jwk);break;
-            case RSA:result = convert((RSAKey)jwk);break;
-            case OCT:result = convert((OCTKey)jwk);break;
-            case OKP:result = convert((OKPKey)jwk);break;
-            default: result = null;
-            // @formatter:on
+            case EC:
+                result = convert((ECKey) jwk);
+                break;
+            case RSA:
+                result = convert((RSAKey) jwk);
+                break;
+            case OCT:
+                result = convert((OCTKey) jwk);
+                break;
+            case OKP:
+                result = convert((OKPKey) jwk);
+                break;
+            default:
+                result = null;
+                // @formatter:on
         }
 
         result.setAlg(jwk.getAlg());

@@ -60,13 +60,13 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
     public Single<ServiceResource> create(ServiceResource item) {
         ServiceResourceMongo res = convert(item);
         res.setId(res.getId() == null ? RandomString.generate() : res.getId());
-        return Single.fromPublisher(resourceCollection.insertOne(res)).flatMap(success -> findById(res.getId()).toSingle());
+        return Single.fromPublisher(resourceCollection.insertOne(res)).flatMap(success -> { item.setId(res.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<ServiceResource> update(ServiceResource item) {
         ServiceResourceMongo authenticator = convert(item);
-        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> findById(authenticator.getId()).toSingle());
+        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

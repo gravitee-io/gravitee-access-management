@@ -27,8 +27,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -98,13 +96,13 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
     public Single<Flow> create(Flow item) {
         FlowMongo flow = convert(item);
         flow.setId(flow.getId() == null ? RandomString.generate() : flow.getId());
-        return Single.fromPublisher(flowsCollection.insertOne(flow)).flatMap(success -> findById(flow.getId()).toSingle());
+        return Single.fromPublisher(flowsCollection.insertOne(flow)).flatMap(success -> { item.setId(flow.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Flow> update(Flow item) {
         FlowMongo flow = convert(item);
-        return Single.fromPublisher(flowsCollection.replaceOne(eq(FIELD_ID, flow.getId()), flow)).flatMap(updateResult -> findById(flow.getId()).toSingle());
+        return Single.fromPublisher(flowsCollection.replaceOne(eq(FIELD_ID, flow.getId()), flow)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

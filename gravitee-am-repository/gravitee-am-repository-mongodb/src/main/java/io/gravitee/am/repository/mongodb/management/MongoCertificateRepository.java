@@ -66,19 +66,25 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     public Single<Certificate> create(Certificate item) {
         CertificateMongo certificate = convert(item);
         certificate.setId(certificate.getId() == null ? RandomString.generate() : certificate.getId());
-        return Single.fromPublisher(certificatesCollection.insertOne(certificate)).flatMap(success -> findById(certificate.getId()).toSingle());
+        return Single.fromPublisher(certificatesCollection.insertOne(certificate))
+                .flatMap(success -> {
+                    item.setId(certificate.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<Certificate> update(Certificate item) {
         CertificateMongo certificate = convert(item);
-        return Single.fromPublisher(certificatesCollection.replaceOne(eq(FIELD_ID, certificate.getId()), certificate)).flatMap(updateResult -> findById(certificate.getId()).toSingle());
+        return Single.fromPublisher(certificatesCollection.replaceOne(eq(FIELD_ID, certificate.getId()), certificate))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)));
     }
+
     private Certificate convert(CertificateMongo certificateMongo) {
         if (certificateMongo == null) {
             return null;

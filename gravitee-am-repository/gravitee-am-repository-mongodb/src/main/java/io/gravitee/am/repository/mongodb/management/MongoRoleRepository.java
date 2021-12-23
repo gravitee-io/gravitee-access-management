@@ -110,13 +110,13 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     public Single<Role> create(Role item) {
         RoleMongo role = convert(item);
         role.setId(role.getId() == null ? RandomString.generate() : role.getId());
-        return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> findById(role.getId()).toSingle());
+        return Single.fromPublisher(rolesCollection.insertOne(role)).flatMap(success -> { item.setId(role.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Role> update(Role item) {
         RoleMongo role = convert(item);
-        return Single.fromPublisher(rolesCollection.replaceOne(eq(FIELD_ID, role.getId()), role)).flatMap(updateResult -> findById(role.getId()).toSingle());
+        return Single.fromPublisher(rolesCollection.replaceOne(eq(FIELD_ID, role.getId()), role)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

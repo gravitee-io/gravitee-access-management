@@ -72,7 +72,7 @@ public class MongoAuthenticationFlowContextRepository extends AbstractManagement
         AuthenticationFlowContextMongo contextMongo = convert(context);
         contextMongo.setId(context.getTransactionId() + "-" + context.getVersion());
         return Single.fromPublisher(authContextCollection.insertOne(contextMongo))
-                .flatMap(success -> findById(contextMongo.getId()).toSingle());
+                .flatMap(success -> Single.just(context));
     }
 
     @Override

@@ -18,15 +18,12 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Installation;
-import io.gravitee.am.model.Organization;
-import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.InstallationMongo;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -65,19 +62,17 @@ public class MongoInstallationRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Single<Installation> create(Installation installation) {
-
-        installation.setId(installation.getId() == null ? RandomString.generate() : installation.getId());
-
-        return Single.fromPublisher(collection.insertOne(convert(installation)))
-                .flatMap(success -> findById(installation.getId()).toSingle());
+    public Single<Installation> create(Installation item) {
+        var installation = convert(item);
+        installation.setId(item.getId() == null ? RandomString.generate() : item.getId());
+        return Single.fromPublisher(collection.insertOne(installation))
+                .flatMap(success -> { item.setId(item.getId()); return Single.just(item); });
     }
 
     @Override
-    public Single<Installation> update(Installation installation) {
-
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, installation.getId()), convert(installation)))
-                .flatMap(updateResult -> findById(installation.getId()).toSingle());
+    public Single<Installation> update(Installation item) {
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, item.getId()), convert(item)))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override
