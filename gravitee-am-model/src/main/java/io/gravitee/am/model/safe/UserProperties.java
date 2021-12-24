@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.context.provider;
+package io.gravitee.am.model.safe;
 
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.model.Role;
@@ -44,6 +44,7 @@ public class UserProperties {
     private Set<String> roles;
     private List<String> groups;
     private Map<String, Object> claims;
+    private Map<String, Object> additionalInformation;
 
     public UserProperties() {
     }
@@ -71,6 +72,11 @@ public class UserProperties {
         if (user.getLoggedAt() != null) {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
+        // remove technical information that shouldn't be used in templates
+        claims.remove("op_id_token");
+        claims.remove("op_access_token");
+
+        additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
         this.preferredLanguage = user.getPreferredLanguage();
     }
@@ -169,5 +175,13 @@ public class UserProperties {
 
     public void setPreferredLanguage(String preferredLanguage) {
         this.preferredLanguage = preferredLanguage;
+    }
+
+    public Map<String, Object> getAdditionalInformation() {
+        return additionalInformation;
+    }
+
+    public void setAdditionalInformation(Map<String, Object> additionalInformation) {
+        this.additionalInformation = additionalInformation;
     }
 }

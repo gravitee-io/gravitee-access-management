@@ -20,12 +20,12 @@ import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequ
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
@@ -107,7 +108,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
     }
 
     private void renderLoginPage(RoutingContext routingContext, Client client) {
-        final Map<String, Object> data = new HashMap<>(routingContext.data());
+        final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
         this.renderPage(routingContext, data, client, logger, "Unable to render Identifier-first login page");
     }

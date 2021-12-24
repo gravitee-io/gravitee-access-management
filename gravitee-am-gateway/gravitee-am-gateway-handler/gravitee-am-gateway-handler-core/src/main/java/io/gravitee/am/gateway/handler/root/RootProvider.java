@@ -294,11 +294,11 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // MFA route
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(getRememberDeviceHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
@@ -382,7 +382,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService, jwtService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // error handler
         errorHandler(rootRouter);

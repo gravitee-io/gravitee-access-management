@@ -52,6 +52,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Constant to use while setting identity provider used to authenticate a user
      */
     public static final String SOURCE = "source";
+    private static final String IP_ADDRESS_KEY = "ip_address";
+    private static final String USER_AGENT_KEY = "user_agent";
 
     @Autowired
     private OrganizationUserService userService;
@@ -68,10 +70,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public User onAuthenticationSuccess(Authentication auth) {
         final DefaultUser principal = (DefaultUser) auth.getPrincipal();
-
         final EndUserAuthentication authentication = new EndUserAuthentication(principal.getUsername(), null, new SimpleAuthenticationContext());
         Map<String, String> details = auth.getDetails() == null ? new HashMap<>() : new HashMap<>((Map<String, String>) auth.getDetails());
-
         details.putIfAbsent(Claims.organization, Organization.DEFAULT);
 
         String organizationId = details.get(Claims.organization);
@@ -102,7 +102,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         newUser.setReferenceType(ReferenceType.ORGANIZATION);
                         newUser.setReferenceId(organizationId);
                         newUser.setLoggedAt(new Date());
-                        newUser.setLoginsCount(1l);
+                        newUser.setLoginsCount(1L);
                         newUser.setAdditionalInformation(principal.getAdditionalInformation());
                         return userService.create(newUser)
                                 .flatMap(user -> userService.setRoles(principal, user).andThen(Single.just(user)));
@@ -110,8 +110,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     return Single.error(ex);
                 })
                 .flatMap(userService::enhance)
-                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class).principal(authentication).referenceType(ReferenceType.ORGANIZATION)
-                        .referenceId(organizationId).user(user)))
+                .doOnSuccess(user -> auditService.report(AuditBuilder.builder(AuthenticationAuditBuilder.class)
+                        .principal(authentication)
+                        .referenceType(ReferenceType.ORGANIZATION)
+                        .referenceId(organizationId).user(user)
+                        .ipAddress(details.get(IP_ADDRESS_KEY))
+                        .userAgent(details.get(USER_AGENT_KEY)))
+                )
                 .blockingGet();
 
         principal.setId(endUser.getId());
@@ -138,7 +143,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return principal;
     }
-
 
     /**
      * Update ORGANIZATION role to an existing user if the identity provider role mapper has changed
