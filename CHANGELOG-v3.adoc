@@ -1,6 +1,19 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/483?closed=1[AM - 3.13.3 (2021-12-27)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.10.10 https://github.com/gravitee-io/issues/issues/6690[#6690]
+- Merge 3.10.11 https://github.com/gravitee-io/issues/issues/6748[#6748]
+- Merge 3.10.12 https://github.com/gravitee-io/issues/issues/6807[#6807]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/480?closed=1[AM - 3.10.12 (2021-12-23)]
 
 === Bug fixes
