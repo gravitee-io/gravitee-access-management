@@ -26,8 +26,8 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
-import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
-import io.gravitee.am.gateway.handler.context.provider.UserProperties;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -197,7 +197,11 @@ public class IDTokenServiceImpl implements IDTokenService {
 
             // 3. If no claims requested, grab all user claims
             if (!requestForSpecificClaims) {
-                userClaims.forEach((k, v) -> idToken.addAdditionalClaim(k, v));
+                userClaims.forEach((k, v) -> {
+                    if (!EXCLUDED_CLAIMS.contains(k)) {
+                        idToken.addAdditionalClaim(k, v);
+                    }
+                });
             }
         }
 

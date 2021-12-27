@@ -235,7 +235,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userConsentPrepareContextHandler)
                 .handler(authenticationFlowContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
-                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine));
+                .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
@@ -275,7 +275,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // Error endpoint
         oauth2Router.route(HttpMethod.GET, "/error")
-                .handler(new ErrorEndpoint(domain.getId(), thymeleafTemplateEngine, clientSyncService, jwtService));
+                .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
 
         // Pushed Authorization Request
         oauth2Router.route(HttpMethod.POST, "/par")

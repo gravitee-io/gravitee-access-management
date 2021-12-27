@@ -25,13 +25,19 @@ import io.gravitee.am.model.User;
  */
 public class UserToken {
 
-    private final User user;
-    private final Client client;
-    private final JWT token;
+    private User user;
+    private Client client;
+    private JWT token;
 
-    public UserToken(User user, Client client, JWT token) {
+    public UserToken() {}
+
+    public UserToken(User user, Client client) {
         this.user = user;
         this.client = client;
+    }
+
+    public UserToken(User user, Client client, JWT token) {
+        this(user, client);
         this.token = token;
     }
 

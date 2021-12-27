@@ -31,11 +31,13 @@ public class FactorAuditBuilder extends ManagementAuditBuilder<FactorAuditBuilde
     }
 
     public FactorAuditBuilder factor(Factor factor) {
-        if (EventType.FACTOR_CREATED.equals(getType()) || EventType.FACTOR_UPDATED.equals(getType())) {
-            setNewValue(factor);
+        if (factor != null) {
+            if (EventType.FACTOR_CREATED.equals(getType()) || EventType.FACTOR_UPDATED.equals(getType())) {
+                setNewValue(factor);
+            }
+            domain(factor.getDomain());
+            setTarget(factor.getId(), EntityType.FACTOR, null, factor.getName(), ReferenceType.DOMAIN, factor.getDomain());
         }
-        domain(factor.getDomain());
-        setTarget(factor.getId(), EntityType.FACTOR, null, factor.getName(), ReferenceType.DOMAIN, factor.getDomain());
         return this;
     }
 }

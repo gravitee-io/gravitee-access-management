@@ -75,7 +75,7 @@
                    [offset]="page.pageNumber"
                    [limit]="page.size"
                    (page)='setPage($event)'>
-      <ngx-datatable-column name="Name" [flexGrow]="4" [cellClass]="'user-name-cell'">
+      <ngx-datatable-column name="Name" prop="username" [flexGrow]="4" [cellClass]="'user-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="user-header" fxLayout="row">
             <div class="user-avatar"
@@ -93,12 +93,12 @@
           </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Identity Provider" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column name="Identity Provider" prop="source" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{row.source}}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Last login" [flexGrow]="2" *hasPermission="[requiredReadPermission]">
+      <ngx-datatable-column name="Last login" prop="loggedAt" [flexGrow]="2" *hasPermission="[requiredReadPermission]" >
         <ng-template let-row="row" ngx-datatable-cell-template>
           <span *ngIf="(row.loggedAt)">{{row.loggedAt | humanDate}}</span>
           <span *ngIf="!(row.loggedAt)">Never logged in</span>

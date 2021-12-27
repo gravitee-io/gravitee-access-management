@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -94,11 +95,10 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
 
             final String loginActionKey = routingContext.get(CONTEXT_PATH) + (isIdentifierFirstEnabled ? "/login/identifier" : "/login");
             routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
-            routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
             // render the webauthn login page
-            engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
                 if (res.succeeded()) {
                     routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                     routingContext.response().end(res.result());

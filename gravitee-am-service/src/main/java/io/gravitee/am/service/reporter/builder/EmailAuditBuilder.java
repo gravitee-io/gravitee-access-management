@@ -38,12 +38,16 @@ public class EmailAuditBuilder extends AuditBuilder<EmailAuditBuilder> {
     }
 
     public EmailAuditBuilder email(Email email) {
-        type(email.getTemplate().replace(HTML_SUFFIX, "").toUpperCase() + EVENT_SUFFIX);
+        if (email != null) {
+            type(email.getTemplate().replace(HTML_SUFFIX, "").toUpperCase() + EVENT_SUFFIX);
+        }
         return this;
     }
 
     public EmailAuditBuilder user(User user) {
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+        if (user != null) {
+            setTarget(user.getId(), EntityType.USER, user.getUsername(), user.getDisplayName(), user.getReferenceType(), user.getReferenceId());
+        }
         return this;
     }
 }

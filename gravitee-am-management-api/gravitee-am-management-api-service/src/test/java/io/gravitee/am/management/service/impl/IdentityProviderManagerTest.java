@@ -23,6 +23,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.Flowable;
+import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,6 +63,7 @@ public class IdentityProviderManagerTest {
 
     @Before
     public void init() {
+        reset(listener);
         cut.setListener(listener);
     }
 
@@ -124,5 +126,19 @@ public class IdentityProviderManagerTest {
         doReturn("adminadmin").when(environment).getProperty("security.providers[0].users[0].password");
         doReturn("ORGANIZATION_PRIMARY_OWNER").when(environment).getProperty("security.providers[0].users[0].role");
         doReturn(enabled).when(environment).getProperty("security.providers[0].enabled", boolean.class, false);
+    }
+
+    @Test
+    public void shouldGetGraviteeProvider() {
+        when(this.idpPluginManager.create(any(), any())).thenReturn(mock(UserProvider.class));
+        cut.loadIdentityProviders();
+
+        final TestObserver<UserProvider> observer = this.cut.getUserProvider(IdentityProviderManagerImpl.IDP_GRAVITEE).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValueCount(1);
+
+        verify(idpPluginManager, never()).findById(any());
     }
 }

@@ -29,6 +29,6 @@ db.getCollection("roles").updateMany(
         "permissionAcls.DOMAIN_ALERT_NOTIFIER": {$exists: false},
     },
     {
-        $set: {"permissionAcls.DOMAIN_ALERT": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
+        $set: {"permissionAcls.DOMAIN_ALERT_NOTIFIER": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
     }
 );

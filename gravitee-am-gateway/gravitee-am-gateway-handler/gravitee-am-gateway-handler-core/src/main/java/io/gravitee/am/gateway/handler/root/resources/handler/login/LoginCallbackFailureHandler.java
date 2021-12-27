@@ -28,6 +28,7 @@ import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -35,6 +36,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 
 /**
  * In case of login callback failures, the user will be redirected to the login page with error message
@@ -91,10 +94,14 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
                 context.session().destroy();
             }
             Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-            Map<String, String> params = new HashMap<>();
-            params.put(Parameters.CLIENT_ID, client.getClientId());
-            params.put(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-            params.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
+            final MultiMap params = MultiMap.caseInsensitiveMultiMap();
+            final MultiMap originalParams = context.get(PARAM_CONTEXT_KEY);
+            if (originalParams != null) {
+                params.setAll(originalParams);
+            }
+            params.set(Parameters.CLIENT_ID, client.getClientId());
+            params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
+            params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
             String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {

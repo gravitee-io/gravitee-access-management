@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.context.provider;
 
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateVariableProvider;
 import org.springframework.beans.factory.InitializingBean;

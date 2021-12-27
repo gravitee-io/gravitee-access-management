@@ -64,6 +64,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static java.util.Optional.ofNullable;
@@ -84,13 +85,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private final UserService userService;
     private final ApplicationContext applicationContext;
     private final DeviceService deviceService;
+    private final Domain domain;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService, ApplicationContext applicationContext) {
+    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService, ApplicationContext applicationContext, Domain domain) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
         this.userService = userService;
         this.deviceService = deviceService;
+        this.domain = domain;
     }
 
     @Override
@@ -145,7 +148,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                     return;
                 }
                 // render the mfa challenge page
-                this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render MFA challenge page");
+                this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA challenge page");
             });
         } catch (Exception ex) {
             logger.error("An error has occurred when rendering MFA challenge page", ex);

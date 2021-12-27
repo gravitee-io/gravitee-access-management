@@ -19,6 +19,7 @@ import io.gravitee.am.model.application.ApplicationType;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -39,6 +40,8 @@ public class NewApplication {
     private String clientSecret;
 
     private List<String> redirectUris;
+
+    private Map<String, Object> metadata;
 
     public String getName() {
         return name;
@@ -86,6 +89,14 @@ public class NewApplication {
 
     public void setRedirectUris(List<String> redirectUris) {
         this.redirectUris = redirectUris;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     @Override

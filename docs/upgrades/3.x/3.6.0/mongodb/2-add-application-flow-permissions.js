@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
 
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.User;
-import io.gravitee.common.service.Service;
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface EmailManager extends Service<EmailManager> {
-
-    String TEMPLATE_NAME_SEPARATOR = "|";
-
-    Email getEmail(io.gravitee.am.model.Template template, User user, String defaultSubject, int defaultExpiresAfter);
-}
+db.getCollection("roles").updateMany(
+    {
+        name: {$in: ["ORGANIZATION_PRIMARY_ONWER", "ORGANIZATION_OWNER", "ENVIRONMENT_PRIMARY_OWNER", "ENVIRONMENT_OWNER", "DOMAIN_PRIMARY_OWNER", "DOMAIN_OWNER"]},
+        "permissionAcls.APPLICATION_FLOW": {$exists: false},
+    },
+    {
+        $set: {"permissionAcls.APPLICATION_FLOW": ["CREATE", "READ", "UPDATE", "DELETE", "LIST"]},
+    }
+);

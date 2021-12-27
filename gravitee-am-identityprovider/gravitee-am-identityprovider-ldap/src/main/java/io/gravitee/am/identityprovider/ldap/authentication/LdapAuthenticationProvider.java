@@ -130,7 +130,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
             try {
                 String username = (String) authentication.getPrincipal();
                 String password = (String) authentication.getCredentials();
-                // authenticate user and and fetch groups if exist
+                // authenticate user and fetch groups if exist
                 AuthenticationResponse response = authenticator.authenticate(new AuthenticationRequest(username, new Credential(password), ReturnAttributes.ALL_USER.value()));
                 if (response.getResult()) { // authentication succeeded
                     LdapEntry userEntry = response.getLdapEntry();

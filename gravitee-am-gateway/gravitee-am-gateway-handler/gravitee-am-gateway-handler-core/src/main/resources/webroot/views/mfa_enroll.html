@@ -169,6 +169,7 @@
 <script th:src="@{../assets/js/intl-tel-input-17.0.8.min.js}"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
+$(document).ready(function() {
     $(".mdl-textfield__input").focus(function() {
         if (!this.value) {
             $(this).prop('required', true);
@@ -247,7 +248,7 @@
         $("#invalid" + eltId).show();
       }
     }
-
+});
 /*]]>*/
 </script>
 </body>

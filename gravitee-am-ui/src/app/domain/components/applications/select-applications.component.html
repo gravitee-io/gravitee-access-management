@@ -20,9 +20,8 @@
   <input matInput placeholder="Search for an application ..." [matAutocomplete]="auto" [formControl]="appCtrl"/>
   <button mat-icon-button matSuffix aria-label="Clear" (click)="removeApp($event)"><mat-icon *ngIf="selectedApp">clear</mat-icon></button>
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAppSelectionChanged($event)" [displayWith]="displayFn">
-    <mat-option *ngFor="let app of filteredApps" [value]="app">
-      <span>{{app.name}}</span> |
-      <small>{{app.clientId}}</small>
+    <mat-option *ngFor="let app of filteredApps | async" [value]="app">
+      <span>{{app.name}}</span>
     </mat-option>
   </mat-autocomplete>
   <mat-hint>Assign user to an application. Useful if you want to apply application guidelines (email, templates) to your user.</mat-hint>

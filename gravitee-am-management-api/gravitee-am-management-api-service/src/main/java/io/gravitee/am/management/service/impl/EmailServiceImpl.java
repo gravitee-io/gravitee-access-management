@@ -21,13 +21,15 @@ import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.DomainProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -62,9 +64,6 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.registration.token.expire-after:86400}")
     private Integer registrationExpireAfter;
 
-    @Value("${gateway.url:http://localhost:8092}")
-    private String gatewayUrl;
-
     @Autowired
     private EmailManager emailManager;
 
@@ -98,7 +97,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
-        return emailManager.getEmail(getTemplateName(template, user), getDefaultSubject(template), getDefaultExpireAt(template));
+        return emailManager.getEmail(template, user, getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
     private void sendEmail(Email email, User user) {
@@ -152,10 +151,14 @@ public class EmailServiceImpl implements EmailService {
         }
 
         Map<String, Object> params = new HashMap<>();
-        params.put("user", user);
+        params.put("user", new UserProperties(user));
         params.put("url", redirectUrl);
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
+        params.put("domain", new DomainProperties(domain));
+        if (client != null) {
+            params.put("client", new ClientProperties(client));
+        }
 
         return params;
     }

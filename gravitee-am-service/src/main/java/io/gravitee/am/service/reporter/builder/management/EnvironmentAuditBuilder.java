@@ -32,14 +32,16 @@ public class EnvironmentAuditBuilder extends ManagementAuditBuilder<EnvironmentA
     }
 
     public EnvironmentAuditBuilder environment(Environment environment) {
-        if (EventType.ENVIRONMENT_CREATED.equals(getType()) || EventType.ENVIRONMENT_UPDATED.equals(getType())) {
-            setNewValue(environment);
+        if (environment != null) {
+            if (EventType.ENVIRONMENT_CREATED.equals(getType()) || EventType.ENVIRONMENT_UPDATED.equals(getType())) {
+                setNewValue(environment);
+            }
+
+            referenceType(ReferenceType.ORGANIZATION);
+            referenceId(environment.getOrganizationId());
+
+            setTarget(environment.getId(), EntityType.ENVIRONMENT, null, environment.getName(), ReferenceType.ORGANIZATION, environment.getOrganizationId());
         }
-
-        referenceType(ReferenceType.ORGANIZATION);
-        referenceId(environment.getOrganizationId());
-
-        setTarget(environment.getId(), EntityType.ENVIRONMENT, null, environment.getName(), ReferenceType.ORGANIZATION, environment.getOrganizationId());
         return this;
     }
 }

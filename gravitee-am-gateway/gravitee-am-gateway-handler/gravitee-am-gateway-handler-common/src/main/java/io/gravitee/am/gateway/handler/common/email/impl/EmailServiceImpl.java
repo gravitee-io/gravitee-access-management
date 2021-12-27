@@ -28,6 +28,9 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.model.safe.DomainProperties;
+import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -157,10 +160,14 @@ public class EmailServiceImpl implements EmailService {
         String redirectUrl =  domainService.buildUrl(domain, redirectUri + "?token=" + token);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("user", user);
+        params.put("user", new UserProperties(user));
         params.put("url", redirectUrl);
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
+        params.put("domain", new DomainProperties(domain));
+        if (client != null) {
+            params.put("client", new ClientProperties(client));
+        }
 
         return params;
     }

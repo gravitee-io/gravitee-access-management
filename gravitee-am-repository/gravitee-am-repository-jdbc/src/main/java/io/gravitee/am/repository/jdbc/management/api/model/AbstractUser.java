@@ -74,6 +74,10 @@ public class AbstractUser {
     private long loginsCount;
     @Column("logged_at")
     private LocalDateTime loggedAt;
+    @Column("last_password_reset")
+    private LocalDateTime lastPasswordReset;
+    @Column("last_logout_at")
+    private LocalDateTime lastLogoutAt;
     @Column("created_at")
     private LocalDateTime createdAt;
     @Column("updated_at")
@@ -315,6 +319,22 @@ public class AbstractUser {
 
     public void setLoggedAt(LocalDateTime loggedAt) {
         this.loggedAt = loggedAt;
+    }
+
+    public LocalDateTime getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(LocalDateTime lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
+    }
+
+    public LocalDateTime getLastLogoutAt() {
+        return lastLogoutAt;
+    }
+
+    public void setLastLogoutAt(LocalDateTime lastLogoutAt) {
+        this.lastLogoutAt = lastLogoutAt;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -19,7 +19,8 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
+import io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.ClientNotFoundException;
@@ -41,6 +42,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -51,12 +54,12 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     private static final String ERROR_PARAM = "error";
     private static final String ERROR_DESCRIPTION_PARAM = "error_description";
     private static final String PARAM_CONTEXT_KEY = "param";
-    private String domain;
+    private Domain domain;
     private ThymeleafTemplateEngine engine;
     private ClientSyncService clientSyncService;
     private JWTService jwtService;
 
-    public ErrorEndpoint(String domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService, JWTService jwtService) {
+    public ErrorEndpoint(Domain domain, ThymeleafTemplateEngine engine, ClientSyncService clientSyncService, JWTService jwtService) {
         this.domain = domain;
         this.engine = engine;
         this.clientSyncService = clientSyncService;
@@ -129,7 +132,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
         // put parameters in context (backward compatibility)
         routingContext.put(PARAM_CONTEXT_KEY, params);
 
-        engine.render(routingContext.data(), getTemplateFileName(client), res -> {
+        engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
             if (res.succeeded()) {
                 routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
                 routingContext.response().end(res.result());
@@ -144,7 +147,7 @@ public class ErrorEndpoint implements Handler<RoutingContext> {
     }
 
     private void resolveClient(String clientId, Handler<AsyncResult<Client>> handler) {
-        clientSyncService.findByDomainAndClientId(domain, clientId)
+        clientSyncService.findByDomainAndClientId(domain.getId(), clientId)
                 .subscribe(
                         client -> handler.handle(Future.succeededFuture(client)),
                         error -> handler.handle(Future.failedFuture(error)),

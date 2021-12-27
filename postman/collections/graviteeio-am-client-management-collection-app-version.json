@@ -435,6 +435,7 @@
 											"    var body = JSON.parse(responseBody);",
 											"    pm.environment.set('app', body.id);",
 											"",
+											"    pm.expect(body).to.have.property('metadata');",
 											"    pm.expect(body).to.have.property('settings');",
 											"    pm.expect(body.settings).to.have.property('oauth');",
 											"    pm.expect(body.settings.oauth).to.have.property('grantTypes');",
@@ -474,7 +475,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"SERVICE\"\n}"
+									"raw": "{\n  \"name\": \"my-client\",\n  \"type\": \"SERVICE\",\n  \"metadata\": { \"key\": \"value\" }\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications",
