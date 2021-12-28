@@ -30,7 +30,7 @@
     <name>Gravitee IO - Access Management - Factor - SMS</name>
 
     <properties>
-        <libphonenumber.version>8.12.20</libphonenumber.version>
+        <libphonenumber.version>8.12.40</libphonenumber.version>
     </properties>
 
     <dependencies>
