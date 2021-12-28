@@ -31,14 +31,16 @@ public class AlertNotifierAuditBuilder extends ManagementAuditBuilder<AlertNotif
     }
 
     public AlertNotifierAuditBuilder alertNotifier(AlertNotifier alertNotifier) {
-        if (EventType.ALERT_NOTIFIER_CREATED.equals(getType()) || EventType.ALERT_NOTIFIER_UPDATED.equals(getType())) {
-            setNewValue(alertNotifier);
+        if (alertNotifier != null) {
+            if (EventType.ALERT_NOTIFIER_CREATED.equals(getType()) || EventType.ALERT_NOTIFIER_UPDATED.equals(getType())) {
+                setNewValue(alertNotifier);
+            }
+
+            referenceType(alertNotifier.getReferenceType());
+            referenceId(alertNotifier.getReferenceId());
+
+            setTarget(alertNotifier.getId(), EntityType.ALERT_NOTIFIER, null, alertNotifier.getName(), alertNotifier.getReferenceType(), alertNotifier.getReferenceId());
         }
-
-        referenceType(alertNotifier.getReferenceType());
-        referenceId(alertNotifier.getReferenceId());
-
-        setTarget(alertNotifier.getId(), EntityType.ALERT_NOTIFIER, null, alertNotifier.getName(), alertNotifier.getReferenceType(), alertNotifier.getReferenceId());
         return this;
     }
 }

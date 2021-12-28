@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -59,10 +61,12 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     private static final Logger logger = LoggerFactory.getLogger(MFAEnrollEndpoint.class);
 
     private final FactorManager factorManager;
+    private final Domain domain;
 
-    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine) {
+    public MFAEnrollEndpoint(FactorManager factorManager, TemplateEngine engine, Domain domain) {
         super(engine);
         this.factorManager = factorManager;
+        this.domain = domain;
     }
 
     @Override
@@ -119,7 +123,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 }
                 routingContext.put(ConstantKeys.ACTION_KEY, action);
                 // render the mfa enroll page
-                this.renderPage(routingContext, routingContext.data(), client, logger, "Unable to render MFA enroll page");
+                this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render MFA enroll page");
             });
         } catch (Exception ex) {
             logger.error("An error occurs while rendering MFA enroll page", ex);

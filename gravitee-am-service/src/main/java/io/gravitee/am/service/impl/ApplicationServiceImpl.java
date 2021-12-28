@@ -231,6 +231,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setName(newApplication.getName());
         application.setType(newApplication.getType());
         application.setDomain(domain);
+        application.setMetadata(newApplication.getMetadata());
 
         // apply default oauth 2.0 settings
         ApplicationSettings applicationSettings = new ApplicationSettings();

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.gateway.handler.context.provider.ClientProperties;
+import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
@@ -42,6 +42,7 @@ import java.util.Objects;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
@@ -153,7 +154,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
                     .setStatusCode(302)
                     .end();
         } else {
-            var data = new HashMap<>(routingContext.data());
+            final Map<String, Object> data = generateData(routingContext, domain, client);
             data.putAll(botDetectionManager.getTemplateVariables(domain, client));
             data.putAll(deviceIdentifierManager.getTemplateVariables(client));
 

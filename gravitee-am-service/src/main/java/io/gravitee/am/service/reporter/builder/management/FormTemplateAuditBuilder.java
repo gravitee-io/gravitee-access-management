@@ -31,14 +31,16 @@ public class FormTemplateAuditBuilder extends ManagementAuditBuilder<FormTemplat
     }
 
     public FormTemplateAuditBuilder form(Form form) {
-        if (EventType.FORM_TEMPLATE_CREATED.equals(getType()) || EventType.FORM_TEMPLATE_UPDATED.equals(getType())) {
-            setNewValue(form);
+        if (form != null) {
+            if (EventType.FORM_TEMPLATE_CREATED.equals(getType()) || EventType.FORM_TEMPLATE_UPDATED.equals(getType())) {
+                setNewValue(form);
+            }
+
+            referenceType(form.getReferenceType());
+            referenceId(form.getReferenceId());
+
+            setTarget(form.getId(), EntityType.FORM, null, form.getTemplate(), form.getReferenceType(), form.getReferenceId());
         }
-
-        referenceType(form.getReferenceType());
-        referenceId(form.getReferenceId());
-
-        setTarget(form.getId(), EntityType.FORM, null, form.getTemplate(), form.getReferenceType(), form.getReferenceId());
         return this;
     }
 }

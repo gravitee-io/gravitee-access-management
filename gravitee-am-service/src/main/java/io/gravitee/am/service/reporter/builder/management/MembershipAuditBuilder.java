@@ -31,18 +31,20 @@ public class MembershipAuditBuilder extends ManagementAuditBuilder<MembershipAud
     }
 
     public MembershipAuditBuilder membership(Membership membership) {
-        if (EventType.MEMBERSHIP_CREATED.equals(getType()) || EventType.MEMBERSHIP_UPDATED.equals(getType())) {
-            setNewValue(membership);
-        }
+        if (membership != null) {
+            if (EventType.MEMBERSHIP_CREATED.equals(getType()) || EventType.MEMBERSHIP_UPDATED.equals(getType())) {
+                setNewValue(membership);
+            }
 
-        if (membership.getReferenceType() == ReferenceType.DOMAIN || membership.getReferenceType() == ReferenceType.APPLICATION) {
-            domain(membership.getDomain());
-        } else {
-            referenceType(membership.getReferenceType());
-            referenceId(membership.getReferenceId());
-        }
+            if (membership.getReferenceType() == ReferenceType.DOMAIN || membership.getReferenceType() == ReferenceType.APPLICATION) {
+                domain(membership.getDomain());
+            } else {
+                referenceType(membership.getReferenceType());
+                referenceId(membership.getReferenceId());
+            }
 
-        setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain());
+            setTarget(membership.getId(), EntityType.MEMBERSHIP, null, membership.getId(), ReferenceType.DOMAIN, membership.getDomain());
+        }
         return this;
     }
 }

@@ -180,7 +180,7 @@ public class LdapAuthenticationProviderConfiguration {
     }
 
     private SearchEntryHandler groupSearchEntryHandler() {
-        GroupSearchEntryHandler groupSearchEntryHandler = new GroupSearchEntryHandler();
+        GroupSearchEntryHandler groupSearchEntryHandler = new GroupSearchEntryHandler(this.configuration.isRecursiveGroupFetch());
         String groupSearchBase = configuration.getGroupSearchBase();
         if (groupSearchBase != null && !groupSearchBase.isEmpty()) {
             groupSearchEntryHandler.setBaseDn(groupSearchBase + LDAP_SEPARATOR + configuration.getContextSourceBase());

@@ -21,25 +21,23 @@ import freemarker.template.Configuration;
 import io.gravitee.am.common.event.EmailEvent;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
-import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -89,44 +87,33 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     @Override
     public void onEvent(Event<EmailEvent, Payload> event) {
         switch (event.type()) {
-            case DEPLOY:
-            case UPDATE:
-                deployEmail(event.content().getId());
-                break;
             case UNDEPLOY:
                 removeEmail(event.content().getId());
                 break;
+            default:
+                logger.debug("{} event received for EmailTemplate {}, ignore it as it will be loaded on demand", event.type(), event.content().getId());
         }
     }
 
     @Override
-    public Email getEmail(String template, String defaultSubject, int defaultExpiresAfter) {
-        boolean templateFound = emailTemplates.containsKey(template);
-        String[] templateParts = template.split(Pattern.quote(TEMPLATE_NAME_SEPARATOR));
+    public Email getEmail(io.gravitee.am.model.Template templateDef, User user, String defaultSubject, int defaultExpiresAfter) {
+        // Since https://github.com/gravitee-io/issues/issues/6590 we have to read the record in Email repository
+        return getEmail0(templateDef, user)
+                .map(customEmail -> {
+                    // try to found email template in the local map
+                    final String templateName = getTemplateName(customEmail);
+                    final Email localEmailTemplate = emailTemplates.get(templateName);
+                    if (localEmailTemplate != null && localEmailTemplate.getUpdatedAt().getTime() >= customEmail.getUpdatedAt().getTime()) {
+                        return create(templateName, localEmailTemplate.getFrom(), localEmailTemplate.getFromName(), localEmailTemplate.getSubject(), localEmailTemplate.getExpiresAfter());
+                    }
+                    // else, reload the local map and return the database copy one
+                    loadEmail(customEmail);
+                    return create(templateName, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
 
-        // template not found for the client, try at domain level
-        if (!templateFound && templateParts.length == 3) {
-            template = templateParts[0] + TEMPLATE_NAME_SEPARATOR + templateParts[1];
-            templateFound = emailTemplates.containsKey(template);
-        }
-
-        if (templateFound) {
-            Email customEmail = emailTemplates.get(template);
-            return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
-        } else {
-            // template not found, return default template
-            template = templateParts[0];
-            return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
-        }
-    }
-
-    private void deployEmail(String emailId) {
-        logger.info("Management API has received a deploy email event for {}", emailId);
-        emailTemplateService.findById(emailId)
-                .subscribe(
-                        email -> loadEmail(email),
-                        error -> logger.error("Unable to deploy email {}", emailId, error),
-                        () -> logger.error("No email found with id {}", emailId));
+                })
+                // if there is nothing in database, return the classpath copy one
+                .defaultIfEmpty(create(templateDef.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter))
+                .blockingGet();
     }
 
     private void removeEmail(String email) {
@@ -171,6 +158,17 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
                 + TEMPLATE_NAME_SEPARATOR
                 + email.getReferenceType() + email.getReferenceId()
                 + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
+    }
+
+    private Maybe<Email> getEmail0(io.gravitee.am.model.Template templateDef, User user) {
+        if (user.getClient() == null) {
+            return emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template())
+                    .filter(Email::isEnabled);
+        }
+        return emailTemplateService.findByClientAndTemplate(user.getReferenceType(), user.getReferenceId(), user.getClient(), templateDef.template())
+                .filter(Email::isEnabled)
+                .switchIfEmpty(Maybe.defer(() -> emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template())))
+                .filter(Email::isEnabled);
     }
 
     public void setDefaultFrom(String defaultFrom) {

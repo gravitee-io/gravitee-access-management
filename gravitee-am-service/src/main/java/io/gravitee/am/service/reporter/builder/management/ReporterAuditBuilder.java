@@ -31,11 +31,13 @@ public class ReporterAuditBuilder extends ManagementAuditBuilder<ReporterAuditBu
     }
 
     public ReporterAuditBuilder reporter(Reporter reporter) {
-        if (EventType.REPORTER_CREATED.equals(getType()) || EventType.REPORTER_UPDATED.equals(getType())) {
-            setNewValue(reporter);
+        if (reporter != null) {
+            if (EventType.REPORTER_CREATED.equals(getType()) || EventType.REPORTER_UPDATED.equals(getType())) {
+                setNewValue(reporter);
+            }
+            domain(reporter.getDomain());
+            setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), ReferenceType.DOMAIN, reporter.getDomain());
         }
-        domain(reporter.getDomain());
-        setTarget(reporter.getId(), EntityType.REPORTER, null, reporter.getName(), ReferenceType.DOMAIN, reporter.getDomain());
         return this;
     }
 }

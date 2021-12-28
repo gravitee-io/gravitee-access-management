@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
-import io.gravitee.am.gateway.handler.oidc.service.idtoken.impl.IDTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.request.ClaimsRequest;
 import io.gravitee.am.model.Role;
@@ -157,7 +157,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
         }
 
         // remove technical claims that are useless for the calling app
-        IDTokenServiceImpl.EXCLUDED_CLAIMS.forEach(key -> userClaims.remove(key));
+        IDTokenService.EXCLUDED_CLAIMS.forEach(key -> userClaims.remove(key));
 
         return (requestForSpecificClaims) ? requestedClaims : userClaims;
     }

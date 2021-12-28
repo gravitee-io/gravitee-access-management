@@ -26,6 +26,7 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
@@ -207,15 +208,17 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                             }
                                                         })
                                                         .flatMap(newUser1 -> {
-                                                            User user = transform(newUser1);
-                                                            AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                                                            if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
-                                                                user.setRegistrationAccessToken(getUserRegistrationToken(user));
-                                                            }
-                                                            return userService.create(user)
+                                                            return Single.fromCallable(() -> {
+                                                                User user = transform(newUser1);
+                                                                AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                                if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
+                                                                    user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
+                                                                    user.setRegistrationAccessToken(getUserRegistrationToken(user));
+                                                                }
+                                                                return user;
+                                                            }).flatMap(user -> userService.create(user)
                                                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable))));
                                                         })
                                                         .flatMap(user -> {
                                                             // end pre-registration user if required
@@ -250,13 +253,14 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 .flatMap(user -> {
                     // get client for password settings
                     return checkClientFunction().apply(domain.getId(), user.getClient())
-                            .map(Optional::of)
+                            .map(Optional::ofNullable)
                             .defaultIfEmpty(Optional.empty())
                             .flatMapSingle(optClient -> {
                                 // check user password
                                 if (isInvalidUserPassword(password, optClient.orElse(null), domain, user)) {
                                     return Single.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
                                 }
+                                final Client client = optClient.filter(Objects::nonNull).map(Application::toClient).orElse(new Client());
                                 return identityProviderManager.getUserProvider(user.getSource())
                                         .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                                         .flatMapSingle(userProvider -> {
@@ -290,8 +294,8 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                             user.setUpdatedAt(new Date());
                                             return userService.update(user);
                                         })
-                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)));
+                                        .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
                             });
                 }).flatMapCompletable(user -> {
                     // reset login attempts in case of reset password action

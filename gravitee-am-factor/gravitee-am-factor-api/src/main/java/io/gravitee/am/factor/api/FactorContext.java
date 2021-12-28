@@ -22,7 +22,6 @@ import org.springframework.context.ApplicationContext;
 import java.util.Map;
 
 /**
- * TODO: no vertx dependency should be visible at this stage
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */

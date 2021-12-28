@@ -181,6 +181,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
         testObserver.assertValue(u -> u.getAdditionalInformation().size() == 1);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
+        testObserver.assertValue(u -> u.getLastPasswordReset() != null);
         testObserver.assertValue(u -> u.getFactors().get(0).getChannel() != null);
         testObserver.assertValue(u -> u.getFactors().get(0).getSecurity() != null);
     }
@@ -221,6 +222,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         user.setInternal(false);
         user.setLastName("last"+random);
         user.setLoggedAt(new Date());
+        user.setLastPasswordReset(new Date());
         user.setFirstName("first"+random);
         user.setLoginsCount(5l);
         user.setNewsletter(false);

@@ -20,7 +20,7 @@ const excludeUserProfileInfoInPassword = document.getElementById("excludeUserPro
 /**
  * When the user starts to type something inside the password field
  */
-passwordInput.onkeyup = function () {
+passwordInput.addEventListener('input', function () {
     if (passwordSettings == null) {
         return;
     }

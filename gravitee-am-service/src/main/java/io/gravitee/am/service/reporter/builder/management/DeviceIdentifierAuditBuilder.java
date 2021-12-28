@@ -37,14 +37,16 @@ public class DeviceIdentifierAuditBuilder extends ManagementAuditBuilder<DeviceI
     }
 
     public DeviceIdentifierAuditBuilder deviceIdentifier(DeviceIdentifier deviceIdentifier) {
-        if (NEW_VALUE_EVENT_TYPE.contains(getType())) {
-            setNewValue(deviceIdentifier);
+        if (deviceIdentifier != null) {
+            if (NEW_VALUE_EVENT_TYPE.contains(getType())) {
+                setNewValue(deviceIdentifier);
+            }
+
+            referenceId(deviceIdentifier.getReferenceId());
+            referenceType(deviceIdentifier.getReferenceType());
+
+            setTarget(deviceIdentifier.getId(), EntityType.DEVICE_IDENTIFIER, null, deviceIdentifier.getName(), deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId());
         }
-
-        referenceId(deviceIdentifier.getReferenceId());
-        referenceType(deviceIdentifier.getReferenceType());
-
-        setTarget(deviceIdentifier.getId(), EntityType.DEVICE_IDENTIFIER, null, deviceIdentifier.getName(), deviceIdentifier.getReferenceType(), deviceIdentifier.getReferenceId());
         return this;
     }
 }

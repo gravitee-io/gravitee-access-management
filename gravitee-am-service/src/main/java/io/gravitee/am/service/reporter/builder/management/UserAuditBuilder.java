@@ -31,16 +31,18 @@ public class UserAuditBuilder extends ManagementAuditBuilder<UserAuditBuilder> {
     }
 
     public UserAuditBuilder user(User user) {
-        if (EventType.USER_CREATED.equals(getType())
-                || EventType.USER_UPDATED.equals(getType())
-                || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
-            setNewValue(user);
+        if (user != null) {
+            if (EventType.USER_CREATED.equals(getType())
+                    || EventType.USER_UPDATED.equals(getType())
+                    || EventType.USER_ROLES_ASSIGNED.equals(getType())) {
+                setNewValue(user);
+            }
+
+            referenceType(user.getReferenceType());
+            referenceId(user.getReferenceId());
+
+            setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId());
         }
-
-        referenceType(user.getReferenceType());
-        referenceId(user.getReferenceId());
-
-        setTarget(user.getId(), EntityType.USER, user.getUsername(), getDisplayName(user), user.getReferenceType(), user.getReferenceId());
         return this;
     }
 
