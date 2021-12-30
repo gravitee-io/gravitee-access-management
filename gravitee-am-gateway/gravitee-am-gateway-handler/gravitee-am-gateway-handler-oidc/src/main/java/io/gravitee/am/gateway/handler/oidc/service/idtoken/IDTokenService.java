@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.idtoken;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;

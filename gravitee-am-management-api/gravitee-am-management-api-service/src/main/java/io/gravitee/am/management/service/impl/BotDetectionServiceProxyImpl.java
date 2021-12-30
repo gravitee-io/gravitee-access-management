@@ -17,16 +17,22 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.exception.BotDetectionPluginSchemaNotFoundException;
 import io.gravitee.am.model.BotDetection;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.exception.BotDetectionNotFoundException;
 import io.gravitee.am.service.model.NewBotDetection;
 import io.gravitee.am.service.model.UpdateBotDetection;
+import io.gravitee.am.service.reporter.AuditReporterService;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.BotDetectionAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -48,6 +54,9 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
     private BotDetectionPluginService botDetectionPluginService;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Override
@@ -62,16 +71,23 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
 
     @Override
     public Single<BotDetection> create(String domain, NewBotDetection botDetection, User principal) {
-        return botDetectionService.create(domain, botDetection, principal).flatMap(this::filterSensitiveData);
+        return botDetectionService.create(domain, botDetection, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).botDetection(detection)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<BotDetection> update(String domain, String id, UpdateBotDetection updateBotDetection, User principal) {
         return botDetectionService.findById(id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
-                .flatMap(oldBotDetection -> updateSensitiveData(updateBotDetection, oldBotDetection))
-                .flatMap(botDetectionToUpdate -> botDetectionService.update(domain, id, botDetectionToUpdate, principal))
-                .flatMap(this::filterSensitiveData);
+                .flatMap(oldBotDetection -> filterSensitiveData(oldBotDetection)
+                        .flatMap(safeOldBoDetection -> updateSensitiveData(updateBotDetection, oldBotDetection)
+                                .flatMap(botDetectionToUpdate -> botDetectionService.update(domain, id, botDetectionToUpdate, principal))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).oldValue(safeOldBoDetection).botDetection(detection)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).throwable(throwable))))
+                );
     }
 
     @Override
@@ -83,10 +99,12 @@ public class BotDetectionServiceProxyImpl extends AbstractSensitiveProxy impleme
         return botDetectionPluginService.getSchema(botDetection.getType())
                 .switchIfEmpty(Single.error(new BotDetectionPluginSchemaNotFoundException(botDetection.getType())))
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new BotDetection(botDetection);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(botDetection.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, botDetection::setConfiguration);
-                    return botDetection;
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

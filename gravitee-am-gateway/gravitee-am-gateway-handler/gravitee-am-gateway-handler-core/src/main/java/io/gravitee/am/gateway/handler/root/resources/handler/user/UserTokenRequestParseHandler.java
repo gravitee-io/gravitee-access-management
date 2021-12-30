@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user;
 
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;

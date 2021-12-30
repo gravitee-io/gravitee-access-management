@@ -121,9 +121,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
 
                     LOGGER.error("An error occurs while trying to create a resource", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a resource", ex));
-                })
-                .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).resource(factor1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).throwable(throwable)));
+                });
     }
 
     @Override
@@ -143,9 +141,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                                 // send sync event to refresh plugins that are using this resource
                                 Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(resource1));
-                            })
-                            .doOnSuccess(factor1 -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).oldValue(oldServiceResource).resource(factor1)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).throwable(throwable)));
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

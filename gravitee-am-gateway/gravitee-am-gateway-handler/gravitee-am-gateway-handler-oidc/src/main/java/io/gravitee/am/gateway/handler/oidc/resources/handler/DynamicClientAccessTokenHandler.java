@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.resources.handler;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.Scope;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oidc.exception.ClientRegistrationForbiddenException;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;

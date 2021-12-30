@@ -121,10 +121,7 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
     public Single<AlertNotifier> create(ReferenceType referenceType, String referenceId, NewAlertNotifier newAlertNotifier, User byUser) {
         LOGGER.debug("Create alert notifier for {} {}: {}", referenceType, referenceId, newAlertNotifier);
 
-        final AlertNotifier alertNotifier = newAlertNotifier.toAlertNotifier();
-        alertNotifier.setReferenceType(referenceType);
-        alertNotifier.setReferenceId(referenceId);
-
+        final AlertNotifier alertNotifier = newAlertNotifier.toAlertNotifier(referenceType, referenceId);
         return this.createInternal(alertNotifier, byUser);
     }
 
@@ -176,19 +173,13 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
         toCreate.setUpdatedAt(now);
 
         return alertNotifierRepository.create(toCreate)
-                .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.CREATE))).ignoreElement().andThen(Single.just(updated)))
-                .doOnSuccess(alertTrigger -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_CREATED).alertNotifier(alertTrigger).principal(byUser)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_CREATED).alertNotifier(toCreate).principal(byUser).throwable(throwable)));
+                .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.CREATE))).ignoreElement().andThen(Single.just(updated)));
     }
 
     private Single<AlertNotifier> updateInternal(AlertNotifier alertNotifier, User updatedBy, AlertNotifier previous) {
-
         alertNotifier.setUpdatedAt(new Date());
-
         return alertNotifierRepository.update(alertNotifier)
-                .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.UPDATE))).ignoreElement().andThen(Single.just(updated)))
-                .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(updated).principal(updatedBy).oldValue(previous)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(previous).principal(updatedBy).throwable(throwable)));
+                .flatMap(updated -> eventService.create(new Event(Type.ALERT_NOTIFIER, new Payload(updated.getId(), updated.getReferenceType(), updated.getReferenceId(), Action.UPDATE))).ignoreElement().andThen(Single.just(updated)));
     }
 
     private Completable deleteInternal(AlertNotifier alertNotifier, User deletedBy) {

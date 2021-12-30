@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.uma.resources.request.PermissionTicketRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.PermissionTicketResponse;
 import io.gravitee.am.model.Domain;

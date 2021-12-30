@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.utils;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.vertx.core.net.SocketAddress;
@@ -24,7 +24,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 
 import java.net.URI;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SUCCESS_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

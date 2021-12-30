@@ -16,25 +16,9 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
-import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
-import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.expression.EvaluationException;
-import org.springframework.expression.Expression;
-import org.springframework.expression.ParseException;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
-
-import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -51,8 +51,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
 import static java.util.Optional.ofNullable;
 
 /**

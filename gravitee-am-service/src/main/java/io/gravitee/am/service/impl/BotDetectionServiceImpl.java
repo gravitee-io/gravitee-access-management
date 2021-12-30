@@ -120,9 +120,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
 
                     LOGGER.error("An error occurs while trying to create a detection", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a detection", ex));
-                })
-                .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).botDetection(detection)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_CREATED).throwable(throwable)));
+                });
     }
 
     @Override
@@ -142,9 +140,7 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                                 // create event for sync process
                                 Event event = new Event(Type.BOT_DETECTION, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(detection));
-                            })
-                            .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).oldValue(oldBotDetection).botDetection(detection)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(BotDetectionAuditBuilder.class).principal(principal).type(EventType.BOT_DETECTION_UPDATED).throwable(throwable)));
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

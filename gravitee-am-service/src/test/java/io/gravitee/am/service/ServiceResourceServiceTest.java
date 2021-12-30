@@ -129,7 +129,7 @@ public class ServiceResourceServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
 
-        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
+        verify(auditService, never()).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
     }
 
     @Test
@@ -147,7 +147,7 @@ public class ServiceResourceServiceTest {
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNoValues();
 
-        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("FAILURE")));
+        verify(auditService, never()).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("FAILURE")));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ServiceResourceServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertValueCount(1);
 
-        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
+        verify(auditService, never()).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus().equals("SUCCESS")));
     }
 
     @Test

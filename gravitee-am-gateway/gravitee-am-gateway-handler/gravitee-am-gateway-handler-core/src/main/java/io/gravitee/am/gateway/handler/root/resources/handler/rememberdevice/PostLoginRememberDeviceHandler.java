@@ -28,7 +28,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 

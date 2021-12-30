@@ -22,7 +22,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.gateway.handler.account.resources.util.AccountRoutes;
 import io.gravitee.am.gateway.handler.account.resources.util.ContextPathParamUtil;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
 import io.gravitee.am.identityprovider.api.DefaultUser;

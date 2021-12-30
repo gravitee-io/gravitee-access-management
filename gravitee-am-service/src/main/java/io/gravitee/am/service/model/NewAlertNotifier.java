@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 
 import javax.validation.constraints.NotEmpty;
@@ -37,13 +38,15 @@ public class NewAlertNotifier {
     @NotNull
     private String configuration;
 
-    public AlertNotifier toAlertNotifier() {
+    public AlertNotifier toAlertNotifier(ReferenceType refType, String refId) {
         final AlertNotifier alertNotifier = new AlertNotifier();
 
         alertNotifier.setType(this.type);
         alertNotifier.setName(this.name);
         alertNotifier.setEnabled(this.enabled);
         alertNotifier.setConfiguration(configuration);
+        alertNotifier.setReferenceId(refId);
+        alertNotifier.setReferenceType(refType);
 
         return alertNotifier;
     }

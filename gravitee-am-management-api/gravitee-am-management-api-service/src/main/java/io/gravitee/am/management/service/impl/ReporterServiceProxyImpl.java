@@ -16,15 +16,20 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
 import io.gravitee.am.model.Reporter;
+import io.gravitee.am.model.resource.ServiceResource;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.ReporterAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -44,6 +49,9 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
 
     @Autowired
     private io.gravitee.am.service.ReporterService reporterService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -75,15 +83,23 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
 
     @Override
     public Single<Reporter> create(String domain, NewReporter newReporter, User principal) {
-        return reporterService.create(domain, newReporter, principal);
+        return reporterService.create(domain, newReporter, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal) {
         return reporterService.findById(id)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
-                .flatMap(oldReporter -> updateSensitiveData(updateReporter, oldReporter))
-                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal));
+                .flatMap(oldReporter -> filterSensitiveData(oldReporter)
+                        .flatMap(safeOldReporter -> updateSensitiveData(updateReporter, oldReporter)
+                                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(safeOldReporter).reporter(reporter1)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).throwable(throwable))))
+                );
     }
 
     @Override
@@ -95,10 +111,12 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
         return reporterPluginService.getSchema(reporter.getType())
                 .switchIfEmpty(Single.error(new ReporterPluginSchemaNotFoundException(reporter.getType())))
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new Reporter(reporter);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(reporter.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, reporter::setConfiguration);
-                    return reporter;
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

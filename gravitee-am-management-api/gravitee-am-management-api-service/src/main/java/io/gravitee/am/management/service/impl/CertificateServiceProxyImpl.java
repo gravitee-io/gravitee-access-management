@@ -17,16 +17,21 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Reporter;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
 import io.gravitee.am.service.exception.CertificatePluginSchemaNotFoundException;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.CertificateAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -48,6 +53,9 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     private CertificatePluginService certificatePluginService;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Override
@@ -67,21 +75,31 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
 
     @Override
     public Single<Certificate> create(String domain) {
-        return certificateService.create(domain).flatMap(this::filterSensitiveData);
+        return certificateService.create(domain)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
-        return certificateService.create(domain, newCertificate, principal).flatMap(this::filterSensitiveData);
+        return certificateService.create(domain, newCertificate, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).certificate(certificate)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
         return certificateService.findById(id)
                 .switchIfEmpty(Single.error(new CertificateNotFoundException(id)))
-                .flatMap(oldCertificate -> updateSensitiveData(updateCertificate, oldCertificate))
-                .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
-                .flatMap(this::filterSensitiveData);
+                .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
+                        .flatMap(safeOldCert -> updateSensitiveData(updateCertificate, oldCertificate)
+                                .flatMap(certificateToUpdate -> certificateService.update(domain, id, certificateToUpdate, principal))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(safeOldCert).certificate(certificate)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable))))
+                );
     }
 
     @Override
@@ -89,14 +107,16 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
         return certificateService.delete(certificateId, principal);
     }
 
-    private Single<Certificate> filterSensitiveData(Certificate idp) {
-        return certificatePluginService.getSchema(idp.getType())
-                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(idp.getType())))
+    private Single<Certificate> filterSensitiveData(Certificate cert) {
+        return certificatePluginService.getSchema(cert.getType())
+                .switchIfEmpty(Single.error(new CertificatePluginSchemaNotFoundException(cert.getType())))
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new Certificate(cert);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(idp.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, idp::setConfiguration);
-                    return idp;
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

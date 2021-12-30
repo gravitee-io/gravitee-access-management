@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery.impl;
 import io.gravitee.am.common.oauth2.CodeChallengeMethod;
 import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.MtlsEndpointAliases;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
