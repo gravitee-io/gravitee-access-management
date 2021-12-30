@@ -41,10 +41,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Map;
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static org.mockito.Mockito.doAnswer;

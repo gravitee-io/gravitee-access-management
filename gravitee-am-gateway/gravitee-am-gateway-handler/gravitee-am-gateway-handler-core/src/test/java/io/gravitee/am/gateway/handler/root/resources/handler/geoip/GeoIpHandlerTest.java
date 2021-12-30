@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.MFASettings;
@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.HashMap;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.GEOIP_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;

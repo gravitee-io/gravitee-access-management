@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.scim.resources.groups;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;

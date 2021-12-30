@@ -17,16 +17,21 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.AlertNotifierServiceProxy;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
+import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.service.AlertNotifierService;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.model.NewAlertNotifier;
 import io.gravitee.am.service.model.PatchAlertNotifier;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.AlertNotifierAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
@@ -49,6 +54,9 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     private NotifierPluginService notifierPluginService;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Override
@@ -68,15 +76,26 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
 
     @Override
     public Single<AlertNotifier> create(ReferenceType referenceType, String referenceId, NewAlertNotifier newAlertNotifier, User byUser) {
-        return alertNotifierService.create(referenceType, referenceId, newAlertNotifier, byUser).flatMap(this::filterSensitiveData);
+        return filterSensitiveData(newAlertNotifier.toAlertNotifier(referenceType, referenceId))
+                .flatMap(safeNewNotifier ->
+                        alertNotifierService.create(referenceType, referenceId, newAlertNotifier, byUser)
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(alertTrigger -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_CREATED).alertNotifier(alertTrigger).principal(byUser)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_CREATED).alertNotifier(safeNewNotifier).principal(byUser).throwable(throwable)))
+                );
     }
 
     @Override
     public Single<AlertNotifier> update(ReferenceType referenceType, String referenceId, String alertNotifierId, PatchAlertNotifier patchAlertNotifier, User byUser) {
         return alertNotifierService.getById(referenceType, referenceId, alertNotifierId)
-                .flatMap(oldAlertNotifier -> updateSensitiveData(patchAlertNotifier, oldAlertNotifier))
-                .flatMap(alertNotifierToPatch -> alertNotifierService.update(referenceType, referenceId, alertNotifierId, alertNotifierToPatch, byUser))
-                .flatMap(this::filterSensitiveData);
+                .flatMap(oldAlertNotifier ->
+                        filterSensitiveData(oldAlertNotifier)
+                        .flatMap(safeOldAlertNotifier -> updateSensitiveData(patchAlertNotifier, oldAlertNotifier)
+                                .flatMap(alertNotifierToPatch -> alertNotifierService.update(referenceType, referenceId, alertNotifierId, alertNotifierToPatch, byUser))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(updated).principal(byUser).oldValue(safeOldAlertNotifier)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertNotifierAuditBuilder.class).type(EventType.ALERT_NOTIFIER_UPDATED).alertNotifier(safeOldAlertNotifier).principal(byUser).throwable(throwable))))
+                );
     }
 
     @Override
@@ -87,10 +106,12 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     private Single<AlertNotifier> filterSensitiveData(AlertNotifier alertNotifier) {
         return notifierPluginService.getSchema(alertNotifier.getType())
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new AlertNotifier(alertNotifier);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(alertNotifier.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, alertNotifier::setConfiguration);
-                    return alertNotifier;
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

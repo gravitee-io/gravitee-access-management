@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.util.Optional.ofNullable;
 
 /**

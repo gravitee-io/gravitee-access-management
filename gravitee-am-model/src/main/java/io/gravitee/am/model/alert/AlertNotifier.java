@@ -57,6 +57,7 @@ public class AlertNotifier implements Resource {
         this.referenceId = other.referenceId;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.configuration = other.getConfiguration();
     }
 
     @Override

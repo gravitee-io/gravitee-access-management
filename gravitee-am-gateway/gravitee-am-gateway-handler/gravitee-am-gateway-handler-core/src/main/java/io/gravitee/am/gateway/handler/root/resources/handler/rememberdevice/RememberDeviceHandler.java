@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -26,8 +26,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Objects;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
 import static io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl.REMEMBER_DEVICE_IS_ACTIVE;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;

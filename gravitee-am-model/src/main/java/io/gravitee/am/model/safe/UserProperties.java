@@ -16,6 +16,7 @@
 package io.gravitee.am.model.safe;
 
 import io.gravitee.am.common.oidc.idtoken.Claims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
@@ -73,8 +74,8 @@ public class UserProperties {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
         // remove technical information that shouldn't be used in templates
-        claims.remove("op_id_token");
-        claims.remove("op_access_token");
+        claims.remove(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY);
+        claims.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
 
         additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();

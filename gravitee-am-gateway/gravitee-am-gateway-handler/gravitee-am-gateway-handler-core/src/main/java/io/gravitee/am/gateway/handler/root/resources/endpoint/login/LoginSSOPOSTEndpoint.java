@@ -16,36 +16,18 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
 import io.gravitee.am.common.exception.oauth2.BadClientCredentialsException;
-import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.common.Request;
-import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Maybe;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

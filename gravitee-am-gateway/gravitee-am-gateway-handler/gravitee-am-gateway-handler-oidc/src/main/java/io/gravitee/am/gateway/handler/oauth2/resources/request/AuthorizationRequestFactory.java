@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;

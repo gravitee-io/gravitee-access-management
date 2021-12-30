@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.login;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.common.http.HttpHeaders;

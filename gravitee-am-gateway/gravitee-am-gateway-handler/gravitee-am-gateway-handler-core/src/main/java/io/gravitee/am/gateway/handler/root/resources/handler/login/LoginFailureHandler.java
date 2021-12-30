@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;

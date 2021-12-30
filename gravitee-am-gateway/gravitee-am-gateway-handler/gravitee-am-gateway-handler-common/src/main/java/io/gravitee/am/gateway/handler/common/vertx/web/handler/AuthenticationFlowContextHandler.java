@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.vertx.core.Handler;
@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTH_FLOW_CONTEXT_VERSION_KEY;
 import static java.util.Optional.ofNullable;
 
 /**

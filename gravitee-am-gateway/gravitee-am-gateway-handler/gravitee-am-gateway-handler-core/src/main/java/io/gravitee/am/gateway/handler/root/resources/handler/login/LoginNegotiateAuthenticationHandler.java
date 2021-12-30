@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 import io.gravitee.am.common.exception.authentication.NegotiateContinueException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
@@ -33,7 +33,7 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
 

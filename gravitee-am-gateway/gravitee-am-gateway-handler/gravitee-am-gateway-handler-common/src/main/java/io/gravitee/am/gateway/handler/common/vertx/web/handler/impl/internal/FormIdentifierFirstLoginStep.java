@@ -25,8 +25,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.Objects;
 import java.util.Optional;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
 

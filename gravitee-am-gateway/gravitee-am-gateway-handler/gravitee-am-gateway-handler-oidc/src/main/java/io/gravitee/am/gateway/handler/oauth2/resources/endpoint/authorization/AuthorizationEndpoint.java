@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
 import io.gravitee.am.common.oauth2.ResponseMode;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
@@ -24,7 +24,6 @@ import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequ
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -37,7 +36,7 @@ import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 
 /**
  * The authorization endpoint is used to interact with the resource owner and obtain an authorization grant.

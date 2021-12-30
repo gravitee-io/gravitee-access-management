@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.account.model.EnrollmentAccount;
 import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;

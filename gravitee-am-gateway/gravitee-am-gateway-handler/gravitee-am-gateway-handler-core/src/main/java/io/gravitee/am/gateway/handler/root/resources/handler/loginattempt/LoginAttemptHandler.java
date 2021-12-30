@@ -35,7 +35,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Predicate.not;
 

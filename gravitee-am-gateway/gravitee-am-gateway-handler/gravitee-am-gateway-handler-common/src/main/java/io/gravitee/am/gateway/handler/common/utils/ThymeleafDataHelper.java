@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;

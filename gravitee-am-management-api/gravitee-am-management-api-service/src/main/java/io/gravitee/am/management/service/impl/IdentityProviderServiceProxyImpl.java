@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.identityprovider.api.User;
@@ -26,9 +27,13 @@ import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.resource.ServiceResource;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -63,6 +68,9 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     @Autowired
     private io.gravitee.am.service.IdentityProviderService identityProviderService;
+
+    @Autowired
+    private AuditService auditService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -101,16 +109,23 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     @Override
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal) {
-        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal).flatMap(this::filterSensitiveData);
+        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
         return identityProviderService.findById(id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
-                .flatMap(oldIdP -> updateSensitiveData(updateIdentityProvider, oldIdP))
-                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal))
-                .flatMap(this::filterSensitiveData);
+                .flatMap(oldIdP -> filterSensitiveData(oldIdP)
+                        .flatMap(safeOldIdp -> updateSensitiveData(updateIdentityProvider, oldIdP)
+                                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal))
+                                .flatMap(this::filterSensitiveData)
+                                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
+                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable))))
+                );
     }
 
     @Override
@@ -122,17 +137,22 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
         return identityProviderPluginService.getSchema(idp.getType())
                 .switchIfEmpty(Single.error(new IdentityProviderPluginSchemaNotFoundException(idp.getType())))
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new IdentityProvider(idp);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(idp.getConfiguration());
-                    if (KERBEROS_AM_IDP.equals(idp.getType())) {
-                        this.filterNestedSensitiveData(schemaNode, configurationNode, "/properties/ldapConfig", "/ldapConfig");
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    if (KERBEROS_AM_IDP.equals(filteredEntity.getType())) {
+                        this.filterNestedSensitiveData(schemaNode, configurationNode,
+                                "/properties/ldapConfig",
+                                "/ldapConfig"
+                        );
                     }
                     // We enforce sensitive data filtering on Inline User Passwords
-                    if (INLINE_AM_IDP.equals(idp.getType())) {
+                    if (INLINE_AM_IDP.equals(filteredEntity.getType())) {
                         filterSensitiveInlineIdpData(configurationNode);
                     }
-                    super.filterSensitiveData(schemaNode, configurationNode, idp::setConfiguration);
-                    return idp;
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

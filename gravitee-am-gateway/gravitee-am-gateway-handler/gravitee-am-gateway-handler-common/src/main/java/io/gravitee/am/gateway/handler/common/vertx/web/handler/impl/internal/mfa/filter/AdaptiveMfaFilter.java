@@ -26,7 +26,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 import static java.util.Objects.isNull;
 
 

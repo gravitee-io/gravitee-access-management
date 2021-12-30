@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.policy.enrich.auth;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.policy.enrich.auth.configuration.EnrichAuthFlowPolicyConfiguration;
 import io.gravitee.am.policy.enrich.auth.configuration.Property;

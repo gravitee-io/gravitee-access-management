@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.vertx.reactivex.ext.web.Session;
 
 import java.util.function.Supplier;

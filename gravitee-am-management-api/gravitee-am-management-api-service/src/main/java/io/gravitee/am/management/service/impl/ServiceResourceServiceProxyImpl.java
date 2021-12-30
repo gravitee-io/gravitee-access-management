@@ -17,16 +17,20 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.management.service.exception.ResourcePluginNotFoundException;
 import io.gravitee.am.model.resource.ServiceResource;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.exception.ServiceResourceNotFoundException;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.ServiceResourceAuditBuilder;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -48,6 +52,9 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
     private ServiceResourceService serviceResourceService;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @Override
@@ -62,16 +69,23 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
 
     @Override
     public Single<ServiceResource> create(String domain, NewServiceResource res, User principal) {
-        return serviceResourceService.create(domain, res, principal).flatMap(this::filterSensitiveData);
+        return serviceResourceService.create(domain, res, principal)
+                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).resource(serviceResource)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).throwable(throwable)));
     }
 
     @Override
     public Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateServiceResource, User principal) {
         return serviceResourceService.findById(id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
-                .flatMap(oldResource -> updateSensitiveData(updateServiceResource, oldResource))
-                .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal))
-                .flatMap(this::filterSensitiveData);
+                .flatMap(oldResource -> filterSensitiveData(oldResource).flatMap(safeOldResource ->
+                        updateSensitiveData(updateServiceResource, oldResource)
+                                .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal)
+                                        .flatMap(this::filterSensitiveData)
+                                        .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).oldValue(safeOldResource).resource(serviceResource)))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).throwable(throwable)))))
+                );
     }
 
     @Override
@@ -83,10 +97,12 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
         return resourcePluginService.getSchema(serviceResource.getType())
                 .switchIfEmpty(Single.error(new ResourcePluginNotFoundException(serviceResource.getType())))
                 .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = new ServiceResource(serviceResource);
                     var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(serviceResource.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, serviceResource::setConfiguration);
-                    return serviceResource;
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
                 });
     }
 

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
 import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.User;

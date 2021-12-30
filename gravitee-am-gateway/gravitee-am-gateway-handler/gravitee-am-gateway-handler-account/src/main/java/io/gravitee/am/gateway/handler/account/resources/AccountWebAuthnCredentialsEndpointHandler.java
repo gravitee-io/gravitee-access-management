@@ -16,11 +16,9 @@
 package io.gravitee.am.gateway.handler.account.resources;
 
 import io.gravitee.am.gateway.handler.account.services.AccountService;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import org.springframework.context.ApplicationContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

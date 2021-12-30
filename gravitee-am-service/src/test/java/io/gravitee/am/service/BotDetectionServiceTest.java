@@ -142,7 +142,7 @@ public class BotDetectionServiceTest {
         testObserver.assertNoErrors();
 
         verify(eventService).create(any());
-        verify(auditService).report(any(BotDetectionAuditBuilder.class));
+        verify(auditService, never()).report(any(BotDetectionAuditBuilder.class));
         verify(botDetectionRepository).create(any(BotDetection.class));
     }
 
@@ -159,7 +159,7 @@ public class BotDetectionServiceTest {
         testObserver.assertNotComplete();
 
         verify(eventService, never()).create(any());
-        verify(auditService).report(any(BotDetectionAuditBuilder.class));
+        verify(auditService, never()).report(any(BotDetectionAuditBuilder.class));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class BotDetectionServiceTest {
         testObserver.assertNoErrors();
 
         verify(botDetectionRepository).findById(anyString());
-        verify(auditService).report(any(BotDetectionAuditBuilder.class));
+        verify(auditService, never()).report(any(BotDetectionAuditBuilder.class));
         verify(botDetectionRepository).update(any(BotDetection.class));
     }
 

@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;

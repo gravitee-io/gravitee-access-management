@@ -150,7 +150,7 @@ public class AlertNotifierServiceTest {
             return true;
         });
 
-        verify(auditService, times(1)).report(any(AlertNotifierAuditBuilder.class));
+        verify(auditService, never()).report(any(AlertNotifierAuditBuilder.class));
     }
 
     @Test
@@ -190,7 +190,7 @@ public class AlertNotifierServiceTest {
             return true;
         });
 
-        verify(auditService, times(1)).report(any(AlertNotifierAuditBuilder.class));
+        verify(auditService, never()).report(any(AlertNotifierAuditBuilder.class));
     }
 
     @Test

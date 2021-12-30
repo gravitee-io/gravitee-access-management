@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oidc.service.discovery;
 import io.gravitee.am.common.oidc.AcrValues;
 import io.gravitee.am.common.oidc.BrazilAcrValues;
 import io.gravitee.am.common.oidc.idtoken.Claims;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.impl.OpenIDDiscoveryServiceImpl;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
@@ -33,8 +33,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;

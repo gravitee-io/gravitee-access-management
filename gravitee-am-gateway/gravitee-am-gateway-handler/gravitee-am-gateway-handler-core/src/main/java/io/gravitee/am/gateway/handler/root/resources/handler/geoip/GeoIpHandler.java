@@ -16,7 +16,7 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.geoip;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.GEOIP_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;

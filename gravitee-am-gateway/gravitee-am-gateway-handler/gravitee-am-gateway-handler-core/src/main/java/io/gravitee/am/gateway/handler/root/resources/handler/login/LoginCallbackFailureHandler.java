@@ -20,7 +20,7 @@ import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -34,10 +34,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 
 /**
  * In case of login callback failures, the user will be redirected to the login page with error message

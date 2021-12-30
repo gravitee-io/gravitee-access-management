@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedResponseTypeException;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
@@ -26,7 +25,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.List;
 import java.util.Set;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 
 /**
  * The authorization server validates the request to ensure that all required parameters are present and valid.

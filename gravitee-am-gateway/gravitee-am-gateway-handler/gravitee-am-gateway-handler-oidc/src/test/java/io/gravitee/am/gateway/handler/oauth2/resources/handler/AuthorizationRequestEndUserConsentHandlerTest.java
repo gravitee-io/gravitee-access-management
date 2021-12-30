@@ -34,7 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 

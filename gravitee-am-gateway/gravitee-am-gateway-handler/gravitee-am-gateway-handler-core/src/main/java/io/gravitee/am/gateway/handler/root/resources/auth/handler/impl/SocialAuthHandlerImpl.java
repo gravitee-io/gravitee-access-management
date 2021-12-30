@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.handler.impl;
 
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
@@ -29,8 +29,8 @@ import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

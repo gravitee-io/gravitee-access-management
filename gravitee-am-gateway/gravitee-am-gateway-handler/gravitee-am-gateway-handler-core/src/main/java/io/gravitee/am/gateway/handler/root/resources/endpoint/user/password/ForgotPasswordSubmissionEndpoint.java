@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.jwt.Claims;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserRequestHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -35,7 +35,7 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
+import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

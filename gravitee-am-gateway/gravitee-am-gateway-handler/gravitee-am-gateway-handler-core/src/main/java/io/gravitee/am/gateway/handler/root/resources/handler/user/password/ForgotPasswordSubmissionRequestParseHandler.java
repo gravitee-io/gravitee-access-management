@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.user.password;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserBodyRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.account.AccountSettings;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.EMAIL_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.EMAIL_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

@@ -19,8 +19,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.UserBodyReques
 
 import java.util.Arrays;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

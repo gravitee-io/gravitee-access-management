@@ -140,7 +140,7 @@ public abstract class AuditBuilder<T> {
     }
 
     public T oldValue(Object oldValue) {
-        this.oldValue = oldValue;
+        this.oldValue = removeSensitiveData(oldValue);
         return (T) this;
     }
 
@@ -167,7 +167,11 @@ public abstract class AuditBuilder<T> {
     }
 
     protected void setNewValue(Object newValue) {
-        this.newValue = newValue;
+        this.newValue = removeSensitiveData(newValue);
+    }
+
+    protected Object removeSensitiveData(Object value) {
+        return value;
     }
 
     public Audit build(ObjectMapper mapper) {

@@ -33,11 +33,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_ID;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.DEVICE_TYPE;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 import static org.mockito.Mockito.*;
 
 /**

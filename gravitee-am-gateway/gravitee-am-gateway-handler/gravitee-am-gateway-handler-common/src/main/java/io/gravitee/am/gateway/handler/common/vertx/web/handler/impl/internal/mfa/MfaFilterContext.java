@@ -22,7 +22,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.ext.web.Session;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)

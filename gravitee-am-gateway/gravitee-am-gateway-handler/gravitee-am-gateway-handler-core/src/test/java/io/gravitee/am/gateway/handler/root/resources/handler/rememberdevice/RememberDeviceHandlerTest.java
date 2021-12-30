@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import java.util.UUID;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static org.mockito.Mockito.*;
 
 /**

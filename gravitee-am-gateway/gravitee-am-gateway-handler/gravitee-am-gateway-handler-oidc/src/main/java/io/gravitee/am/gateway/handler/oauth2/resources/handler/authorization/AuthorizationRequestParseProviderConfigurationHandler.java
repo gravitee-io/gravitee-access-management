@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryServ
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 
 /**
  * Fetch OpenID Provider configuration
