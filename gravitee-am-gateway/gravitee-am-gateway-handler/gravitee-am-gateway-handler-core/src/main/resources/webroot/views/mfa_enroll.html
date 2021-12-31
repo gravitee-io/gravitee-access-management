@@ -169,6 +169,12 @@
 <script th:inline="javascript">
 /*<![CDATA[*/
 
+const intlFields = {};
+
+function hideError(eltId){
+    $("#invalid" + eltId).hide();
+}
+
 function checkPhoneNumber(event, factor, eltId) {
   const phoneInput = intlFields[eltId];
   const phoneNumber = phoneInput.getNumber();
@@ -235,7 +241,6 @@ $(document).ready(function() {
         return phoneInput;
     }
 
-    const intlFields = {};
     /*[# th:each="factor,factIter: ${factors}"]*/
     if ( [[${factor.factorType}]] == 'SMS' ) {
         intlFields['phoneFact'+/*[[${factIter.index}]]*/] = initializeIntlTelInput("phoneFact"+/*[[${factIter.index}]]*/, /*[[${factor.enrollment.countries}]]*/);
@@ -244,10 +249,6 @@ $(document).ready(function() {
         hideError("emailFact"+/*[[${factIter.index}]]*/);
     }
     /*[/]*/
-
-    function hideError(eltId){
-        $("#invalid" + eltId).hide();
-    }
 });
 /*]]>*/
 </script>
