@@ -61,6 +61,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthenticationRequestServiceTest {
 
+    public static final int RETENTION_PERIOD = 960;
     private Domain domain = new Domain();
 
     private CIBASettings cibaSettings;
@@ -102,6 +103,7 @@ public class AuthenticationRequestServiceTest {
         CibaAuthRequest request = new CibaAuthRequest();
         request.setLastAccessAt(new Date(Instant.now().minusSeconds(1).toEpochMilli()));
         request.setStatus(AuthenticationRequestStatus.ONGOING.name());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
 
@@ -116,6 +118,7 @@ public class AuthenticationRequestServiceTest {
         CibaAuthRequest request = new CibaAuthRequest();
         request.setLastAccessAt(new Date(Instant.now().minusSeconds(6).toEpochMilli()));
         request.setStatus(AuthenticationRequestStatus.ONGOING.name());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
         when(requestRepository.update(any())).thenReturn(Single.just(request));
@@ -132,6 +135,7 @@ public class AuthenticationRequestServiceTest {
     public void shouldRetrieve_AccessDenied() {
         CibaAuthRequest request = new CibaAuthRequest();
         request.setStatus(AuthenticationRequestStatus.REJECTED.name());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
         when(requestRepository.delete(any())).thenReturn(Completable.complete());
@@ -146,6 +150,7 @@ public class AuthenticationRequestServiceTest {
     public void shouldRetrieve() {
         CibaAuthRequest request = new CibaAuthRequest();
         request.setStatus(AuthenticationRequestStatus.SUCCESS.name());
+        request.setExpireAt(new Date(Instant.now().plusSeconds(RETENTION_PERIOD).toEpochMilli()));
 
         when(requestRepository.findById(anyString())).thenReturn(Maybe.just(request));
         when(requestRepository.delete(any())).thenReturn(Completable.complete());
