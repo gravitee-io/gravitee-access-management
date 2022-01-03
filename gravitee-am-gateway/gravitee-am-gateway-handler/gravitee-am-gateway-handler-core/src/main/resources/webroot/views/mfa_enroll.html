@@ -168,6 +168,51 @@
 <script th:src="@{../assets/js/intl-tel-input-17.0.8.min.js}"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
+
+const intlFields = {};
+
+function hideError(eltId){
+    $("#invalid" + eltId).hide();
+}
+
+function checkPhoneNumber(event, factor, eltId) {
+  const phoneInput = intlFields[eltId];
+  const phoneNumber = phoneInput.getNumber();
+
+  // intl-tel-input validity check, Requires plugin updates for updates on phone number validity
+  if (phoneInput.isValidNumber()) {
+    $("#invalid" + eltId).hide();
+    $("#"+factor).find( '#phone' )[0].value = phoneNumber;
+    $("#"+factor).submit();
+  } else {
+    // do not submit form in case of wrong number
+    event.preventDefault();
+    $("#invalid" + eltId).show();
+  }
+}
+
+function assignSharedSecret(event, factor, eltId) {
+  const sharedSecret = $("#" + eltId);
+  $("#"+factor).find( '#sharedSecret' )[0].value = sharedSecret.val();
+  $("#"+factor).submit();
+}
+
+function checkEmail(event, factor, eltId, sharedSecretId) {
+  const emailInput = $("#" + eltId);
+  const sharedSecret = $("#" + sharedSecretId);
+
+  if (emailInput.val() != null) {
+    hideError(eltId);
+    $("#"+factor).find( '#email' )[0].value = emailInput.val();
+    $("#"+factor).find( '#sharedSecret' )[0].value = sharedSecret.val();
+    $("#"+factor).submit();
+  } else {
+    // do not submit form in case of wrong number
+    event.preventDefault();
+    $("#invalid" + eltId).show();
+  }
+}
+
 $(document).ready(function() {
     $(".mdl-textfield__input").focus(function() {
         if (!this.value) {
@@ -196,7 +241,6 @@ $(document).ready(function() {
         return phoneInput;
     }
 
-    const intlFields = {};
     /*[# th:each="factor,factIter: ${factors}"]*/
     if ( [[${factor.factorType}]] == 'SMS' ) {
         intlFields['phoneFact'+/*[[${factIter.index}]]*/] = initializeIntlTelInput("phoneFact"+/*[[${factIter.index}]]*/, /*[[${factor.enrollment.countries}]]*/);
@@ -205,48 +249,6 @@ $(document).ready(function() {
         hideError("emailFact"+/*[[${factIter.index}]]*/);
     }
     /*[/]*/
-
-    function hideError(eltId){
-        $("#invalid" + eltId).hide();
-    }
-
-    function checkPhoneNumber(event, factor, eltId) {
-      const phoneInput = intlFields[eltId];
-      const phoneNumber = phoneInput.getNumber();
-
-      // intl-tel-input validity check, Requires plugin updates for updates on phone number validity
-      if (phoneInput.isValidNumber()) {
-        $("#invalid" + eltId).hide();
-        $("#"+factor).find( '#phone' )[0].value = phoneNumber;
-        $("#"+factor).submit();
-      } else {
-        // do not submit form in case of wrong number
-        event.preventDefault();
-        $("#invalid" + eltId).show();
-      }
-    }
-
-    function assignSharedSecret(event, factor, eltId) {
-      const sharedSecret = $("#" + eltId);
-      $("#"+factor).find( '#sharedSecret' )[0].value = sharedSecret.val();
-      $("#"+factor).submit();
-    }
-
-    function checkEmail(event, factor, eltId, sharedSecretId) {
-      const emailInput = $("#" + eltId);
-      const sharedSecret = $("#" + sharedSecretId);
-
-      if (emailInput.val() != null) {
-        hideError(eltId);
-        $("#"+factor).find( '#email' )[0].value = emailInput.val();
-        $("#"+factor).find( '#sharedSecret' )[0].value = sharedSecret.val();
-        $("#"+factor).submit();
-      } else {
-        // do not submit form in case of wrong number
-        event.preventDefault();
-        $("#invalid" + eltId).show();
-      }
-    }
 });
 /*]]>*/
 </script>
