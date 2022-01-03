@@ -22,6 +22,7 @@ import io.gravitee.am.authdevice.notifier.api.model.ADNotificationResponse;
 import io.gravitee.am.authdevice.notifier.api.model.ADUserResponse;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestExpiredException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthorizationPendingException;
 import io.gravitee.am.gateway.handler.ciba.exception.SlowDownException;
@@ -32,7 +33,6 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
-import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
@@ -43,6 +43,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 import java.time.Instant;
@@ -74,6 +75,14 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
     @Autowired
     private ClientSyncService clientService;
 
+    /**
+     * How many time (in sec) an auth-request is kept into the DB
+     * once it expired. (This retention is useful to manage the
+     * expired_token error)
+     */
+    @Value("${openid.ciba.auth-request.retention:900}")
+    private int requestRetentionInSec = 900;
+
     @Override
     public Single<CibaAuthRequest> register(CibaAuthenticationRequest request, Client client) {
         Instant now = Instant.now();
@@ -88,7 +97,9 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         entity.setStatus(AuthenticationRequestStatus.ONGOING.name());
         entity.setCreatedAt(new Date(now.toEpochMilli()));
         entity.setLastAccessAt(new Date(now.toEpochMilli()));
-        entity.setExpireAt(new Date(now.plusSeconds(ttl).toEpochMilli()));
+        // as the application has to be informed of an expired request, we add retention time to the ttl
+        // to avoid removing the request information from the database when ttl has expired
+        entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
 
         LOGGER.debug("Register AuthenticationRequest with auth_req_id '{}' and expiry of '{}' seconds", entity.getId(), ttl);
 
@@ -101,6 +112,9 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         return this.authRequestRepository.findById(authReqId)
                 .switchIfEmpty(Single.error(new AuthenticationRequestNotFoundException(authReqId)))
                 .flatMap(request -> {
+                    if ((request.getExpireAt().getTime() - (requestRetentionInSec * 1000)) < Instant.now().toEpochMilli()) {
+                        return Single.error(new AuthenticationRequestExpiredException());
+                    }
                     switch (AuthenticationRequestStatus.valueOf(request.getStatus())) {
                         case ONGOING:
                             // Check if the request interval is respected by the client
