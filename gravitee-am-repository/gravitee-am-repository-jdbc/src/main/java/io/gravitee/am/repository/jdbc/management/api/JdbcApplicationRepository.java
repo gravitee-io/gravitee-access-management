@@ -32,12 +32,14 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -47,7 +49,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -55,8 +57,35 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcApplicationRepository extends AbstractJdbcRepository implements ApplicationRepository {
+public class JdbcApplicationRepository extends AbstractJdbcRepository implements ApplicationRepository, InitializingBean {
+
     public static final int MAX_CONCURRENCY = 1;
+
+    public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_ENABLED = "enabled";
+    public static final String COL_TEMPLATE = "template";
+    public static final String COL_NAME = "name";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_DOMAIN = "domain";
+    public static final String COL_CERTIFICATE = "certificate";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_METADATA = "metadata";
+    public static final String COL_SETTINGS = "settings";
+
+    private static final List<String> columns = List.of(COL_ID,
+            COL_TYPE,
+            COL_ENABLED,
+            COL_TEMPLATE,
+            COL_NAME,
+            COL_DESCRIPTION,
+            COL_DOMAIN,
+            COL_CERTIFICATE,
+            COL_CREATED_AT,
+            COL_UPDATED_AT,
+            COL_METADATA,
+            COL_SETTINGS);
 
     @Autowired
     private SpringApplicationRepository applicationRepository;
@@ -70,12 +99,21 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Autowired
     private SpringApplicationIdentityRepository identityRepository;
 
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
+
     protected Application toEntity(JdbcApplication entity) {
         return mapper.map(entity, Application.class);
     }
 
     protected JdbcApplication toJdbcEntity(Application entity) {
         return mapper.map(entity, JdbcApplication.class);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("applications", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("applications", columns, List.of(COL_ID));
     }
 
     private Single<Application> completeApplication(Application entity) {
@@ -110,10 +148,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
         LOGGER.debug("findAll({}, {})", page, size);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcApplication.class)
-                .page(PageRequest.of(page, size, Sort.by("id")))
-                .as(JdbcApplication.class)
+        return fluxToFlowable(template.select(JdbcApplication.class)
+                .matching(Query.empty().with(PageRequest.of(page, size, Sort.by(COL_ID))))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
@@ -133,11 +169,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcApplication.class)
-                .matching(from(where("domain").is(domain)))
-                .page(PageRequest.of(page, size, Sort.by("id")))
-                .as(JdbcApplication.class)
+        return fluxToFlowable(template.select(JdbcApplication.class)
+                .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_ID))))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
@@ -156,21 +189,18 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, page, size);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch);
 
-        return fluxToFlowable(dbClient.execute(search)
-                .bind("domain", domain)
+        return fluxToFlowable(template.getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                .as(JdbcApplication.class)
-                .fetch()
+                .map(row -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(dbClient.execute(count)
-                        .bind("domain", domain)
+                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                        .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                        .as(Long.class)
-                        .fetch()
-                        .first())
+                        .map(row -> row.get(0, Long.class)).first())
                         .map(total -> new Page<Application>(data, page, total)))
                 .doOnError((error) -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
@@ -188,9 +218,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByIdentityProvider({})", identityProvider);
 
         // identity is a keyword with mssql
-        return fluxToFlowable(dbClient.execute("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id where i." +
-                databaseDialectHelper.toSql(SqlIdentifier.quoted("identity")) + " = :identity")
-                .bind("identity", identityProvider).as(JdbcApplication.class).fetch().all())
+        return fluxToFlowable(template.getDatabaseClient()
+                .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id where i." + databaseDialectHelper.toSql(SqlIdentifier.quoted("identity")) + " = :identity")
+                .bind("identity", identityProvider)
+                .map(row -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable());
     }
@@ -235,11 +266,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         LOGGER.debug("findByDomainAndClientId({}, {})", domain, clientId);
-        return fluxToFlowable(dbClient.execute(databaseDialectHelper.buildFindApplicationByDomainAndClient())
-                .bind("domain", domain)
+        return fluxToFlowable(template.getDatabaseClient().sql(databaseDialectHelper.buildFindApplicationByDomainAndClient())
+                .bind(COL_DOMAIN, domain)
                 .bind("clientId", clientId)
-                .as(JdbcApplication.class)
-                .fetch()
+                .map(row -> rowMapper.read(JdbcApplication.class, row))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable())
@@ -260,24 +290,22 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("Create Application with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("applications");
 
-        // doesn't use the class introspection to handle json objects
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType() == null ? null : item.getType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"template", item.isTemplate(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"name", item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"description", item.getDescription(), String.class);
-        insertSpec = addQuotedField(insertSpec,"domain", item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec,"certificate", item.getCertificate(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"metadata", item.getMetadata());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"settings", item.getSettings());
+        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
+        sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
+        sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
+        sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
+        sql = addQuotedField(sql, COL_DESCRIPTION, item.getDescription(), String.class);
+        sql = addQuotedField(sql, COL_DOMAIN, item.getDomain(), String.class);
+        sql = addQuotedField(sql, COL_CERTIFICATE, item.getCertificate(), String.class);
+        sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
+        sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
 
-        Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
-
+        Mono<Integer> insertAction = sql.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
@@ -289,25 +317,22 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("Update Application with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("applications");
 
-        // doesn't use the class introspection to handle json objects
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType() == null ? null : item.getType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"template", item.isTemplate(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"name", item.getName(), String.class);
-        updateFields = addQuotedField(updateFields,"description", item.getDescription(), String.class);
-        updateFields = addQuotedField(updateFields,"domain", item.getDomain(), String.class);
-        updateFields = addQuotedField(updateFields,"certificate", item.getCertificate(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"metadata", item.getMetadata());
-        updateFields = databaseDialectHelper.addJsonField(updateFields,"settings", item.getSettings());
+        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
+        sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
+        sql = addQuotedField(sql, COL_TEMPLATE, item.isTemplate(), Boolean.class);
+        sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
+        sql = addQuotedField(sql, COL_DESCRIPTION, item.getDescription(), String.class);
+        sql = addQuotedField(sql, COL_DOMAIN, item.getDomain(), String.class);
+        sql = addQuotedField(sql, COL_CERTIFICATE, item.getCertificate(), String.class);
+        sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        sql = databaseDialectHelper.addJsonField(sql, COL_METADATA, item.getMetadata());
+        sql = databaseDialectHelper.addJsonField(sql, COL_SETTINGS, item.getSettings());
 
-        Mono<Integer> updateAction = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
-
+        Mono<Integer> updateAction = sql.fetch().rowsUpdated();
         updateAction = deleteChildEntities(item.getId()).then(updateAction);
         updateAction = persistChildEntities(updateAction, item);
 
@@ -319,16 +344,16 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = dbClient.delete().from(JdbcApplication.class).matching(from(where("id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcApplication.class).matching(query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
                 .andThen(applicationRepository.deleteById(id));
     }
 
     private Mono<Integer> deleteChildEntities(String appId) {
-        Mono<Integer> identities = dbClient.delete().from(JdbcApplication.Identity.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
-        Mono<Integer> factors = dbClient.delete().from(JdbcApplication.Factor.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
-        Mono<Integer> grants = dbClient.delete().from(JdbcApplication.Grant.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
-        Mono<Integer> scopeSettings = dbClient.delete().from(JdbcApplication.ScopeSettings.class).matching(from(where("application_id").is(appId))).fetch().rowsUpdated();
+        Mono<Integer> identities = template.delete(JdbcApplication.Identity.class).matching(query(where("application_id").is(appId))).all();
+        Mono<Integer> factors = template.delete(JdbcApplication.Factor.class).matching(query(where("application_id").is(appId))).all();
+        Mono<Integer> grants = template.delete(JdbcApplication.Grant.class).matching(query(where("application_id").is(appId))).all();
+        Mono<Integer> scopeSettings = template.delete(JdbcApplication.ScopeSettings.class).matching(query(where("application_id").is(appId))).all();
         return factors.then(identities).then(grants).then(scopeSettings);
     }
 
@@ -336,44 +361,51 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         final Set<String> identities = app.getIdentities();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
-                JdbcApplication.Identity identity = new JdbcApplication.Identity();
-                identity.setIdentity(idp);
-                identity.setApplicationId(app.getId());
-
-                DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("application_identities");
-                insertSpec = addQuotedField(insertSpec,"application_id", identity.getApplicationId(), String.class);
-                insertSpec = addQuotedField(insertSpec,"identity", identity.getIdentity(), String.class);
-
-                return insertSpec.fetch().rowsUpdated();
+                final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
+                String INSERT_STMT = "INSERT INTO application_identities(application_id, " + identity + ") VALUES (:app, :idpid)";
+                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("app", app.getId())
+                        .bind("idpid", idp);
+                return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 
         final Set<String> factors = app.getFactors();
         if (factors != null && !factors.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(factors).concatMap(value -> {
-                JdbcApplication.Factor factor = new JdbcApplication.Factor();
-                factor.setFactor(value);
-                factor.setApplicationId(app.getId());
-                return dbClient.insert().into(JdbcApplication.Factor.class).using(factor).fetch().rowsUpdated();
+                String INSERT_STMT = "INSERT INTO application_factors(application_id, factor) VALUES (:app, :factor)";
+                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("app", app.getId())
+                        .bind("factor", value);
+                return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 
         final List<String> grants = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getGrantTypes).orElse(Collections.emptyList());
         if (grants != null && !grants.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(grants).concatMap(value -> {
-                JdbcApplication.Grant grant = new JdbcApplication.Grant();
-                grant.setGrant(value);
-                grant.setApplicationId(app.getId());
-                return dbClient.insert().into(JdbcApplication.Grant.class).using(grant).fetch().rowsUpdated();
+                String INSERT_STMT = "INSERT INTO application_grants(application_id, grant_type) VALUES (:app, :grant)";
+                final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("app", app.getId())
+                        .bind("grant", value);
+                return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 
         final List<ApplicationScopeSettings> scopeSettings = Optional.ofNullable(app.getSettings()).map(ApplicationSettings::getOauth).map(ApplicationOAuthSettings::getScopeSettings).orElse(Collections.emptyList());
         if (scopeSettings != null && !scopeSettings.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(scopeSettings).concatMap(value -> {
-                JdbcApplication.ScopeSettings jdbcScopeSettings = mapper.map(value, JdbcApplication.ScopeSettings.class);
-                jdbcScopeSettings.setApplicationId(app.getId());
-                return dbClient.insert().into(JdbcApplication.ScopeSettings.class).using(jdbcScopeSettings).fetch().rowsUpdated();
+                String INSERT_STMT = "INSERT INTO application_scope_settings(application_id, scope, is_default, scope_approval) VALUES (:app, :scope, :default, :approval)";
+                DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                        .sql(INSERT_STMT)
+                        .bind("app", app.getId())
+                        .bind("default", value.isDefaultScope());
+                sql = value.getScope() == null ? sql.bindNull("scope", String.class) : sql.bind("scope", value.getScope());
+                sql = value.getScopeApproval() == null ? sql.bindNull("approval", Integer.class) : sql.bind("approval", value.getScopeApproval());
+                return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 

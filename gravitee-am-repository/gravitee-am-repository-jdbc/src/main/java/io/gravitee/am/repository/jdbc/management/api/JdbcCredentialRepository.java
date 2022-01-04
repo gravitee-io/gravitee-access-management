@@ -27,11 +27,10 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -86,14 +85,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     public Single<Credential> create(Credential item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create credential with id {}", item.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcCredential.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
-                .doOnError((error) -> LOGGER.error("unable to create credential with id {}", item.getId(), error));
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -115,26 +107,24 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     @Override
     public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcCredential.class)
-                .matching(from(
+        return monoToCompletable(template.delete(JdbcCredential.class)
+                .matching(Query.query(
                         where("reference_type").is(referenceType.name())
                                 .and(where("reference_id").is(referenceId))
                                 .and(where("user_id").is(userId))))
-                .then())
+                .all())
                 .doOnError(error -> LOGGER.error("Unable to delete credential for userId {}", userId, error));
     }
 
     @Override
     public Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid) {
         LOGGER.debug("deleteByAaguid({})", aaguid);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcCredential.class)
-                .matching(from(
+        return monoToCompletable(template.delete(JdbcCredential.class)
+                .matching(Query.query(
                         where("reference_type").is(referenceType.name())
                                 .and(where("reference_id").is(referenceId))
                                 .and(where("aaguid").is(aaguid))))
-                .then())
+                .all())
                 .doOnError(error -> LOGGER.error("Unable to delete credential for aaguid {}", aaguid, error));
     }
 }

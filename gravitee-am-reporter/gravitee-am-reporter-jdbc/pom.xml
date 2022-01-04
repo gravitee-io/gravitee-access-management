@@ -32,12 +32,8 @@
     <name>Gravitee IO - Access Management - Reporter JDBC</name>
 
     <properties>
-        <r2dbc-pool.version>0.8.6.RELEASE</r2dbc-pool.version>
-        <r2dbc-postgresql.version>0.8.7.RELEASE</r2dbc-postgresql.version>
-        <r2dbc-mssql.version>0.8.7.RELEASE</r2dbc-mssql.version>
-        <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
-        <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
-        <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
+        <r2dbc-releasetrain.version>Arabba-SR11</r2dbc-releasetrain.version>
+
         <testcontainers.version>1.15.1</testcontainers.version>
 
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
@@ -47,7 +43,20 @@
         <skip-reporters-tests>true</skip-reporters-tests>
         <reactor-core.version>3.4.13</reactor-core.version>
         <reactor-adapter.version>3.4.6</reactor-adapter.version>
+        <spring-data-r2dbc.version>1.4.0</spring-data-r2dbc.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.r2dbc</groupId>
+                <artifactId>r2dbc-bom</artifactId>
+                <version>${r2dbc-releasetrain.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Gravitee dependencies -->
@@ -86,7 +95,7 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-r2dbc</artifactId>
-            <version>1.1.0.RELEASE</version>
+            <version>${spring-data-r2dbc.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>reactive-streams</artifactId>
@@ -106,24 +115,21 @@
             <version>${reactor-adapter.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-native-unix-common</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.projectreactor.netty</groupId>
+            <artifactId>reactor-netty-core</artifactId>
+            <version>${reactor-netty.version}</version>
+        </dependency>
+
         <!-- R2DBC -->
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-pool</artifactId>
-            <version>${r2dbc-pool.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-spi</artifactId>
-            <version>${r2dbc-spi.version}</version>
-            <scope>compile</scope>
         </dependency>
 
         <!-- Guava dependencies -->
@@ -134,73 +140,23 @@
         </dependency>
 
         <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty</artifactId>
-            <version>${reactor-netty.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
-            <version>${r2dbc-postgresql.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-mssql</artifactId>
-            <version>${r2dbc-mssql.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.miku</groupId>
             <artifactId>r2dbc-mysql</artifactId>
-            <version>${r2dbc-mysql.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.mariadb</groupId>
             <artifactId>r2dbc-mariadb</artifactId>
-            <version>${r2dbc-mariadb.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
             <scope>provided</scope>
         </dependency>
 
@@ -217,6 +173,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -312,18 +269,18 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mysql-tc~8.0.22</jdbcType>
+                                        <jdbcType>mysql-tc~8.0.27</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>mariadb-10.5</id>
+                                <id>mariadb-10.6</id>
                                 <goals>
                                     <goal>test</goal>
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc~10.5.8</jdbcType>
+                                        <jdbcType>mariadb-tc~10.6.5</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -334,7 +291,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-CU8-ubuntu-18.04</jdbcType>
+                                        <jdbcType>mssql-tc~2019-CU14-ubuntu-18.04</jdbcType>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
@@ -354,88 +311,8 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <argLine>-Xmx1024m</argLine>
                             <skipTests>${skip-reporters-tests}</skipTests>
                         </configuration>
-                        <executions>
-                            <execution>
-                                <id>postgres-13</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>postgresql-tc~13.1</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>mysql-5.6</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mysql-tc</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>mysql-8</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mysql-tc~8.0.22</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>mariadb-10.2</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>mariadb-10.5</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mariadb-tc~10.5.8</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>sqlserver-2017</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mssql-tc</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>sqlserver-2019</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <systemPropertyVariables>
-                                        <jdbcType>mssql-tc~2019-CU8-ubuntu-18.04</jdbcType>
-                                    </systemPropertyVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>

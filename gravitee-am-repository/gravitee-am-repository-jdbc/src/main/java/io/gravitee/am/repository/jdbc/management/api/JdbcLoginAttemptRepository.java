@@ -29,17 +29,14 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -48,6 +45,7 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  */
 @Repository
 public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implements LoginAttemptRepository {
+
     @Autowired
     protected SpringLoginAttemptRepository loginAttemptRepository;
 
@@ -65,16 +63,11 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
 
         Criteria whereClause = buildWhereClause(criteria);
 
-        DatabaseClient.TypedSelectSpec<JdbcLoginAttempt> from = dbClient.select()
-                .from(JdbcLoginAttempt.class)
-                .page(PageRequest.of(0, 1, Sort.by("id")));
-
         whereClause = whereClause.and(
                 where("expire_at").greaterThan(LocalDateTime.now(UTC))
                 .or(where("expire_at").isNull()));
-        from = from.matching(from(whereClause));
 
-        return monoToMaybe(from.as(JdbcLoginAttempt.class).first())
+        return monoToMaybe(template.select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcLoginAttempt.class).singleOrEmpty())
                 .map(this::toEntity);
     }
 
@@ -106,7 +99,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(from(whereClause)).then());
+            return monoToCompletable(template.delete(JdbcLoginAttempt.class).matching(Query.query(whereClause)).all());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from LoginAttempt without criteria");
@@ -125,13 +118,7 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     public Single<LoginAttempt> create(LoginAttempt item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create LoginAttempt with id {}", item.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcLoginAttempt.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> loginAttemptRepository.findById(item.getId()).map(this::toEntity).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -150,6 +137,6 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcLoginAttempt.class).matching(where("expire_at").lessThan(now)).then());
+        return monoToCompletable(template.delete(JdbcLoginAttempt.class).matching(Query.query(where("expire_at").lessThan(now))).all());
     }
 }

@@ -42,7 +42,7 @@
 				<exclude>io.netty:netty-codec</exclude>
 				<exclude>io.netty:netty-transport</exclude>
 				<exclude>io.netty:netty-buffer</exclude>
-				<exclude>io.netty:netty-transport-native-epoll</exclude>
+				<exclude>io.netty:netty-codec-socks</exclude>
 				<exclude>io.netty:netty-codec-http</exclude>
 				<exclude>io.netty:netty-codec-http2</exclude>
 				<exclude>io.netty:netty-handler</exclude>

@@ -19,9 +19,11 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.r2dbc.postgresql.codec.Json;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.Parameter;
 
 import java.util.Map;
 
@@ -40,11 +42,11 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    public DatabaseClient.GenericInsertSpec<Map<String, Object>> addJsonField(DatabaseClient.GenericInsertSpec<Map<String, Object>> spec, String name, Object value) {
+    public DatabaseClient.GenericExecuteSpec addJsonField(DatabaseClient.GenericExecuteSpec spec, String name, Object value) {
         try {
             return value == null ?
-                    spec.nullValue(SqlIdentifier.quoted(name), Json.class) :
-                    spec.value(SqlIdentifier.quoted(name), Json.of(JSONMapper.toJson(value)));
+                    spec.bindNull(name, Json.class) :
+                    spec.bind(name, Json.of(JSONMapper.toJson(value)));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -55,7 +57,7 @@ public class PostgresqlHelper extends AbstractDialectHelper {
         if (value == null) {
             spec.put(SqlIdentifier.quoted(name), (Json) null);
         } else {
-            spec.put(SqlIdentifier.quoted(name), Json.of(JSONMapper.toJson(value)));
+            spec.put(SqlIdentifier.quoted(name), Parameter.fromOrEmpty(Json.of(JSONMapper.toJson(value)), Json.class));
         }
         return spec;
     }
@@ -129,11 +131,11 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" ) ");
     }
 
-    protected String buildPagingClause(int page, int size) {
+    public String buildPagingClause(int page, int size) {
         return buildPagingClause("id", page, size);
     }
 
-    protected String buildPagingClause(String field, int page, int size) {
+    public String buildPagingClause(String field, int page, int size) {
         return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + (page * size);
     }
 

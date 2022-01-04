@@ -20,8 +20,8 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Flowable;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 import java.util.Map;
 
@@ -33,9 +33,9 @@ public interface DatabaseDialectHelper {
 
     String toSql(SqlIdentifier sql);
 
-    DatabaseClient.GenericInsertSpec<Map<String, Object>> addJsonField(DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec, String name, Object value);
-
     Map<SqlIdentifier, Object> addJsonField(Map<SqlIdentifier, Object> insertSpec, String name, Object value);
+
+    DatabaseClient.GenericExecuteSpec addJsonField(DatabaseClient.GenericExecuteSpec spec, String name, Object value);
 
     ScimUserSearch prepareScimSearchUserQuery(StringBuilder queryBuilder, FilterCriteria filterCriteria, int page, int size);
 
@@ -67,4 +67,7 @@ public interface DatabaseDialectHelper {
 
     String buildCountRoleQuery(boolean wildcard);
 
+    String buildPagingClause(int page, int size);
+
+    String buildPagingClause(String field, int page, int size);
 }

@@ -24,18 +24,16 @@ import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -43,7 +41,27 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements SystemTaskRepository {
+public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements SystemTaskRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_STATUS = "status";
+    public static final String COL_OPERATION_ID = "operation_id";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+    public static final String WHERE_SUFFIX = "_where";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_TYPE,
+            COL_STATUS,
+            COL_OPERATION_ID,
+            COL_CREATED_AT,
+            COL_UPDATED_AT
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     protected final LocalDateConverter dateConverter = new LocalDateConverter();
 
@@ -56,15 +74,17 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("system_tasks", columns);
+        // the operation_id used in the where clause may be different from the one present into the bean, so we append a suffix
+        this.UPDATE_STATEMENT = createUpdateStatement("system_tasks", columns, List.of(COL_ID, COL_OPERATION_ID))+WHERE_SUFFIX;
+    }
+
+    @Override
     public Maybe<SystemTask> findById(String id) {
         LOGGER.debug("findById({}, {}, {})", id);
-        return monoToMaybe(dbClient.select()
-                .from(JdbcSystemTask.class)
-                .project("*")
-                .matching(from(where("id").is(id)))
-                .as(JdbcSystemTask.class).first())
+        return monoToMaybe(template.select(Query.query(where(COL_ID).is(id)).limit(1), JdbcSystemTask.class).singleOrEmpty())
                 .map(this::toEntity);
-
     }
 
     @Override
@@ -72,13 +92,13 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create SystemTask with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("system_tasks");
-        insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec, "status", item.getStatus(), String.class);
-        insertSpec = addQuotedField(insertSpec, "operation_id", item.getOperationId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_STATUS, item.getStatus(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_OPERATION_ID, item.getOperationId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
@@ -91,30 +111,27 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
 
     @Override
     public Single<SystemTask> updateIf(SystemTask item, String operationId) {
-        LOGGER.debug("Update SystemTask with id {}", item.getId());
+        LOGGER.debug("Update SystemTask with id {} and operationId {}", item.getId(), operationId);
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("system_tasks");
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields, "type", item.getType(), String.class);
-        updateFields = addQuotedField(updateFields, "status", item.getStatus(), String.class);
-        updateFields = addQuotedField(updateFields, "operation_id", item.getOperationId(), String.class);
-        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec updateSpec = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields))
-                .matching(from(where("id").is(item.getId()).and(where("operation_id").is(operationId))))
-                .fetch()
-                .rowsUpdated();
+        updateSpec = addQuotedField(updateSpec, COL_ID, item.getId(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_TYPE, item.getType(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_STATUS, item.getStatus(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID, item.getOperationId(), String.class);
+        updateSpec = addQuotedField(updateSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        updateSpec = addQuotedField(updateSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID + WHERE_SUFFIX, operationId, String.class);
 
+        Mono<Integer> action = updateSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("Delete SystemTask with id {}", id);
-        Mono<Integer> delete = dbClient.delete().from(JdbcSystemTask.class)
-                .matching(from(where("id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcSystemTask.class)
+                .matching(Query.query(where(COL_ID).is(id))).all();
         return monoToCompletable(delete);
     }
 }

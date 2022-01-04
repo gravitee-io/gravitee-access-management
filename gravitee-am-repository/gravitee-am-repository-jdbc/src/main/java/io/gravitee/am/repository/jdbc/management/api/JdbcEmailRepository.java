@@ -27,19 +27,15 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -47,7 +43,41 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcEmailRepository extends AbstractJdbcRepository implements EmailRepository {
+public class JdbcEmailRepository extends AbstractJdbcRepository implements EmailRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_ENABLED = "enabled";
+    public static final String COL_CLIENT = "client";
+    public static final String COL_CONTENT = "content";
+    public static final String COL_EXPIRES_AFTER = "expires_after";
+    public static final String COL_FROM = "from";
+    public static final String COL_FROM_NAME = "from_name";
+    public static final String COL_REFERENCE_ID = "reference_id";
+    public static final String COL_REFERENCE_TYPE = "reference_type";
+    public static final String COL_SUBJECT = "subject";
+    public static final String COL_TEMPLATE = "template";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_ENABLED,
+            COL_CLIENT,
+            COL_CONTENT,
+            COL_EXPIRES_AFTER,
+            COL_FROM,
+            COL_FROM_NAME,
+            COL_REFERENCE_ID,
+            COL_REFERENCE_TYPE,
+            COL_SUBJECT,
+            COL_TEMPLATE,
+            COL_CREATED_AT,
+            COL_UPDATED_AT
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
+
     @Autowired
     private SpringEmailRepository emailRepository;
 
@@ -59,6 +89,12 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
 
     protected JdbcEmail toJdbcEntity(Email entity) {
         return mapper.map(entity, JdbcEmail.class);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("emails", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("emails", columns, List.of(COL_ID));
     }
 
     @Override
@@ -125,21 +161,21 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create email with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("emails");
-        // doesn't use the class introspection to detect the fields due to keyword column name
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"client", item.getClient(), String.class);
-        insertSpec = addQuotedField(insertSpec,"content", item.getContent(), String.class);
-        insertSpec = addQuotedField(insertSpec,"expires_after", item.getExpiresAfter(), int.class);
-        insertSpec = addQuotedField(insertSpec,"from", item.getFrom(), String.class);
-        insertSpec = addQuotedField(insertSpec,"from_name", item.getFromName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_id", item.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"subject", item.getSubject(), String.class);
-        insertSpec = addQuotedField(insertSpec,"template", item.getTemplate(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_ENABLED, item.isEnabled(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_CLIENT, item.getClient(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CONTENT, item.getContent(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_EXPIRES_AFTER, item.getExpiresAfter(), int.class);
+        insertSpec = addQuotedField(insertSpec, COL_FROM, item.getFrom(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_FROM_NAME, item.getFromName(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_TYPE, item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_SUBJECT, item.getSubject(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TEMPLATE, item.getTemplate(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
@@ -149,28 +185,24 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Single<Email> update(Email item) {
         LOGGER.debug("update email with id {}", item.getId());
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("emails");
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        // doesn't use the class introspection to detect the fields due to keyword column name
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"client", item.getClient(), String.class);
-        updateFields = addQuotedField(updateFields,"content", item.getContent(), String.class);
-        updateFields = addQuotedField(updateFields,"expires_after", item.getExpiresAfter(), int.class);
-        updateFields = addQuotedField(updateFields,"from", item.getFrom(), String.class);
-        updateFields = addQuotedField(updateFields,"from_name", item.getFromName(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_id", item.getReferenceId(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"subject", item.getSubject(), String.class);
-        updateFields = addQuotedField(updateFields,"template", item.getTemplate(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_ENABLED, item.isEnabled(), Boolean.class);
+        update = addQuotedField(update, COL_CLIENT, item.getClient(), String.class);
+        update = addQuotedField(update, COL_CONTENT, item.getContent(), String.class);
+        update = addQuotedField(update, COL_EXPIRES_AFTER, item.getExpiresAfter(), int.class);
+        update = addQuotedField(update, COL_FROM, item.getFrom(), String.class);
+        update = addQuotedField(update, COL_FROM_NAME, item.getFromName(), String.class);
+        update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        update = addQuotedField(update, COL_REFERENCE_TYPE, item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        update = addQuotedField(update, COL_SUBJECT, item.getSubject(), String.class);
+        update = addQuotedField(update, COL_TEMPLATE, item.getTemplate(), String.class);
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
-
+        Mono<Integer> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
-
     }
 
     @Override

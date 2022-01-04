@@ -45,6 +45,24 @@ public class JdbcApplication {
     private String metadata;
     private String settings;
 
+    public JdbcApplication() {
+    }
+
+    public JdbcApplication(String id, String name, String type, String description, String domain, boolean enabled, boolean template, String certificate, LocalDateTime createdAt, LocalDateTime updatedAt, String metadata, String settings) {
+        this.id = id;
+        this.name = name;
+        this.type = type;
+        this.description = description;
+        this.domain = domain;
+        this.enabled = enabled;
+        this.template = template;
+        this.certificate = certificate;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.metadata = metadata;
+        this.settings = settings;
+    }
+
     public String getId() {
         return id;
     }

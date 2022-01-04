@@ -27,6 +27,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -35,7 +36,6 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -45,6 +45,7 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  */
 @Repository
 public class JdbcEntrypointRepository extends AbstractJdbcRepository implements EntrypointRepository {
+
     @Autowired
     private SpringEntrypointRepository entrypointRepository;
 
@@ -100,19 +101,11 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Entrypoint with id {}", item.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcEntrypoint.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
+        Mono<Integer> action = template.insert(toJdbcEntity(item)).map(__ -> 1);
 
         final List<String> tags = item.getTags();
         if (tags != null && !tags.isEmpty()) {
-            action = action.then(Flux.fromIterable(tags).concatMap(tagValue -> {
-                JdbcEntrypoint.Tag tag = new JdbcEntrypoint.Tag();
-                tag.setTag(tagValue);
-                tag.setEntrypointId(item.getId());
-                return dbClient.insert().into(JdbcEntrypoint.Tag.class).using(tag).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(tags).concatMap(tagValue -> insertTag(tagValue, item)).reduce(Integer::sum));
         }
 
         return monoToSingle(action.as(trx::transactional))
@@ -125,19 +118,11 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("update Entrypoint with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> action = dbClient.update()
-                .table(JdbcEntrypoint.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
+        Mono<Integer> action = template.update(toJdbcEntity(item)).map(__ -> 1);
 
         final List<String> tags = item.getTags();
         if (tags != null & !tags.isEmpty()) {
-            action = action.then(Flux.fromIterable(tags).concatMap(tagValue -> {
-                JdbcEntrypoint.Tag tag = new JdbcEntrypoint.Tag();
-                tag.setTag(tagValue);
-                tag.setEntrypointId(item.getId());
-                return dbClient.insert().into(JdbcEntrypoint.Tag.class).using(tag).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(tags).concatMap(tagValue -> insertTag(tagValue, item)).reduce(Integer::sum));
         }
 
         return monoToSingle(deleteTags(item.getId()).then(action).as(trx::transactional))
@@ -145,21 +130,26 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
                 .doOnError((error) -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
     }
 
+    private Mono<Integer> insertTag(String tagValue, Entrypoint item) {
+        return template.getDatabaseClient().sql("INSERT INTO entrypoint_tags(entrypoint_id, tag) VALUES(:entrypoint, :tag)")
+                .bind("entrypoint", item.getId())
+                .bind("tag", tagValue)
+                .fetch().rowsUpdated();
+    }
+
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = dbClient.delete().from(JdbcEntrypoint.class)
-                .matching(from(where("id").is(id)))
-                .fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcEntrypoint.class)
+                .matching(Query.query(where("id").is(id))).all();
 
         return monoToCompletable(deleteTags(id).then(delete).as(trx::transactional))
                 .doOnError(error -> LOGGER.error("Unable to delete entrypoint with id {}", id, error));
     }
 
     private Mono<Integer> deleteTags(String id) {
-        return dbClient.delete().from(JdbcEntrypoint.Tag.class)
-                .matching(from(where("entrypoint_id").is(id)))
-                .fetch().rowsUpdated();
+        return template.delete(JdbcEntrypoint.Tag.class)
+                .matching(Query.query(where("entrypoint_id").is(id))).all();
     }
 }

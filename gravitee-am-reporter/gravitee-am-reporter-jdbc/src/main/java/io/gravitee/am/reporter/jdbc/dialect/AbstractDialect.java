@@ -18,8 +18,9 @@ package io.gravitee.am.reporter.jdbc.dialect;
 import com.google.common.base.CaseFormat;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
+import io.r2dbc.spi.Row;
 import io.reactivex.Single;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -159,7 +160,7 @@ public abstract class AbstractDialect implements DialectHelper {
         queryBuilder = queryBuilder.append("FROM "+auditsTable+" a ");
 
         whereClauseBuilder = whereClauseBuilder.append(" WHERE a.reference_type = :refType AND a.reference_id = :refId");
-        bindings.put("refType", referenceType);
+        bindings.put("refType", referenceType.name());
         bindings.put("refId", referenceId);
 
         // event types
@@ -239,8 +240,12 @@ public abstract class AbstractDialect implements DialectHelper {
     @Override
     public Single<List<Map<String, Object>>> buildAndProcessHistogram(DatabaseClient dbClient, ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
         SearchQuery searchQuery = buildHistogramQuery(referenceType, referenceId, criteria);
-        DatabaseClient.GenericExecuteSpec histogram = dbClient.execute(searchQuery.getQuery());
-        return fluxToFlowable(histogram.fetch().all()).toList();
+        DatabaseClient.GenericExecuteSpec histogram = dbClient.sql(searchQuery.getQuery());
+        return fluxToFlowable(histogram.map(this::toHistogramSlotValue).all()).toList();
+    }
+
+    protected Map<String, Object> toHistogramSlotValue(Row row) {
+        return Map.of("slot", row.get("slot"), "status", row.get("status"), "attempts", row.get("attempts"));
     }
 
 }

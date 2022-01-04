@@ -25,11 +25,10 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -54,9 +53,7 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Flowable<BotDetection> findAll() {
         LOGGER.debug("findAll()");
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcBotDetection.class)
-                .fetch()
+        return fluxToFlowable(template.select(JdbcBotDetection.class)
                 .all())
                 .map(this::toEntity);
     }
@@ -64,10 +61,8 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcBotDetection.class)
-                .matching(from(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
-                .fetch()
+        return fluxToFlowable(template.select(JdbcBotDetection.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
                 .map(this::toEntity);
     }
@@ -75,10 +70,8 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
     @Override
     public Maybe<BotDetection> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(dbClient.select()
-                .from(JdbcBotDetection.class)
-                .matching(from(where(ID_FIELD).is(id)))
-                .fetch()
+        return monoToMaybe(template.select(JdbcBotDetection.class)
+                .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
                 .map(this::toEntity);
     }
@@ -88,30 +81,19 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create bot detection with id {}", item.getId());
 
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcBotDetection.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Single<BotDetection> update(BotDetection item) {
         LOGGER.debug("update bot detection with id {}", item.getId());
-        Mono<Integer> action = dbClient.update()
-                .table(JdbcBotDetection.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.update(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcBotDetection.class)
-                .matching(from(where(ID_FIELD).is(id)))
-                .fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcBotDetection.class)
+                .matching(Query.query(where(ID_FIELD).is(id))).all().then());
     }
 }

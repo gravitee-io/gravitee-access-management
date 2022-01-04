@@ -18,27 +18,24 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcPermissionTicket;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringPermissionTicketRepository;
 import io.gravitee.am.repository.management.api.PermissionTicketRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -47,7 +44,28 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcPermissionTicketRepository extends AbstractJdbcRepository implements PermissionTicketRepository {
+public class JdbcPermissionTicketRepository extends AbstractJdbcRepository implements PermissionTicketRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_CLIENT_ID = "client_id";
+    public static final String COL_DOMAIN = "domain";
+    public static final String COL_USER_ID = "user_id";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_EXPIRE_AT = "expire_at";
+    public static final String COL_PERMISSION_REQUEST = "permission_request";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_CLIENT_ID,
+            COL_DOMAIN,
+            COL_USER_ID,
+            COL_CREATED_AT,
+            COL_EXPIRE_AT,
+            COL_PERMISSION_REQUEST
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     protected SpringPermissionTicketRepository permissionTicketRepository;
@@ -58,6 +76,12 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
 
     protected JdbcPermissionTicket toJdbcEntity(PermissionTicket entity) {
         return mapper.map(entity, JdbcPermissionTicket.class);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("uma_permission_ticket", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("uma_permission_ticket", columns, List.of(COL_ID));
     }
 
     @Override
@@ -74,16 +98,15 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create PermissionTicket with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("uma_permission_ticket");
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"client_id", item.getClientId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"domain", item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec,"user_id", item.getUserId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"expire_at", dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "permission_request", item.getPermissionRequest());
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CLIENT_ID, item.getClientId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DOMAIN, item.getDomain(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_USER_ID, item.getUserId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_EXPIRE_AT, dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PERMISSION_REQUEST, item.getPermissionRequest());
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -94,19 +117,18 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
     public Single<PermissionTicket> update(PermissionTicket item) {
         LOGGER.debug("update PermissionTicket with id {}", item.getId());
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("uma_permission_ticket");
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"client_id", item.getClientId(), String.class);
-        updateFields = addQuotedField(updateFields,"domain", item.getDomain(), String.class);
-        updateFields = addQuotedField(updateFields,"user_id", item.getUserId(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"expire_at", dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "permission_request", item.getPermissionRequest());
 
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
+        update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_CLIENT_ID, item.getClientId(), String.class);
+        update = addQuotedField(update, COL_DOMAIN, item.getDomain(), String.class);
+        update = addQuotedField(update, COL_USER_ID, item.getUserId(), String.class);
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_EXPIRE_AT, dateConverter.convertTo(item.getExpireAt(), null), LocalDateTime.class);
+        update = databaseDialectHelper.addJsonField(update, COL_PERMISSION_REQUEST, item.getPermissionRequest());
+
+        Mono<Integer> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
@@ -119,6 +141,6 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcPermissionTicket.class).matching(where("expire_at").lessThan(now)).then());
+        return monoToCompletable(template.delete(JdbcPermissionTicket.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all());
     }
 }

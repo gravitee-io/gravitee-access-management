@@ -26,18 +26,15 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -102,32 +99,26 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     @Override
     public Completable deleteByDomainAndScopeKey(String domain, String scope) {
         LOGGER.debug("deleteByDomainAndScopeKey({}, {})", domain, scope);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcScopeApproval.class)
-                .matching(from(where("domain").is(domain)
-                        .and(where("scope").is(scope))))
-                .fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+                .matching(Query.query(where("domain").is(domain)
+                        .and(where("scope").is(scope)))).all());
     }
 
     @Override
     public Completable deleteByDomainAndUserAndClient(String domain, String user, String client) {
         LOGGER.debug("deleteByDomainAndUserAndClient({}, {}, {})", domain, user, client);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcScopeApproval.class)
-                .matching(from(where("domain").is(domain)
+        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+                .matching(Query.query(where("domain").is(domain)
                         .and(where("user_id").is(user)
-                        .and(where("client_id").is(client)))))
-                .fetch().rowsUpdated());
+                        .and(where("client_id").is(client))))).all());
     }
 
     @Override
     public Completable deleteByDomainAndUser(String domain, String user) {
         LOGGER.debug("deleteByDomainAndUser({}, {})", domain, user);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcScopeApproval.class)
-                .matching(from(where("domain").is(domain)
-                        .and(where("user_id").is(user))))
-                .fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcScopeApproval.class)
+                .matching(Query.query(where("domain").is(domain)
+                        .and(where("user_id").is(user)))).all());
     }
 
     @Override
@@ -143,14 +134,7 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Single<ScopeApproval> create(ScopeApproval item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create ScopeApproval with id {}", item.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcScopeApproval.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action)
-                .flatMap((i) -> scopeApprovalRepository.findById(item.getId()).map(this::toEntity).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
@@ -169,6 +153,6 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcScopeApproval.class).matching(where("expires_at").lessThan(now)).then());
+        return monoToCompletable(template.delete(JdbcScopeApproval.class).matching(Query.query(where("expires_at").lessThan(now))).all());
     }
 }

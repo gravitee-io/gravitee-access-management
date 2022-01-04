@@ -16,7 +16,6 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
@@ -30,6 +29,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -121,10 +120,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
         LOGGER.debug("create organization with id {}", organization.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Void> insert = dbClient.insert()
-                .into(JdbcOrganization.class)
-                .using(toJdbcOrganization(organization))
-                .then();
+        Mono<Void> insert = template.insert(toJdbcOrganization(organization)).then();
 
         final Mono<Void> storeIdentities = storeIdentities(organization, false);
         final Mono<Void> storeDomainRestrictions = storeDomainRestrictions(organization, false);
@@ -144,10 +140,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
         // prepare the update for organization table
-        Mono<Void> update = dbClient.update()
-                .table(JdbcOrganization.class)
-                .using(toJdbcOrganization(organization))
-                .matching(from(where("id").is(organization.getId()))).then();
+        Mono<Void> update = template.update(toJdbcOrganization(organization)).then();
 
         final Mono<Void> storeIdentities = storeIdentities(organization, true);
         final Mono<Void> storeDomainRestrictions = storeDomainRestrictions(organization, true);
@@ -168,7 +161,7 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
         Mono<Void> deleteIdentities = deleteIdentities(organizationId);
         Mono<Void> deleteDomainRestrictions = deleteDomainRestrictions(organizationId);
         Mono<Void> deleteHrids = deleteHrids(organizationId);
-        Mono<Void> delete = dbClient.delete().from(JdbcOrganization.class).matching(from(where("id").is(organizationId))).then();
+        Mono<Void> delete = template.delete(JdbcOrganization.class).matching(Query.query(where("id").is(organizationId))).all().then();
 
         return monoToCompletable(delete
                 .then(deleteDomainRestrictions)
@@ -194,7 +187,11 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                         dbIdentity.setOrganizationId(organization.getId());
                         return dbIdentity;
                     })
-                    .concatMap(dbIdentity -> dbClient.insert().into(JdbcOrganization.Identity.class).using(dbIdentity).then()))
+                    .concatMap(dbIdentity ->  template.getDatabaseClient()
+                            .sql("INSERT INTO organization_identities(organization_id, identity_id) VALUES (:organization_id, :identity_id)")
+                            .bind("organization_id", dbIdentity.getOrganizationId())
+                            .bind("identity_id", dbIdentity.getIdentity())
+                            .fetch().rowsUpdated().then()))
                     .ignoreElements();
         }
 
@@ -219,7 +216,11 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                         dbDomainRestriction.setOrganizationId(organization.getId());
                         return dbDomainRestriction;
                     })
-                    .concatMap(dbDomainRestriction -> dbClient.insert().into(JdbcOrganization.DomainRestriction.class).using(dbDomainRestriction).then()))
+                    .concatMap(dbDomainRestriction -> template.getDatabaseClient()
+                            .sql("INSERT INTO organization_domain_restrictions(organization_id, domain_restriction) VALUES (:organization_id, :domain_restriction)")
+                            .bind("organization_id", dbDomainRestriction.getOrganizationId())
+                            .bind("domain_restriction", dbDomainRestriction.getDomainRestriction())
+                            .fetch().rowsUpdated().then()))
                     .ignoreElements();
         }
 
@@ -245,7 +246,12 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                 dbHrids.add(hrid);
             }
             return delete.thenMany(Flux.fromIterable(dbHrids)).
-                    concatMap(hrid -> dbClient.insert().into(JdbcOrganization.Hrid.class).using(hrid).then())
+                    concatMap(hrid -> template.getDatabaseClient()
+                            .sql("INSERT INTO organization_hrids(organization_id, hrid, pos) VALUES (:organization_id, :hrid, :pos)")
+                            .bind("organization_id", hrid.getOrganizationId())
+                            .bind("hrid", hrid.getHrid())
+                            .bind("pos", hrid.getPos())
+                            .fetch().rowsUpdated().then())
                     .ignoreElements();
         }
 
@@ -253,14 +259,14 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
     }
 
     private Mono<Void> deleteIdentities(String organizationId) {
-        return dbClient.delete().from(JdbcOrganization.Identity.class).matching(from(where("organization_id").is(organizationId))).then();
+        return template.delete(JdbcOrganization.Identity.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
     }
 
     private Mono<Void> deleteDomainRestrictions(String organizationId) {
-        return dbClient.delete().from(JdbcOrganization.DomainRestriction.class).matching(from(where("organization_id").is(organizationId))).then();
+        return template.delete(JdbcOrganization.DomainRestriction.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
     }
 
     private Mono<Void> deleteHrids(String organizationId) {
-        return dbClient.delete().from(JdbcOrganization.Hrid.class).matching(from(where("organization_id").is(organizationId))).then();
+        return template.delete(JdbcOrganization.Hrid.class).matching(Query.query(where("organization_id").is(organizationId))).all().then();
     }
 }

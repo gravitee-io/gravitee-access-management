@@ -25,8 +25,8 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
@@ -67,13 +67,7 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
     public Single<PushedAuthorizationRequest> create(PushedAuthorizationRequest par) {
         par.setId(par.getId() == null ? RandomString.generate() : par.getId());
         LOGGER.debug("Create PushedAuthorizationRequest with id {}", par.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcPushedAuthorizationRequest.class)
-                .using(toJdbcEntity(par))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> parRepository.findById(par.getId()).map(this::toEntity).toSingle())
+        return monoToSingle(template.insert(toJdbcEntity(par))).map(this::toEntity)
                 .doOnError((error) -> LOGGER.error("Unable to create PushedAuthorizationRequest with id {}", par.getId(), error));
     }
 
@@ -87,10 +81,9 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcPushedAuthorizationRequest.class)
-                .matching(where("expire_at")
-                        .lessThan(now)).then())
+        return monoToCompletable(template.delete(JdbcPushedAuthorizationRequest.class)
+                .matching(Query.query(where("expire_at")
+                        .lessThan(now))).all())
                 .doOnError(error -> LOGGER.error("Unable to purge PushedAuthorizationRequest", error));
     }
 }

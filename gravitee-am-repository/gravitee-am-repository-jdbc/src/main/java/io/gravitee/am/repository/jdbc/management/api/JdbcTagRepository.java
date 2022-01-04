@@ -27,7 +27,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -74,13 +73,7 @@ public class JdbcTagRepository extends AbstractJdbcRepository implements TagRepo
     public Single<Tag> create(Tag item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create tag with id {}", item.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcTag.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

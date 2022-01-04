@@ -74,11 +74,11 @@ public class MySqlHelper extends AbstractDialectHelper {
         return search;
     }
 
-    protected String buildPagingClause(int page, int size) {
+    public String buildPagingClause(int page, int size) {
         return buildPagingClause("id", page, size);
     }
 
-    protected String buildPagingClause(String field, int page, int size) {
+    public String buildPagingClause(String field, int page, int size) {
         return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + (page * size);
     }
 

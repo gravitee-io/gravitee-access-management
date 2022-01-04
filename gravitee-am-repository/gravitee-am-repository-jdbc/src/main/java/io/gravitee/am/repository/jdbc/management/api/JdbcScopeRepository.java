@@ -27,21 +27,20 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
@@ -52,7 +51,38 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcScopeRepository extends AbstractJdbcRepository implements ScopeRepository {
+public class JdbcScopeRepository extends AbstractJdbcRepository implements ScopeRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_NAME = "name";
+    public static final String COL_DOMAIN = "domain";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_EXPIRES_IN = "expires_in";
+    public static final String COL_ICON_URI = "icon_uri";
+    public static final String COL_KEY = "key";
+    public static final String COL_DISCOVERY = "discovery";
+    public static final String COL_PARAMETERIZED = "parameterized";
+    public static final String COL_SYSTEM = "system";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_NAME,
+            COL_DOMAIN,
+            COL_DESCRIPTION,
+            COL_EXPIRES_IN,
+            COL_ICON_URI,
+            COL_KEY,
+            COL_DISCOVERY,
+            COL_PARAMETERIZED,
+            COL_SYSTEM,
+            COL_CREATED_AT,
+            COL_UPDATED_AT
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     private SpringScopeRepository scopeRepository;
@@ -69,16 +99,18 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     }
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("scopes", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("scopes", columns, List.of(COL_ID));
+    }
+
+    @Override
     public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
 
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
-        return fluxToFlowable(dbClient.select()
-                .from("scopes")
-                .project("*")
-                .matching(from(where("domain").is(domain)))
-                .orderBy(Sort.Order.by("scopes."+databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))))
-                .page(PageRequest.of(page, size))
-                .as(JdbcScope.class).fetch().all())
+        return fluxToFlowable(template.select(Query.query(from(where(COL_DOMAIN).is(domain)))
+                                .sort(Sort.by(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
+                                .with(PageRequest.of(page, size)), JdbcScope.class))
                 .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
@@ -87,10 +119,10 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     }
 
     private Single<Long> countByDomain(String domain) {
-        return monoToSingle(dbClient.execute("select count(s."+databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))+") from scopes s where s.domain = :domain")
-                .bind("domain", domain)
-                .as(Long.class)
-                .fetch().first());
+        return monoToSingle(template.getDatabaseClient().sql("select count(s."+databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))+") from scopes s where s.domain = :domain")
+                .bind(COL_DOMAIN, domain)
+                .map(row -> row.get(0, Long.class))
+                .first());
     }
 
     @Override
@@ -103,19 +135,19 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         String search = this.databaseDialectHelper.buildSearchScopeQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountScopeQuery(wildcardSearch);
 
-        return fluxToFlowable(dbClient.execute(search)
-                .bind("domain", domain)
+        return fluxToFlowable(template.getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
                 .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                .as(JdbcScope.class)
-                .fetch().all())
+                .map(row -> rowMapper.read(JdbcScope.class, row))
+                .all())
                 .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(dbClient.execute(count)
-                        .bind("domain", domain)
+                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                        .bind(COL_DOMAIN, domain)
                         .bind("value", wildcardSearch ? wildcardQuery.toUpperCase() : query.toUpperCase())
-                        .as(Long.class)
-                        .fetch().first())
+                        .map(row -> row.get(0, Long.class))
+                        .first())
                         .map(total -> new Page<>(data, page, total)));
     }
 
@@ -135,24 +167,19 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
         LOGGER.debug("findByDomainAndKey({}, {})", domain, key);
-        return monoToMaybe(dbClient.select().from(JdbcScope.class)
-                .project("*")
-                .matching(from(where("domain").is(domain)
-                        .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))).is(key))))
-                .as(JdbcScope.class)
-                .first()).map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()));
+        return monoToMaybe(template.select(Query.query(where(COL_DOMAIN).is(domain)
+                        .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))).is(key)))
+                .limit(1), JdbcScope.class).singleOrEmpty()
+        ).map(this::toEntity).flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()));
     }
 
     @Override
     public Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys) {
         LOGGER.debug("findByDomainAndKeys({}, {})", domain, keys);
-        return fluxToFlowable(dbClient.select().from(JdbcScope.class)
-                .project("*")
-                .matching(from(where("domain").is(domain)
-                        .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted("key"))).in(keys))))
-                .as(JdbcScope.class)
-                .all()).map(this::toEntity)
+        return fluxToFlowable(template.select(
+                Query.query(where(COL_DOMAIN).is(domain)
+                        .and(where(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))).in(keys))), JdbcScope.class))
+                .map(this::toEntity)
                 .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable());
     }
 
@@ -170,34 +197,37 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("Create Scope with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("scopes");
-        // doesn't use the class introspection to detect the fields due to keyword column name
-        insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "name", item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec, "domain", item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec, "description", item.getDescription(), String.class);
-        insertSpec = addQuotedField(insertSpec, "expires_in", item.getExpiresIn(), Integer.class);
-        insertSpec = addQuotedField(insertSpec, "icon_uri", item.getIconUri(), String.class);
-        insertSpec = addQuotedField(insertSpec, "key", item.getKey(), String.class); // mssql keyword
-        insertSpec = addQuotedField(insertSpec, "discovery", item.isDiscovery(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "parameterized", item.isParameterized(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "system", item.isSystem(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DOMAIN, item.getDomain(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DESCRIPTION, item.getDescription(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_EXPIRES_IN, item.getExpiresIn(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, COL_ICON_URI, item.getIconUri(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_KEY, item.getKey(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DISCOVERY, item.isDiscovery(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_PARAMETERIZED, item.isParameterized(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_SYSTEM, item.isSystem(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
         final List<String> scopeClaims = item.getClaims();
         if (scopeClaims != null && !scopeClaims.isEmpty()) {
-            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> {
-                JdbcScope.Claims sClaim = new JdbcScope.Claims();
-                sClaim.setClaim(claim);
-                sClaim.setScopeId(item.getId());
-                return dbClient.insert().into(JdbcScope.Claims.class).using(sClaim).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Integer::sum));
         }
 
         return monoToSingle(action.as(trx::transactional)).flatMap((i) -> this.findById(item.getId()).toSingle());
+    }
+
+    private Mono<Integer> insertClaim(String claim, Scope item) {
+        return template.getDatabaseClient().sql("INSERT INTO scope_claims(scope_id, claim) VALUES(:scope_id, :claim)")
+                .bind("scope_id", item.getId())
+                .bind("claim", claim)
+                .fetch().rowsUpdated();
     }
 
     @Override
@@ -205,35 +235,29 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("Update Scope with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaims = dbClient.delete().from(JdbcScope.Claims.class)
-                .matching(from(where("scope_id").is(item.getId()))).fetch().rowsUpdated();
+        Mono<Integer> deleteClaims = template.delete(JdbcScope.Claims.class)
+                .matching(Query.query(where("scope_id").is(item.getId()))).all();
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("scopes");
-        // doesn't use the class introspection to detect the fields due to keyword column name
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields, "name", item.getName(), String.class);
-        updateFields = addQuotedField(updateFields, "domain", item.getDomain(), String.class);
-        updateFields = addQuotedField(updateFields, "description", item.getDescription(), String.class);
-        updateFields = addQuotedField(updateFields, "expires_in", item.getExpiresIn(), Integer.class);
-        updateFields = addQuotedField(updateFields, "icon_uri", item.getIconUri(), String.class);
-        updateFields = addQuotedField(updateFields, "key", item.getKey(), String.class); // mssql keyword
-        updateFields = addQuotedField(updateFields, "discovery", item.isDiscovery(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "parameterized", item.isParameterized(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "system", item.isSystem(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_NAME, item.getName(), String.class);
+        update = addQuotedField(update, COL_DOMAIN, item.getDomain(), String.class);
+        update = addQuotedField(update, COL_DESCRIPTION, item.getDescription(), String.class);
+        update = addQuotedField(update, COL_EXPIRES_IN, item.getExpiresIn(), Integer.class);
+        update = addQuotedField(update, COL_ICON_URI, item.getIconUri(), String.class);
+        update = addQuotedField(update, COL_KEY, item.getKey(), String.class);
+        update = addQuotedField(update, COL_DISCOVERY, item.isDiscovery(), Boolean.class);
+        update = addQuotedField(update, COL_PARAMETERIZED, item.isParameterized(), Boolean.class);
+        update = addQuotedField(update, COL_SYSTEM, item.isSystem(), Boolean.class);
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+
+        Mono<Integer> action = update.fetch().rowsUpdated();
 
         final List<String> scopeClaims = item.getClaims();
         if (scopeClaims != null && !scopeClaims.isEmpty()) {
-            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> {
-                JdbcScope.Claims sClaim = new JdbcScope.Claims();
-                sClaim.setClaim(claim);
-                sClaim.setScopeId(item.getId());
-                return dbClient.insert().into(JdbcScope.Claims.class).using(sClaim).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(scopeClaims).concatMap(claim -> insertClaim(claim, item)).reduce(Integer::sum));
         }
 
         return monoToSingle(deleteClaims.then(action).as(trx::transactional))
@@ -245,11 +269,11 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         LOGGER.debug("delete({})", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteClaim = dbClient.delete().from(JdbcScope.Claims.class)
-                .matching(from(where("scope_id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> deleteClaim = template.delete(JdbcScope.Claims.class)
+                .matching(Query.query(where("scope_id").is(id))).all();
 
-        Mono<Integer> delete = dbClient.delete().from(JdbcScope.class)
-                .matching(from(where("id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcScope.class)
+                .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(deleteClaim.then(delete).as(trx::transactional));
     }

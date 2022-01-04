@@ -48,10 +48,10 @@ public class SystemTaskRepositoryTest extends AbstractManagementTest {
         assertEqualsTo(task, task.getOperationId(), testObserver);
     }
 
-    private void assertEqualsTo(SystemTask scope, String expectedOpId, TestObserver<SystemTask> testObserver) {
-        testObserver.assertValue(s -> s.getId().equals(scope.getId()));
-        testObserver.assertValue(s -> s.getStatus().equals(scope.getStatus()));
-        testObserver.assertValue(s -> s.getType().equals(scope.getType()));
+    private void assertEqualsTo(SystemTask task, String expectedOpId, TestObserver<SystemTask> testObserver) {
+        testObserver.assertValue(s -> s.getId().equals(task.getId()));
+        testObserver.assertValue(s -> s.getStatus().equals(task.getStatus()));
+        testObserver.assertValue(s -> s.getType().equals(task.getType()));
         testObserver.assertValue(s -> s.getOperationId().equals(expectedOpId));
     }
 

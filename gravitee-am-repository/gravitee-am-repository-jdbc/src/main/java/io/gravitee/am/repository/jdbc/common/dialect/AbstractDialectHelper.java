@@ -19,8 +19,9 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 
 import java.time.LocalDateTime;
@@ -62,11 +63,11 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public DatabaseClient.GenericInsertSpec<Map<String, Object>> addJsonField(DatabaseClient.GenericInsertSpec<Map<String, Object>> spec, String name, Object value) {
+    public DatabaseClient.GenericExecuteSpec addJsonField(DatabaseClient.GenericExecuteSpec spec, String name, Object value) {
         try {
             return value == null ?
-                    spec.nullValue(SqlIdentifier.quoted(name), String.class) :
-                    spec.value(SqlIdentifier.quoted(name), JSONMapper.toJson(value));
+                    spec.bindNull(name, String.class) :
+                    spec.bind(name, JSONMapper.toJson(value));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -257,10 +258,6 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     protected abstract ScimUserSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimUserSearch search);
-
-    protected abstract String buildPagingClause(int page, int size);
-
-    protected abstract String buildPagingClause(String field, int page, int size);
 
     @Override
     public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {
