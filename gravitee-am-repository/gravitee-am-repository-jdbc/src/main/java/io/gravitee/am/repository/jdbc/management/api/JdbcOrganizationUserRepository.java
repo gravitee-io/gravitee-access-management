@@ -31,21 +31,19 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Criteria;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.data.util.StreamUtils;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,7 +51,6 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -61,13 +58,130 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcOrganizationUserRepository extends AbstractJdbcRepository implements OrganizationUserRepository {
+public class JdbcOrganizationUserRepository extends AbstractJdbcRepository implements OrganizationUserRepository, InitializingBean {
     private static final String ATTRIBUTE_USER_FIELD_EMAIL = "email";
     private static final String ATTRIBUTE_USER_FIELD_PHOTO = "photo";
     private static final String ATTRIBUTE_USER_FIELD_IM = "im";
     private static final String ATTRIBUTE_USER_FIELD_PHONE = "phoneNumber";
 
+    private static final String FK_USER_ID = "user_id";
+
+    private static final String ATTR_COL_TYPE = "type";
+    private static final String ATTR_COL_PRIMARY = "primary";
+    private static final String ATTR_COL_VALUE = "value";
+    private static final String ATTR_COL_USER_FIELD = "user_field";
+
+    private static final String ADDR_COL_TYPE = "type";
+    private static final String ADDR_COL_FORMATTED = "formatted";
+    private static final String ADDR_COL_STREET_ADDRESS = "street_address";
+    private static final String ADDR_COL_LOCALITY = "locality";
+    private static final String ADDR_COL_REGION = "region";
+    private static final String ADDR_COL_POSTAL_CODE = "postal_code";
+    private static final String ADDR_COL_COUNTRY = "country";
+    private static final String ADDR_COL_PRIMARY = "primary";
+
+    private static final String USER_COL_ID = "id";
+    private static final String USER_COL_EMAIL = "email";
+    private static final String USER_COL_EXTERNAL_ID = "external_id";
+    private static final String USER_COL_USERNAME = "username";
+    private static final String USER_COL_PASSWORD = "password";
+    private static final String USER_COL_DISPLAY_NAME = "display_name";
+    private static final String USER_COL_NICK_NAME = "nick_name";
+    private static final String USER_COL_FIRST_NAME = "first_name";
+    private static final String USER_COL_LAST_NAME = "last_name";
+    private static final String USER_COL_TITLE = "title";
+    private static final String USER_COL_TYPE = "type";
+    private static final String USER_COL_PREFERRED_LANGUAGE = "preferred_language";
+    private static final String USER_COL_ACCOUNT_NON_EXPIRED = "account_non_expired";
+    private static final String USER_COL_ACCOUNT_LOCKED_AT = "account_locked_at";
+    private static final String USER_COL_ACCOUNT_LOCKED_UNTIL = "account_locked_until";
+    private static final String USER_COL_ACCOUNT_NON_LOCKED = "account_non_locked";
+    private static final String USER_COL_CREDENTIALS_NON_EXPIRED = "credentials_non_expired";
+    private static final String USER_COL_ENABLED = "enabled";
+    private static final String USER_COL_INTERNAL = "internal";
+    private static final String USER_COL_PRE_REGISTRATION = "pre_registration";
+    private static final String USER_COL_REGISTRATION_COMPLETED = "registration_completed";
+    private static final String USER_COL_NEWSLETTER = "newsletter";
+    private static final String USER_COL_REGISTRATION_USER_URI = "registration_user_uri";
+    private static final String USER_COL_REGISTRATION_ACCESS_TOKEN = "registration_access_token";
+    private static final String USER_COL_REFERENCE_TYPE = "reference_type";
+    private static final String USER_COL_REFERENCE_ID = "reference_id";
+    private static final String USER_COL_SOURCE = "source";
+    private static final String USER_COL_CLIENT = "client";
+    private static final String USER_COL_LOGINS_COUNT = "logins_count";
+    private static final String USER_COL_LOGGED_AT = "logged_at";
+    private static final String USER_COL_CREATED_AT = "created_at";
+    private static final String USER_COL_UPDATED_AT = "updated_at";
+    private static final String USER_COL_X_509_CERTIFICATES = "x509_certificates";
+    private static final String USER_COL_FACTORS = "factors";
+    private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
+
+    private static final List<String> USER_COLUMNS = List.of(
+            USER_COL_ID,
+            USER_COL_EXTERNAL_ID,
+            USER_COL_USERNAME,
+            USER_COL_PASSWORD,
+            USER_COL_EMAIL,
+            USER_COL_DISPLAY_NAME,
+            USER_COL_NICK_NAME,
+            USER_COL_FIRST_NAME,
+            USER_COL_LAST_NAME,
+            USER_COL_TITLE,
+            USER_COL_TYPE,
+            USER_COL_PREFERRED_LANGUAGE,
+            USER_COL_ACCOUNT_NON_EXPIRED,
+            USER_COL_ACCOUNT_LOCKED_AT,
+            USER_COL_ACCOUNT_LOCKED_UNTIL,
+            USER_COL_ACCOUNT_NON_LOCKED,
+            USER_COL_CREDENTIALS_NON_EXPIRED,
+            USER_COL_ENABLED,
+            USER_COL_INTERNAL,
+            USER_COL_PRE_REGISTRATION,
+            USER_COL_REGISTRATION_COMPLETED,
+            USER_COL_NEWSLETTER,
+            USER_COL_REGISTRATION_USER_URI,
+            USER_COL_REGISTRATION_ACCESS_TOKEN,
+            USER_COL_REFERENCE_TYPE,
+            USER_COL_REFERENCE_ID,
+            USER_COL_SOURCE,
+            USER_COL_CLIENT,
+            USER_COL_LOGINS_COUNT,
+            USER_COL_LOGGED_AT,
+            USER_COL_CREATED_AT,
+            USER_COL_UPDATED_AT,
+            USER_COL_X_509_CERTIFICATES,
+            USER_COL_FACTORS,
+            USER_COL_ADDITIONAL_INFORMATION
+    );
+
+
+    private static final List<String> ADDRESS_COLUMNS = List.of(
+            FK_USER_ID,
+            ADDR_COL_TYPE,
+            ADDR_COL_FORMATTED,
+            ADDR_COL_STREET_ADDRESS,
+            ADDR_COL_LOCALITY,
+            ADDR_COL_REGION,
+            ADDR_COL_POSTAL_CODE,
+            ADDR_COL_COUNTRY,
+            ADDR_COL_PRIMARY
+    );
+
+    private static final List<String> ATTRIBUTES_COLUMNS = List.of(
+            FK_USER_ID,
+            ATTR_COL_USER_FIELD,
+            ATTR_COL_VALUE,
+            ATTR_COL_TYPE,
+            ATTR_COL_PRIMARY
+    );
+
+
     private static short CONCURRENT_FLATMAP = 1;
+
+    private String UPDATE_USER_STATEMENT;
+    private String INSERT_USER_STATEMENT;
+    private String INSERT_ADDRESS_STATEMENT;
+    private String INSERT_ATTRIBUTES_STATEMENT;
 
     @Autowired
     protected SpringOrganizationUserRepository userRepository;
@@ -96,6 +210,14 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_USER_STATEMENT = createInsertStatement("organization_users", USER_COLUMNS);
+        this.UPDATE_USER_STATEMENT = createUpdateStatement("organization_users", USER_COLUMNS, List.of(USER_COL_ID));
+        this.INSERT_ADDRESS_STATEMENT = createInsertStatement("organization_user_addresses", ADDRESS_COLUMNS);
+        this.INSERT_ATTRIBUTES_STATEMENT = createInsertStatement("organization_user_attributes", ATTRIBUTES_COLUMNS);
+    }
+
+    @Override
     public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({})", referenceId);
         return userRepository.findByReference(referenceType.name(), referenceId)
@@ -106,18 +228,17 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     @Override
     public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcOrganizationUser.class)
-                .matching(from(where("reference_id").is(referenceId)
-                        .and(where("reference_type").is(referenceType.name()))))
-                .orderBy(Sort.Order.asc("id"))
-                .page(PageRequest.of(page, size))
-                .as(JdbcOrganizationUser.class).all())
+        return fluxToFlowable(template.select(JdbcOrganizationUser.class)
+                .matching(Query.query(where(USER_COL_REFERENCE_ID).is(referenceId)
+                        .and(where(USER_COL_REFERENCE_TYPE).is(referenceType.name())))
+                        .sort(Sort.by(USER_COL_ID).ascending())
+                        .with(PageRequest.of(page, size))
+                ).all())
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toFlowable(), CONCURRENT_FLATMAP)
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<User>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -130,48 +251,45 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         String search = this.databaseDialectHelper.buildSearchUserQuery(wildcardSearch, page, size, true);
         String count = this.databaseDialectHelper.buildCountUserQuery(wildcardSearch, true);
 
-        return fluxToFlowable(dbClient.execute(search)
-                .bind("value", wildcardSearch ? wildcardValue : query)
+        return fluxToFlowable(template.getDatabaseClient().sql(search)
+                .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .as(JdbcOrganizationUser.class)
-                .fetch().all())
+                .map(row -> rowMapper.read(JdbcOrganizationUser.class, row))
+                .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeUser(app).toFlowable(), CONCURRENT_FLATMAP) // single thread to keep order
                 .toList()
-                .flatMap(data -> monoToSingle(dbClient.execute(count)
-                        .bind("value", wildcardSearch ? wildcardValue : query)
+                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
+                        .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
-                        .as(Long.class)
-                        .fetch().first())
-                        .map(total -> new Page<User>(data, page, total)));
+                        .map(row -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<>(data, page, total)));
     }
 
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
         LOGGER.debug("search({}, {}, {}, {}, {})", referenceType, referenceId, criteria, page, size);
-        Criteria referenceClause = where("reference_id").is(referenceId).and(where("reference_type").is(referenceType.name()));
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM organization_users WHERE reference_id = :refId AND reference_type = :refType AND ");
         ScimUserSearch search = this.databaseDialectHelper.prepareScimSearchUserQuery(queryBuilder, criteria, page, size);
 
         // execute query
-        DatabaseClient.GenericExecuteSpec executeSelect = dbClient.execute(search.getSelectQuery());
-        executeSelect = executeSelect.bind("refType", referenceType.name()).bind("refId", referenceId);
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = template.getDatabaseClient().sql(search.getSelectQuery()).bind("refType", referenceType.name()).bind("refId", referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeSelect = executeSelect.bind(entry.getKey(), entry.getValue());
         }
-        Flux<JdbcOrganizationUser> userFlux = executeSelect.as(JdbcOrganizationUser.class).fetch().all();
+        Flux<JdbcOrganizationUser> userFlux = executeSelect.map(row -> rowMapper.read(JdbcOrganizationUser.class, row)).all();
 
         // execute count to provide total in the Page
-        DatabaseClient.GenericExecuteSpec executeCount = dbClient.execute(search.getCountQuery());
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeCount = template.getDatabaseClient().sql(search.getCountQuery());
         executeCount = executeCount.bind("refType", referenceType.name()).bind("refId", referenceId);
         for (Map.Entry<String, Object> entry : search.getBinding().entrySet()) {
             executeCount = executeCount.bind(entry.getKey(), entry.getValue());
         }
-        Mono<Long> userCount = executeCount.as(Long.class).fetch().one();
+        Mono<Long> userCount = executeCount.map(row -> row.get(0, Long.class)).first();
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
@@ -229,47 +347,46 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("Create user with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("organization_users");
 
-        // doesn't use the class introspection to handle json objects
-        insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "external_id", item.getExternalId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "username", item.getUsername(), String.class);
-        insertSpec = addQuotedField(insertSpec, "password", item.getPassword(), String.class);
-        insertSpec = addQuotedField(insertSpec, "email", item.getEmail(), String.class);
-        insertSpec = addQuotedField(insertSpec, "display_name", item.getDisplayName(), String.class);
-        insertSpec = addQuotedField(insertSpec, "nick_name", item.getNickName(), String.class);
-        insertSpec = addQuotedField(insertSpec, "first_name", item.getFirstName(), String.class);
-        insertSpec = addQuotedField(insertSpec, "last_name", item.getLastName(), String.class);
-        insertSpec = addQuotedField(insertSpec, "title", item.getTitle(), String.class);
-        insertSpec = addQuotedField(insertSpec, "type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec, "preferred_language", item.getPreferredLanguage(), String.class);
-        insertSpec = addQuotedField(insertSpec, "account_non_expired", item.isAccountNonExpired(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "account_non_locked", item.isAccountNonLocked(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "enabled", item.isEnabled(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "internal", item.isInternal(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "pre_registration", item.isPreRegistration(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "registration_completed", item.isRegistrationCompleted(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "newsletter", item.isNewsletter(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec, "registration_user_uri", item.getRegistrationUserUri(), String.class);
-        insertSpec = addQuotedField(insertSpec, "registration_access_token", item.getRegistrationAccessToken(), String.class);
-        insertSpec = addQuotedField(insertSpec, "reference_type", item.getReferenceType(), String.class);
-        insertSpec = addQuotedField(insertSpec, "reference_id", item.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "source", item.getSource(), String.class);
-        insertSpec = addQuotedField(insertSpec, "client", item.getClient(), String.class);
-        insertSpec = addQuotedField(insertSpec, "logins_count", item.getLoginsCount(), Integer.class);
-        insertSpec = addQuotedField(insertSpec, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "x509_certificates", item.getX509Certificates());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "factors", item.getFactors());
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "additional_information", item.getAdditionalInformation());
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_USER_STATEMENT);
+
+        insertSpec = addQuotedField(insertSpec, USER_COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_EXTERNAL_ID, item.getExternalId(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_USERNAME, item.getUsername(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_PASSWORD, item.getPassword(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_EMAIL, item.getEmail(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_DISPLAY_NAME, item.getDisplayName(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_NICK_NAME, item.getNickName(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_FIRST_NAME, item.getFirstName(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_LAST_NAME, item.getLastName(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_TITLE, item.getTitle(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_TYPE, item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_PREFERRED_LANGUAGE, item.getPreferredLanguage(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ACCOUNT_NON_EXPIRED, item.isAccountNonExpired(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ACCOUNT_LOCKED_AT, dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ACCOUNT_LOCKED_UNTIL, dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ACCOUNT_NON_LOCKED, item.isAccountNonLocked(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_CREDENTIALS_NON_EXPIRED, item.isCredentialsNonExpired(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ENABLED, item.isEnabled(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_INTERNAL, item.isInternal(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_PRE_REGISTRATION, item.isPreRegistration(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_REGISTRATION_COMPLETED, item.isRegistrationCompleted(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_NEWSLETTER, item.isNewsletter(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_REGISTRATION_USER_URI, item.getRegistrationUserUri(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_REGISTRATION_ACCESS_TOKEN, item.getRegistrationAccessToken(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_REFERENCE_TYPE, item.getReferenceType() != null ? item.getReferenceType().name() : null, String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_SOURCE, item.getSource(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_CLIENT, item.getClient(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_FACTORS, item.getFactors());
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
-
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
@@ -281,51 +398,51 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("Update User with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("organization_users");
-        // doesn't use the class introspection to handle json objects
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields, "external_id", item.getExternalId(), String.class);
-        updateFields = addQuotedField(updateFields, "username", item.getUsername(), String.class);
-        updateFields = addQuotedField(updateFields, "password", item.getPassword(), String.class);
-        updateFields = addQuotedField(updateFields, "email", item.getEmail(), String.class);
-        updateFields = addQuotedField(updateFields, "display_name", item.getDisplayName(), String.class);
-        updateFields = addQuotedField(updateFields, "nick_name", item.getNickName(), String.class);
-        updateFields = addQuotedField(updateFields, "first_name", item.getFirstName(), String.class);
-        updateFields = addQuotedField(updateFields, "last_name", item.getLastName(), String.class);
-        updateFields = addQuotedField(updateFields, "title", item.getTitle(), String.class);
-        updateFields = addQuotedField(updateFields, "type", item.getType(), String.class);
-        updateFields = addQuotedField(updateFields, "preferred_language", item.getPreferredLanguage(), String.class);
-        updateFields = addQuotedField(updateFields, "account_non_expired", item.isAccountNonExpired(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "account_locked_at", dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "account_locked_until", dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "account_non_locked", item.isAccountNonLocked(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "credentials_non_expired", item.isCredentialsNonExpired(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "enabled", item.isEnabled(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "internal", item.isInternal(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "pre_registration", item.isPreRegistration(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "registration_completed", item.isRegistrationCompleted(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "newsletter", item.isNewsletter(), Boolean.class);
-        updateFields = addQuotedField(updateFields, "registration_user_uri", item.getRegistrationUserUri(), String.class);
-        updateFields = addQuotedField(updateFields, "registration_access_token", item.getRegistrationAccessToken(), String.class);
-        updateFields = addQuotedField(updateFields, "reference_type", item.getReferenceType(), String.class);
-        updateFields = addQuotedField(updateFields, "reference_id", item.getReferenceId(), String.class);
-        updateFields = addQuotedField(updateFields, "source", item.getSource(), String.class);
-        updateFields = addQuotedField(updateFields, "client", item.getClient(), String.class);
-        updateFields = addQuotedField(updateFields, "logins_count", item.getLoginsCount(), Integer.class);
-        updateFields = addQuotedField(updateFields, "logged_at", dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "x509_certificates", item.getX509Certificates());
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "factors", item.getFactors());
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "additional_information", item.getAdditionalInformation());
 
-        Mono<Integer> updateAction = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_USER_STATEMENT);
 
-        updateAction = deleteChildEntities(item.getId()).then(updateAction);
-        updateAction = persistChildEntities(updateAction, item);
+        update = addQuotedField(update, USER_COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, USER_COL_EXTERNAL_ID, item.getExternalId(), String.class);
+        update = addQuotedField(update, USER_COL_USERNAME, item.getUsername(), String.class);
+        update = addQuotedField(update, USER_COL_PASSWORD, item.getPassword(), String.class);
+        update = addQuotedField(update, USER_COL_EMAIL, item.getEmail(), String.class);
+        update = addQuotedField(update, USER_COL_DISPLAY_NAME, item.getDisplayName(), String.class);
+        update = addQuotedField(update, USER_COL_NICK_NAME, item.getNickName(), String.class);
+        update = addQuotedField(update, USER_COL_FIRST_NAME, item.getFirstName(), String.class);
+        update = addQuotedField(update, USER_COL_LAST_NAME, item.getLastName(), String.class);
+        update = addQuotedField(update, USER_COL_TITLE, item.getTitle(), String.class);
+        update = addQuotedField(update, USER_COL_TYPE, item.getType(), String.class);
+        update = addQuotedField(update, USER_COL_PREFERRED_LANGUAGE, item.getPreferredLanguage(), String.class);
+        update = addQuotedField(update, USER_COL_ACCOUNT_NON_EXPIRED, item.isAccountNonExpired(), Boolean.class);
+        update = addQuotedField(update, USER_COL_ACCOUNT_LOCKED_AT, dateConverter.convertTo(item.getAccountLockedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_ACCOUNT_LOCKED_UNTIL, dateConverter.convertTo(item.getAccountLockedUntil(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_ACCOUNT_NON_LOCKED, item.isAccountNonLocked(), Boolean.class);
+        update = addQuotedField(update, USER_COL_CREDENTIALS_NON_EXPIRED, item.isCredentialsNonExpired(), Boolean.class);
+        update = addQuotedField(update, USER_COL_ENABLED, item.isEnabled(), Boolean.class);
+        update = addQuotedField(update, USER_COL_INTERNAL, item.isInternal(), Boolean.class);
+        update = addQuotedField(update, USER_COL_PRE_REGISTRATION, item.isPreRegistration(), Boolean.class);
+        update = addQuotedField(update, USER_COL_REGISTRATION_COMPLETED, item.isRegistrationCompleted(), Boolean.class);
+        update = addQuotedField(update, USER_COL_NEWSLETTER, item.isNewsletter(), Boolean.class);
+        update = addQuotedField(update, USER_COL_REGISTRATION_USER_URI, item.getRegistrationUserUri(), String.class);
+        update = addQuotedField(update, USER_COL_REGISTRATION_ACCESS_TOKEN, item.getRegistrationAccessToken(), String.class);
+        update = addQuotedField(update, USER_COL_REFERENCE_TYPE, item.getReferenceType() != null ? item.getReferenceType().name() : null, String.class);
+        update = addQuotedField(update, USER_COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        update = addQuotedField(update, USER_COL_SOURCE, item.getSource(), String.class);
+        update = addQuotedField(update, USER_COL_CLIENT, item.getClient(), String.class);
+        update = addQuotedField(update, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
+        update = addQuotedField(update, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
+        update = databaseDialectHelper.addJsonField(update, USER_COL_FACTORS, item.getFactors());
+        update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
 
-        return monoToSingle(updateAction.as(trx::transactional))
+        Mono<Integer> action = update.fetch().rowsUpdated();
+
+        action = deleteChildEntities(item.getId()).then(action);
+        action = persistChildEntities(action, item);
+
+        return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
@@ -333,7 +450,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> delete = dbClient.delete().from(JdbcOrganizationUser.class).matching(from(where("id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcOrganizationUser.class).matching(Query.query(where(USER_COL_ID).is(id))).all();
 
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
@@ -342,30 +459,45 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         final List<Address> addresses = item.getAddresses();
         if (addresses != null && !addresses.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(addresses).concatMap(address -> {
-                JdbcOrganizationUser.Address jdbcAddr = mapper.map(address, JdbcOrganizationUser.Address.class);
-                jdbcAddr.setUserId(item.getId());
-                return dbClient.insert().into(JdbcOrganizationUser.Address.class).using(jdbcAddr).fetch().rowsUpdated();
+                DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_ADDRESS_STATEMENT).bind(FK_USER_ID, item.getId());
+                insert = address.getType() != null ? insert.bind(ADDR_COL_TYPE, address.getType()) : insert.bindNull(ADDR_COL_TYPE, String.class);
+                insert = address.getFormatted() != null ? insert.bind(ADDR_COL_FORMATTED, address.getFormatted()) : insert.bindNull(ADDR_COL_FORMATTED, String.class);
+                insert = address.getStreetAddress() != null ? insert.bind(ADDR_COL_STREET_ADDRESS, address.getStreetAddress()) : insert.bindNull(ADDR_COL_STREET_ADDRESS, String.class);
+                insert = address.getLocality() != null ? insert.bind(ADDR_COL_LOCALITY, address.getLocality()) : insert.bindNull(ADDR_COL_LOCALITY, String.class);
+                insert = address.getRegion() != null ? insert.bind(ADDR_COL_REGION, address.getRegion()) : insert.bindNull(ADDR_COL_REGION, String.class);
+                insert = address.getPostalCode() != null ? insert.bind(ADDR_COL_POSTAL_CODE, address.getPostalCode()) : insert.bindNull(ADDR_COL_POSTAL_CODE, String.class);
+                insert = address.getCountry() != null ? insert.bind(ADDR_COL_COUNTRY, address.getCountry()) : insert.bindNull(ADDR_COL_COUNTRY, String.class);
+                insert = address.isPrimary() != null ? insert.bind(ADDR_COL_PRIMARY, address.isPrimary()) : insert.bindNull(ADDR_COL_PRIMARY, Boolean.class);
+                return insert.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }
 
-        actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), JdbcOrganizationUser.Role.class);
-        actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), JdbcOrganizationUser.DynamicRole.class);
+        actionFlow = addJdbcRoles(actionFlow, item, item.getRoles(), "organization_user_roles");
+        actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "organization_dynamic_user_roles");
 
         final List<String> entitlements = item.getEntitlements();
         if (entitlements != null && !entitlements.isEmpty()) {
-            actionFlow = actionFlow.then(Flux.fromIterable(entitlements).concatMap(entitlement -> {
-                JdbcOrganizationUser.Entitlements jdbcEntitlement = new JdbcOrganizationUser.Entitlements();
-                jdbcEntitlement.setUserId(item.getId());
-                jdbcEntitlement.setEntitlement(entitlement);
-                return dbClient.insert().into(JdbcOrganizationUser.Entitlements.class).using(jdbcEntitlement).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            actionFlow = actionFlow.then(Flux.fromIterable(entitlements).concatMap(entitlement ->
+                            template.getDatabaseClient().sql("INSERT INTO organization_user_entitlements(user_id, entitlement) VALUES(:user, :entitlement)")
+                                    .bind("user", item.getId())
+                                    .bind("entitlement", entitlement)
+                                    .fetch().rowsUpdated())
+                    .reduce(Integer::sum));
         }
 
         Optional<Mono<Integer>> attributes = concat(concat(concat(convertAttributes(item, item.getEmails(), ATTRIBUTE_USER_FIELD_EMAIL),
                                 convertAttributes(item, item.getPhoneNumbers(), ATTRIBUTE_USER_FIELD_PHONE)),
                         convertAttributes(item, item.getIms(), ATTRIBUTE_USER_FIELD_IM)),
                 convertAttributes(item, item.getPhotos(), ATTRIBUTE_USER_FIELD_PHOTO))
-                .map(jdbcAttr -> dbClient.insert().into(JdbcOrganizationUser.Attribute.class).using(jdbcAttr).fetch().rowsUpdated())
+                .map(jdbcAttr -> {
+                    DatabaseClient.GenericExecuteSpec insert = template.getDatabaseClient().sql(INSERT_ATTRIBUTES_STATEMENT)
+                            .bind(FK_USER_ID, item.getId())
+                            .bind(ATTR_COL_USER_FIELD, jdbcAttr.getUserField());
+                    insert = jdbcAttr.getValue() != null ? insert.bind(ATTR_COL_VALUE, jdbcAttr.getValue()) : insert.bindNull(ATTR_COL_VALUE, String.class);
+                    insert = jdbcAttr.getType() != null ? insert.bind(ATTR_COL_TYPE, jdbcAttr.getType()) : insert.bindNull(ATTR_COL_TYPE, String.class);
+                    insert = jdbcAttr.getPrimary() != null ? insert.bind(ATTR_COL_PRIMARY, jdbcAttr.getPrimary()) : insert.bindNull(ATTR_COL_PRIMARY, Boolean.class);
+                    return insert.fetch().rowsUpdated();
+                })
                 .reduce(Mono::then);
         if (attributes.isPresent()) {
             actionFlow = actionFlow.then(attributes.get());
@@ -375,14 +507,14 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     private <T extends JdbcOrganizationUser.AbstractRole> Mono<Integer> addJdbcRoles(
-            Mono<Integer> actionFlow, User item, List<String> roles, Class<T> clazz) {
+            Mono<Integer> actionFlow, User item, List<String> roles, String roleTable) {
         if (roles != null && !roles.isEmpty()) {
             return actionFlow.then(Flux.fromIterable(roles).concatMap(role -> {
                 try {
-                    T jdbcRole = clazz.getConstructor().newInstance();
-                    jdbcRole.setUserId(item.getId());
-                    jdbcRole.setRole(role);
-                    return dbClient.insert().into(clazz).using(jdbcRole).fetch().rowsUpdated();
+                    return template.getDatabaseClient().sql("INSERT INTO " + roleTable + "(user_id, role) VALUES(:user, :role)")
+                            .bind("user", item.getId())
+                            .bind("role", role)
+                            .fetch().rowsUpdated();
                 } catch (Exception e) {
                     LOGGER.error("An unexpected error has occurred", e);
                     return Mono.just(0);
@@ -405,11 +537,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     private Mono<Integer> deleteChildEntities(String userId) {
-        Mono<Integer> deleteRoles = dbClient.delete().from(JdbcOrganizationUser.Role.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        Mono<Integer> deleteRolesDynamicRoles = dbClient.delete().from(JdbcOrganizationUser.DynamicRole.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        Mono<Integer> deleteAddresses = dbClient.delete().from(JdbcOrganizationUser.Address.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        Mono<Integer> deleteAttributes = dbClient.delete().from(JdbcOrganizationUser.Attribute.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
-        Mono<Integer> deleteEntitlements = dbClient.delete().from(JdbcOrganizationUser.Entitlements.class).matching(from(where("user_id").is(userId))).fetch().rowsUpdated();
+        Mono<Integer> deleteRoles = template.delete(JdbcOrganizationUser.Role.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+        Mono<Integer> deleteRolesDynamicRoles = template.delete(JdbcOrganizationUser.DynamicRole.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+        Mono<Integer> deleteAddresses = template.delete(JdbcOrganizationUser.Address.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+        Mono<Integer> deleteAttributes = template.delete(JdbcOrganizationUser.Attribute.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
+        Mono<Integer> deleteEntitlements = template.delete(JdbcOrganizationUser.Entitlements.class).matching(Query.query(where(FK_USER_ID).is(userId))).all();
         return deleteRoles.then(deleteRolesDynamicRoles).then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
     }
 

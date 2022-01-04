@@ -20,7 +20,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAlertTrigger;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganization;
 import io.gravitee.am.repository.jdbc.management.api.spring.alert.SpringAlertTriggerAlertNotifierRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.alert.SpringAlertTriggerRepository;
 import io.gravitee.am.repository.management.api.AlertTriggerRepository;
@@ -30,7 +29,8 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -58,6 +57,10 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
 
     @Autowired
     private SpringAlertTriggerAlertNotifierRepository alertTriggerAlertNotifierRepository;
+
+    public static final String ALERT_TRIGGER_ID = "alert_trigger_id";
+    public static final String ALERT_NOTIFIER_ID = "alert_notifier_id";
+    private final static String INSERT_ALERT_NOTIFIER_STMT = "INSERT INTO alert_triggers_alert_notifiers(" + ALERT_TRIGGER_ID + ", " + ALERT_NOTIFIER_ID + ") VALUES (:"+ALERT_TRIGGER_ID+", :"+ALERT_NOTIFIER_ID+")";
 
     protected AlertTrigger toEntity(JdbcAlertTrigger alertTrigger) {
         AlertTrigger mapped = mapper.map(alertTrigger, AlertTrigger.class);
@@ -95,9 +98,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         LOGGER.debug("create alert trigger with id {}", alertTrigger.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Void> insert = dbClient.insert()
-                .into(JdbcAlertTrigger.class)
-                .using(toJdbcAlertTrigger(alertTrigger))
+        Mono<Void> insert = template.insert(toJdbcAlertTrigger(alertTrigger))
                 .then();
 
         final Mono<Void> storeAlertNotifiers = storeAlertNotifiers(alertTrigger, false);
@@ -113,10 +114,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         LOGGER.debug("update alert trigger with id {}", alertTrigger.getId());
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        Mono<Void> update = dbClient.update()
-                .table(JdbcAlertTrigger.class)
-                .using(toJdbcAlertTrigger(alertTrigger))
-                .matching(from(where("id").is(alertTrigger.getId()))).then();
+        Mono<Void> update = template.update(toJdbcAlertTrigger(alertTrigger)).then();
 
         final Mono<Void> storeAlertNotifiers = storeAlertNotifiers(alertTrigger, true);
 
@@ -158,9 +156,9 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
 
         if (criteria.getAlertNotifierIds().isPresent() && !criteria.getAlertNotifierIds().get().isEmpty()) {
             // Add join when alert notifier ids are provided.
-            queryBuilder.append("INNER JOIN alert_triggers_alert_notifiers n ON t.id = n.alert_trigger_id ");
+            queryBuilder.append("INNER JOIN alert_triggers_alert_notifiers n ON t.id = n." + ALERT_TRIGGER_ID + " ");
 
-            queryCriteria.add("n.alert_notifier_id IN(:alertNotifierIds)");
+            queryCriteria.add("n." + ALERT_NOTIFIER_ID + " IN(:alertNotifierIds)");
             params.put("alertNotifierIds", criteria.getAlertNotifierIds().get());
         }
 
@@ -176,15 +174,14 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         params.put("reference_id", referenceId);
         params.put("reference_type", referenceType.name());
 
-        DatabaseClient.GenericExecuteSpec execute = dbClient.execute(queryBuilder.toString());
+        org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec execute = template.getDatabaseClient().sql(queryBuilder.toString());
 
         for (Map.Entry<String, Object> entry : params.entrySet()) {
             execute = execute.bind(entry.getKey(), entry.getValue());
         }
 
         return fluxToFlowable(execute
-                .as(String.class)
-                .fetch().all())
+                .map(x -> x.get(0, String.class)).all())
                 .flatMapMaybe(this::findById)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AlertTrigger with referenceId {}, referenceType {} and criteria {}",
                         referenceId, referenceType, criteria, error));
@@ -207,16 +204,21 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
                         dbAlertNotifier.setAlertTriggerId(alertTrigger.getId());
                         return dbAlertNotifier;
                     })
-                    .concatMap(dbAlertNotifier -> dbClient.insert().into(JdbcAlertTrigger.AlertNotifier.class).using(dbAlertNotifier).then()))
+                    .concatMap(dbAlertNotifier -> {
+                        final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
+                                .sql(INSERT_ALERT_NOTIFIER_STMT)
+                                .bind(ALERT_TRIGGER_ID, dbAlertNotifier.getAlertTriggerId())
+                                .bind(ALERT_NOTIFIER_ID, dbAlertNotifier.getAlertNotifierId());
+                        return sql.then();
+                    }))
                     .ignoreElements();
         }
 
         return Mono.empty();
     }
 
-
     private Mono<Void> deleteAlertNotifiers(String alertTriggerId) {
-        return dbClient.delete().from(JdbcAlertTrigger.AlertNotifier.class).matching(from(where("alert_trigger_id").is(alertTriggerId))).then();
+        return template.delete(Query.query(where(ALERT_TRIGGER_ID).is(alertTriggerId)),JdbcAlertTrigger.AlertNotifier.class).then();
     }
 
 }

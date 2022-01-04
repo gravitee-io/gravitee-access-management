@@ -28,24 +28,23 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.reactivestreams.Publisher;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -53,7 +52,34 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRepository {
+public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_NAME = "name";
+    public static final String COL_SYSTEM = "system";
+    public static final String COL_DEFAULT_ROLE = "default_role";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_REFERENCE_ID = "reference_id";
+    public static final String COL_REFERENCE_TYPE = "reference_type";
+    public static final String COL_ASSIGNABLE_TYPE = "assignable_type";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_PERMISSION_ACLS = "permission_acls";
+
+    private static final List<String> columns = List.of(COL_ID,
+            COL_NAME,
+            COL_SYSTEM,
+            COL_DEFAULT_ROLE,
+            COL_DESCRIPTION,
+            COL_REFERENCE_ID,
+            COL_REFERENCE_TYPE,
+            COL_ASSIGNABLE_TYPE,
+            COL_CREATED_AT,
+            COL_UPDATED_AT,
+            COL_PERMISSION_ACLS);
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     private SpringRoleRepository roleRepository;
@@ -70,6 +96,12 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     }
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("roles", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("roles", columns, List.of(COL_ID));
+    }
+
+    @Override
     public Flowable<Role> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return roleRepository.findByReference(referenceType.name(), referenceId)
@@ -80,13 +112,11 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
     @Override
     public Single<Page<Role>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         LOGGER.debug("findAll({}, {}, {}, {})", referenceType, referenceId, page, size);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcRole.class)
-                .matching(from(where("reference_id").is(referenceId)
-                        .and(where("reference_type").is(referenceType.name()))))
-                .orderBy(Sort.Order.asc("name"))
-                .page(PageRequest.of(page, size))
-                .as(JdbcRole.class).all())
+        return fluxToFlowable(template.select(Query
+                        .query(where(COL_REFERENCE_ID).is(referenceId)
+                        .and(where(COL_REFERENCE_TYPE).is(referenceType.name())))
+                        .sort(Sort.by(COL_NAME).ascending())
+                        .with(PageRequest.of(page, size)), JdbcRole.class))
                 .map(this::toEntity)
                 .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
@@ -104,21 +134,20 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         String search = this.databaseDialectHelper.buildSearchRoleQuery(wildcardSearch, page, size);
         String count = this.databaseDialectHelper.buildCountRoleQuery(wildcardSearch);
 
-        return fluxToFlowable(dbClient.execute(search)
+        return fluxToFlowable(template.getDatabaseClient().sql(search)
                 .bind("value", wildcardSearch ? wildcardValue : query)
                 .bind("refId", referenceId)
                 .bind("refType", referenceType.name())
-                .as(JdbcRole.class)
-                .fetch().all())
+                .map(row -> rowMapper.read(JdbcRole.class, row)).all())
                 .map(this::toEntity)
                 .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
-                .flatMap(data -> monoToSingle(dbClient.execute(count)
+                .flatMap(data -> monoToSingle(template.getDatabaseClient().sql(count)
                         .bind("value", wildcardSearch ? wildcardValue : query)
                         .bind("refId", referenceId)
                         .bind("refType", referenceType.name())
-                        .as(Long.class)
-                        .fetch().first())
+                        .map(row -> row.get(0, Long.class))
+                        .first())
                         .map(total -> new Page<Role>(data, page, total)));
     }
 
@@ -169,31 +198,28 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Create Role with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("roles");
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"name", item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"system", item.isSystem(), String.class);
-        insertSpec = addQuotedField(insertSpec,"default_role", item.isDefaultRole(), String.class);
-        insertSpec = addQuotedField(insertSpec,"description", item.getDescription(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_id", item.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"assignable_type", item.getAssignableType() == null ? null : item.getAssignableType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "permission_acls", item.getPermissionAcls());
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
+
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_SYSTEM, item.isSystem(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DEFAULT_ROLE, item.isDefaultRole(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DESCRIPTION, item.getDescription(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_TYPE, item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_ASSIGNABLE_TYPE, item.getAssignableType() == null ? null : item.getAssignableType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PERMISSION_ACLS, item.getPermissionAcls());
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
-            action = action.then(Flux.fromIterable(resourceScopes).concatMap(scope -> {
-                JdbcRole.OAuthScope rScope = new JdbcRole.OAuthScope();
-                rScope.setScope(scope);
-                rScope.setRoleId(item.getId());
-                return dbClient.insert().into(JdbcRole.OAuthScope.class).using(rScope).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item)
+            ).reduce(Integer::sum));
         }
 
         return monoToSingle(action.as(trx::transactional))
@@ -205,38 +231,41 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Update Role with id {}", item.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = dbClient.delete().from(JdbcRole.OAuthScope.class)
-                .matching(from(where("role_id").is(item.getId()))).fetch().rowsUpdated();
+        Mono<Void> deleteScopes = template.delete(JdbcRole.OAuthScope.class)
+                .matching(Query.query(where("role_id").is(item.getId()))).all().then();
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("roles");
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"name", item.getName(), String.class);
-        updateFields = addQuotedField(updateFields,"system", item.isSystem(), String.class);
-        updateFields = addQuotedField(updateFields,"default_role", item.isDefaultRole(), String.class);
-        updateFields = addQuotedField(updateFields,"description", item.getDescription(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_id", item.getReferenceId(), String.class);
-        updateFields = addQuotedField(updateFields,"reference_type", item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"assignable_type", item.getAssignableType() == null ? null : item.getAssignableType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "permission_acls", item.getPermissionAcls());
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_NAME, item.getName(), String.class);
+        update = addQuotedField(update, COL_SYSTEM, item.isSystem(), String.class);
+        update = addQuotedField(update, COL_DEFAULT_ROLE, item.isDefaultRole(), String.class);
+        update = addQuotedField(update, COL_DESCRIPTION, item.getDescription(), String.class);
+        update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);
+        update = addQuotedField(update, COL_REFERENCE_TYPE, item.getReferenceType() == null ? null : item.getReferenceType().name(), String.class);
+        update = addQuotedField(update, COL_ASSIGNABLE_TYPE, item.getAssignableType() == null ? null : item.getAssignableType().name(), String.class);
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = databaseDialectHelper.addJsonField(update, COL_PERMISSION_ACLS, item.getPermissionAcls());
+
+        Mono<Integer> action = update.fetch().rowsUpdated();
 
         final List<String> resourceScopes = item.getOauthScopes();
         if (resourceScopes != null && !resourceScopes.isEmpty()) {
-            action = action.then(Flux.fromIterable(resourceScopes).concatMap(scope -> {
-                JdbcRole.OAuthScope rScope = new JdbcRole.OAuthScope();
-                rScope.setScope(scope);
-                rScope.setRoleId(item.getId());
-                return dbClient.insert().into(JdbcRole.OAuthScope.class).using(rScope).fetch().rowsUpdated();
-            }).reduce(Integer::sum));
+            action = action.then(Flux.fromIterable(resourceScopes).concatMap(insertScopr(item))
+                    .reduce(Integer::sum));
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
                 .flatMap((i) -> this.findById(item.getId()).toSingle());
+    }
+
+    private Function<String, Publisher<? extends Integer>> insertScopr(Role item) {
+        return scope ->
+                template.getDatabaseClient().sql("INSERT INTO role_oauth_scopes(role_id, scope) VALUES(:role_id, :scope)")
+                        .bind("role_id", item.getId())
+                        .bind("scope", scope)
+                        .fetch().rowsUpdated();
     }
 
     @Override
@@ -244,11 +273,11 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("Delete Role with id {}", id);
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Integer> deleteScopes = dbClient.delete().from(JdbcRole.OAuthScope.class)
-                .matching(from(where("role_id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> deleteScopes = template.delete(JdbcRole.OAuthScope.class)
+                .matching(Query.query(where("role_id").is(id))).all();
 
-        Mono<Integer> delete = dbClient.delete().from(JdbcRole.class)
-                .matching(from(where("id").is(id))).fetch().rowsUpdated();
+        Mono<Integer> delete = template.delete(JdbcRole.class)
+                .matching(Query.query(where(COL_ID).is(id))).all();
 
         return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));
     }

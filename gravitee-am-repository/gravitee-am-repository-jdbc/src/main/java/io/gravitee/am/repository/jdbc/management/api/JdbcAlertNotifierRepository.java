@@ -29,11 +29,12 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -66,22 +67,14 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
         alertNotifier.setId(alertNotifier.getId() == null ? RandomString.generate() : alertNotifier.getId());
         LOGGER.debug("create alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(dbClient.insert()
-                .into(JdbcAlertNotifier.class)
-                .using(toJdbcAlertNotifier(alertNotifier))
-                .then()
-                .then(maybeToMono(findById(alertNotifier.getId()))));
+        return monoToSingle(template.insert(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
     }
 
     @Override
     public Single<AlertNotifier> update(AlertNotifier alertNotifier) {
         LOGGER.debug("update alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(dbClient.update()
-                .table(JdbcAlertNotifier.class)
-                .using(toJdbcAlertNotifier(alertNotifier))
-                .matching(from(where("id").is(alertNotifier.getId()))).then()
-                .then(maybeToMono(findById(alertNotifier.getId()))));
+        return monoToSingle(template.update(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
     }
 
     @Override
@@ -114,13 +107,6 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? idsClause.or(enableClause) : idsClause.and(enableClause)));
 
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcAlertNotifier.class)
-                .matching(from(whereClause))
-                .as(JdbcAlertNotifier.class)
-                .all())
-                .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve AlertNotifier with referenceId {}, referenceType {} and criteria {}",
-                        referenceId, referenceType, criteria, error));
+        return fluxToFlowable(template.select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity);
     }
 }

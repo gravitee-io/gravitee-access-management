@@ -17,7 +17,6 @@ package io.gravitee.am.repository.jdbc.oauth2.oidc;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcLoginAttempt;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.model.JdbcRequestObject;
 import io.gravitee.am.repository.jdbc.oauth2.oidc.spring.SpringRequestObjectRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
@@ -26,6 +25,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
@@ -68,14 +68,7 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
     public Single<RequestObject> create(RequestObject requestObject) {
         requestObject.setId(requestObject.getId() == null ? RandomString.generate() : requestObject.getId());
         LOGGER.debug("Create requestObject with id {}", requestObject.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcRequestObject.class)
-                .using(toJdbcEntity(requestObject))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> requestObjectRepository.findById(requestObject.getId()).map(this::toEntity).toSingle())
-                .doOnError((error) -> LOGGER.error("Unable to create requestObject with id {}", requestObject.getId(), error));
+        return monoToSingle(template.insert(toJdbcEntity(requestObject))).map(this::toEntity);
     }
 
     @Override
@@ -88,6 +81,6 @@ public class JdbcRequestObjectRepository extends AbstractJdbcRepository implemen
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcRequestObject.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge RequestObjects", error));
+        return monoToCompletable(template.delete(JdbcRequestObject.class).matching(Query.query(where("expire_at").lessThan(now))).all()).doOnError(error -> LOGGER.error("Unable to purge RequestObjects", error));
     }
 }

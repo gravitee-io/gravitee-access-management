@@ -15,22 +15,20 @@
  */
 package io.gravitee.am.reporter.jdbc.dialect;
 
-import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
+import io.r2dbc.spi.Row;
 import io.reactivex.Single;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
@@ -56,8 +54,8 @@ public class MySQLDialect extends AbstractDialect {
             String beginSlot = dateTimeFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(slot), ZoneId.of(ZoneOffset.UTC.getId())));
             String endSlot = dateTimeFormatter.format(LocalDateTime.ofInstant(Instant.ofEpochMilli(slot + criteria.interval()), ZoneId.of(ZoneOffset.UTC.getId())));
             String query =
-                    " SELECT " + slot + " as slot, o.status, COUNT(o.status) as attempts " + queryBuilder.toString()
-                            + whereClauseBuilder.toString() +
+                    " SELECT " + slot + " as slot, o.status, COUNT(o.status) as attempts " + queryBuilder
+                            + whereClauseBuilder +
                             " AND '" + beginSlot + "' <= a.timestamp and '" + endSlot + "' >= a.timestamp " +
                             " GROUP BY o.status ORDER BY o.status ";
 
@@ -69,11 +67,11 @@ public class MySQLDialect extends AbstractDialect {
                 } else if (value instanceof LocalDateTime) {
                     query = query.replaceAll(":" + bind.getKey(), "'" + dateTimeFormatter.format((LocalDateTime) value) + "'");
                 } else {
-                    query = query.replaceAll(":" + bind.getKey(), "'" + String.valueOf(value) + "'");
+                    query = query.replaceAll(":" + bind.getKey(), "'" + value + "'");
                 }
             }
 
-            return dbClient.execute(query).fetch().all();
+            return dbClient.sql(query).map(this::toHistogramSlotValue).all();
         })).toList();
     }
 

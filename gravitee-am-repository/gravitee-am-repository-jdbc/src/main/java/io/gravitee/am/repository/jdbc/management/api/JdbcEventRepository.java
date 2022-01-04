@@ -25,16 +25,18 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
@@ -47,7 +49,24 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcEventRepository extends AbstractJdbcRepository implements EventRepository {
+public class JdbcEventRepository extends AbstractJdbcRepository implements EventRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_PAYLOAD = "payload";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_TYPE,
+            COL_PAYLOAD,
+            COL_CREATED_AT,
+            COL_UPDATED_AT
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     private SpringEventRepository eventRepository;
@@ -58,6 +77,12 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
 
     protected JdbcEvent toJdbcEntity(Event entity) {
         return mapper.map(entity, JdbcEvent.class);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("events", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("events", columns, List.of(COL_ID));
     }
 
     @Override
@@ -80,11 +105,10 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create event with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("events");
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
         insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec,"type", item.getType() == null ? null : item.getType().name(), String.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, "payload", item.getPayload());
         insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
@@ -98,15 +122,14 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
     public Single<Event> update(Event item) {
         LOGGER.debug("update event with id {}", item.getId());
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("events");
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType(), String.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "payload", item.getPayload());
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
+        update = addQuotedField(update,"id", item.getId(), String.class);
+        update = addQuotedField(update,"type", item.getType() == null ? null : item.getType().name(), String.class);
+        update = databaseDialectHelper.addJsonField(update, "payload", item.getPayload());
+        update = addQuotedField(update,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
+        Mono<Integer> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 

@@ -20,7 +20,6 @@ import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -38,7 +37,7 @@ public class JdbcPermissionTicket {
     @Column("client_id")
     private String clientId;
     @Column("created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
     @Column("expire_at")
     private LocalDateTime expireAt;
 
@@ -82,11 +81,11 @@ public class JdbcPermissionTicket {
         this.clientId = clientId;
     }
 
-    public Date getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(Date createdAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

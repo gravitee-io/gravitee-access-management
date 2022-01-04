@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEnvironment;
 import io.gravitee.am.repository.jdbc.management.api.spring.environment.SpringEnvironmentDomainRestrictionRepository;
@@ -28,6 +29,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -120,9 +122,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         LOGGER.debug("create Environment with id {}", environment.getId());
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
-        Mono<Void> insert = dbClient.insert()
-                .into(JdbcEnvironment.class)
-                .using(toJdbcEnvironment(environment))
+        Mono<Void> insert = template.insert(toJdbcEnvironment(environment))
                 .then();
 
         final Mono<Void> storeDomainRestrictions = storeDomainRestrictions(environment, false);
@@ -141,10 +141,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
         // prepare the update for environment table
-        Mono<Void> update = dbClient.update()
-                .table(JdbcEnvironment.class)
-                .using(toJdbcEnvironment(environment))
-                .matching(from(where("id").is(environment.getId()))).then();
+        Mono<Void> update = template.update(toJdbcEnvironment(environment)).then();
 
         return monoToSingle(update
                 .then(storeDomainRestrictions(environment, true))
@@ -159,7 +156,7 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Void> deleteDomainRestrictions = deleteDomainRestrictions(environmentId);
         Mono<Void> deleteHrids = deleteHrids(environmentId);
-        Mono<Void> delete = dbClient.delete().from(JdbcEnvironment.class).matching(from(where("id").is(environmentId))).then();
+        Mono<Void> delete = template.delete(JdbcEnvironment.class).matching(Query.query(where("id").is(environmentId))).all().then();
 
         return monoToCompletable(delete
                 .then(deleteDomainRestrictions)
@@ -197,13 +194,17 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         if (domainRestrictions != null && !domainRestrictions.isEmpty()) {
             // concat flows to create domainRestrictions
             return delete.thenMany(Flux.fromIterable(domainRestrictions)
-                    .map(domainRestriction -> {
-                        JdbcEnvironment.DomainRestriction dbDomainRestriction = new JdbcEnvironment.DomainRestriction();
-                        dbDomainRestriction.setDomainRestriction(domainRestriction);
-                        dbDomainRestriction.setEnvironmentId(environment.getId());
-                        return dbDomainRestriction;
-                    })
-                    .concatMap(dbDomainRestriction -> dbClient.insert().into(JdbcEnvironment.DomainRestriction.class).using(dbDomainRestriction).then()))
+                            .map(domainRestriction -> {
+                                JdbcEnvironment.DomainRestriction dbDomainRestriction = new JdbcEnvironment.DomainRestriction();
+                                dbDomainRestriction.setDomainRestriction(domainRestriction);
+                                dbDomainRestriction.setEnvironmentId(environment.getId());
+                                return dbDomainRestriction;
+                            })
+                            .concatMap(dbDomainRestriction -> template.getDatabaseClient()
+                                    .sql("INSERT INTO environment_domain_restrictions(environment_id, domain_restriction) VALUES (:environment_id, :domain_restriction)")
+                                    .bind("environment_id", dbDomainRestriction.getEnvironmentId())
+                                    .bind("domain_restriction", dbDomainRestriction.getDomainRestriction())
+                                    .fetch().rowsUpdated()).then())
                     .ignoreElements();
         }
 
@@ -229,7 +230,14 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 dbHrids.add(hrid);
             }
             return delete.thenMany(Flux.fromIterable(dbHrids)).
-                    concatMap(hrid -> dbClient.insert().into(JdbcEnvironment.Hrid.class).using(hrid).then())
+                    concatMap(hrid ->
+                            template.getDatabaseClient()
+                                    .sql("INSERT INTO environment_hrids(environment_id, hrid, pos) VALUES (:environment_id, :hrid, :pos)")
+                                    .bind("environment_id", hrid.getEnvironmentId())
+                                    .bind("hrid", hrid.getHrid())
+                                    .bind("pos", hrid.getPos())
+                                    .fetch().rowsUpdated().then()
+                    )
                     .ignoreElements();
         }
 
@@ -237,10 +245,10 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
     }
 
     private Mono<Void> deleteDomainRestrictions(String environmentId) {
-        return dbClient.delete().from(JdbcEnvironment.DomainRestriction.class).matching(from(where("environment_id").is(environmentId))).then();
+        return template.delete(JdbcEnvironment.DomainRestriction.class).matching(Query.query(where("environment_id").is(environmentId))).all().then();
     }
 
     private Mono<Void> deleteHrids(String environmentId) {
-        return dbClient.delete().from(JdbcEnvironment.Hrid.class).matching(from(where("environment_id").is(environmentId))).then();
+        return template.delete(JdbcEnvironment.Hrid.class).matching(Query.query(where("environment_id").is(environmentId))).all().then();
     }
 }

@@ -23,9 +23,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

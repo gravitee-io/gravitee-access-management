@@ -24,26 +24,38 @@ import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
-public class JdbcInstallationRepository extends AbstractJdbcRepository implements InstallationRepository {
+public class JdbcInstallationRepository extends AbstractJdbcRepository implements InstallationRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_ADDITIONAL_INFORMATION = "additional_information";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_CREATED_AT,
+            COL_UPDATED_AT,
+            COL_ADDITIONAL_INFORMATION
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     private SpringInstallationRepository installationRepository;
@@ -55,6 +67,17 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
             mapped.setAdditionalInformation(new HashMap<>());
         }
         return mapped;
+    }
+
+    protected JdbcInstallation toJdbcEntity(Installation installation) {
+        JdbcInstallation mapped = mapper.map(installation, JdbcInstallation.class);
+        return mapped;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("installations", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("installations", columns, List.of(COL_ID));
     }
 
     @Override
@@ -76,13 +99,12 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
         installation.setId(installation.getId() == null ? RandomString.generate() : installation.getId());
         LOGGER.debug("create installation with id {}", installation.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("installations");
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        insertSpec = addQuotedField(insertSpec, "id", installation.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec, "created_at", dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec, "updated_at", dateConverter.convertTo(installation.getUpdatedAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "additional_information", installation.getAdditionalInformation());
+        insertSpec = addQuotedField(insertSpec, COL_ID, installation.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(installation.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ADDITIONAL_INFORMATION, installation.getAdditionalInformation());
 
         return monoToCompletable(insertSpec.then())
                 .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()));
@@ -92,16 +114,14 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
     public Single<Installation> update(Installation installation) {
         LOGGER.debug("update installation with id {}", installation.getId());
 
-        DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("installations");
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        updateFields = addQuotedField(updateFields, "id", installation.getId(), String.class);
-        updateFields = addQuotedField(updateFields, "created_at", dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields, "updated_at", dateConverter.convertTo(installation.getUpdatedAt(), null), LocalDateTime.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "additional_information", installation.getAdditionalInformation());
+        update = addQuotedField(update, COL_ID, installation.getId(), String.class);
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(installation.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(installation.getUpdatedAt(), null), LocalDateTime.class);
+        update = databaseDialectHelper.addJsonField(update, COL_ADDITIONAL_INFORMATION, installation.getAdditionalInformation());
 
-        return monoToCompletable(updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(installation.getId()))).then())
+        return monoToCompletable(update.fetch().rowsUpdated())
                 .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()));
     }
 

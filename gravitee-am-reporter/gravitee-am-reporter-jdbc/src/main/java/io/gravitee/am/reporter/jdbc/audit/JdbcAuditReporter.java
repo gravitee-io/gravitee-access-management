@@ -39,7 +39,10 @@ import io.gravitee.am.reporter.jdbc.utils.JSONMapper;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.reporter.api.Reportable;
 import io.r2dbc.pool.ConnectionPool;
+import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import io.r2dbc.spi.Result;
+import io.r2dbc.spi.Statement;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -51,8 +54,10 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -67,11 +72,11 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
-import static org.springframework.data.relational.core.query.Criteria.from;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
@@ -84,8 +89,62 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAuditReporter.class);
     public static final String REPORTER_AUTO_PROVISIONING = "management.jdbc.reporter.provisioning";
+    public static final String AUDIT_FIELD_ACTOR = "actor";
+    public static final String AUDIT_FIELD_TARGET = "target";
 
     private final Pattern pattern = Pattern.compile("___");
+
+    public static final String COL_ID = "id";
+    public static final String COL_TRANSACTION_ID = "transaction_id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_REFERENCE_TYPE = "reference_type";
+    public static final String COL_REFERENCE_ID = "reference_id";
+    public static final String COL_TIMESTAMP = "timestamp";
+    public static final String COL_AUDIT_ID = "audit_id";
+    public static final String COL_AUDIT_FIELD = "audit_field";
+    public static final String COL_ALTERNATIVE_ID = "alternative_id";
+    public static final String COL_DISPLAY_NAME = "display_name";
+    public static final String COL_ATTRIBUTES = "attributes";
+    public static final String COL_STATUS = "status";
+    public static final String COL_MESSAGE = "message";
+    public static final String COL_IP_ADDRESS = "ip_address";
+    public static final String COL_USER_AGENT = "user_agent";
+
+    private static final List<String> auditColumns = List.of(
+            COL_ID,
+            COL_TRANSACTION_ID,
+            COL_TYPE,
+            COL_REFERENCE_TYPE,
+            COL_REFERENCE_ID,
+            COL_TIMESTAMP
+    );
+
+    private static final List<String> entityColumns = List.of(
+            COL_AUDIT_ID,
+            COL_AUDIT_FIELD,
+            COL_ID,
+            COL_ALTERNATIVE_ID,
+            COL_TYPE,
+            COL_DISPLAY_NAME,
+            COL_REFERENCE_TYPE,
+            COL_REFERENCE_ID,
+            COL_ATTRIBUTES
+    );
+
+    private static final List<String> outcomesColumns = List.of(
+            COL_AUDIT_ID,
+            COL_STATUS,
+            COL_MESSAGE
+    );
+
+    private static final List<String> accessPointColumns = List.of(
+            COL_AUDIT_ID,
+            COL_ID,
+            COL_ALTERNATIVE_ID,
+            COL_DISPLAY_NAME,
+            COL_IP_ADDRESS,
+            COL_USER_AGENT
+    );
 
     private String auditsTable;
     private String auditAccessPointsTable;
@@ -96,7 +155,7 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     private Environment environment;
 
     @Autowired
-    private DatabaseClient dbClient;
+    private R2dbcEntityTemplate template;
 
     @Autowired
     private JdbcReporterConfiguration configuration;
@@ -110,15 +169,29 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     @Autowired
     private ConnectionFactory connectionFactory;
 
+    @Autowired
+    protected MappingR2dbcConverter rowMapper;
+
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
 
     private Disposable disposable;
 
     private boolean ready = false;
 
+    private String INSERT_AUDIT_STATEMENT;
+    private String INSERT_ENTITY_STATEMENT;
+    private String INSERT_OUTCOMES_STATEMENT;
+    private String INSERT_ACCESSPOINT_STATEMENT;
+
     @Override
     public boolean canSearch() {
         return true;
+    }
+
+    protected String createInsertStatement(String table, List<String> columns) {
+        return "INSERT INTO " + table + " (" +
+                columns.stream().collect(Collectors.joining(","))
+                + ") VALUES (:" + columns.stream().collect(Collectors.joining(",:")) + ")";
     }
 
     @Override
@@ -131,16 +204,16 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
 
         SearchQuery searchQuery = dialectHelper.buildSearchQuery(referenceType, referenceId, criteria);
 
-        DatabaseClient.GenericExecuteSpec query = dbClient.execute(searchQuery.getQuery() + dialectHelper.buildPagingClause(page, size));
-        DatabaseClient.GenericExecuteSpec count = dbClient.execute(searchQuery.getCount());
+        DatabaseClient.GenericExecuteSpec query = template.getDatabaseClient().sql(searchQuery.getQuery() + dialectHelper.buildPagingClause(page, size));
+        DatabaseClient.GenericExecuteSpec count = template.getDatabaseClient().sql(searchQuery.getCount());
         for (Map.Entry<String, Object> bind : searchQuery.getBindings().entrySet()) {
             query = query.bind(bind.getKey(), bind.getValue());
             count = count.bind(bind.getKey(), bind.getValue());
         }
 
-        Mono<Long> total = count.as(Long.class).fetch().first();
+        Mono<Long> total = count.map(row -> row.get(0, Long.class)).first();
 
-        return fluxToFlowable(query.as(AuditJdbc.class).fetch().all()
+        return fluxToFlowable(query.map(row -> rowMapper.read(AuditJdbc.class, row)).all()
                 .map(this::convert)
                 .concatMap(this::fillWithActor)
                 .concatMap(this::fillWithTarget)
@@ -183,13 +256,13 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             return Single.just(result);
         }
 
-        return dialectHelper.buildAndProcessHistogram(dbClient, referenceType, referenceId, criteria).map(stats -> {
+        return dialectHelper.buildAndProcessHistogram(template.getDatabaseClient(), referenceType, referenceId, criteria).map(stats -> {
             Map<Long, Long> successResult = new TreeMap<>();
             Map<Long, Long> failureResult = new TreeMap<>();
             stats.forEach(slotValue -> {
                 Long timestamp = ((Number) slotValue.get("slot")).longValue();
                 Long attempts = ((Number) slotValue.get("attempts")).longValue();
-                if (((String)slotValue.get("status")).equalsIgnoreCase("success")) {
+                if (((String)slotValue.get(COL_STATUS)).equalsIgnoreCase("success")) {
                     successResult.put(timestamp, attempts);
                 } else {
                     failureResult.put(timestamp, attempts);
@@ -220,12 +293,11 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             LOGGER.debug("Reporter not yet bootstrapped");
             return Single.just(Collections.singletonMap("data", 0l));
         }
-
-        DatabaseClient.GenericExecuteSpec count = dbClient.execute(searchQuery.getCount());
+        DatabaseClient.GenericExecuteSpec count = template.getDatabaseClient().sql(searchQuery.getCount());
         for (Map.Entry<String, Object> bind : searchQuery.getBindings().entrySet()) {
             count = count.bind(bind.getKey(), bind.getValue());
         }
-        return monoToSingle(count.as(Long.class).fetch().first().switchIfEmpty(Mono.just(0l)))
+        return monoToSingle(count.map(row -> row.get(0, Long.class)).first().switchIfEmpty(Mono.just(0l)))
                 .map(data -> Collections.singletonMap("data", data));
     }
 
@@ -241,11 +313,14 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             LOGGER.debug("Reporter not yet bootstrapped");
             return Single.just(Collections.emptyMap());
         }
-        DatabaseClient.GenericExecuteSpec groupBy = dbClient.execute(searchQuery.getQuery());
+        DatabaseClient.GenericExecuteSpec groupBy = template.getDatabaseClient().sql(searchQuery.getQuery());
         for (Map.Entry<String, Object> bind : searchQuery.getBindings().entrySet()) {
             groupBy = groupBy.bind(bind.getKey(), bind.getValue());
         }
-        return monoToSingle(groupBy.fetch().all().collectMap((f) -> f.get(convertFieldName(criteria)), (f) -> f.get("counter")));
+        return monoToSingle(groupBy.map(row -> Map.of(row.get(convertFieldName(criteria)), row.get("counter"))).all().reduce(new HashMap<>(), (acc, value) -> {
+            acc.putAll(value);
+            return acc;
+        }));
     }
 
     private String convertFieldName(AuditReportableCriteria criteria) {
@@ -264,12 +339,10 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
             return Maybe.empty();
         }
 
-        Mono<Audit> auditMono = dbClient.select().from(auditsTable).matching(
-                from(where("reference_id").is(referenceId)
-                        .and(where("reference_type").is(referenceType.name()))
-                        .and(where("id").is(id))))
-                .as(AuditJdbc.class)
-                .fetch()
+        Mono<Audit> auditMono = template.select(AuditJdbc.class).from(this.auditsTable).matching(
+                Query.query(where(COL_REFERENCE_ID).is(referenceId)
+                        .and(where(COL_REFERENCE_TYPE).is(referenceType.name()))
+                        .and(where(COL_ID).is(id))))
                 .first()
                 .map(this::convert)
                 .flatMap(this::fillWithActor)
@@ -283,42 +356,34 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     }
 
     private Mono<Audit> fillWithActor(Audit audit) {
-        return dbClient.select().from(auditEntitiesTable).matching(
-                from(where("audit_id").is(audit.getId())
-                        .and(where("audit_field").is("actor"))))
-                .as(AuditEntityJdbc.class)
-                .fetch()
+        return template.select(AuditEntityJdbc.class).from(this.auditEntitiesTable).matching(
+                Query.query(where(COL_AUDIT_ID).is(audit.getId())
+                        .and(where(COL_AUDIT_FIELD).is(AUDIT_FIELD_ACTOR))))
                 .first()
                 .map(entity -> fillWith(audit, entity))
                 .switchIfEmpty(Mono.just(audit));
     }
 
     private Mono<Audit> fillWithTarget(Audit audit) {
-        return dbClient.select().from(auditEntitiesTable).matching(
-                from(where("audit_id").is(audit.getId())
-                        .and(where("audit_field").is("target"))))
-                .as(AuditEntityJdbc.class)
-                .fetch()
+        return template.select(AuditEntityJdbc.class).from(this.auditEntitiesTable).matching(
+                Query.query(where(COL_AUDIT_ID).is(audit.getId())
+                        .and(where(COL_AUDIT_FIELD).is(AUDIT_FIELD_TARGET))))
                 .first()
                 .map(entity -> fillWith(audit, entity))
                 .switchIfEmpty(Mono.just(audit));
     }
 
     private Mono<Audit> fillWithAccessPoint(Audit audit) {
-        return dbClient.select().from(auditAccessPointsTable).matching(
-                from(where("audit_id").is(audit.getId())))
-                .as(AuditAccessPointJdbc.class)
-                .fetch()
+        return template.select(AuditAccessPointJdbc.class).from(this.auditAccessPointsTable).matching(
+                Query.query(where(COL_AUDIT_ID).is(audit.getId())))
                 .first()
                 .map(entity -> fillWith(audit, entity))
                 .switchIfEmpty(Mono.just(audit));
     }
 
     private Mono<Audit> fillWithOutcomes(Audit audit) {
-        return dbClient.select().from(auditOutcomesTable).matching(
-                from(where("audit_id").is(audit.getId())))
-                .as(AuditOutcomeJdbc.class)
-                .fetch()
+        return template.select(AuditOutcomeJdbc.class).from(auditOutcomesTable).matching(
+                Query.query(where(COL_AUDIT_ID).is(audit.getId())))
                 .first()
                 .map(entity -> fillWith(audit, entity))
                 .switchIfEmpty(Mono.just(audit));
@@ -356,7 +421,7 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
         auditEntity.setReferenceId(entity.getReferenceId());
         auditEntity.setReferenceType(entity.getReferenceType() == null ? null : ReferenceType.valueOf(entity.getReferenceType()));
         auditEntity.setAttributes(JSONMapper.toCollectionOfBean(entity.getAttributes(), new TypeReference<Map<String, Object>>() {}));
-        if ("actor".equalsIgnoreCase(entity.getAuditField())) {
+        if (AUDIT_FIELD_ACTOR.equalsIgnoreCase(entity.getAuditField())) {
             audit.setActor(auditEntity);
         } else {
             audit.setTarget(auditEntity);
@@ -392,47 +457,47 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     private Mono insertReport(Audit audit) {
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into(auditsTable);
-        insertSpec = addQuotedField(insertSpec,"id", audit.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"transaction_id", audit.getTransactionId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", audit.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_type", audit.getReferenceType() == null ? null : audit.getReferenceType().name(), String.class);
-        insertSpec = addQuotedField(insertSpec,"reference_id", audit.getReferenceId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"timestamp", LocalDateTime.ofInstant(audit.timestamp(), ZoneId.of(ZoneOffset.UTC.getId())), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_AUDIT_STATEMENT);
+        insertSpec = addQuotedField(insertSpec, COL_ID, audit.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, audit.getTransactionId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TYPE, audit.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_TYPE, audit.getReferenceType() == null ? null : audit.getReferenceType().name(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, audit.getReferenceId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TIMESTAMP, LocalDateTime.ofInstant(audit.timestamp(), ZoneId.of(ZoneOffset.UTC.getId())), LocalDateTime.class);
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
 
         AuditEntity actor = audit.getActor();
         if (actor != null) {
-            insertAction = insertAction.then(prepateInsertEntity(audit, actor, "actor"));
+            insertAction = insertAction.then(prepateInsertEntity(audit, actor, AUDIT_FIELD_ACTOR));
         }
 
         AuditEntity target = audit.getTarget();
         if (target != null) {
-            insertAction = insertAction.then(prepateInsertEntity(audit, target, "target"));
+            insertAction = insertAction.then(prepateInsertEntity(audit, target, AUDIT_FIELD_TARGET));
         }
 
         AuditOutcome outcome = audit.getOutcome();
         if (outcome != null) {
-            DatabaseClient.GenericInsertSpec<Map<String, Object>> insertOutcomeSpec = dbClient.insert().into(auditOutcomesTable);
+            DatabaseClient.GenericExecuteSpec insertOutcomeSpec = template.getDatabaseClient().sql(INSERT_OUTCOMES_STATEMENT);
 
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, "audit_id", audit.getId(), String.class);
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, "status", outcome.getStatus(), String.class);
-            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, "message", outcome.getMessage(), String.class);
+            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_AUDIT_ID, audit.getId(), String.class);
+            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_STATUS, outcome.getStatus(), String.class);
+            insertOutcomeSpec = addQuotedField(insertOutcomeSpec, COL_MESSAGE, outcome.getMessage(), String.class);
 
             insertAction = insertAction.then(insertOutcomeSpec.fetch().rowsUpdated());
         }
 
         AuditAccessPoint accessPoint = audit.getAccessPoint();
         if (accessPoint != null) {
-            DatabaseClient.GenericInsertSpec<Map<String, Object>> insertAccessPointSpec = dbClient.insert().into(auditAccessPointsTable);
+            DatabaseClient.GenericExecuteSpec insertAccessPointSpec = template.getDatabaseClient().sql(INSERT_ACCESSPOINT_STATEMENT);
 
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "audit_id", audit.getId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "id", accessPoint.getId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "alternative_id", accessPoint.getAlternativeId(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "display_name", accessPoint.getDisplayName(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "ip_address", accessPoint.getIpAddress(), String.class);
-            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, "user_agent", accessPoint.getUserAgent(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_AUDIT_ID, audit.getId(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ID, accessPoint.getId(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_ALTERNATIVE_ID, accessPoint.getAlternativeId(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_DISPLAY_NAME, accessPoint.getDisplayName(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_IP_ADDRESS, accessPoint.getIpAddress(), String.class);
+            insertAccessPointSpec = addQuotedField(insertAccessPointSpec, COL_USER_AGENT, accessPoint.getUserAgent(), String.class);
 
             insertAction = insertAction.then(insertAccessPointSpec.fetch().rowsUpdated());
         }
@@ -441,21 +506,21 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
     }
 
     private Mono<Integer> prepateInsertEntity(Audit audit, AuditEntity entity, String field) {
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertEntitySpec = dbClient.insert().into(auditEntitiesTable);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "audit_id", audit.getId(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "audit_field", field, String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "id", entity.getId(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "alternative_id", entity.getAlternativeId(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "type", entity.getType(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "display_name", entity.getDisplayName(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "reference_type", entity.getReferenceType() == null ? null : entity.getReferenceType().name(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "reference_id", entity.getReferenceId(), String.class);
-        insertEntitySpec = addQuotedField(insertEntitySpec, "attributes", JSONMapper.toJson(entity.getAttributes()), String.class);
+        DatabaseClient.GenericExecuteSpec insertEntitySpec = template.getDatabaseClient().sql(INSERT_ENTITY_STATEMENT);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_AUDIT_ID, audit.getId(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_AUDIT_FIELD, field, String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_ID, entity.getId(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_ALTERNATIVE_ID, entity.getAlternativeId(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_TYPE, entity.getType(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_DISPLAY_NAME, entity.getDisplayName(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_REFERENCE_TYPE, entity.getReferenceType() == null ? null : entity.getReferenceType().name(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_REFERENCE_ID, entity.getReferenceId(), String.class);
+        insertEntitySpec = addQuotedField(insertEntitySpec, COL_ATTRIBUTES, JSONMapper.toJson(entity.getAttributes()), String.class);
         return insertEntitySpec.fetch().rowsUpdated();
     }
 
-    protected <T> DatabaseClient.GenericInsertSpec<Map<String, Object>> addQuotedField(DatabaseClient.GenericInsertSpec<Map<String, Object>> spec, String name, Object value, Class<T> type) {
-        return value == null ? spec.nullValue(SqlIdentifier.quoted(name), type) : spec.value(SqlIdentifier.quoted(name), value);
+    protected <T> DatabaseClient.GenericExecuteSpec addQuotedField(DatabaseClient.GenericExecuteSpec spec, String name, Object value, Class<T> type) {
+        return value == null ? spec.bindNull(name, type) : spec.bind(name, value);
     }
 
     @Override
@@ -472,49 +537,60 @@ public class JdbcAuditReporter extends AbstractService implements AuditReporter,
         this.dialectHelper.setAuditOutcomesTable(auditOutcomesTable);
         this.dialectHelper.setAuditAccessPointsTable(auditAccessPointsTable);
 
+        this.INSERT_AUDIT_STATEMENT = createInsertStatement(this.auditsTable, auditColumns);
+        this.INSERT_ENTITY_STATEMENT = createInsertStatement(this.auditEntitiesTable, entityColumns);
+        this.INSERT_OUTCOMES_STATEMENT = createInsertStatement(this.auditOutcomesTable, outcomesColumns);
+        this.INSERT_ACCESSPOINT_STATEMENT = createInsertStatement(this.auditAccessPointsTable, accessPointColumns);
+
         if (environment.getProperty(REPORTER_AUTO_PROVISIONING, Boolean.class, true)) {
             // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
             final String sqlScript = "database/" + configuration.getDriver() + ".schema";
-            try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
 
-                List<String> sqlStatements = reader.lines()
-                        // remove empty line and comment
-                        .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
-                        .map(line -> {
-                            // update table & index names
-                            String finalLine = pattern.matcher(line).replaceAll(tableSuffix);
-                            LOGGER.debug("Statement to execute: {}", finalLine);
-                            return finalLine;
-                        })
-                        .distinct()
-                        .collect(Collectors.toList());
+            Function<Connection, Mono<Integer>> resultFunction = connection -> {
+                Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable));
+                return flowableToFlux(Flowable.fromPublisher(doesTableExist.execute())
+                        .flatMap(Result::getRowsUpdated)
+                        .first(0)
+                        .flatMapPublisher(total -> {
+                            if (total == 0) {
+                                LOGGER.debug("SQL datatable {} doest not exists, initialize all audit tables for the reporter.", auditsTable);
+                                try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
+                                     BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
 
-                LOGGER.debug("Found {} statements to execute", sqlStatements.size());
+                                    List<String> sqlStatements = reader.lines()
+                                            // remove empty line and comment
+                                            .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
+                                            .map(line -> {
+                                                // update table & index names
+                                                String finalLine = pattern.matcher(line).replaceAll(tableSuffix);
+                                                LOGGER.debug("Statement to execute: {}", finalLine);
+                                                return finalLine;
+                                            })
+                                            .distinct()
+                                            .collect(Collectors.toList());
 
-                dbClient.execute(dialectHelper.tableExists(auditsTable))
-                        .as(Integer.class)
-                        .fetch()
-                        .first()
-                        .switchIfEmpty(Mono.just(0))
-                        .flatMap(found -> {
-                            if (found == 0) {
-                                return Flux.fromIterable(sqlStatements)
-                                        .concatMap(statement -> dbClient.execute(statement).then())
-                                        .then();
+                                    LOGGER.debug("Found {} statements to execute", sqlStatements.size());
+                                    return Flowable.fromIterable(sqlStatements)
+                                            .flatMap(statement -> Flowable.fromPublisher(connection.createStatement(statement).execute()))
+                                            .flatMap(Result::getRowsUpdated);
+
+                                } catch (Exception e) {
+                                    LOGGER.error("Unable to initialize the reporter schema", e);
+                                    return Flowable.error(e);
+                                }
                             } else {
-                                return Mono.empty();
+                                return Flowable.empty();
                             }
-                        })
-                        .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
-                        .doOnTerminate(() -> {
-                            // init bulk processor
-                            initializeBulkProcessor();
-                        }).subscribe();
+                        })).reduce(Integer::sum);
+            };
 
-            } catch (Exception e) {
-                LOGGER.error("Unable to initialize the report schema", e);
-            }
+            template.getDatabaseClient().inConnection(resultFunction)
+                    .doOnError(error -> LOGGER.error("Unable to initialize Database", error))
+                    .doOnTerminate(() -> {
+                        // init bulk processor
+                        initializeBulkProcessor();
+                    }).subscribe();
+
         } else {
             initializeBulkProcessor();
         }

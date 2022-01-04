@@ -15,20 +15,25 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthenticationFlowContext;
 import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.relational.core.query.Query;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
@@ -41,10 +46,35 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcRepository implements AuthenticationFlowContextRepository {
+public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcRepository implements AuthenticationFlowContextRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_DATA = "data";
+    public static final String COL_VERSION = "version";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_EXPIRE_AT = "expire_at";
+    public static final String COL_TRANSACTION_ID = "transaction_id";
+
+    private static final List<String> columns = List.of(COL_ID,
+            COL_TRANSACTION_ID,
+            COL_VERSION,
+            COL_CREATED_AT,
+            COL_EXPIRE_AT,
+            COL_DATA);
+
+    private String INSERT_STATEMENT;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("auth_flow_ctx", columns);
+    }
 
     protected AuthenticationFlowContext toEntity(JdbcAuthenticationFlowContext entity) {
         return mapper.map(entity, AuthenticationFlowContext.class);
+    }
+
+    protected JdbcAuthenticationFlowContext toJdbcEntity(AuthenticationFlowContext entity) {
+        return mapper.map(entity, JdbcAuthenticationFlowContext.class);
     }
 
     @Override
@@ -53,10 +83,8 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         if (id == null) {
             return Maybe.empty();
         }
-        return monoToMaybe(dbClient.select()
-                .from(JdbcAuthenticationFlowContext.class)
-                .matching(from(where("id").is(id)))
-                .as(JdbcAuthenticationFlowContext.class).one())
+        return monoToMaybe(template.select(JdbcAuthenticationFlowContext.class)
+                .matching(Query.query(where(COL_ID).is(id))).one())
                 .map(this::toEntity);
     }
 
@@ -68,11 +96,10 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         }
         
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToMaybe(dbClient.select()
-                .from(JdbcAuthenticationFlowContext.class)
-                .matching(from(where("transaction_id").is(transactionId).and(where("expire_at").greaterThan(now))))
-                .orderBy(Sort.Order.desc("version"))
-                .as(JdbcAuthenticationFlowContext.class).first())
+        return monoToMaybe(template.select(JdbcAuthenticationFlowContext.class)
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
+                        .sort(Sort.by(COL_VERSION).descending())
+                ).first())
                 .map(this::toEntity);
     }
 
@@ -84,11 +111,9 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         }
 
         LocalDateTime now = LocalDateTime.now(UTC);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcAuthenticationFlowContext.class)
-                .matching(from(where("transaction_id").is(transactionId).and(where("expire_at").greaterThan(now))))
-                .orderBy(Sort.Order.desc("version"))
-                .as(JdbcAuthenticationFlowContext.class).all())
+        return fluxToFlowable(template.select(JdbcAuthenticationFlowContext.class)
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
+                        .sort(Sort.by(COL_VERSION).descending())).all())
                 .map(this::toEntity);
     }
 
@@ -97,18 +122,16 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
        String id = context.getTransactionId() + "-" + context.getVersion();
         LOGGER.debug("Create AuthenticationContext with id {}", id);
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("auth_flow_ctx");
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        // doesn't use the class introspection to handle json objects
-        insertSpec = addQuotedField(insertSpec,"id", id, String.class);
-        insertSpec = addQuotedField(insertSpec,"transaction_id", context.getTransactionId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"version", context.getVersion(), Integer.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(context.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"expire_at", dateConverter.convertTo(context.getExpireAt(), null), LocalDateTime.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec,"data", context.getData());
+        insertSpec = addQuotedField(insertSpec,COL_ID, id, String.class);
+        insertSpec = addQuotedField(insertSpec,COL_TRANSACTION_ID, context.getTransactionId(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_VERSION, context.getVersion(), Integer.class);
+        insertSpec = addQuotedField(insertSpec,COL_CREATED_AT, dateConverter.convertTo(context.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,COL_EXPIRE_AT, dateConverter.convertTo(context.getExpireAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec,COL_DATA, context.getData());
 
         Mono<Integer> insertAction = insertSpec.fetch().rowsUpdated();
-
         return monoToSingle(insertAction)
                 .flatMap((i) -> this.findById(id).toSingle());
     }
@@ -116,23 +139,21 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
     @Override
     public Completable delete(String transactionId) {
         LOGGER.debug("delete({})", transactionId);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcAuthenticationFlowContext.class)
-                .matching(from(where("transaction_id").is(transactionId))).fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class)
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId))).all());
     }
 
     @Override
     public Completable delete(String transactionId, int version) {
         LOGGER.debug("delete({}, {})", transactionId, version);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcAuthenticationFlowContext.class)
-                .matching(from(where("transaction_id").is(transactionId).and(where("version").is(version)))).fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class)
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_VERSION).is(version)))).all());
     }
 
     @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(dbClient.delete().from(JdbcAuthenticationFlowContext.class).matching(where("expire_at").lessThan(now)).then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error));
+        return monoToCompletable(template.delete(JdbcAuthenticationFlowContext.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all().then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error));
     }
 }

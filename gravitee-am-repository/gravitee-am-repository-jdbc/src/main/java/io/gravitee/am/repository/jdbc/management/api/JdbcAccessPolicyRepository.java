@@ -26,14 +26,15 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.query.Update;
+import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -51,7 +53,7 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implements AccessPolicyRepository {
+public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implements AccessPolicyRepository, InitializingBean {
 
     @Autowired
     protected SpringAccessPolicyRepository accessPolicyRepository;
@@ -60,23 +62,47 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         return mapper.map(entity, AccessPolicy.class);
     }
 
-    protected JdbcAccessPolicy toJdbcAccessPolicy(AccessPolicy entity) {
-        return mapper.map(entity, JdbcAccessPolicy.class);
+    public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_ENABLED = "enabled";
+    public static final String COL_NAME = "name";
+    public static final String COL_DESCRIPTION = "description";
+    public static final String COL_ORDER = "order";
+    public static final String COL_CONDITION = "condition";
+    public static final String COL_DOMAIN = "domain";
+    public static final String COL_RESOURCE = "resource";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+
+    private static List<String> columns = List.of(COL_ID,COL_TYPE,
+            COL_ENABLED,
+            COL_NAME,
+            COL_DESCRIPTION,
+            COL_ORDER,
+            COL_CONDITION,
+            COL_DOMAIN,
+            COL_RESOURCE,
+            COL_CREATED_AT,
+            COL_UPDATED_AT);
+
+    private String INSERT_STATEMENT;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("uma_access_policies", columns);
     }
 
     @Override
     public Single<Page<AccessPolicy>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain(domain:{}, page:{}, size:{})", domain, page, size);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcAccessPolicy.class)
-                .project("*") // required for mssql to work with to order column name
-                .matching(from(where("domain").is(domain)))
-                .orderBy(Sort.Order.desc("updated_at"))
-                .page(PageRequest.of(page, size))
-                .as(JdbcAccessPolicy.class).all()).toList()
+        return fluxToFlowable(template.select(JdbcAccessPolicy.class)
+                .matching(
+                        query(where(COL_DOMAIN).is(domain))
+                                .sort(Sort.by(Sort.Order.desc(COL_UPDATED_AT)))
+                                .with(PageRequest.of(page, size))).all()).toList()
                 .map(content -> content.stream().map(this::toAccessPolicy).collect(Collectors.toList()))
                 .flatMap(content -> accessPolicyRepository.countByDomain(domain)
-                        .map((count) -> new Page<AccessPolicy>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)));
     }
 
     @Override
@@ -109,46 +135,41 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create AccessPolicy with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("uma_access_policies");
-        // doesn't use the class introspection to detect the fields due to keyword column name
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"enabled", item.isEnabled(), Boolean.class);
-        insertSpec = addQuotedField(insertSpec,"name", item.getName(), String.class);
-        insertSpec = addQuotedField(insertSpec,"description", item.getDescription(), String.class);
-        insertSpec = addQuotedField(insertSpec,"order", item.getOrder(), Integer.class); // keyword
-        insertSpec = addQuotedField(insertSpec,"condition", item.getCondition(), String.class);
-        insertSpec = addQuotedField(insertSpec,"domain", item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec,"resource", item.getResource(), String.class);
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient().sql(INSERT_STATEMENT);
+        sql = addQuotedField(sql, COL_ID, item.getId(), String.class);
+        sql = addQuotedField(sql, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        sql = addQuotedField(sql, COL_ENABLED, item.isEnabled(), Boolean.class);
+        sql = addQuotedField(sql, COL_NAME, item.getName(), String.class);
+        sql = addQuotedField(sql, COL_DESCRIPTION, item.getDescription(), String.class);
+        sql = addQuotedField(sql, COL_ORDER, item.getOrder(), Integer.class); // keyword
+        sql = addQuotedField(sql, COL_CONDITION, item.getCondition(), String.class);
+        sql = addQuotedField(sql, COL_DOMAIN, item.getDomain(), String.class);
+        sql = addQuotedField(sql, COL_RESOURCE, item.getResource(), String.class);
+        sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        Mono<Integer> action = insertSpec.fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(sql.fetch().rowsUpdated()).flatMap((i) -> this.findById(item.getId()).toSingle());
     }
 
     @Override
     public Single<AccessPolicy> update(AccessPolicy item) {
         LOGGER.debug("update AccessPolicy with id {}", item.getId());
 
-        final DatabaseClient.GenericUpdateSpec updateSpec = dbClient.update().table("uma_access_policies");
-        // doesn't use the class introspection to detect the fields due to keyword column name
         Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType() == null ? null : item.getType().name(), String.class);
-        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled(), Boolean.class);
-        updateFields = addQuotedField(updateFields,"name", item.getName(), String.class);
-        updateFields = addQuotedField(updateFields,"description", item.getDescription(), String.class);
-        updateFields = addQuotedField(updateFields,"order", item.getOrder(), Integer.class); // keyword
-        updateFields = addQuotedField(updateFields,"condition", item.getCondition(), String.class);
-        updateFields = addQuotedField(updateFields,"domain", item.getDomain(), String.class);
-        updateFields = addQuotedField(updateFields,"resource", item.getResource(), String.class);
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
-        Mono<Integer> action = updateSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        updateFields = addQuotedField(updateFields,"id", item.getId());
+        updateFields = addQuotedField(updateFields,"type", item.getType() == null ? null : item.getType().name());
+        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled());
+        updateFields = addQuotedField(updateFields,"name", item.getName());
+        updateFields = addQuotedField(updateFields,"description", item.getDescription());
+        updateFields = addQuotedField(updateFields,"order", item.getOrder());
+        updateFields = addQuotedField(updateFields,"condition", item.getCondition());
+        updateFields = addQuotedField(updateFields,"domain", item.getDomain());
+        updateFields = addQuotedField(updateFields,"resource", item.getResource());
+        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null));
+        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null));
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.update(query(where("id").is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
+                .flatMap(__ -> Single.defer(() -> this.findById(item.getId()).toSingle()));
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.common;
 
+import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.r2dbc.spi.ConnectionFactory;
@@ -52,7 +53,6 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
     public static final String MYSQL_DRIVER = "mysql";
     public static final String MARIADB_DRIVER = "mariadb";
     public static final String SQLSERVER_DRIVER = "sqlserver";
-
 
     public static final String DIALECT_HELPER_POSTGRESQL = "PostgresqlHelper";
     public static final String DIALECT_HELPER_MYSQL = "MySqlHelper";

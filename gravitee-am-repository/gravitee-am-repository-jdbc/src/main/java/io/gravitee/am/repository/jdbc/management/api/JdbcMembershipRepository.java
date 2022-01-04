@@ -30,13 +30,10 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
@@ -94,11 +91,7 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
 
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcMembership.class)
-                .matching(from(whereClause))
-                .as(JdbcMembership.class)
-                .all())
+        return fluxToFlowable(template.select(Query.query(whereClause), JdbcMembership.class))
                 .map(this::toEntity);
     }
 
@@ -120,13 +113,7 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Single<Membership> create(Membership item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create Membership with id {}", item.getId());
-
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcMembership.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override

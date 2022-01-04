@@ -25,6 +25,7 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
@@ -54,10 +55,8 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
     @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
-        return fluxToFlowable(dbClient.select()
-                .from(JdbcDeviceIdentifier.class)
-                .matching(from(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
-                .fetch()
+        return fluxToFlowable(template.select(JdbcDeviceIdentifier.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
                 .map(this::toEntity);
     }
@@ -65,10 +64,8 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
     @Override
     public Maybe<DeviceIdentifier> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return monoToMaybe(dbClient.select()
-                .from(JdbcDeviceIdentifier.class)
-                .matching(from(where(ID_FIELD).is(id)))
-                .fetch()
+        return monoToMaybe(template.select(JdbcDeviceIdentifier.class)
+                .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
                 .map(this::toEntity);
     }
@@ -78,30 +75,20 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create device identifier with id {}", item.getId());
 
-        Mono<Integer> action = dbClient.insert()
-                .into(JdbcDeviceIdentifier.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(template.insert(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Single<DeviceIdentifier> update(DeviceIdentifier item) {
         LOGGER.debug("update device identifier with id {}", item.getId());
-        Mono<Integer> action = dbClient.update()
-                .table(JdbcDeviceIdentifier.class)
-                .using(toJdbcEntity(item))
-                .fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle( template.update(toJdbcEntity(item))).map(this::toEntity);
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(dbClient.delete()
-                .from(JdbcDeviceIdentifier.class)
-                .matching(from(where(ID_FIELD).is(id)))
-                .fetch().rowsUpdated());
+        return monoToCompletable(template.delete(JdbcDeviceIdentifier.class)
+                .matching(Query.query(where(ID_FIELD).is(id)))
+                .all());
     }
 }

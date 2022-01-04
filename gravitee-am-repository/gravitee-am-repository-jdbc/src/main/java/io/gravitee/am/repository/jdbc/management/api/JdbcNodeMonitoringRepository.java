@@ -25,7 +25,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -70,12 +69,7 @@ public class JdbcNodeMonitoringRepository extends AbstractJdbcRepository impleme
     @Override
     public Single<Monitoring> create(Monitoring monitoring) {
         LOGGER.debug("Create Monitoring with id {}", monitoring.getId());
-        Mono<Integer> insertResult = dbClient.insert()
-                .into(JdbcMonitoring.class)
-                .using(toJdbcEntity(monitoring))
-                .fetch().rowsUpdated();
-
-        return monoToSingle(insertResult.map(result -> monitoring));
+        return monoToSingle(template.insert(toJdbcEntity(monitoring))).map(this::toEntity);
     }
 
     @Override

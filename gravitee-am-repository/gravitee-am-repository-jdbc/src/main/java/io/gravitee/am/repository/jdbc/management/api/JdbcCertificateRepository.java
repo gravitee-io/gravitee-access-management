@@ -25,20 +25,16 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -46,10 +42,39 @@ import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
  * @author GraviteeSource Team
  */
 @Repository
-public class JdbcCertificateRepository extends AbstractJdbcRepository implements CertificateRepository {
+public class JdbcCertificateRepository extends AbstractJdbcRepository implements CertificateRepository, InitializingBean {
+
+    public static final String COL_ID = "id";
+    public static final String COL_TYPE = "type";
+    public static final String COL_CONFIGURATION = "configuration";
+    public static final String COL_DOMAIN = "domain";
+    public static final String COL_NAME = "name";
+    public static final String COL_METADATA = "metadata";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_UPDATED_AT = "updated_at";
+
+    private static final List<String> columns = List.of(
+            COL_ID,
+            COL_TYPE,
+            COL_CONFIGURATION,
+            COL_DOMAIN,
+            COL_NAME,
+            COL_METADATA,
+            COL_CREATED_AT,
+            COL_UPDATED_AT
+    );
+
+    private String INSERT_STATEMENT;
+    private String UPDATE_STATEMENT;
 
     @Autowired
     private SpringCertificateRepository certificateRepository;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.INSERT_STATEMENT = createInsertStatement("certificates", columns);
+        this.UPDATE_STATEMENT = createUpdateStatement("certificates", columns, List.of(COL_ID));
+    }
 
     protected Certificate toEntity(JdbcCertificate entity) {
         Certificate cert = mapper.map(entity, Certificate.class);
@@ -95,17 +120,16 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create certificate with id {}", item.getId());
 
-        DatabaseClient.GenericInsertSpec<Map<String, Object>> insertSpec = dbClient.insert().into("certificates");
+        DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType(), String.class);
-        insertSpec = addQuotedField(insertSpec,"configuration", item.getConfiguration(), String.class);
-        insertSpec = addQuotedField(insertSpec,"domain", item.getDomain(), String.class);
-        insertSpec = addQuotedField(insertSpec,"name", item.getName(), String.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "metadata", item.getMetadata());
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_TYPE, item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_CONFIGURATION, item.getConfiguration(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_DOMAIN, item.getDomain(), String.class);
+        insertSpec = addQuotedField(insertSpec,COL_NAME, item.getName(), String.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_METADATA, item.getMetadata());
+        insertSpec = addQuotedField(insertSpec,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -116,22 +140,21 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     @Override
     public Single<Certificate> update(Certificate item) {
         LOGGER.debug("update Certificate with id {}", item.getId());
-        DatabaseClient.GenericUpdateSpec updatedSpec = dbClient.update().table("certificates");
 
-        // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
-        Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId(), String.class);
-        updateFields = addQuotedField(updateFields,"type", item.getType(), String.class);
-        updateFields = addQuotedField(updateFields,"configuration", item.getConfiguration(), String.class);
-        updateFields = addQuotedField(updateFields,"domain", item.getDomain(), String.class);
-        updateFields = addQuotedField(updateFields,"name", item.getName(), String.class);
-        updateFields = databaseDialectHelper.addJsonField(updateFields, "metadata", item.getMetadata());
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
 
-        Mono<Integer> action = updatedSpec.using(Update.from(updateFields)).matching(from(where("id").is(item.getId()))).fetch().rowsUpdated();
+        update = addQuotedField(update,COL_ID, item.getId(), String.class);
+        update = addQuotedField(update,COL_TYPE, item.getType(), String.class);
+        update = addQuotedField(update,COL_CONFIGURATION, item.getConfiguration(), String.class);
+        update = addQuotedField(update,COL_DOMAIN, item.getDomain(), String.class);
+        update = addQuotedField(update,COL_NAME, item.getName(), String.class);
+        update = databaseDialectHelper.addJsonField(update, COL_METADATA, item.getMetadata());
+        update = addQuotedField(update,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+        Mono<Integer> updateAction = update.fetch().rowsUpdated();
+
+        return monoToSingle(updateAction).flatMap((i) -> this.findById(item.getId()).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to update certificate with id {}", item.getId(), error));
     }
 
