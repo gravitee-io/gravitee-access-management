@@ -45,13 +45,13 @@ import static org.mockito.Mockito.*;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class PostLoginRememberDeviceHandlerTest {
+public class DeviceIdentifierHandlerTest {
 
     private DeviceService deviceService;
 
     private SpyRoutingContext spyRoutingContext;
     private Client client;
-    private PostLoginRememberDeviceHandler handler;
+    private DeviceIdentifierHandler handler;
     private String userId;
     private String deviceIdentifierId;
 
@@ -64,7 +64,7 @@ public class PostLoginRememberDeviceHandlerTest {
         client.setId(UUID.randomUUID().toString());
         client.setClientId(UUID.randomUUID().toString());
         deviceService = spy(DeviceService.class);
-        handler = new PostLoginRememberDeviceHandler(deviceService);
+        handler = new DeviceIdentifierHandler(deviceService);
 
         userId = UUID.randomUUID().toString();
         deviceIdentifierId = UUID.randomUUID().toString();
