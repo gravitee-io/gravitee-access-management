@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-am-gateway-handler</artifactId>
         <groupId>io.gravitee.am.gateway.handler</groupId>
-        <version>3.14.3-SNAPSHOT</version>
+        <version>3.14.3</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-handler-saml2</artifactId>
