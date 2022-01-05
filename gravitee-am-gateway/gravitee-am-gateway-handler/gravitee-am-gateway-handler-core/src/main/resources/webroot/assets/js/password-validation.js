@@ -76,7 +76,7 @@ passwordInput.addEventListener('input', function () {
         validateMessageElement(excludeUserProfileInfoInPassword, isExcludeUserProfileInfoInPasswordOk);
     }
     submitBtn.disabled = !(isMinLengthOk && isIncludeNumbersOk && isIncludeSpecialCharactersOk && isLettersInMixedCaseOk && isMaxConsecutiveLettersOk && isExcludeUserProfileInfoInPasswordOk);
-}
+});
 
 /**
  *
