@@ -40,7 +40,7 @@ public class RememberDeviceHandlerTest extends RxWebTestBase {
 
     private SpyRoutingContext spyRoutingContext;
     private Client client;
-    private RememberDeviceHandler handler;
+    private RememberDeviceSettingsHandler handler;
 
     @Before
     public void setUp() {
@@ -50,7 +50,7 @@ public class RememberDeviceHandlerTest extends RxWebTestBase {
         client.setId(UUID.randomUUID().toString());
         client.setClientId(UUID.randomUUID().toString());
 
-        handler = new RememberDeviceHandler();
+        handler = new RememberDeviceSettingsHandler();
 
         spyRoutingContext = spy(new SpyRoutingContext());
         doNothing().when(spyRoutingContext).next();

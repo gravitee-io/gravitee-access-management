@@ -38,9 +38,9 @@ import static java.util.Optional.ofNullable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RememberDeviceHandler implements Handler<RoutingContext> {
+public class RememberDeviceSettingsHandler implements Handler<RoutingContext> {
 
-    public RememberDeviceHandler() {
+    public RememberDeviceSettingsHandler() {
     }
 
     @Override

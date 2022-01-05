@@ -36,11 +36,11 @@ import static java.util.Optional.ofNullable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PostLoginRememberDeviceHandler implements Handler<RoutingContext> {
+public class DeviceIdentifierHandler implements Handler<RoutingContext> {
 
     private final DeviceService deviceService;
 
-    public PostLoginRememberDeviceHandler(DeviceService deviceService) {
+    public DeviceIdentifierHandler(DeviceService deviceService) {
         this.deviceService = deviceService;
     }
 

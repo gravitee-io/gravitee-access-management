@@ -17,11 +17,18 @@ const clearMessage = () => {
     errorElement.style.display = 'none';
 };
 
-loginForm.onsubmit = () => {
-    w
-        .login({
-            name: this.username.value
-        })
+loginForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    let user = {
+        name: this.username.value
+    };
+    if(this.deviceId && this.deviceId.value){
+        user.deviceId = this.deviceId.value;
+    }
+    if(this.deviceType && this.deviceType.value){
+        user.deviceType = this.deviceType.value;
+    }
+    w.login(user)
         .then(res => {
             clearMessage();
             setTimeout(() => {
@@ -32,4 +39,4 @@ loginForm.onsubmit = () => {
             displayMessage(err instanceof DOMException ? err.message : 'Invalid user');
         });
     return false;
-};
+});

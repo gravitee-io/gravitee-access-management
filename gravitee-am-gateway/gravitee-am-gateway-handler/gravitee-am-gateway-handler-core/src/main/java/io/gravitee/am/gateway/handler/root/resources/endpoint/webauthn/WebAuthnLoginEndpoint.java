@@ -16,17 +16,20 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
-import io.gravitee.common.http.MediaType;
+import io.gravitee.am.service.DeviceService;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
@@ -39,11 +42,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,16 +61,21 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
 
     private final Domain domain;
     private final WebAuthn webAuthn;
-    private final ThymeleafTemplateEngine engine;
+    private final DeviceIdentifierManager deviceIdentifierManager;
+    private final DeviceService deviceService;
 
     public WebAuthnLoginEndpoint(Domain domain,
                                  UserAuthenticationManager userAuthenticationManager,
                                  WebAuthn webAuthn,
-                                 ThymeleafTemplateEngine engine) {
+                                 ThymeleafTemplateEngine engine,
+                                 DeviceIdentifierManager deviceIdentifierManager,
+                                 DeviceService deviceService
+    ) {
         super(engine, userAuthenticationManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
-        this.engine = engine;
+        this.deviceIdentifierManager = deviceIdentifierManager;
+        this.deviceService = deviceService;
     }
 
     @Override
@@ -90,23 +101,14 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true));
 
-            var optionalSettings = Optional.ofNullable(LoginSettings.getInstance(domain, client)).filter(Objects::nonNull);
-            var isIdentifierFirstEnabled = optionalSettings.map(LoginSettings::isIdentifierFirstEnabled).orElse(false);
-
-            final String loginActionKey = routingContext.get(CONTEXT_PATH) + (isIdentifierFirstEnabled ? "/login/identifier" : "/login");
+            final String loginActionKey = routingContext.get(CONTEXT_PATH) + "/login";
             routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
             // render the webauthn login page
-            engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {
-                if (res.succeeded()) {
-                    routingContext.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
-                    routingContext.response().end(res.result());
-                } else {
-                    logger.error("Unable to render WebAuthn login page", res.cause());
-                    routingContext.fail(res.cause());
-                }
-            });
+            final Map<String, Object> data = generateData(routingContext, domain, client);
+            data.putAll(deviceIdentifierManager.getTemplateVariables(client));
+            renderPage(routingContext, data, client, logger, "Unable to render WebAuthn login page");
         } catch (Exception ex) {
             logger.error("An error occurs while rendering WebAuthn login page", ex);
             routingContext.fail(503);
@@ -139,6 +141,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
             final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final String username = webauthnLogin.getString("name");
 
+            var rememberDeviceSettings = getRememberDeviceSettings(client);
             // STEP 18 Generate assertion
             webAuthn.getCredentialsOptions(username, generateServerGetAssertion -> {
                 if (generateServerGetAssertion.failed()) {
@@ -154,10 +157,18 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                     .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
                                     .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
                                     .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
+                            if (rememberDeviceSettings.isActive()) {
+                                var deviceId = webauthnLogin.getString(DEVICE_ID);
+                                var deviceType = webauthnLogin.getString(DEVICE_TYPE);
+                                checkIfDeviceExists(ctx, client, h.result().getId(), deviceId, deviceType, rememberDeviceSettings)
+                                        .doFinally(() -> buildResponse(ctx, getAssertion))
+                                        .subscribe();
+                            } else {
+                                buildResponse(ctx, getAssertion);
+                            }
+                        } else {
+                            buildResponse(ctx, getAssertion);
                         }
-                        ctx.response()
-                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(getAssertion));
                     });
 
                 }
@@ -168,6 +179,43 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
         } catch (RuntimeException e) {
             logger.error("Unexpected exception", e);
             ctx.fail(e);
+        }
+    }
+
+    private void buildResponse(RoutingContext ctx, JsonObject getAssertion) {
+        ctx.response()
+                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                .end(Json.encodePrettily(getAssertion));
+    }
+
+    private RememberDeviceSettings getRememberDeviceSettings(Client client) {
+        return ofNullable(client.getMfaSettings()).filter(Objects::nonNull)
+                .map(MFASettings::getRememberDevice)
+                .orElse(new RememberDeviceSettings());
+    }
+
+    private Completable checkIfDeviceExists(RoutingContext routingContext,
+                                            Client client,
+                                            String userId,
+                                            String deviceId,
+                                            String deviceType,
+                                            RememberDeviceSettings rememberDeviceSettings) {
+        var domain = client.getDomain();
+        var deviceIdentifierId = rememberDeviceSettings.getDeviceIdentifierId();
+        if (isNullOrEmpty(deviceId)) {
+            routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            return Completable.complete();
+        } else {
+            return this.deviceService.deviceExists(domain, client.getClientId(), userId, deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
+                if (!isEmpty) {
+                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+                } else {
+                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+                    routingContext.session().put(DEVICE_ID, deviceId);
+                    routingContext.session().put(DEVICE_TYPE, deviceType);
+                }
+                return Maybe.just(isEmpty);
+            }).ignoreElement();
         }
     }
 

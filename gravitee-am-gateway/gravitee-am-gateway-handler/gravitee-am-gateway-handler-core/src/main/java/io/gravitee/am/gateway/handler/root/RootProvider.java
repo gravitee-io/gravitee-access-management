@@ -61,8 +61,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.PostLoginRememberDeviceHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
@@ -224,7 +224,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);
-        Handler<RoutingContext> getRememberDeviceHandler = new RememberDeviceHandler();
+        Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
+        final DeviceIdentifierHandler deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
 
         // Root policy chain handler
         rootRouter.route()
@@ -248,7 +249,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(botDetectionHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
-                .handler(new PostLoginRememberDeviceHandler(deviceService))
+                .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
 
@@ -296,7 +297,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
-                .handler(getRememberDeviceHandler)
+                .handler(rememberDeviceSettingsHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -311,7 +312,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine));
+                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, deviceIdentifierManager, deviceService));
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
