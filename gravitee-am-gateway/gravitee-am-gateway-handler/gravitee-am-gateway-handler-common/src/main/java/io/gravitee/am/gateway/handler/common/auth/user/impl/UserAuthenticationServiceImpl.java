@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -95,6 +96,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         return userService
                 .findById(subject)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(subject)))
+                .flatMap(user -> isIndefinitelyLocked(user) ?
+                        Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
+                        Maybe.just(user)
+                )
                 .flatMap(user -> identityProviderManager.get(user.getSource())
                         // if the user has been found, try to load user information from its latest identity provider
                         .flatMap(authenticationProvider -> {
@@ -119,7 +124,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     public Maybe<User> loadPreAuthenticatedUser(io.gravitee.am.identityprovider.api.User principal) {
         String source = (String) principal.getAdditionalInformation().get(SOURCE_FIELD);
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
-                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)));
+                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
+                .flatMap(user -> isIndefinitelyLocked(user) ?
+                        Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
+                        Maybe.just(user)
+                );
     }
 
     @Override
@@ -150,6 +159,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         return userService.findByDomainAndExternalIdAndSource(domain.getId(), principal.getId(), source)
                 .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), principal.getUsername(), source)))
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(principal.getUsername())))
+                .flatMap(user -> isIndefinitelyLocked(user) ?
+                        Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
+                        Maybe.just(user)
+                )
                 .flatMapSingle(existingUser -> update(existingUser, principal, afterAuthentication))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
@@ -157,6 +170,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                     }
                     return Single.error(ex);
                 });
+    }
+
+    private boolean isIndefinitelyLocked(User user) {
+        return !user.isAccountNonLocked() && user.getAccountLockedUntil() == null;
     }
 
     /**
@@ -200,10 +217,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         if (afterAuthentication) {
             // remove the op_id_token and op_access_token from existing user profile to avoid keeping this information
             // if the singleSignOut is disabled or provider does not retrieve oidc tokens
-            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_TOKEN_KEY)){
+            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_TOKEN_KEY)) {
                 existingUser.removeAdditionalInformation(OIDC_PROVIDER_ID_TOKEN_KEY);
             }
-            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY)){
+            if (!additionalInformation.containsKey(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY)) {
                 existingUser.removeAdditionalInformation(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
             }
         }

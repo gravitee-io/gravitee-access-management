@@ -51,6 +51,8 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -107,7 +109,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        return findAll(ReferenceType.DOMAIN, domain, page, size)
+        return findAll(DOMAIN, domain, page, size)
                 .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
     }
 
@@ -239,17 +241,17 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Override
     public Single<User> update(String domain, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal) {
-        return update(ReferenceType.DOMAIN, domain, id, updateUser, principal);
+        return update(DOMAIN, domain, id, updateUser, principal);
     }
 
     @Override
     public Single<User> updateStatus(String domain, String id, boolean status, io.gravitee.am.identityprovider.api.User principal) {
-        return updateStatus(ReferenceType.DOMAIN, domain, id, status, principal);
+        return updateStatus(DOMAIN, domain, id, status, principal);
     }
 
     @Override
     public Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.findById(ReferenceType.DOMAIN, domain.getId(), userId)
+        return userService.findById(DOMAIN, domain.getId(), userId)
                 .flatMap(user -> {
                     // get client for password settings
                     return checkClientFunction().apply(domain.getId(), user.getClient())
@@ -312,7 +314,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     public Completable sendRegistrationConfirmation(String domainId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return domainService.findById(domainId)
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                .flatMapCompletable(domain1 -> findById(ReferenceType.DOMAIN, domainId, userId)
+                .flatMapCompletable(domain1 -> findById(DOMAIN, domainId, userId)
                         .flatMapCompletable(user -> {
                             if (!user.isPreRegistration()) {
                                 return Completable.error(new UserInvalidException("Pre-registration is disabled for the user " + userId));
@@ -332,6 +334,34 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     @Override
+    public Completable lock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
+        return findById(referenceType, referenceId, userId)
+                .flatMap(user -> {
+                    user.setAccountNonLocked(false);
+                    user.setAccountLockedAt(null);
+                    user.setAccountLockedUntil(null);
+
+                    return identityProviderManager.getUserProvider(user.getSource())
+                            .switchIfEmpty(identityProviderManager.getUserProvider(user.getSource()))
+                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                            .flatMapSingle(__ -> {
+                                // reset login attempts and update user
+                                // We also make sure to make it at lock not to interfere with LoginAttempt if active
+                                LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                                        .domain(user.getReferenceId())
+                                        .client(user.getClient())
+                                        .username(user.getUsername())
+                                        .build();
+                                return loginAttemptService.reset(criteria).andThen(userService.update(user));
+                            });
+                })
+                .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).user(user1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).throwable(throwable)))
+                .ignoreElement();
+    }
+
+
+    @Override
     public Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal) {
         return findById(referenceType, referenceId, userId)
                 .flatMap(user -> {
@@ -344,8 +374,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             .client(user.getClient())
                             .username(user.getUsername())
                             .build();
-                    return loginAttemptService.reset(criteria)
-                            .andThen(userService.update(user));
+                    return loginAttemptService.reset(criteria).andThen(userService.update(user));
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).throwable(throwable)))
@@ -455,6 +484,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
     }
 
     private User transform(NewUser newUser) {
-        return transform(newUser, ReferenceType.DOMAIN, newUser.getDomain());
+        return transform(newUser, DOMAIN, newUser.getDomain());
     }
 }

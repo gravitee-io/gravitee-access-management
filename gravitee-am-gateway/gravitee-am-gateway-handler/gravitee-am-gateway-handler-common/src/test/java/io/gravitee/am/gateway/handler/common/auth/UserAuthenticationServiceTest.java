@@ -16,11 +16,17 @@
 package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
 import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.gateway.api.Request;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -32,6 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -51,6 +58,9 @@ public class UserAuthenticationServiceTest {
 
     @Mock
     private Domain domain;
+
+    @Mock
+    private IdentityProviderManager identityProviderManager;
 
     @Test
     public void shouldConnect_unknownUser() {
@@ -99,7 +109,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
@@ -110,6 +122,29 @@ public class UserAuthenticationServiceTest {
         testObserver.assertNoErrors();
         verify(userService, never()).create(any());
         verify(userService, times(1)).update(any());
+    }
+
+    @Test
+    public void shouldNotConnect_accountLocked() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(false);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountLockedException.class);
     }
 
     @Test
@@ -127,7 +162,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(false);
 
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
@@ -190,7 +227,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
@@ -222,7 +261,10 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("group-role", "group2-role"));
 
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(mock(User.class)));
+
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
@@ -258,6 +300,7 @@ public class UserAuthenticationServiceTest {
         existingAdditionalInformation.put("source", source);
         existingAdditionalInformation.put("op_id_token", "token1");
         existingUser.setAdditionalInformation(existingAdditionalInformation);
+        existingUser.setAccountNonLocked(true);
 
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
@@ -270,7 +313,6 @@ public class UserAuthenticationServiceTest {
         testObserver.assertNoErrors();
         verify(userService).update(argThat(user1 -> "token2".equals(user1.getAdditionalInformation().get("op_id_token"))));
     }
-
 
     @Test
     public void shouldConnect_knownUser_with_OpIdToken_removed() {
@@ -295,7 +337,7 @@ public class UserAuthenticationServiceTest {
         existingAdditionalInformation.put("source", source);
         existingAdditionalInformation.put("op_id_token", "token1");
         existingUser.setAdditionalInformation(existingAdditionalInformation);
-
+        existingUser.setAccountNonLocked(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
@@ -307,5 +349,162 @@ public class UserAuthenticationServiceTest {
         testObserver.assertNoErrors();
 
         verify(userService).update(argThat(user1 -> !user1.getAdditionalInformation().containsKey("op_id_token")));
+    }
+
+    @Test
+    public void shouldLoadByUsername_idpUser() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User existingUser = new User();
+        HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
+        existingAdditionalInformation.put("source", source);
+        existingAdditionalInformation.put("op_id_token", "token1");
+        existingUser.setAdditionalInformation(existingAdditionalInformation);
+        existingUser.setAccountNonLocked(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(user1 -> user1.equals(existingUser));
+
+        verify(userService, times(1)).findByDomainAndExternalIdAndSource("Domain", "id", "SRC");
+    }
+
+    @Test
+    public void shouldNotLoadPreAuthenticatedUser_idpUser_accountLocked() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User existingUser = new User();
+        HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
+        existingAdditionalInformation.put("source", source);
+        existingAdditionalInformation.put("op_id_token", "token1");
+        existingUser.setAdditionalInformation(existingAdditionalInformation);
+        existingUser.setAccountNonLocked(false);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertFailure(AccountLockedException.class);
+
+        verify(userService, times(1)).findByDomainAndExternalIdAndSource("Domain", "id", "SRC");
+    }
+
+    @Test
+    public void shouldNotLoadPreAuthenticatedUser_subjectRequest_userDoesNotExist() {
+        var request = mock(Request.class);
+
+        when(userService.findById(any())).thenReturn(Maybe.empty());
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser("some_id", request).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertFailure(UserNotFoundException.class);
+    }
+
+    @Test
+    public void shouldNotLoadPreAuthenticatedUser_subjectRequest() {
+        final User existingUser = new User();
+        existingUser.setId(UUID.randomUUID().toString());
+        existingUser.setUsername("username");
+        existingUser.setAccountNonLocked(false);
+
+        var request = mock(Request.class);
+
+        when(userService.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertFailure(AccountLockedException.class);
+    }
+
+    @Test
+    public void shouldLoadPreAuthenticatedUser_subjectRequest_enhance_defer() {
+        final User existingUser = new User();
+        existingUser.setId(UUID.randomUUID().toString());
+        existingUser.setUsername("username");
+        existingUser.setAccountNonLocked(true);
+
+        var request = mock(Request.class);
+
+        when(userService.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.empty();
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+        when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(user1 -> user1.equals(existingUser));
+    }
+
+    @Test
+    public void shouldLoadPreAuthenticatedUser_subjectRequest_enhance_defer_with_AuthenticationProvider() {
+        final User existingUser = new User();
+        existingUser.setId(UUID.randomUUID().toString());
+        existingUser.setUsername("username");
+        existingUser.setAccountNonLocked(true);
+
+        var request = mock(Request.class);
+
+        when(userService.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                var user = new io.gravitee.am.identityprovider.api.DefaultUser();
+                user.setUsername(existingUser.getUsername());
+                return Maybe.just(user);
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                var user = new io.gravitee.am.identityprovider.api.DefaultUser();
+                user.setUsername(existingUser.getUsername());
+                return Maybe.just(user);
+            }
+        }));
+        when(userService.enhance(existingUser)).thenReturn(Single.just(existingUser));
+        when(userService.update(existingUser)).thenReturn(Single.just(existingUser));
+
+        TestObserver<User> testObserver = userAuthenticationService.loadPreAuthenticatedUser(existingUser.getId(), request).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertValue(user1 -> user1.equals(existingUser));
     }
 }

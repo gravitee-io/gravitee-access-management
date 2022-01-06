@@ -28,7 +28,6 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
-import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.UpdateUser;
@@ -42,15 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -236,13 +227,37 @@ public class UserResource extends AbstractResource {
     }
 
     @POST
+    @Path("lock")
+    @ApiOperation(value = "Lock a user",
+            notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified environment " +
+                    "or DOMAIN_USER[UPDATE] permission on the specified organization")
+    @ApiResponses({
+            @ApiResponse(code = 204, message = "User locked"),
+            @ApiResponse(code = 500, message = "Internal server error")})
+    public void lockUser(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("user") String user,
+            @Suspended final AsyncResponse response) {
+        final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(irrelevant -> userService.lock(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
+    }
+
+    @POST
     @Path("unlock")
     @ApiOperation(value = "Unlock a user",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "User unlocked"),
+            @ApiResponse(code = 204, message = "User unlocked"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void unlockUser(
             @PathParam("organizationId") String organizationId,
@@ -257,7 +272,6 @@ public class UserResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapCompletable(irrelevant -> userService.unlock(ReferenceType.DOMAIN, domain, user, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
-
     }
 
     @Path("consents")

@@ -16,12 +16,10 @@
 package io.gravitee.am.management.service;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.Completable;
@@ -49,6 +47,8 @@ public interface UserService extends CommonUserService {
     Completable resetPassword(Domain domain, String userId, String password, io.gravitee.am.identityprovider.api.User principal);
 
     Completable sendRegistrationConfirmation(String domain, String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    Completable lock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
     Completable unlock(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
 
