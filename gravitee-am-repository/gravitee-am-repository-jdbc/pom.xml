@@ -38,8 +38,6 @@
         <r2dbc-mariadb.version>0.8.4-rc</r2dbc-mariadb.version>
         <r2dbc-spi.version>0.8.4.RELEASE</r2dbc-spi.version>
 
-        <reactor-netty.version>1.0.14</reactor-netty.version>
-
         <jdbc-postgresql.version>42.2.16</jdbc-postgresql.version>
         <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.17</jdbc-mysql.version>
