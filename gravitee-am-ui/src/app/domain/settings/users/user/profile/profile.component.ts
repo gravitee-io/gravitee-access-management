@@ -217,6 +217,6 @@ export class UserProfileComponent implements OnInit {
   }
 
   accountLocked(user) {
-    return !user.accountNonLocked && user.accountLockedUntil > new Date();
+    return !user.accountNonLocked && (user.accountLockedUntil === null || !user.accountLockedUntil || user.accountLockedUntil > new Date());
   }
 }
