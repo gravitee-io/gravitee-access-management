@@ -48,7 +48,7 @@
         <dozer.version>6.5.0</dozer.version>
 
         <testcontainers.version>1.15.0</testcontainers.version>
-        <liquibase.version>3.8.0</liquibase.version>
+        <liquibase.version>3.8.1</liquibase.version>
         <liquibase-slf4j.version>2.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>
@@ -361,8 +361,8 @@
                                 </excludes>
                             </artifactSet>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer" />
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer" />
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
