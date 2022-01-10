@@ -37,7 +37,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.ciba.service.request;
 
 import io.gravitee.am.common.ciba.Parameters;
-import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.model.oidc.Client;
@@ -32,7 +32,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import java.util.List;
 import java.util.Map;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.ParamUtils.*;
 
 /**
@@ -133,7 +132,7 @@ public class CibaAuthenticationRequest extends OAuth2Request {
         cibaRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         cibaRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
 
-        final Client client = context.get(CLIENT_CONTEXT_KEY);
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         cibaRequest.setClientId(client.getClientId());
 
         cibaRequest.setScopes(splitScopes(getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.SCOPE)));
