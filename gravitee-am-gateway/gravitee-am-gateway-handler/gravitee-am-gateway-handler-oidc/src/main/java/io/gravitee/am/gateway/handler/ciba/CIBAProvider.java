@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.ciba;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestAcknowledgeHandler;
 import io.gravitee.am.gateway.handler.ciba.resources.handler.AuthenticationRequestCallbackHandler;
@@ -24,8 +25,6 @@ import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.user.UserService;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.AuthorizationRequestParseProviderConfigurationHandler;

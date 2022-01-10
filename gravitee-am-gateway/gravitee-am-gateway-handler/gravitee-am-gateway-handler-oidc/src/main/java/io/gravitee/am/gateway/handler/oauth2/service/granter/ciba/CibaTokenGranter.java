@@ -21,7 +21,6 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.ciba.exception.AuthenticationRequestNotFoundException;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -38,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.util.Collections.emptyMap;
 import static org.springframework.util.StringUtils.isEmpty;
-
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 /**
  * Implementation of the CIBA Grant Flow
  * See <a href="https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html#rfc.section.10"></a>
@@ -95,7 +94,7 @@ public class CibaTokenGranter extends AbstractTokenGranter {
                             // store only the AuthenticationFlowContext.data attributes in order to simplify EL templating
                             // and provide an up to date set of data if the enrichAuthFlow Policy ius used multiple time in a step
                             // {#context.attributes['authFlow']['entry']}
-                            tokenRequest1.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, emptyMap());
+                            tokenRequest1.getContext().put(AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, emptyMap());
 
                             return tokenRequest1;
                         }));
