@@ -108,7 +108,7 @@
         <embedded-ldap-junit.version>0.7</embedded-ldap-junit.version>
         <json-smart.version>2.4.7</json-smart.version>
         <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
-        <reactor-netty.version>1.0.14</reactor-netty.version>
+        <reactor-netty.version>1.0.15</reactor-netty.version>
         <sonar.skip>true</sonar.skip>
 
         <!-- External plugins versions -->
