@@ -15,6 +15,7 @@
  */
 package io.gravitee.sample.ciba.notifier.http.mock;
 
+import com.fasterxml.jackson.databind.deser.impl.InnerClassProperty;
 import com.nimbusds.jose.JOSEObject;
 import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
 import io.gravitee.sample.ciba.notifier.CibaHttpNotifier;
@@ -35,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.Executors;
 
 import static io.gravitee.sample.ciba.notifier.http.Constants.*;
 
@@ -60,6 +62,7 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
     @Override
     public void handle(RoutingContext routingContext) {
         try {
+
             final String auth = routingContext.request().getHeader(HttpHeaders.AUTHORIZATION);
             if (auth != null && auth.startsWith(BEARER) && !StringUtil.isNullOrEmpty(authBearer)) {
                 // control the token
@@ -89,14 +92,7 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         .setStatusCode(200)
                         .end(Json.encode(new NotifierResponse(transactionId, state)));
 
-                this.webClient
-                        .postAbs(optCallback.get().getDomainCallback())
-                        .authentication(new UsernamePasswordCredentials(
-                                optCallback.get().getClientId(),
-                                optCallback.get().getClientSecret()))
-                        .sendForm(formData)
-                        .onSuccess(res -> LOGGER.info("Callback succeeded for tid {}", transactionId))
-                        .onFailure(err -> LOGGER.warn("Callback failed for tid {} : {}", transactionId, err));
+                sendResponse(transactionId, optCallback.get(), formData, true);
 
             } else {
                 routingContext.response()
@@ -108,5 +104,33 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
             LOGGER.warn("Unable to manage the notification request", e);
             routingContext.fail(500, e);
         }
+    }
+
+    private void sendResponse(String transactionId, DomainReference optCallback, MultiMap formData, boolean retry) {
+        Executors.defaultThreadFactory().newThread(() -> {
+            try {
+                webClient
+                        .postAbs(optCallback.getDomainCallback())
+                        .authentication(new UsernamePasswordCredentials(
+                                optCallback.getClientId(),
+                                optCallback.getClientSecret()))
+                        .sendForm(formData)
+                        .onSuccess(res -> LOGGER.info("Callback succeeded for tid {}", transactionId))
+                        .onFailure(err -> {
+                            if (retry) {
+                                LOGGER.info("Retry the callback for tid {} (err: {})", transactionId, err);
+                                // give to the AM GW enough time to update the Request external ID
+                                try {
+                                    Thread.sleep(2000);
+                                } catch (InterruptedException e) { /*Silent catch*/ }
+                                sendResponse(transactionId, optCallback, formData, false);
+                            } else {
+                                LOGGER.warn("Callback failed for tid {} : {}", transactionId, err);
+                            }
+                        });
+            } catch (Exception e) {
+                LOGGER.warn("Callback request failed for tid {} : {}", transactionId, e);
+            }
+        }).start();
     }
 }
