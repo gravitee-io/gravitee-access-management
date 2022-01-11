@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM eclipse-temurin:11-jre-focal
+FROM graviteeio/java:17
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
 
-RUN apt-get update \
-    && apt-get --yes upgrade \
-    && apt-get --yes install zip unzip netcat-openbsd wget \
+RUN apk update \
+	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://oss.sonatype.org/service/local/artifact/maven/content\?r\=snapshots\&g\=io.gravitee.am.gateway.standalone\&a\=gravitee-am-gateway-standalone-distribution-zip\&p\=zip\&v\=${GRAVITEEAM_VERSION} \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
-	&& apt-get --yes remove zip unzip netcat-openbsd wget \
-    && apt autoremove --yes \
+	&& apk del zip unzip netcat-openbsd wget \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
 	&& chgrp -R 0 ${GRAVITEEIO_HOME} \

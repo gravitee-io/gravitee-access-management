@@ -19,7 +19,7 @@ version: '2'
 services:
 
   mongodb:
-    image: mongo:3.4
+    image: mongo:4.2
     container_name: gio_am_mongodb
     ports:
     - 27017:27017
