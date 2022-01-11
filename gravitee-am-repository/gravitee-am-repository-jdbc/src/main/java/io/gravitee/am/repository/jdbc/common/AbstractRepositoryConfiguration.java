@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.common;
 
-import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.r2dbc.spi.ConnectionFactory;
