@@ -24,7 +24,7 @@ ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
 RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/
 
-FROM eclipse-temurin:11-jre-focal
+FROM graviteeio/java:17
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway

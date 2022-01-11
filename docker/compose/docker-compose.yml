@@ -34,7 +34,7 @@ services:
       - webui
 
   mongodb:
-    image: mongo:3.4
+    image: mongo:4.2
     container_name: gio_am_mongodb
     restart: always
     volumes:
