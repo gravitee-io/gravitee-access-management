@@ -237,6 +237,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
+            newIdentityProvider.setSystem(true);
 
             Optional<String> mongoServers = getMongoServers();
             String mongoHost = null;
@@ -257,7 +258,10 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
 
             String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
-            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"usersCollection\":\"idp_users_" + lowerCaseId + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
+                    + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
+                    + "\",\"usersCollection\":\"idp_users_" + lowerCaseId
+                    + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
             String tableSuffix = lowerCaseId.replaceAll("-", "_");

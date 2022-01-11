@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section">
+      <div *ngIf="!reporter.system" class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Configuration</h5>
           <mat-divider></mat-divider>
@@ -56,7 +56,12 @@
           <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
         </div>
       </div>
-
+      <div>
+        <app-emptystate *ngIf="reporter.system"
+                    [message]="'This reporter configurations cannot be changed'"
+                    [subMessage]="'This is a default reporter'"
+                    [icon]="'settings'"></app-emptystate>
+      </div>
       <div fxLayout="row">
         <button mat-raised-button [disabled]="((!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged)" (click)="save()">SAVE</button>
       </div>

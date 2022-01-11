@@ -144,6 +144,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
         identityProvider.setReferenceId(referenceId);
         identityProvider.setName(newIdentityProvider.getName());
         identityProvider.setType(newIdentityProvider.getType());
+        identityProvider.setSystem(newIdentityProvider.isSystem());
         identityProvider.setConfiguration(newIdentityProvider.getConfiguration());
         identityProvider.setExternal(newIdentityProvider.isExternal());
         identityProvider.setDomainWhitelist(ofNullable(newIdentityProvider.getDomainWhitelist()).orElse(List.of()));

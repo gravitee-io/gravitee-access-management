@@ -92,6 +92,7 @@ public class InlineOrganizationProviderConfiguration extends OrganizationProvide
         provider.setExternal(false);
         provider.setType("inline-am-idp");// use the inline provider implementation as InMemory provider
         provider.setName(getName());
+        provider.setSystem(true);
         provider.setReferenceId(Organization.DEFAULT);
         provider.setReferenceType(ReferenceType.ORGANIZATION);
         provider.setRoleMapper(generateRoleMapper());

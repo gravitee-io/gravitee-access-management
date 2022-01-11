@@ -111,6 +111,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
         insertSpec = addQuotedField(insertSpec, "id", item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, "type", item.getType(), String.class);
+        insertSpec = addQuotedField(insertSpec, "source", item.isSystem(), boolean.class);
         insertSpec = addQuotedField(insertSpec, "name", item.getName(), String.class);
         insertSpec = addQuotedField(insertSpec, "external", item.isExternal(), boolean.class);
         insertSpec = addQuotedField(insertSpec, "reference_id", item.getReferenceId(), String.class);
@@ -136,6 +137,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         // doesn't use the class introspection to allow the usage of Json type in PostgreSQL
         updateFields = addQuotedField(updateFields, "id", item.getId(), String.class);
         updateFields = addQuotedField(updateFields, "type", item.getType(), String.class);
+        updateFields = addQuotedField(updateFields, "system", item.isSystem(), boolean.class);
         updateFields = addQuotedField(updateFields, "name", item.getName(), String.class);
         updateFields = addQuotedField(updateFields, "external", item.isExternal(), boolean.class);
         updateFields = addQuotedField(updateFields, "reference_id", item.getReferenceId(), String.class);

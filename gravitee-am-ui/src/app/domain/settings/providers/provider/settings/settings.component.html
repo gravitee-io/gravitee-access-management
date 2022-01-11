@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <div class="gv-form-section">
+        <div *ngIf="!provider.system" class="gv-form-section">
           <div class="gv-form-section-title">
             <h5>Configuration</h5>
             <mat-divider></mat-divider>
@@ -61,6 +61,12 @@
           <div>
             <provider-form *ngIf="provider" [providerConfiguration]="providerConfiguration" [providerSchema]="providerSchema" (configurationCompleted)="enableProviderUpdate($event)"></provider-form>
           </div>
+        </div>
+        <div>
+          <app-emptystate *ngIf="provider.system"
+                      [message]="'This provider configurations cannot be changed'"
+                      [subMessage]="'This is a default provider'"
+                      [icon]="'settings'"></app-emptystate>
         </div>
         <div *hasPermission="['domain_identity_provider_update']" fxLayout="row">
           <button mat-raised-button color="primary" [disabled]="(!providerForm.valid || providerForm.pristine) && (!configurationIsValid || configurationPristine)" (click)="update($event)">SAVE</button>

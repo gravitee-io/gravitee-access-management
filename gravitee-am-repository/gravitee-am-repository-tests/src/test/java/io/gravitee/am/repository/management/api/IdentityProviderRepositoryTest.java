@@ -71,6 +71,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProvider.setReferenceId("ref" + random);
         identityProvider.setConfiguration("{\"field\": \"" + random + "\"}");
         identityProvider.setExternal(true);
+        identityProvider.setSystem(true);
         identityProvider.setType("type" + random);
 
         Map<String, String> mappers = new HashMap<>();

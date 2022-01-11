@@ -154,6 +154,7 @@ public class ReporterServiceImpl implements ReporterService {
         reporter.setEnabled(newReporter.isEnabled());
         reporter.setDomain(domain);
         reporter.setName(newReporter.getName());
+        reporter.setSystem(newReporter.isSystem());
         reporter.setType(newReporter.getType());
         // currently only audit logs
         reporter.setDataType("AUDIT");
@@ -301,6 +302,7 @@ public class ReporterServiceImpl implements ReporterService {
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
+        newReporter.setSystem(true);
         newReporter.setType("mongodb");
         newReporter.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "") + "\",\"bulkActions\":1000,\"flushInterval\":5}");
 
@@ -334,6 +336,7 @@ public class ReporterServiceImpl implements ReporterService {
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("JDBC Reporter");
+        newReporter.setSystem(true);
         newReporter.setType(REPORTER_AM_JDBC);
         newReporter.setConfiguration("{\"host\":\"" + jdbcHost + "\"," +
                 "\"port\":" + jdbcPort + "," +

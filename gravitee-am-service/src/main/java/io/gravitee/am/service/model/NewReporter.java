@@ -34,6 +34,9 @@ public class NewReporter {
     private String name;
 
     @NotNull
+    private boolean system;
+
+    @NotNull
     private String configuration;
 
     public String getId() {
@@ -66,6 +69,14 @@ public class NewReporter {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public String getConfiguration() {
