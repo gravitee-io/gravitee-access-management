@@ -27,21 +27,15 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.time.ZoneOffset.UTC;
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -107,11 +101,11 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
 
         DatabaseClient.GenericExecuteSpec insertSpec = template.getDatabaseClient().sql(INSERT_STATEMENT);
 
-        insertSpec = addQuotedField(insertSpec,"id", item.getId(), String.class);
-        insertSpec = addQuotedField(insertSpec,"type", item.getType() == null ? null : item.getType().name(), String.class);
-        insertSpec = databaseDialectHelper.addJsonField(insertSpec, "payload", item.getPayload());
-        insertSpec = addQuotedField(insertSpec,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        insertSpec = addQuotedField(insertSpec,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PAYLOAD, item.getPayload());
+        insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -123,11 +117,11 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         LOGGER.debug("update event with id {}", item.getId());
 
         DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql(UPDATE_STATEMENT);
-        update = addQuotedField(update,"id", item.getId(), String.class);
-        update = addQuotedField(update,"type", item.getType() == null ? null : item.getType().name(), String.class);
-        update = databaseDialectHelper.addJsonField(update, "payload", item.getPayload());
-        update = addQuotedField(update,"created_at", dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
-        update = addQuotedField(update,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_ID, item.getId(), String.class);
+        update = addQuotedField(update, COL_TYPE, item.getType() == null ? null : item.getType().name(), String.class);
+        update = databaseDialectHelper.addJsonField(update, COL_PAYLOAD, item.getPayload());
+        update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());

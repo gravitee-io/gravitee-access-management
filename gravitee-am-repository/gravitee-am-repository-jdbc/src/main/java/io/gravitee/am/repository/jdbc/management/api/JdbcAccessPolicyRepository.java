@@ -31,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Update;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -43,7 +42,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
@@ -156,19 +154,19 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         LOGGER.debug("update AccessPolicy with id {}", item.getId());
 
         Map<SqlIdentifier, Object> updateFields = new HashMap<>();
-        updateFields = addQuotedField(updateFields,"id", item.getId());
-        updateFields = addQuotedField(updateFields,"type", item.getType() == null ? null : item.getType().name());
-        updateFields = addQuotedField(updateFields,"enabled", item.isEnabled());
-        updateFields = addQuotedField(updateFields,"name", item.getName());
-        updateFields = addQuotedField(updateFields,"description", item.getDescription());
-        updateFields = addQuotedField(updateFields,"order", item.getOrder());
-        updateFields = addQuotedField(updateFields,"condition", item.getCondition());
-        updateFields = addQuotedField(updateFields,"domain", item.getDomain());
-        updateFields = addQuotedField(updateFields,"resource", item.getResource());
-        updateFields = addQuotedField(updateFields,"created_at", dateConverter.convertTo(item.getCreatedAt(), null));
-        updateFields = addQuotedField(updateFields,"updated_at", dateConverter.convertTo(item.getUpdatedAt(), null));
+        updateFields = addQuotedField(updateFields, COL_ID, item.getId());
+        updateFields = addQuotedField(updateFields, COL_TYPE, item.getType() == null ? null : item.getType().name());
+        updateFields = addQuotedField(updateFields, COL_ENABLED, item.isEnabled());
+        updateFields = addQuotedField(updateFields, COL_NAME, item.getName());
+        updateFields = addQuotedField(updateFields, COL_DESCRIPTION, item.getDescription());
+        updateFields = addQuotedField(updateFields, COL_ORDER, item.getOrder());
+        updateFields = addQuotedField(updateFields, COL_CONDITION, item.getCondition());
+        updateFields = addQuotedField(updateFields, COL_DOMAIN, item.getDomain());
+        updateFields = addQuotedField(updateFields, COL_RESOURCE, item.getResource());
+        updateFields = addQuotedField(updateFields, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null));
+        updateFields = addQuotedField(updateFields, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null));
 
-        return monoToSingle(template.update(query(where("id").is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
+        return monoToSingle(template.update(query(where(COL_ID).is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
                 .flatMap(__ -> Single.defer(() -> this.findById(item.getId()).toSingle()));
     }
 
