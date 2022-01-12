@@ -36,8 +36,7 @@
       "type": "string",
       "title": "Username",
       "description": "Username used for authentication",
-      "condition": "model.authentication",
-      "sensitive": true
+      "condition": "model.authentication"
     },
     "password": {
       "type": "string",

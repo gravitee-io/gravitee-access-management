@@ -32,8 +32,7 @@
     "user" : {
       "type" : "string",
       "title": "Authentication user",
-      "description": "User to access database.",
-      "sensitive": true
+      "description": "User to access database."
     },
     "password" : {
       "type" : "string",

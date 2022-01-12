@@ -6,8 +6,7 @@
       "type" : "string",
       "default": "mongodb://localhost:27017",
       "title": "MongoDB connection URI",
-      "description": "Connection URI used to connect to a MongoDB instance.",
-      "sensitive": true
+      "description": "Connection URI used to connect to a MongoDB instance."
     },
     "host" : {
       "type" : "string",
@@ -31,14 +30,12 @@
     "databaseCredentials" : {
       "type" : "string",
       "title": "Authentication database",
-      "description": "Database used for authentication.",
-      "sensitive": true
+      "description": "Database used for authentication."
     },
     "usernameCredentials" : {
       "type" : "string",
       "title": "Authentication user",
-      "description": "User used to authenticate.",
-      "sensitive": true
+      "description": "User used to authenticate."
     },
     "passwordCredentials" : {
       "type" : "string",
