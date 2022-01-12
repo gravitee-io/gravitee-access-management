@@ -37,14 +37,22 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
 
     private static final String TEMPLATE_ATTRIBUTE_REQUEST = "request";
     private static final String TEMPLATE_ATTRIBUTE_CONTEXT = "context";
-    private Request request;
-    private final Map<String, Object> attributes = new HashMap<>();
+
+    private final Request request;
+    private final Map<String, Object> attributes;
     private TemplateEngine templateEngine;
 
-    public SimpleAuthenticationContext() { }
+    public SimpleAuthenticationContext() {
+        this(null, new HashMap<>());
+    }
 
     public SimpleAuthenticationContext(Request request) {
+        this(request, new HashMap<>());
+    }
+
+    public SimpleAuthenticationContext(Request request, Map<String, Object> attributes) {
         this.request = request;
+        this.attributes = attributes;
     }
 
     @Override
@@ -102,5 +110,10 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
     @Override
     public Tracer getTracer() {
         throw new IllegalStateException();
+    }
+
+    @Override
+    public AuthenticationContext copy() {
+       return new SimpleAuthenticationContext(request);
     }
 }

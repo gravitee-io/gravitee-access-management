@@ -64,4 +64,8 @@ public interface AuthenticationContext extends ExecutionContext {
     default Map<String, Object> attributes() {
         return getAttributes();
     }
+
+    default AuthenticationContext copy() {
+        return this;
+    }
 }

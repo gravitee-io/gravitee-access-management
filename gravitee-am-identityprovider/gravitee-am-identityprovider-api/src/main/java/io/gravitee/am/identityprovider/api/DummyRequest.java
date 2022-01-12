@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.franceconnect.authentication;
+package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class DummyRequest implements Request {
@@ -72,7 +72,7 @@ public class DummyRequest implements Request {
 
     @Override
     public MultiValueMap<String, String> parameters() {
-       return queryParameters;
+        return queryParameters;
     }
 
     @Override
