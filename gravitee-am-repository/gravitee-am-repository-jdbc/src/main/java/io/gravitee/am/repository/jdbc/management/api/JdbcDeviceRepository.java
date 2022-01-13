@@ -27,13 +27,11 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
@@ -59,11 +57,13 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     @Override
     public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, String user) {
         LOGGER.debug("findByReferenceAndApplicationAndUser({}, {})", referenceType, referenceId);
+        LocalDateTime now = LocalDateTime.now(UTC);
         return fluxToFlowable(template.select(JdbcDevice.class)
                 .matching(Query.query(
                         where(REFERENCE_ID_FIELD).is(referenceId)
                                 .and(where(REF_TYPE_FIELD).is(referenceType.name()))
                                 .and(where(USER_FIELD).is(user))
+                                .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
                 ))
                 .all())
                 .map(this::toEntity);
@@ -72,13 +72,16 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     @Override
     public Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
             ReferenceType referenceType, String referenceId, String client, String user, String rememberDevice, String deviceId) {
+        LocalDateTime now = LocalDateTime.now(UTC);
         return monoToMaybe(template.select(JdbcDevice.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId)
                         .and(where(REF_TYPE_FIELD).is(referenceType.name()))
                         .and(where(CLIENT_FIELD).is(client))
                         .and(where(USER_FIELD).is(user))
                         .and(where(DEVICE_IDENTIFIER_ID).is(rememberDevice))
-                        .and(where(DEVICE_ID).is(deviceId))))
+                        .and(where(DEVICE_ID).is(deviceId))
+                        .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
+                ))
                 .first())
                 .map(this::toEntity);
     }
@@ -90,8 +93,9 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
     @Override
     public Maybe<Device> findById(String id) {
         LOGGER.debug("findById({})", id);
+        LocalDateTime now = LocalDateTime.now(UTC);
         return monoToMaybe(template.select(JdbcDevice.class)
-                .matching(Query.query(where(ID_FIELD).is(id)))
+                .matching(Query.query(where(ID_FIELD).is(id).and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))))
                 .first())
                 .map(this::toEntity);
     }
