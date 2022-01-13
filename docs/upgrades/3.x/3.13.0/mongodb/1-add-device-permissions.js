@@ -16,9 +16,9 @@
 db.getCollection("roles").updateMany(
     {
         name: {$in: ["ORGANIZATION_PRIMARY_ONWER", "ORGANIZATION_OWNER", "ENVIRONMENT_PRIMARY_OWNER", "ENVIRONMENT_OWNER", "DOMAIN_PRIMARY_OWNER", "DOMAIN_OWNER"]},
-        "permissionAcls.DOMAIN_USER_DEVICES": {$exists: false},
+        "permissionAcls.DOMAIN_USER_DEVICE": {$exists: false},
     },
     {
-        $set: {"permissionAcls.DOMAIN_USER_DEVICES": ["DELETE", "LIST"]},
+        $set: {"permissionAcls.DOMAIN_USER_DEVICE": ["DELETE", "LIST"]},
     }
 );

@@ -48,6 +48,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_13_0/schema-device.yml
   - include:
+      - file: liquibase/changelogs/v3_13_0/schema-device-permission.yml
+  - include:
       - file: liquibase/changelogs/v3_15_0/schema.yml
   - include:
       - file: liquibase/changelogs/v3_15_0/schema-ciba-auth-req.yml

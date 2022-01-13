@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.13.0-device-permission
+      author: GraviteeSource Team
+      changes:
+        # Fix permission issue on user device and device identifier
+        ##############
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_DEVICE_IDENTIFIER}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_DEVICE_IDENTIFIER', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_DEVICE_IDENTIFIER', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_USER_DEVICE}', '[\"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_USER_DEVICE', JSON_ARRAY('DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_USER_DEVICE', JSON_QUERY('[\"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
