@@ -26,14 +26,18 @@ import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.exception.RedirectMismatchException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.response.OAuth2ErrorResponse;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
+import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.Json;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -113,6 +117,17 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
                     request.setRedirectUri(defaultErrorURL);
                     HttpException httpStatusException = (HttpException) throwable;
                     doRedirect(routingContext, buildRedirectUri(httpStatusException.getMessage(), httpStatusException.getPayload(), request, routingContext));
+                } else if (throwable instanceof PolicyChainException) {
+                    PolicyChainException policyChainException = (PolicyChainException) throwable;
+                    OAuth2ErrorResponse oAuth2ErrorResponse = new OAuth2ErrorResponse(policyChainException.key());
+                    oAuth2ErrorResponse.setDescription(policyChainException.getMessage());
+                    routingContext
+                            .response()
+                            .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                            .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
+                            .putHeader(HttpHeaders.PRAGMA, "no-cache")
+                            .setStatusCode(policyChainException.statusCode())
+                            .end(Json.encodePrettily(oAuth2ErrorResponse));
                 } else {
                     logger.error("An exception has occurred while handling authorization request", throwable);
                     cleanSession(routingContext);
@@ -258,15 +273,17 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private void cleanSession(RoutingContext context) {
-        context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
-        context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
-        context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
+        if (context.session() != null) {
+            context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
+            context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
+            context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
+            context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
+            context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+            context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+            context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
+            context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
+            context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
+        }
     }
 
     private void doRedirect(RoutingContext context, String url) {
