@@ -56,7 +56,9 @@ public final class AuthorizationRequestFactory {
         // set technical information
         authorizationRequest.setTimestamp(System.currentTimeMillis());
         authorizationRequest.setId(RandomString.generate());
-        authorizationRequest.setTransactionId(context.session().get(ConstantKeys.TRANSACTION_ID_KEY));
+        if (context.session() != null) {
+            authorizationRequest.setTransactionId(context.session().get(ConstantKeys.TRANSACTION_ID_KEY));
+        }
 
         if (context.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY) != null) {
             AuthenticationFlowContext authFlowContext = context.get(ConstantKeys.AUTH_FLOW_CONTEXT_KEY);
@@ -87,7 +89,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setState(getOAuthParameter(context, Parameters.STATE));
         authorizationRequest.setResponseMode(getOAuthParameter(context, Parameters.RESPONSE_MODE));
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
-        authorizationRequest.setApproved(Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_CONSENT_APPROVED_KEY)));
+        authorizationRequest.setApproved(context.session() != null && Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_CONSENT_APPROVED_KEY)));
 
         // set OIDC information
         String prompt = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.PROMPT);
