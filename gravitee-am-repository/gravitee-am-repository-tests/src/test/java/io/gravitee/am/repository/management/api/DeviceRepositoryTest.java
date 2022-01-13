@@ -54,25 +54,37 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValueCount(1);
     }
 
+    @Test
+    public void testNotFindByDomainAndApplicationAndUser_expired() {
+        Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
+        Device createdDevice = repository.create(device).blockingGet();
+
+       repository.findById(createdDevice.getUserId()).test().assertEmpty();
+    }
+
     private Device buildDevice() {
-        Device rememberDevice = new Device();
+        return buildDevice(new Date(System.currentTimeMillis() + 10000));
+    }
+
+    private Device buildDevice(Date expiresAt) {
+        Device device = new Device();
         String random = UUID.random().toString();
-        rememberDevice.setReferenceType(ReferenceType.DOMAIN);
-        rememberDevice.setReferenceId("domain" + random);
-        rememberDevice.setClient("client" + random);
-        rememberDevice.setUserId("user" + random);
-        rememberDevice.setDeviceIdentifierId("rememberDevice" + random);
-        rememberDevice.setType("type" + random);
-        rememberDevice.setDeviceId("deviceId" + random);
-        rememberDevice.setCreatedAt(new Date());
-        rememberDevice.setExpiresAt(new Date());
-        return rememberDevice;
+        device.setReferenceType(ReferenceType.DOMAIN);
+        device.setReferenceId("domain" + random);
+        device.setClient("client" + random);
+        device.setUserId("user" + random);
+        device.setDeviceIdentifierId("device" + random);
+        device.setType("type" + random);
+        device.setDeviceId("deviceId" + random);
+        device.setCreatedAt(new Date());
+        device.setExpiresAt(expiresAt);
+        return device;
     }
 
     @Test
     public void testFindById() throws TechnicalException {
-        Device rememberDevice = buildDevice();
-        Device deviceCreated = repository.create(rememberDevice).blockingGet();
+        Device device = buildDevice();
+        Device deviceCreated = repository.create(device).blockingGet();
 
         TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
         testObserver.awaitTerminalEvent();
@@ -90,7 +102,16 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId() throws TechnicalException {
+    public void testNotFindById_expired() {
+        Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
+        Device deviceCreated = repository.create(device).blockingGet();
+
+        TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
+        testObserver.assertEmpty();
+    }
+
+    @Test
+    public void testFindByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId() {
         Device rememberDevice = buildDevice();
         Device deviceCreated = repository.create(rememberDevice).blockingGet();
 
@@ -104,21 +125,21 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(bd -> bd.getId().equals(deviceCreated.getId()));
-        testObserver.assertValue(bd -> bd.getReferenceType().equals(deviceCreated.getReferenceType()));
-        testObserver.assertValue(bd -> bd.getReferenceId().equals(deviceCreated.getReferenceId()));
-        testObserver.assertValue(bd -> bd.getClient().equals(deviceCreated.getClient()));
-        testObserver.assertValue(bd -> bd.getDeviceIdentifierId().equals(deviceCreated.getDeviceIdentifierId()));
-        testObserver.assertValue(bd -> bd.getDeviceId().equals(deviceCreated.getDeviceId()));
-        testObserver.assertValue(bd -> bd.getType().equals(deviceCreated.getType()));
-        testObserver.assertValue(bd -> bd.getUserId().equals(deviceCreated.getUserId()));
+        testObserver.assertValue(device1 -> device1.getId().equals(deviceCreated.getId()));
+        testObserver.assertValue(device1 -> device1.getReferenceType().equals(deviceCreated.getReferenceType()));
+        testObserver.assertValue(device1 -> device1.getReferenceId().equals(deviceCreated.getReferenceId()));
+        testObserver.assertValue(device1 -> device1.getClient().equals(deviceCreated.getClient()));
+        testObserver.assertValue(device1 -> device1.getDeviceIdentifierId().equals(deviceCreated.getDeviceIdentifierId()));
+        testObserver.assertValue(device1 -> device1.getDeviceId().equals(deviceCreated.getDeviceId()));
+        testObserver.assertValue(device1 -> device1.getType().equals(deviceCreated.getType()));
+        testObserver.assertValue(device1 -> device1.getUserId().equals(deviceCreated.getUserId()));
     }
 
     @Test
-    public void testNotFindByDeviceId() throws TechnicalException {
-        Device rememberDevice = buildDevice();
-        Device deviceCreated = repository.create(rememberDevice).blockingGet();
-        repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+    public void testNotFindByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId_unknown_client() {
+        Device device = buildDevice();
+        Device deviceCreated = repository.create(device).blockingGet();
+        final TestObserver<Device> test = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
                 deviceCreated.getReferenceId(),
                 "unknown_client",
                 deviceCreated.getUserId(),
@@ -127,8 +148,21 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testNotFoundById() throws TechnicalException {
-        repository.findById("test").test().assertEmpty();
+    public void testNotFindByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId_expired() {
+        Device device = buildDevice(new Date(System.currentTimeMillis() - 10000));
+        Device deviceCreated = repository.create(device).blockingGet();
+
+        final TestObserver<Device> test = repository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(
+                deviceCreated.getReferenceId(),
+                deviceCreated.getClient(),
+                deviceCreated.getUserId(),
+                deviceCreated.getDeviceIdentifierId(),
+                deviceCreated.getDeviceId()).test().assertEmpty();
+    }
+
+    @Test
+    public void testNotFoundById_unknown_id() {
+        repository.findById("unknown_id").test().assertEmpty();
     }
 
     @Test
@@ -140,23 +174,23 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(bd -> nonNull(bd.getId()));
-        testObserver.assertValue(bd -> bd.getReferenceType().equals(device.getReferenceType()));
-        testObserver.assertValue(bd -> bd.getReferenceId().equals(device.getReferenceId()));
-        testObserver.assertValue(bd -> bd.getClient().equals(device.getClient()));
-        testObserver.assertValue(bd -> bd.getType().equals(device.getType()));
-        testObserver.assertValue(bd -> bd.getDeviceIdentifierId().equals(device.getDeviceIdentifierId()));
-        testObserver.assertValue(bd -> bd.getDeviceId().equals(device.getDeviceId()));
-        testObserver.assertValue(bd -> bd.getUserId().equals(device.getUserId()));
+        testObserver.assertValue(device1 -> nonNull(device1.getId()));
+        testObserver.assertValue(device1 -> device1.getReferenceType().equals(device.getReferenceType()));
+        testObserver.assertValue(device1 -> device1.getReferenceId().equals(device.getReferenceId()));
+        testObserver.assertValue(device1 -> device1.getClient().equals(device.getClient()));
+        testObserver.assertValue(device1 -> device1.getType().equals(device.getType()));
+        testObserver.assertValue(device1 -> device1.getDeviceIdentifierId().equals(device.getDeviceIdentifierId()));
+        testObserver.assertValue(device1 -> device1.getDeviceId().equals(device.getDeviceId()));
+        testObserver.assertValue(device1 -> device1.getUserId().equals(device.getUserId()));
     }
 
     @Test
     public void testUpdate() throws TechnicalException {
         Device createdDevice = buildDevice();
-        Device botDetectionCreated = repository.create(createdDevice).blockingGet();
+        Device deviceCreated = repository.create(createdDevice).blockingGet();
 
         Device device = buildDevice();
-        device.setId(botDetectionCreated.getId());
+        device.setId(deviceCreated.getId());
         device.setExpiresAt(new Date());
 
         TestObserver<Device> testObserver = repository.update(device).test();
@@ -164,30 +198,30 @@ public class DeviceRepositoryTest extends AbstractManagementTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(bd -> bd.getId().equals(device.getId()));
-        testObserver.assertValue(bd -> bd.getReferenceType().equals(device.getReferenceType()));
-        testObserver.assertValue(bd -> bd.getReferenceId().equals(device.getReferenceId()));
-        testObserver.assertValue(bd -> bd.getClient().equals(device.getClient()));
-        testObserver.assertValue(bd -> bd.getType().equals(device.getType()));
-        testObserver.assertValue(bd -> bd.getDeviceIdentifierId().equals(device.getDeviceIdentifierId()));
-        testObserver.assertValue(bd -> bd.getDeviceId().equals(device.getDeviceId()));
-        testObserver.assertValue(bd -> bd.getUserId().equals(device.getUserId()));
+        testObserver.assertValue(device1 -> device1.getId().equals(device.getId()));
+        testObserver.assertValue(device1 -> device1.getReferenceType().equals(device.getReferenceType()));
+        testObserver.assertValue(device1 -> device1.getReferenceId().equals(device.getReferenceId()));
+        testObserver.assertValue(device1 -> device1.getClient().equals(device.getClient()));
+        testObserver.assertValue(device1 -> device1.getType().equals(device.getType()));
+        testObserver.assertValue(device1 -> device1.getDeviceIdentifierId().equals(device.getDeviceIdentifierId()));
+        testObserver.assertValue(device1 -> device1.getDeviceId().equals(device.getDeviceId()));
+        testObserver.assertValue(device1 -> device1.getUserId().equals(device.getUserId()));
     }
 
     @Test
     public void testDelete() throws TechnicalException {
-        Device botDetection = buildDevice();
-        Device rememberDeviceCreated = repository.create(botDetection).blockingGet();
+        Device device = buildDevice();
+        Device deviceCreated = repository.create(device).blockingGet();
 
-        TestObserver<Device> testObserver = repository.findById(rememberDeviceCreated.getId()).test();
+        TestObserver<Device> testObserver = repository.findById(deviceCreated.getId()).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValue(bd -> bd.getId().equals(rememberDeviceCreated.getId()));
+        testObserver.assertValue(bd -> bd.getId().equals(deviceCreated.getId()));
 
-        TestObserver testObserver1 = repository.delete(rememberDeviceCreated.getId()).test();
+        TestObserver testObserver1 = repository.delete(deviceCreated.getId()).test();
         testObserver1.awaitTerminalEvent();
 
-        repository.findById(rememberDeviceCreated.getId()).test().assertEmpty();
+        repository.findById(deviceCreated.getId()).test().assertEmpty();
     }
 }
