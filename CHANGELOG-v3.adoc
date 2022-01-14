@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/495?closed=1[AM - 3.14.4 (2022-01-14)]
+
+=== Bug fixes
+
+*_Am_*
+
+- Java mail properties are not set https://github.com/gravitee-io/issues/issues/6928[#6928]
+
+*_Gateway_*
+
+- Http provider configuration is not respected https://github.com/gravitee-io/issues/issues/6916[#6916]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/492?closed=1[AM - 3.14.3 (2022-01-05)]
 
 === Bug fixes
