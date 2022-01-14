@@ -76,6 +76,9 @@ public class ReporterResource extends AbstractResource {
                         .flatMap(irrelevant -> reporterService.findById(reporter))
                         .switchIfEmpty(Maybe.error(new ReporterNotFoundException(reporter)))
                         .map(reporter1 -> {
+                            if (reporter1.isSystem()) {
+                                reporter1.setConfiguration(null);
+                            }
                             if (!reporter1.getDomain().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Reporter does not belong to domain");
                             }

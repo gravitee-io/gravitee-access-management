@@ -91,8 +91,7 @@ public class ReporterServiceImpl implements ReporterService {
     @Autowired
     private AuditService auditService;
 
-    @Autowired
-    private DomainService domainService;
+    private static String defaultReporterConfiguration = "";
 
     @Override
     public Flowable<Reporter> findAll() {
@@ -305,6 +304,7 @@ public class ReporterServiceImpl implements ReporterService {
         newReporter.setSystem(true);
         newReporter.setType("mongodb");
         newReporter.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "") + "\",\"bulkActions\":1000,\"flushInterval\":5}");
+        defaultReporterConfiguration = newReporter.getConfiguration();
 
         return newReporter;
     }
@@ -405,5 +405,13 @@ public class ReporterServiceImpl implements ReporterService {
     private boolean useJdbcReporter() {
         String managementBackend = this.environment.getProperty("management.type", "mongodb");
         return "jdbc".equalsIgnoreCase(managementBackend);
+    }
+
+    public static String getDefaultReporterConfiguration() {
+        return defaultReporterConfiguration;
+    }
+
+    private static void setDefaultReporterConfiguration(String defaultReporterConfiguration) {
+        ReporterServiceImpl.defaultReporterConfiguration = defaultReporterConfiguration;
     }
 }

@@ -114,6 +114,8 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Autowired
     private RoleService roleService;
 
+    private static String defaultIdpConfig;
+
     private InMemoryIdentityProviderListener listener;
 
     public void setListener(InMemoryIdentityProviderListener listener) {
@@ -396,4 +398,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return Maybe.empty();
     }
 
+    public static String getDefaultIdpConfig() {
+        return defaultIdpConfig;
+    }
+
+    private static void setDefaultIdpConfig(String defaultIdpConfig) {
+        IdentityProviderManagerImpl.defaultIdpConfig = defaultIdpConfig;
+    }
 }
