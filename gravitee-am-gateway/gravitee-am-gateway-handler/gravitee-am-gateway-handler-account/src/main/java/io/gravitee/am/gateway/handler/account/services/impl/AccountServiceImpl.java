@@ -185,6 +185,11 @@ public class AccountServiceImpl implements AccountService {
                 });
     }
 
+    @Override
+    public Completable removeWebAuthnCredential(String id) {
+        return credentialService.delete(id);
+    }
+
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {
         DefaultUser idpUser = new DefaultUser(user.getUsername());
         idpUser.setId(user.getExternalId());

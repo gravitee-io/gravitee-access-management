@@ -71,7 +71,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                  DeviceIdentifierManager deviceIdentifierManager,
                                  DeviceService deviceService
     ) {
-        super(engine, userAuthenticationManager);
+        super(engine, userAuthenticationManager, null);
         this.domain = domain;
         this.webAuthn = webAuthn;
         this.deviceIdentifierManager = deviceIdentifierManager;

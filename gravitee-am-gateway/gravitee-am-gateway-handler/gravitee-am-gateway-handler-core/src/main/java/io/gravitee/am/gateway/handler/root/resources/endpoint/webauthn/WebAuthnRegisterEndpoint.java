@@ -15,17 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
+import com.google.common.net.HttpHeaders;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
-import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.am.model.safe.UserProperties;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
@@ -40,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_REDIRECT_URI;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_REGISTRATION_TOKEN;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -58,8 +62,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
     public WebAuthnRegisterEndpoint(Domain domain,
                                     UserAuthenticationManager userAuthenticationManager,
                                     WebAuthn webAuthn,
-                                    TemplateEngine templateEngine) {
-        super(templateEngine, userAuthenticationManager);
+                                    TemplateEngine templateEngine,
+                                    UserService userService) {
+        super(templateEngine, userAuthenticationManager, userService);
         this.domain = domain;
         this.webAuthn = webAuthn;
     }
@@ -111,12 +116,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final User user = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
             final UserProperties userProperties = new UserProperties(user);
-
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
-            final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
 
             routingContext.put(ConstantKeys.ACTION_KEY, action);
-            routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
 
@@ -124,8 +126,24 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                 routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());
             }
 
-            // render the webauthn register page
-            this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render WebAuthn register page");
+            if (isSelfRegistration(queryParams)) {
+                validateToken(queryParams.get(WEBAUTHN_REGISTRATION_TOKEN), handler -> {
+                    if (handler.failed()) {
+                        routingContext.fail(401);
+                        return;
+                    }
+
+                    final JWT token = handler.result().getToken();
+                    final String skipAction = token.get(WEBAUTHN_REDIRECT_URI).toString();
+                    routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
+                    renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render WebAuthn register page");
+                });
+            }
+            else {
+                final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
+                routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
+                renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render WebAuthn register page");
+            }
         } catch (Exception ex) {
             logger.error("An error has occurred while rendering WebAuthn register page", ex);
             routingContext.fail(503);

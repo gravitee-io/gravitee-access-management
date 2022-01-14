@@ -336,7 +336,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine));
+                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, userService));
         rootRouter.route(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
@@ -344,7 +344,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain));
+                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain, userService));
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);

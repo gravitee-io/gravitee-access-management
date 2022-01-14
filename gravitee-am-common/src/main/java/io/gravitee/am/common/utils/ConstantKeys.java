@@ -88,6 +88,8 @@ public interface ConstantKeys {
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
+    String WEBAUTHN_REDIRECT_URI = "redirect_uri";
+    String WEBAUTHN_REGISTRATION_TOKEN = "registration_token";
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
     String PASSWORDLESS_AUTH_COMPLETED_KEY = "passwordlessAuthCompleted";
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
