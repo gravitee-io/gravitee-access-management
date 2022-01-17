@@ -54,11 +54,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -251,9 +253,16 @@ public class UserServiceImpl implements UserService {
 
                                 // We remove the dynamic roles from the user roles to be updated in order to preserve
                                 // the roles that were assigned by the RoleMappers so that whenever the rule from the
-                                // said RoleMapper does not apply anymore, user loses the role
-                                if (userToUpdate.getRoles() != null && userToUpdate.getDynamicRoles() != null) {
-                                    userToUpdate.getRoles().removeAll(userToUpdate.getDynamicRoles());
+                                // said RoleMapper does not apply anymore, user loses the role.
+                                // If roles existed in the existing user roles, it means it has been assigned manually
+                                // we don't want them to be in dynamic roles until the existing static role is removed
+                                if (userToUpdate.getDynamicRoles() != null) {
+                                    var existingStaticRoles = ofNullable(existingUser.getRoles()).orElse(new ArrayList<>());
+                                    var toUpdateStaticRoles = ofNullable(userToUpdate.getRoles()).orElse(new ArrayList<>());
+                                    // create a workingCopy of DynamicRoles to avoid altering the one coming from the existing user
+                                    var workingCopyDynamicRoles = new ArrayList<>(userToUpdate.getDynamicRoles());
+                                    workingCopyDynamicRoles.removeAll(existingStaticRoles);
+                                    toUpdateStaticRoles.removeAll(workingCopyDynamicRoles);
                                 }
 
                                 UserFactorUpdater.updateFactors(existingUser.getFactors(), existingUser, userToUpdate);
