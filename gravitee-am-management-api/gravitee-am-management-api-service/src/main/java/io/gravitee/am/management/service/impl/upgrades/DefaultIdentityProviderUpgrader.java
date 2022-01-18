@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -43,25 +46,28 @@ public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
     @Autowired
     private IdentityProviderService identityProviderService;
 
+    @Autowired
+    private IdentityProviderManagerImpl identityProviderManager;
+
     @Override
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
         identityProviderService.findAll()
-                .flatMapCompletable(this::updateDefaultIdp)
+                .flatMapSingle(this::updateDefaultIdp)
                 .subscribe();
         return true;
     }
 
-    private Completable updateDefaultIdp(IdentityProvider identityProvider) {
-        return identityProviderService.findById(identityProvider.getId())
-                .flatMapCompletable(identityProvider1 -> {
-                    if (identityProvider1.isSystem()) {
-                        logger.info("Set the default idp found with the default configurations, update idp {}", identityProvider.getName());
-                        identityProvider1.setConfiguration(IdentityProviderManagerImpl.getDefaultIdpConfig());
-                        return Completable.complete();
-                    }
-                    return Completable.complete();
-                });
+    private Single<IdentityProvider> updateDefaultIdp(IdentityProvider identityProvider) {
+        UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
+        updateIdentityProvider.setDomainWhitelist(identityProvider.getDomainWhitelist());
+        updateIdentityProvider.setMappers(identityProvider.getMappers());
+        updateIdentityProvider.setName(identityProvider.getName());
+        updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
+        updateIdentityProvider.setConfiguration(identityProvider.isSystem()
+                ? identityProvider.getConfiguration() : identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null));
+
+        return identityProviderService.update(identityProvider.getReferenceId(), identityProvider.getId(), updateIdentityProvider, true);
     }
 
     @Override

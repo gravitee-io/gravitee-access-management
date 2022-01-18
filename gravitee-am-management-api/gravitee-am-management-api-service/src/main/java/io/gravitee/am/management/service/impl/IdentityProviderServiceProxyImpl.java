@@ -116,12 +116,12 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
-    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
         return identityProviderService.findById(id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
                 .flatMap(oldIdP -> filterSensitiveData(oldIdP)
                         .flatMap(safeOldIdp -> updateSensitiveData(updateIdentityProvider, oldIdP)
-                                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal))
+                                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal, false))
                                 .flatMap(this::filterSensitiveData)
                                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable))))

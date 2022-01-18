@@ -46,7 +46,7 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
 
-    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
+    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader);
 
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 
@@ -54,8 +54,8 @@ public interface IdentityProviderService {
         return create(domain, identityProvider, null);
     }
 
-    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
-        return update(domain, id, updateIdentityProvider, null);
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader) {
+        return update(domain, id, updateIdentityProvider, null, isUpgrader);
     }
 
     default Completable delete(String domain, String identityProviderId) {
@@ -66,8 +66,8 @@ public interface IdentityProviderService {
         return create(ReferenceType.DOMAIN, domain, identityProvider, principal);
     }
 
-    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
-        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
+        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal, isUpgrader);
     }
 
     default Completable delete(String domain, String identityProviderId, User principal) {

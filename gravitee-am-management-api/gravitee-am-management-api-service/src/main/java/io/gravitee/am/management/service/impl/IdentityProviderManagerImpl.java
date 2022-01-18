@@ -114,8 +114,6 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     @Autowired
     private RoleService roleService;
 
-    private static String defaultIdpConfig;
-
     private InMemoryIdentityProviderListener listener;
 
     public void setListener(InMemoryIdentityProviderListener listener) {
@@ -237,10 +235,24 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         String lowerCaseId = referenceId.toLowerCase();
         newIdentityProvider.setId(DEFAULT_IDP_PREFIX + lowerCaseId);
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
+        newIdentityProvider.setSystem(true);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setSystem(true);
+            newIdentityProvider.setConfiguration(createProviderConfiguration(referenceId, null));
+        } else if (useJdbcRepositories()) {
+            newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
+            newIdentityProvider.setConfiguration(createProviderConfiguration(referenceId, newIdentityProvider));
+        } else {
+            return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend + " backend"));
+        }
+        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
+    }
 
+    public String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
+
+        String providerConfig = null;
+        String lowerCaseId = referenceId.toLowerCase();
+        if (useMongoRepositories()) {
             Optional<String> mongoServers = getMongoServers();
             String mongoHost = null;
             String mongoPort = null;
@@ -260,25 +272,27 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             defaultMongoUri += addOptionsToURI(mongoServers.orElse(mongoHost+":"+mongoPort));
 
             String mongoUri = environment.getProperty("management.mongodb.uri", defaultMongoUri);
-            newIdentityProvider.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
+            providerConfig = "{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
                     + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
                     + "\",\"usersCollection\":\"idp_users_" + lowerCaseId
-                    + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}");
+                    + "\",\"findUserByUsernameQuery\":\"{username: ?}\",\"findUserByEmailQuery\":\"{email: ?}\"" +
+                    ",\"usernameField\":\"username\",\"passwordField\":\"password\",\"passwordEncoder\":\"BCrypt\"}";
         } else if (useJdbcRepositories()) {
-            newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
             String tableSuffix = lowerCaseId.replaceAll("-", "_");
             if ((tableSuffix).length() > TABLE_NAME_MAX_LENGTH) {
                 try {
                     logger.info("Table name 'idp_users_{}' will be too long, compute shortest unique name", tableSuffix);
                     byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
                     tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 40).toLowerCase();
-                    newIdentityProvider.setId(DEFAULT_IDP_PREFIX + tableSuffix);
+                    if (identityProvider != null) {
+                        identityProvider.setId(DEFAULT_IDP_PREFIX + tableSuffix);
+                    }
                 } catch (NoSuchAlgorithmException e) {
                     throw new IllegalStateException("Unable to compute digest of '" + lowerCaseId + "' due to unknown sha-256 algorithm", e);
                 }
             }
 
-            String providerConfig = "{\"host\":\""+jdbcHost+"\"," +
+            providerConfig = "{\"host\":\""+jdbcHost+"\"," +
                     "\"port\":"+jdbcPort+"," +
                     "\"protocol\":\""+jdbcDriver+"\"," +
                     "\"database\":\""+jdbcDatabase+"\"," +
@@ -293,11 +307,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
                     "\"usernameAttribute\":\"username\"," +
                     "\"passwordAttribute\":\"password\"," +
                     "\"passwordEncoder\":\"BCrypt\"}";
-            newIdentityProvider.setConfiguration(providerConfig);
-        } else {
-            return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend + " backend"));
         }
-        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
+
+        return providerConfig;
     }
 
     private Optional<String> getMongoServers() {
@@ -396,13 +408,5 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             identityProviders.remove(identityProvider.getId());
         }
         return Maybe.empty();
-    }
-
-    public static String getDefaultIdpConfig() {
-        return defaultIdpConfig;
-    }
-
-    private static void setDefaultIdpConfig(String defaultIdpConfig) {
-        IdentityProviderManagerImpl.defaultIdpConfig = defaultIdpConfig;
     }
 }

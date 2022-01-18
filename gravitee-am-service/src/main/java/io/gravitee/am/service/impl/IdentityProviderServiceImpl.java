@@ -164,7 +164,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     @Override
-    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
         LOGGER.debug("Update an identity provider {} for {} {}", id, referenceType, referenceId);
 
         return identityProviderRepository.findById(referenceType, referenceId, id)
@@ -172,7 +172,9 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .flatMapSingle(oldIdentity -> {
                     IdentityProvider identityToUpdate = new IdentityProvider(oldIdentity);
                     identityToUpdate.setName(updateIdentityProvider.getName());
-                    identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
+                    if (!identityToUpdate.isSystem() || isUpgrader){
+                        identityToUpdate.setConfiguration(updateIdentityProvider.getConfiguration());
+                    }
                     identityToUpdate.setMappers(updateIdentityProvider.getMappers());
                     identityToUpdate.setRoleMapper(updateIdentityProvider.getRoleMapper());
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
