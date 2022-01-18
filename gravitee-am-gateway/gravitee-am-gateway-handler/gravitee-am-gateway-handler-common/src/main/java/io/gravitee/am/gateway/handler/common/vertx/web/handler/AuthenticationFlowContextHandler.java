@@ -56,7 +56,7 @@ public class AuthenticationFlowContextHandler implements Handler<RoutingContext>
                                 // store the AuthenticationFlowContext in order to provide all related information about this context
                                 context.put(ConstantKeys.AUTH_FLOW_CONTEXT_KEY, ctx);
                                 // store only the AuthenticationFlowContext.data attributes in order to simplify EL templating
-                                // and provide an up to date set of data if the enrichAuthFlow Policy ius used multiple time in a step
+                                // and provide an up to date set of data if the enrichAuthFlow Policy is used multiple time in a step
                                 // {#context.attributes['authFlow']['entry']}
                                 context.put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
                                 context.next();
