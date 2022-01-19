@@ -34,6 +34,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.validators.PasswordValidator;
 import io.gravitee.am.service.validators.UserValidator;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -281,4 +282,49 @@ public class UserServiceTest {
         testObserver.assertValue(g -> "my user 2".equals(g.getDisplayName()));
     }
 
+    @Test
+    public void shouldDeleteUser() throws Exception {
+        final String userId = "userId";
+
+        io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
+        when(endUser.getId()).thenReturn(userId);
+        when(endUser.getExternalId()).thenReturn("user-external-id");
+        when(endUser.getSource()).thenReturn("user-idp");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.delete(any())).thenReturn(Completable.complete());
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(userRepository.delete(userId)).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.delete(userId, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        verify(userRepository, times(1)).delete(userId);
+        verify(identityProviderManager, times(1)).getUserProvider(anyString());
+        verify(userProvider, times(1)).delete(anyString());
+    }
+
+    @Test
+    public void shouldDeleteUser_noExternalProvider() throws Exception {
+        final String userId = "userId";
+
+        io.gravitee.am.model.User endUser = mock(io.gravitee.am.model.User.class);
+        when(endUser.getId()).thenReturn(userId);
+        when(endUser.getSource()).thenReturn("user-idp");
+
+        UserProvider userProvider = mock(UserProvider.class);
+
+        when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+        when(userRepository.delete(userId)).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.delete(userId, null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        verify(userRepository, times(1)).delete(userId);
+        verify(identityProviderManager, times(1)).getUserProvider(anyString());
+        verify(userProvider, never()).delete(anyString());
+    }
 }
