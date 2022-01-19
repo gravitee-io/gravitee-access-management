@@ -5,13 +5,13 @@ Here are few guidelines that should help you get started.
 
 == Using GitHub issues
 
-We use GitHub issues to track bugs and enhancements. You find a bug in the source code ? You want to propose new features or enhancements  You can help us by submitting an issue in our https://github.com/gravitee-io/gravitee-management-rest-api[repository]. Before you submit your issue, search the https://github.com/gravitee-io/gravitee-management-rest-api/issues[issues archive] or the https://waffle.io/gravitee-io/release[backlog]; maybe your question was already answered.
+We use GitHub issues to track bugs and enhancements. You find a bug in the source code ? You want to propose new features or enhancements  You can help us by submitting an issue in our https://github.com/gravitee-io/gravitee-access-management[repository]. Before you submit your issue, search the https://github.com/gravitee-io/issues/issues[issues repository]; maybe your question was already answered.
 
-> Issues are only to report bugs, request enhancements, or request new features. For general questions and discussions, use the https://groups.google.com/forum/#!forum/graviteeio[Gravitee.io Forum].
+> Issues are only to report bugs, request enhancements, or request new features. For general questions and discussions, use the https://community.gravitee.io[Gravitee.io Forum].
 
 Providing the following information will help us to deal quickly with your issue :
 
-* **Overview of the issue** : describe the issue and why this is a bug for you. 
+* **Overview of the issue** : describe the issue and why this is a bug for you.
 * **Gravitee.io version(s)** : possible regression ?
 * **Browsers and Operating System** : Linux/Windows/Docker ? Browser version for the UI, etc ...
 * **You have stack trace, screenshots, logs ?** add these to the issue's description.
@@ -49,7 +49,7 @@ mvn clean install
 git push origin issue/#<issue-id>-my-fix-branch
 ```
 
-* In GitHub, send a pull request to `<gravitee-io/gravitee-management-rest-api>:master`.
+* In GitHub, send a pull request to `<gravitee-io/gravitee-access-management>:master`.
 
 * If we suggest changes then:
   ** Make the required updates.
@@ -64,7 +64,7 @@ git rebase master
 git push origin issue/#<issue-id>-my-fix-branch -f
 ```
 
-And That's it! You've just contributed to the project and we really appreciate it ! You can still find help, news and information on our https://groups.google.com/forum/#!forum/graviteeio[forum].
+And That's it! You've just contributed to the project and we really appreciate it ! You can still find help, news and information on our https://community.gravitee.io[forum].
 
 == Further Information
 
