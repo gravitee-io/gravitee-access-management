@@ -81,13 +81,14 @@ public class ReportersResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> reporterService.findByDomain(domain).toList()))
                 .flatMap(reporters ->
-                        hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
-                                .map(hasPermission -> {
-                                    if (hasPermission) {
-                                        return reporters;
-                                    }
-                                    return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
-                                })
+                    hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
+                        .map(hasPermission -> {
+                            reporters.stream().filter(Reporter::isSystem).forEach(reporter -> reporter.setConfiguration(null));
+                            if (hasPermission) {
+                                return reporters;
+                            }
+                            return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
+                        })
                 )
                 .subscribe(response::resume, response::resume);
     }
