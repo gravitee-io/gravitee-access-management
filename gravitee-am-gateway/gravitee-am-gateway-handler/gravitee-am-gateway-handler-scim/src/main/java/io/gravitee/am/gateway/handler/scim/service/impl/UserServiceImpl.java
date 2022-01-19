@@ -18,7 +18,6 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.gravitee.am.common.audit.EventType;
-import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -26,10 +25,12 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.mapper.UserMapper;
-import io.gravitee.am.gateway.handler.scim.model.*;
+import io.gravitee.am.gateway.handler.scim.model.ListResponse;
+import io.gravitee.am.gateway.handler.scim.model.Member;
+import io.gravitee.am.gateway.handler.scim.model.PatchOp;
+import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.service.GroupService;
 import io.gravitee.am.gateway.handler.scim.service.UserService;
-import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
@@ -53,8 +54,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.security.Principal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -282,19 +284,19 @@ public class UserServiceImpl implements UserService {
                                             }
                                             return userRepository.update(userToUpdate);
                                         })
-                                        .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
-                                        .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error)))
                                         .onErrorResumeNext(ex -> {
                                             if (ex instanceof UserNotFoundException ||
-                                                    ex instanceof UserInvalidException ||
-                                                    ex instanceof UserProviderNotFoundException) {
+                                            ex instanceof UserInvalidException ||
+                                            ex instanceof UserProviderNotFoundException) {
                                                 // idp user does not exist, only update AM user
                                                 // clear password
                                                 userToUpdate.setPassword(null);
                                                 return userRepository.update(userToUpdate);
                                             }
                                             return Single.error(ex);
-                                        }));
+                                        })
+                                        .doOnSuccess(updatedUser -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).oldValue(existingUser).type(EventType.USER_UPDATED).user(updatedUser)))
+                                        .doOnError(error -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).user(existingUser).type(EventType.USER_UPDATED).throwable(error))));
                             }));
                 })
                 .map(user1 -> UserMapper.convert(user1, baseUrl, false))
@@ -351,33 +353,25 @@ public class UserServiceImpl implements UserService {
         LOGGER.debug("Delete user {}", userId);
         return userRepository.findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                .flatMapCompletable(user -> identityProviderManager.getUserProvider(user.getSource())
-                        .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
-                        .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
-                        .andThen(userRepository.delete(userId))
-                        .andThen(Completable.fromAction(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user))))
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user does not exist, only remove AM user
-                                return userRepository.delete(userId);
-                            }
-                            return Completable.error(ex);
-                        })
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof AbstractManagementException) {
-                                return Completable.error(ex);
-                            } else {
-                                LOGGER.error("An error occurs while trying to delete user: {}", userId, ex);
-                                return Completable.error(new TechnicalManagementException(
-                                        String.format("An error occurs while trying to delete user: %s", userId), ex));
-                            }
-                        }))
-                .doOnError((error) -> {
-                    final io.gravitee.am.model.User user = new io.gravitee.am.model.User();
-                    user.setId(userId);
-                    user.setReferenceId(domain.getId());
-                    user.setReferenceType(ReferenceType.DOMAIN);
-                    auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user).throwable(error));
+                .flatMapCompletable(user -> {
+                    return identityProviderManager.getUserProvider(user.getSource())
+                            .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
+                            .flatMapCompletable(userProvider -> userProvider.delete(user.getExternalId()))
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserNotFoundException || ex instanceof UserProviderNotFoundException) {
+                                    // idp user does not exist, only remove AM user
+                                    return Completable.complete();
+                                } else if (ex instanceof AbstractManagementException) {
+                                    return Completable.error(ex);
+                                } else {
+                                    LOGGER.error("An error has occurred when trying to delete user: {}", userId, ex);
+                                    return Completable.error(new TechnicalManagementException(
+                                            String.format("An error has occurred when trying to delete user: %s", userId), ex));
+                                }
+                            })
+                            .andThen(userRepository.delete(userId))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
+                            .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
                 });
     }
 
