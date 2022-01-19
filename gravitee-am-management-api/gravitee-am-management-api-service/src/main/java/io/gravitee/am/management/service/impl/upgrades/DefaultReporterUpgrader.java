@@ -15,15 +15,10 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.model.Environment;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reporter;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.impl.ReporterServiceImpl;
-import io.reactivex.Completable;
+import io.gravitee.am.service.model.UpdateReporter;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,21 +41,19 @@ public class DefaultReporterUpgrader implements Upgrader, Ordered {
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
         reporterService.findAll()
-                .flatMapCompletable(this::updateDefaultReporter)
+                .filter(reporter -> reporter.isSystem())
+                .flatMapSingle(this::updateDefaultReporter)
                 .subscribe();
         return true;
     }
 
-    private Completable updateDefaultReporter(Reporter reporter) {
-        return reporterService.findById(reporter.getId())
-                .flatMapCompletable(reporter1 -> {
-                    if (reporter1.isSystem()) {
-                        logger.info("Set the default idp found with the default configurations, update idp {}", reporter1.getName());
-                        reporter1.setConfiguration(ReporterServiceImpl.getDefaultReporterConfiguration());
-                        return Completable.complete();
-                    }
-                    return Completable.complete();
-                });
+    private Single<Reporter> updateDefaultReporter(Reporter reporter) {
+        UpdateReporter updateReporter = new UpdateReporter();
+        updateReporter.setEnabled(reporter.isEnabled());
+        updateReporter.setName(reporter.getName());
+        updateReporter.setConfiguration(reporterService.createReporterConfig(reporter.getDomain()));
+
+        return reporterService.update(reporter.getDomain(), reporter.getId(), updateReporter, true);
     }
 
     @Override

@@ -109,7 +109,7 @@ public class ReporterResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser)))
+                        .flatMapSingle(__ -> reporterService.update(domain, reporter, updateReporter, authenticatedUser, false)))
                 .subscribe(response::resume, response::resume);
     }
 

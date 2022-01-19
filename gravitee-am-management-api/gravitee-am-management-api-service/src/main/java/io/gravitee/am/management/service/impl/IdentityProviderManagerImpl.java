@@ -248,6 +248,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         return identityProviderService.create(referenceType, referenceId, newIdentityProvider, null);
     }
 
+    @Override
     public String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider) {
 
         String providerConfig = null;

@@ -15,18 +15,10 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,25 +39,26 @@ public class DefaultIdentityProviderUpgrader implements Upgrader, Ordered {
     private IdentityProviderService identityProviderService;
 
     @Autowired
-    private IdentityProviderManagerImpl identityProviderManager;
+    private IdentityProviderManager identityProviderManager;
 
     @Override
     public boolean upgrade() {
         logger.info("Applying domain idp upgrade");
         identityProviderService.findAll()
+                .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
                 .subscribe();
         return true;
     }
 
     private Single<IdentityProvider> updateDefaultIdp(IdentityProvider identityProvider) {
+
         UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
         updateIdentityProvider.setDomainWhitelist(identityProvider.getDomainWhitelist());
         updateIdentityProvider.setMappers(identityProvider.getMappers());
         updateIdentityProvider.setName(identityProvider.getName());
         updateIdentityProvider.setRoleMapper(identityProvider.getRoleMapper());
-        updateIdentityProvider.setConfiguration(identityProvider.isSystem()
-                ? identityProvider.getConfiguration() : identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null));
+        updateIdentityProvider.setConfiguration(identityProviderManager.createProviderConfiguration(identityProvider.getReferenceId(), null));
 
         return identityProviderService.update(identityProvider.getReferenceId(), identityProvider.getId(), updateIdentityProvider, true);
     }

@@ -27,7 +27,6 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -180,7 +179,7 @@ public class ReporterServiceImpl implements ReporterService {
 
 
     @Override
-    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal) {
+    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
         LOGGER.debug("Update a reporter {} for domain {}", id, domain);
 
         return reporterRepository.findById(id)
@@ -189,7 +188,9 @@ public class ReporterServiceImpl implements ReporterService {
                     Reporter reporterToUpdate = new Reporter(oldReporter);
                     reporterToUpdate.setEnabled(updateReporter.isEnabled());
                     reporterToUpdate.setName(updateReporter.getName());
-                    reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
+                    if (!oldReporter.isSystem() || isUpgrader) {
+                        reporterToUpdate.setConfiguration(updateReporter.getConfiguration());
+                    }
                     reporterToUpdate.setUpdatedAt(new Date());
 
                     return checkReporterConfiguration(reporterToUpdate)
@@ -278,81 +279,96 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     private NewReporter createMongoReporter(String domain) {
-        Optional<String> mongoServers = getMongoServers(environment);
-        String mongoHost = null;
-        String mongoPort = null;
-        if (!mongoServers.isPresent()) {
-            mongoHost = environment.getProperty("management.mongodb.host", "localhost");
-            mongoPort = environment.getProperty("management.mongodb.port", "27017");
-        }
-
-        final String username = environment.getProperty("management.mongodb.username");
-        final String password = environment.getProperty("management.mongodb.password");
-        String mongoDBName = getMongoDatabaseName(environment);
-
-        String defaultMongoUri = "mongodb://";
-        if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
-            defaultMongoUri += username +":"+ password +"@";
-        }
-        defaultMongoUri += mongoServers.orElse(mongoHost+":"+mongoPort) + "/" + mongoDBName;
-        String mongoUri = environment.getProperty("management.mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
-
         NewReporter newReporter = new NewReporter();
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("MongoDB Reporter");
         newReporter.setSystem(true);
         newReporter.setType("mongodb");
-        newReporter.setConfiguration("{\"uri\":\"" + mongoUri + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "") + "\",\"port\":" + mongoPort + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "") + "\",\"bulkActions\":1000,\"flushInterval\":5}");
-        defaultReporterConfiguration = newReporter.getConfiguration();
+        newReporter.setConfiguration(createReporterConfig(domain));
 
         return newReporter;
     }
 
     private NewReporter createJdbcReporter(String domain) {
-        String jdbcHost = environment.getProperty("management.jdbc.host");
-        String jdbcPort = environment.getProperty("management.jdbc.port");
-        String jdbcDatabase = environment.getProperty("management.jdbc.database");
-        String jdbcDriver = environment.getProperty("management.jdbc.driver");
-        String jdbcUser = environment.getProperty("management.jdbc.username");
-        String jdbcPwd = environment.getProperty("management.jdbc.password");
-
-        // dash are forbidden in table name, replace them in domainName by underscore
-        String tableSuffix = null;
-        if (domain != null) {
-            tableSuffix = domain.replaceAll("-", "_");
-            if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
-                try {
-                    LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
-                    byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
-                    tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
-                } catch (NoSuchAlgorithmException e) {
-                    throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
-                }
-            }
-        }
-
         NewReporter newReporter = new NewReporter();
         newReporter.setId(RandomString.generate());
         newReporter.setEnabled(true);
         newReporter.setName("JDBC Reporter");
         newReporter.setSystem(true);
         newReporter.setType(REPORTER_AM_JDBC);
-        newReporter.setConfiguration("{\"host\":\"" + jdbcHost + "\"," +
-                "\"port\":" + jdbcPort + "," +
-                "\"database\":\"" + jdbcDatabase + "\"," +
-                "\"driver\":\"" + jdbcDriver + "\"," +
-                "\"username\":\"" + jdbcUser+ "\"," +
-                "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
-                "\"tableSuffix\":\"" + (tableSuffix != null ? tableSuffix : "") + "\"," +
-                "\"initialSize\":0," +
-                "\"maxSize\":10," +
-                "\"maxIdleTime\":30000," +
-                "\"maxLifeTime\":30000," +
-                "\"bulkActions\":1000," +
-                "\"flushInterval\":5}");
+        newReporter.setConfiguration(createReporterConfig(domain));
 
         return newReporter;
+    }
+
+    @Override
+    public String createReporterConfig(String domain) {
+        String reporterConfig = null;
+        if (useMongoReporter()) {
+            Optional<String> mongoServers = getMongoServers(environment);
+            String mongoHost = null;
+            String mongoPort = null;
+            if (!mongoServers.isPresent()) {
+                mongoHost = environment.getProperty("management.mongodb.host", "localhost");
+                mongoPort = environment.getProperty("management.mongodb.port", "27017");
+            }
+
+            final String username = environment.getProperty("management.mongodb.username");
+            final String password = environment.getProperty("management.mongodb.password");
+            String mongoDBName = getMongoDatabaseName(environment);
+
+            String defaultMongoUri = "mongodb://";
+            if (!StringUtils.isEmpty(username) && !StringUtils.isEmpty(password)) {
+                defaultMongoUri += username +":"+ password +"@";
+            }
+            defaultMongoUri += mongoServers.orElse(mongoHost+":"+mongoPort) + "/" + mongoDBName;
+            String mongoUri = environment.getProperty("management.mongodb.uri", addOptionsToURI(environment, defaultMongoUri));
+
+            reporterConfig = "{\"uri\":\"" + mongoUri
+                    + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
+                    + "\",\"port\":" + mongoPort
+                    + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
+                    + "\",\"reportableCollection\":\"reporter_audits" + (domain != null ? "_" + domain : "")
+                    + "\",\"bulkActions\":1000,\"flushInterval\":5}";
+        } else if (useJdbcReporter()) {
+            String jdbcHost = environment.getProperty("management.jdbc.host");
+            String jdbcPort = environment.getProperty("management.jdbc.port");
+            String jdbcDatabase = environment.getProperty("management.jdbc.database");
+            String jdbcDriver = environment.getProperty("management.jdbc.driver");
+            String jdbcUser = environment.getProperty("management.jdbc.username");
+            String jdbcPwd = environment.getProperty("management.jdbc.password");
+
+            // dash are forbidden in table name, replace them in domainName by underscore
+            String tableSuffix = null;
+            if (domain != null) {
+                tableSuffix = domain.replaceAll("-", "_");
+                if (tableSuffix.length() > TABLE_SUFFIX_MAX_LENGTH) {
+                    try {
+                        LOGGER.info("Table name 'reporter_audits_access_points_{}' will be too long, compute shortest unique name", tableSuffix);
+                        byte[] hash = MessageDigest.getInstance("sha-256").digest(tableSuffix.getBytes());
+                        tableSuffix = BaseEncoding.base16().encode(hash).substring(0, 30).toLowerCase();
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new IllegalStateException("Unable to compute digest of '" + domain + "' due to unknown sha-256 algorithm", e);
+                    }
+                }
+            }
+
+            reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
+                    "\"port\":" + jdbcPort + "," +
+                    "\"database\":\"" + jdbcDatabase + "\"," +
+                    "\"driver\":\"" + jdbcDriver + "\"," +
+                    "\"username\":\"" + jdbcUser+ "\"," +
+                    "\"password\":"+ (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
+                    "\"tableSuffix\":\"" + (tableSuffix != null ? tableSuffix : "") + "\"," +
+                    "\"initialSize\":0," +
+                    "\"maxSize\":10," +
+                    "\"maxIdleTime\":30000," +
+                    "\"maxLifeTime\":30000," +
+                    "\"bulkActions\":1000," +
+                    "\"flushInterval\":5}";
+        }
+        return reporterConfig;
     }
 
     private String addOptionsToURI(Environment environment, String mongoUri) {
