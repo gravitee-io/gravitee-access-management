@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
-import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
+import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -35,18 +36,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 import static java.util.Optional.ofNullable;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
@@ -69,48 +74,113 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
 
     @Override
     public void handle(RoutingContext routingContext) {
-        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        prepareContext(routingContext, client);
-        renderLoginPage(routingContext, client);
+        HttpServerRequest req = routingContext.request();
+        switch (req.method().name()) {
+            case "GET":
+                renderLoginPage(routingContext);
+                break;
+            case "POST":
+                redirect(routingContext);
+                break;
+            default:
+                routingContext.fail(405);
+        }
     }
 
-    private void prepareContext(RoutingContext routingContext, Client client) {
-        final HttpServerRequest request = routingContext.request();
+    private void renderLoginPage(RoutingContext routingContext) {
+        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         // remove sensible client data
-        routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
+        routingContext.put(CLIENT_CONTEXT_KEY, new ClientProperties(client));
         // put domain in context data
-        routingContext.put(ConstantKeys.DOMAIN_CONTEXT_KEY, domain);
+        routingContext.put(DOMAIN_CONTEXT_KEY, domain);
         // put request in context
+        final HttpServerRequest request = routingContext.request();
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(request.getDelegate(), true));
         routingContext.put(REQUEST_CONTEXT_KEY, evaluableRequest);
 
+        // put login settings in context
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
         var optionalSettings = ofNullable(loginSettings).filter(Objects::nonNull);
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
 
         // put error in context
-        final String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
-        final String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
-        routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
-        routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        final String error = request.getParam(ERROR_PARAM_KEY);
+        final String errorDescription = request.getParam(ERROR_DESCRIPTION_PARAM_KEY);
+        routingContext.put(ERROR_PARAM_KEY, error);
+        routingContext.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
         // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>(evaluableRequest.getParams().toSingleValueMap());
-        params.put(ConstantKeys.ERROR_PARAM_KEY, error);
-        params.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-        routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
+        params.put(ERROR_PARAM_KEY, error);
+        params.put(ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        routingContext.put(PARAM_CONTEXT_KEY, params);
 
+        // put actions in context
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-        routingContext.put(ACTION_KEY, resolveProxyRequest(request, routingContext.get(CONTEXT_PATH) + "/login", queryParams, true));
+        routingContext.put(ACTION_KEY, resolveProxyRequest(request, routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParams, true));
         routingContext.put(REGISTER_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
         routingContext.put(WEBAUTHN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
-    }
 
-    private void renderLoginPage(RoutingContext routingContext, Client client) {
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
         this.renderPage(routingContext, data, client, logger, "Unable to render Identifier-first login page");
+    }
+
+    private void redirect(RoutingContext routingContext) {
+        final List<IdentityProvider> socialProviders = routingContext.get(SOCIAL_PROVIDER_CONTEXT_KEY);
+        final String username = routingContext.request().getParam(USERNAME_PARAM_KEY);
+        final String[] domainName = username.split("@");
+
+        // username is not an email, continue
+        if (domainName.length < 2) {
+            doInternalRedirect(routingContext);
+            return;
+        }
+
+        // no social providers configured, continue
+        if (socialProviders == null) {
+            doInternalRedirect(routingContext);
+            return;
+        }
+
+        final IdentityProvider identityProvider = socialProviders
+                .stream()
+                .filter(s -> s.getDomainWhitelist() != null && s.getDomainWhitelist().stream().anyMatch(domainName[1]::equals))
+                .findFirst()
+                .orElse(null);
+
+        // no IdP has matched, continue
+        if (identityProvider == null) {
+            doInternalRedirect(routingContext);
+            return;
+        }
+
+        // else, redirect to the external provider
+        doExternalRedirect(routingContext, identityProvider);
+    }
+
+    private void doInternalRedirect(RoutingContext routingContext) {
+        final String redirectUrl = routingContext.get(CONTEXT_PATH) + "/login";
+        final HttpServerRequest request = routingContext.request();
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+        queryParams.add(Parameters.LOGIN_HINT, request.getParam(USERNAME_PARAM_KEY));
+        final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
+        doRedirect0(routingContext, url);
+    }
+
+    private void doExternalRedirect(RoutingContext routingContext, IdentityProvider identityProvider) {
+        Map<String, String> urls = routingContext.get(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+        StringBuilder sb = new StringBuilder(urls.get(identityProvider.getId()));
+        sb.append("&login_hint=" + routingContext.request().getParam(USERNAME_PARAM_KEY));
+        doRedirect0(routingContext, sb.toString());
+    }
+
+    private void doRedirect0(RoutingContext routingContext, String url) {
+        routingContext.response()
+                .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, url)
+                .setStatusCode(302)
+                .end();
     }
 
     @Override

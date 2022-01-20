@@ -44,6 +44,26 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'IDENTIFIER_FIRST_LOGIN'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Identifier-first Login custom</title>
+        </head>
+        <body>
+          <form th:action="${action}" method="post">
+            <input type="text" name="username" required/>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+            <button type="submit">Sign in</button>
+            <a th:if="${allowRegister}" th:href="${registerAction}">No account ? Register</a>
+            <a th:if="${allowPasswordless}" th:href="${passwordlessAction}">Sign in with fingerprint, device or security key</a>
+          </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
     <pre *ngIf="data.rawTemplate === 'WEBAUTHN_LOGIN'">
       <![CDATA[
         <!DOCTYPE html>

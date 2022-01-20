@@ -237,11 +237,19 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(geoIpHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
+        // Identifier First Login route
+        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+
         // login route
         rootRouter.get(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
+                .handler(new LoginHideFormHandler(domain))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
 
         rootRouter.post(PATH_LOGIN)
@@ -373,13 +381,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
-        //identifier First Login Route
-        rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
-                .handler(clientRequestParseHandler)
-                .handler(botDetectionHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
-                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
-
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -454,7 +455,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .route(PATH_WEBAUTHN_LOGIN)
                 .handler(sessionHandler);
 
-        //Identifier First login
+        // Identifier First login endpoint
         router
                 .route(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(sessionHandler);
@@ -484,7 +485,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
 
-        //identifier First Login Route
+        // Identifier First Login endpoint
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
     }
 
