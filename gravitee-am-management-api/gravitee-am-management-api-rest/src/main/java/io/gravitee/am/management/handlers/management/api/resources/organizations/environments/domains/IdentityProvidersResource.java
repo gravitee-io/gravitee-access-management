@@ -21,12 +21,14 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -116,10 +118,11 @@ public class IdentityProvidersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
-                        .map(identityProvider -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/identities/" + identityProvider.getId()))
-                                .entity(identityProvider)
-                                .build()))
+                        .map(identityProvider -> Response.created(URI.create("/organizations/" + organizationId + "/environments/"
+                                                    + environmentId + "/domains/" + domain + "/identities/" + identityProvider.getId()))
+                                            .entity(identityProvider)
+                                            .build()
+                        ))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -133,7 +136,7 @@ public class IdentityProvidersResource extends AbstractResource {
         filteredIdentityProvider.setId(identityProvider.getId());
         filteredIdentityProvider.setName(identityProvider.getName());
         filteredIdentityProvider.setType(identityProvider.getType());
-
+        filteredIdentityProvider.setSystem(identityProvider.isSystem());
         return filteredIdentityProvider;
     }
 }

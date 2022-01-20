@@ -25,8 +25,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -89,6 +87,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporterMongo.setEnabled(reporter.isEnabled());
         reporterMongo.setDomain(reporter.getDomain());
         reporterMongo.setName(reporter.getName());
+        reporterMongo.setSystem(reporter.isSystem());
         reporterMongo.setType(reporter.getType());
         reporterMongo.setDataType(reporter.getDataType());
         reporterMongo.setConfiguration(reporter.getConfiguration());
@@ -107,6 +106,7 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         reporter.setEnabled(reporterMongo.isEnabled());
         reporter.setDomain(reporterMongo.getDomain());
         reporter.setName(reporterMongo.getName());
+        reporter.setSystem(reporterMongo.isSystem());
         reporter.setType(reporterMongo.getType());
         reporter.setDataType(reporterMongo.getDataType());
         reporter.setConfiguration(reporterMongo.getConfiguration());

@@ -34,6 +34,8 @@ public class IdentityProviderMongo extends Auditable {
 
     private String type;
 
+    private boolean system;
+
     private String configuration;
 
     /**
@@ -76,6 +78,14 @@ public class IdentityProviderMongo extends Auditable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public String getConfiguration() {

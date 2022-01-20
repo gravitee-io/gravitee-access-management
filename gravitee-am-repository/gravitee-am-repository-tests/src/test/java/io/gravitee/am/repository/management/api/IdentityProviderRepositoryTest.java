@@ -71,6 +71,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProvider.setReferenceId("ref" + random);
         identityProvider.setConfiguration("{\"field\": \"" + random + "\"}");
         identityProvider.setExternal(true);
+        identityProvider.setSystem(true);
         identityProvider.setType("type" + random);
 
         Map<String, String> mappers = new HashMap<>();
@@ -108,6 +109,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     private void assertEqualsTo(IdentityProvider identityProvider, TestObserver<IdentityProvider> testObserver) {
         testObserver.assertValue(idp -> idp.getName().equals(identityProvider.getName()));
         testObserver.assertValue(idp -> idp.getType().equals(identityProvider.getType()));
+        testObserver.assertValue(idp -> idp.isSystem() == identityProvider.isSystem());
         testObserver.assertValue(idp -> idp.getConfiguration().equals(identityProvider.getConfiguration()));
         testObserver.assertValue(idp -> idp.getReferenceId().equals(identityProvider.getReferenceId()));
         testObserver.assertValue(idp -> idp.getReferenceType().equals(identityProvider.getReferenceType()));

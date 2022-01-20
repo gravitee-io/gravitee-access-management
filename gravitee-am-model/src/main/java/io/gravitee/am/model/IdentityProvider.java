@@ -31,6 +31,8 @@ public class IdentityProvider {
 
     private String type;
 
+    private boolean system;
+
     private String configuration;
 
     private Map<String, String> mappers;
@@ -56,6 +58,7 @@ public class IdentityProvider {
         this.id = other.id;
         this.name = other.name;
         this.type = other.type;
+        this.system = other.system;
         this.configuration = other.configuration;
         this.mappers = other.mappers;
         this.roleMapper = other.roleMapper;
@@ -161,6 +164,14 @@ public class IdentityProvider {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     @Override

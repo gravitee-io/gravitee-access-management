@@ -81,6 +81,7 @@ public class IdentityProviderResource extends AbstractResource {
                         .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
                         .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
                         .map(identityProvider1 -> {
+                            identityProvider1 = hideConfiguration(identityProvider1);
                             if (identityProvider1.getReferenceType() == ReferenceType.DOMAIN
                                     && !identityProvider1.getReferenceId().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Identity provider does not belong to domain");
@@ -88,6 +89,13 @@ public class IdentityProviderResource extends AbstractResource {
                             return Response.ok(identityProvider1).build();
                         }))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private IdentityProvider hideConfiguration(IdentityProvider identityProvider1) {
+        if (identityProvider1.isSystem()) {
+            identityProvider1.setConfiguration(null);
+        }
+        return identityProvider1;
     }
 
     @PUT
@@ -113,7 +121,8 @@ public class IdentityProviderResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser)))
+                        .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser, false)))
+                        .map(idp -> hideConfiguration(idp))
                 .subscribe(response::resume, response::resume);
     }
 
