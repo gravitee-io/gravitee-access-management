@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "4f6054f4-67e6-47a7-8b4f-f600bc779f6c",
+		"_postman_id": "af761f6a-1c7e-46c7-b629-d104ece898c6",
 		"name": "Gravitee.io - AM - Login - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1107,7 +1107,7 @@
 					"response": []
 				},
 				{
-					"name": "Redirect to login form",
+					"name": "Redirect to login identifier form",
 					"event": [
 						{
 							"listen": "test",
@@ -1160,14 +1160,14 @@
 					"response": []
 				},
 				{
-					"name": "302 empty username",
+					"name": "200 empty username",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 302\", function () {",
-									"    pm.response.to.have.status(302);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1194,7 +1194,7 @@
 							"urlencoded": []
 						},
 						"url": {
-							"raw": "{{action}}?client_id={{clientId3}}&username=&response_type={{response_type}}&redirect_uri={{redirect_uri}}&state=1234-5678-9876",
+							"raw": "{{action}}?client_id={{clientId3}}&username=",
 							"host": [
 								"{{action}}"
 							],
@@ -1208,16 +1208,19 @@
 									"value": ""
 								},
 								{
-									"key": "response_type",
-									"value": "{{response_type}}"
+									"key": "",
+									"value": "",
+									"disabled": true
 								},
 								{
-									"key": "redirect_uri",
-									"value": "{{redirect_uri}}"
+									"key": "",
+									"value": "",
+									"disabled": true
 								},
 								{
-									"key": "state",
-									"value": "1234-5678-9876"
+									"key": "",
+									"value": "",
+									"disabled": true
 								}
 							]
 						},
@@ -1226,14 +1229,14 @@
 					"response": []
 				},
 				{
-					"name": "302 null username",
+					"name": "200 null username",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.test(\"Status code is 302\", function () {",
-									"    pm.response.to.have.status(302);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
 									"});"
 								],
 								"type": "text/javascript"
@@ -1260,7 +1263,7 @@
 							"urlencoded": []
 						},
 						"url": {
-							"raw": "{{action}}?client_id={{clientId3}}&response_type={{response_type}}&redirect_uri={{redirect_uri}}&state=1234-5678-9876",
+							"raw": "{{action}}?client_id={{clientId3}}",
 							"host": [
 								"{{action}}"
 							],
@@ -1268,18 +1271,6 @@
 								{
 									"key": "client_id",
 									"value": "{{clientId3}}"
-								},
-								{
-									"key": "response_type",
-									"value": "{{response_type}}"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{redirect_uri}}"
-								},
-								{
-									"key": "state",
-									"value": "1234-5678-9876"
 								}
 							]
 						},
@@ -1335,7 +1326,7 @@
 							"urlencoded": []
 						},
 						"url": {
-							"raw": "{{action}}?client_id={{clientId3}}&username=user&response_type={{response_type}}&redirect_uri={{redirect_uri}}&state=1234-5678-9876",
+							"raw": "{{action}}?client_id={{clientId3}}&username=user",
 							"host": [
 								"{{action}}"
 							],
@@ -1347,18 +1338,6 @@
 								{
 									"key": "username",
 									"value": "user"
-								},
-								{
-									"key": "response_type",
-									"value": "{{response_type}}"
-								},
-								{
-									"key": "redirect_uri",
-									"value": "{{redirect_uri}}"
-								},
-								{
-									"key": "state",
-									"value": "1234-5678-9876"
 								}
 							]
 						},
@@ -1384,7 +1363,7 @@
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
 									"    // if login was ok, we replay the authorize flow",
-									"    tests['Redirect to consent page'] = location.includes('/oauth/authorize');",
+									"    tests['Redirect to login page'] = location.includes('/login');",
 									"});"
 								],
 								"type": "text/javascript"
