@@ -126,7 +126,7 @@ export class ReporterComponent implements OnInit {
   }
 
   save() {
-    this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration);
+    this.reporter.configuration = JSON.stringify(this.updateReporterConfiguration ? this.updateReporterConfiguration : {});
     if (this.createMode) {
       this.reporterService.create(this.domainId, this.reporter, this.organizationContext).subscribe(data => {
         this.reporter = data;

@@ -198,7 +198,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).test();
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -209,12 +209,96 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldUpdate_isUpgrader_isSystem() {
+        UpdateIdentityProvider updateIdentityProvider = (UpdateIdentityProvider) createIdentityProviders(true, false);
+        IdentityProvider identityProvider = (IdentityProvider) createIdentityProviders(false, true);
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
+        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, true).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(identityProviderRepository, times(1))
+                .update(argThat(upIdp -> upIdp.getConfiguration().equals("new-configuration")));
+        verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldUpdate_notUpgrader_notSystem() {
+        UpdateIdentityProvider updateIdentityProvider = (UpdateIdentityProvider) createIdentityProviders(true, false);
+        IdentityProvider identityProvider = (IdentityProvider) createIdentityProviders(false, false);
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
+        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(identityProviderRepository, times(1))
+                .update(argThat(upIdp -> upIdp.getConfiguration().equals("new-configuration")));
+        verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdate_notUpgrader_isSystem() {
+
+        UpdateIdentityProvider updateIdentityProvider = (UpdateIdentityProvider) createIdentityProviders(true, false);
+        IdentityProvider identityProvider = (IdentityProvider) createIdentityProviders(false, true);
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
+        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(identityProviderRepository, times(1))
+                .update(argThat(upIdp -> upIdp.getConfiguration().equals("initial-config")));
+        verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    private Object createIdentityProviders(boolean isUpdate, boolean isSystem) {
+        if (isUpdate) {
+            UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
+            updateIdentityProvider.setName("IDP to test");
+            updateIdentityProvider.setConfiguration("new-configuration");
+
+            return updateIdentityProvider;
+        } else {
+            IdentityProvider identityProvider = new IdentityProvider();
+            identityProvider.setId("idp-to-upgrade");
+            identityProvider.setName("IDP to test");
+            identityProvider.setConfiguration("initial-config");
+            identityProvider.setReferenceType(ReferenceType.DOMAIN);
+            identityProvider.setReferenceId("domain#1");
+            identityProvider.setSystem(isSystem);
+
+            return identityProvider;
+        }
+    }
+
+    @Test
     public void shouldUpdate_technicalException() {
         UpdateIdentityProvider updateIdentityProvider = Mockito.mock(UpdateIdentityProvider.class);
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
-        identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider).subscribe(testObserver);
+        identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

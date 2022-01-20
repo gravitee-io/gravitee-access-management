@@ -15,15 +15,11 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
-import io.gravitee.am.model.ReferenceType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,6 +31,7 @@ public class JdbcIdentityProvider {
     private String id;
     private String name;
     private String type;
+    private boolean system;
     private String configuration;
     private String mappers;
     @Column("role_mapper")
@@ -73,6 +70,14 @@ public class JdbcIdentityProvider {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public String getConfiguration() {

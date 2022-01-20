@@ -28,6 +28,7 @@ public class Reporter {
     private boolean enabled;
     private String type;
     private String name;
+    private boolean system;
     private String dataType;
     private String configuration;
     private Date createdAt;
@@ -42,6 +43,7 @@ public class Reporter {
         this.enabled = other.enabled;
         this.type = other.type;
         this.name = other.name;
+        this.system = other.system;
         this.dataType = other.dataType;
         this.configuration = other.configuration;
         this.createdAt = other.createdAt;
@@ -86,6 +88,14 @@ public class Reporter {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public String getDataType() {

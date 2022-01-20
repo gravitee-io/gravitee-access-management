@@ -23,7 +23,6 @@ import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
 import io.gravitee.am.model.Reporter;
-import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.ReporterNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
@@ -82,20 +81,20 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     }
 
     @Override
-    public Single<Reporter> create(String domain, NewReporter newReporter, User principal) {
-        return reporterService.create(domain, newReporter, principal)
+    public Single<Reporter> create(String domain, NewReporter newReporter, User principal, boolean system) {
+        return reporterService.create(domain, newReporter, principal, system)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).reporter(reporter1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal) {
+    public Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader) {
         return reporterService.findById(id)
                 .switchIfEmpty(Single.error(new ReporterNotFoundException(id)))
                 .flatMap(oldReporter -> filterSensitiveData(oldReporter)
                         .flatMap(safeOldReporter -> updateSensitiveData(updateReporter, oldReporter)
-                                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal))
+                                .flatMap(reporterToUpdate -> reporterService.update(domain, id, reporterToUpdate, principal, isUpgrader))
                                 .flatMap(this::filterSensitiveData)
                                 .doOnSuccess(reporter1 -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).oldValue(safeOldReporter).reporter(reporter1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ReporterAuditBuilder.class).principal(principal).type(EventType.REPORTER_UPDATED).throwable(throwable))))
@@ -106,6 +105,11 @@ public class ReporterServiceProxyImpl extends AbstractSensitiveProxy implements 
     public Completable delete(String reporterId, User principal) {
         return reporterService.delete(reporterId, principal);
     }
+
+    @Override
+    public String createReporterConfig(String domain){
+        return reporterService.createReporterConfig(domain);
+    };
 
     private Single<Reporter> filterSensitiveData(Reporter reporter) {
         return reporterPluginService.getSchema(reporter.getType())

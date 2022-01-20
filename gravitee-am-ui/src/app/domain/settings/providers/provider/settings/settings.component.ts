@@ -58,6 +58,11 @@ export class ProviderSettingsComponent implements OnInit {
 
   ngOnInit() {
     this.provider = this.route.snapshot.data['provider'];
+    if (this.provider.system) {
+      // settings tab is useless for system providers
+      // define the mappers as default landing page in this case
+      this.router.navigate(['../mappers'], { relativeTo: this.route });
+    }
     this.certificates = this.route.snapshot.data['certificates'];
     this.customCode = '<a th:href="${authorizeUrls.get(\'' + this.provider.id + '\')}">SIGN IN WITH OAUTH2 PROVIDER</a>';
     if (this.router.routerState.snapshot.url.startsWith('/settings')) {

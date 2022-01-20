@@ -24,8 +24,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -42,22 +40,24 @@ public interface ReporterService {
 
     NewReporter createInternal(String domain);
 
-    Single<Reporter> create(String domain, NewReporter newReporter, User principal);
+    Single<Reporter> create(String domain, NewReporter newReporter, User principal, boolean system);
 
-    Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal);
+    Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal, boolean isUpgrader);
 
     Completable delete(String reporterId, User principal);
+
+    String createReporterConfig(String domain);
 
     default NewReporter createInternal() {
         return createInternal(null);
     }
 
     default Single<Reporter> create(String domain, NewReporter newReporter) {
-        return create(domain, newReporter, null);
+        return create(domain, newReporter, null, true);
     }
 
-    default Single<Reporter> update(String domain, String id, UpdateReporter updateReporter) {
-        return update(domain, id, updateReporter, null);
+    default Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, boolean isUpgrader) {
+        return update(domain, id, updateReporter, null, isUpgrader);
     }
 
     default Completable delete(String reporterId) {

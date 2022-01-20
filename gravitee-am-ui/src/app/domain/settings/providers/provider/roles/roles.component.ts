@@ -105,7 +105,7 @@ export class ProviderRolesComponent implements OnInit {
   }
 
   update() {
-    this.provider.configuration = JSON.parse(this.provider.configuration);
+    this.provider.configuration = this.provider.configuration ? JSON.parse(this.provider.configuration) : {};
     this.provider.roleMapper = this.providerRoleMapper;
     this.providerService.update(this.domainId, this.provider.id, this.provider, this.organizationContext).subscribe(data => {
       this.snackbarService.open("Role mapping updated");

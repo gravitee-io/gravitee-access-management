@@ -41,6 +41,7 @@ public class JdbcReporter {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    private boolean system;
 
     public String getId() {
         return id;
@@ -112,5 +113,13 @@ public class JdbcReporter {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 }
