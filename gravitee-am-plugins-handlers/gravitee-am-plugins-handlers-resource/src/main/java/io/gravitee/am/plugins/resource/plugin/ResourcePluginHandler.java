@@ -18,9 +18,9 @@ package io.gravitee.am.plugins.resource.plugin;
 import io.gravitee.am.plugins.resource.core.ResourceDefinition;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.Resource;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ResourcePluginHandler implements PluginHandler {
+public class ResourcePluginHandler extends AbstractPluginHandler {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ResourcePluginHandler.class);
 
@@ -43,20 +43,27 @@ public class ResourcePluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.RESOURCE.name().equalsIgnoreCase(plugin.type());
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    protected String type() {
+        return PluginType.RESOURCE.name();
+    }
 
-            final Class<?> resourceClass = classloader.loadClass(plugin.clazz());
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
+    @Override
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
+        try {
             LOGGER.info("Register a new resource plugin: {} [{}]", plugin.id(), plugin.clazz());
 
-            Assert.isAssignable(Resource.class, resourceClass);
+            Assert.isAssignable(Resource.class, pluginClass);
 
-            Resource resource = createInstance((Class<Resource>) resourceClass);
+            var resource = createInstance((Class<Resource>) pluginClass);
 
             resourcePluginManager.register(new ResourceDefinition(plugin, resource));
         } catch (Exception iae) {
@@ -66,7 +73,7 @@ public class ResourcePluginHandler implements PluginHandler {
 
     private <T> T createInstance(Class<T> clazz) throws Exception {
         try {
-            return clazz.newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
             LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;
