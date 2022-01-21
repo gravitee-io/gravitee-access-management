@@ -16,10 +16,7 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.*;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
@@ -51,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
@@ -84,6 +82,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     @Autowired
     private MongoReporterConfiguration configuration;
+
+    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
 
     private MongoCollection<AuditMongo> reportableCollection;
 
@@ -138,6 +139,13 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         // init reportable collection
         reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
+        this.createIndex(reportableCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), ensureIndexOnStart);
+        this.createIndex(reportableCollection, new Document(FIELD_TIMESTAMP, 1), ensureIndexOnStart);
+        this.createIndex(reportableCollection, new Document(FIELD_TYPE, 1), ensureIndexOnStart);
+        this.createIndex(reportableCollection, new Document(FIELD_STATUS, 1), ensureIndexOnStart);
+        this.createIndex(reportableCollection, new Document(FIELD_ACTOR, 1), ensureIndexOnStart);
+        this.createIndex(reportableCollection, new Document(FIELD_TARGET, 1), ensureIndexOnStart);
+
         // init bulk processor
         disposable = bulkProcessor.buffer(
                 configuration.getFlushInterval(),
@@ -146,6 +154,14 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
                 .subscribe();
+    }
+
+    protected void createIndex(MongoCollection<?> collection, Document document, boolean ensure) {
+        if (ensure) {
+            Single.fromPublisher(collection.createIndex(document, new IndexOptions()))
+                    .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
+                    .doOnError(throwable -> logger.error("Error occurs during creation of index", throwable)).blockingGet();
+        }
     }
 
     @Override
