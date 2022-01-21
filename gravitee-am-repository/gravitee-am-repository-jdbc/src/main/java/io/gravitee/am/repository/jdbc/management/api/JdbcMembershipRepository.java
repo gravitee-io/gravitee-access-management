@@ -33,12 +33,9 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -140,5 +137,13 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return membershipRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        return monoToCompletable(dbClient.delete().from(JdbcMembership.class)
+                .matching(from(where("reference_id").is(referenceId)
+                        .and(where("reference_type").is(referenceType.name())))).fetch().rowsUpdated());
     }
 }

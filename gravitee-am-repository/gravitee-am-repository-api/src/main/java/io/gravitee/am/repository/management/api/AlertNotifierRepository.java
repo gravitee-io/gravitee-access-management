@@ -49,6 +49,8 @@ public interface AlertNotifierRepository extends CrudRepository<AlertNotifier, S
      */
     Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId);
 
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
     /**
      * Find all the alert notifier attached to the specified reference and matching the specified criteria.
      *

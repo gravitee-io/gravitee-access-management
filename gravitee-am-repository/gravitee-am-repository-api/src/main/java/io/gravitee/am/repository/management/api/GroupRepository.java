@@ -19,6 +19,7 @@ import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,6 +35,8 @@ public interface GroupRepository extends CrudRepository<Group, String> {
     Flowable<Group> findByMember(String memberId);
 
     Flowable<Group> findAll(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     Single<Page<Group>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 

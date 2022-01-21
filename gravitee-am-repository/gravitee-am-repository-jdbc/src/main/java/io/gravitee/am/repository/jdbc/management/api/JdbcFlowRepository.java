@@ -20,6 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Step;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcExtensionGrant;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcFlow;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringFlowRepository;
 import io.gravitee.am.repository.management.api.FlowRepository;
@@ -30,6 +31,7 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.r2dbc.core.DatabaseClient;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.stereotype.Repository;
@@ -212,6 +214,14 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         return flowRepository.findAll(referenceType.name(), referenceId)
                 .map(this::toEntity)
                 .flatMap(flow -> completeFlow(flow).toFlowable());
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        return monoToCompletable(dbClient.delete().from(JdbcFlow.class)
+                .matching(from(where("reference_id").is(referenceId)
+                        .and(where("reference_type").is(referenceType.name())))).fetch().rowsUpdated());
     }
 
     @Override

@@ -233,6 +233,11 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    public Completable deleteByReference(String referenceId, ReferenceType referenceType) {
+        return membershipRepository.deleteByReference(referenceType, referenceId);
+    }
+
+    @Override
     public Completable addDomainUserRoleIfNecessary(String organizationId, String environmentId, String domainId, NewMembership newMembership, User principal) {
 
         MembershipCriteria criteria = convert(newMembership);

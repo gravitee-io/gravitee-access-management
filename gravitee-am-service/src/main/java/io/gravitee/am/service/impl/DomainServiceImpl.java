@@ -29,8 +29,6 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
-import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
@@ -138,6 +136,12 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private AlertNotifierService alertNotifierService;
+
+    @Autowired
+    private BotDetectionService botDetectionService;
+
+    @Autowired
+    private ServiceResourceService serviceResourceService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -353,92 +357,43 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                 .flatMapCompletable(domain -> {
                     // delete applications
-                    return applicationService.findByDomain(domainId)
-                            .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).collect(Collectors.toList());
-                                return Completable.concat(deleteApplicationsCompletable);
-                            })
+                    return applicationService.deleteByDomain(domainId)
                             // delete certificates
-                            .andThen(certificateService.findByDomain(domainId)
-                                    .flatMapCompletable(certificate -> certificateService.delete(certificate.getId()))
-                            )
+                            .andThen(certificateService.deleteByDomain(domainId))
                             // delete identity providers
-                            .andThen(identityProviderService.findByDomain(domainId)
-                                    .flatMapCompletable(identityProvider ->
-                                        identityProviderService.delete(domainId, identityProvider.getId())
-                                    )
-                            )
+                            .andThen(identityProviderService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             // delete extension grants
-                            .andThen(extensionGrantService.findByDomain(domainId)
-                                    .flatMapCompletable(extensionGrant -> extensionGrantService.delete(domainId, extensionGrant.getId()))
-                            )
+                            .andThen(extensionGrantService.deleteByDomain(domainId))
                             // delete roles
-                            .andThen(roleService.findByDomain(domainId)
-                                    .flatMapCompletable(roles -> {
-                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(ReferenceType.DOMAIN, domainId, r.getId())).collect(Collectors.toList());
-                                        return Completable.concat(deleteRolesCompletable);
-                                    })
-                            )
+                            .andThen(roleService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             // delete users
-                            .andThen(userService.findByDomain(domainId)
-                                    .flatMapCompletable(user ->
-                                        userService.delete(user.getId()))
-                            )
+                            .andThen(userService.deleteByDomain(domainId))
                             // delete groups
-                            .andThen(groupService.findByDomain(domainId)
-                                    .flatMapCompletable(group ->
-                                        groupService.delete(ReferenceType.DOMAIN, domainId, group.getId()))
-                            )
+                            .andThen(groupService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             // delete scopes
-                            .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
-                                    .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).collect(Collectors.toList());
-                                        return Completable.concat(deleteScopesCompletable);
-                                    })
-                            )
+                            .andThen(scopeService.deleteByDomain(domainId))
                             // delete email templates
-                            .andThen(emailTemplateService.findAll(ReferenceType.DOMAIN, domainId)
-                                    .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))
-                            )
+                            .andThen(emailTemplateService.deleteByDomain(domainId))
                             // delete form templates
-                            .andThen(formService.findByDomain(domainId)
-                                    .flatMapCompletable(formTemplate -> formService.delete(domainId, formTemplate.getId()))
-                            )
+                            .andThen(formService.deleteByDomain(domainId))
+                            // delete bot detection
+                            .andThen(botDetectionService.deleteByDomain(domainId))
+                            // delete service resources
+                            .andThen(serviceResourceService.deleteByDomain(domainId))
                             // delete reporters
-                            .andThen(reporterService.findByDomain(domainId)
-                                    .flatMapCompletable(reporter ->
-                                        reporterService.delete(reporter.getId()))
-                            )
+                            .andThen(reporterService.deleteByDomain(domainId))
                             // delete flows
-                            .andThen(flowService.findAll(ReferenceType.DOMAIN, domainId)
-                                    .filter(f -> f.getId() != null)
-                                    .flatMapCompletable(flows -> flowService.delete(flows.getId()))
-                            )
+                            .andThen(flowService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             // delete memberships
-                            .andThen(membershipService.findByReference(domainId, ReferenceType.DOMAIN)
-                                    .flatMapCompletable(membership ->  membershipService.delete(membership.getId()))
-                            )
+                            .andThen(membershipService.deleteByReference(domainId, ReferenceType.DOMAIN))
                             // delete factors
-                            .andThen(factorService.findByDomain(domainId)
-                                    .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
-                            )
+                            .andThen(factorService.deleteByDomain(domainId))
                             // delete uma resources
-                            .andThen(resourceService.findByDomain(domainId)
-                                    .flatMapCompletable(resources -> {
-                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).collect(Collectors.toList());
-                                        return Completable.concat(deletedResourceCompletable);
-                                    })
-                            )
+                            .andThen(resourceService.deleteByDomain(domainId))
                             // delete alert triggers
-                            .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
-                                    .flatMapCompletable(alertTrigger -> alertTriggerService.delete(alertTrigger.getReferenceType(), alertTrigger.getReferenceId(), alertTrigger.getId(), principal)
-                                    )
-                            )
+                            .andThen(alertTriggerService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             // delete alert notifiers
-                            .andThen(alertNotifierService.findByDomainAndCriteria(domainId, new AlertNotifierCriteria())
-                                    .flatMapCompletable(alertNotifier -> alertNotifierService.delete(alertNotifier.getReferenceType(), alertNotifier.getReferenceId(), alertNotifier.getId(), principal)
-                                    )
-                            )
+                            .andThen(alertNotifierService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))

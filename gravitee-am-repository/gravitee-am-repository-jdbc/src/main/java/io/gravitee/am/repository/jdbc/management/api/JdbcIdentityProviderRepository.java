@@ -39,6 +39,7 @@ import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -154,5 +155,13 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return this.identityProviderRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType.name(), referenceId);
+        return monoToCompletable(dbClient.delete().from(JdbcIdentityProvider.class)
+                .matching(from(where("reference_id").is(referenceId)
+                        .and(where("reference_type").is(referenceType.name())))).fetch().rowsUpdated());
     }
 }

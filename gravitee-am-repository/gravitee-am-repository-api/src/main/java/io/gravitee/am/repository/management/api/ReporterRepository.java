@@ -17,10 +17,8 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
-import io.reactivex.Single;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,4 +29,6 @@ public interface ReporterRepository extends CrudRepository<Reporter, String> {
     Flowable<Reporter> findAll();
 
     Flowable<Reporter> findByDomain(String domain);
+
+    Completable deleteByDomain(String domain);
 }

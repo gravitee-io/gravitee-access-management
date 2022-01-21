@@ -36,6 +36,8 @@ public interface FactorService {
 
     Flowable<Factor> findByDomain(String domain);
 
+    Completable deleteByDomain(String domain);
+
     Single<Factor> create(String domain, NewFactor factor, User principal);
 
     Single<Factor> update(String domain, String id, UpdateFactor updateFactor, User principal);

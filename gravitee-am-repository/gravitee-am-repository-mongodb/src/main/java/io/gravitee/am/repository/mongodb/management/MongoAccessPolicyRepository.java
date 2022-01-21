@@ -98,6 +98,11 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
         return Completable.fromPublisher(accessPoliciesCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(accessPoliciesCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
     private AccessPolicy convert(AccessPolicyMongo accessPolicyMongo) {
         if (accessPolicyMongo == null) {
             return null;

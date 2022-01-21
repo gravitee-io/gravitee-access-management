@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.model.UpdateReporter;
@@ -23,8 +24,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -47,6 +46,8 @@ public interface ReporterService {
     Single<Reporter> update(String domain, String id, UpdateReporter updateReporter, User principal);
 
     Completable delete(String reporterId, User principal);
+
+    Completable deleteByDomain(String domain);
 
     default NewReporter createInternal() {
         return createInternal(null);

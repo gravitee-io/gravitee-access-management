@@ -241,7 +241,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     @Override
     public Completable delete(String domain, String identityProviderId, User principal) {
-
         return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Delete identity providers by reference {}/{}", referenceId, referenceType);
+        return identityProviderRepository.deleteByReference(referenceType, referenceId);
     }
 }

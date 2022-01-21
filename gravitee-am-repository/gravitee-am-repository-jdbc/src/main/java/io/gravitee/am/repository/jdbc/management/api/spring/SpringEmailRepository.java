@@ -48,4 +48,5 @@ public interface SpringEmailRepository extends RxJava2CrudRepository<JdbcEmail, 
     @Query("select * from emails e where e.reference_id = :refId and e.reference_type = :refType and e.template = :tpl and e.client IS NULL")
     Maybe<JdbcEmail> findByTemplate(@Param("refId")String refId, @Param("refType") String refType,
                                     @Param("tpl") String template);
+
 }

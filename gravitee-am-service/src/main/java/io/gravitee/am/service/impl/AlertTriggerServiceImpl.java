@@ -192,4 +192,9 @@ public class AlertTriggerServiceImpl implements io.gravitee.am.service.AlertTrig
                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(AlertTriggerAuditBuilder.class).type(EventType.ALERT_TRIGGER_DELETED).alertTrigger(alertTrigger).principal(deletedBy)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(AlertTriggerAuditBuilder.class).type(EventType.ALERT_TRIGGER_DELETED).alertTrigger(alertTrigger).principal(deletedBy).throwable(throwable)));
     }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return this.alertTriggerRepository.deleteByReference(referenceType, referenceId);
+    }
 }

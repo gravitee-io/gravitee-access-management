@@ -302,4 +302,20 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         Mono<Integer> delete = dbClient.delete().from(databaseDialectHelper.toSql(quoted("groups"))).matching(from(where("id").is(id))).fetch().rowsUpdated();
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("delete Group with referenceId {}/{}", referenceId, referenceType);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<Integer> delete = dbClient.delete().from(databaseDialectHelper.toSql(quoted("groups"))).matching(from(where("reference_type").is(referenceType.name()).and(where("reference_id").is(referenceId)))).fetch().rowsUpdated();
+        return monoToCompletable(deleteChildEntitiesByRef(referenceType, referenceId).then(delete).as(trx::transactional));
+    }
+
+    private Mono<Integer> deleteChildEntitiesByRef(ReferenceType referenceType, String referenceId) {
+        Mono<Integer> deleteRoles = dbClient.execute("DELETE FROM group_roles WHERE group_id IN (SELECT id FROM groups u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        Mono<Integer> deleteMembers = dbClient.execute("DELETE FROM group_members WHERE group_id IN (SELECT id FROM groups u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        return deleteRoles.then(deleteMembers);
+    }
+
 }

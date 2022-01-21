@@ -51,6 +51,30 @@ public class BotDetectionRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValueCount(1);
     }
 
+    @Test
+    public void testDeleteByDomain() throws TechnicalException {
+        BotDetection botDetection = buildBotDetection();
+        botDetection.setReferenceId("testDomain");
+        botDetection.setReferenceType(ReferenceType.DOMAIN);
+        repository.create(botDetection).blockingGet();
+
+        TestSubscriber<BotDetection> testSubscriber = repository.findByReference(ReferenceType.DOMAIN,"testDomain").test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+
+        final TestObserver<Void> testDomain = repository.deleteByReference(ReferenceType.DOMAIN, "testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertNoErrors();
+
+        testSubscriber = repository.findByReference(ReferenceType.DOMAIN,"testDomain").test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+    }
+
     private BotDetection buildBotDetection() {
         BotDetection bdetect = new BotDetection();
         String random = UUID.random().toString();

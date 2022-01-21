@@ -79,6 +79,11 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
         return Completable.fromPublisher(factorsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(factorsCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
     private Factor convert(FactorMongo factorMongo) {
         if (factorMongo == null) {
             return null;

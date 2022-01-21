@@ -58,6 +58,8 @@ public interface IdentityProviderService {
 
     Completable delete(String domain, String identityProviderId, User principal);
 
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
     default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
         return create(domain, identityProvider, null);
     }

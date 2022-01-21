@@ -163,6 +163,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(CrossDomainManager.class);
         components.add(ClientManager.class);
         components.add(CertificateManager.class);
+        components.add(FlowManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

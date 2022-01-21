@@ -39,6 +39,7 @@ import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -140,5 +141,11 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         LOGGER.debug("delete({})", id);
         return this.certificateRepository.deleteById(id)
                 .doOnError(error -> LOGGER.error("Unable to delete Certificate with id {}", id, error));
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(this.dbClient.delete().from(JdbcCertificate.class).matching(where("domain").is(domain)).fetch().rowsUpdated());
     }
 }

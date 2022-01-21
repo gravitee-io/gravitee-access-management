@@ -19,6 +19,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 
 /**
@@ -35,6 +36,8 @@ public interface AlertTriggerRepository extends CrudRepository<AlertTrigger, Str
      * @return the list of alert triggers.
      */
     Flowable<AlertTrigger> findAll(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     /**
      * Find all alert triggers for a given reference type and id and matching specified criteria.

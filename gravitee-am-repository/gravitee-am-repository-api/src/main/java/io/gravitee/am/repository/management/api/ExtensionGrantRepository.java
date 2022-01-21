@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -30,6 +31,8 @@ import java.util.Set;
 public interface ExtensionGrantRepository extends CrudRepository<ExtensionGrant, String> {
 
     Flowable<ExtensionGrant> findByDomain(String domain);
+
+    Completable deleteByDomain(String domain);
 
     Maybe<ExtensionGrant> findByDomainAndName(String domain, String name);
 }

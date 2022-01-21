@@ -131,6 +131,32 @@ public class RepositoryRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop/2);
     }
 
+    @Test
+    public void shouldDeleteByDomain() {
+        final int loop = 10;
+        final String domain = "fixedDomainId";
+        for (int i =0; i < loop; ++i) {
+            Reporter reporter = buildReporter();
+            if (i % 2 == 0) reporter.setDomain(domain);
+            repository.create(reporter).blockingGet();
+        }
+
+        TestObserver<List<Reporter>> testObserver = repository.findByDomain(domain).toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue( p -> p.size() == loop/2);
+        testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop/2);
+
+        final TestObserver<Void> test = repository.deleteByDomain(domain).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testObserver = repository.findByDomain(domain).toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue( p -> p.size() == 0);
+    }
+
     private void assertEqualsTo(Reporter reporter, TestObserver<Reporter> testObserver) {
         testObserver.assertValue(p -> p.getName().equals(reporter.getName()));
         testObserver.assertValue(p -> p.getType().equals(reporter.getType()));

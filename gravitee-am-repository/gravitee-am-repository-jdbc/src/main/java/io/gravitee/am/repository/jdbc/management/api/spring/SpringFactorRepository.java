@@ -17,7 +17,6 @@ package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcFactor;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.RxJava2CrudRepository;
 import org.springframework.stereotype.Repository;

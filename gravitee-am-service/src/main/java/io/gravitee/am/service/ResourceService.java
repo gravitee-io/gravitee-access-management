@@ -54,6 +54,7 @@ public interface ResourceService {
     Single<AccessPolicy> createAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource);
     Single<AccessPolicy> updateAccessPolicy(AccessPolicy accessPolicy, String domain, String client, String user, String resource, String accessPolicyId);
     Completable deleteAccessPolicy(String domain, String client, String user, String resource, String accessPolicy);
+    Completable deleteByDomain(String domain);
 
     default Single<Set<Resource>> findByDomain(String domain) {
         return findByDomain(domain, 0, Integer.MAX_VALUE)

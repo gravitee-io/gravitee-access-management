@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
@@ -31,5 +32,7 @@ public interface FactorRepository extends CrudRepository<Factor, String> {
     Flowable<Factor> findAll();
 
     Flowable<Factor> findByDomain(String domain);
+
+    Completable deleteByDomain(String domain);
 
 }

@@ -21,7 +21,6 @@ import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.TopApplication;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -76,9 +75,7 @@ public interface ApplicationService {
 
     Single<Long> countByDomain(String domainId);
 
-    Single<Set<TopApplication>> findTopApplications();
-
-    Single<Set<TopApplication>> findTopApplicationsByDomain(String domain);
+    Completable deleteByDomain(String domainId);
 
     default Single<Set<Application>> findAll() {
         return findAll(0, Integer.MAX_VALUE)

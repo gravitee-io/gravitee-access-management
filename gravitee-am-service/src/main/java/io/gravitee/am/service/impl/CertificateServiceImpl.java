@@ -355,6 +355,11 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    public Completable deleteByDomain(String domainId) {
+        return certificateRepository.deleteByDomain(domainId);
+    }
+
+    @Override
     public Single<Certificate> create(String domain) {
         // Define the default certificate
         // Create a default PKCS12 certificate: io.gravitee.am.certificate.pkcs12.PKCS12Configuration

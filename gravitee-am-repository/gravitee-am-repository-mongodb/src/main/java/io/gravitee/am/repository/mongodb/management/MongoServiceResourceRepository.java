@@ -74,6 +74,11 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
         return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(resourceCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, referenceId),eq(FIELD_REFERENCE_TYPE, referenceType.name()))));
+    }
+
     private ServiceResource convert(ServiceResourceMongo resMongo) {
         if (resMongo == null) {
             return null;

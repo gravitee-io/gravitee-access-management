@@ -253,6 +253,15 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Integer> deleteScopes = dbClient.execute("DELETE FROM role_oauth_scopes WHERE role_id IN (SELECT id FROM roles r WHERE r.reference_type = :refType AND r.reference_id = :refId)").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        Mono<Integer> delete = dbClient.execute("DELETE FROM roles WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        return monoToCompletable(deleteScopes.then(delete).as(trx::transactional));
+    }
+
     private Maybe<Role> completeWithScopes(Maybe<Role> maybeRole, String id) {
         Maybe<List<String>> scopes = oauthScopeRepository.findAllByRole(id)
                 .map(JdbcRole.OAuthScope::getScope)

@@ -219,6 +219,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return emailRepository.deleteByReference(ReferenceType.DOMAIN, domain);
+    }
 
     private Single<Email> create0(ReferenceType referenceType, String referenceId, String client, NewEmail newEmail, User principal) {
         String emailId = RandomString.generate();

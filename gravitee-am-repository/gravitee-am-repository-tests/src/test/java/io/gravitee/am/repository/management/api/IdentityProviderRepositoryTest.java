@@ -191,4 +191,53 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProviderRepository.findById(identityProviderCreated.getId()).test().assertEmpty();
     }
 
+    @Test
+    public void testDeleteByDomain() throws TechnicalException {
+        // create idp
+        IdentityProvider identityProvider = buildIdentityProvider();
+        identityProvider.setReferenceId("testDomain");
+        identityProviderRepository.create(identityProvider).blockingGet();
+
+        IdentityProvider identityProvider2 = buildIdentityProvider();
+        identityProvider2.setReferenceId("testDomain");
+        identityProviderRepository.create(identityProvider2).blockingGet();
+
+        IdentityProvider identityProvider3 = buildIdentityProvider();
+        identityProvider3.setReferenceId("testDomain2");
+        identityProviderRepository.create(identityProvider3).blockingGet();
+
+        // fetch idps
+        TestObserver<List<IdentityProvider>> testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == 2);
+
+        testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain2").toList().test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == 1);
+
+        final TestObserver<Void> testDomain = identityProviderRepository.deleteByReference(ReferenceType.DOMAIN, "testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertNoErrors();
+
+        // fetch idps
+        testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain").toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == 0);
+
+        testObserver = identityProviderRepository.findAll(ReferenceType.DOMAIN, "testDomain2").toList().test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == 1);
+
+    }
 }

@@ -194,6 +194,39 @@ public class EmailRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldDeleteByReference() {
+        TestSubscriber<Email> testSubscriber = repository.findAll().test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+
+        final int loop = 10;
+        List<Email> emails = IntStream.range(0, loop).mapToObj(__ -> {
+            final Email email = buildEmail();
+            email.setReferenceId(FIXED_REF_ID);
+            return email;
+        }).collect(Collectors.toList());
+        emails.forEach(email -> repository.create(email).map(e -> {
+            email.setId(e.getId());
+            return e;
+        }).blockingGet());
+
+        TestSubscriber<String> testIdSubscriber = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).map(Email::getId).test();
+        testIdSubscriber.awaitTerminalEvent();
+        testIdSubscriber.assertNoErrors();
+        testIdSubscriber.assertValueCount(loop);
+
+        final TestObserver<Void> test = repository.deleteByReference(ReferenceType.DOMAIN, FIXED_REF_ID).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testIdSubscriber = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).map(Email::getId).test();
+        testIdSubscriber.awaitTerminalEvent();
+        testIdSubscriber.assertNoErrors();
+        testIdSubscriber.assertNoValues();
+    }
+
+    @Test
     public void shouldFindByClient() {
         TestSubscriber<Email> testSubscriber = repository.findAll().test();
         testSubscriber.awaitTerminalEvent();

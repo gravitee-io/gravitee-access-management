@@ -40,6 +40,7 @@ import java.util.Map;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -177,5 +178,13 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return emailRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        return monoToCompletable(dbClient.delete().from(JdbcEmail.class)
+                .matching(from(where("reference_type").is(referenceType.name())
+                        .and(where("reference_id").is(referenceId)))).fetch().rowsUpdated());
     }
 }

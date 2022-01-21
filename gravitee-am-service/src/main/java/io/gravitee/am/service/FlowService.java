@@ -53,6 +53,8 @@ public interface FlowService {
 
     Completable delete(String id, User principal);
 
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
     Single<String> getSchema();
 
     default Flowable<Flow> findAll(ReferenceType referenceType, String referenceId) {

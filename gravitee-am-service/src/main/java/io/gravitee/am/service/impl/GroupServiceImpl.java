@@ -288,7 +288,7 @@ public class GroupServiceImpl implements GroupService {
 
         return findById(referenceType, referenceId, groupId)
                 .flatMapCompletable(group -> groupRepository.delete(groupId)
-                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
+                        .andThen(Completable.fromSingle(eventService.create(new Event(Type.GROUP, new Payload(group.getId(), group.getReferenceType(), group.getReferenceId(), Action.DELETE)))))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).group(group)))
                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(GroupAuditBuilder.class).principal(principal).type(EventType.GROUP_DELETED).throwable(throwable)))
                 )
@@ -300,6 +300,12 @@ public class GroupServiceImpl implements GroupService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete group: %s", groupId), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Delete group by reference {}/{}", referenceId, referenceType);
+        return this.groupRepository.deleteByReference(referenceType, referenceId);
     }
 
     @Override

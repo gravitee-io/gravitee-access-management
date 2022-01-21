@@ -125,6 +125,11 @@ public class MongoRoleRepository extends AbstractManagementMongoRepository imple
     }
 
     @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(rolesCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
+    @Override
     public Maybe<Role> findByNameAndAssignableType(ReferenceType referenceType, String referenceId, String name, ReferenceType assignableType) {
         return Observable.fromPublisher(rolesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_NAME, name), eq(FIELD_ASSIGNABLE_TYPE, assignableType.name()))).first()).firstElement().map(this::convert);
     }

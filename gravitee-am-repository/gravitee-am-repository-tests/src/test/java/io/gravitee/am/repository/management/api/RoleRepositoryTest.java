@@ -15,15 +15,13 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Platform;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -260,5 +258,46 @@ public class RoleRepositoryTest extends AbstractManagementTest {
         // fetch role
         roleRepository.findById(roleCreated.getId()).test().assertEmpty();
     }
+
+
+    @Test
+    public void testDeleteByRef() throws TechnicalException {
+        final String DOMAIN_1 = "domain1";
+        final String DOMAIN_2 = "domain2";
+
+        // create role
+        Role role = buildRole();
+        role.setReferenceId(DOMAIN_1);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        roleRepository.create(role).blockingGet();
+
+        role = buildRole();
+        role.setReferenceId(DOMAIN_1);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        roleRepository.create(role).blockingGet();
+
+        role = buildRole();
+        role.setReferenceId(DOMAIN_2);
+        role.setReferenceType(ReferenceType.DOMAIN);
+        roleRepository.create(role).blockingGet();
+
+        final long rolesDomain1 = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).count().blockingGet();
+        Assert.assertEquals("Domain1 should have 2 roles", 2, rolesDomain1);
+        long rolesDomain2 = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        Assert.assertEquals("Domain2 should have 1 role", 1, rolesDomain2);
+
+        // delete role
+        TestObserver testObserver1 = roleRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testObserver1.awaitTerminalEvent();
+
+        // fetch role
+        final TestSubscriber<Role> find = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).test();
+        find.awaitTerminalEvent();
+        find.assertNoValues();
+
+        rolesDomain2 = roleRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        Assert.assertEquals("Domain2 should have 1 role", 1, rolesDomain2);
+    }
+
 
 }

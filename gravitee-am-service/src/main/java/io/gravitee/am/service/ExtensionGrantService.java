@@ -40,6 +40,8 @@ public interface ExtensionGrantService {
 
     Completable delete(String domain, String certificateId, User principal);
 
+    Completable deleteByDomain(String domain);
+
     default Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant) {
         return create(domain, newExtensionGrant, null);
     }

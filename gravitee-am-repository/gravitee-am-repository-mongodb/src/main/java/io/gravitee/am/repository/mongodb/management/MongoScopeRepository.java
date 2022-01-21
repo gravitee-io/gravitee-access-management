@@ -76,6 +76,11 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(scopesCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
+    @Override
     public Single<Page<Scope>> findByDomain(String domain, int page, int size) {
         Bson mongoQuery = eq(FIELD_DOMAIN, domain);
         Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery)).first(0l);

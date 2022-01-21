@@ -153,4 +153,50 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         // fetch domain
         certificateRepository.findById(certificateCreated.getId()).test().assertEmpty();
     }
+    @Test
+    public void testDeleteByDomain() throws TechnicalException {
+        // create certificate
+        final String DOMAIN = "domain1";
+        final String DOMAIN2 = "domain2";
+        Certificate certificate = buildCertificate();
+        certificate.setDomain(DOMAIN);
+        certificateRepository.create(certificate).blockingGet();
+
+        certificate = buildCertificate();
+        certificate.setDomain(DOMAIN);
+        certificateRepository.create(certificate).blockingGet();
+
+        certificate = buildCertificate();
+        certificate.setDomain(DOMAIN2);
+        certificateRepository.create(certificate).blockingGet();
+
+        TestSubscriber<Certificate> testSubscriber = certificateRepository.findByDomain(DOMAIN).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
+
+        testSubscriber = certificateRepository.findByDomain(DOMAIN2).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+
+        // delete domain
+        TestObserver testObserver1 = certificateRepository.deleteByDomain(DOMAIN).test();
+        testObserver1.awaitTerminalEvent();
+
+        // fetch domain
+        testSubscriber = certificateRepository.findByDomain(DOMAIN).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+
+        testSubscriber = certificateRepository.findByDomain(DOMAIN2).test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+    }
 }

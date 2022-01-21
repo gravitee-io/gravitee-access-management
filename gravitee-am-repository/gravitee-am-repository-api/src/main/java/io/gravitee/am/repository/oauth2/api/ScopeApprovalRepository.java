@@ -42,6 +42,8 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
 
     Completable deleteByDomainAndUser(String domain, String user);
 
+    Completable deleteByDomain(String domain);
+
     default Completable purgeExpiredData() {
         return Completable.complete();
     }

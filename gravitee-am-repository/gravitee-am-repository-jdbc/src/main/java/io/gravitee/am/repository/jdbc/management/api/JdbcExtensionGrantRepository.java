@@ -29,6 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.data.relational.core.query.Criteria.from;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -94,5 +97,11 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return extensionGrantRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(dbClient.delete().from(JdbcExtensionGrant.class).matching(from(where("domain").is(domain))).fetch().rowsUpdated());
     }
 }

@@ -149,6 +149,36 @@ public class AlertNotifierRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void deleteByReference() {
+        TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertNoValues();
+        AlertNotifier alertNotifierToCreate1 = buildAlertNotifier();
+        AlertNotifier alertNotifierToCreate2 = buildAlertNotifier();
+        alertNotifierToCreate2.setReferenceId("domain#2");
+
+        alertNotifierRepository.create(alertNotifierToCreate1).blockingGet();
+        alertNotifierRepository.create(alertNotifierToCreate2).blockingGet();
+
+        testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertValueCount(1);
+
+        final TestObserver<Void> test = alertNotifierRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertValueCount(0);
+    }
+
+    @Test
     public void findByCriteriaWithEmptyNotifierIdList() {
         TestSubscriber<AlertNotifier> testObserver1 = alertNotifierRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 

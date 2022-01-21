@@ -41,6 +41,8 @@ public interface MembershipService {
 
     Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType);
 
+    Completable deleteByReference(String referenceId, ReferenceType referenceType);
+
     Flowable<Membership> findByMember(String memberId, MemberType memberType);
 
     Single<Membership> addOrUpdate(String organizationId, Membership membership, User principal);

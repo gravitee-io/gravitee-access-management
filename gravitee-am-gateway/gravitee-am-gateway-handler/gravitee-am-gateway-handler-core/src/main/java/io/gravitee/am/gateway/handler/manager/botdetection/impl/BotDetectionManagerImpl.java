@@ -40,10 +40,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -107,6 +104,9 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
         LOGGER.info("Dispose event listener for bot detection events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, BotDetectionEvent.class, domain.getId());
+
+        Set<String> botIds = new HashSet<>(this.botDetections.keySet());
+        botIds.forEach(this::removeBotDetection);
     }
 
     @Override

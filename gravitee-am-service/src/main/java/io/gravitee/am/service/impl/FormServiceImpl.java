@@ -297,6 +297,11 @@ public class FormServiceImpl implements FormService {
         return delete(ReferenceType.DOMAIN, domain, formId, principal);
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return this.formRepository.deleteByReference(ReferenceType.DOMAIN, domain);
+    }
+
     private Single<Boolean> checkFormUniqueness(ReferenceType referenceType, String referenceId, String client, String formTemplate) {
         Maybe<Form> maybeSource = client == null ?
                 findByTemplate(referenceType, referenceId, formTemplate) :

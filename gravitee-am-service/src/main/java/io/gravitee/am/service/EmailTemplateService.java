@@ -66,6 +66,8 @@ public interface EmailTemplateService {
 
     Completable delete(String emailId, User principal);
 
+    Completable deleteByDomain(String domain);
+
     default Single<Email> create(String domain, NewEmail newEmail) {
         return create(domain, newEmail,  null);
     }

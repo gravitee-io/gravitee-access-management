@@ -57,6 +57,32 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         testDomain.assertValue(f -> f.getType().equals(resourceCreated.getType()));
     }
 
+    @Test
+    public void testDeleteByDomain() throws TechnicalException {
+        // create res
+        ServiceResource resource = buildResource();
+        resource.setReferenceId("testDomain");
+        ServiceResource resourceCreated = serviceResourceRepository.create(resource).blockingGet();
+
+        // fetch factors
+        TestSubscriber<ServiceResource> testDomain = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, "testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertComplete();
+        testDomain.assertNoErrors();
+        testDomain.assertValueCount(1);
+
+        final TestObserver<Void> testDomain1 = serviceResourceRepository.deleteByReference(ReferenceType.DOMAIN, "testDomain").test();
+        testDomain1.awaitTerminalEvent();
+        testDomain1.assertNoErrors();
+
+        testDomain = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, "testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertComplete();
+        testDomain.assertNoErrors();
+        testDomain.assertNoValues();
+
+    }
+
     private ServiceResource buildResource() {
         ServiceResource resource = new ServiceResource();
         String random = UUID.random().toString();

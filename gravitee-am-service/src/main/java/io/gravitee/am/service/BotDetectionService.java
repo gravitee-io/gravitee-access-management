@@ -42,6 +42,8 @@ public interface BotDetectionService {
 
     Completable delete(String domain, String botDetectionId, User principal);
 
+    Completable deleteByDomain(String domain);
+
     default Single<BotDetection> create(String domain, NewBotDetection botDetection) {
         return create(domain, botDetection, null);
     }

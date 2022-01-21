@@ -158,6 +158,36 @@ public class FormRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(l -> l.stream().map(Form::getId).distinct().count() == loop);
     }
 
+    @Test
+    public void shouldDeleteByReference() {
+        final int loop = 10;
+        for (int i = 0; i < loop; i++) {
+            final Form form = buildForm();
+            form.setReferenceId(FIXED_REF_ID);
+            repository.create(form).blockingGet();
+        }
+
+        for (int i = 0; i < loop; i++) {
+            // random ref id
+            repository.create(buildForm()).blockingGet();
+        }
+
+        TestObserver<List<Form>> testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(l -> l.size() == loop);
+        testObserver.assertValue(l -> l.stream().map(Form::getId).distinct().count() == loop);
+
+        final TestObserver<Void> test = repository.deleteByReference(ReferenceType.DOMAIN, FIXED_REF_ID).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testObserver = repository.findAll(ReferenceType.DOMAIN, FIXED_REF_ID).toList().test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(l -> l.size() == 0);
+    }
+
 
     @Test
     public void shouldFindByClient() {
