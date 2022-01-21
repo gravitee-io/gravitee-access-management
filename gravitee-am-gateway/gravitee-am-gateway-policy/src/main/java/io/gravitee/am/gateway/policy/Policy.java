@@ -32,4 +32,8 @@ public interface Policy {
     default void execute(Object ... args) throws PolicyException {}
 
     default boolean isRunnable() { return true; }
+
+    void activate() throws Exception;
+
+    void deactivate() throws Exception;
 }
