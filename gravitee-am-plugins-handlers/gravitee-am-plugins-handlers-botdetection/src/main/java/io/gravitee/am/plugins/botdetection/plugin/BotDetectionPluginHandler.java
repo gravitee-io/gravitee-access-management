@@ -18,10 +18,9 @@ package io.gravitee.am.plugins.botdetection.plugin;
 import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionDefinition;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
-import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ import org.springframework.util.Assert;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BotDetectionPluginHandler implements PluginHandler {
+public class BotDetectionPluginHandler extends AbstractPluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginHandler.class);
     public static final String PLUGIN_TYPE_BOT_DETECTION = "BOT_DETECTION";
@@ -43,21 +42,18 @@ public class BotDetectionPluginHandler implements PluginHandler {
     private BotDetectionPluginManager pluginManager;
 
     @Override
-    public boolean canHandle(Plugin plugin)  {
-        return PLUGIN_TYPE_BOT_DETECTION.equalsIgnoreCase(plugin.type());
+    public boolean canHandle(Plugin plugin) {
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-
-            final Class<?> pluginClass = classloader.loadClass(plugin.clazz());
             LOGGER.info("Register a new bot detection plugin: {} [{}]", plugin.id(), plugin.clazz());
 
             Assert.isAssignable(BotDetection.class, pluginClass);
 
-            BotDetection botDetection = createInstance((Class<BotDetection>) pluginClass);
+            var botDetection = createInstance((Class<BotDetection>) pluginClass);
 
             pluginManager.register(new BotDetectionDefinition(botDetection, plugin));
         } catch (Exception iae) {
@@ -65,9 +61,19 @@ public class BotDetectionPluginHandler implements PluginHandler {
         }
     }
 
+    @Override
+    protected String type() {
+        return PLUGIN_TYPE_BOT_DETECTION;
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
     private <T> T createInstance(Class<T> clazz) throws Exception {
         try {
-            return clazz.newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
             LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;
