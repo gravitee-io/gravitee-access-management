@@ -29,11 +29,6 @@
     <artifactId>gravitee-am-identityprovider-google</artifactId>
     <name>Gravitee IO - Access Management - Identity Provider - Google</name>
 
-    <properties>
-        <json-schema-generator-maven-plugin.version>1.3.0</json-schema-generator-maven-plugin.version>
-        <json-schema-generator-maven-plugin.outputDirectory>${project.build.directory}/schemas</json-schema-generator-maven-plugin.outputDirectory>
-    </properties>
-
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>
@@ -112,25 +107,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>io.gravitee.maven.plugins</groupId>
-                <artifactId>json-schema-generator-maven-plugin</artifactId>
-                <version>${json-schema-generator-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>generate-json-schemas</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>io/gravitee/am/identityprovider/google/GoogleIdentityProviderConfiguration.class</include>
-                            </includes>
-                            <outputDirectory>${json-schema-generator-maven-plugin.outputDirectory}</outputDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>properties-maven-plugin</artifactId>
