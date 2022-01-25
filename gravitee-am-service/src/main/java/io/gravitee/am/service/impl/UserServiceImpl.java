@@ -17,7 +17,6 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
-import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
@@ -25,13 +24,12 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -39,8 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -103,7 +101,6 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Override
     public Single<User> create(String domain, NewUser newUser) {
-
         return create(ReferenceType.DOMAIN, domain, newUser);
     }
 
@@ -175,5 +172,11 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while count users analytics : %s", query), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("Delete all users for domain {}", domain);
+        return userRepository.deleteByReference(ReferenceType.DOMAIN, domain);
     }
 }

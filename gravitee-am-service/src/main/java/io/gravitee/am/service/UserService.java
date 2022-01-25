@@ -58,4 +58,5 @@ public interface UserService extends CommonUserService {
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
+    Completable deleteByDomain(String domainId);
 }

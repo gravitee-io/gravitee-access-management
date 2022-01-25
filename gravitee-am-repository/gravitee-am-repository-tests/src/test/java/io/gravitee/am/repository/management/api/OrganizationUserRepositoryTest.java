@@ -30,6 +30,7 @@ import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -749,4 +750,43 @@ public class OrganizationUserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(users -> users.getData().size() == 2);
     }
 
+    @Test
+    public void testDeleteByRef() throws TechnicalException {
+        final String ORG_1 = "org1";
+        final String ORG_2 = "org2";
+
+        // create user
+        User user = buildUser();
+        user.setReferenceId(ORG_1);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        organizationUserRepository.create(user).blockingGet();
+
+        user = buildUser();
+        user.setReferenceId(ORG_1);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        organizationUserRepository.create(user).blockingGet();
+
+        user = buildUser();
+        user.setReferenceId(ORG_2);
+        user.setReferenceType(ReferenceType.ORGANIZATION);
+        organizationUserRepository.create(user).blockingGet();
+
+        final long usersDomain1 = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_1).count().blockingGet();
+        Assert.assertEquals("Org1 should have 2 users", 2, usersDomain1);
+        long usersDomain2 = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_2).count().blockingGet();
+        Assert.assertEquals("Org2 should have 1 users", 1, usersDomain2);
+
+        // delete user
+        TestObserver testObserver1 = organizationUserRepository.deleteByReference(ReferenceType.ORGANIZATION, ORG_1).test();
+        testObserver1.awaitTerminalEvent();
+
+        // fetch user
+        final TestSubscriber<User> find = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_1).test();
+        find.awaitTerminalEvent();
+        find.assertNoValues();
+
+        usersDomain2 = organizationUserRepository.findAll(ReferenceType.ORGANIZATION, ORG_2).count().blockingGet();
+        Assert.assertEquals("Org2 should have 1 users", 1, usersDomain2);
+
+    }
 }
