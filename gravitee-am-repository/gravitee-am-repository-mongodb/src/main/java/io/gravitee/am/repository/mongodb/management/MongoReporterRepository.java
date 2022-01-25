@@ -79,6 +79,11 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         return Completable.fromPublisher(reportersCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByDomain(String id) {
+        return Completable.fromPublisher(reportersCollection.deleteMany(eq(FIELD_DOMAIN, id)));
+    }
+
     private ReporterMongo convert(Reporter reporter) {
         if (reporter == null) {
             return null;

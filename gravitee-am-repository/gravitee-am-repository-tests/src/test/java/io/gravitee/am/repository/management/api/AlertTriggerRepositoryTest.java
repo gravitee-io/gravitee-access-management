@@ -174,6 +174,36 @@ public class AlertTriggerRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void deleteByReference() {
+        TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertNoErrors();
+        testObserver1.assertNoValues();
+        AlertTrigger alertTriggerToCreate1 = buildAlertTrigger();
+        AlertTrigger alertTriggerToCreate2 = buildAlertTrigger();
+        alertTriggerToCreate2.setReferenceId("domain#2");
+
+        alertTriggerRepository.create(alertTriggerToCreate1).blockingGet();
+        alertTriggerRepository.create(alertTriggerToCreate2).blockingGet();
+
+        testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertValueCount(1);
+
+        final TestObserver<Void> test = alertTriggerRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
+        testObserver1.awaitTerminalEvent();
+        testObserver1.assertComplete();
+        testObserver1.assertValueCount(0);
+    }
+
+    @Test
     public void findByCriteriaWithEmptyAlertNotifierIdList() {
         TestSubscriber<AlertTrigger> testObserver1 = alertTriggerRepository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).test();
 

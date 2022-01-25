@@ -19,6 +19,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.reactivex.Completable;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,35 @@ public class ScopeRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(scopes -> scopes.getData().size() == 1);
         testObserver.assertValue(scopes -> scopes.getData().iterator().next().getClaims().size() == 2);
+    }
+
+    @Test
+    public void testDeleteByDomain() {
+        // create scope
+        Scope scope = new Scope();
+        scope.setName("testName");
+        scope.setDomain("testDomain");
+        scope.setClaims(Arrays.asList("claim1", "claim2"));
+        scopeRepository.create(scope).blockingGet();
+
+        // fetch scopes
+        TestObserver<Page<Scope>> testObserver = scopeRepository.findByDomain("testDomain", 0, Integer.MAX_VALUE).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(scopes -> scopes.getData().size() == 1);
+        testObserver.assertValue(scopes -> scopes.getData().iterator().next().getClaims().size() == 2);
+
+        final TestObserver<Void> testDomain = scopeRepository.deleteByDomain("testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertNoErrors();
+
+        testObserver = scopeRepository.findByDomain("testDomain", 0, Integer.MAX_VALUE).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(scopes -> scopes.getData().size() == 0);
+
     }
 
     @Test

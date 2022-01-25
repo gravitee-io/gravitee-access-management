@@ -79,6 +79,12 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     public Completable delete(String id) {
         return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)));
     }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(certificatesCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
     private Certificate convert(CertificateMongo certificateMongo) {
         if (certificateMongo == null) {
             return null;

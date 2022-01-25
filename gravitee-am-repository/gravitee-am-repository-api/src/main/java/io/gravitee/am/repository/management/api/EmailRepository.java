@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -45,4 +46,6 @@ public interface EmailRepository extends CrudRepository<Email, String> {
     Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template);
 
     Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }

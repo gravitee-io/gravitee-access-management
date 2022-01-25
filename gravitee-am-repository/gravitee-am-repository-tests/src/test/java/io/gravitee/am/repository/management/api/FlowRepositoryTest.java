@@ -64,6 +64,35 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testDeleteByRef() {
+        Flow flow = buildFlow(1,1);
+        flow.setReferenceType(ReferenceType.DOMAIN);
+        flow.setReferenceId("DOMAIN1");
+        Flow flow2 = buildFlow(2,3);
+        flow2.setReferenceType(ReferenceType.DOMAIN);
+        flow2.setReferenceId("DOMAIN1");
+
+        flowRepository.create(flow).blockingGet();
+        flowRepository.create(flow2).blockingGet();
+
+        TestObserver<List<Flow>> obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").toList().test();
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(list -> list.size() == 2);
+
+        final TestObserver<Void> test = flowRepository.deleteByReference(ReferenceType.DOMAIN, "DOMAIN1").test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        obs = flowRepository.findAll(ReferenceType.DOMAIN, "DOMAIN1").toList().test();
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertNoErrors();
+        obs.assertValue(list -> list.size() == 0);
+    }
+
+    @Test
     public void testFindByApplication() {
         Flow flow = buildFlow(1,1);
         flow.setReferenceType(ReferenceType.DOMAIN);

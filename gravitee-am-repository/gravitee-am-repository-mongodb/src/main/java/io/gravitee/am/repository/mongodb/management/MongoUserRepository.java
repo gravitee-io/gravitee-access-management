@@ -24,10 +24,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.Single;
+import io.reactivex.*;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
@@ -160,4 +158,5 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     protected UserMongo convert(User user) {
         return convert(user, new UserMongo());
     }
+
 }

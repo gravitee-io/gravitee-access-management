@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -32,6 +33,8 @@ import java.util.Set;
 public interface ScopeRepository extends CrudRepository<Scope, String> {
 
     Single<Page<Scope>> findByDomain(String domain, int page, int size);
+
+    Completable deleteByDomain(String domain);
 
     Single<Page<Scope>> search(String domain, String query, int page, int size);
 

@@ -194,4 +194,9 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                             String.format("An error occurs while trying to delete resource: %s", resourceId), ex));
                 });
     }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return this.serviceResourceRepository.deleteByReference(ReferenceType.DOMAIN, domain);
+    }
 }

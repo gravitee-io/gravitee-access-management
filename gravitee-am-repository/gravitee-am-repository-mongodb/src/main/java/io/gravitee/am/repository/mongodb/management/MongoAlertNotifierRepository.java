@@ -100,6 +100,11 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))));
+    }
+
     private AlertNotifier convert(AlertNotifierMongo alertNotifierMongo) {
 
         AlertNotifier alertNotifier = new AlertNotifier();

@@ -125,6 +125,36 @@ public class AccessPolicyRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void deleteByDomain() throws TechnicalException {
+        AccessPolicy accessPolicy = new AccessPolicy();
+        accessPolicy.setName("accessPolicyName");
+        final String DOMAIN_SINGLE = DOMAIN_ID + "single";
+        accessPolicy.setDomain(DOMAIN_SINGLE);
+        repository.create(accessPolicy).blockingGet();
+
+        AccessPolicy accessPolicyOtherDomain = new AccessPolicy();
+        accessPolicyOtherDomain.setName("accessPolicyName");
+        accessPolicyOtherDomain.setDomain(DOMAIN_ID+"-other");
+        repository.create(accessPolicyOtherDomain).blockingGet();
+
+        TestObserver<Page<AccessPolicy>> testObserver = repository.findByDomain(DOMAIN_SINGLE, 0, 20).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(p -> p.getTotalCount() == 1);
+
+        final TestObserver<Void> test = repository.deleteByDomain(DOMAIN_SINGLE).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        testObserver = repository.findByDomain(DOMAIN_SINGLE, 0, 20).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(p -> p.getTotalCount() == 0);
+    }
+
+    @Test
     public void findByDomain_Paging() throws Exception {
         final int totalCount = 10;
         final String DOMAIN10 = DOMAIN_ID + "-10";

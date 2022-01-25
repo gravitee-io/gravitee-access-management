@@ -233,4 +233,8 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return this.extensionGrantRepository.deleteByDomain(domain);
+    }
 }

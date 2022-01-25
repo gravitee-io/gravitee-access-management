@@ -184,6 +184,11 @@ public class BotDetectionServiceImpl implements BotDetectionService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return botDetectionRepository.deleteByReference(ReferenceType.DOMAIN, domain);
+    }
+
     private Function<BotDetection, SingleSource<? extends BotDetection>> checkBotDetectionReleasedByApp(String domainId, String botDetectionId) {
         return botDetection -> applicationService.findByDomain(domainId)
                 .flatMap(applications -> {

@@ -64,4 +64,5 @@ public interface CertificateService {
         return delete(certificateId, null);
     }
 
+    Completable deleteByDomain(String domainId);
 }

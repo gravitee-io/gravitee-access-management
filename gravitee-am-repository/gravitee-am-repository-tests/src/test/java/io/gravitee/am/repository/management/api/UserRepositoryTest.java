@@ -32,6 +32,7 @@ import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -324,10 +325,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
     @Test
     public void testDelete() throws TechnicalException {
         // create user
-        User user = new User();
-        user.setReferenceType(ReferenceType.DOMAIN);
-        user.setReferenceId("domainId");
-        user.setUsername("testsUsername");
+        User user = buildUser();
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
@@ -343,6 +341,46 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
         // fetch user
         userRepository.findById(userCreated.getId()).test().assertEmpty();
+    }
+
+    @Test
+    public void testDeleteByRef() throws TechnicalException {
+        final String DOMAIN_1 = "domain1";
+        final String DOMAIN_2 = "domain2";
+
+        // create user
+        User user = buildUser();
+        user.setReferenceId(DOMAIN_1);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        userRepository.create(user).blockingGet();
+
+        user = buildUser();
+        user.setReferenceId(DOMAIN_1);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        userRepository.create(user).blockingGet();
+
+        user = buildUser();
+        user.setReferenceId(DOMAIN_2);
+        user.setReferenceType(ReferenceType.DOMAIN);
+        userRepository.create(user).blockingGet();
+
+        final long usersDomain1 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).count().blockingGet();
+        Assert.assertEquals("Domain1 should have 2 users", 2, usersDomain1);
+        long usersDomain2 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        Assert.assertEquals("Domain2 should have 1 users", 1, usersDomain2);
+
+        // delete user
+        TestObserver testObserver1 = userRepository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testObserver1.awaitTerminalEvent();
+
+        // fetch user
+        final TestSubscriber<User> find = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_1).test();
+        find.awaitTerminalEvent();
+        find.assertNoValues();
+
+        usersDomain2 = userRepository.findAll(ReferenceType.DOMAIN, DOMAIN_2).count().blockingGet();
+        Assert.assertEquals("Domain2 should have 1 users", 1, usersDomain2);
+
     }
 
     @Test

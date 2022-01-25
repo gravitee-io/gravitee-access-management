@@ -165,6 +165,11 @@ public class AlertNotifierServiceImpl implements io.gravitee.am.service.AlertNot
                 .flatMapCompletable(alertNotifier -> deleteInternal(alertNotifier, byUser));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return this.alertNotifierRepository.deleteByReference(referenceType, referenceId);
+    }
+
     private Single<AlertNotifier> createInternal(AlertNotifier toCreate, User byUser) {
 
         Date now = new Date();

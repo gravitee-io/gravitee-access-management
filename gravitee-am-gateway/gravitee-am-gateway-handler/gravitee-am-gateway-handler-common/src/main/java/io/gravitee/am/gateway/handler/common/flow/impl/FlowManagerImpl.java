@@ -99,6 +99,9 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
         logger.info("Dispose event listener for flow events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, FlowEvent.class, domain.getId());
+
+        Set<String> flowIds = new HashSet(flows.keySet());
+        flowIds.forEach(id -> removeFlow(id));
     }
 
     @Override

@@ -134,6 +134,11 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
         return Completable.fromPublisher(emailsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(emailsCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
     private Email convert(EmailMongo emailMongo) {
         if (emailMongo == null) {
             return null;

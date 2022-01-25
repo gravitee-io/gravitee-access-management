@@ -81,6 +81,37 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testDeleteByReference() {
+
+        Membership membership = new Membership();
+        membership.setRoleId("role#1");
+        membership.setReferenceType(ReferenceType.ORGANIZATION);
+        membership.setReferenceId(ORGANIZATION_ID);
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        membershipRepository.create(membership).blockingGet();
+
+        membership.setId(null);
+        membership.setRoleId("role#2");
+        membershipRepository.create(membership).blockingGet();
+
+        TestObserver<List<Membership>> obs = membershipRepository.findByReference(ORGANIZATION_ID, ReferenceType.ORGANIZATION).toList().test();
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(m -> m.size() == 2);
+
+        final TestObserver<Void> test = membershipRepository.deleteByReference(ReferenceType.ORGANIZATION, ORGANIZATION_ID).test();
+        test.awaitTerminalEvent();
+        test.assertNoErrors();
+
+        obs = membershipRepository.findByReference(ORGANIZATION_ID, ReferenceType.ORGANIZATION).toList().test();
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(m -> m.size() == 0);
+    }
+
+    @Test
     public void testFindByMember() {
 
         Membership membership = new Membership();

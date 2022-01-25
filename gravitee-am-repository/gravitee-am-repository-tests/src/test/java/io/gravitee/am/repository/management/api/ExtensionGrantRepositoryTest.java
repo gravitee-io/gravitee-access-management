@@ -150,4 +150,5 @@ public class ExtensionGrantRepositoryTest extends AbstractManagementTest {
         // fetch extension grant
         extensionGrantRepository.findById(extensionGrantCreated.getId()).test().assertEmpty();
     }
+
 }

@@ -41,4 +41,6 @@ public interface AlertNotifierService {
     Single<AlertNotifier> update(ReferenceType referenceType, String referenceId, String alertNotifierId, PatchAlertNotifier patchAlertNotifier, User byUser);
 
     Completable delete(ReferenceType referenceType, String referenceId, String notifierId, User byUser);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }

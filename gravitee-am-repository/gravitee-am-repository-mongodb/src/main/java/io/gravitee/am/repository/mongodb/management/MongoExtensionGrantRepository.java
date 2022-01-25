@@ -81,6 +81,11 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
         return Completable.fromPublisher(extensionGrantsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(extensionGrantsCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
     private ExtensionGrant convert(ExtensionGrantMongo extensionGrantMongo) {
         if (extensionGrantMongo == null) {
             return null;

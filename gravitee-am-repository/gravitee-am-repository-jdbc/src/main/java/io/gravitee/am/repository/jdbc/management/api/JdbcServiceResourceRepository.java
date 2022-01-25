@@ -30,6 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -81,6 +84,13 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return serviceResourceRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return monoToCompletable(dbClient.delete().from(JdbcServiceResource.class)
+                .matching(from(where("reference_id").is(referenceId)
+                        .and(where("reference_type").is(referenceType.name())))).fetch().rowsUpdated());
     }
 
     @Override

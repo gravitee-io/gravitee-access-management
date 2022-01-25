@@ -121,6 +121,11 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return Completable.fromPublisher(membershipsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(membershipsCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
     private Membership convert(MembershipMongo membershipMongo) {
         Membership membership = new Membership();
         membership.setId(membershipMongo.getId());

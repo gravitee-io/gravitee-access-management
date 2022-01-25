@@ -32,7 +32,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -111,6 +110,11 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(groupsCollection.deleteOne(eq(FIELD_ID, id)));
+    }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(groupsCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
     }
 
     private Group convert(GroupMongo groupMongo) {

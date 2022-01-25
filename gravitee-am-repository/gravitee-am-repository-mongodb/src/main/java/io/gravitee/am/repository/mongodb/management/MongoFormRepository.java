@@ -117,6 +117,11 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
         return Completable.fromPublisher(formsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(formsCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
     private Form convert(FormMongo pageMongo) {
         if (pageMongo == null) {
             return null;

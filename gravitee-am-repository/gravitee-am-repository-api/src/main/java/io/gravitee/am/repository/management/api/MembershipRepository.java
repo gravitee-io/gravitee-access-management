@@ -20,6 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -33,6 +34,8 @@ import java.util.List;
 public interface MembershipRepository extends CrudRepository<Membership, String> {
 
     Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     Flowable<Membership> findByMember(String memberId, MemberType memberType);
 

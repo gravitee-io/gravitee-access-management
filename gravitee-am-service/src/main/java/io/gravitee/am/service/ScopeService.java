@@ -41,6 +41,8 @@ public interface ScopeService {
 
     Single<Page<Scope>> findByDomain(String domain, int page, int size);
 
+    Completable deleteByDomain(String domain);
+
     Maybe<Scope> findByDomainAndKey(String domain, String scopeKey);
 
     Single<List<Scope>> findByDomainAndKeys(String domain, List<String> scopeKeys);

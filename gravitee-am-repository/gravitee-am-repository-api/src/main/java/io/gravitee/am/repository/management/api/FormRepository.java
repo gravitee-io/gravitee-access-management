@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -31,6 +32,8 @@ import java.util.List;
 public interface FormRepository extends CrudRepository<Form, String> {
 
     Flowable<Form> findAll(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     Flowable<Form> findAll(ReferenceType referenceType);
 

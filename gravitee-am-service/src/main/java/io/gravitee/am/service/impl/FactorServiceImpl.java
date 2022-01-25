@@ -208,4 +208,9 @@ public class FactorServiceImpl implements FactorService {
                             String.format("An error occurs while trying to delete factor: %s", factorId), ex));
                 });
     }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return this.factorRepository.deleteByDomain(domain);
+    }
 }

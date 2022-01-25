@@ -41,7 +41,6 @@ import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.utils.GrantTypeUtils;
@@ -432,44 +431,12 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Set<TopApplication>> findTopApplications() {
-        LOGGER.debug("Find top applications");
-        return applicationRepository.findAll(0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find top applications", ex));
-                });
-    }
-
-    @Override
-    public Single<Set<TopApplication>> findTopApplicationsByDomain(String domain) {
-        LOGGER.debug("Find top applications for domain: {}", domain);
-        return applicationRepository.findByDomain(domain, 0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications for domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find top applications for domain %s", domain), ex));
+    public Completable deleteByDomain(String domainId) {
+        LOGGER.debug("Delete applications for domain {}", domainId);
+        return findByDomain(domainId)
+                .flatMapCompletable(applications -> {
+                    List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> delete(a.getId())).collect(Collectors.toList());
+                    return Completable.concat(deleteApplicationsCompletable);
                 });
     }
 

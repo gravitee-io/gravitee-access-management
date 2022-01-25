@@ -406,4 +406,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     return mongoCertificate;
                 }).collect(Collectors.toList());
     }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
 }

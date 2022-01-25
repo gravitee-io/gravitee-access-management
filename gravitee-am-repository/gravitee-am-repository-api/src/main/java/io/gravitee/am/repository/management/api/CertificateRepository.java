@@ -17,6 +17,7 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
@@ -31,4 +32,6 @@ public interface CertificateRepository extends CrudRepository<Certificate, Strin
     Flowable<Certificate> findAll();
 
     Flowable<Certificate> findByDomain(String domain);
+
+    Completable deleteByDomain(String domain);
 }

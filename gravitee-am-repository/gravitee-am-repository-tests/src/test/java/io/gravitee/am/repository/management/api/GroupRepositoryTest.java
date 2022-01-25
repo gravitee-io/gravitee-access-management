@@ -317,4 +317,38 @@ public class GroupRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertNoValues();
     }
+
+    @Test
+    public void shouldDeleteByRef() {
+        List<Group> emptyList = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
+        assertNotNull(emptyList);
+        assertTrue(emptyList.isEmpty());
+
+        final Group grpDomain2 = buildGroup();
+        grpDomain2.setReferenceId(UUID.randomUUID().toString());
+        repository.create(grpDomain2).blockingGet();
+
+        final int loop = 5;
+        for (int i = 0; i < loop; ++i) {
+            final Group item = buildGroup();
+            item.setReferenceId(DOMAIN_ID);
+            repository.create(item).blockingGet();
+        }
+
+        List<Group> groupOfDomain = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(loop, groupOfDomain.size());
+
+        repository.deleteByReference(ReferenceType.DOMAIN, DOMAIN_ID).blockingGet();
+
+        groupOfDomain = repository.findAll(ReferenceType.DOMAIN, DOMAIN_ID).toList().blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(0, groupOfDomain.size());
+
+        groupOfDomain = repository.findAll(ReferenceType.DOMAIN, grpDomain2.getReferenceId()).toList().blockingGet();
+        assertNotNull(groupOfDomain);
+        assertEquals(1, groupOfDomain.size());
+
+    }
+
 }

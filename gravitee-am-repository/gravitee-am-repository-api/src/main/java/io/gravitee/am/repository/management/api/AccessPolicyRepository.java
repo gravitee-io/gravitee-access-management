@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
@@ -30,6 +31,7 @@ import java.util.List;
 public interface AccessPolicyRepository extends CrudRepository<AccessPolicy, String> {
 
     Single<Page<AccessPolicy>> findByDomain(String domain, int page, int size);
+    Completable deleteByDomain(String domain);
     Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource);
     Flowable<AccessPolicy> findByResources(List<String> resources);
     Single<Long> countByResource(String resource);

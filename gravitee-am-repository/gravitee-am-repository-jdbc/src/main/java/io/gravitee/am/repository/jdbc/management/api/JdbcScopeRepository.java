@@ -252,4 +252,12 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
         return monoToCompletable(deleteClaim.then(delete).as(trx::transactional));
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Integer> deleteClaims = dbClient.execute("DELETE FROM scope_claims WHERE scope_id IN (SELECT id FROM scopes s WHERE s.domain = :domain)").bind("domain", domain).fetch().rowsUpdated();
+        Mono<Integer> delete = dbClient.delete().from(JdbcScope.class).matching(where("domain").is(domain)).fetch().rowsUpdated();
+        return monoToCompletable(deleteClaims.then(delete).as(trx::transactional));
+    }
 }

@@ -112,6 +112,11 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
         return Completable.fromPublisher(flowsCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(flowsCollection.deleteMany(and(eq(FIELD_REFERENCE_ID,referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))));
+    }
+
     private FlowMongo convert(Flow flow) {
         if (flow == null) {
             return null;

@@ -80,6 +80,11 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
         return Completable.fromPublisher(botDetectionMongoCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(botDetectionMongoCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
     private BotDetection convert(BotDetectionMongo entity) {
         if (entity == null) {
             return null;

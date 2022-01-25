@@ -244,6 +244,11 @@ public class ReporterServiceImpl implements ReporterService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return reporterRepository.deleteByDomain(domain);
+    }
+
     /**
      * This method check if the configuration attribute of a Reporter is valid
      *

@@ -26,9 +26,11 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -94,5 +96,11 @@ public class JdbcFactorRepository extends AbstractJdbcRepository implements Fact
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return factorRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("deleteByDomain({})", domain);
+        return monoToCompletable(dbClient.delete().from(JdbcFactor.class).matching(Criteria.where("domain").is(domain)).fetch().rowsUpdated());
     }
 }

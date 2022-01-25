@@ -34,6 +34,8 @@ public interface ServiceResourceService {
 
     Flowable<ServiceResource> findByDomain(String domain);
 
+    Completable deleteByDomain(String domain);
+
     Single<ServiceResource> create(String domain, NewServiceResource res, User principal);
 
     Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateServiceResource, User principal);

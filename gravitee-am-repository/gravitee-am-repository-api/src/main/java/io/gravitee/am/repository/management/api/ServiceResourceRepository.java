@@ -18,6 +18,7 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 
 /**
@@ -27,5 +28,7 @@ import io.reactivex.Flowable;
 public interface ServiceResourceRepository extends CrudRepository<ServiceResource, String> {
 
     Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
 }

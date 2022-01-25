@@ -67,6 +67,8 @@ public interface RoleService {
 
     Completable delete(ReferenceType referenceType, String referenceId, String roleId, User principal);
 
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
+
     Completable createOrUpdateSystemRoles();
 
     default Single<Role> create(String domain, NewRole role) {

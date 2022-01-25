@@ -38,4 +38,6 @@ public interface AlertTriggerService {
     Single<AlertTrigger> createOrUpdate(ReferenceType referenceType, String referenceId, PatchAlertTrigger patchAlertTrigger, User byUser);
 
     Completable delete(ReferenceType referenceType, String referenceId, String alertTriggerId, User byUser);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }

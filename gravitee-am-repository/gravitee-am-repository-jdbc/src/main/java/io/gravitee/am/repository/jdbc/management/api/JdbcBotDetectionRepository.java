@@ -114,4 +114,13 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
                 .matching(from(where(ID_FIELD).is(id)))
                 .fetch().rowsUpdated());
     }
+
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        return monoToCompletable(dbClient.delete()
+                .from(JdbcBotDetection.class)
+                .matching(from(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
+                .fetch().rowsUpdated());
+    }
 }

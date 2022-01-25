@@ -337,6 +337,11 @@ public class ResourceServiceImpl implements ResourceService {
                 });
     }
 
+    @Override
+    public Completable deleteByDomain(String domain) {
+        return accessPolicyRepository.deleteByDomain(domain);
+    }
+
     private Single<Resource> validateScopes(Resource toValidate) {
         if(toValidate.getResourceScopes()==null || toValidate.getResourceScopes().isEmpty()) {
             return Single.error(new MissingScopeException());

@@ -91,6 +91,15 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
     }
 
     @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        return monoToCompletable(dbClient.delete().from(JdbcAlertNotifier.class)
+                .matching(from(where("reference_type").is(referenceType.name())
+                        .and(where("reference_id").is(referenceId))))
+                .fetch().rowsUpdated());
+    }
+
+    @Override
     public Flowable<AlertNotifier> findAll(ReferenceType referenceType, String referenceId) {
         return findByCriteria(referenceType, referenceId, new AlertNotifierCriteria());
     }

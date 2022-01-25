@@ -43,8 +43,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
-import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava2Adapter.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -155,5 +154,11 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
     public Completable delete(String id) {
         LOGGER.debug("delete AccessPolicy with id {}", id);
         return accessPolicyRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("delete AccessPolicy with domain {}", domain);
+        return monoToCompletable(dbClient.delete().from(JdbcAccessPolicy.class).matching(from(where("domain").is(domain))).fetch().rowsUpdated());
     }
 }

@@ -218,6 +218,12 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Delete flow by reference {}/{}", referenceType, referenceId);
+        return flowRepository.deleteByReference(referenceType, referenceId);
+    }
+
+    @Override
     public Completable delete(String id, User principal) {
         LOGGER.debug("Delete flow {}", id);
         if (id == null) {

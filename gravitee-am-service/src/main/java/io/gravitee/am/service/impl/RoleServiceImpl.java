@@ -294,6 +294,12 @@ public class RoleServiceImpl implements RoleService {
     }
 
     @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Delete roles by reference id {}/{}", referenceId, referenceType.name());
+        return roleRepository.deleteByReference(referenceType, referenceId);
+    }
+
+    @Override
     public Completable createOrUpdateSystemRoles() {
 
         List<Role> roles = buildSystemRoles();

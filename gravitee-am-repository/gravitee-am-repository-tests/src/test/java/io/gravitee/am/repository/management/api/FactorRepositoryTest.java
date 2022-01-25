@@ -50,6 +50,31 @@ public class FactorRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertValueCount(1);
     }
 
+    @Test
+    public void testDeleteByDomain() throws TechnicalException {
+        // create factor
+        Factor factor = buildFactor();
+        factor.setDomain("testDomain");
+        factorRepository.create(factor).blockingGet();
+
+        // fetch factors
+        TestSubscriber<Factor> testSubscriber = factorRepository.findByDomain("testDomain").test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+
+        final TestObserver<Void> testDomain = factorRepository.deleteByDomain("testDomain").test();
+        testDomain.awaitTerminalEvent();
+        testDomain.assertNoErrors();
+
+        testSubscriber = factorRepository.findByDomain("testDomain").test();
+        testSubscriber.awaitTerminalEvent();
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+    }
+
     private Factor buildFactor() {
         Factor factor = new Factor();
         String random = UUID.random().toString();

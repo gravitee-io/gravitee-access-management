@@ -45,7 +45,10 @@ import org.springframework.stereotype.Component;
 
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -343,6 +346,12 @@ public class ScopeServiceImpl implements ScopeService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete scope: %s", scopeId), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("Delete scopes by domain: {}", domain);
+        return scopeApprovalRepository.deleteByDomain(domain).andThen(scopeRepository.deleteByDomain(domain));
     }
 
     @Override

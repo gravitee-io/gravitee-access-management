@@ -125,6 +125,11 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     }
 
     @Override
+    public Completable deleteByDomain(String domain) {
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(eq(FIELD_DOMAIN, domain)));
+    }
+
+    @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id)));
     }

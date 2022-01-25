@@ -19,6 +19,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.model.flow.Type;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -34,6 +35,8 @@ public interface FlowRepository extends CrudRepository<Flow, String> {
     Maybe<Flow> findById(ReferenceType referenceType, String referenceId, String id);
 
     Flowable<Flow> findAll(ReferenceType referenceType, String referenceId);
+
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 
     Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application);
 }

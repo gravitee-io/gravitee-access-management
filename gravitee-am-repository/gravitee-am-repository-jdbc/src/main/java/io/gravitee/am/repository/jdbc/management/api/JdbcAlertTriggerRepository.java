@@ -129,7 +129,7 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.alertTriggerRepository.deleteById(id);
+        return monoToCompletable(deleteAlertNotifiers(id)).andThen(this.alertTriggerRepository.deleteById(id));
     }
 
     @Override
@@ -219,4 +219,12 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         return dbClient.delete().from(JdbcAlertTrigger.AlertNotifier.class).matching(from(where("alert_trigger_id").is(alertTriggerId))).then();
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Integer> deleteScopes = dbClient.execute("DELETE FROM alert_triggers_alert_notifiers WHERE alert_trigger_id IN (SELECT id FROM alert_triggers r WHERE r.reference_type = :refType AND r.reference_id = :refId)").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        Mono<Integer> delete = dbClient.execute("DELETE FROM alert_triggers WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        return monoToCompletable(deleteScopes.then(delete).as(trx::transactional));
+    }
 }
