@@ -86,7 +86,7 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
                     // we doesn't want to stop the request processing due to deletion error if context is successfully loaded
                     clearContext(transactionId)
                             .subscribe(
-                                    () -> LOGGER.info("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
+                                    () -> LOGGER.debug("Deletion of Authentication Flow context '{}' succeeded after loading it", transactionId),
                                     (error) -> LOGGER.warn("Deletion of Authentication Flow context '{}' failed after loading it", transactionId, error));
                 } );
     }
