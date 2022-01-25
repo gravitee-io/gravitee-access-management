@@ -60,9 +60,11 @@ public class InlineAuthenticationProvider implements AuthenticationProvider, Ini
 
     @Override
     public void afterPropertiesSet() {
-        for(io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
-            LOGGER.debug("Add an inline user: {}", user);
-            userDetailsService.createUser(user);
+        if (configuration.getUsers() != null) {
+            for (io.gravitee.am.identityprovider.inline.model.User user : configuration.getUsers()) {
+                LOGGER.debug("Add an inline user: {}", user);
+                userDetailsService.createUser(user);
+            }
         }
     }
 

@@ -61,7 +61,7 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     private static final Collector<JsonNode, ?, Map<String, String>> JSON_NODE_MAP_COLLECTOR =
             Collectors.toMap(json -> json.get(USERNAME_INLINE_KEY).asText(), json -> json.get(PASSWORD_INLINE_KEY).asText());
-    private static final String USERS_INLINE_CONFIG_PATH = "/users";
+    private static final String USERS_INLINE_CONFIG_FIELD = "users";
 
     @Autowired
     private IdentityProviderPluginService identityProviderPluginService;
@@ -176,13 +176,15 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     private void filterSensitiveInlineIdpData(JsonNode idpConfig) {
-        var users = (ArrayNode) idpConfig.at(USERS_INLINE_CONFIG_PATH);
-        users.forEach(jsonNode -> ((ObjectNode) jsonNode).put(PASSWORD_INLINE_KEY, SENSITIVE_VALUE));
+        if (idpConfig.has(USERS_INLINE_CONFIG_FIELD)) {
+            var users = (ArrayNode) idpConfig.get(USERS_INLINE_CONFIG_FIELD);
+            users.forEach(jsonNode -> ((ObjectNode) jsonNode).put(PASSWORD_INLINE_KEY, SENSITIVE_VALUE));
+        }
     }
 
     private void handleUpdateInlineIdp(JsonNode updateConfig, JsonNode oldConfig) {
-        var updatedUsers = (ArrayNode) updateConfig.at(USERS_INLINE_CONFIG_PATH);
-        var oldConfigUsers = (ArrayNode) oldConfig.at(USERS_INLINE_CONFIG_PATH);
+        var updatedUsers = (ArrayNode) updateConfig.get(USERS_INLINE_CONFIG_FIELD);
+        var oldConfigUsers = (ArrayNode) oldConfig.get(USERS_INLINE_CONFIG_FIELD);
         if (!areUserRemoved(updatedUsers) && !noPriorUsers(oldConfigUsers)) {
             var oldUserList = new ArrayList<JsonNode>(oldConfig.size());
             oldConfigUsers.forEach(oldUserList::add);
