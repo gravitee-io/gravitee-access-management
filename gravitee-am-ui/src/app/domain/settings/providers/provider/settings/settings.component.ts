@@ -102,8 +102,8 @@ export class ProviderSettingsComponent implements OnInit {
     } else {
       event.preventDefault();
       const originalConfig = JSON.parse(this.provider.configuration);
-      const updatedUsernames = this.updateProviderConfiguration.users.map(user => user.username);
-      const allOriginalUsernames = originalConfig.users.every(u => updatedUsernames.includes(u.username));
+      const updatedUsernames = this.updateProviderConfiguration.users ? this.updateProviderConfiguration.users.map(user => user.username) : [];
+      const allOriginalUsernames = !originalConfig.users || originalConfig.users.every(u => updatedUsernames.includes(u.username)) ;
 
       if (!allOriginalUsernames) {
         const title = 'Update Provider: a user has been modified or deleted.';
