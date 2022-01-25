@@ -72,7 +72,6 @@ public class DomainServiceTest {
     private static final String CERTIFICATE_ID = "id-certificate";
     private static final String EXTENSION_GRANT_ID = "id-extension-grant";
     private static final String ROLE_ID = "id-role";
-    private static final String USER_ID = "id-user";
     private static final String SCOPE_ID = "id-scope";
     private static final String GROUP_ID = "id-group";
     private static final String FORM_ID = "id-form";
@@ -573,9 +572,7 @@ public class DomainServiceTest {
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
-        when(user.getId()).thenReturn(USER_ID);
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(user));
-        when(userService.delete(anyString())).thenReturn(Completable.complete());
+        when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope),0,1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
@@ -619,7 +616,7 @@ public class DomainServiceTest {
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
-        verify(userService, times(1)).delete(USER_ID);
+        verify(userService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
         verify(groupService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -640,8 +637,8 @@ public class DomainServiceTest {
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
-        when(userService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0,1)));
+        when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
@@ -665,7 +662,6 @@ public class DomainServiceTest {
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString());
-        verify(userService, never()).delete(anyString());
         verify(scopeService, never()).delete(anyString(), anyBoolean());
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
