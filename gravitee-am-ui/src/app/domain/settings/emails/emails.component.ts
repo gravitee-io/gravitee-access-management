@@ -61,6 +61,13 @@ export class DomainSettingsEmailsComponent {
         'template': 'MFA_CHALLENGE',
         'icon': 'check_circle_outline',
         'enabled': true
+      },
+      {
+        'name': 'Certificate Expiration',
+        'description': 'Email notification about Certificate expiration',
+        'template': 'CERTIFICATE_EXPIRATION',
+        'icon': 'notifications',
+        'enabled': true
       }
     ]
   }

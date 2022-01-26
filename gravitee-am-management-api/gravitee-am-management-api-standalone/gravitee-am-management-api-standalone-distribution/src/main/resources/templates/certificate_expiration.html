@@ -1,0 +1,11 @@
+<html>
+<body style="text-align: center;">
+<header>
+	<#include "header.html" />
+</header>
+<div style="margin-top: 50px; color: #424e5a;">
+	<h3>Hi ${user.firstName} ${user.lastName},</h3>
+	<p>The certificate ${certificate.name} for the domain ${domain.name} will expire at ${certificate.expiresAt?datetime}.</p>
+</div>
+</body>
+</html>

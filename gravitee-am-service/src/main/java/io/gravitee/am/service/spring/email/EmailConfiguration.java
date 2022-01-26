@@ -37,6 +37,9 @@ public class EmailConfiguration {
     private final static String EMAIL_PROPERTIES_PREFIX = "email.properties";
     private final static String MAILAPI_PROPERTIES_PREFIX = "mail.smtp.";
 
+    @Value("${email.enabled:false}")
+    private boolean enabled;
+
     @Value("${email.host}")
     private String host;
 
@@ -51,6 +54,9 @@ public class EmailConfiguration {
 
     @Value("${email.protocol:smtp}")
     private String protocol;
+
+    @Value("${email.from}")
+    private String from;
 
     @Autowired
     private ConfigurableEnvironment environment;
@@ -80,4 +86,50 @@ public class EmailConfiguration {
 
         return properties;
     }
+
+    public String getHost() {
+        return host;
+    }
+
+    public String getPort() {
+        return port;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public boolean useAuth() {
+        return getProperty("auth", false, Boolean.class);
+    }
+
+    private <T> T getProperty(String propName, T defaultValue, Class<T> clazz) {
+        final Map<String, Object> emailProperties = EnvironmentUtils.getPropertiesStartingWith(environment, EMAIL_PROPERTIES_PREFIX);
+        if (emailProperties.containsKey(EMAIL_PROPERTIES_PREFIX + "." + propName)) {
+            return (T) emailProperties.get(EMAIL_PROPERTIES_PREFIX + "." + propName);
+        } else {
+            return defaultValue;
+        }
+    }
+
+    public boolean useStartTls() {
+        return getProperty("starttls.enable", false, Boolean.class);
+    }
+
 }

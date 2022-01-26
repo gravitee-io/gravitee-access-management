@@ -63,3 +63,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_15_1/add-system-reporter.yml
   - include:
       - file: liquibase/changelogs/v3_16_0/schema.yml
+  - include:
+      - file: liquibase/changelogs/v3_16_0/schema-notification-acknowledges.yml
