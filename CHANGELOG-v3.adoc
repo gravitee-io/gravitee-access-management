@@ -1,6 +1,62 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/452?closed=1[AM - 3.15.0 (2022-01-26)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Nullpointer when IPFiltering reject the request https://github.com/gravitee-io/issues/issues/6927[#6927]
+- Remember device doesn't expire https://github.com/gravitee-io/issues/issues/6926[#6926]
+- [webauthn] include device identifier at webauthn login https://github.com/gravitee-io/issues/issues/6871[#6871]
+
+*_General_*
+
+- Merge 3.14.3 https://github.com/gravitee-io/issues/issues/6868[#6868]
+
+*_Management_*
+
+- Device Identifier permissions are not set https://github.com/gravitee-io/issues/issues/6925[#6925]
+
+*_Management-api_*
+
+- Do not expose sensitive information from plugins configuration https://github.com/gravitee-io/issues/issues/6734[#6734]
+
+*_Policy_*
+
+- [groovy] merge 1.14.2 into master https://github.com/gravitee-io/issues/issues/6843[#6843]
+
+=== Features
+
+*_Gateway_*
+
+- [oidc] add CIBA flow https://github.com/gravitee-io/issues/issues/5193[#5193]
+
+*_Management_*
+
+- Password policy - add password dictionary https://github.com/gravitee-io/issues/issues/6520[#6520]
+- Password policy - add pattern verification option https://github.com/gravitee-io/issues/issues/6521[#6521]
+
+=== Improvements
+
+*_Gateway_*
+
+- [idp] add an option to add id_token and access_token from the OP https://github.com/gravitee-io/issues/issues/6549[#6549]
+- [oidc] scope openid should not be used to get full profile information https://github.com/gravitee-io/issues/issues/6516[#6516]
+
+*_Management_*
+
+- Split AM roles and IdP roles https://github.com/gravitee-io/issues/issues/6515[#6515]
+
+*_Management-api_*
+
+- Do not expose sensitive information from audit logs https://github.com/gravitee-io/issues/issues/6783[#6783]
+- Lock user account via HTTP call https://github.com/gravitee-io/issues/issues/6785[#6785]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/495?closed=1[AM - 3.14.4 (2022-01-14)]
 
 === Bug fixes
