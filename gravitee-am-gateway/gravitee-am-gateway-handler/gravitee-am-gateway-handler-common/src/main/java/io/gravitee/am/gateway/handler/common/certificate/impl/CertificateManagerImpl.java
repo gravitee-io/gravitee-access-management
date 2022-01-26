@@ -47,6 +47,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -237,6 +238,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, signatureAlgorithm.getDigestName()));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+            @Override
+            public Optional<Date> getExpirationDate() {
+                return Optional.empty();
+            }
 
             @Override
             public Single<io.gravitee.am.certificate.api.Key> key() {
@@ -276,6 +281,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, SignatureAlgorithm.NONE.getValue()));
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+            @Override
+            public Optional<Date> getExpirationDate() {
+                return Optional.empty();
+            }
 
             @Override
             public Flowable<JWK> privateKey() {

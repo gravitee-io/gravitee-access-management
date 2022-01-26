@@ -28,6 +28,8 @@ import org.junit.Test;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 
@@ -85,6 +87,11 @@ public class CertificateProviderManagerTest {
 
         io.gravitee.am.certificate.api.CertificateProvider noneProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
             @Override
+            public Optional<Date> getExpirationDate() {
+                return Optional.empty();
+            }
+
+            @Override
             public Flowable<JWK> privateKey() {
                 throw new UnsupportedOperationException("No private key for \"none\" algorithm");
             }
@@ -126,6 +133,11 @@ public class CertificateProviderManagerTest {
         certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
 
         io.gravitee.am.certificate.api.CertificateProvider defaultProvider = new io.gravitee.am.certificate.api.CertificateProvider() {
+            @Override
+            public Optional<Date> getExpirationDate() {
+                return Optional.empty();
+            }
+
             @Override
             public Flowable<JWK> privateKey() {
                return null;

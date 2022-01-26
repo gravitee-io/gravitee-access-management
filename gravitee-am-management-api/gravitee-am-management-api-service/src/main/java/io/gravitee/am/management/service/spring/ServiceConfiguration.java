@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.management.service.spring;
 
+import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
+import io.gravitee.node.api.notifier.NotifierService;
+import io.gravitee.node.notifier.NotifierServiceImpl;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -25,7 +29,10 @@ import org.springframework.context.annotation.Import;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan("io.gravitee.am.management.service")
-@Import({FreemarkerConfiguration.class})
+@ComponentScan({"io.gravitee.am.management.service",
+        "io.gravitee.node.notifier"})
+@Import({FreemarkerConfiguration.class,
+        NotifierConfiguration.class})
 public class ServiceConfiguration {
+
 }
