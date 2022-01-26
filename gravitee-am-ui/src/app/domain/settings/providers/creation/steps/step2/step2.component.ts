@@ -16,7 +16,6 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {OrganizationService} from '../../../../../../services/organization.service';
-import * as _ from 'lodash';
 import {SnackbarService} from "../../../../../../services/snackbar.service";
 
 @Component({
@@ -45,15 +44,6 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
     if (changes.provider) {
       this.organizationService.identitySchema(changes.provider.currentValue.type).subscribe(data => {
         this.providerSchema = data;
-        // enhance schema information
-        if (this.providerSchema.properties.graviteeCertificate && this.certificates && this.certificates.length > 0) {
-          this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
-          this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { 'type' : 'select' };
-          this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
-            map[obj.id] = obj.name;
-            return map;
-          }, {});
-        }
       });
     }
   }
