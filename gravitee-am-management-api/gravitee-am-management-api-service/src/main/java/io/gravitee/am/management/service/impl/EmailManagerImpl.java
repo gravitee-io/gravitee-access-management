@@ -21,6 +21,8 @@ import freemarker.template.Configuration;
 import io.gravitee.am.common.event.EmailEvent;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.service.EmailTemplateService;
@@ -97,8 +99,17 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
     @Override
     public Email getEmail(io.gravitee.am.model.Template templateDef, User user, String defaultSubject, int defaultExpiresAfter) {
+        return getEmail0(templateDef, user.getReferenceType(), user.getReferenceId(), user, defaultSubject, defaultExpiresAfter);
+    }
+
+    @Override
+    public Email getEmail(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
+        return getEmail0(template, referenceType, referenceId, user, defaultSubject, defaultExpiresAfter);
+    }
+
+    private Email getEmail0(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
         // Since https://github.com/gravitee-io/issues/issues/6590 we have to read the record in Email repository
-        return getEmail0(templateDef, user)
+        return innerGetEmail(template, referenceType, referenceId, user)
                 .map(customEmail -> {
                     // try to found email template in the local map
                     final String templateName = getTemplateName(customEmail);
@@ -112,7 +123,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
                 })
                 // if there is nothing in database, return the classpath copy one
-                .defaultIfEmpty(create(templateDef.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter))
+                .defaultIfEmpty(create(template.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter))
                 .blockingGet();
     }
 
@@ -160,14 +171,14 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
                 + ((email.getClient() != null) ? TEMPLATE_NAME_SEPARATOR + email.getClient() : "");
     }
 
-    private Maybe<Email> getEmail0(io.gravitee.am.model.Template templateDef, User user) {
+    private Maybe<Email> innerGetEmail(io.gravitee.am.model.Template templateDef, ReferenceType refType, String referenceId, User user) {
         if (user.getClient() == null) {
-            return emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template())
+            return emailTemplateService.findByTemplate(refType, referenceId, templateDef.template())
                     .filter(Email::isEnabled);
         }
-        return emailTemplateService.findByClientAndTemplate(user.getReferenceType(), user.getReferenceId(), user.getClient(), templateDef.template())
+        return emailTemplateService.findByClientAndTemplate(refType, referenceId, user.getClient(), templateDef.template())
                 .filter(Email::isEnabled)
-                .switchIfEmpty(Maybe.defer(() -> emailTemplateService.findByTemplate(user.getReferenceType(), user.getReferenceId(), templateDef.template())))
+                .switchIfEmpty(Maybe.defer(() -> emailTemplateService.findByTemplate(refType, referenceId, templateDef.template())))
                 .filter(Email::isEnabled);
     }
 

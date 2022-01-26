@@ -39,7 +39,8 @@ public enum Template {
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),
     WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
     IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
-    ERROR("error", "/error");
+    ERROR("error", "/error"),
+    CERTIFICATE_EXPIRATION("certificate_expiration", null);
 
     private final String template;
     private final String redirectUri;

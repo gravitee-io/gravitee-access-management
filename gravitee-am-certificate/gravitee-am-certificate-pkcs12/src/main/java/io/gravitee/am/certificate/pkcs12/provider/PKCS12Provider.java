@@ -49,6 +49,7 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
 
     private final static String KEYSTORE_TYPE = "pkcs12";
 
+    private Date expirationDate;
     private KeyPair keyPair;
     private Certificate cert;
     private JWKSet jwkSet;
@@ -94,12 +95,18 @@ public class PKCS12Provider implements CertificateProvider, InitializingBean {
                     signature = getSignature(((X509Certificate) cert).getSigAlgName());
                     String pem = X509CertUtils.toPEMString((X509Certificate) cert);
                     certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
+                    expirationDate = ((X509Certificate) cert).getNotAfter();
                 }
                 certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) keyPair.getPublic())));
             } else {
                 throw new IllegalArgumentException("A RSA Signer must be supplied");
             }
         }
+    }
+
+    @Override
+    public Optional<Date> getExpirationDate() {
+        return Optional.ofNullable(this.expirationDate);
     }
 
     @Override

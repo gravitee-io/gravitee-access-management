@@ -15,20 +15,19 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.User;
-import io.gravitee.common.service.Service;
+import io.gravitee.am.certificate.api.CertificateProvider;
+import io.gravitee.am.model.Certificate;
+import io.reactivex.Completable;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailManager extends Service<EmailManager> {
+public interface DomainNotifierService {
 
-    String TEMPLATE_NAME_SEPARATOR = "|";
+    void registerCertificateExpiration(CertificateProvider provider, Certificate certificate);
 
-    Email getEmail(io.gravitee.am.model.Template template, User user, String defaultSubject, int defaultExpiresAfter);
+    void unregisterCertificateExpiration(String domainId, String certificateId);
 
-    Email getEmail(io.gravitee.am.model.Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter);
+    Completable deleteCertificateExpirationAcknowledge(String certificateId);
 }

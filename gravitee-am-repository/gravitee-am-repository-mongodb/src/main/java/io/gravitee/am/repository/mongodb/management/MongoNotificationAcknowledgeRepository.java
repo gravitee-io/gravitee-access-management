@@ -1,0 +1,106 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.repository.mongodb.management;
+
+import com.mongodb.reactivestreams.client.MongoCollection;
+import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.repository.mongodb.management.internal.model.NotificationAcknowledgeMongo;
+import io.gravitee.node.api.notifier.NotificationAcknowledge;
+import io.gravitee.node.api.notifier.NotificationAcknowledgeRepository;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import org.bson.Document;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+@Component
+public class MongoNotificationAcknowledgeRepository extends AbstractManagementMongoRepository implements NotificationAcknowledgeRepository {
+
+    private static final String FIELD_RESOURCE_ID = "resource";
+    private static final String FIELD_TYPE = "type";
+    private static final String FIELD_AUDIENCE_ID = "audience";
+
+    private MongoCollection<NotificationAcknowledgeMongo> collection;
+
+    @PostConstruct
+    public void init() {
+        collection = mongoOperations.getCollection("notification_acknowledgements", NotificationAcknowledgeMongo.class);
+        super.createIndex(collection, new Document(FIELD_RESOURCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_AUDIENCE_ID, 1));
+        super.init(collection);
+    }
+
+    @Override
+    public Maybe<NotificationAcknowledge> findById(String id) {
+        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id))
+                        .first())
+                .firstElement()
+                .map(this::convert);
+
+    }
+
+    @Override
+    public Maybe<NotificationAcknowledge> findByResourceIdAndAudienceId(String resource, String type, String audience) {
+        return Observable.fromPublisher(collection.find(and(
+                    eq(FIELD_RESOURCE_ID, resource),
+                    eq(FIELD_TYPE, type),
+                    eq(FIELD_AUDIENCE_ID, audience)))
+                .first())
+                .firstElement()
+                .map(this::convert);
+    }
+
+    @Override
+    public Completable deleteByResourceId(String id) {
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_RESOURCE_ID, id)));
+    }
+
+    @Override
+    public Single<NotificationAcknowledge> create(NotificationAcknowledge notificationAcknowledge) {
+        NotificationAcknowledgeMongo entity = convert(notificationAcknowledge);
+        entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
+        return Single.fromPublisher(collection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+    }
+
+    private NotificationAcknowledge convert(NotificationAcknowledgeMongo entity) {
+        final NotificationAcknowledge bean = new NotificationAcknowledge();
+        bean.setId(entity.getId());
+        bean.setResourceId(entity.getResource());
+        bean.setAudienceId(entity.getAudience());
+        bean.setType(entity.getType());
+        bean.setCreatedAt(entity.getCreatedAt());
+        return bean;
+    }
+
+    private NotificationAcknowledgeMongo convert(NotificationAcknowledge bean) {
+        final NotificationAcknowledgeMongo entity = new NotificationAcknowledgeMongo();
+        entity.setId(bean.getId());
+        entity.setResource(bean.getResourceId());
+        entity.setAudience(bean.getAudienceId());
+        entity.setType(bean.getType());
+        entity.setCreatedAt(bean.getCreatedAt());
+        return entity;
+    }
+}

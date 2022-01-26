@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.event.CertificateEvent;
 import io.gravitee.am.management.service.CertificateManager;
+import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
@@ -55,6 +56,9 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private DomainNotifierService notifierService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -73,11 +77,13 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
     public void onEvent(Event<CertificateEvent, Payload> event) {
         switch (event.type()) {
             case DEPLOY:
-            case UPDATE:
                 deployCertificate(event.content().getId());
                 break;
+            case UPDATE:
+                updateCertificate(event.content().getReferenceId(), event.content().getId());
+                break;
             case UNDEPLOY:
-                removeCertificate(event.content().getId());
+                removeCertificate(event.content().getReferenceId(), event.content().getId());
                 break;
         }
     }
@@ -122,9 +128,18 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                         () -> logger.error("No certificate found with id {}", certificateId));
     }
 
-    private void removeCertificate(String certificateId) {
+    private void updateCertificate(String domainId, String certificateId) {
+        logger.info("Management API has received a deploy certificate event for {}", certificateId);
+        notifierService.unregisterCertificateExpiration(domainId, certificateId);
+        notifierService.deleteCertificateExpirationAcknowledge(certificateId).blockingAwait();
+        deployCertificate(certificateId);
+    }
+
+    private void removeCertificate(String domainId, String certificateId) {
         logger.info("Management API has received a undeploy certificate event for {}", certificateId);
         certificateProviders.remove(certificateId);
+        notifierService.unregisterCertificateExpiration(domainId, certificateId);
+        notifierService.deleteCertificateExpirationAcknowledge(certificateId).blockingAwait();
     }
 
     private void loadCertificate(Certificate certificate) {
@@ -133,7 +148,10 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                     certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
             if (certificateProvider != null) {
                 certificateProviders.put(certificate.getId(), certificateProvider);
+                notifierService.registerCertificateExpiration(certificateProvider, certificate);
             } else {
+                notifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
+                notifierService.deleteCertificateExpirationAcknowledge(certificate.getId()).blockingAwait();
                 certificateProviders.remove(certificate.getId());
             }
         } catch (Exception ex) {

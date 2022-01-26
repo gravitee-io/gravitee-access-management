@@ -37,10 +37,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,6 +47,7 @@ import java.util.stream.Stream;
  */
 public class JavaKeyStoreProvider implements CertificateProvider, InitializingBean {
 
+    private Date expirationDate;
     private KeyPair keyPair;
     private Certificate cert;
     private JWKSet jwkSet;
@@ -94,12 +92,18 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
                     signature = getSignature(((X509Certificate) cert).getSigAlgName());
                     String pem = X509CertUtils.toPEMString((X509Certificate) cert);
                     certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
+                    expirationDate = ((X509Certificate) cert).getNotAfter();
                 }
                 certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) keyPair.getPublic())));
             } else {
                 throw new IllegalArgumentException("A RSA Signer must be supplied");
             }
         }
+    }
+
+    @Override
+    public Optional<Date> getExpirationDate() {
+        return Optional.ofNullable(this.expirationDate);
     }
 
     @Override

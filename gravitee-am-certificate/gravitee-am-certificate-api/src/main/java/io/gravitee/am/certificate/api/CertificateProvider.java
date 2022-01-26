@@ -19,15 +19,20 @@ import io.gravitee.am.model.jose.JWK;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
+import javax.swing.text.html.Option;
 import java.security.cert.Certificate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface CertificateProvider {
+
+    Optional<Date> getExpirationDate();
 
     Single<Key> key();
 
