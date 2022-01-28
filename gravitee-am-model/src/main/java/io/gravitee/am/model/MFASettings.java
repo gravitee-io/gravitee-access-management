@@ -29,6 +29,7 @@ public class MFASettings {
     private String stepUpAuthenticationRule;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettings rememberDevice;
+    private ForceEnrollSettings forceEnroll;
 
     public MFASettings() {
     }
@@ -41,6 +42,10 @@ public class MFASettings {
                 .filter(Objects::nonNull)
                 .map(RememberDeviceSettings::new)
                 .orElse(new RememberDeviceSettings());
+        this.forceEnroll = ofNullable(other.forceEnroll)
+                .filter(Objects::nonNull)
+                .map(ForceEnrollSettings::new)
+                .orElse(new ForceEnrollSettings());
     }
 
     public String getLoginRule() {
@@ -73,5 +78,13 @@ public class MFASettings {
 
     public void setRememberDevice(RememberDeviceSettings rememberDevice) {
         this.rememberDevice = rememberDevice;
+    }
+
+    public ForceEnrollSettings getForceEnroll() {
+        return forceEnroll;
+    }
+
+    public void setForceEnroll(ForceEnrollSettings forceEnroll) {
+        this.forceEnroll = forceEnroll;
     }
 }

@@ -50,8 +50,8 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
 public class DeviceServiceImpl implements DeviceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceServiceImpl.class);
-
-    private static final long DEFAULT_DEVICE_EXPIRATION_TIME_SECONDS = 7200L;
+    //Ten hours
+    private static final long DEFAULT_DEVICE_EXPIRATION_TIME_SECONDS = 10 * 60 * 60;
 
     @Lazy
     @Autowired

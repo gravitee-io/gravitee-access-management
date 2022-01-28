@@ -55,3 +55,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_15_0/schema-ciba-auth-req.yml
   - include:
       - file: liquibase/changelogs/v3_15_0/schema-ciba-auth-device-plugin.yml
+  - include:
+      - file: liquibase/changelogs/v3_16_0/schema.yml

@@ -149,7 +149,7 @@
                         <input th:if="${factor.factorType == 'EMAIL'}" type="hidden" id="email" name="email" value=""/>
                         <input th:if="${factor.factorType == 'EMAIL' || factor.factorType == 'TOTP' }" type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                         <div class="mfa-enroll-form-actions">
-                            <button type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
+                            <button th:if="${mfa_force_enrollment == false}" type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
                             <span style="flex: 1 1 0%;"></span>
                             <button th:if="${factor.factorType == 'TOTP'}"  type="submit" th:data1="${factor.id}" th:data2="'sharedSecret' + ${factIter.index}" th:onclick="javascript:assignSharedSecret(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}"  type="submit" th:data1="${factor.id}" th:data2="'phoneFact' + ${factIter.index}" th:onclick="javascript:checkPhoneNumber(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>

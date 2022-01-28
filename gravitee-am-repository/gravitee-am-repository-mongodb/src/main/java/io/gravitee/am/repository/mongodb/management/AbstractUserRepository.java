@@ -238,6 +238,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setClient(userMongo.getClient());
         user.setLoginsCount(userMongo.getLoginsCount());
         user.setLoggedAt(userMongo.getLoggedAt());
+        user.setMfaEnrollSkippedAt(userMongo.getMfaEnrollSkippedAt());
         user.setLastPasswordReset(userMongo.getLastPasswordReset());
         user.setLastLogoutAt(userMongo.getLastLogoutAt());
         user.setRoles(userMongo.getRoles());
@@ -292,6 +293,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setClient(user.getClient());
         userMongo.setLoginsCount(user.getLoginsCount());
         userMongo.setLoggedAt(user.getLoggedAt());
+        userMongo.setMfaEnrollSkippedAt(user.getMfaEnrollSkippedAt());
         userMongo.setLastPasswordReset(user.getLastPasswordReset());
         userMongo.setLastLogoutAt(user.getLastLogoutAt());
         userMongo.setRoles(user.getRoles());

@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.ForceEnrollSettings;
 
 import java.util.Objects;
 
@@ -32,6 +33,7 @@ public class MFASettingsMongo {
     private String stepUpAuthenticationRule;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettingsMongo rememberDevice;
+    private ForceEnrollSettingsMongo forceEnroll;
 
     public String getLoginRule() {
         return loginRule;
@@ -65,12 +67,21 @@ public class MFASettingsMongo {
         this.rememberDevice = rememberDevice;
     }
 
+    public ForceEnrollSettingsMongo getForceEnroll() {
+        return forceEnroll;
+    }
+
+    public void setForceEnroll(ForceEnrollSettingsMongo forceEnroll) {
+        this.forceEnroll = forceEnroll;
+    }
+
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
         mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
-        mfaSettings.setRememberDevice(ofNullable(rememberDevice).orElse(new RememberDeviceSettingsMongo()).convert());
+        mfaSettings.setRememberDevice(ofNullable(getRememberDevice()).orElse(new RememberDeviceSettingsMongo()).convert());
+        mfaSettings.setForceEnroll(ofNullable(getForceEnroll()).orElse(new ForceEnrollSettingsMongo()).convert());
         return mfaSettings;
     }
 
@@ -81,6 +92,7 @@ public class MFASettingsMongo {
             mfaSettingsMongo.setStepUpAuthenticationRule(settings.getStepUpAuthenticationRule());
             mfaSettingsMongo.setAdaptiveAuthenticationRule(settings.getAdaptiveAuthenticationRule());
             mfaSettingsMongo.setRememberDevice(RememberDeviceSettingsMongo.convert(ofNullable(mfaSettings.getRememberDevice()).orElse(new RememberDeviceSettings())));
+            mfaSettingsMongo.setForceEnroll(ForceEnrollSettingsMongo.convert(ofNullable(mfaSettings.getForceEnroll()).orElse(new ForceEnrollSettings())));
             return mfaSettingsMongo;
         }).orElse(null);
     }

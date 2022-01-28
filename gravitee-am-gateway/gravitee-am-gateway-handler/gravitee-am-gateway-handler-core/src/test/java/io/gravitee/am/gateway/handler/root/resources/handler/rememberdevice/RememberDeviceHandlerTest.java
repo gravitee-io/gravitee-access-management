@@ -153,7 +153,7 @@ public class RememberDeviceHandlerTest extends RxWebTestBase {
         spyRoutingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
         handler.handle(spyRoutingContext);
 
-        Assert.assertEquals((long) spyRoutingContext.get(REMEMBER_DEVICE_CONSENT_TIME_SECONDS), 7200L);
+        Assert.assertEquals((long) spyRoutingContext.get(REMEMBER_DEVICE_CONSENT_TIME_SECONDS), 36000L);
         verify(spyRoutingContext, times(0)).fail(405);
         verify(spyRoutingContext, times(1)).next();
     }

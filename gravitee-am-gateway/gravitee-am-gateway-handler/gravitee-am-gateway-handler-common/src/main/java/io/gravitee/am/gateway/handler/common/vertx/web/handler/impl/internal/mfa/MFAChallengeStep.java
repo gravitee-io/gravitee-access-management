@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.*;
@@ -40,13 +41,14 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
-        var context = new MfaFilterContext(client, session);
+        final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
+        var context = new MfaFilterContext(client, session, endUser);
 
         // Rules that makes you skip MFA challenge
         var mfaFilterChain = new MfaFilterChain(
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors()),
-                new MfaChallengeCompleteFilter(session),
+                new MfaChallengeCompleteFilter(context),
                 new AdaptiveMfaFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
                 new StepUpAuthenticationFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
                 new RememberDeviceFilter(context),

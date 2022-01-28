@@ -112,6 +112,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String USER_COL_SOURCE = "source";
     private static final String USER_COL_CLIENT = "client";
     private static final String USER_COL_LOGINS_COUNT = "logins_count";
+    private static final String USER_COL_MFA_ENROLL_SKIPPED_AT = "mfa_enroll_skipped_at";
     private static final String USER_COL_LOGGED_AT = "logged_at";
     private static final String USER_COL_CREATED_AT = "created_at";
     private static final String USER_COL_UPDATED_AT = "updated_at";
@@ -153,6 +154,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_LOGGED_AT,
             USER_COL_LAST_PASSWORD_RESET,
             USER_COL_LAST_LOGOUT_AT,
+            USER_COL_MFA_ENROLL_SKIPPED_AT,
             USER_COL_CREATED_AT,
             USER_COL_UPDATED_AT,
             USER_COL_X_509_CERTIFICATES,
@@ -482,6 +484,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_PASSWORD_RESET, dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_MFA_ENROLL_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollSkippedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
@@ -535,6 +538,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = addQuotedField(update, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_PASSWORD_RESET, dateConverter.convertTo(item.getLastPasswordReset(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_LAST_LOGOUT_AT, dateConverter.convertTo(item.getLastLogoutAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_MFA_ENROLL_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollSkippedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());

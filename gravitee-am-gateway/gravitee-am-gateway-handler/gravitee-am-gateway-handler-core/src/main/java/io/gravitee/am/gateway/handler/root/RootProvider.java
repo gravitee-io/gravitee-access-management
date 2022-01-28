@@ -294,7 +294,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // MFA route
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain));
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
