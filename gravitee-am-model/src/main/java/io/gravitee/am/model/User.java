@@ -122,6 +122,8 @@ public class User implements IUser {
 
     private Date lastLogoutAt;
 
+    private Date mfaEnrollmentSkippedAt;
+
     private Date createdAt;
 
     private Date updatedAt;
@@ -190,6 +192,7 @@ public class User implements IUser {
         this.loggedAt = other.loggedAt;
         this.lastPasswordReset = other.lastPasswordReset;
         this.lastLogoutAt = other.lastLogoutAt;
+        this.mfaEnrollmentSkippedAt = other.mfaEnrollmentSkippedAt;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -720,6 +723,14 @@ public class User implements IUser {
 
     public void setPhoneNumber(String phoneNumber) {
         putAdditionalInformation(StandardClaims.PHONE_NUMBER, phoneNumber);
+    }
+
+    public Date getMfaEnrollmentSkippedAt() {
+        return mfaEnrollmentSkippedAt;
+    }
+
+    public void setMfaEnrollmentSkippedAt(Date mfaEnrollmentSkippedAt) {
+        this.mfaEnrollmentSkippedAt = mfaEnrollmentSkippedAt;
     }
 
     public Map<String, Object> getAddress() {

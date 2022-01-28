@@ -22,6 +22,8 @@ import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordPara
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -46,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -228,7 +231,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -248,7 +251,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn("idp-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -274,7 +277,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -299,7 +302,7 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -322,7 +325,7 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.empty());
 
@@ -347,7 +350,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
 
@@ -369,7 +372,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
 
         TestObserver testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
@@ -398,7 +401,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.create(any())).thenReturn(Single.just(user));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
@@ -428,7 +431,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
@@ -450,7 +453,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
@@ -469,7 +472,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -491,7 +494,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()),any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
 
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -531,5 +534,77 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, times(1)).deleteByUserId(any(), any(), any());
+    }
+
+    @Test
+    public void mustSetEnrolSkipTime() {
+        Client client = mock(Client.class);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
+        var mfaSettings = new MFASettings();
+        mfaSettings.setEnrollment(enrollmentSettings);
+        var user = mock(User.class);
+
+        when(client.getMfaSettings()).thenReturn(mfaSettings);
+        when(user.getMfaEnrollmentSkippedAt()).thenReturn(null);
+
+        doReturn(Single.just(user)).when(commonUserService).update(user);
+
+        userService.setMfaEnrollmentSkippedTime(client, user);
+
+        verify(commonUserService, times(1)).update(user);
+    }
+
+    @Test
+    public void mustNotSetEnrolSkipTime_settingsNotActive() {
+        Client client = mock(Client.class);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(true);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
+        var mfaSettings = new MFASettings();
+        mfaSettings.setEnrollment(enrollmentSettings);
+        var user = mock(User.class);
+
+        when(client.getMfaSettings()).thenReturn(mfaSettings);
+
+        userService.setMfaEnrollmentSkippedTime(client, user);
+
+        verify(commonUserService, times(0)).update(user);
+    }
+
+    @Test
+    public void mustNotSetEnrolSkipTime_settingsUserIsNull() {
+        Client client = mock(Client.class);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
+        var mfaSettings = new MFASettings();
+        mfaSettings.setEnrollment(enrollmentSettings);
+
+        when(client.getMfaSettings()).thenReturn(mfaSettings);
+
+        userService.setMfaEnrollmentSkippedTime(client, null);
+
+        verify(commonUserService, times(0)).update(any());
+    }
+
+    @Test
+    public void mustNotSetEnrolSkipTime_settingsUserExpiredAlreadySet() {
+        Client client = mock(Client.class);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(new Date(System.currentTimeMillis() + 86400L).getTime());
+        var mfaSettings = new MFASettings();
+        mfaSettings.setEnrollment(enrollmentSettings);
+
+        var user = mock(User.class);
+
+        when(client.getMfaSettings()).thenReturn(mfaSettings);
+        when(user.getMfaEnrollmentSkippedAt()).thenReturn(new Date());
+
+        userService.setMfaEnrollmentSkippedTime(client, user);
+
+        verify(commonUserService, times(0)).update(any());
     }
 }

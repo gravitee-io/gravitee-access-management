@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 
 import java.util.Objects;
 
@@ -32,6 +33,7 @@ public class MFASettingsMongo {
     private String stepUpAuthenticationRule;
     private String adaptiveAuthenticationRule;
     private RememberDeviceSettingsMongo rememberDevice;
+    private EnrollmentSettingsMongo enrollment;
 
     public String getLoginRule() {
         return loginRule;
@@ -65,12 +67,21 @@ public class MFASettingsMongo {
         this.rememberDevice = rememberDevice;
     }
 
+    public EnrollmentSettingsMongo getEnrollment() {
+        return enrollment;
+    }
+
+    public void setEnrollment(EnrollmentSettingsMongo enrollment) {
+        this.enrollment = enrollment;
+    }
+
     public MFASettings convert() {
         MFASettings mfaSettings = new MFASettings();
         mfaSettings.setLoginRule(getLoginRule());
         mfaSettings.setStepUpAuthenticationRule(getStepUpAuthenticationRule());
         mfaSettings.setAdaptiveAuthenticationRule(getAdaptiveAuthenticationRule());
-        mfaSettings.setRememberDevice(ofNullable(rememberDevice).orElse(new RememberDeviceSettingsMongo()).convert());
+        mfaSettings.setRememberDevice(ofNullable(getRememberDevice()).orElse(new RememberDeviceSettingsMongo()).convert());
+        mfaSettings.setEnrollment(ofNullable(getEnrollment()).orElse(new EnrollmentSettingsMongo()).convert());
         return mfaSettings;
     }
 
@@ -81,6 +92,7 @@ public class MFASettingsMongo {
             mfaSettingsMongo.setStepUpAuthenticationRule(settings.getStepUpAuthenticationRule());
             mfaSettingsMongo.setAdaptiveAuthenticationRule(settings.getAdaptiveAuthenticationRule());
             mfaSettingsMongo.setRememberDevice(RememberDeviceSettingsMongo.convert(ofNullable(mfaSettings.getRememberDevice()).orElse(new RememberDeviceSettings())));
+            mfaSettingsMongo.setEnrollment(EnrollmentSettingsMongo.convert(ofNullable(mfaSettings.getEnrollment()).orElse(new EnrollmentSettings())));
             return mfaSettingsMongo;
         }).orElse(null);
     }

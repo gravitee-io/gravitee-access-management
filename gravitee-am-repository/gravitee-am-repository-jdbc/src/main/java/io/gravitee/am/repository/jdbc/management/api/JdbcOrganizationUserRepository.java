@@ -110,6 +110,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String USER_COL_CLIENT = "client";
     private static final String USER_COL_LOGINS_COUNT = "logins_count";
     private static final String USER_COL_LOGGED_AT = "logged_at";
+    private static final String USER_COL_MFA_ENROLLMENT_SKIPPED_AT = "mfa_enrollment_skipped_at";
     private static final String USER_COL_CREATED_AT = "created_at";
     private static final String USER_COL_UPDATED_AT = "updated_at";
     private static final String USER_COL_X_509_CERTIFICATES = "x509_certificates";
@@ -147,6 +148,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             USER_COL_CLIENT,
             USER_COL_LOGINS_COUNT,
             USER_COL_LOGGED_AT,
+            USER_COL_MFA_ENROLLMENT_SKIPPED_AT,
             USER_COL_CREATED_AT,
             USER_COL_UPDATED_AT,
             USER_COL_X_509_CERTIFICATES,
@@ -380,6 +382,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = addQuotedField(insertSpec, USER_COL_CLIENT, item.getClient(), String.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());
@@ -431,6 +434,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = addQuotedField(update, USER_COL_CLIENT, item.getClient(), String.class);
         update = addQuotedField(update, USER_COL_LOGINS_COUNT, item.getLoginsCount(), Integer.class);
         update = addQuotedField(update, USER_COL_LOGGED_AT, dateConverter.convertTo(item.getLoggedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, USER_COL_MFA_ENROLLMENT_SKIPPED_AT, dateConverter.convertTo(item.getMfaEnrollmentSkippedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, USER_COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
         update = databaseDialectHelper.addJsonField(update, USER_COL_X_509_CERTIFICATES, item.getX509Certificates());

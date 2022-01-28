@@ -77,6 +77,14 @@ public interface ConstantKeys {
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
 
+    String USER_MFA_ENROLLMENT = "user_mfa_enrollment";
+    String MFA_FORCE_ENROLLMENT = "mfa_force_enrollment";
+    String MFA_ENROLLMENT_FACTOR_ID = "factorId";
+    String MFA_ENROLLMENT_SHARED_SECRET = "sharedSecret";
+    String MFA_ENROLLMENT_PHONE = "phone";
+    String MFA_ENROLLMENT_EMAIL = "email";
+    long DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS = 10 * 60 * 60; // ten hours
+
     // Passwordless keys.
     String WEBAUTHN_SKIPPED_KEY = "webAuthnRegistrationSkipped";
     String WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY = "webAuthnCredentialId";
@@ -119,6 +127,7 @@ public interface ConstantKeys {
     //remember device
     String DEVICE_ALREADY_EXISTS_KEY = "deviceAlreadyExists";
     String REMEMBER_DEVICE_CONSENT_TIME_SECONDS = "rememberDeviceConsentTimeSeconds";
+    long DEFAULT_REMEMBER_DEVICE_CONSENT_TIME = 10 * 60 * 60; // 10 hours
 
     // ------
     // Values used to find key into gravitee.yaml

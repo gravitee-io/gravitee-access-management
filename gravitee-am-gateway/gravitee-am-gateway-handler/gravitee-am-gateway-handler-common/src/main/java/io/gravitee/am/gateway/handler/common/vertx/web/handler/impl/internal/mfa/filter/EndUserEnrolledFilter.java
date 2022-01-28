@@ -16,11 +16,7 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
-import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.model.User;
-import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.oidc.Client;
-import io.vertx.reactivex.ext.web.Session;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
 
 import java.util.function.Supplier;
 
@@ -28,30 +24,14 @@ import java.util.function.Supplier;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EndUserEnrolledFilter implements Supplier<Boolean> {
+public class EndUserEnrolledFilter extends MfaContextHolder implements Supplier<Boolean> {
 
-    private final Session session;
-    private final User user;
-    private final Client client;
-
-    public EndUserEnrolledFilter(Session session, io.gravitee.am.model.User user, Client client) {
-        this.session = session;
-        this.user = user;
-        this.client = client;
+    public EndUserEnrolledFilter(MfaFilterContext context) {
+        super(context);
     }
 
     @Override
     public Boolean get() {
-        if (session.get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null) {
-            return true;
-        }
-
-        if (user.getFactors() == null || user.getFactors().isEmpty()) {
-            return false;
-        }
-
-        return user.getFactors().stream()
-                .map(EnrolledFactor::getFactorId)
-                .anyMatch(factor -> client.getFactors().contains(factor));
+        return context.hasEndUserAlreadyEnrolled() || context.userHasMatchingFactors();
     }
 }

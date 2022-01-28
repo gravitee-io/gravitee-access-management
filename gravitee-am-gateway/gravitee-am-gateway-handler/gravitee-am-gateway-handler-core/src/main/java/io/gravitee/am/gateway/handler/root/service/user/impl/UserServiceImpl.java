@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -31,10 +32,7 @@ import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordPara
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.jwt.JWTParser;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
@@ -57,6 +55,11 @@ import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.lang.Boolean.FALSE;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -364,7 +367,7 @@ public class UserServiceImpl implements UserService {
                                             .map(Optional::ofNullable)
                                             .defaultIfEmpty(Optional.empty())
                                             .flatMapSingle(optUser -> {
-                                                if (!optUser.isPresent()) {
+                                                if (optUser.isEmpty()) {
                                                     return Single.just(user);
                                                 }
                                                 return userService.update(enhanceUser(user, optUser.get()));
@@ -390,24 +393,22 @@ public class UserServiceImpl implements UserService {
                     // Single field search using email or username with IdP linked to the clientApp
                     // email used in priority for backward compatibility
                     return Observable.fromIterable(client.getIdentities())
-                            .flatMapMaybe(authProvider -> {
-                                return identityProviderManager.getUserProvider(authProvider)
-                                        .flatMap(userProvider -> {
-                                            final String username = params.getUsername();
-                                            final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
-                                                    userProvider.findByUsername(username) : userProvider.findByEmail(email) ;
-                                            return findQuery
-                                                    .map(user -> Optional.of(new UserAuthentication(user, authProvider)))
-                                                    .defaultIfEmpty(Optional.empty())
-                                                    .onErrorReturnItem(Optional.empty());
-                                        })
-                                        .defaultIfEmpty(Optional.empty());
-                            })
+                            .flatMapMaybe(authProvider -> identityProviderManager.getUserProvider(authProvider)
+                                    .flatMap(userProvider -> {
+                                        final String username = params.getUsername();
+                                        final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
+                                                userProvider.findByUsername(username) : userProvider.findByEmail(email);
+                                        return findQuery
+                                                .map(user -> Optional.of(new UserAuthentication(user, authProvider)))
+                                                .defaultIfEmpty(Optional.empty())
+                                                .onErrorReturnItem(Optional.empty());
+                                    })
+                                    .defaultIfEmpty(Optional.empty()))
                             .takeUntil((Predicate<? super Optional<UserAuthentication>>) Optional::isPresent)
                             .lastOrError()
                             .flatMap(optional -> {
                                 // be sure to not duplicate an existing user
-                                if (!optional.isPresent()) {
+                                if (optional.isEmpty()) {
                                     return Single.error(new UserNotFoundException());
                                 }
                                 final UserAuthentication idpUser = optional.get();
@@ -416,7 +417,7 @@ public class UserServiceImpl implements UserService {
                                         .map(Optional::ofNullable)
                                         .defaultIfEmpty(Optional.empty())
                                         .flatMapSingle(optEndUser -> {
-                                            if (!optEndUser.isPresent()) {
+                                            if (optEndUser.isEmpty()) {
                                                 return userService.create(convert(idpUser.getUser(), idpUser.getSource()));
                                             }
                                             return userService.update(enhanceUser(optEndUser.get(), idpUser.getUser()));
@@ -455,6 +456,29 @@ public class UserServiceImpl implements UserService {
     @Override
     public Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
         return userService.addFactor(userId, enrolledFactor, principal);
+    }
+
+    @Override
+    public Completable setMfaEnrollmentSkippedTime(Client client, User user) {
+        var mfaEnrollmentSettings = getMfaEnrollmentSettings(client);
+        final Boolean active = Optional.ofNullable(mfaEnrollmentSettings.getForceEnrollment()).orElse(false);
+        if (FALSE.equals(active) && nonNull(user)) {
+            Date now = new Date();
+            long skipTime = ofNullable(mfaEnrollmentSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            if (isNull(user.getMfaEnrollmentSkippedAt()) || user.getMfaEnrollmentSkippedAt().getTime() + skipTime < now.getTime()) {
+                user.setMfaEnrollmentSkippedAt(now);
+                return userService.update(user).ignoreElement();
+            }
+        }
+        return Completable.complete();
+    }
+
+    private EnrollmentSettings getMfaEnrollmentSettings(Client client) {
+        return ofNullable(client)
+                .filter(Objects::nonNull)
+                .map(Client::getMfaSettings)
+                .filter(Objects::nonNull).map(MFASettings::getEnrollment)
+                .orElse(new EnrollmentSettings());
     }
 
     private MaybeSource<Optional<Client>> clientSource(String audience) {
@@ -501,7 +525,7 @@ public class UserServiceImpl implements UserService {
             additionalInformation.put(StandardClaims.EMAIL, user.getEmail());
         }
         if (user.getAdditionalInformation() != null) {
-            user.getAdditionalInformation().forEach((k, v) -> additionalInformation.putIfAbsent(k, v));
+            user.getAdditionalInformation().forEach(additionalInformation::putIfAbsent);
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;

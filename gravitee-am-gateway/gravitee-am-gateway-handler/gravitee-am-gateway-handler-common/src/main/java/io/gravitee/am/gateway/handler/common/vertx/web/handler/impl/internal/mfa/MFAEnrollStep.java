@@ -43,13 +43,13 @@ public class MFAEnrollStep extends MFAStep {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
         final Session session = routingContext.session();
-        var context = new MfaFilterContext(client, session);
+        var context = new MfaFilterContext(client, session, endUser);
 
         // Rules that makes you skip MFA enroll
         var mfaFilterChain = new MfaFilterChain(
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors()),
-                new EndUserEnrolledFilter(session, endUser, client),
+                new EndUserEnrolledFilter(context),
                 new AdaptiveMfaFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
                 new StepUpAuthenticationFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
                 new RememberDeviceFilter(context),

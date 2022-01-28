@@ -65,6 +65,42 @@
 
         <div *ngIf="hasFactors() && hasSelectedFactors()" class="gv-form-section">
           <div class="gv-form-section-title">
+            <h5>Enrollment options</h5>
+            <small>Enforcement of MFA settings for the user accounts.</small>
+            <mat-divider></mat-divider>
+          </div>
+          <div class="gv-form-section-description" fxLayout="column" style="margin-bottom: 10px;">
+            <mat-slide-toggle matInput placeholder="Force enrollment" name="mfaForceEnrollment"
+                              (change)="changeForceEnrollment()" [checked]="enrollment.forceEnrollment">
+              Force enrollment
+            </mat-slide-toggle>
+            <mat-hint style="font-size: 75%;">When toggled, enrollment step will be enforced, otherwise users can ignore enroll step for a given period of time</mat-hint>
+          </div>
+          <form>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="50">
+              <input matInput type="number" placeholder="Duration" name="skipTimeSecond" min="0" [min]="0"
+                     [disabled]="enrollment.forceEnrollment"
+                     [value]="displaySkipTime()"
+                     (change)="onSkipTimeInEvent($event)">
+              <mat-hint>Default time is 10 hours</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline" floatLabel="always" fxFlex="50" style="margin-left: 5px;">
+              <mat-select placeholder="Unit" name="skipTimeUnit" [value]="displaySkipTimeUnit()" [disabled]="enrollment.forceEnrollment" (selectionChange)="onSkipTimeUnitEvent($event)">
+                <mat-option value="seconds">SECONDS</mat-option>
+                <mat-option value="minutes">MINUTES</mat-option>
+                <mat-option value="hours">HOURS</mat-option>
+                <mat-option value="days">DAYS</mat-option>
+                <mat-option value="weeks">WEEKS</mat-option>
+                <mat-option value="months">MONTHS</mat-option>
+                <mat-option value="years">YEARS</mat-option>
+              </mat-select>
+              <mat-hint>Period of time users can skip enrollment</mat-hint>
+            </mat-form-field>
+          </form>
+        </div>
+
+        <div *ngIf="hasFactors() && hasSelectedFactors()" class="gv-form-section">
+          <div class="gv-form-section-title">
             <div fxLayout="row" style="align-items: center;">
               <h5>Adaptive MFA</h5>
               <button mat-icon-button (click)="openAMFADialog($event)">
@@ -124,9 +160,9 @@
             </blockquote>
             <mat-divider></mat-divider>
           </div>
-          <div class="gv-form-section-description">
-            <mat-slide-toggle matInput placeholder="Step up authentication rule" name="mfaRememberDevice"
-                              (change)="changeActive()" [checked]="rememberDevice.active" [disabled]="!hasDeviceIdentifierPlugins()">
+          <div  class="gv-form-section-description">
+            <mat-slide-toggle matInput placeholder="Remember device" name="mfaRememberDevice"
+                              (change)="changeRememberDeviceActive()" [checked]="rememberDevice.active">
               Enable Remember Device
             </mat-slide-toggle>
           </div>
@@ -142,6 +178,7 @@
               <input matInput type="number" placeholder="Duration" name="expirationTimeSeconds" min="0" [min]="0"
                      [value]="displayExpiresIn()"
                      (change)="onExpiresInEvent($event)">
+              <mat-hint>Default time is 10 hours</mat-hint>
             </mat-form-field>
             <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px;">
               <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()"

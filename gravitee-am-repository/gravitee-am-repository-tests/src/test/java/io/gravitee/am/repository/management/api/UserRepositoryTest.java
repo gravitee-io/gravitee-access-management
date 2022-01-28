@@ -215,6 +215,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         user.setAccountNonLocked(true);
         user.setClient("client"+random);
         user.setCreatedAt(new Date());
+        user.setMfaEnrollmentSkippedAt(new Date());
         user.setCredentialsNonExpired(true);
         user.setDisplayName("display"+random);
         user.setEnabled(true);

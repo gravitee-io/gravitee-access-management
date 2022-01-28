@@ -13,25 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
-
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-
-import java.util.function.Supplier;
+package io.gravitee.am.model;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MfaChallengeCompleteFilter extends MfaContextHolder implements Supplier<Boolean> {
+public class EnrollmentSettings {
 
-    public MfaChallengeCompleteFilter(MfaFilterContext context) {
-        super(context);
+    private Boolean forceEnrollment;
+    private Long skipTimeSeconds;
+
+    public EnrollmentSettings() {
     }
 
-    @Override
-    public Boolean get() {
-        return context.isMfaChallengeComplete();
+    public EnrollmentSettings(EnrollmentSettings enrollment) {
+        this.forceEnrollment = enrollment.forceEnrollment;
+        this.skipTimeSeconds = enrollment.skipTimeSeconds;
+    }
+
+    public Boolean getForceEnrollment() {
+        return forceEnrollment;
+    }
+
+    public void setForceEnrollment(Boolean forceEnrollment) {
+        this.forceEnrollment = forceEnrollment;
+    }
+
+    public Long getSkipTimeSeconds() {
+        return skipTimeSeconds;
+    }
+
+    public void setSkipTimeSeconds(Long skipTimeSeconds) {
+        this.skipTimeSeconds = skipTimeSeconds;
     }
 }

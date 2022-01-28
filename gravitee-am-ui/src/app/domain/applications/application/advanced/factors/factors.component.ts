@@ -51,7 +51,9 @@ export class ApplicationFactorsComponent implements OnInit {
   mfaStepUpRule: string;
   adaptiveMfaRule: string;
   rememberDevice: any;
+  enrollment: any;
   rememberDeviceTime: any;
+  enrollmentTime: any;
   deviceIdentifiers: any[];
 
   constructor(private route: ActivatedRoute,
@@ -71,9 +73,14 @@ export class ApplicationFactorsComponent implements OnInit {
     this.mfaStepUpRule = applicationMfaSettings.stepUpAuthenticationRule;
     this.adaptiveMfaRule = applicationMfaSettings.adaptiveAuthenticationRule;
     this.rememberDevice = applicationMfaSettings.rememberDevice || {};
+    this.enrollment = applicationMfaSettings.enrollment || {};
     this.rememberDeviceTime = {
-      'expirationTime': this.getExpiresIn(this.rememberDevice.expirationTimeSeconds),
+      'expirationTime': this.getTime(this.rememberDevice.expirationTimeSeconds),
       'expirationTimeUnit': this.getUnitTime(this.rememberDevice.expirationTimeSeconds)
+    }
+    this.enrollmentTime = {
+      'skipTime': this.getTime(this.enrollment.skipTimeSeconds),
+      'skipTimeUnit': this.getUnitTime(this.enrollment.skipTimeSeconds)
     }
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
@@ -83,15 +90,30 @@ export class ApplicationFactorsComponent implements OnInit {
     const data: any = {};
     data.factors = this.application.factors;
     data.settings = {};
-    if (this.rememberDevice.active && this.rememberDeviceTime.expirationTime) {
-      this.rememberDeviceTime.expirationTime = Math.abs(this.rememberDeviceTime.expirationTime);
-      this.rememberDevice.expirationTimeSeconds =
-        moment.duration(this.rememberDeviceTime.expirationTime, this.rememberDeviceTime.expirationTimeUnit).asSeconds();
+
+    if (this.rememberDevice.active) {
+      if (!this.rememberDeviceTime.expirationTime) {
+        this.rememberDevice.expirationTimeSeconds = null;
+      } else {
+        this.rememberDeviceTime.expirationTime = Math.abs(this.rememberDeviceTime.expirationTime);
+        this.rememberDevice.expirationTimeSeconds =
+          moment.duration(this.rememberDeviceTime.expirationTime, this.rememberDeviceTime.expirationTimeUnit).asSeconds();
+      }
     }
+
+    if (!this.enrollmentTime.skipTime) {
+      this.enrollment.skipTimeSeconds = null;
+    } else {
+      this.enrollmentTime.skipTime = Math.abs(this.enrollmentTime.skipTime);
+      this.enrollment.skipTimeSeconds =
+        moment.duration(this.enrollmentTime.skipTime, this.enrollmentTime.skipTimeUnit).asSeconds();
+    }
+
     data.settings.mfa = {
       'stepUpAuthenticationRule': this.mfaStepUpRule,
       'adaptiveAuthenticationRule': this.adaptiveMfaRule,
-      'rememberDevice': this.rememberDevice
+      'rememberDevice': this.rememberDevice,
+      'enrollment': this.enrollment
     };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
@@ -103,6 +125,7 @@ export class ApplicationFactorsComponent implements OnInit {
 
   selectFactor(event, factorId) {
     if (event.checked) {
+      this.application.factors = this.application.factors || [];
       this.application.factors.push(factorId);
     } else {
       this.application.factors.splice(this.application.factors.indexOf(factorId), 1);
@@ -166,7 +189,25 @@ export class ApplicationFactorsComponent implements OnInit {
     return this.rememberDeviceTime.expirationTimeUnit;
   }
 
-  private getExpiresIn(value) {
+  displaySkipTime() {
+    return this.enrollmentTime.skipTime;
+  }
+
+  displaySkipTimeUnit() {
+    return this.enrollmentTime.skipTimeUnit;
+  }
+
+  onSkipTimeInEvent($event) {
+    this.enrollmentTime.skipTime = $event.target.value;
+    this.formChanged = true;
+  }
+
+  onSkipTimeUnitEvent($event) {
+    this.enrollmentTime.skipTimeUnit = $event.value;
+    this.formChanged = true;
+  }
+
+  private getTime(value) {
     if (value) {
       const humanizeDate = moment.duration(value, 'seconds').humanize().split(' ');
       const humanizeDateValue = (humanizeDate.length === 2)
@@ -188,7 +229,12 @@ export class ApplicationFactorsComponent implements OnInit {
     return 'seconds'
   }
 
-  changeActive() {
+  changeForceEnrollment(){
+    this.enrollment.forceEnrollment = !this.enrollment.forceEnrollment;
+    this.formChanged = true;
+  }
+
+  changeRememberDeviceActive() {
     this.rememberDevice.active = !this.rememberDevice.active
     this.formChanged = true;
     if (!this.rememberDevice.deviceIdentifierId) {

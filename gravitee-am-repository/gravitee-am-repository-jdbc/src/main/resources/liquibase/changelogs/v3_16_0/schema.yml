@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.16.0
+      author: GraviteeSource Team
+      changes:
+        #########
+        # users #
+        #########
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: mfa_enrollment_skipped_at, type: timestamp(6), constraints: { nullable: true } }
+        ######################
+        # organization_users #
+        ######################
+        - addColumn:
+            tableName: organization_users
+            columns:
+              - column: { name: mfa_enrollment_skipped_at, type: timestamp(6), constraints: { nullable: true } }

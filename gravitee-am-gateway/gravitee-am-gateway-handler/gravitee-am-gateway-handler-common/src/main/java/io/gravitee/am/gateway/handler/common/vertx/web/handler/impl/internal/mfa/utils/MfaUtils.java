@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.ext.web.Session;
 
@@ -38,10 +39,6 @@ public class MfaUtils {
         return TRUE.equals(session.get(ConstantKeys.STRONG_AUTH_COMPLETED_KEY));
     }
 
-    public static boolean isMfaSkipped(Session session) {
-        return TRUE.equals(session.get(ConstantKeys.MFA_SKIPPED_KEY));
-    }
-
     public static String getMfaStepUpRule(Client client) {
         return ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getStepUpAuthenticationRule();
     }
@@ -58,5 +55,12 @@ public class MfaUtils {
 
     public static boolean deviceAlreadyExists(Session session) {
         return TRUE.equals(session.get(DEVICE_ALREADY_EXISTS_KEY));
+    }
+
+    public static EnrollmentSettings getEnrollmentSettings(Client client) {
+        return ofNullable(client.getMfaSettings())
+                .filter(Objects::nonNull)
+                .map(MFASettings::getEnrollment)
+                .orElse(new EnrollmentSettings());
     }
 }
