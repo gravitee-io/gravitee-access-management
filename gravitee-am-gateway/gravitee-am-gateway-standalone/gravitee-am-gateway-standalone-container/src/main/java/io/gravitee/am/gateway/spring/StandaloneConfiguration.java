@@ -37,6 +37,7 @@ import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.NodeMetadataResolver;
+import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
@@ -69,7 +70,8 @@ import org.springframework.context.annotation.Import;
         FactorConfiguration.class,
         ResourceConfiguration.class,
         BotDetectionConfiguration.class,
-        DeviceIdentifierConfiguration.class
+        DeviceIdentifierConfiguration.class,
+        NodeCertificatesConfiguration.class
 })
 public class StandaloneConfiguration {
 
