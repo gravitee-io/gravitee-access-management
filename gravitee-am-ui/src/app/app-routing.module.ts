@@ -72,7 +72,6 @@ import {ScopeComponent} from './domain/settings/scopes/scope/scope.component';
 import {SettingsComponent} from './settings/settings.component';
 import {SettingsMembershipsComponent} from './settings/memberships/memberships.component';
 import {UsersComponent} from './domain/settings/users/users.component';
-import {UsersResolver} from './resolvers/users.resolver';
 import {UserComponent} from './domain/settings/users/user/user.component';
 import {UserResolver} from './resolvers/user.resolver';
 import {UserCreationComponent} from './domain/settings/users/creation/user-creation.component';
@@ -420,10 +419,7 @@ export const routes: Routes = [
               {
                 path: '',
                 pathMatch: 'full',
-                component: UsersComponent,
-                resolve: {
-                  users: UsersResolver
-                }
+                component: UsersComponent
               },
               {
                 path: 'new',
@@ -1840,10 +1836,7 @@ export const routes: Routes = [
                           {
                             path: '',
                             pathMatch: 'full',
-                            component: UsersComponent,
-                            resolve: {
-                              users: UsersResolver
-                            }
+                            component: UsersComponent
                           },
                           {
                             path: 'new',
