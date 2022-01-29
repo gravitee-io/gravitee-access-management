@@ -32,9 +32,8 @@ import {FormControl} from "@angular/forms";
   styleUrls: ['./users.component.scss']
 })
 export class UsersComponent implements OnInit {
-  private isLoading: boolean;
-  private hasValue: boolean;
   private re = /\b(eq|ne|co|sw|ew|pr|gt|ge|lt|le|and|or)\b/gi;
+  isLoading: boolean;
   searchValue: string;
   organizationContext: boolean;
   requiredReadPermission: string;
@@ -74,14 +73,7 @@ export class UsersComponent implements OnInit {
       this.createMode = this.authService.hasPermissions(['domain_user_create']);
       this.requiredReadPermission = 'domain_user_read';
     }
-    this.pagedUsers = this.route.snapshot.data['users'];
-    this.users = this.pagedUsers.data;
-    this.page.totalElements = this.pagedUsers.totalCount;
-    this.hasValue = this.pagedUsers.totalCount > 0;
-  }
-
-  get isEmpty() {
-    return !this.users || this.users.length === 0 && (!this.searchValue && !this.hasValue) && !this.isLoading;
+    this.loadUsers(null);
   }
 
   loadUsers(searchQuery) {

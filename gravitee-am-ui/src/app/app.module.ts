@@ -180,7 +180,6 @@ import {UserCredentialComponent} from './domain/settings/users/user/credentials/
 import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
 import {UserCredentialResolver} from './resolvers/user-credential.resolver';
 import {UserService} from './services/user.service';
-import {UsersResolver} from './resolvers/users.resolver';
 import {UserResolver} from './resolvers/user.resolver';
 import {UserRolesResolver} from './resolvers/user-roles.resolver';
 import {ExtensionGrantService} from './services/extension-grant.service';
@@ -632,7 +631,6 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     RolesResolver,
     PageRolesResolver,
     RoleResolver,
-    UsersResolver,
     UserResolver,
     UserRolesResolver,
     UserCredentialsResolver,
