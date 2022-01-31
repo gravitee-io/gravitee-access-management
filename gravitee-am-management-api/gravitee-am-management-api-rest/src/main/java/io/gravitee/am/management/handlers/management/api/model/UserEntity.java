@@ -59,6 +59,7 @@ public class UserEntity extends User {
         setAdditionalInformation(user.getAdditionalInformation());
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
+        setLastPasswordReset(user.getLastPasswordReset());
     }
 
     public ApplicationEntity getApplicationEntity() {

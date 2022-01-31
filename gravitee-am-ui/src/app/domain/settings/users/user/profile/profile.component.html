@@ -194,6 +194,11 @@
             <h4 matLine>Created at</h4>
             <p matLine>{{user.createdAt | humanDate}}</p>
           </mat-list-item>
+          <mat-list-item>
+            <mat-icon mat-list-icon>alarm_on</mat-icon>
+            <h4 matLine>Password last reset at</h4>
+            <p matLine>{{user.lastPasswordReset | humanDate}}</p>
+          </mat-list-item>
           <mat-list-item *ngIf="user.referenceType === 'domain'">
             <mat-icon mat-list-icon>dock</mat-icon>
             <h4 matLine>Last application</h4>

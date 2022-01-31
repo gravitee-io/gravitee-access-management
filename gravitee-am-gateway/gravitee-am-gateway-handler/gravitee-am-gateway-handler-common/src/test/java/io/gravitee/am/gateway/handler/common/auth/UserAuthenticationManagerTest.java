@@ -15,10 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth;
 
-import io.gravitee.am.common.exception.authentication.AccountDisabledException;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
+import io.gravitee.am.common.exception.authentication.*;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -34,6 +31,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -80,6 +78,9 @@ public class UserAuthenticationManagerTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private PasswordService passwordService;
+
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {
         Client client = new Client();
@@ -116,6 +117,8 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
+        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
 
         when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
@@ -157,6 +160,59 @@ public class UserAuthenticationManagerTest {
         observer.assertComplete();
         observer.assertValue(user -> user.getUsername().equals("username"));
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
+    }
+
+    @Test
+    public void shouldAuthenticateUser_singleIdentityProvider_PasswordExipry() {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentities(Collections.singleton("idp-1"));
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+
+        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(true);
+
+        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            return Single.just(user);
+        });
+
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertError(AccountPasswordExpiredException.class);
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
 
     @Test
@@ -216,6 +272,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
+        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
         when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();

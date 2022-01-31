@@ -74,6 +74,11 @@ public class PasswordSettings {
      */
     private Boolean excludeUserProfileInfoInPassword;
 
+    /**
+     * The Expiration duration (in days) of a password
+     */
+    private Integer expiryDuration;
+
     public PasswordSettings() {
 
     }
@@ -88,6 +93,7 @@ public class PasswordSettings {
         this.maxConsecutiveLetters = other.maxConsecutiveLetters;
         this.excludePasswordsInDictionary = other.excludePasswordsInDictionary;
         this.excludeUserProfileInfoInPassword = other.excludeUserProfileInfoInPassword;
+        this.expiryDuration = other.expiryDuration;
     }
 
     public Integer getMinLength() {
@@ -160,6 +166,14 @@ public class PasswordSettings {
 
     public void setExcludeUserProfileInfoInPassword(Boolean excludeUserProfileInfoInPassword) {
         this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
+    }
+
+    public Integer getExpiryDuration() {
+        return expiryDuration;
+    }
+
+    public void setExpiryDuration(Integer expiryDuration) {
+        this.expiryDuration = expiryDuration;
     }
 
     public static Optional<PasswordSettings> getInstance(PasswordSettingsAware passwordSettingsAware, Domain domain) {
