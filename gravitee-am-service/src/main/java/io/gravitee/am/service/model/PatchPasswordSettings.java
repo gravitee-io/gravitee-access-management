@@ -36,6 +36,7 @@ public class PatchPasswordSettings {
     private Optional<Integer> maxConsecutiveLetters;
     private Optional<Boolean> excludePasswordsInDictionary;
     private Optional<Boolean> excludeUserProfileInfoInPassword;
+    private Optional<Integer> expiryDuration;
 
     public Optional<Integer> getMinLength() {
         return minLength;
@@ -109,6 +110,14 @@ public class PatchPasswordSettings {
         this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
     }
 
+    public Optional<Integer> getExpiryDuration() {
+        return expiryDuration;
+    }
+
+    public void setExpiryDuration(Optional<Integer> expiryDuration) {
+        this.expiryDuration = expiryDuration;
+    }
+
     public PasswordSettings patch(PasswordSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         PasswordSettings toPatch = Optional.ofNullable(_toPatch).map(PasswordSettings::new).orElseGet(PasswordSettings::new);
@@ -121,6 +130,7 @@ public class PatchPasswordSettings {
         SetterUtils.safeSet(toPatch::setMaxConsecutiveLetters, this.maxConsecutiveLetters);
         SetterUtils.safeSet(toPatch::setExcludePasswordsInDictionary, this.excludePasswordsInDictionary);
         SetterUtils.safeSet(toPatch::setExcludeUserProfileInfoInPassword, this.excludeUserProfileInfoInPassword);
+        SetterUtils.safeSet(toPatch::setExpiryDuration, this.expiryDuration);
 
         if (toPatch.getMinLength() != null && toPatch.getMaxLength() != null) {
             if (toPatch.getMinLength() > toPatch.getMaxLength()) {

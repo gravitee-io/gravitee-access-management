@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
+import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
@@ -50,6 +51,8 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
             if (throwable instanceof PolicyChainException) {
                 PolicyChainException policyChainException = (PolicyChainException) throwable;
                 handleException(routingContext, policyChainException.key(), policyChainException.getMessage());
+            } else if (throwable instanceof AccountPasswordExpiredException) {
+                handleException(routingContext, ((AccountPasswordExpiredException) throwable).getErrorCode(), throwable.getMessage());
             } else if (throwable instanceof AuthenticationException) {
                 handleException(routingContext, "invalid_user", "Invalid or unknown user");
             } else {

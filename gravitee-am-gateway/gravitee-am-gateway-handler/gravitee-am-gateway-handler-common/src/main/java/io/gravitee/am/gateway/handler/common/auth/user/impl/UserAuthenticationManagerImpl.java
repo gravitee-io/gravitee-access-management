@@ -34,6 +34,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.Completable;
@@ -76,6 +77,9 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
@@ -127,11 +131,18 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         }
                     } else {
                         // complete user connection
-                        return connect(user);
+                        return connect(user).flatMap(connectedUser -> checkAccountPasswordExpiry(client, connectedUser));
                     }
                 })
                 .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
                 .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
+    }
+
+    private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
+        if (passwordService.checkAccountPasswordExpiry(connectedUser, client, domain)) {
+            return Single.error(new AccountPasswordExpiredException("Account's password is expired "));
+        }
+        return Single.just(connectedUser);
     }
 
     @Override

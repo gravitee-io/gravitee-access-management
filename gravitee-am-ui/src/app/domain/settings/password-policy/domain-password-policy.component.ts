@@ -40,6 +40,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
   maxConsecutiveLetters: number;
   excludePasswordsInDictionary: boolean;
   excludeUserProfileInfoInPassword: boolean;
+  expiryDuration: number;
 
   constructor(private route: ActivatedRoute,
               private router: Router,
@@ -62,6 +63,7 @@ export class DomainPasswordPolicyComponent implements OnInit {
       this.maxConsecutiveLetters = this.passwordSettings.maxConsecutiveLetters;
       this.excludePasswordsInDictionary = this.passwordSettings.excludePasswordsInDictionary;
       this.excludeUserProfileInfoInPassword = this.passwordSettings.excludeUserProfileInfoInPassword;
+      this.expiryDuration = this.passwordSettings.expiryDuration;
     }
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
   }
@@ -100,7 +102,8 @@ export class DomainPasswordPolicyComponent implements OnInit {
       'lettersInMixedCase': this.lettersInMixedCase,
       'maxConsecutiveLetters': this.maxConsecutiveLetters,
       'excludePasswordsInDictionary': this.excludePasswordsInDictionary,
-      'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword
+      'excludeUserProfileInfoInPassword': this.excludeUserProfileInfoInPassword,
+      'expiryDuration': this.expiryDuration
     };
     this.domainService.patchPasswordSettings(this.domainId, data).subscribe(data => {
       this.passwordSettings = data.passwordSettings;

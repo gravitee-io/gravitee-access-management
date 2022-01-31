@@ -207,6 +207,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         user.setAdditionalInformation(newUser.getAdditionalInformation());
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
+        user.setLastPasswordReset(user.getCreatedAt());
         return user;
     }
 

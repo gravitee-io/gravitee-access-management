@@ -63,11 +63,15 @@ public class PasswordSettingsMongo {
      */
     private Boolean excludePasswordsInDictionary;
 
-
     /**
      * Excludes user profile information from password
      */
     private Boolean excludeUserProfileInfoInPassword;
+
+    /**
+     * The Expiration duration (in days) of a password
+     */
+    private Integer expiryDuration;
 
     public boolean isInherited() {
         return inherited;
@@ -141,6 +145,14 @@ public class PasswordSettingsMongo {
         this.excludeUserProfileInfoInPassword = excludeUserProfileInfoInPassword;
     }
 
+    public Integer getExpiryDuration() {
+        return expiryDuration;
+    }
+
+    public void setExpiryDuration(Integer expiryDuration) {
+        this.expiryDuration = expiryDuration;
+    }
+
     public PasswordSettings convert() {
         PasswordSettings passwordSettings = new PasswordSettings();
         passwordSettings.setInherited(isInherited());
@@ -152,6 +164,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setMaxConsecutiveLetters(getMaxConsecutiveLetters());
         passwordSettings.setExcludePasswordsInDictionary(isExcludePasswordsInDictionary());
         passwordSettings.setExcludeUserProfileInfoInPassword(isExcludeUserProfileInfoInPassword());
+        passwordSettings.setExpiryDuration(getExpiryDuration());
         return passwordSettings;
     }
 
@@ -169,6 +182,7 @@ public class PasswordSettingsMongo {
         passwordSettings.setMaxConsecutiveLetters(other.getMaxConsecutiveLetters());
         passwordSettings.setExcludePasswordsInDictionary(other.isExcludePasswordsInDictionary());
         passwordSettings.setExcludeUserProfileInfoInPassword(other.isExcludeUserProfileInfoInPassword());
+        passwordSettings.setExpiryDuration(other.getExpiryDuration());
         return passwordSettings;
     }
 }

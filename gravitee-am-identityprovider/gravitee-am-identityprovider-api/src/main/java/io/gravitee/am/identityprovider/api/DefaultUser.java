@@ -52,6 +52,8 @@ public class DefaultUser implements User {
 
     private Date updatedAt;
 
+    private Date lastPasswordReset;
+
     public DefaultUser() {}
 
     public DefaultUser(String username) {
@@ -68,6 +70,7 @@ public class DefaultUser implements User {
             additionalInformation = user.getAdditionalInformation();
             createdAt = user.getCreatedAt();
             updatedAt = user.getUpdatedAt();
+            lastPasswordReset = user.getLastPasswordReset();
         }
     }
 
@@ -200,6 +203,15 @@ public class DefaultUser implements User {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @Override
+    public Date getLastPasswordReset() {
+        return lastPasswordReset;
+    }
+
+    public void setLastPasswordReset(Date lastPasswordReset) {
+        this.lastPasswordReset = lastPasswordReset;
     }
 
     @Override

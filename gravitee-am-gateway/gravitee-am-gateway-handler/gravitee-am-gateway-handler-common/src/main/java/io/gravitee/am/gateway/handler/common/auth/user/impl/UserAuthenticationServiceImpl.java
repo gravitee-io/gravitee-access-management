@@ -205,6 +205,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         }
         // set roles
         existingUser.setDynamicRoles(principal.getRoles());
+        if (existingUser.getLastPasswordReset() == null) {
+            existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
+        }
 
         Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
         removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
