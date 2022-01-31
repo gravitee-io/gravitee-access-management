@@ -51,9 +51,9 @@ export class ApplicationFactorsComponent implements OnInit {
   mfaStepUpRule: string;
   adaptiveMfaRule: string;
   rememberDevice: any;
-  forceEnroll: any;
+  enrollment: any;
   rememberDeviceTime: any;
-  forceEnrollTime: any;
+  enrollmentTime: any;
   deviceIdentifiers: any[];
 
   constructor(private route: ActivatedRoute,
@@ -73,14 +73,14 @@ export class ApplicationFactorsComponent implements OnInit {
     this.mfaStepUpRule = applicationMfaSettings.stepUpAuthenticationRule;
     this.adaptiveMfaRule = applicationMfaSettings.adaptiveAuthenticationRule;
     this.rememberDevice = applicationMfaSettings.rememberDevice || {};
-    this.forceEnroll = applicationMfaSettings.forceEnroll || {};
+    this.enrollment = applicationMfaSettings.enrollment || {};
     this.rememberDeviceTime = {
       'expirationTime': this.getTime(this.rememberDevice.expirationTimeSeconds),
       'expirationTimeUnit': this.getUnitTime(this.rememberDevice.expirationTimeSeconds)
     }
-    this.forceEnrollTime = {
-      'skipTime': this.getTime(this.forceEnroll.skipTimeSeconds),
-      'skipTimeUnit': this.getUnitTime(this.forceEnroll.skipTimeSeconds)
+    this.enrollmentTime = {
+      'skipTime': this.getTime(this.enrollment.skipTimeSeconds),
+      'skipTimeUnit': this.getUnitTime(this.enrollment.skipTimeSeconds)
     }
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.factorService.findByDomain(this.domainId).subscribe(response => this.factors = [...response]);
@@ -101,21 +101,19 @@ export class ApplicationFactorsComponent implements OnInit {
       }
     }
 
-    if (this.forceEnroll.active) {
-      if (!this.forceEnrollTime.skipTime) {
-        this.forceEnroll.skipTimeSeconds = null;
-      } else {
-        this.forceEnroll.skipTimeSeconds = Math.abs(this.forceEnroll.expirationTime);
-        this.forceEnroll.skipTimeSeconds =
-          moment.duration(this.forceEnrollTime.skipTime, this.forceEnrollTime.skipTimeUnit).asSeconds();
-      }
+    if (!this.enrollmentTime.skipTime) {
+      this.enrollment.skipTimeSeconds = null;
+    } else {
+      this.enrollmentTime.skipTime = Math.abs(this.enrollmentTime.skipTime);
+      this.enrollment.skipTimeSeconds =
+        moment.duration(this.enrollmentTime.skipTime, this.enrollmentTime.skipTimeUnit).asSeconds();
     }
 
     data.settings.mfa = {
       'stepUpAuthenticationRule': this.mfaStepUpRule,
       'adaptiveAuthenticationRule': this.adaptiveMfaRule,
       'rememberDevice': this.rememberDevice,
-      'forceEnroll': this.forceEnroll
+      'enrollment': this.enrollment
     };
     this.applicationService.patch(this.domainId, this.application.id, data).subscribe(data => {
       this.application = data;
@@ -127,6 +125,7 @@ export class ApplicationFactorsComponent implements OnInit {
 
   selectFactor(event, factorId) {
     if (event.checked) {
+      this.application.factors = this.application.factors || [];
       this.application.factors.push(factorId);
     } else {
       this.application.factors.splice(this.application.factors.indexOf(factorId), 1);
@@ -191,20 +190,20 @@ export class ApplicationFactorsComponent implements OnInit {
   }
 
   displaySkipTime() {
-    return this.forceEnrollTime.skipTime;
+    return this.enrollmentTime.skipTime;
   }
 
   displaySkipTimeUnit() {
-    return this.forceEnrollTime.skipTimeUnit;
+    return this.enrollmentTime.skipTimeUnit;
   }
 
   onSkipTimeInEvent($event) {
-    this.forceEnrollTime.skipTime = $event.target.value;
+    this.enrollmentTime.skipTime = $event.target.value;
     this.formChanged = true;
   }
 
   onSkipTimeUnitEvent($event) {
-    this.forceEnrollTime.skipTimeUnit = $event.value;
+    this.enrollmentTime.skipTimeUnit = $event.value;
     this.formChanged = true;
   }
 
@@ -230,8 +229,8 @@ export class ApplicationFactorsComponent implements OnInit {
     return 'seconds'
   }
 
-  changeForceEnrollActive(){
-    this.forceEnroll.active = !this.forceEnroll.active;
+  changeForceEnrollment(){
+    this.enrollment.forceEnrollment = !this.enrollment.forceEnrollment;
     this.formChanged = true;
   }
 

@@ -19,25 +19,25 @@ package io.gravitee.am.model;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ForceEnrollSettings {
+public class EnrollmentSettings {
 
-    private Boolean active;
+    private Boolean forceEnrollment;
     private Long skipTimeSeconds;
 
-    public ForceEnrollSettings() {
+    public EnrollmentSettings() {
     }
 
-    public ForceEnrollSettings(ForceEnrollSettings forceEnrollSettings) {
-        this.active = forceEnrollSettings.active;
-        this.skipTimeSeconds = forceEnrollSettings.skipTimeSeconds;
+    public EnrollmentSettings(EnrollmentSettings enrollment) {
+        this.forceEnrollment = enrollment.forceEnrollment;
+        this.skipTimeSeconds = enrollment.skipTimeSeconds;
     }
 
-    public Boolean getActive() {
-        return active;
+    public Boolean getForceEnrollment() {
+        return forceEnrollment;
     }
 
-    public void setActive(Boolean active) {
-        this.active = active;
+    public void setForceEnrollment(Boolean forceEnrollment) {
+        this.forceEnrollment = forceEnrollment;
     }
 
     public Long getSkipTimeSeconds() {

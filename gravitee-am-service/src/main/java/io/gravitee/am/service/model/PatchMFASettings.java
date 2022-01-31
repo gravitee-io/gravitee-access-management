@@ -32,7 +32,7 @@ public class PatchMFASettings {
     private Optional<String> stepUpAuthenticationRule;
     private Optional<String> adaptiveAuthenticationRule;
     private Optional<PatchRememberDeviceSettings> rememberDevice;
-    private Optional<PatchForceEnrollSettings> forceEnroll;
+    private Optional<PatchEnrollmentSettings> enrollment;
 
     public Optional<String> getLoginRule() {
         return loginRule;
@@ -66,12 +66,12 @@ public class PatchMFASettings {
         this.rememberDevice = rememberDevice;
     }
 
-    public Optional<PatchForceEnrollSettings> getForceEnroll() {
-        return forceEnroll;
+    public Optional<PatchEnrollmentSettings> getEnrollment() {
+        return enrollment;
     }
 
-    public void setForceEnroll(Optional<PatchForceEnrollSettings> forceEnroll) {
-        this.forceEnroll = forceEnroll;
+    public void setEnrollment(Optional<PatchEnrollmentSettings> enrollment) {
+        this.enrollment = enrollment;
     }
 
     public MFASettings patch(MFASettings _toPatch) {
@@ -84,8 +84,8 @@ public class PatchMFASettings {
             toPatch.setRememberDevice(this.getRememberDevice().get().patch(toPatch.getRememberDevice()));
         }
 
-        if (nonNull(this.getForceEnroll()) && this.getForceEnroll().isPresent()) {
-            toPatch.setForceEnroll(this.getForceEnroll().get().patch(toPatch.getForceEnroll()));
+        if (nonNull(this.getEnrollment()) && this.getEnrollment().isPresent()) {
+            toPatch.setEnrollment(this.getEnrollment().get().patch(toPatch.getEnrollment()));
         }
         return toPatch;
     }

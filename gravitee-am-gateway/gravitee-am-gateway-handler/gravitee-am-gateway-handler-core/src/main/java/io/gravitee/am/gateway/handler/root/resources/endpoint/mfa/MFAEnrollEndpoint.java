@@ -136,17 +136,17 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
     }
 
     private boolean isForceMfaActive(Client client) {
-        var forceEnroll = ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getForceEnroll();
-        return ofNullable(forceEnroll).map(ForceEnrollSettings::getActive).orElse(false);
+        var enrollmentSettings = ofNullable(client.getMfaSettings()).orElse(new MFASettings()).getEnrollment();
+        return ofNullable(enrollmentSettings).map(EnrollmentSettings::getForceEnrollment).orElse(false);
     }
 
     private void saveEnrollment(RoutingContext routingContext) {
         MultiMap params = routingContext.request().formAttributes();
         final Boolean acceptEnrollment = Boolean.valueOf(params.get(ConstantKeys.USER_MFA_ENROLLMENT));
-        final String factorId = params.get(ConstantKeys.MFA_ENROL_FACTOR_ID);
-        final String sharedSecret = params.get(ConstantKeys.MFA_ENROL_SHARED_SECRET);
-        final String phoneNumber = params.get(ConstantKeys.MFA_ENROL_PHONE);
-        final String emailAddress = params.get(ConstantKeys.MFA_ENROL_EMAIL);
+        final String factorId = params.get(ConstantKeys.MFA_ENROLLMENT_FACTOR_ID);
+        final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
+        final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
+        final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
 
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
@@ -167,7 +167,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         // if user has skipped the enrollment process, continue
         if (!acceptEnrollment) {
             final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            userService.setEnrollSkippedTime(client, endUser).doFinally(() -> redirectToAuthorize(routingContext)).subscribe();
+            userService.setMfaEnrollmentSkippedTime(client, endUser).doFinally(() -> redirectToAuthorize(routingContext)).subscribe();
         } else {
             FactorProvider provider = optFactor.get().getValue();
             if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {

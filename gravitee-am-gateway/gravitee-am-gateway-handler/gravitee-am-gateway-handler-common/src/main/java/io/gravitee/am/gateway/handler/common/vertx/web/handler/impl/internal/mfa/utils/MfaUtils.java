@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
-import io.gravitee.am.model.ForceEnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.ext.web.Session;
 
@@ -57,10 +57,10 @@ public class MfaUtils {
         return TRUE.equals(session.get(DEVICE_ALREADY_EXISTS_KEY));
     }
 
-    public static ForceEnrollSettings getMfaForceEnrollSettings(Client client) {
+    public static EnrollmentSettings getEnrollmentSettings(Client client) {
         return ofNullable(client.getMfaSettings())
                 .filter(Objects::nonNull)
-                .map(MFASettings::getForceEnroll)
-                .orElse(new ForceEnrollSettings());
+                .map(MFASettings::getEnrollment)
+                .orElse(new EnrollmentSettings());
     }
 }

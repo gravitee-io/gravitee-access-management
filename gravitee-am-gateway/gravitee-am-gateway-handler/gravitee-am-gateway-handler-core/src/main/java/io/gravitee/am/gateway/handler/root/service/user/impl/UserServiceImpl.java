@@ -459,26 +459,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Completable setEnrollSkippedTime(Client client, User user) {
-        var forceEnrollSettings = getForceEnrollSettings(client);
-        final Boolean active = Optional.ofNullable(forceEnrollSettings.getActive()).orElse(false);
+    public Completable setMfaEnrollmentSkippedTime(Client client, User user) {
+        var mfaEnrollmentSettings = getMfaEnrollmentSettings(client);
+        final Boolean active = Optional.ofNullable(mfaEnrollmentSettings.getForceEnrollment()).orElse(false);
         if (FALSE.equals(active) && nonNull(user)) {
             Date now = new Date();
-            long skipTime = ofNullable(forceEnrollSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROL_SKIP_TIME_SECONDS) * 1000L;
-            if (isNull(user.getMfaEnrollSkippedAt()) || user.getMfaEnrollSkippedAt().getTime() + skipTime < now.getTime()) {
-                user.setMfaEnrollSkippedAt(now);
+            long skipTime = ofNullable(mfaEnrollmentSettings.getSkipTimeSeconds()).orElse(ConstantKeys.DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            if (isNull(user.getMfaEnrollmentSkippedAt()) || user.getMfaEnrollmentSkippedAt().getTime() + skipTime < now.getTime()) {
+                user.setMfaEnrollmentSkippedAt(now);
                 return userService.update(user).ignoreElement();
             }
         }
         return Completable.complete();
     }
 
-    private ForceEnrollSettings getForceEnrollSettings(Client client) {
+    private EnrollmentSettings getMfaEnrollmentSettings(Client client) {
         return ofNullable(client)
                 .filter(Objects::nonNull)
                 .map(Client::getMfaSettings)
-                .filter(Objects::nonNull).map(MFASettings::getForceEnroll)
-                .orElse(new ForceEnrollSettings());
+                .filter(Objects::nonNull).map(MFASettings::getEnrollment)
+                .orElse(new EnrollmentSettings());
     }
 
     private MaybeSource<Optional<Client>> clientSource(String audience) {

@@ -23,7 +23,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.ForceEnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -539,19 +539,19 @@ public class UserServiceTest {
     @Test
     public void mustSetEnrolSkipTime() {
         Client client = mock(Client.class);
-        var forceEnrollSettings = new ForceEnrollSettings();
-        forceEnrollSettings.setActive(false);
-        forceEnrollSettings.setSkipTimeSeconds(7200L);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
         var mfaSettings = new MFASettings();
-        mfaSettings.setForceEnroll(forceEnrollSettings);
+        mfaSettings.setEnrollment(enrollmentSettings);
         var user = mock(User.class);
 
         when(client.getMfaSettings()).thenReturn(mfaSettings);
-        when(user.getMfaEnrollSkippedAt()).thenReturn(null);
+        when(user.getMfaEnrollmentSkippedAt()).thenReturn(null);
 
         doReturn(Single.just(user)).when(commonUserService).update(user);
 
-        userService.setEnrollSkippedTime(client, user);
+        userService.setMfaEnrollmentSkippedTime(client, user);
 
         verify(commonUserService, times(1)).update(user);
     }
@@ -559,16 +559,16 @@ public class UserServiceTest {
     @Test
     public void mustNotSetEnrolSkipTime_settingsNotActive() {
         Client client = mock(Client.class);
-        var forceEnrollSettings = new ForceEnrollSettings();
-        forceEnrollSettings.setActive(true);
-        forceEnrollSettings.setSkipTimeSeconds(7200L);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(true);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
         var mfaSettings = new MFASettings();
-        mfaSettings.setForceEnroll(forceEnrollSettings);
+        mfaSettings.setEnrollment(enrollmentSettings);
         var user = mock(User.class);
 
         when(client.getMfaSettings()).thenReturn(mfaSettings);
 
-        userService.setEnrollSkippedTime(client, user);
+        userService.setMfaEnrollmentSkippedTime(client, user);
 
         verify(commonUserService, times(0)).update(user);
     }
@@ -576,15 +576,15 @@ public class UserServiceTest {
     @Test
     public void mustNotSetEnrolSkipTime_settingsUserIsNull() {
         Client client = mock(Client.class);
-        var forceEnrollSettings = new ForceEnrollSettings();
-        forceEnrollSettings.setActive(false);
-        forceEnrollSettings.setSkipTimeSeconds(7200L);
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(7200L);
         var mfaSettings = new MFASettings();
-        mfaSettings.setForceEnroll(forceEnrollSettings);
+        mfaSettings.setEnrollment(enrollmentSettings);
 
         when(client.getMfaSettings()).thenReturn(mfaSettings);
 
-        userService.setEnrollSkippedTime(client, null);
+        userService.setMfaEnrollmentSkippedTime(client, null);
 
         verify(commonUserService, times(0)).update(any());
     }
@@ -592,18 +592,18 @@ public class UserServiceTest {
     @Test
     public void mustNotSetEnrolSkipTime_settingsUserExpiredAlreadySet() {
         Client client = mock(Client.class);
-        var forceEnrollSettings = new ForceEnrollSettings();
-        forceEnrollSettings.setActive(false);
-        forceEnrollSettings.setSkipTimeSeconds(new Date(System.currentTimeMillis() + 86400L).getTime());
+        var enrollmentSettings = new EnrollmentSettings();
+        enrollmentSettings.setForceEnrollment(false);
+        enrollmentSettings.setSkipTimeSeconds(new Date(System.currentTimeMillis() + 86400L).getTime());
         var mfaSettings = new MFASettings();
-        mfaSettings.setForceEnroll(forceEnrollSettings);
+        mfaSettings.setEnrollment(enrollmentSettings);
 
         var user = mock(User.class);
 
         when(client.getMfaSettings()).thenReturn(mfaSettings);
-        when(user.getMfaEnrollSkippedAt()).thenReturn(new Date());
+        when(user.getMfaEnrollmentSkippedAt()).thenReturn(new Date());
 
-        userService.setEnrollSkippedTime(client, user);
+        userService.setMfaEnrollmentSkippedTime(client, user);
 
         verify(commonUserService, times(0)).update(any());
     }

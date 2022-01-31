@@ -17,7 +17,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
-import io.gravitee.am.model.ForceEnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -92,12 +92,12 @@ public class MfaFilterContext {
     }
 
     private boolean isEnrollSkipped() {
-        final ForceEnrollSettings forceEnroll = MfaUtils.getMfaForceEnrollSettings(client);
-        final Boolean active = Optional.ofNullable(forceEnroll.getActive()).orElse(false);
-        if (FALSE.equals(active) && nonNull(endUser.getMfaEnrollSkippedAt())) {
+        final EnrollmentSettings enrollmentSettings = MfaUtils.getEnrollmentSettings(client);
+        final Boolean forceEnrollment = Optional.ofNullable(enrollmentSettings.getForceEnrollment()).orElse(false);
+        if (FALSE.equals(forceEnrollment) && nonNull(endUser.getMfaEnrollmentSkippedAt())) {
             Date now = new Date();
-            long skipTime = ofNullable(forceEnroll.getSkipTimeSeconds()).orElse(DEFAULT_ENROL_SKIP_TIME_SECONDS) * 1000L;
-            return endUser.getMfaEnrollSkippedAt().getTime() + skipTime > now.getTime();
+            long skipTime = ofNullable(enrollmentSettings.getSkipTimeSeconds()).orElse(DEFAULT_ENROLLMENT_SKIP_TIME_SECONDS) * 1000L;
+            return endUser.getMfaEnrollmentSkippedAt().getTime() + skipTime > now.getTime();
         }
         return false;
     }

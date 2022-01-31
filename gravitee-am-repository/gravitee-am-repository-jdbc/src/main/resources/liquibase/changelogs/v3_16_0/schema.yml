@@ -9,11 +9,11 @@ databaseChangeLog:
         - addColumn:
             tableName: users
             columns:
-              - column: { name: mfa_enroll_skipped_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: mfa_enrollment_skipped_at, type: timestamp(6), constraints: { nullable: true } }
         ######################
         # organization_users #
         ######################
         - addColumn:
             tableName: organization_users
             columns:
-              - column: { name: mfa_enroll_skipped_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: mfa_enrollment_skipped_at, type: timestamp(6), constraints: { nullable: true } }

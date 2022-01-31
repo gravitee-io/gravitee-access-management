@@ -1649,7 +1649,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"forceEnroll\" : {\n                \"active\" : true            \n            }\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enrollment\" : {\n                \"forceEnrollment\" : true            \n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",
@@ -2241,7 +2241,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"forceEnroll\" : {\n                \"active\" : false,\n                \"skipTimeSeconds\" : 5\n            }\n        }\n    }\n}"
+											"raw": "{\n    \"factors\": [\n       \"{{mfaFactorId}}\"\n    ],\n    \"settings\": {\n        \"mfa\": {\n            \"enrollment\" : {\n                \"forceEnrollment\" : false,\n                \"skipTimeSeconds\" : 5\n            }\n        }\n    }\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app4}}",

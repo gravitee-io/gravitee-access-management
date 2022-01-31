@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.model.ForceEnrollSettings;
+import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.Objects;
@@ -27,29 +27,29 @@ import static java.util.Objects.isNull;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class PatchForceEnrollSettings {
+public class PatchEnrollmentSettings {
 
-    private Optional<Boolean> active;
+    private Optional<Boolean> forceEnrollment;
     private Optional<Long> skipTimeSeconds;
 
-    public PatchForceEnrollSettings() {
+    public PatchEnrollmentSettings() {
     }
 
-    public ForceEnrollSettings patch(ForceEnrollSettings _toPatch) {
-        ForceEnrollSettings toPatch = _toPatch == null ? new ForceEnrollSettings() : new ForceEnrollSettings(_toPatch);
-        SetterUtils.safeSet(toPatch::setActive, this.getActive());
+    public EnrollmentSettings patch(EnrollmentSettings _toPatch) {
+        EnrollmentSettings toPatch = _toPatch == null ? new EnrollmentSettings() : new EnrollmentSettings(_toPatch);
+        SetterUtils.safeSet(toPatch::setForceEnrollment, this.getForceEnrollment());
         final Optional<Long> skipTimeSeconds = isNull(this.getSkipTimeSeconds()) ? Optional.empty() :
                 this.getSkipTimeSeconds().filter(Objects::nonNull).map(Math::abs);
         SetterUtils.safeSet(toPatch::setSkipTimeSeconds, skipTimeSeconds);
         return toPatch;
     }
 
-    public Optional<Boolean> getActive() {
-        return active;
+    public Optional<Boolean> getForceEnrollment() {
+        return forceEnrollment;
     }
 
-    public void setActive(Optional<Boolean> active) {
-        this.active = active;
+    public void setForceEnrollment(Optional<Boolean> forceEnrollment) {
+        this.forceEnrollment = forceEnrollment;
     }
 
     public Optional<Long> getSkipTimeSeconds() {
