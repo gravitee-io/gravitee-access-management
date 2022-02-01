@@ -21,10 +21,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
@@ -130,6 +127,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private CSRFHandler csrfHandler;
 
     @Autowired
+    private CSPHandler cspHandler;
+
+    @Autowired
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
@@ -203,6 +203,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // CSRF handler
         csrfHandler(oauth2Router);
+
+        // CSP Handler
+        cspHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
 
@@ -316,6 +319,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     private void csrfHandler(Router router) {
         router.route("/consent").handler(csrfHandler);
+    }
+
+    private void cspHandler(Router router) {
+        router.route("/consent").handler(cspHandler);
     }
 
     private void errorHandler(Router router) {

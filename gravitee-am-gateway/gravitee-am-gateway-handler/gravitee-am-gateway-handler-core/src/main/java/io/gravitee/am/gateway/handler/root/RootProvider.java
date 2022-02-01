@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -149,6 +150,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private CSRFHandler csrfHandler;
 
     @Autowired
+    private CSPHandler cspHandler;
+
+    @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
 
@@ -215,6 +219,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // CSRF handler
         csrfHandler(rootRouter);
+
+        // CSP Handler
+        cspHandler(rootRouter);
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
@@ -501,6 +508,29 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_REGISTER).handler(csrfHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
+    }
+
+    private void cspHandler(Router router) {
+        // /login/callback does not need csp as it is not submit to our server.
+        // /oauth/consent csp is managed by handler-oidc (see OAuth2Provider).
+        router.route(PATH_LOGIN).handler(cspHandler);
+        router.route(PATH_LOGIN_CALLBACK).handler(cspHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(cspHandler);
+        router.route(PATH_LOGIN_SSO_SPNEGO).handler(cspHandler);
+        router.route(PATH_MFA_ENROLL).handler(cspHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(cspHandler);
+        router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(cspHandler);
+        router.route(PATH_LOGOUT).handler(cspHandler);
+        router.route(PATH_LOGOUT_CALLBACK).handler(cspHandler);
+        router.route(PATH_REGISTER).handler(cspHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(cspHandler);
+        router.route(PATH_RESET_PASSWORD).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).handler(cspHandler);
+        router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
+        router.route(PATH_ERROR).handler(cspHandler);
     }
 
     private void staticHandler(Router router) {
