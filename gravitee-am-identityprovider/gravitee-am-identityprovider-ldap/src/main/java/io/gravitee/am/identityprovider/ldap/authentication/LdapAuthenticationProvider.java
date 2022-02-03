@@ -41,6 +41,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -81,6 +84,8 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
     @Qualifier("userSearchExecutor")
     private SearchExecutor userSearchExecutor;
 
+    private ScheduledExecutorService executorService;
+
     @Override
     public void afterPropertiesSet() {
         String searchFilter = configuration.getUserSearchFilter();
@@ -101,19 +106,32 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
     @Override
     protected void doStart() throws Exception {
         super.doStart();
+        this.executorService = Executors.newScheduledThreadPool(1);
+        initConnectionPools(1);
+    }
 
+    private void initConnectionPools(int retryDelayInSec) {
         LOGGER.info("Init LDAP {} connection pools", configuration.getContextSourceUrl());
-        if (bindConnectionPool != null) {
-            bindConnectionPool.initialize();
-        }
-        if (searchConnectionPool != null) {
-            searchConnectionPool.initialize();
+        try {
+            if (bindConnectionPool != null) {
+                bindConnectionPool.initialize();
+            }
+            if (searchConnectionPool != null) {
+                searchConnectionPool.initialize();
+            }
+        } catch (IllegalStateException e) {
+            final int nextDelay = retryDelayInSec < 60 ? retryDelayInSec * 2 : retryDelayInSec;
+            this.executorService.schedule(() -> initConnectionPools(nextDelay), retryDelayInSec, TimeUnit.SECONDS);
         }
     }
 
     @Override
     protected void doStop() throws Exception {
         super.doStop();
+
+        if (this.executorService != null) {
+            this.executorService.shutdownNow();
+        }
 
         LOGGER.info("Close LDAP {} connection pools", configuration.getContextSourceUrl());
         if (bindConnectionPool != null) {
