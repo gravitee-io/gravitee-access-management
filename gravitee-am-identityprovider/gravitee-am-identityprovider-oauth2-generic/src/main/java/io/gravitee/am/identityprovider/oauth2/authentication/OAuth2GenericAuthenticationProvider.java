@@ -15,19 +15,30 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.common.oauth2.authentication.AbstractOpenIDConnectAuthenticationProvider;
 import io.gravitee.am.identityprovider.oauth2.OAuth2GenericIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
+import io.gravitee.am.model.flow.Flow;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.functions.Function;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.Assert;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,6 +51,7 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     private static final String TOKEN_ENDPOINT = "token_endpoint";
     private static final String USERINFO_ENDPOINT = "userinfo_endpoint";
     private static final String END_SESSION_ENDPOINT = "end_session_endpoint";
+    private static final String JWKS_ENDPOINT = "jwks_uri";
 
     @Autowired
     @Qualifier("oauthWebClient")
@@ -85,11 +97,16 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
             throw new IllegalArgumentException("A client_secret must be supplied in order to use the Authorization Code flow");
         }
 
-        // fetch OpenID Provider information
-        getOpenIDProviderConfiguration(configuration);
+        initializeAuthProvider().subscribe();
+    }
 
-        // generate jwt processor if we try to fetch user information from the ID Token
-        generateJWTProcessor(configuration);
+    protected Completable initializeAuthProvider() {
+        // fetch OpenID Provider information
+        final RetryWithDelay retryHandler = new RetryWithDelay();
+        return Completable.fromAction(() -> getOpenIDProviderConfiguration(configuration))
+                .doOnError((error) -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
+                .retryWhen(retryHandler)
+                .andThen(Completable.fromAction(() -> generateJWTProcessor(configuration)));
     }
 
     private void getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
@@ -118,6 +135,11 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
                     configuration.setLogoutUri((String) providerConfiguration.get(END_SESSION_ENDPOINT));
                 }
 
+                // try to use the JWKS provided by the well-known endpoint if it is not specified into the configuration form
+                if (configuration.getPublicKeyResolver() == KeyResolver.JWKS_URL && ObjectUtils.isEmpty(configuration.getResolverParameter())) {
+                    configuration.setResolverParameter((String) providerConfiguration.get(JWKS_ENDPOINT));
+                }
+
                 // configuration verification
                 Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authorization endpoint is required");
 
@@ -131,6 +153,24 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
             } catch (Exception e) {
                 throw new IllegalStateException(e.getMessage());
             }
+        }
+    }
+
+    /**
+     * trigger a retry with a delay of 1 second up to 60 seconds.
+     */
+    private class RetryWithDelay implements Function<Flowable<Throwable>, Publisher<?>> {
+
+        private int delayInSec = 0;
+
+        @Override
+        public Publisher<?> apply(Flowable<Throwable> throwableFlowable) throws Exception {
+            return throwableFlowable.flatMap(err-> {
+                if (delayInSec < 60) {
+                    delayInSec = delayInSec + Math.max(delayInSec, 1);
+                }
+                return Flowable.timer(delayInSec, TimeUnit.SECONDS);
+            });
         }
     }
 }
