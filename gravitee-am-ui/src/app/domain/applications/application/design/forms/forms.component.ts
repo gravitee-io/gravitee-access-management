@@ -122,6 +122,13 @@ export class ApplicationFormsComponent implements OnInit {
         'enabled': this.applicationSettingsValid()
       },
       {
+        'name': 'Recovery Codes',
+        'description': 'Multi-factor authentication recovery code page',
+        'template': 'MFA_RECOVERY_CODE',
+        'icon': 'autorenew',
+        'enabled': this.applicationSettingsValid()
+      },
+      {
         'name': 'Error',
         'description': 'Error page to display a message describing the problem',
         'template': 'ERROR',

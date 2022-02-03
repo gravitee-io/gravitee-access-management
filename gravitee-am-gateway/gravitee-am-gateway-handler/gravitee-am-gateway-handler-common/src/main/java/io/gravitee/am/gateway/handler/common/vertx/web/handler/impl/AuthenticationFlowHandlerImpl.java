@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.RedirectHandler;
@@ -45,6 +46,9 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
     @Autowired
     private RuleEngine ruleEngine;
 
+    @Autowired
+    private FactorManager factorManager;
+
     @Override
     public Handler<RoutingContext> create() {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
@@ -52,8 +56,8 @@ public class AuthenticationFlowHandlerImpl implements AuthenticationFlowHandler 
         steps.add(new FormIdentifierFirstLoginStep(RedirectHandler.create("/login/identifier"), domain));
         steps.add(new FormLoginStep(RedirectHandler.create("/login")));
         steps.add(new WebAuthnRegisterStep(domain, RedirectHandler.create("/webauthn/register")));
-        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine));
-        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine));
+        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
+        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
         return new AuthenticationFlowChainHandler(steps);
     }
 }

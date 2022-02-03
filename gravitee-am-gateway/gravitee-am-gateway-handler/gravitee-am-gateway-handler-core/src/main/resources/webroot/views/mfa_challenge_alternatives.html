@@ -43,6 +43,11 @@
                             <span>Email</span>
                             <span class="mdl-list__item-text-body">Send an email to <b th:text="${factor.target}"></b>.</span>
                         </span>
+                        <span th:if="${factor.factorType == 'RECOVERY CODE'}" class="mdl-list__item-primary-content">
+                            <i class="material-icons mdl-list__item-avatar">autorenew</i>
+                            <span>Recovery Code</span>
+                            <span class="mdl-list__item-text-body">Use a recovery code previously generated <b th:text="${factor.target}"></b>.</span>
+                        </span>
                         <span class="mdl-list__item-secondary-action">
                           <label class="mdl-radio mdl-js-radio mdl-js-ripple-effect" th:for="'list-factor-' + ${factor.id}">
                             <input type="radio" th:id="'list-factor-' + ${factor.id}" class="mdl-radio__button" th:name="factorId" th:value="${factor.id}" />

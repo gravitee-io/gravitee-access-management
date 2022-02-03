@@ -459,6 +459,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal) {
+        return userService.updateFactor(userId, enrolledFactor, principal);
+    }
+
+    @Override
     public Completable setMfaEnrollmentSkippedTime(Client client, User user) {
         var mfaEnrollmentSettings = getMfaEnrollmentSettings(client);
         final Boolean active = Optional.ofNullable(mfaEnrollmentSettings.getForceEnrollment()).orElse(false);

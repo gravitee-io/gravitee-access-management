@@ -16,8 +16,10 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.factor.FactorDataKeys;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.factor.api.RecoveryFactor;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
@@ -39,6 +41,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
@@ -61,8 +64,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -214,16 +219,57 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                     // update user strong auth status
                     routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                     routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-
-                    redirect(routingContext, client, returnURL);
+                    generateRecoveryCodeAndRedirect(endUser, client, routingContext, returnURL, queryParams);
                 });
             } else {
                 // update user strong auth status
                 routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
                 routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                redirect(routingContext, client, returnURL);
+                generateRecoveryCodeAndRedirect(endUser, client, routingContext, returnURL, queryParams);
             }
         });
+    }
+
+    private void generateRecoveryCodeAndRedirect(io.gravitee.am.model.User endUser, Client client,
+                                                 RoutingContext routingContext, String returnURL, MultiMap queryParams){
+        final String recoveryCodeUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
+                routingContext.get(CONTEXT_PATH) + "/mfa/recovery_code", queryParams, true);
+
+        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(client)) {
+            redirect(routingContext, client, returnURL);
+        } else if (hasInactiveRecoveryCode(endUser)) {
+            redirect(routingContext, client, recoveryCodeUrl);
+        }
+        else {
+            generateRecoveryCode(endUser, client).subscribe(
+                    () -> {
+                        redirect(routingContext, client, recoveryCodeUrl);
+                    },
+                    error -> {
+                        logger.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
+                        redirect(routingContext, client, returnURL);
+                    }
+            );
+        }
+    }
+
+    private boolean hasInactiveRecoveryCode(User endUser) {
+        return hasRecoveryCode(endUser) && !isRecoveryCodeActivated(endUser);
+    }
+
+    private boolean hasActiveRecoveryCode(User endUser) {
+        return hasRecoveryCode(endUser) && isRecoveryCodeActivated(endUser);
+    }
+
+    private Completable generateRecoveryCode(io.gravitee.am.model.User endUser, Client client) {
+        final Factor recoveryFactor = getRecoveryFactor(client);
+        final FactorProvider recoveryFactorProvider = factorManager.get(recoveryFactor.getId());
+        final Map<String, Object> factorData = Map.of(
+                FactorContext.KEY_RECOVERY_FACTOR,
+                recoveryFactor, KEY_USER, endUser);
+        final FactorContext recoveryFactorCtx = new FactorContext(applicationContext, factorData);
+
+        return ((RecoveryFactor) recoveryFactorProvider).generateRecoveryCode(recoveryFactorCtx);
     }
 
     private void redirect(RoutingContext routingContext, Client client, String returnURL) {
@@ -264,7 +310,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         Map<String, Object> factorData = new HashMap<>();
         factorData.putAll(getEvaluableAttributes(routingContext));
         factorData.put(FactorContext.KEY_CLIENT, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY));
-        factorData.put(FactorContext.KEY_USER, endUser);
+        factorData.put(KEY_USER, endUser);
         factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         FactorContext factorContext = new FactorContext(applicationContext, factorData);
@@ -347,6 +393,17 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                             additionalData));
                     enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL,
                             routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS)));
+                    break;
+                case RECOVERY_CODE:
+                    if (endUser.getFactors() != null) {
+                        Optional<EnrolledFactorSecurity> factorSecurity = endUser.getFactors()
+                                .stream()
+                                .filter(ftr -> ftr.getSecurity().getType().equals(RECOVERY_CODE))
+                                .map(EnrolledFactor::getSecurity)
+                                .findFirst();
+
+                        factorSecurity.ifPresent(enrolledFactor::setSecurity);
+                    }
                     break;
             }
             enrolledFactor.setCreatedAt(new Date());
@@ -438,5 +495,53 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                     }
             ).subscribe();
         }
+    }
+
+    private Factor getRecoveryFactor(Client client) {
+        final List<Factor> recoveryFactor = client.getFactors().stream()
+                .filter(f -> factorManager.get(f) != null)
+                .map(f -> factorManager.getFactor(f))
+                .filter(f -> f.getFactorType().equals(FactorType.RECOVERY_CODE))
+                .collect(Collectors.toList());
+
+        return recoveryFactor.size() > 0 ? recoveryFactor.get(0) : null;
+    }
+
+    private boolean isRecoveryCodeActivated(io.gravitee.am.model.User user) {
+        if (user.getFactors() == null) {
+            return false;
+        }
+
+        final Optional<EnrolledFactor> securityFactor = user.getFactors()
+                .stream()
+                .filter(ftr -> ftr.getSecurity() != null && ftr.getSecurity().getType().equals(RECOVERY_CODE))
+                .findFirst();
+
+        return securityFactor.isPresent() && securityFactor.get().getStatus().equals(FactorStatus.ACTIVATED);
+    }
+
+    private boolean hasRecoveryCode(io.gravitee.am.model.User user) {
+        if (user.getFactors() == null) {
+            return false;
+        }
+
+        final Optional<EnrolledFactorSecurity> factorSecurity = user.getFactors()
+                .stream()
+                .filter(ftr -> ftr.getSecurity() != null && ftr.getSecurity().getType().equals(RECOVERY_CODE))
+                .map(EnrolledFactor::getSecurity)
+                .findFirst();
+
+        return factorSecurity.isPresent();
+    }
+
+    private boolean recoveryFactorDisabled(Client client) {
+        final Optional<Factor> recoveryFactor = client.getFactors()
+                .stream()
+                .map(factorManager::getFactor)
+                .filter(Objects::nonNull)
+                .filter(factor -> factor.getFactorType().equals(FactorType.RECOVERY_CODE))
+                .findFirst();
+
+        return recoveryFactor.isEmpty();
     }
 }

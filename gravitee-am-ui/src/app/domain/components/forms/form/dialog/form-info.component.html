@@ -480,6 +480,38 @@
         </html>
       ]]>
     </pre>
+    <pre *ngIf="data.rawTemplate === 'MFA_RECOVERY_CODE'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Recovery</title>
+        </head>
+        <body>
+        <div class="mdl-layout mdl-js-layout">
+              <div>
+                  <label>Recovery Codes</label>
+              </div>
+              <div >
+                  <ul>
+                      <li th:each="recoveryCode : ${recoveryCodes}" th:text="${recoveryCode}">
+                      </li>
+                  </ul>
+              </div>
+              <div>
+                <form role="form" th:id="confirmationForm" th:action="${returnURL}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" id="continue" value="true"
+                            class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                        Continue
+                    </button>
+                </form>
+              </div>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
   </mat-dialog-content>
   <mat-dialog-actions>
     <span fxFlex></span>

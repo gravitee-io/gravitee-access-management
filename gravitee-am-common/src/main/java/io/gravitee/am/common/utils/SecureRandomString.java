@@ -16,7 +16,9 @@
 package io.gravitee.am.common.utils;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Random version-4 UUID will have 6 predetermined variant and version bits, leaving 122 bits for the randomly generated part.
@@ -34,6 +36,11 @@ import java.util.Base64;
  */
 public final class SecureRandomString {
 
+    public static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final String DIGITS = "0123456789";
+    public static final String ALPHA_NUMERIC = UPPER + UPPER.toLowerCase() + DIGITS;
+    private static final char[] SYMBOLS = ALPHA_NUMERIC.toCharArray();
+
     private static final SecureRandom random = new SecureRandom();
     private static final Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
 
@@ -41,5 +48,31 @@ public final class SecureRandomString {
         byte[] buffer = new byte[32];
         random.nextBytes(buffer);
         return encoder.encodeToString(buffer);
+    }
+
+    public static String randomAlphaNumeric(int length) {
+        if (length <= 0) {
+            throw new IllegalArgumentException("Requested random string length " + length + " is less than or equals to 0.");
+        }
+
+        final char[] buffer = new char[length];
+        for (int i = 0; i < length; ++i) {
+            buffer[i] = SYMBOLS[random.nextInt(SYMBOLS.length)];
+        }
+
+        return new String(buffer);
+    }
+
+    public static List<String> randomAlphaNumeric(int length, int count) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("Requested random string count " + count + " is less than or equals to 0.");
+        }
+
+        final ArrayList<String> stringList = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            stringList.add(randomAlphaNumeric(length));
+        }
+
+        return stringList;
     }
 }

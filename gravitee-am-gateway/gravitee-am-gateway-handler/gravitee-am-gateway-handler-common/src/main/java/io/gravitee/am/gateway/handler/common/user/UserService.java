@@ -91,4 +91,13 @@ public interface UserService {
      * @return
      */
     Single<User> addFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
+
+    /**
+     * Update an MFA factor to an end-user
+     * @param userId the end-user id
+     * @param enrolledFactor the factor to enroll
+     * @param principal the user who has performed this action
+     * @return
+     */
+    Single<User> updateFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 }

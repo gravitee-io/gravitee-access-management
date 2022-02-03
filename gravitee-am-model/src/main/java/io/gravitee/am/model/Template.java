@@ -34,6 +34,7 @@ public enum Template {
     MFA_ENROLL("mfa_enroll", "/mfa/enroll"),
     MFA_CHALLENGE("mfa_challenge", "/mfa/challenge"),
     MFA_CHALLENGE_ALTERNATIVES("mfa_challenge_alternatives", "/mfa/challenge/alternatives"),
+    MFA_RECOVERY_CODE("mfa_recovery_code", "/mfa/recovery_code"),
     BLOCKED_ACCOUNT("blocked_account", "/resetPassword"),
     COMPLETE_PROFILE("complete_profile", "/completeProfile"),
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),

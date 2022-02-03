@@ -45,6 +45,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpo
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ResetPasswordEndpoint;
@@ -101,6 +102,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     public static final String PATH_MFA_ENROLL = "/mfa/enroll";
     public static final String PATH_MFA_CHALLENGE = "/mfa/challenge";
     public static final String PATH_MFA_CHALLENGE_ALTERNATIVES = "/mfa/challenge/alternatives";
+    public static final String PATH_MFA_RECOVERY_CODE = "/mfa/recovery_code";
     public static final String PATH_LOGOUT = "/logout";
     public static final String PATH_LOGOUT_CALLBACK = "/logout/callback";
     public static final String PATH_REGISTER = "/register";
@@ -317,6 +319,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
+        rootRouter.route(PATH_MFA_RECOVERY_CODE)
+                .handler(clientRequestParseHandler)
+                .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService));
 
         // WebAuthn route
         Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain);
@@ -429,6 +434,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(sessionHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(sessionHandler);
+        router.route(PATH_MFA_RECOVERY_CODE)
+                .handler(sessionHandler);
 
         // Logout endpoint
         router
@@ -479,6 +486,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // MFA endpoint
         router.route(PATH_MFA_ENROLL).handler(authenticationFlowContextHandler);
         router.route(PATH_MFA_CHALLENGE).handler(authenticationFlowContextHandler);
+        router.route(PATH_MFA_RECOVERY_CODE).handler(authenticationFlowContextHandler);
 
         // Registration confirmation endpoint
         router.route(PATH_REGISTER).handler(authenticationFlowContextHandler);
@@ -505,6 +513,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_LOGIN_SSO_POST).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE).handler(csrfHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(csrfHandler);
+        router.route(PATH_MFA_RECOVERY_CODE).handler(csrfHandler);
         router.route(PATH_MFA_ENROLL).handler(csrfHandler);
         router.route(PATH_REGISTER).handler(csrfHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
@@ -521,6 +530,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_MFA_ENROLL).handler(cspHandler);
         router.route(PATH_MFA_CHALLENGE).handler(cspHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(cspHandler);
+        router.route(PATH_MFA_RECOVERY_CODE).handler(cspHandler);
         router.route(PATH_LOGOUT).handler(cspHandler);
         router.route(PATH_LOGOUT_CALLBACK).handler(cspHandler);
         router.route(PATH_REGISTER).handler(cspHandler);

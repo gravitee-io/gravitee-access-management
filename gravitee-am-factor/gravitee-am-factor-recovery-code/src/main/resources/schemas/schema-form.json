@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:factor:sms:RecoveryCodeFactorConfiguration",
+  "properties": {
+    "factorType": {
+      "title": "Factor Type",
+      "description": "Predefined factor type",
+      "default": "Recovery Code",
+      "readOnly": true
+    },
+    "digit": {
+      "title": "Number of digits",
+      "description": "Number of digits the user needs to enter",
+      "type": "integer"
+    },
+    "count": {
+      "title": "Number of recovery codes",
+      "description": "Number of generated recovery codes",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "digit", "count"
+  ]
+}

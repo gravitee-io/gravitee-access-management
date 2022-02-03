@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -28,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
+import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -47,8 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -64,6 +66,9 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     private CertificateManager certificateManager;
     @Mock
     private UserService userService;
+    @Mock
+    private FactorManager factorManager;
+
     private SpELRuleEngine ruleEngine = new SpELRuleEngine();
 
     @Override
@@ -71,11 +76,15 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         super.setUp();
 
         List<AuthenticationFlowStep> steps = new LinkedList<>();
-        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine));
-        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine));
+        steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
+        steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
         AuthenticationFlowChainHandler authenticationFlowChainHandler = new AuthenticationFlowChainHandler(steps);
 
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
+
+        Factor factor = new Factor();
+        factor.setFactorType(FactorType.SMS);
+        when(factorManager.getFactor(anyString())).thenReturn(factor);
 
         router.route("/login")
                 .order(Integer.MIN_VALUE)

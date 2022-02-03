@@ -124,6 +124,13 @@ export class DomainSettingsFormsComponent implements OnInit {
         'enabled': true
       },
       {
+        'name': 'Recovery Codes',
+        'description': 'Multi-factor authentication recovery code page',
+        'template': 'MFA_RECOVERY_CODE',
+        'icon': 'autorenew',
+        'enabled': true
+      },
+      {
         'name': 'Error',
         'description': 'Error page to display a message describing the problem',
         'template': 'ERROR',
