@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.services.sync.spring;
 
 import io.gravitee.am.gateway.services.sync.SyncManager;
+import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -38,5 +39,10 @@ public class SyncConfiguration {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setThreadNamePrefix("sync-");
         return scheduler;
+    }
+
+    @Bean
+    public SyncProbe syncProbe() {
+        return new SyncProbe();
     }
 }
