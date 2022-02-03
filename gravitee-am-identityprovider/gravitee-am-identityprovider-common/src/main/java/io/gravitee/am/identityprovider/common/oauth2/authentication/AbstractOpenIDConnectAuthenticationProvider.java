@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.common.oauth2.authentication;
 import com.google.common.base.Strings;
 import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -88,7 +89,12 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     }
 
     protected Maybe<User> retrieveUserFromIdToken(AuthenticationContext authContext, String idToken) {
-        return Maybe.fromCallable(() -> jwtProcessor.process(idToken, null))
+        if (this.jwtProcessor == null) {
+            // ensure that jwtProcessor exist before using it
+            return Maybe.error(new InternalAuthenticationServiceException("Identity provider has not been properly initialized"));
+        }
+
+        return Maybe.fromCallable(() -> this.jwtProcessor.process(idToken, null))
                 .onErrorResumeNext(ex -> {
                     return Maybe.error(new BadCredentialsException(ex.getMessage()));
                 })
@@ -98,6 +104,11 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     @Override
     public Request signInUrl(String redirectUri, String state) {
         try {
+            if (getConfiguration().getUserAuthorizationUri() == null) {
+                LOGGER.warn("Social Provider {} can't provide signInUrl, userAuthorizationUri is null", this.getClass().getSimpleName());
+                return null;
+            }
+
             UriBuilder builder = UriBuilder.fromHttpUrl(getConfiguration().getUserAuthorizationUri());
             builder.addParameter(Parameters.CLIENT_ID, getConfiguration().getClientId());
             builder.addParameter(Parameters.RESPONSE_TYPE, getConfiguration().getResponseType());
@@ -122,7 +133,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             request.setUri(builder.buildString());
             return request;
         } catch (Exception e) {
-            LOGGER.error("An error occurs while building OpenID Connect Sign In URL", e);
+            LOGGER.error("An error has occurred while building OpenID Connect Sign In URL", e);
             return null;
         }
     }
