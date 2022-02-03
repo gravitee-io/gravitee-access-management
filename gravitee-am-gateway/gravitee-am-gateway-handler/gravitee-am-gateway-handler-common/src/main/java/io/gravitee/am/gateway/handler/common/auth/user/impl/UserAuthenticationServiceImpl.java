@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.auth.user.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
@@ -48,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -184,8 +186,22 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Completable checkAccountStatus(User user) {
         if (!user.isEnabled()) {
             return Completable.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
+        } else if (checkAccountPasswordExpiry(user)) {
+            return Completable.error( new AccountPasswordExpiredException("Account's password is expired "));
         }
         return Completable.complete();
+    }
+
+    private boolean checkAccountPasswordExpiry(User user) {
+        /** If the expiryDate is set to 0 so it's disabled */
+        if(domain.getPasswordSettings() == null || (domain.getPasswordSettings() != null && domain.getPasswordSettings().getExpiryDuration() == 0))
+            return false;
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(user.getLastPasswordReset());
+        calendar.add(Calendar.DAY_OF_MONTH, domain.getPasswordSettings().getExpiryDuration());
+
+        return calendar.compareTo(Calendar.getInstance()) < 0;
     }
 
     /**

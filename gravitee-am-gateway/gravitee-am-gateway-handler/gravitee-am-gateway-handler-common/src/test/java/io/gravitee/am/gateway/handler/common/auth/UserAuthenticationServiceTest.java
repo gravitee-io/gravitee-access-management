@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.auth;
 
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationServiceImpl;
@@ -24,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.Request;
@@ -37,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -145,6 +148,38 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountLockedException.class);
+    }
+
+    @Test
+    public void shouldNotConnect_passwordExpired() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -5);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(3);
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
+        final User foundUser = mock(User.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(foundUser.isEnabled()).thenReturn(true);
+        when(foundUser.getLastPasswordReset()).thenReturn(calendar.getTime());
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(User.class))).thenReturn(Single.just(foundUser));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertNotComplete();
+        testObserver.assertError(AccountPasswordExpiredException.class);
     }
 
     @Test

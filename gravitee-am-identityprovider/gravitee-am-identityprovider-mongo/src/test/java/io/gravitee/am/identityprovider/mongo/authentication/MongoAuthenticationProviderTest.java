@@ -41,6 +41,12 @@ public class MongoAuthenticationProviderTest {
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
+    /** This is a workaround for Macs with M1 ships
+     * Link to the github issue:
+     * https://github.com/flapdoodle-oss/de.flapdoodle.embed.mongo/issues/337#issuecomment-794303570
+     * */
+    static { System.setProperty("os.arch", "i686_64"); }
+
     @Test
     public void shouldLoadUserByUsername_authentication() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
