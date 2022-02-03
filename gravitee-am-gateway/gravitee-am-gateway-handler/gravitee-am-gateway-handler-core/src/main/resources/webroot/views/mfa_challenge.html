@@ -60,6 +60,7 @@
                     </div>
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                     <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
+
                     <div class="mfa-challenge-form-actions">
                         <div th:if="${rememberDeviceIsActive && rememberDeviceConsentTimeSeconds != null && deviceId != null && !deviceAlreadyExists}" style="align-content:flex-start;margin-top:10px;margin-right:40px">
                             <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect mdl-typography--text-center">

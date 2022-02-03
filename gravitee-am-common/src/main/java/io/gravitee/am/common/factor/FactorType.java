@@ -25,7 +25,8 @@ public enum FactorType {
     OTP("TOTP"),
     SMS("SMS"),
     EMAIL("EMAIL"),
-    CALL("CALL");
+    CALL("CALL"),
+    RECOVERY_CODE("RECOVERY CODE");
 
     FactorType(String type) {
         this.type = type;
@@ -37,6 +38,7 @@ public enum FactorType {
         if (SMS.getType().equalsIgnoreCase(type)) return SMS;
         if (EMAIL.getType().equalsIgnoreCase(type)) return EMAIL;
         if (CALL.getType().equalsIgnoreCase(type)) return CALL;
+        if (RECOVERY_CODE.getType().equalsIgnoreCase(type)) return RECOVERY_CODE;
         throw new NoSuchElementException(String.format("No factor type for provided string of %s", type));
     }
 

@@ -26,14 +26,16 @@ export class DomainSettingsFactorsComponent implements OnInit {
     'otp' : 'Generic OTP Factor',
     'email' : 'EMAIL Factor',
     'sms' : 'SMS Factor',
-    'call' : 'Call Factor'
+    'call' : 'Call Factor',
+    'recovery_code' : 'Recovery Code Factor'
   };
 
   private factorIcons: any = {
     'otp': 'mobile_friendly',
     'email': 'sms',
     'sms': 'email',
-    'call': 'call'
+    'call': 'call',
+    'recovery_code': 'autorenew'
   };
 
   factors: any[];

@@ -16,6 +16,10 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
+import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.model.Factor;
+
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -28,13 +32,24 @@ import static java.util.Objects.isNull;
 public class NoFactorFilter implements Supplier<Boolean> {
 
     private final Set<String> factors;
+    private final FactorManager factorManager;
 
-    public NoFactorFilter(Set<String> factors) {
+    public NoFactorFilter(Set<String> factors, FactorManager factorManager) {
         this.factors = factors;
+        this.factorManager = factorManager;
     }
 
     @Override
     public Boolean get() {
-        return isNull(factors) || factors.isEmpty();
+        return isNull(factors) || factors.isEmpty() || onlyRecoveryCodeFactor();
+    }
+
+    private boolean onlyRecoveryCodeFactor(){
+        if(factors.size() == 1){
+            final String factorId = factors.stream().findFirst().get();
+            final Factor factor = factorManager.getFactor(factorId);
+            return factor.getFactorType().equals(FactorType.RECOVERY_CODE);
+        }
+        return false;
     }
 }

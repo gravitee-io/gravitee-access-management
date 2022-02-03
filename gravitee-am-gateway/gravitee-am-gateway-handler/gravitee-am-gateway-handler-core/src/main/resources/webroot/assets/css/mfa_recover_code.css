@@ -1,0 +1,21 @@
+.recovery-codes {
+    margin: 30px 0;
+    font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+    font-size: 19px;
+}
+
+.recovery-code {
+    display: inline-block;
+    width: 48%;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.recovery-code::before {
+    content: "●";
+    color: #769313;
+    position: relative;
+    top: -3px;
+    margin-right: 10px;
+    font-size: 12px;
+}

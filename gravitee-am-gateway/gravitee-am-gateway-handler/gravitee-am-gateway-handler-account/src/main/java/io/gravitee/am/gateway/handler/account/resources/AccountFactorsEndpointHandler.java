@@ -18,9 +18,11 @@ package io.gravitee.am.gateway.handler.account.resources;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
+import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
+import io.gravitee.am.factor.api.RecoveryFactor;
 import io.gravitee.am.gateway.handler.account.model.EnrollmentAccount;
 import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
@@ -38,6 +40,7 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
+import io.reactivex.Completable;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -60,6 +63,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
+import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -184,6 +188,18 @@ public class AccountFactorsEndpointHandler {
                     }
                 }
 
+                //Check if the factor is a recovery factor.
+                // In case of recovery factor; recovery code is generated instead of sending challenge
+                if (isRecoveryCodeFactor(factor)) {
+                    generateRecoveryCode(routingContext, factor, (RecoveryFactor)factorProvider).subscribe(
+                            () -> {
+                                AccountResponseHandler.handleDefaultResponse(routingContext, Future.succeededFuture());
+                            },
+                            routingContext::fail
+                    );
+                    return;
+                }
+
                 // enroll factor
                 enrollFactor(factor, factorProvider, account, user, eh -> {
                     if (eh.failed()) {
@@ -211,6 +227,20 @@ public class AccountFactorsEndpointHandler {
         } catch (DecodeException ex) {
             routingContext.fail(new InvalidRequestException("Unable to parse body message"));
         }
+    }
+
+    private Completable generateRecoveryCode(RoutingContext routingContext, Factor factor, RecoveryFactor factorProvider) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        final Map<String, Object> factorData = Map.of(
+                FactorContext.KEY_RECOVERY_FACTOR, factor,
+                KEY_USER, user);
+        final FactorContext recoveryFactorCtx = new FactorContext(applicationContext, factorData);
+
+        return factorProvider.generateRecoveryCode(recoveryFactorCtx);
+    }
+
+    private boolean isRecoveryCodeFactor(Factor factor) {
+        return FactorType.RECOVERY_CODE.equals(factor.getFactorType());
     }
 
     /**

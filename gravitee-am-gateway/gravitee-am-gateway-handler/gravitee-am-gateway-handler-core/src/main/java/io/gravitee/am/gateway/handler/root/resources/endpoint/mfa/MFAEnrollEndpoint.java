@@ -111,8 +111,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 }
 
                 // put factors in context
-                List<Factor> factorsToRender = h.result();
-                routingContext.put("factors", factorsToRender);
+                routingContext.put("factors", factorsToRender(h.result()));
 
                 if (endUser.getPhoneNumbers() != null && !endUser.getPhoneNumbers().isEmpty()) {
                     routingContext.put("phoneNumber", endUser.getPhoneNumbers().stream()
@@ -133,6 +132,19 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             logger.error("An error occurs while rendering MFA enroll page", ex);
             routingContext.fail(503);
         }
+    }
+
+    /**
+     * Filter out recovery code factor from the given list of factors
+     *
+     * @param factors list of Factor object
+     * @return list of Factor object
+     */
+    private List<Factor> factorsToRender(List<Factor> factors) {
+        final String factorType = "RECOVERY CODE";
+        return factors.stream()
+                .filter(factor -> !factor.factorType.equals(factorType))
+                .collect(Collectors.toList());
     }
 
     private boolean isForceMfaActive(Client client) {

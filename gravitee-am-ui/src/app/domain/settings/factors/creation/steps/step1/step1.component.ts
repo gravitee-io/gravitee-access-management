@@ -26,7 +26,8 @@ export class FactorCreationStep1Component implements OnInit {
     'otp-am-factor' : 'Generic OTP Factor',
     'email-am-factor' : 'EMAIL Factor',
     'sms-am-factor' : 'SMS Factor',
-    'call-am-factor' : 'Call Factor'
+    'call-am-factor' : 'Call Factor',
+    'recovery-code-am-factor': 'Recovery Code Factor'
   };
   @Input() factor: any;
   factors: any[];

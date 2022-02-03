@@ -27,6 +27,7 @@ import java.util.Map;
  */
 public class FactorContext {
     public static final String KEY_ENROLLED_FACTOR = "enrolledFactor";
+    public static final String KEY_RECOVERY_FACTOR = "recoveryFactor";
     public static final String KEY_CODE = "code";
     public static final String KEY_CLIENT = "client";
     public static final String KEY_USER = "user";
