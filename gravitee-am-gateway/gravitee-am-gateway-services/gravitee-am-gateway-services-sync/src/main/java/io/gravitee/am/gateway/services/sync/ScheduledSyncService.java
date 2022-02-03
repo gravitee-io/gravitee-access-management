@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
+import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.node.api.healthcheck.ProbeManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,12 +51,23 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
     @Autowired
     private SyncManager syncStateManager;
 
+    @Autowired
+    private SyncProbe syncProbe;
+
+    @Autowired
+    private ProbeManager probeManager;
+
     private final AtomicLong counter = new AtomicLong(0);
 
     @Override
     protected void doStart() throws Exception {
         if (enabled) {
             super.doStart();
+
+            // register the probe
+            probeManager.register(syncProbe);
+
+            // start the sync service
             logger.info("Sync service has been initialized with cron [{}]", cronTrigger);
             // Sync must start only when doStart() is invoked, that's the reason why we are not
             // using @Scheduled annotation on doSync() method.

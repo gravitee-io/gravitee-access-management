@@ -90,6 +90,8 @@ public class SyncManager implements InitializingBean {
 
     private long lastDelay = 0;
 
+    private boolean allSecurityDomainsSync = false;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Starting gateway tags initialization ...");
@@ -110,6 +112,7 @@ public class SyncManager implements InitializingBean {
             if (lastRefreshAt == -1) {
                 logger.debug("Initial synchronization");
                 deployDomains();
+                allSecurityDomainsSync = true;
             } else {
                 // search for events and compute them
                 logger.debug("Events synchronization");
@@ -133,6 +136,10 @@ public class SyncManager implements InitializingBean {
         } catch (Exception ex) {
             logger.error("An error has occurred during synchronization", ex);
         }
+    }
+
+    public boolean isAllSecurityDomainsSync() {
+        return allSecurityDomainsSync;
     }
 
     private void deployDomains() {
