@@ -40,7 +40,7 @@ public abstract class AbstractSensitiveProxy {
             JsonNode configurationNode,
             Consumer<String> configurationSetter
     ) {
-        if (schemaNode.has(PROPERTIES_SCHEMA_KEY)) {
+        if (schemaNode.has(PROPERTIES_SCHEMA_KEY) && configurationNode.isObject()) {
             var properties = schemaNode.get(PROPERTIES_SCHEMA_KEY).fields();
             properties.forEachRemaining(entry -> {
                 if (isSensitive(entry)) {
@@ -96,7 +96,7 @@ public abstract class AbstractSensitiveProxy {
 
     protected Consumer<Entry<String, JsonNode>> setOldConfigurationIfNecessary(JsonNode updatedConfigurationNode, JsonNode oldConfigurationNode) {
         return entry -> {
-            if (isSensitive(entry) && !valueIsUpdatable(updatedConfigurationNode, entry)) {
+            if (isSensitive(entry) && !valueIsUpdatable(updatedConfigurationNode, entry) && updatedConfigurationNode.isObject()) {
                 ((ObjectNode) updatedConfigurationNode).set(entry.getKey(), oldConfigurationNode.get(entry.getKey()));
             }
         };
