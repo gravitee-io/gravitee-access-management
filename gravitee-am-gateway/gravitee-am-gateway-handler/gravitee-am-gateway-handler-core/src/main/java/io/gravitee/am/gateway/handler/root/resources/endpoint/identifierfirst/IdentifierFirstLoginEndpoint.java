@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -164,16 +165,19 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         final String redirectUrl = routingContext.get(CONTEXT_PATH) + "/login";
         final HttpServerRequest request = routingContext.request();
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
-        queryParams.add(Parameters.LOGIN_HINT, request.getParam(USERNAME_PARAM_KEY));
+        // login_hint parameter can be duplicated from a previous step, remove it
+        queryParams.remove(Parameters.LOGIN_HINT);
+        queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
         final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
         doRedirect0(routingContext, url);
     }
 
     private void doExternalRedirect(RoutingContext routingContext, IdentityProvider identityProvider) {
         Map<String, String> urls = routingContext.get(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
-        StringBuilder sb = new StringBuilder(urls.get(identityProvider.getId()));
-        sb.append("&login_hint=" + routingContext.request().getParam(USERNAME_PARAM_KEY));
-        doRedirect0(routingContext, sb.toString());
+        UriBuilder uriBuilder = UriBuilder.fromHttpUrl(urls.get(identityProvider.getId()));
+        // encode login_hint parameter for external provider (Azure AD replace the '+' sign by a space ' ')
+        uriBuilder.addParameter(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY)));
+        doRedirect0(routingContext, uriBuilder.buildString());
     }
 
     private void doRedirect0(RoutingContext routingContext, String url) {
