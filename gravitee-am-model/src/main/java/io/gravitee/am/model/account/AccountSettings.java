@@ -144,6 +144,7 @@ public class AccountSettings {
         this.resetPasswordCustomFormFields = other.resetPasswordCustomFormFields;
         this.useBotDetection = other.useBotDetection;
         this.botDetectionPlugin = other.botDetectionPlugin;
+        this.defaultIdentityProviderForRegistration = other.defaultIdentityProviderForRegistration;
     }
 
     public boolean isInherited() {
