@@ -22,7 +22,10 @@ import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +33,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -164,16 +166,16 @@ public class CredentialServiceImpl implements CredentialService {
     }
 
     @Override
-    public Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid) {
-        LOGGER.debug("Delete credentials by {} {} and aaguid: {}", referenceType, referenceId, aaguid);
-        return credentialRepository.deleteByAaguid(referenceType, referenceId, aaguid)
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("Delete credentials by reference {} {}", referenceType, referenceId);
+        return credentialRepository.deleteByReference(referenceType, referenceId)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
                     }
-                    LOGGER.error("An error has occurred while trying to delete credentials using {} {} and aaguid: {}", referenceType, referenceId, aaguid, ex);
+                    LOGGER.error("An error has occurred while trying to delete credentials for {} {}", referenceType, referenceId, ex);
                     return Completable.error(new TechnicalManagementException(
-                            String.format("An error has occurred while trying to delete credentials using: %s %s and aaguid: %s", referenceType, referenceId, aaguid), ex));
+                            String.format("An error has occurred while trying to delete credentials for: %s %s", referenceType, referenceId), ex));
                 });
     }
 }

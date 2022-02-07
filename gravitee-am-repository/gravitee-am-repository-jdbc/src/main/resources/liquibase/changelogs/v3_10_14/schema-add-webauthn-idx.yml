@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.10.14-add-webauthn-idx
+      author: GraviteeSource Team
+      changes:
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName:  idx_webauthn_credentials_ref
+            tableName:  webauthn_credentials
+            unique:  false
