@@ -206,6 +206,11 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         return Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id)));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))));
+    }
+
     protected User convert(T userMongo) {
         if (userMongo == null) {
             return null;

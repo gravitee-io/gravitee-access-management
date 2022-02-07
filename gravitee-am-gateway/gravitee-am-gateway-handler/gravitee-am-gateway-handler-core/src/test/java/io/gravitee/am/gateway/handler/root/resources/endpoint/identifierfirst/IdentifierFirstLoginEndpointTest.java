@@ -178,7 +178,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     idp.setId("provider-id");
                     idp.setDomainWhitelist(List.of("domain.com"));
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://host/some/provider/oauth/authorize"));
                     routingContext.next();
                 })
                 .handler(identifierFirstLoginEndpoint::handle);
@@ -190,7 +190,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/some/provider/oauth/authorize&login_hint=username@domain.com"));
+                    assertTrue(location.contains("https://host/some/provider/oauth/authorize?login_hint=username%40domain.com"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -204,7 +204,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     idp.setDomainWhitelist(List.of("domain.com"));
                     idp.setType("google");
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://host/some/provider/oauth/authorize"));
                     routingContext.next();
                 })
                 .handler(identifierFirstLoginEndpoint::handle);
@@ -215,7 +215,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("/some/provider/oauth/authorize&login_hint=username@domain.com"));
+                    assertTrue(location.equals("https://host/some/provider/oauth/authorize?login_hint=username%40domain.com"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

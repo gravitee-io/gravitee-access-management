@@ -8,9 +8,8 @@ CREATE TABLE IF NOT EXISTS reporter_audits_outcomes___ (audit_id VARCHAR(64) NOT
 CREATE TABLE IF NOT EXISTS reporter_audits_access_points___ (audit_id VARCHAR(64) NOT NULL, id VARCHAR(255), alternative_id VARCHAR(320), display_name VARCHAR(255), ip_address VARCHAR(255), user_agent VARCHAR(255))
 CREATE TABLE IF NOT EXISTS reporter_audits_entities___ (audit_id VARCHAR(64) NOT NULL, audit_field VARCHAR(64) NOT NULL, id VARCHAR(64), alternative_id VARCHAR(320), display_name VARCHAR(256), type VARCHAR(64), display_ame VARCHAR(255), reference_type VARCHAR(64), reference_id VARCHAR(64), attributes TEXT)
 
-CREATE INDEX IF NOT EXISTS idx_audits_ref___ ON reporter_audits___(reference_id, reference_type)
-CREATE INDEX IF NOT EXISTS idx_audits_type___ ON reporter_audits___(type)
-CREATE INDEX IF NOT EXISTS idx_audits_timestamp___ ON reporter_audits___(timestamp)
+CREATE INDEX IF NOT EXISTS idx_audits_ref___ ON reporter_audits___(reference_id, reference_type, timestamp)
+CREATE INDEX IF NOT EXISTS idx_audits_evttype___ ON reporter_audits___(reference_id, reference_type, type, timestamp)
 CREATE INDEX IF NOT EXISTS idx_audit_outcomes_id___ ON reporter_audits_outcomes___(audit_id)
 CREATE INDEX IF NOT EXISTS idx_audit_outcomes_status___ ON reporter_audits_outcomes___(status)
 CREATE INDEX IF NOT EXISTS idx_audit_access_points_id___ ON reporter_audits_access_points___(audit_id)

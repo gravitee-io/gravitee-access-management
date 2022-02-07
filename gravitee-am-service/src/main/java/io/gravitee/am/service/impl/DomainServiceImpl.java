@@ -380,10 +380,9 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             // delete users
-                            .andThen(userService.findByDomain(domainId)
-                                    .flatMapCompletable(user ->
-                                        userService.delete(user.getId()))
-                            )
+                            // do not delete one by one for memory consumption issue
+                            // https://github.com/gravitee-io/issues/issues/6999
+                            .andThen(userService.deleteByDomain(domainId))
                             // delete groups
                             .andThen(groupService.findByDomain(domainId)
                                     .flatMapCompletable(group ->

@@ -335,6 +335,22 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
     }
 
+    @Override
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Integer> delete = dbClient.execute("DELETE FROM organization_users WHERE reference_type = :refType AND reference_id = :refId").bind("refType", referenceType.name()).bind("refId", referenceId).fetch().rowsUpdated();
+        return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
+    }
+
+    private Mono<Integer> deleteChildEntitiesByRef(String refType, String refId) {
+        Mono<Integer> deleteRoles = dbClient.execute("DELETE FROM organization_user_roles WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Integer> deleteAddresses = dbClient.execute("DELETE FROM organization_user_addresses WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Integer> deleteAttributes = dbClient.execute("DELETE FROM organization_user_attributes WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        Mono<Integer> deleteEntitlements = dbClient.execute("DELETE FROM organization_user_entitlements WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind("refType", refType).bind("refId", refId).fetch().rowsUpdated();
+        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements);
+    }
+
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, User item) {
         final List<Address> addresses = item.getAddresses();
         if (addresses != null && !addresses.isEmpty()) {

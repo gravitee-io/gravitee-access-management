@@ -20,6 +20,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -48,4 +49,5 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
 
     Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
 
+    Completable deleteByReference(ReferenceType referenceType, String referenceId);
 }

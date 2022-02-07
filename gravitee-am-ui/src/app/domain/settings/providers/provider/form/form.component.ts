@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import {MaterialCertificateComponent} from "../../../../../components/json-schema-form/material-certificate-component";
 
 @Component({
   selector: 'provider-form',
@@ -26,6 +27,9 @@ export class ProviderFormComponent implements OnInit, OnChanges {
   @Output() configurationCompleted = new EventEmitter<any>();
   displayForm: boolean = false;
   data: any = {};
+  customWidgets = {
+    graviteeCertificate: MaterialCertificateComponent
+  };
 
   constructor() { }
 
