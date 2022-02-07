@@ -139,12 +139,8 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         // init reportable collection
         reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
-        this.createIndex(reportableCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), ensureIndexOnStart);
-        this.createIndex(reportableCollection, new Document(FIELD_TIMESTAMP, 1), ensureIndexOnStart);
-        this.createIndex(reportableCollection, new Document(FIELD_TYPE, 1), ensureIndexOnStart);
-        this.createIndex(reportableCollection, new Document(FIELD_STATUS, 1), ensureIndexOnStart);
-        this.createIndex(reportableCollection, new Document(FIELD_ACTOR, 1), ensureIndexOnStart);
-        this.createIndex(reportableCollection, new Document(FIELD_TARGET, 1), ensureIndexOnStart);
+        // init indexes
+        initIndexes();
 
         // init bulk processor
         disposable = bulkProcessor.buffer(
@@ -154,14 +150,6 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
                 .subscribe();
-    }
-
-    protected void createIndex(MongoCollection<?> collection, Document document, boolean ensure) {
-        if (ensure) {
-            Single.fromPublisher(collection.createIndex(document, new IndexOptions()))
-                    .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
-                    .doOnError(throwable -> logger.error("Error occurs during creation of index", throwable)).blockingGet();
-        }
     }
 
     @Override
@@ -185,6 +173,26 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             mongoClient.close();
         } catch (Exception ex) {
             logger.error("Failed to close mongoDB client", ex);
+        }
+    }
+
+    private void initIndexes() {
+        if (ensureIndexOnStart) {
+            List<Document> documents = Arrays.asList(
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1)
+            );
+
+            Flowable.fromIterable(documents)
+                    .flatMapSingle(document -> {
+                        return Single.fromPublisher(reportableCollection.createIndex(document, new IndexOptions()))
+                                .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
+                                .doOnError(throwable -> logger.error("An error has occurred during creation of index {}", document.toJson(), throwable));
+                    })
+                    .subscribe();
         }
     }
 

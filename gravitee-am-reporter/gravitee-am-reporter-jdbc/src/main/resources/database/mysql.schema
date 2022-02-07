@@ -3,7 +3,7 @@
 -- Table & index names are suffixed by 3 underscores to define a
 -- pattern to replace with the reporter name
 --
-CREATE TABLE IF NOT EXISTS reporter_audits___ (id NVARCHAR(64) NOT NULL, transaction_id NVARCHAR(64) NULL, type NVARCHAR(255) NULL, reference_type NVARCHAR(64) NULL, reference_id NVARCHAR(64) NULL, timestamp timestamp(6) NULL, PRIMARY KEY (id), INDEX (reference_id, reference_type), INDEX (timestamp), INDEX (type))
+CREATE TABLE IF NOT EXISTS reporter_audits___ (id NVARCHAR(64) NOT NULL, transaction_id NVARCHAR(64) NULL, type NVARCHAR(255) NULL, reference_type NVARCHAR(64) NULL, reference_id NVARCHAR(64) NULL, timestamp timestamp(6) NULL, PRIMARY KEY (id), INDEX (reference_id, reference_type, timestamp), INDEX (reference_id, reference_type, type, timestamp))
 CREATE TABLE IF NOT EXISTS reporter_audits_outcomes___ (audit_id NVARCHAR(64) NOT NULL, status NVARCHAR(64) NULL, message LONGTEXT NULL, INDEX(audit_id), INDEX (status))
 CREATE TABLE IF NOT EXISTS reporter_audits_access_points___ (audit_id NVARCHAR(64) NOT NULL, id VARCHAR(255), alternative_id NVARCHAR(64) NULL, display_name NVARCHAR(255) NULL, ip_address NVARCHAR(255) NULL, user_agent NVARCHAR(255) NULL, INDEX(audit_id), INDEX (alternative_id))
 CREATE TABLE IF NOT EXISTS reporter_audits_entities___ (audit_id NVARCHAR(64) NOT NULL, audit_field NVARCHAR(64) NOT NULL, id VARCHAR(64), alternative_id NVARCHAR(320) NULL, display_name NVARCHAR(255) NULL, type NVARCHAR(64) NULL, display_ame NVARCHAR(255) NULL, reference_type NVARCHAR(64) NULL, reference_id NVARCHAR(64) NULL, attributes LONGTEXT NULL, INDEX(audit_id), INDEX (alternative_id))
