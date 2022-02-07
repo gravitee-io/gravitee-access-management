@@ -55,15 +55,15 @@ public class SPNEGOStep extends AuthenticationFlowStep {
         }
 
         // check if application has enabled Kerberos authentication
-        if (client == null || client.getIdentities() == null) {
+        if (client == null || client.getIdentityProviders() == null) {
             flow.doNext(routingContext);
             return;
         }
 
         boolean kerberosEnabled =
-                client.getIdentities()
+                client.getIdentityProviders()
                         .stream()
-                        .map(identityProviderManager::getIdentityProvider)
+                        .map(appIdp -> identityProviderManager.getIdentityProvider(appIdp.getIdentity()))
                         .anyMatch(identityProvider -> identityProvider != null && KERBEROS_AM_IDP.equals(identityProvider.getType()));
 
         if (!kerberosEnabled) {

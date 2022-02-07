@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 import java.util.*;
 
 import static io.gravitee.am.identityprovider.api.AuthenticationContext.CONTEXT_KEY_PROFILE;
+import static java.util.function.Predicate.not;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -51,7 +52,7 @@ public class DefaultIdentityProviderRoleMapper implements IdentityProviderRoleMa
             }
 
             this.getRoles().forEach((role, users) -> {
-                Arrays.asList(users).stream().filter(u -> !StringUtils.isEmpty(u)).map(String::trim).forEach(u -> {
+                Arrays.stream(users).filter(not(StringUtils::isEmpty)).map(String::trim).forEach(u -> {
                     if (u.startsWith("{") && u.endsWith("}") && templateEngine != null) {
                         try {
                             if (templateEngine.getValue(u, Boolean.class)) {

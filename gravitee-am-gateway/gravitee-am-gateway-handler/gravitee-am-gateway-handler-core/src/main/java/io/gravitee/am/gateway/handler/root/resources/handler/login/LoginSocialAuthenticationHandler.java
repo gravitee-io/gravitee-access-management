@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.common.Request;
 import io.gravitee.am.identityprovider.api.social.SocialAuthenticationProvider;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
 import io.reactivex.Maybe;
@@ -53,6 +54,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     private static final Logger logger = LoggerFactory.getLogger(LoginSocialAuthenticationHandler.class);
     private static final Map<String, String> socialProviders;
+
     static {
         Map<String, String> sMap = new HashMap<>();
         sMap.put("github-am-idp", "github");
@@ -86,7 +88,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
 
         // fetch client identity providers
-        getSocialIdentityProviders(client.getIdentities(), identityProvidersResultHandler -> {
+        getSocialIdentityProviders(client.getIdentityProviders(), identityProvidersResultHandler -> {
             if (identityProvidersResultHandler.failed()) {
                 logger.error("Unable to fetch client social identity providers", identityProvidersResultHandler.cause());
                 routingContext.fail(new InvalidRequestException("Unable to fetch client social identity providers"));
@@ -128,11 +130,12 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     }
 
-    private void getSocialIdentityProviders(Set<String> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
+    private void getSocialIdentityProviders(SortedSet<ApplicationIdentityProvider> identities, Handler<AsyncResult<List<IdentityProvider>>> resultHandler) {
         if (identities == null) {
             resultHandler.handle(Future.succeededFuture(Collections.emptyList()));
         } else {
             resultHandler.handle(Future.succeededFuture(identities.stream()
+                    .map(ApplicationIdentityProvider::getIdentity)
                     .map(identityProviderManager::getIdentityProvider)
                     .filter(identityProvider -> identityProvider != null && identityProvider.isExternal())
                     .collect(Collectors.toList())));
@@ -168,9 +171,9 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
                                 Maybe<Request> signInURL = ((SocialAuthenticationProvider) authenticationProvider).asyncSignInUrl(redirectUri, state);
 
                                 return signInURL.map(request -> {
-                                    if(HttpMethod.GET.equals(request.getMethod())) {
+                                    if (HttpMethod.GET.equals(request.getMethod())) {
                                         return request.getUri();
-                                    }else {
+                                    } else {
                                         // Extract body to convert it to query parameters and use POST form.
                                         final Map<String, String> queryParams = getParams(request.getBody());
                                         queryParams.put(ACTION_KEY, request.getUri());

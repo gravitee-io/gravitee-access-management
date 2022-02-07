@@ -21,6 +21,7 @@ import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.AbstractManagementTest;
@@ -31,6 +32,9 @@ import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toCollection;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -148,7 +152,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         Application appCreated = applicationRepository.create(app).blockingGet();
 
         // fetch app
-        TestSubscriber<Application> testSubscriber = applicationRepository.findByIdentityProvider(appCreated.getIdentities().iterator().next()).test();
+        final String next = appCreated.getIdentityProviders().stream().map(ApplicationIdentityProvider::getIdentity).iterator().next();
+        TestSubscriber<Application> testSubscriber = applicationRepository.findByIdentityProvider(next).test();
         testSubscriber.awaitTerminalEvent();
 
         testSubscriber.assertComplete();
@@ -165,7 +170,8 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getFactors().containsAll(app.getFactors()));
         testObserver.assertValue(a -> a.getCertificate().equals(app.getCertificate()));
         testObserver.assertValue(a -> a.getDescription().equals(app.getDescription()));
-        testObserver.assertValue(a -> a.getIdentities().containsAll(app.getIdentities()));
+        testObserver.assertValue(a -> a.getIdentityProviders() != null);
+        testObserver.assertValue(a -> a.getIdentityProviders().size() == 2);
         testObserver.assertValue(a -> a.getSettings() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth() != null);
         testObserver.assertValue(a -> a.getSettings().getOauth().getGrantTypes().containsAll(Arrays.asList("authorization_code")));
@@ -191,15 +197,25 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         app.setName("name" + random);
         app.setTemplate(true);
         app.setEnabled(true);
-        app.setIdentities(Sets.newSet("ipd1" + random, "idp2" + random));
         app.setFactors(Sets.newSet("fact1" + random, "fact2" + random));
         app.setSettings(buildApplicationSettings());
+        app.setIdentityProviders(getProviderSettings());
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("key1", "value1");
         app.setMetadata(metadata);
         app.setCreatedAt(new Date());
         app.setUpdatedAt(new Date());
         return app;
+    }
+
+    private static TreeSet<ApplicationIdentityProvider> getProviderSettings() {
+         return Stream.of(getIdentityProviderSettings(), getIdentityProviderSettings())
+                 .collect(toCollection(TreeSet::new));
+    }
+
+    private static ApplicationIdentityProvider getIdentityProviderSettings() {
+        final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider(UUID.randomUUID().toString(), new Random().nextInt());
+        return applicationIdentityProvider;
     }
 
     private static ApplicationSettings buildApplicationSettings() {
@@ -216,7 +232,7 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         scopeSettings.setScope("scopename");
         scopeSettings.setDefaultScope(true);
         scopeSettings.setScopeApproval(42);
-        oauth.setScopeSettings(Arrays.asList(scopeSettings));
+        oauth.setScopeSettings(List.of(scopeSettings));
         return settings;
     }
 

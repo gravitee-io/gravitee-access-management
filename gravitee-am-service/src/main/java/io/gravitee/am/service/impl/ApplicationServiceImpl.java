@@ -26,7 +26,10 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -584,27 +587,19 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private Single<Application> validateApplicationIdentityProviders(Application application) {
-        if (application.getIdentities() == null || application.getIdentities().isEmpty()) {
+        if (application.getIdentityProviders() == null || application.getIdentityProviders().isEmpty()) {
             return Single.just(application);
         }
-        return Observable.fromIterable(application.getIdentities())
-                .flatMapSingle(identity -> identityProviderService.findById(identity)
-                        .map(Optional::of)
+        return Observable.fromIterable(application.getIdentityProviders())
+                .flatMapSingle(appId -> identityProviderService.findById(appId.getIdentity())
+                        .map(__ -> Optional.of(appId))
                         .defaultIfEmpty(Optional.empty())
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
                         .toSingle())
                 .toList()
-                .map(optionalIdentities -> {
-                    if (optionalIdentities == null || optionalIdentities.isEmpty()) {
-                        application.setIdentities(Collections.emptySet());
-                    } else {
-                        Set<String> identities = optionalIdentities
-                                .stream()
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .map(IdentityProvider::getId)
-                                .collect(Collectors.toSet());
-                        application.setIdentities(identities);
-                    }
+                .map(appIdps -> {
+                    application.setIdentityProviders(new TreeSet<>(appIdps));
                     return application;
                 });
     }

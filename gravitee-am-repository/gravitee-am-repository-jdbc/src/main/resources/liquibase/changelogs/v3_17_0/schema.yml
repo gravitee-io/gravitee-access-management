@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.17.0
+      author: GraviteeSource Team
+      changes:
+        ##########################
+        # application_identities #
+        ##########################
+        - addColumn:
+            tableName: application_identities
+            columns:
+              - column: { name: priority, type: integer, constraints: { nullable: false }, defaultValue: 0 }

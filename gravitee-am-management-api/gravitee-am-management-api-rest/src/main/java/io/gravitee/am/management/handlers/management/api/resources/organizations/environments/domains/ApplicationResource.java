@@ -300,7 +300,7 @@ public class ApplicationResource extends AbstractResource {
         }
 
         if (hasAnyPermission(userPermissions, Permission.APPLICATION_IDENTITY_PROVIDER, Acl.READ)) {
-            filteredApplication.setIdentities(application.getIdentities());
+            filteredApplication.setIdentityProviders(application.getIdentityProviders());
         }
 
         if (hasAnyPermission(userPermissions, Permission.APPLICATION_CERTIFICATE, Acl.READ)) {

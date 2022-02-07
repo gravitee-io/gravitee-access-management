@@ -21,14 +21,12 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
-import io.reactivex.Single;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -138,6 +136,8 @@ public class IdentityProvidersResource extends AbstractResource {
         filteredIdentityProvider.setType(identityProvider.getType());
         filteredIdentityProvider.setExternal(identityProvider.isExternal());
         filteredIdentityProvider.setSystem(identityProvider.isSystem());
+        filteredIdentityProvider.setExternal(identityProvider.isExternal());
+
         return filteredIdentityProvider;
     }
 }

@@ -18,16 +18,13 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
@@ -37,16 +34,10 @@ import io.reactivex.Single;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -83,7 +74,8 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(mockApplication.getFactors(), application.getFactors());
         assertEquals(mockApplication.getCreatedAt(), application.getCreatedAt());
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
-        assertEquals(mockApplication.getIdentities(), application.getIdentities());
+        assertEquals(mockApplication.getIdentityProviders().toArray()[0], application.getIdentityProviders().toArray()[0]);
+        assertEquals(mockApplication.getIdentityProviders().toArray()[1], application.getIdentityProviders().toArray()[1]);
         assertEquals(mockApplication.getCertificate(), application.getCertificate());
         assertNotNull(application.getSettings());
         assertNotNull(application.getSettings().getAdvanced());
@@ -120,7 +112,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNull(application.getFactors());
         assertEquals(mockApplication.getCreatedAt(), application.getCreatedAt());
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
-        assertNull(application.getIdentities());
+        assertNull(application.getIdentityProviders());
         assertNull(application.getCertificate());
         assertNotNull(application.getSettings());
         assertNull(application.getSettings().getAccount());
@@ -206,7 +198,8 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertEquals(mockApplication.getFactors(), application.getFactors());
         assertEquals(mockApplication.getCreatedAt(), application.getCreatedAt());
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
-        assertEquals(mockApplication.getIdentities(), application.getIdentities());
+        assertEquals(mockApplication.getIdentityProviders().toArray()[0], application.getIdentityProviders().toArray()[0]);
+        assertEquals(mockApplication.getIdentityProviders().toArray()[1], application.getIdentityProviders().toArray()[1]);
         assertEquals(mockApplication.getCertificate(), application.getCertificate());
         ApplicationSettings settings = application.getSettings();
         assertNotNull(settings);
@@ -247,7 +240,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNull(application.getFactors());
         assertEquals(mockApplication.getCreatedAt(), application.getCreatedAt());
         assertEquals(mockApplication.getUpdatedAt(), application.getUpdatedAt());
-        assertNull(application.getIdentities());
+        assertNull(application.getIdentityProviders());
         assertNull(application.getCertificate());
         ApplicationSettings settings = application.getSettings();
         assertNotNull(settings);
@@ -367,7 +360,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockApplication.setFactors(Collections.singleton("factor"));
         mockApplication.setCreatedAt(new Date());
         mockApplication.setUpdatedAt(new Date());
-        mockApplication.setIdentities(Collections.singleton("identity"));
+        mockApplication.setIdentityProviders(getApplicationIdentityProviders());
         mockApplication.setCertificate("certificate");
 
         ApplicationSettings filteredApplicationSettings = new ApplicationSettings();
@@ -380,5 +373,14 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockApplication.setMetadata(Collections.singletonMap("key", "value"));
 
         return mockApplication;
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders() {
+        var patchAppIdp = new ApplicationIdentityProvider("id1", 1);
+        var patchAppIdp2 = new ApplicationIdentityProvider("id2", 2);
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        set.add(patchAppIdp);
+        set.add(patchAppIdp2);
+        return set;
     }
 }

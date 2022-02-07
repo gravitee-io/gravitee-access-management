@@ -796,7 +796,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\"identities\":[\"{{defaultIdp}}\"]}",
+									"raw": "{\"identityProviders\":[{ \"identity\": \"{{defaultIdp}}\", \"priority\" : -1 }]}",
 									"options": {
 										"raw": {
 											"language": "json"

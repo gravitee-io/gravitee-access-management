@@ -422,7 +422,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\", \"refresh_token\"],\n  \t  \"scopeSettings\": [{\"scope\" : \"openid\", \"defaultScope\": true}, {\"scope\" : \"scope1\", \"defaultScope\": true}] \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"https://domain/callback\",\"https://another/callback\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\", \"refresh_token\"],\n  \t  \"scopeSettings\": [{\"scope\" : \"openid\", \"defaultScope\": true}, {\"scope\" : \"scope1\", \"defaultScope\": true}] \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
@@ -528,7 +528,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"http://localhost:4000/\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\"],\n  \t  \"scopeSettings\": [ { \"scope\": \"scope1\", \"defaultScope\": true } ]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t  \"redirectUris\": [\"http://localhost:4000/\"],\n  \t  \"grantTypes\": [\"authorization_code\", \"password\", \"implicit\"],\n  \t  \"scopeSettings\": [ { \"scope\": \"scope1\", \"defaultScope\": true } ]\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client2}}",

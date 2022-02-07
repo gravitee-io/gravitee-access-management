@@ -320,7 +320,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000\"],\n\t\t\"grantTypes\": [\"implicit\"]\n\t}\n  }\n}\n"
+							"raw": "{\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ],\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000\"],\n\t\t\"grantTypes\": [\"implicit\"]\n\t}\n  }\n}\n"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{app}}",

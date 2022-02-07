@@ -164,6 +164,7 @@ public class JdbcApplication {
         @Column("application_id")
         private String applicationId;
         private String identity;
+        private int priority;
 
         public String getApplicationId() {
             return applicationId;
@@ -179,6 +180,10 @@ public class JdbcApplication {
 
         public void setIdentity(String identity) {
             this.identity = identity;
+        }
+
+        public int getPriority() {
+            return priority;
         }
     }
 

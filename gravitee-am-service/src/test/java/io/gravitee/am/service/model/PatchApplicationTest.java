@@ -16,20 +16,12 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.model.scim.SCIMSettings;
-import io.gravitee.am.service.model.openid.PatchClientRegistrationSettings;
-import io.gravitee.am.service.model.openid.PatchOIDCSettings;
 import org.junit.Test;
 
-import javax.swing.text.html.Option;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -59,7 +51,11 @@ public class PatchApplicationTest {
         assertEquals(new HashSet<>(Arrays.asList(Permission.APPLICATION_SETTINGS)), patchApplication.getRequiredPermissions());
 
         patchApplication = new PatchApplication();
-        patchApplication.setIdentities(Optional.of(Collections.singleton("patchIdentity")));
+        var patchAppIdp = new PatchApplicationIdentityProvider();
+        patchAppIdp.setPriority(1);
+        patchAppIdp.setIdentity("patchIdentity");
+        var patchAppIdps = Optional.of(Set.of(patchAppIdp));
+        patchApplication.setIdentityProviders(patchAppIdps);
         assertEquals(new HashSet<>(Arrays.asList(Permission.APPLICATION_IDENTITY_PROVIDER)), patchApplication.getRequiredPermissions());
 
         patchApplication = new PatchApplication();
@@ -90,7 +86,7 @@ public class PatchApplicationTest {
         // Check multiple permissions.
         patchApplication = new PatchApplication();
         patchApplication.setTemplate(Optional.of(true));
-        patchApplication.setIdentities(Optional.of(Collections.singleton("patchIdentity")));
+        patchApplication.setIdentityProviders(patchAppIdps);
         patchApplication.setFactors(Optional.of(Collections.singleton("patchFactor")));
         patchApplication.setCertificate(Optional.of("patchCertificate"));
         patchApplicationSettings = new PatchApplicationSettings();

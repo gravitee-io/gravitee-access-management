@@ -29,6 +29,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
@@ -43,8 +44,8 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Matchers.any;
@@ -85,7 +86,7 @@ public class UserAuthenticationManagerTest {
     public void shouldNotAuthenticateUser_noIdentityProvider() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.emptySet());
+        client.setIdentityProviders(new TreeSet<>());
 
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
@@ -112,7 +113,7 @@ public class UserAuthenticationManagerTest {
     public void shouldAuthenticateUser_singleIdentityProvider() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -166,7 +167,7 @@ public class UserAuthenticationManagerTest {
     public void shouldAuthenticateUser_singleIdentityProvider_PasswordExipry() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true,"idp-1"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -219,7 +220,7 @@ public class UserAuthenticationManagerTest {
     public void shouldAuthenticateUser_singleIdentityProvider_throwException() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -263,7 +264,7 @@ public class UserAuthenticationManagerTest {
     public void shouldAuthenticateUser_multipleIdentityProvider() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(new LinkedHashSet<>(Arrays.asList("idp-1", "idp-2")));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1", "idp-2"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -330,10 +331,105 @@ public class UserAuthenticationManagerTest {
     }
 
     @Test
+    public void shouldAuthenticateUser_multipleIDPs_firstPriorityIdentityProvider() {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentityProviders(getApplicationIdentityProviders(true ,"idp-1", "idp-2"));
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+
+
+        IdentityProvider identityProvider2 = new IdentityProvider();
+        identityProvider2.setId("idp-2");
+
+        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            return Single.just(user);
+        });
+
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username1"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        when(identityProviderManager.getIdentityProvider("idp-2")).thenReturn(identityProvider2);
+
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(user -> user.getUsername().equals("username1"));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
+
+        client.setIdentityProviders(getApplicationIdentityProviders(false ,"idp-1", "idp-2"));
+
+        when(identityProviderManager.get("idp-2")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username2"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+
+        observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return null;
+            }
+        }).test();
+
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(user -> user.getUsername().equals("username2"));
+        verify(eventManager, times(2)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
+
+    }
+
+    @Test
     public void shouldNotAuthenticateUser_accountDisabled() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -381,7 +477,7 @@ public class UserAuthenticationManagerTest {
     public void shouldNotAuthenticateUser_onlyExternalProvider() {
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
 
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
@@ -403,7 +499,7 @@ public class UserAuthenticationManagerTest {
 
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
         client.setAccountSettings(accountSettings);
 
         IdentityProvider identityProvider = new IdentityProvider();
@@ -455,7 +551,7 @@ public class UserAuthenticationManagerTest {
 
         Client client = new Client();
         client.setClientId("client-id");
-        client.setIdentities(Collections.singleton("idp-1"));
+        client.setIdentityProviders(getApplicationIdentityProviders(true, "idp-1"));
         client.setAccountSettings(accountSettings);
 
         IdentityProvider identityProvider = new IdentityProvider();
@@ -498,5 +594,15 @@ public class UserAuthenticationManagerTest {
         verify(loginAttemptService, never()).loginFailed(any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(boolean order, String... identities) {
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        var wrapper = new Object(){ int priority = order ? 0 : identities.length - 1; };
+        Arrays.stream(identities).forEach(identity -> {
+            var patchAppIdp = new ApplicationIdentityProvider(identity, order? wrapper.priority++ : wrapper.priority--);
+            set.add(patchAppIdp);
+        });
+        return set;
     }
 }

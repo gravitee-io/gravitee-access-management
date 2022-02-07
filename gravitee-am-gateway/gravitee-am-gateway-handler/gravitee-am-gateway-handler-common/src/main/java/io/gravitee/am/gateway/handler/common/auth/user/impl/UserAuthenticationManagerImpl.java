@@ -31,6 +31,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
@@ -91,10 +92,10 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         // If user can't be authenticated, send an exception
 
         // Skip external identity provider for authentication with credentials.
-        List<String> identities = client.getIdentities() != null ?
-                client.getIdentities()
+        List<String> identities = client.getIdentityProviders() != null ?
+                client.getIdentityProviders()
                         .stream()
-                        .map(idp -> identityProviderManager.getIdentityProvider(idp))
+                        .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
                         .filter(idp -> idp != null && !idp.isExternal())
                         .map(IdentityProvider::getId)
                         .collect(Collectors.toList()) : null;
@@ -104,7 +105,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         }
 
         return Observable.fromIterable(identities)
-                .flatMapMaybe(authProvider -> authenticate0(client, authentication.copy(), authProvider, preAuthenticated))
+                .concatMapMaybe(authProvider -> authenticate0(client, authentication.copy(), authProvider, preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
                 .flatMap(userAuthentication -> {
@@ -154,10 +155,10 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         // If user can't be found, send an exception
 
         // Skip external identity provider for authentication with credentials.
-        List<String> identities = client.getIdentities() != null ?
-                client.getIdentities()
+        List<String> identities = client.getIdentityProviders() != null ?
+                client.getIdentityProviders()
                         .stream()
-                        .map(idp -> identityProviderManager.getIdentityProvider(idp))
+                        .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
                         .filter(idp -> idp != null && !idp.isExternal())
                         .map(IdentityProvider::getId)
                         .collect(Collectors.toList()) : null;

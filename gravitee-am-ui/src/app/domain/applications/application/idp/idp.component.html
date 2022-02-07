@@ -37,11 +37,19 @@
             </span>
           </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
+        <ngx-datatable-column [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
-                              [checked]="isIdentityProviderSelected(row.id)" [disabled]="readonly">
+            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id, this.identityProviders)"
+                              [checked]="row.selected" [disabled]="readonly">
             </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Priority" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-form-field *ngIf="isIdentityProviderSelected(row.id, this.identityProviders)" style="margin-top: -10px; align-items: center; width: 50px;" appearance="outline" floatLabel="always">
+              <input id="{{ 'input_' + row.id }}" matInput type="text" placeholder="" name="priority" type="number"
+                      value="{{row.priority}}" [readonly]="readonly" [min]="0" max="{{this.currentIdentityProvidersSize - 1 }}" (change)="setIdpPriority($event, row.id, this.identityProviders)">
+            </mat-form-field>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>
@@ -68,9 +76,17 @@
         </ngx-datatable-column>
         <ngx-datatable-column name="" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id)"
-                              [checked]="isIdentityProviderSelected(row.id)" [disabled]="readonly">
+            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id, this.socialIdentityProviders)"
+                              [checked]="row.selected" [disabled]="readonly">
             </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="Priority" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-form-field *ngIf="isIdentityProviderSelected(row.id, this.socialIdentityProviders)" style="margin-top: -10px; align-items: center; width: 50px;" appearance="outline" floatLabel="always">
+              <input matInput type="text" placeholder="" name="priority" type="number"
+                      value="{{row.priority}}" [readonly]="readonly" [min]="0" max="{{ this.currentIdentityProvidersSize - 1 }}" (change)="setIdpPriority($event, row.id, this.socialIdentityProviders)">
+            </mat-form-field>
           </ng-template>
         </ngx-datatable-column>
       </ngx-datatable>

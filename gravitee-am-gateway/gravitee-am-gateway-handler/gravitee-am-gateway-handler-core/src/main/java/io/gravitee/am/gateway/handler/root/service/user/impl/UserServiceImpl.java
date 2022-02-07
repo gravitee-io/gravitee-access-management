@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.service.user.impl;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountInactiveException;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
@@ -54,12 +55,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
 
 import static java.lang.Boolean.FALSE;
+import static java.util.Map.entry;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -331,11 +334,14 @@ public class UserServiceImpl implements UserService {
                     // narrow users
                     if (users.size() > 1) {
                         // filter by identity provider
-                        if (client.getIdentities() != null && !client.getIdentities().isEmpty()) {
-                            foundUsers = users
-                                    .stream()
-                                    .filter(u -> client.getIdentities().contains(u.getSource()))
-                                    .collect(Collectors.toList());
+                        if (client.getIdentityProviders() != null && !client.getIdentityProviders().isEmpty()) {
+                            foundUsers = users.stream()
+                                    .flatMap(u -> client.getIdentityProviders().stream().map(appIdp -> entry(u, appIdp.getIdentity())))
+                                    .filter(entry -> {
+                                        var user = entry.getKey();
+                                        var identity = entry.getValue();
+                                        return Objects.equals(user.getSource(), identity);
+                                    }).map(Entry::getKey).collect(toList());
                         }
 
                         if (foundUsers.size() > 1) {
@@ -343,7 +349,7 @@ public class UserServiceImpl implements UserService {
                             List<User> filteredSourceUsers = users
                                     .stream()
                                     .filter(u -> u.getClient() == null || client.getId().equals(u.getClient()))
-                                    .collect(Collectors.toList());
+                                    .collect(toList());
 
                             if (!filteredSourceUsers.isEmpty()) {
                                 foundUsers = new ArrayList<>(filteredSourceUsers);
@@ -381,25 +387,25 @@ public class UserServiceImpl implements UserService {
 
                     // if user has no email or email is unknown
                     // fallback to registered user providers if user has never been authenticated
-                    if (client.getIdentities() == null || client.getIdentities().isEmpty()) {
+                    if (client.getIdentityProviders() == null || client.getIdentityProviders().isEmpty()) {
                         return Single.error(new UserNotFoundException(email));
                     }
 
-                    if (StringUtils.isEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
+                    if (Strings.isNullOrEmpty(params.getEmail()) & StringUtils.isEmpty(params.getUsername())) {
                         // no user found using criteria. email & username are missing, unable to search the user through UserProvider
                         return Single.error(new UserNotFoundException(email));
                     }
 
                     // Single field search using email or username with IdP linked to the clientApp
                     // email used in priority for backward compatibility
-                    return Observable.fromIterable(client.getIdentities())
-                            .flatMapMaybe(authProvider -> identityProviderManager.getUserProvider(authProvider)
+                    return Observable.fromIterable(client.getIdentityProviders())
+                            .flatMapMaybe(authProvider -> identityProviderManager.getUserProvider(authProvider.getIdentity())
                                     .flatMap(userProvider -> {
                                         final String username = params.getUsername();
-                                        final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = StringUtils.isEmpty(email) ?
+                                        final Maybe<io.gravitee.am.identityprovider.api.User> findQuery = Strings.isNullOrEmpty(email) ?
                                                 userProvider.findByUsername(username) : userProvider.findByEmail(email);
                                         return findQuery
-                                                .map(user -> Optional.of(new UserAuthentication(user, authProvider)))
+                                                .map(user -> Optional.of(new UserAuthentication(user, authProvider.getIdentity())))
                                                 .defaultIfEmpty(Optional.empty())
                                                 .onErrorReturnItem(Optional.empty());
                                     })
