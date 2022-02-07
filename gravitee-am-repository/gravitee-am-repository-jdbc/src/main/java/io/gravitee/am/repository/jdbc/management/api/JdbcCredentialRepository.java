@@ -126,15 +126,14 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     }
 
     @Override
-    public Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid) {
-        LOGGER.debug("deleteByAaguid({})", aaguid);
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
+        LOGGER.debug("deleteByReference({} - {})", referenceType.name(), referenceId);
         return monoToCompletable(dbClient.delete()
                 .from(JdbcCredential.class)
                 .matching(from(
                         where("reference_type").is(referenceType.name())
-                                .and(where("reference_id").is(referenceId))
-                                .and(where("aaguid").is(aaguid))))
+                                .and(where("reference_id").is(referenceId))))
                 .then())
-                .doOnError(error -> LOGGER.error("Unable to delete credential for aaguid {}", aaguid, error));
+                .doOnError(error -> LOGGER.error("Unable to delete credential for reference {} - {}", referenceType.name(), referenceId, error));
     }
 }

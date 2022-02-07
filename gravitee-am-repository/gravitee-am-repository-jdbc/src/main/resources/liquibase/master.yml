@@ -33,4 +33,6 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_10_10/schema-add-last-password-reset-date.yml
   - include:
       - file: liquibase/changelogs/v3_10_10/schema-add-last-logout-date.yml
+  - include:
+      - file: liquibase/changelogs/v3_10_14/schema-add-webauthn-idx.yml
 

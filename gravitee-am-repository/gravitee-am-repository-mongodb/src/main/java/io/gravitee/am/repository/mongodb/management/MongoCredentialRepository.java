@@ -40,13 +40,13 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     private static final String FIELD_USER_ID = "userId";
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_CREDENTIAL_ID = "credentialId";
-    private static final String FIELD_AAGUID = "aaguid";
     private MongoCollection<CredentialMongo> credentialsCollection;
 
     @PostConstruct
     public void init() {
         credentialsCollection = mongoOperations.getCollection("webauthn_credentials", CredentialMongo.class);
         super.init(credentialsCollection);
+        super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1));
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1));
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1));
         super.createIndex(credentialsCollection, new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CREDENTIAL_ID, 1));
@@ -127,13 +127,12 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     }
 
     @Override
-    public Completable deleteByAaguid(ReferenceType referenceType, String referenceId, String aaguid) {
+    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         return Completable.fromPublisher(
                 credentialsCollection.deleteMany(
                         and(
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                                eq(FIELD_REFERENCE_ID, referenceId),
-                                eq(FIELD_AAGUID, aaguid)
+                                eq(FIELD_REFERENCE_ID, referenceId)
                         )
                 ));
     }

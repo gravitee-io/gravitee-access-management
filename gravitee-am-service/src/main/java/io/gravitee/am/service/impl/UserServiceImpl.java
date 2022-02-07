@@ -177,6 +177,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     @Override
     public Completable deleteByDomain(String domain) {
         LOGGER.debug("Delete all users for domain {}", domain);
-        return userRepository.deleteByReference(ReferenceType.DOMAIN, domain);
+        return credentialService.deleteByReference(ReferenceType.DOMAIN, domain)
+                .andThen(userRepository.deleteByReference(ReferenceType.DOMAIN, domain));
     }
 }
