@@ -1,6 +1,39 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/499?closed=1[AM - 3.10.14 (2022-02-07)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Missing gateway ready status probe https://github.com/gravitee-io/issues/issues/7045[#7045]
+- SCIM update and delete may report a false negative in AuditLogs https://github.com/gravitee-io/issues/issues/6970[#6970]
+
+*_Management_*
+
+- Application settings lost after certificate update https://github.com/gravitee-io/issues/issues/7040[#7040]
+- Create index for mongo reporter https://github.com/gravitee-io/issues/issues/6986[#6986]
+- Optimize remove users when deleting a domain https://github.com/gravitee-io/issues/issues/6999[#6999]
+- UserProviderExists method is not working anymore https://github.com/gravitee-io/issues/issues/7035[#7035]
+
+*_Management-ui_*
+
+- Async load users page https://github.com/gravitee-io/issues/issues/7021[#7021]
+
+=== Improvements
+
+*_Gateway_*
+
+- Missing gateway ready status probe https://github.com/gravitee-io/issues/issues/7045[#7045]
+
+*_Management-ui_*
+
+- Async load users page https://github.com/gravitee-io/issues/issues/7021[#7021]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/452?closed=1[AM - 3.15.0 (2022-01-26)]
 
 === Bug fixes
