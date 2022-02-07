@@ -855,7 +855,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"client_name\":\"client_rs256\",\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"identities\": [\n    \t\"{{idp.inmemory}}\"\n\t],\n    \"response_types\": [\"code\",\"token\",\"id_token\",\"id_token token\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\"\n}"
+									"raw": "{\n\t\"client_name\":\"client_rs256\",\n    \"redirect_uris\": [\"https://op-test:60001/authz_cb\"],\n    \"application_type\": \"web\",\n    \"contacts\": [\"roland@example.com\"],\n    \"identityProviders\": [\n    \t{ \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n\t],\n    \"response_types\": [\"code\",\"token\",\"id_token\",\"id_token token\"],\n    \"grant_types\": [\"authorization_code\",\"implicit\"],\n    \"scope\": \"openid\",\n    \"post_logout_redirect_uris\": [\"https://op-test:60001/logout\"],\n    \"token_endpoint_auth_method\": \"client_secret_basic\"\n}"
 								},
 								"url": {
 									"raw": "{{registrationEndpoint}}",

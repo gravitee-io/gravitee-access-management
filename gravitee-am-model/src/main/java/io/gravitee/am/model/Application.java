@@ -17,13 +17,10 @@ package io.gravitee.am.model;
 
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,10 +57,6 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     private boolean template;
     /**
-     * Identity providers used for authentication
-     */
-    private Set<String> identities;
-    /**
      * Factors used for authentication
      */
     private Set<String> factors;
@@ -79,6 +72,10 @@ public class Application implements Resource, PasswordSettingsAware {
      * Application settings
      */
     private ApplicationSettings settings;
+    /**
+     * Identity Provider Settings
+     */
+    private SortedSet<ApplicationIdentityProvider> identityProviders;
     /**
      * Application created date
      */
@@ -99,11 +96,11 @@ public class Application implements Resource, PasswordSettingsAware {
         this.domain = other.domain;
         this.enabled = other.enabled;
         this.template = other.template;
-        this.identities = other.identities;
         this.factors = other.factors;
         this.certificate = other.certificate;
         this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
         this.settings = other.settings != null ? new ApplicationSettings(other.settings) : null;
+        this.identityProviders = other.identityProviders;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
     }
@@ -164,14 +161,6 @@ public class Application implements Resource, PasswordSettingsAware {
         this.template = template;
     }
 
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
-    }
-
     public Set<String> getFactors() {
         return factors;
     }
@@ -204,6 +193,14 @@ public class Application implements Resource, PasswordSettingsAware {
         this.settings = settings;
     }
 
+    public SortedSet<ApplicationIdentityProvider> getIdentityProviders() {
+        return identityProviders;
+    }
+
+    public void setIdentityProviders(SortedSet<ApplicationIdentityProvider> identityProviders) {
+        this.identityProviders = identityProviders;
+    }
+
     public Date getCreatedAt() {
         return createdAt;
     }
@@ -227,7 +224,7 @@ public class Application implements Resource, PasswordSettingsAware {
         client.setEnabled(this.enabled);
         client.setTemplate(this.template);
         client.setCertificate(this.certificate);
-        client.setIdentities(this.identities);
+        client.setIdentityProviders(this.identityProviders);
         client.setFactors(this.factors);
         client.setMetadata(this.metadata);
         client.setCreatedAt(this.createdAt);

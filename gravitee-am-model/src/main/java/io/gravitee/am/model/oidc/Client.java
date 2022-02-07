@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 
 import java.time.ZoneId;
@@ -168,8 +169,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
      */
     private Date updatedAt;
 
-    private Set<String> identities;
-
     private String certificate;
 
     private Set<String> factors;
@@ -179,6 +178,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     private List<ApplicationScopeSettings> scopeSettings;
 
     private AccountSettings accountSettings;
+
+    private SortedSet<ApplicationIdentityProvider> identityProviders;
 
     private LoginSettings loginSettings;
 
@@ -264,7 +265,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.enabled = other.enabled;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
-        this.identities = other.identities != null ? new HashSet<>(other.identities) : null;
+        this.identityProviders = other.identityProviders != null ? new TreeSet<>(other.identityProviders) : null;
         this.factors = other.factors != null ? new HashSet<>(other.factors) : null;
         this.certificate = other.certificate;
         this.enhanceScopesWithUserPermissions = other.enhanceScopesWithUserPermissions;
@@ -673,14 +674,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.updatedAt = updatedAt;
     }
 
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
-    }
-
     public Set<String> getFactors() {
         return factors;
     }
@@ -929,6 +922,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public SortedSet<ApplicationIdentityProvider> getIdentityProviders() {
+        return identityProviders;
+    }
+
+    public void setIdentityProviders(SortedSet<ApplicationIdentityProvider> identityProviders) {
+        this.identityProviders = identityProviders;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -954,7 +955,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setRequestUris(this.getRequestUris() != null ? new ArrayList<>(this.getRequestUris()) : null);
         clone.setScopeSettings(this.scopeSettings != null ? new ArrayList<>(this.getScopeSettings()) : null);
         clone.setAutoApproveScopes(this.getAutoApproveScopes() != null ? new ArrayList<>(this.getAutoApproveScopes()) : null);
-        clone.setIdentities(this.getIdentities() != null ? new HashSet<>(this.getIdentities()) : null);
+        clone.setIdentityProviders(this.getIdentityProviders() != null ? new TreeSet<>(this.getIdentityProviders()) : null);
         clone.setFactors(this.getFactors() != null ? new HashSet<>(this.getFactors()) : null);
         clone.setJwks(this.getJwks() != null ? this.getJwks().clone() : null);
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));

@@ -204,7 +204,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
                 client.getClientName().equals(clientName) &&
-                client.getIdentities() == null &&
+                client.getIdentityProviders() == null &&
                 client.getCertificate() == null
         );
         verify(clientService, times(1)).create(any());
@@ -222,7 +222,9 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> defaultAssertion(client) && client.getIdentities().contains("identity-provider-id-123"));
+        testObserver.assertValue(client -> defaultAssertion(client) &&
+                client.getIdentityProviders().stream().anyMatch(appIdp -> appIdp.getIdentity().equals("identity-provider-id-123"))
+        );
     }
 
     @Test

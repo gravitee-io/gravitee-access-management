@@ -22,10 +22,11 @@ import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordPara
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.EnrollmentSettings;
+import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
@@ -46,9 +47,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -386,7 +385,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_userNotFound_fallback_idp() {
         Client client = mock(Client.class);
-        when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders("idp-1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -417,7 +416,7 @@ public class UserServiceTest {
     @Test
     public void shouldForgotPassword_userNotFound_fallback_idp_update_user() {
         Client client = mock(Client.class);
-        when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders("idp-1"));
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
         when(idpUser.getEmail()).thenReturn("test@test.com");
@@ -447,7 +446,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotForgotPassword_userNotFound_noIdp_client() {
         Client client = mock(Client.class);
-        when(client.getIdentities()).thenReturn(Collections.emptySet());
+        when(client.getIdentityProviders()).thenReturn(new TreeSet<>());
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -464,7 +463,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotForgotPassword_userNotFound_idpNotFound() {
         Client client = mock(Client.class);
-        when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders("idp-1"));
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -484,7 +483,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotForgotPassword_userNotFound() {
         Client client = mock(Client.class);
-        when(client.getIdentities()).thenReturn(Collections.singleton("idp-1"));
+        when(client.getIdentityProviders()).thenReturn(getApplicationIdentityProviders("idp-1"));
 
         User user = mock(User.class);
         when(user.getEmail()).thenReturn("test@test.com");
@@ -606,5 +605,14 @@ public class UserServiceTest {
         userService.setMfaEnrollmentSkippedTime(client, user);
 
         verify(commonUserService, times(0)).update(any());
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        Arrays.stream(identities).forEach(identity -> {
+            var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+            set.add(patchAppIdp);
+        });
+        return set;
     }
 }

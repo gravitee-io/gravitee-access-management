@@ -33,10 +33,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
-import io.gravitee.am.service.model.NewApplication;
-import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.PatchApplicationOAuthSettings;
-import io.gravitee.am.service.model.PatchApplicationSettings;
+import io.gravitee.am.service.model.*;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -44,7 +41,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -55,6 +51,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -517,18 +514,18 @@ public class ApplicationServiceTest {
 
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
         verify(applicationRepository, times(1)).create(captor.capture());
-        Assert.assertTrue("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId() != null);
-        Assert.assertTrue("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret() != null);
+        assertNotNull("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId());
+        assertNotNull("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret());
     }
 
     @Test
     public void shouldPatch_keepingClientRedirectUris() {
         PatchApplication patchClient = new PatchApplication();
-        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
         PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
-        patchApplicationOAuthSettings.setResponseTypes(Optional.of(Arrays.asList("token")));
-        patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("implicit")));
+        patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
         patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
@@ -537,7 +534,7 @@ public class ApplicationServiceTest {
         toPatch.setDomain(DOMAIN);
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
-        oAuthSettings.setRedirectUris(Arrays.asList("https://callback"));
+        oAuthSettings.setRedirectUris(List.of("https://callback"));
         settings.setOauth(oAuthSettings);
         toPatch.setSettings(settings);
 
@@ -564,6 +561,17 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).findById(anyString());
         verify(identityProviderService, times(2)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    private Optional<Set<PatchApplicationIdentityProvider>> getApplicationIdentityProviders() {
+        var patchAppIdp = new PatchApplicationIdentityProvider();
+        patchAppIdp.setPriority(1);
+        patchAppIdp.setIdentity("id1");
+        var patchAppIdp2 = new PatchApplicationIdentityProvider();
+        patchAppIdp2.setPriority(2);
+        patchAppIdp2.setIdentity("id2");
+        var patchAppIdps = Optional.of(Set.of(patchAppIdp, patchAppIdp2));
+        return patchAppIdps;
     }
 
     @Test
@@ -736,11 +744,11 @@ public class ApplicationServiceTest {
         idp2.setId("idp2");
 
         PatchApplication patchClient = new PatchApplication();
-        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
         PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
-        patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
-        patchApplicationOAuthSettings.setRedirectUris(Optional.of(Arrays.asList("https://callback")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("authorization_code")));
+        patchApplicationOAuthSettings.setRedirectUris(Optional.of(List.of("https://callback")));
         patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
         patchApplicationSettings.setPasswordSettings(Optional.empty());
         patchClient.setSettings(Optional.of(patchApplicationSettings));
@@ -777,7 +785,7 @@ public class ApplicationServiceTest {
         idp2.setId("idp2");
 
         PatchApplication patchClient = new PatchApplication();
-        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
         PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));
@@ -824,7 +832,7 @@ public class ApplicationServiceTest {
         idp2.setId("idp2");
 
         PatchApplication patchClient = new PatchApplication();
-        patchClient.setIdentities(Optional.of(new HashSet<>(Arrays.asList("id1", "id2"))));
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
         PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
         PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
         patchApplicationOAuthSettings.setGrantTypes(Optional.of(Arrays.asList("authorization_code")));

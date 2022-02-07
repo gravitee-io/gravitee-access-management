@@ -41,12 +41,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
@@ -72,12 +70,13 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
 
     private Client appClient;
     private io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint identifierFirstLoginEndpoint;
+    private ClientRequestParseHandler clientRequestParseHandler;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        ClientRequestParseHandler clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
+        clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService);
         clientRequestParseHandler.setRequired(true);
 
         final LoginSettings loginSettings = new LoginSettings();
@@ -92,6 +91,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
         domain.setLoginSettings(loginSettings);
 
         appClient.setDomain(domain.getId());
+        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
 
         identifierFirstLoginEndpoint = new IdentifierFirstLoginEndpoint(templateEngine, domain, botDetectionManager);
         router.route("/login/identifier")
@@ -102,7 +102,6 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
     @Test
     public void mustInvokeIdentifierFirstLoginEndpoint() throws Exception {
         router.route(HttpMethod.GET, "/login/identifier").handler(get200AssertMockRoutingContextHandler(identifierFirstLoginEndpoint));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login/identifier?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.OK_200, "OK");
@@ -240,6 +239,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 }
                 return answer;
             }).when(templateEngine).render(Mockito.<Map<String, Object>>any(), Mockito.any(), Mockito.any());
+
             identifierFirstLoginEndpoint.handle(routingContext);
         };
     }

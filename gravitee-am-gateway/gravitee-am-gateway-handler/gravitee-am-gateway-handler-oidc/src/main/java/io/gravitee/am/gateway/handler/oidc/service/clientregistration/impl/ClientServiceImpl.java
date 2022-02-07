@@ -142,7 +142,7 @@ public class ClientServiceImpl implements ClientService {
         application.setEnabled(client.isEnabled());
         application.setTemplate(client.isTemplate());
         application.setCertificate(client.getCertificate());
-        application.setIdentities(client.getIdentities());
+        application.setIdentityProviders(client.getIdentityProviders());
         application.setMetadata(client.getMetadata());
         application.setCreatedAt(client.getCreatedAt());
         application.setUpdatedAt(client.getUpdatedAt());

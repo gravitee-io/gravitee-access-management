@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.UserService;
@@ -37,8 +38,9 @@ import org.mockito.Mock;
 import org.mockito.exceptions.misusing.InvalidUseOfMatchersException;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Collections;
 import java.util.Date;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -178,7 +180,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         Client requestedClient = new Client();
         requestedClient.setId("client-requested-id");
         requestedClient.setClientId("requested-client");
-        requestedClient.setIdentities(Collections.singleton("idp-1"));
+        requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
 
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty()).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
@@ -220,7 +222,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         Client requestedClient = new Client();
         requestedClient.setId("client-requested-id");
         requestedClient.setClientId("requested-client");
-        requestedClient.setIdentities(Collections.singleton("idp-2"));
+        requestedClient.setIdentityProviders(getApplicationIdentityProviders("idp-2"));
 
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
@@ -246,5 +248,12 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
                 HttpMethod.GET,
                 "/login?client_id=requested-client",
                 HttpStatusCode.FORBIDDEN_403, "Forbidden");
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String identity) {
+        var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        set.add(patchAppIdp);
+        return set;
     }
 }

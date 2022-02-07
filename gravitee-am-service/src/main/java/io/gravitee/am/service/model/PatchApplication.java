@@ -16,13 +16,13 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+
+import static java.util.stream.Collectors.toCollection;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,7 +34,7 @@ public class PatchApplication {
     private Optional<String> description;
     private Optional<Boolean> enabled;
     private Optional<Boolean> template;
-    private Optional<Set<String>> identities;
+    private Optional<Set<PatchApplicationIdentityProvider>> identityProviders;
     private Optional<Set<String>> factors;
     private Optional<String> certificate;
     private Optional<Map<String, Object>> metadata;
@@ -72,12 +72,12 @@ public class PatchApplication {
         this.template = template;
     }
 
-    public Optional<Set<String>> getIdentities() {
-        return identities;
+    public Optional<Set<PatchApplicationIdentityProvider>> getIdentityProviders() {
+        return identityProviders;
     }
 
-    public void setIdentities(Optional<Set<String>> identities) {
-        this.identities = identities;
+    public void setIdentityProviders(Optional<Set<PatchApplicationIdentityProvider>> identityProviders) {
+        this.identityProviders = identityProviders;
     }
 
     public Optional<Set<String>> getFactors() {
@@ -120,15 +120,25 @@ public class PatchApplication {
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
         SetterUtils.safeSet(toPatch::setEnabled, this.getEnabled(), boolean.class);
         SetterUtils.safeSet(toPatch::setTemplate, this.getTemplate(), boolean.class);
-        SetterUtils.safeSet(toPatch::setIdentities, this.getIdentities());
         SetterUtils.safeSet(toPatch::setFactors, this.getFactors());
         SetterUtils.safeSet(toPatch::setCertificate, this.getCertificate());
         SetterUtils.safeSet(toPatch::setMetadata, this.getMetadata());
         if (this.getSettings() != null && this.getSettings().isPresent()) {
             toPatch.setSettings(this.getSettings().get().patch(toPatch.getSettings()));
         }
+        if (this.getIdentityProviders() != null && this.getIdentityProviders().isPresent()) {
+            var appIdentityProviders = buildAppIdentityProviders(getIdentityProviders().get());
+            toPatch.setIdentityProviders(appIdentityProviders);
+        }
 
         return toPatch;
+    }
+
+    private SortedSet<ApplicationIdentityProvider> buildAppIdentityProviders(Set<PatchApplicationIdentityProvider> applicationIdentityProviders) {
+        return applicationIdentityProviders.stream().map(patchAppIdp -> {
+            var appIdp = new ApplicationIdentityProvider(patchAppIdp.getIdentity(), patchAppIdp.getPriority());
+            return appIdp;
+        }).collect(toCollection(TreeSet::new));
     }
 
     /**
@@ -151,7 +161,7 @@ public class PatchApplication {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 
-        if (identities != null && identities.isPresent()) {
+        if (identityProviders != null && identityProviders.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_IDENTITY_PROVIDER);
         }
 

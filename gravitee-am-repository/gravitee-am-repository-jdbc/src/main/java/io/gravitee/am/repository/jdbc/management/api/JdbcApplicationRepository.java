@@ -21,8 +21,10 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationFactorRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationRepository;
@@ -37,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.data.relational.core.query.Update;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
@@ -48,6 +49,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static java.util.stream.Collectors.toCollection;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava2Adapter.*;
@@ -118,10 +120,12 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
 
     private Single<Application> completeApplication(Application entity) {
         return Single.just(entity).flatMap(app ->
-                identityRepository.findAllByApplicationId(app.getId()).map(JdbcApplication.Identity::getIdentity).toList().map(idps -> {
-                    app.setIdentities(new HashSet<>(idps));
-                    return app;
-                })
+                identityRepository.findAllByApplicationId(app.getId()).toList()
+                        .map(idps -> idps.stream().map(this::convertIdentity).collect(toCollection(TreeSet::new)))
+                        .map(identities -> {
+                            app.setIdentityProviders(identities);
+                            return app;
+                        })
         ).flatMap(app ->
                 factorRepository.findAllByApplicationId(app.getId()).map(JdbcApplication.Factor::getFactor).toList().map(factors -> {
                     app.setFactors(new HashSet<>(factors));
@@ -135,6 +139,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                     return app;
                 })
         );// do not read grant tables, information already present into the settings object
+    }
+
+    private ApplicationIdentityProvider convertIdentity(Identity identity) {
+        var idpSettings = new ApplicationIdentityProvider(identity.getIdentity(), identity.getPriority());
+        return idpSettings;
     }
 
     @Override
@@ -154,13 +163,13 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
                 .toList()
-                .flatMap(data -> applicationRepository.count().map(total -> new Page<Application>(data, page, total)))
+                .flatMap(data -> applicationRepository.count().map(total -> new Page<>(data, page, total)))
                 .doOnError((error) -> LOGGER.error("Unable to retrieve all applications (page={}/size={})", page, size, error));
     }
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
-        LOGGER.debug("findByDomain({})",domain);
+        LOGGER.debug("findByDomain({})", domain);
         return applicationRepository.findByDomain(domain)
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable());
@@ -218,8 +227,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByIdentityProvider({})", identityProvider);
 
         // identity is a keyword with mssql
+        final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
         return fluxToFlowable(template.getDatabaseClient()
-                .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id where i." + databaseDialectHelper.toSql(SqlIdentifier.quoted("identity")) + " = :identity")
+                .sql("SELECT a.* FROM applications a INNER JOIN application_identities i ON a.id = i.application_id AND i." + identity + " = :identity")
                 .bind("identity", identityProvider)
                 .map(row -> rowMapper.read(JdbcApplication.class, row)).all())
                 .map(this::toEntity)
@@ -358,15 +368,19 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Application app) {
-        final Set<String> identities = app.getIdentities();
+        var identities = app.getIdentityProviders();
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
                 final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
-                String INSERT_STMT = "INSERT INTO application_identities(application_id, " + identity + ") VALUES (:app, :idpid)";
+                final String priority = databaseDialectHelper.toSql(SqlIdentifier.quoted("priority"));
+                String INSERT_STMT = "INSERT INTO application_identities" +
+                        "(application_id, " + identity + ", " + priority + ") " +
+                        "VALUES (:app, :idpid, :priority)";
                 final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
-                        .bind("idpid", idp);
+                        .bind("idpid", idp.getIdentity())
+                        .bind("priority", idp.getPriority());
                 return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));
         }

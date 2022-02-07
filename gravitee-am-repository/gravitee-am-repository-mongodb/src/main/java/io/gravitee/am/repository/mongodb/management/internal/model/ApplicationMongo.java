@@ -38,6 +38,7 @@ public class ApplicationMongo extends Auditable {
     private String certificate;
     private Document metadata;
     private ApplicationSettingsMongo settings;
+    private Set<ApplicationIdentityProviderMongo> identityProviders;
 
     public String getId() {
         return id;
@@ -133,5 +134,13 @@ public class ApplicationMongo extends Auditable {
 
     public void setSettings(ApplicationSettingsMongo settings) {
         this.settings = settings;
+    }
+
+    public Set<ApplicationIdentityProviderMongo> getIdentityProviders() {
+        return identityProviders;
+    }
+
+    public void setIdentityProviders(Set<ApplicationIdentityProviderMongo> identityProviders) {
+        this.identityProviders = identityProviders;
     }
 }

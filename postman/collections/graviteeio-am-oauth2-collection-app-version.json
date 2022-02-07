@@ -533,7 +533,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"authorization_code\", \"password\", \"refresh_token\"],\n  \t\t\"scopeSettings\": [ { \"scope\" : \"scope1\", \"defaultScope\": true }, { \"scope\" : \"openid\", \"defaultScope\": true }]\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [],\n  \t\t\"grantTypes\": [\"authorization_code\", \"password\", \"refresh_token\"],\n  \t\t\"scopeSettings\": [ { \"scope\" : \"scope1\", \"defaultScope\": true }, { \"scope\" : \"openid\", \"defaultScope\": true }]\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client1}}",
@@ -639,7 +639,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\"],\n  \t\t\"scopeSettings\": [ {\"scope\" : \"scope1\", \"defaultScope\": true}] \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+							"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"redirectUris\": [\"http://localhost:4000/\"],\n  \t\t\"scopeSettings\": [ {\"scope\" : \"scope1\", \"defaultScope\": true}] \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client2}}",
@@ -10487,7 +10487,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"grantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}, { \"scope\" : \"email\" } ]\n  \t}\n  },\n  \"certificate\": \"{{certificateJks}}\",\n  \"identities\": [\"{{idp.inmemory}}\"]\n}"
+											"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"grantTypes\": [\"urn:ietf:params:oauth:grant-type:jwt-bearer\"],\n\t\t\"scopeSettings\": [ {\"scope\" : \"openid\"}, { \"scope\" : \"email\" } ]\n  \t}\n  },\n  \"certificate\": \"{{certificateJks}}\",\n  \"identityProviders\": [{ \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }]\n}"
 										},
 										"url": {
 											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{clientJwtBearer}}",
@@ -12233,7 +12233,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"tokenEndpointAuthMethod\": \"none\"\n  \t}\n  },\n  \"identities\": [\n    \"{{idp.inmemory}}\"\n  ]\n}"
+									"raw": "{\n  \"settings\": {\n  \t\"oauth\": {\n  \t\t\"tokenEndpointAuthMethod\": \"none\"\n  \t}\n  },\n  \"identityProviders\": [\n    { \"identity\": \"{{idp.inmemory}}\", \"priority\" : -1 }\n  ]\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{publicClient}}",

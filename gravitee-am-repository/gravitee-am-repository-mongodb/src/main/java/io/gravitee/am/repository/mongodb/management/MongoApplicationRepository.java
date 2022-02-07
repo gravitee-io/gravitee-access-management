@@ -26,25 +26,29 @@ import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.jose.*;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
+import io.reactivex.Observable;
 import io.reactivex.*;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,6 +58,9 @@ import static com.mongodb.client.model.Filters.*;
 public class MongoApplicationRepository extends AbstractManagementMongoRepository implements ApplicationRepository {
 
     private static final String FIELD_CLIENT_ID = "settings.oauth.clientId";
+    private static final String FIELD_APPLICATION_IDENTITY_PROVIDERS = "identityProviders";
+    private static final String FIELD_IDENTITY = "identity";
+    // Kept for retro-compatibility
     private static final String FIELD_IDENTITIES = "identities";
     private static final String FIELD_FACTORS = "factors";
     private static final String FIELD_CERTIFICATE = "certificate";
@@ -69,6 +76,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_IDENTITIES, 1));
+        super.createIndex(applicationsCollection, new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_CERTIFICATE, 1));
         super.createIndex(applicationsCollection, new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1));
     }
@@ -125,7 +133,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findByIdentityProvider(String identityProvider) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_IDENTITIES, identityProvider))).map(MongoApplicationRepository::convert);
+        final BsonDocument bsonDocument = new BsonDocument(FIELD_IDENTITY, new BsonString(identityProvider));
+        final Bson query = elemMatch(FIELD_APPLICATION_IDENTITY_PROVIDERS, Document.parse(bsonDocument.toJson()));
+        return Flowable.fromPublisher(applicationsCollection.find(query)).map(MongoApplicationRepository::convert);
     }
 
     @Override
@@ -195,16 +205,18 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setDomain(other.getDomain());
         applicationMongo.setEnabled(other.isEnabled());
         applicationMongo.setTemplate(other.isTemplate());
-        applicationMongo.setIdentities(other.getIdentities());
         applicationMongo.setFactors(other.getFactors());
         applicationMongo.setCertificate(other.getCertificate());
         applicationMongo.setMetadata(other.getMetadata() != null ? new Document(other.getMetadata()) : null);
         applicationMongo.setSettings(convert(other.getSettings()));
+        applicationMongo.setIdentityProviders(convert(other.getIdentityProviders()));
+        applicationMongo.setIdentities(applicationMongo.getIdentityProviders().stream().map(ApplicationIdentityProviderMongo::getIdentity).collect(toSet()));
         applicationMongo.setCreatedAt(other.getCreatedAt());
         applicationMongo.setUpdatedAt(other.getUpdatedAt());
 
         return applicationMongo;
     }
+
 
     private static Application convert(ApplicationMongo other) {
         Application application = new Application();
@@ -215,11 +227,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setDomain(other.getDomain());
         application.setEnabled(other.isEnabled());
         application.setTemplate(other.isTemplate());
-        application.setIdentities(other.getIdentities());
         application.setFactors(other.getFactors());
         application.setCertificate(other.getCertificate());
         application.setMetadata(other.getMetadata());
         application.setSettings(convert(other.getSettings()));
+        application.setIdentityProviders(convert(other.getIdentityProviders()));
         application.setCreatedAt(other.getCreatedAt());
         application.setUpdatedAt(other.getUpdatedAt());
 
@@ -557,11 +569,11 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         }
 
         result.setAlg(jwkMongo.getAlg());
-        result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(Collectors.toSet()) : null);
+        result.setKeyOps(jwkMongo.getKeyOps() != null ? jwkMongo.getKeyOps().stream().collect(toSet()) : null);
         result.setKid(jwkMongo.getKid());
         result.setKty(jwkMongo.getKty());
         result.setUse(jwkMongo.getUse());
-        result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(Collectors.toSet()) : null);
+        result.setX5c(jwkMongo.getX5c() != null ? jwkMongo.getX5c().stream().collect(toSet()) : null);
         result.setX5t(jwkMongo.getX5t());
         result.setX5tS256(jwkMongo.getX5tS256());
         result.setX5u(jwkMongo.getX5u());
@@ -699,5 +711,29 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         JWKMongo key = new JWKMongo();
         key.setK(octKey.getK());
         return key;
+    }
+
+    private static SortedSet<ApplicationIdentityProvider> convert(Set<ApplicationIdentityProviderMongo> applicationIdentityProvidersMongo) {
+        return ofNullable(applicationIdentityProvidersMongo).orElse(Set.of()).stream()
+                .map(MongoApplicationRepository::convert)
+                .collect(toCollection(TreeSet::new));
+    }
+
+    private static ApplicationIdentityProvider convert(ApplicationIdentityProviderMongo idpSettingsMongo) {
+        var identityProviderSettings = new ApplicationIdentityProvider(idpSettingsMongo.getIdentity(), idpSettingsMongo.getPriority());
+        return identityProviderSettings;
+    }
+
+    private static Set<ApplicationIdentityProviderMongo> convert(SortedSet<ApplicationIdentityProvider> applicationIdentityProviders) {
+        return ofNullable(applicationIdentityProviders).orElse(new TreeSet<>()).stream()
+                .map(MongoApplicationRepository::convert)
+                .collect(toSet());
+    }
+
+    private static ApplicationIdentityProviderMongo convert(ApplicationIdentityProvider idpSettingsMongo) {
+        var identityProviderSettings = new ApplicationIdentityProviderMongo();
+        identityProviderSettings.setIdentity(idpSettingsMongo.getIdentity());
+        identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
+        return identityProviderSettings;
     }
 }

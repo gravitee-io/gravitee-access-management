@@ -37,6 +37,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EmailTemplateService;
@@ -234,18 +235,17 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     /**
      * Identity provider is not part of dynamic client registration but needed on the client.
-     * So we set the first identoty provider available on the domain.
+     * So we set the first identity provider available on the domain.
      * @param client App to create
      * @return
      */
     private Single<Client> applyDefaultIdentityProvider(Client client) {
-        return identityProviderService.findByDomain(client.getDomain()).toList()
-                .map(identityProviders -> {
-                    if (identityProviders != null && !identityProviders.isEmpty()) {
-                        client.setIdentities(Collections.singleton(identityProviders.get(0).getId()));
-                    }
+        return identityProviderService.findByDomain(client.getDomain()).firstElement()
+                .map(identityProvider -> {
+                    var appIdp = new ApplicationIdentityProvider(identityProvider.getId(), -1);
+                    client.setIdentityProviders(new TreeSet<>(Set.of(appIdp)));
                     return client;
-                });
+                }).defaultIfEmpty(client).toSingle();
     }
 
     /**

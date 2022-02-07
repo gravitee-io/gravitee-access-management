@@ -22,6 +22,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
@@ -30,9 +31,9 @@ import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeSet;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
@@ -88,7 +89,8 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
     }
 
     private Maybe<Optional<LoginAttempt>> getLoginAttempt(Client client, String username, AccountSettings accountSettings) {
-        return ofNullable(client.getIdentities()).orElse(new HashSet<>()).stream()
+        return ofNullable(client.getIdentityProviders()).orElse(new TreeSet<>()).stream()
+                .map(ApplicationIdentityProvider::getIdentity)
                 .map(identityProviderManager::getIdentityProvider)
                 .filter(Objects::nonNull).filter(not(IdentityProvider::isExternal))
                 .map(IdentityProvider::getId)

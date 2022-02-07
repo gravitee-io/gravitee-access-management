@@ -16,13 +16,14 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
-import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
 import io.reactivex.Maybe;
@@ -32,7 +33,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
@@ -74,7 +77,7 @@ public class LoginAttemptHandlerTest {
         client = new Client();
         client.setId(UUID.randomUUID().toString());
         client.setClientId(UUID.randomUUID().toString());
-        client.setIdentities(Set.of(internal.getId(), external.getId()));
+        client.setIdentityProviders(getApplicationIdentityProviders(internal.getId(), external.getId()));
 
         final LoginAttempt attempts = new LoginAttempt();
         attempts.setAttempts(5);
@@ -84,6 +87,7 @@ public class LoginAttemptHandlerTest {
         loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);
         doNothing().when(spyRoutingContext).next();
     }
+
 
     @Test
     public void mustDoNextNoLoginAttemptApplied_noClient() {
@@ -123,5 +127,14 @@ public class LoginAttemptHandlerTest {
         //Necessary so the reactive consumer is consumed
         Thread.sleep(1000);
         verify(spyRoutingContext, times(1)).next();
+    }
+
+    private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
+        var set = new TreeSet<ApplicationIdentityProvider>();
+        Arrays.stream(identities).forEach(identity -> {
+            var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+            set.add(patchAppIdp);
+        });
+        return set;
     }
 }
