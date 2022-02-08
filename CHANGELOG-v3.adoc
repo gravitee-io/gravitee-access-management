@@ -1,6 +1,26 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/500?closed=1[AM - 3.14.5 (2022-02-08)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Email aliases interpretation with identifier first login https://github.com/gravitee-io/issues/issues/7030[#7030]
+- State not managed with Identifier First login https://github.com/gravitee-io/issues/issues/6975[#6975]
+
+*_General_*
+
+- Merge 3.10.14 https://github.com/gravitee-io/issues/issues/7068[#7068]
+
+*_Management_*
+
+- Upgrade gravitee-node to 1.20 https://github.com/gravitee-io/issues/issues/7020[#7020]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/499?closed=1[AM - 3.10.14 (2022-02-07)]
 
 === Bug fixes
