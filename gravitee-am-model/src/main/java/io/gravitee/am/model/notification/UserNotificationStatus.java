@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.spring;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+package io.gravitee.am.model.notification;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegnet at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan({"io.gravitee.am.management.service"})
-@Import({FreemarkerConfiguration.class,
-        PlatformNotifierConfiguration.class})
-public class ServiceConfiguration {
-
+public enum UserNotificationStatus {
+    UNREAD,
+    READ
 }

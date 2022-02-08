@@ -399,6 +399,7 @@ import { DeviceNotifierCreationStep1Component } from './domain/settings/openid/c
 import { DeviceNotifierCreationStep2Component } from './domain/settings/openid/ciba/device-notifiers/create/steps/step2/step2.component';
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/form/form.component';
+import { UserNotificationsService } from './services/user-notifications.service';
 
 @NgModule({
   declarations: [
@@ -747,6 +748,7 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
     BotDetectionResolver,
     BotDetectionPluginsResolver,
     ScopesAllResolver,
+    UserNotificationsService,
     DeviceIdentifierPluginsResolver,
     DeviceIdentifiersResolver,
     DeviceIdentifierResolver,

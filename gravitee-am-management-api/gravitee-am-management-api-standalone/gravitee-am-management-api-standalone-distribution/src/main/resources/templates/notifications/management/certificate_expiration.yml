@@ -1,0 +1,5 @@
+title: |
+  Certificare [${certificate.name}] will expire
+message: |
+  The certificate ${certificate.name} for the domain ${domain.name}
+  will expire at ${certificate.expiresAt?datetime}.

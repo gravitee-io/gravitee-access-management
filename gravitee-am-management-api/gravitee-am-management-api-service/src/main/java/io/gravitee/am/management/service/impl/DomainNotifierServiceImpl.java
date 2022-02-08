@@ -24,6 +24,7 @@ import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.impl.notifications.CertificateNotificationCondition;
 import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
+import io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration;
 import io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
@@ -49,7 +50,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -114,9 +117,9 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
         findDomain(certificate.getDomain())
                 .flatMapPublisher(domain ->
                         retrieveDomainOwners(domain)
-                                .map(user -> {
-                            return buildEmailNotificationDefinition(provider, certificate, domain, user);
-                        }))
+                                .flatMap(user -> Flowable.fromArray(
+                                        buildEmailNotificationDefinition(provider, certificate, domain, user),
+                                        buildUINotificationDefinition(provider, certificate, domain, user))))
                 .subscribe(definition -> {
                     if (definition.isPresent()) {
                         notifierService.register(definition.get(), new CertificateNotificationCondition(certificateExpiryThreshold));
@@ -202,6 +205,36 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 return Optional.of(definition);
             } catch (IOException | TemplateException e) {
                 LOGGER.warn("Unable to generate email template for certificate expiration", e);
+            }
+        } else {
+            LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
+        }
+        return Optional.empty();
+    }
+
+    private Optional<NotificationDefinition> buildUINotificationDefinition(CertificateProvider provider, Certificate certificate, Domain domain, User user) {
+        if (uiNotifierEnabled) {
+            try {
+                Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
+                        .withDomain(domain)
+                        .withUser(user)
+                        .withCertificate(certificate, provider.getExpirationDate().orElse(null))
+                        .build();
+
+                ManagementUINotifierConfiguration value = new ManagementUINotifierConfiguration();
+                value.setTemplate(CERTIFICATE_EXPIRY_TPL);
+
+                final NotificationDefinition definition = new NotificationDefinition();
+                definition.setType(TYPE_UI_NOTIFIER);
+                definition.setConfiguration(mapper.writeValueAsString(value));
+                definition.setResourceId(certificate.getId());
+                definition.setAudienceId(user.getId());
+                definition.setCron(this.cronExpression);
+                definition.setData(data);
+
+                return Optional.of(definition);
+            } catch (IOException e) {
+                LOGGER.warn("Unable to generate ui configuration for certificate expiration", e);
             }
         } else {
             LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());

@@ -94,4 +94,9 @@ public class CurrentUserResource extends AbstractResource {
     public NewsletterResource getNewsletterResource() {
         return resourceContext.getResource(NewsletterResource.class);
     }
+
+    @Path("/notifications")
+    public UserNotificationsResource getUserNotificationsResource() {
+        return resourceContext.getResource(UserNotificationsResource.class);
+    }
 }

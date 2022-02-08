@@ -15,19 +15,29 @@
  */
 package io.gravitee.am.management.service.spring;
 
-import org.springframework.context.annotation.ComponentScan;
+import io.gravitee.am.management.service.impl.notifications.PlatformNotifierPluginFactoryImpl;
+import io.gravitee.node.api.notifier.NotifierService;
+import io.gravitee.node.notifier.NotifierServiceImpl;
+import io.gravitee.node.notifier.plugin.NotifierPluginFactory;
+import io.gravitee.node.notifier.spring.NotifierConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegnet at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan({"io.gravitee.am.management.service"})
-@Import({FreemarkerConfiguration.class,
-        PlatformNotifierConfiguration.class})
-public class ServiceConfiguration {
+public class PlatformNotifierConfiguration extends NotifierConfiguration {
+
+    @Bean
+    public NotifierPluginFactory getNotifierPluginFactory() {
+        return new PlatformNotifierPluginFactoryImpl();
+    }
+
+    @Bean
+    public NotifierService notifierService() {
+        return new NotifierServiceImpl();
+    }
 
 }
