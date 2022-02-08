@@ -2226,7 +2226,7 @@
 												"exec": [
 													"",
 													"// Create and Sign RequestObject (exp, iat, jti generated automatically by the lib)",
-													"const currentTime = +new Date(); // the current time in milliseconds",
+													"const currentTime = Date.now() / 1000; ",
 													"const header = {\"alg\": \"RS256\"};",
 													"const payload = { ",
 													"    aud: pm.environment.get('gateway_url')+'/'+pm.environment.get('domainHrid')+'/oidc', ",
