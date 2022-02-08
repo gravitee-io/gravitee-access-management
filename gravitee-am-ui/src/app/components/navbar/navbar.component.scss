@@ -76,3 +76,40 @@ mat-toolbar {
 ::ng-deep.mat-menu-content {
   padding-bottom: 2px !important;
 }
+
+.notifications-menu {
+  display: flex;
+  margin-left: 5px;
+}
+
+.notifications-menu-circle {
+  background-color:red; 
+  text-align:center; 
+  border-radius:50%;
+  height: 10px;
+  width: 10px;
+  position: absolute;
+  z-index: 2;
+}
+
+.notification > h3 {
+  font-size: 16px;
+}
+
+.notification > p {
+  font-size: 14px;
+}
+
+.notification > small {
+  margin-bottom: 5px;
+  font-weight: lighter;
+}
+
+.notification-title {
+  display: flex; 
+  flex-direction: row;
+}
+
+.notification-title > button {
+  margin-left: auto
+}

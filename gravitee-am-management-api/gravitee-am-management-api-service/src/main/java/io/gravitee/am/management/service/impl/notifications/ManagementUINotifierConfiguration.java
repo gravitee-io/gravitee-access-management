@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.spring;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+package io.gravitee.am.management.service.impl.notifications;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegnet at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan({"io.gravitee.am.management.service"})
-@Import({FreemarkerConfiguration.class,
-        PlatformNotifierConfiguration.class})
-public class ServiceConfiguration {
+public class ManagementUINotifierConfiguration {
 
+    public static final String CERTIFICATE_EXPIRY_TPL = "certificate_expiration";
+
+    private String template;
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(String template) {
+        this.template = template;
+    }
 }

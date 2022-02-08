@@ -31,6 +31,7 @@ import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +46,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -59,6 +62,7 @@ public class DomainNotificationServiceTest {
     public static final String DOMAIN_ID = UUID.randomUUID().toString();
     public static final String ORGANIZATION_ID = "org-" + DOMAIN_ID;
     public static final String ENV_ID = "env-" + DOMAIN_ID;
+
     @InjectMocks
     private DomainNotifierServiceImpl cut;
 
@@ -127,8 +131,13 @@ public class DomainNotificationServiceTest {
 
     }
 
+    @After
+    public void cleanUp() {
+        ReflectionTestUtils.setField(cut, "uiNotifierEnabled", false);
+    }
+
     @Test
-    public void shouldNotifyUser() throws Exception {
+    public void shouldNotifyUser_EmailOnly() throws Exception {
         final Membership member = new Membership();
         member.setMemberType(MemberType.USER);
         member.setMemberId("userid");
@@ -147,6 +156,32 @@ public class DomainNotificationServiceTest {
         Thread.sleep(1000); // wait subscription execution
 
         verify(notifierService).register(any(), any());
+        verify(groupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    public void shouldNotifyUser_EmailAndUI() throws Exception {
+        ReflectionTestUtils.setField(cut, "uiNotifierEnabled", true);
+
+        final Membership member = new Membership();
+        member.setMemberType(MemberType.USER);
+        member.setMemberId("userid");
+        when(membershipService.findByCriteria(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), any())).thenReturn(Flowable.just(member), Flowable.empty());
+
+        final User user = new User();
+        user.setEmail("user@acme.fr");
+        when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
+
+        when(emailConfiguration.isEnabled()).thenReturn(true);
+
+        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
+
+        cut.registerCertificateExpiration(provider, certificate);
+
+        Thread.sleep(1000); // wait subscription execution
+
+        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_UI_NOTIFIER)), any());
+        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_EMAIL_NOTIFIER)), any());
         verify(groupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
     }
 

@@ -23,13 +23,18 @@
       <span class="fill-remaining-space"></span>
       <div fxLayout="row" style="align-items: center;">
         <span class="currentDomain">{{currentDomain?.name | lowercase}}</span>
-        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()">
+        <button mat-icon-button [matMenuTriggerFor]="userNotificationsMenu" [disabled]="!hasNotifications()" disableRipple>
+          <div class="notifications-menu">
+            <mat-icon style="opacity: 75%;">notifications</mat-icon>
+            <div class="notifications-menu-circle" *ngIf="hasNotifications()"></div>
+          </div>
+        </button>
+        <button class="userAccountMenu" mat-icon-button [matMenuTriggerFor]="userAccountMenu" disableRipple (click)="listDomains()" data-testid="user-notifications-button">
           <app-user-avatar [user]="user" [width]="'30'"></app-user-avatar>
           <mat-icon>keyboard_arrow_down</mat-icon>
         </button>
       </div>
   </mat-toolbar>
-
   <mat-menu #userAccountMenu="matMenu" [overlapTrigger]="false">
     <div class="userAccount" fxLayout="column">
       <div class="userAccountProfile" fxLayout="row">
@@ -57,6 +62,22 @@
           <span>{{link.label}}</span>
         </a>
       </div>
+    </div>
+  </mat-menu>
+
+  <mat-menu #userNotificationsMenu="matMenu" [overlapTrigger]="false">
+    <div fxLayout="column">
+        <div class="notification" fxLayout="column" style="margin-left: 20px; margin-right: 20px;"  *ngFor="let notification of notifications;">
+            <div class="notification-title">
+              <h3>{{ notification.title }}</h3>
+              <button mat-icon-button (click)="markNotificationAsRead(notification.id, $event)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <p>{{ notification.message }}</p>
+            <small><i>{{ notification.createdAt | date:'medium' }}</i></small>
+            <mat-divider></mat-divider>
+        </div>
     </div>
   </mat-menu>
 </div>
