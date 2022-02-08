@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.node.api.notifier.NotificationCondition;
 import io.gravitee.node.api.notifier.NotificationDefinition;
 

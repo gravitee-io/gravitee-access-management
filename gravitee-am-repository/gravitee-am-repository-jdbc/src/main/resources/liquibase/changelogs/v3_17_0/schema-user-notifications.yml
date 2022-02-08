@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.17.0
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: user_notifications
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: audience, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: status, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: message, type: clob, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_user_notifications
+            columnNames: id
+            tableName: user_notifications
+
+        - createIndex:
+            tableName: user_notifications
+            columns:
+              - column:
+                  name: audience
+              - column:
+                  name: status
+            indexName: user_notifications_audience
+            unique: false

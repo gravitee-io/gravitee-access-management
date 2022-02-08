@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
+import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcNotificationAcknowledge;
 import io.gravitee.node.api.notifier.NotificationAcknowledge;
@@ -69,7 +70,9 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     @Override
     public Single<NotificationAcknowledge> create(NotificationAcknowledge notificationAcknowledge) {
         LOGGER.debug("create({})", notificationAcknowledge);
-        return monoToSingle(this.template.insert(toJdbcEntity(notificationAcknowledge))).map(this::toEntity);
+        final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
+        entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
+        return monoToSingle(this.template.insert(entity)).map(this::toEntity);
     }
 
     @Override

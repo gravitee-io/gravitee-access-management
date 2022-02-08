@@ -24,6 +24,7 @@ import * as _ from 'lodash';
 import {SidenavService} from "../sidenav/sidenav.service";
 import {EnvironmentService} from "../../services/environment.service";
 import {MatSelectChange} from "@angular/material/select";
+import { UserNotificationsService } from 'app/services/user-notifications.service';
 
 @Component({
   selector: 'gv-navbar',
@@ -39,6 +40,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   currentDomain: any = {};
   navLinks: any[];
   currentEnvironment;
+  notifications: any[];
+  // notification refresh interval in millis
+  readonly REFRESH_INTERVAL = 10000;
 
   constructor(private authService: AuthService,
               private domainService: DomainService,
@@ -46,7 +50,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
               private snackbarService: SnackbarService,
               private sidenavService: SidenavService,
               private environmentService: EnvironmentService,
-              public router: Router) {
+              public router: Router,
+              private userNotificationsService: UserNotificationsService) {
   }
 
   ngOnInit() {
@@ -60,6 +65,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.currentDomain = data;
     });
     this.sidenavSubscription = this.sidenavService.resizeSidenavObservable.subscribe(reducedMode => this.reducedMode = reducedMode);
+    
+    // read notifications on component initialization and then trigger a refresh in regular period
+    this.userNotificationsService.listNotifications().subscribe(data => {
+      this.notifications = data;
+
+      setInterval(() => {
+        this.userNotificationsService.listNotifications().subscribe(data => {
+          this.notifications = data;
+        })
+      }, this.REFRESH_INTERVAL)
+    })
   }
 
   ngOnDestroy(): void {
@@ -108,5 +124,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   private canDisplay(permissions): boolean {
     return this.authService.hasPermissions(permissions);
+  }
+
+  hasNotifications() {
+    return this.notifications && this.notifications.length > 0;
+  }
+
+  markNotificationAsRead(notificationId, event) {
+    if (this.notifications.filter(notif => notif.id !== notificationId).length > 0) {
+      // keep menu open only of there are more notifications
+      event.stopPropagation();
+    }
+    this.userNotificationsService.markAsRead(notificationId).subscribe(data => {
+      this.notifications = this.notifications.filter(notif => notif.id !== notificationId);
+    });
   }
 }
