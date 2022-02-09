@@ -73,7 +73,7 @@ public class IdentityProvidersResource extends AbstractResource {
                 .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
                         .filter(identityProvider -> {
                             if (userProvider) {
-                                return identityProviderManager.userProviderExists(identityProvider.getId());
+                                return identityProviderManager.userProviderExists(identityProvider.getType());
                             }
                             return true;
                         })

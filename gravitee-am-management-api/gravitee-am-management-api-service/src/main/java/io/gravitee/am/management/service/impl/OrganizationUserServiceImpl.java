@@ -152,8 +152,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                                                         .flatMap(newlyCreatedUser -> userService.setRoles(newlyCreatedUser).andThen(Single.just(newlyCreatedUser)))
                                                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
                                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)));
-                                            })
-                                            .map(this::setInternalStatus));
+                                            }));
                                 });
 
                     }
