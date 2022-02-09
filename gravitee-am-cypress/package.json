@@ -1,0 +1,31 @@
+{
+  "name": "gravitee-am-cypress",
+  "version": "3.16.0-SNAPSHOT",
+  "private": true,
+  "description": "Gravitee.io AM - Cypress",
+  "scripts": {
+    "test": "cypress open",
+    "lint": "echo 'Lint to be configured'",
+    "lint:fix": "npm run prettier:fix && npm run lint:license:fix",
+    "lint:license": "license-check-and-add check -f license-check-config.json",
+    "lint:license:fix": "license-check-and-add add -f license-check-config.json -r",
+    "prettier": "prettier --check \"**/*.{js,ts,html,css,scss,json}\"",
+    "prettier:fix": "prettier --write \"**/*.{js,ts,html,css,scss,json}\"",
+    "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\""
+  },
+  "license": "MIT License",
+  "devDependencies": {
+    "@types/faker": "5.5.9",
+    "@types/node": "14.18.5",
+    "ansi-regex": "6.0.1",
+    "cypress": "8.7.0",
+    "cypress-terminal-report": "3.4.1",
+    "har-validator": "5.1.5",
+    "license-check-and-add": "^4.0.3",
+    "prettier": "2.5.1",
+    "typescript": "4.5.2"
+  },
+  "dependencies": {
+    "faker": "5.5.3"
+  }
+}

@@ -27,3 +27,10 @@ gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-man
 dependency-reduced-pom.xml
 audit-logs
 gravitee-am-ui/.vscode/
+
+# Cypress
+gravitee-am-cypress/cypress/videos/
+gravitee-am-cypress/cypress/screenshots/
+**/node_modules/
+**/.vscode
+.dccache
