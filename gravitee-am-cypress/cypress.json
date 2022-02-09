@@ -1,0 +1,9 @@
+{
+  "video": false,
+  "supportFile": "cypress/support/index.ts",
+  "env": {
+    "baseUrl": "http://localhost/am/ui",
+    "admin_user_login": "admin",
+    "admin_user_password": "adminadmin"
+  }
+}
