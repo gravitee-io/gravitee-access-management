@@ -113,7 +113,6 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
 
     @Override
     public Single<User> create(String domain, NewUser newUser) {
-
         return create(ReferenceType.DOMAIN, domain, newUser);
     }
 
@@ -185,6 +184,13 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while count users analytics : %s", query), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByDomain(String domain) {
+        LOGGER.debug("Delete all users for domain {}", domain);
+        return credentialService.deleteByReference(ReferenceType.DOMAIN, domain)
+                .andThen(userRepository.deleteByReference(ReferenceType.DOMAIN, domain));
     }
 
     @Override

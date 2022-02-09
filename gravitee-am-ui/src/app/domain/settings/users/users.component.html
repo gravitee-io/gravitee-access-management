@@ -16,9 +16,8 @@
 
 -->
 <div class="gv-page-container" fxLayout="column">
-  <h1 *ngIf="!isEmpty">Users</h1>
-
-  <div *ngIf="!isEmpty" class="users-search" fxLayout="column">
+  <h1>Users</h1>
+  <div class="users-search" fxLayout="column">
     <mat-form-field id="users-search-input" appearance="fill" floatLabel="always" style="max-width: 90%;">
       <mat-icon matPrefix>search</mat-icon>
       <mat-label>Search for users</mat-label>
@@ -63,13 +62,15 @@
     </mat-card>
   </div>
 
-  <div class="users-content" *ngIf="!isEmpty">
+  <div class="users-content">
     <ngx-datatable class="material"
                    [columnMode]="'flex'"
                    [headerHeight]="40"
                    [footerHeight]="40"
                    [rowHeight]="50"
+                   [messages]="{emptyMessage: 'There is no user to display.', totalMessage: 'total'}"
                    [rows]='users'
+                   [loadingIndicator]="isLoading"
                    [externalPaging]="true"
                    [count]="page.totalElements"
                    [offset]="page.pageNumber"
@@ -114,12 +115,7 @@
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty"
-                  [message]="'Users will appear here'"
-                  [subMessage]="'No data to display'"
-                  [icon]="'person'"></app-emptystate>
-
-  <div *ngIf="createMode" [ngClass]="{'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty}">
+  <div *ngIf="createMode" class="gv-add-button">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

@@ -54,7 +54,7 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {NgxDatatableModule} from '@swimlane/ngx-datatable';
 import {CodemirrorModule} from 'ng2-codemirror';
-import {MaterialDesignFrameworkModule} from '@ajsf/material';
+import {MaterialDesignFrameworkModule, MaterialSelectComponent} from '@ajsf/material';
 import {HighchartsChartModule} from 'highcharts-angular';
 import {ClipboardModule} from 'ngx-clipboard';
 import 'codemirror';
@@ -180,7 +180,6 @@ import {UserCredentialComponent} from './domain/settings/users/user/credentials/
 import {UserCredentialsResolver} from './resolvers/user-credentials.resolver';
 import {UserCredentialResolver} from './resolvers/user-credential.resolver';
 import {UserService} from './services/user.service';
-import {UsersResolver} from './resolvers/users.resolver';
 import {UserResolver} from './resolvers/user.resolver';
 import {UserRolesResolver} from './resolvers/user-roles.resolver';
 import {ExtensionGrantService} from './services/extension-grant.service';
@@ -192,6 +191,7 @@ import {ExtensionGrantFormComponent} from './domain/settings/extension-grants/ex
 import {ExtensionGrantCreationStep1Component} from './domain/settings/extension-grants/creation/steps/step1/step1.component';
 import {ExtensionGrantCreationStep2Component} from './domain/settings/extension-grants/creation/steps/step2/step2.component';
 import {MaterialFileComponent} from './components/json-schema-form/material-file.component';
+import {MaterialCertificateComponent} from './components/json-schema-form/material-certificate-component';
 import {ManagementComponent} from './settings/management/management.component';
 import {ManagementGeneralComponent} from './settings/management/general/general.component';
 import {SettingsMembershipsComponent} from './settings/memberships/memberships.component';
@@ -507,6 +507,7 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
     ScopeCreationComponent,
     ScopeComponent,
     MaterialFileComponent,
+    MaterialCertificateComponent,
     ManagementComponent,
     ManagementGeneralComponent,
     SettingsMembershipsComponent,
@@ -675,7 +676,6 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
     RolesResolver,
     PageRolesResolver,
     RoleResolver,
-    UsersResolver,
     UserResolver,
     UserRolesResolver,
     DynamicUserRolesResolver,

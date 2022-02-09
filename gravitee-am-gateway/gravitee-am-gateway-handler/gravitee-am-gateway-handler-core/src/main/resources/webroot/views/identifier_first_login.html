@@ -28,7 +28,7 @@
                 <label>Sign in</label>
                 <span>to continue to <span th:text="${domain.name}"></span></span>
             </div>
-            <form id="form" role="form" th:action="${action}" method="get">
+            <form id="form" role="form" th:action="${action}" method="post">
                 <div class="login-form-content">
                     <div class="input-textfield">
                         <label for="username">Username</label>
@@ -37,13 +37,12 @@
                     <div th:if="${error}" class="login-error-info">
                             <span>
                                 <span class="error" th:text="${error}"></span>
-                                <small class="error_description" th:text="*{error_description}?: 'Wrong user or password'"></small>
+                                <small class="error_description" th:text="*{error_description}?: 'Invalid user'"></small>
                             </span>
                     </div>
                 </div>
 
-                <input type="hidden" th:name="response_type" th:value="${param.response_type}"/>
-                <input type="hidden" th:name="redirect_uri" th:value="${param.redirect_uri}"/>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
 
                 <input type="hidden" th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"

@@ -54,6 +54,11 @@ public final class EndUserAuthentication implements Authentication {
     }
 
     @Override
+    public Authentication copy() {
+        return new EndUserAuthentication(credentials, principal, context.copy());
+    }
+
+    @Override
     public String toString() {
         return principal.toString();
     }

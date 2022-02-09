@@ -34,6 +34,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_10_10/schema-add-last-logout-date.yml
   - include:
+      - file: liquibase/changelogs/v3_10_14/schema-add-webauthn-idx.yml
+  - include:
       - file: liquibase/changelogs/v3_11_0/schema-par.yml
   - include:
       - file: liquibase/changelogs/v3_12_0/schema.yml

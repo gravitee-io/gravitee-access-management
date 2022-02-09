@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
@@ -128,13 +129,16 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLoginEndpoint_redirectProvider() throws Exception {
         appClient.getLoginSettings().setIdentifierFirstEnabled(false);
         appClient.getLoginSettings().setHideForm(TRUE);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp = new IdentityProvider();
-            idp.setId("provider-id");
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
-            routingContext.next();
-        }).handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
+        router.route(HttpMethod.GET, "/login")
+                .handler(routingContext -> {
+                    final IdentityProvider idp = new IdentityProvider();
+                    idp.setId("provider-id");
+                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+                    routingContext.next();
+                })
+                .handler(new LoginHideFormHandler(domain))
+                .handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -158,90 +162,20 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldInvokeLoginEndpoint_noRedirectNoMatchingProviders() throws Exception {
-        appClient.getLoginSettings().setHideForm(false);
-        appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp = new IdentityProvider();
-            idp.setId("provider-id");
-            idp.setDomainWhitelist(List.of("other-domain.com"));
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
-            routingContext.next();
-        }).handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, true));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
-        testRequest(
-                HttpMethod.GET, "/login?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
-                HttpStatusCode.OK_200, "OK");
-    }
-
-    @Test
-    public void shouldInvokeLoginEndpoint_noRedirectUsernameIsNotAnEmail() throws Exception {
-        appClient.getLoginSettings().setHideForm(false);
-        appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp = new IdentityProvider();
-            idp.setId("provider-id");
-            idp.setDomainWhitelist(List.of("other-domain.com"));
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
-            routingContext.next();
-        }).handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, true));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
-        testRequest(
-                HttpMethod.GET, "/login?username=username&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
-                HttpStatusCode.OK_200, "OK");
-    }
-
-    @Test
-    public void shouldInvokeLoginEndpoint_redirectUsernameMatchesDomain() throws Exception {
-        appClient.getLoginSettings().setHideForm(false);
-        appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp = new IdentityProvider();
-            idp.setId("provider-id");
-            idp.setDomainWhitelist(List.of("domain.com"));
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
-            routingContext.next();
-        }).handler(get302AssertMockRoutingContextHandler(loginEndpoint, false, true));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
-        testRequest(
-                HttpMethod.GET, "/login?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
-                HttpStatusCode.FOUND_302, "Found");
-    }
-
-    @Test
-    public void shouldInvokeLoginEndpoint_redirectUsernameMatchesDomainAndSpecificIdp() throws Exception {
-        appClient.getLoginSettings().setHideForm(false);
-        appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp = new IdentityProvider();
-            idp.setId("provider-id");
-            idp.setDomainWhitelist(List.of("domain.com"));
-            idp.setType("google");
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-            routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
-            routingContext.next();
-        }).handler(get302AssertMockRoutingContextHandler(loginEndpoint, false, true));
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
-        testRequest(
-                HttpMethod.GET, "/login?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
-                HttpStatusCode.FOUND_302, "Found");
-    }
-
-    @Test
     public void shouldInvokeLoginEndpoint_noRedirectMultipleProviders() throws Exception {
         appClient.getLoginSettings().setIdentifierFirstEnabled(false);
         appClient.getLoginSettings().setHideForm(TRUE);
-        router.route(HttpMethod.GET, "/login").handler(routingContext -> {
-            final IdentityProvider idp1 = new IdentityProvider();
-            idp1.setId("provider-id-1");
-            final IdentityProvider idp2 = new IdentityProvider();
-            idp2.setId("provider-id-2");
-            routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp1, idp2));
-            routingContext.next();
-        }).handler(get200AssertMockRoutingContextHandler(loginEndpoint, true, false));
+        router.route(HttpMethod.GET, "/login")
+                .handler(routingContext -> {
+                    final IdentityProvider idp1 = new IdentityProvider();
+                    idp1.setId("provider-id-1");
+                    final IdentityProvider idp2 = new IdentityProvider();
+                    idp2.setId("provider-id-2");
+                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp1, idp2));
+                    routingContext.next();
+                })
+                .handler(new LoginHideFormHandler(domain))
+                .handler(get200AssertMockRoutingContextHandler(loginEndpoint, true, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -307,8 +241,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
                     assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
                     assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
-                    assertEquals(routingContext.get(BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParamsNoUsername, true));
-
+                    if (expectedFirstIdentifier) {
+                        assertEquals(routingContext.get(BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParamsNoUsername, true));
+                    }
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY)));
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_REGISTER_CONTEXT_KEY)));
                     assertFalse(TRUE.equals(routingContext.get(ALLOW_PASSWORDLESS_CONTEXT_KEY)));
@@ -343,7 +278,6 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                 assertEquals(routingContext.get(FORGOT_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/forgotPassword", queryParams, true));
                 assertEquals(routingContext.get(REGISTER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/register", queryParams, true));
                 assertEquals(routingContext.get(WEBAUTHN_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true));
-                assertEquals(routingContext.get(BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY), resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/login/identifier", queryParamsNoUsername, true));
 
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY)));
                 assertFalse(TRUE.equals(routingContext.get(ALLOW_REGISTER_CONTEXT_KEY)));

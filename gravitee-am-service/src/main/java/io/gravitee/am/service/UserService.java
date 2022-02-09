@@ -59,6 +59,8 @@ public interface UserService extends CommonUserService {
 
     Single<Map<Object, Object>> statistics(AnalyticsQuery query);
 
+    Completable deleteByDomain(String domainId);
+
     Single<User> upsertFactor(String userId, EnrolledFactor enrolledFactor, io.gravitee.am.identityprovider.api.User principal);
 
     Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal);

@@ -18,9 +18,9 @@ package io.gravitee.am.plugins.idp.plugin;
 import io.gravitee.am.identityprovider.api.IdentityProvider;
 import io.gravitee.am.plugins.idp.core.IdentityProviderDefinition;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderPluginHandler implements PluginHandler {
+public class IdentityProviderPluginHandler extends AbstractPluginHandler {
 
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
 
@@ -43,20 +43,17 @@ public class IdentityProviderPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.IDENTITY_PROVIDER.name().equalsIgnoreCase(plugin.type());
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-
-            final Class<?> identityProviderClass = classloader.loadClass(plugin.clazz());
             LOGGER.info("Register a new identity provider plugin: {} [{}]", plugin.id(), plugin.clazz());
 
-            Assert.isAssignable(IdentityProvider.class, identityProviderClass);
+            Assert.isAssignable(IdentityProvider.class, pluginClass);
 
-            IdentityProvider identityIdentityProvider = createInstance((Class<IdentityProvider>) identityProviderClass);
+            var identityIdentityProvider = createInstance((Class<IdentityProvider>) pluginClass);
 
             identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin));
         } catch (Exception iae) {
@@ -64,9 +61,19 @@ public class IdentityProviderPluginHandler implements PluginHandler {
         }
     }
 
+    @Override
+    protected String type() {
+        return PluginType.IDENTITY_PROVIDER.name();
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, plugin.getClass().getClassLoader());
+    }
+
     private <T> T createInstance(Class<T> clazz) throws Exception {
         try {
-            return clazz.newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
             LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;

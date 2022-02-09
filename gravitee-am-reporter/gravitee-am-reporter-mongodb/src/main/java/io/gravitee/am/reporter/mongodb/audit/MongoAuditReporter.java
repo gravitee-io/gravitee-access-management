@@ -16,10 +16,7 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.*;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
@@ -51,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
@@ -84,6 +82,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     @Autowired
     private MongoReporterConfiguration configuration;
+
+    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    private boolean ensureIndexOnStart;
 
     private MongoCollection<AuditMongo> reportableCollection;
 
@@ -138,6 +139,9 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         // init reportable collection
         reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
+        // init indexes
+        initIndexes();
+
         // init bulk processor
         disposable = bulkProcessor.buffer(
                 configuration.getFlushInterval(),
@@ -169,6 +173,26 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             mongoClient.close();
         } catch (Exception ex) {
             logger.error("Failed to close mongoDB client", ex);
+        }
+    }
+
+    private void initIndexes() {
+        if (ensureIndexOnStart) {
+            List<Document> documents = Arrays.asList(
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TYPE, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1),
+                    new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1)
+            );
+
+            Flowable.fromIterable(documents)
+                    .flatMapSingle(document -> {
+                        return Single.fromPublisher(reportableCollection.createIndex(document, new IndexOptions()))
+                                .doOnSuccess(s -> logger.debug("Created an index named: {}", s))
+                                .doOnError(throwable -> logger.error("An error has occurred during creation of index {}", document.toJson(), throwable));
+                    })
+                    .subscribe();
         }
     }
 

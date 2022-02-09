@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.github.authentication;
+package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
@@ -34,7 +33,7 @@ public class DummyAuthenticationContext implements AuthenticationContext {
     private final Map<String, Object> attributes;
     private final Request request;
 
-    DummyAuthenticationContext(Map<String, Object> attributes, Request request) {
+    public DummyAuthenticationContext(Map<String, Object> attributes, Request request) {
         this.attributes = attributes;
         this.request = request;
     }
@@ -87,5 +86,10 @@ public class DummyAuthenticationContext implements AuthenticationContext {
     @Override
     public Tracer getTracer() {
         return null;
+    }
+
+    @Override
+    public AuthenticationContext copy() {
+        return new DummyAuthenticationContext(attributes, request);
     }
 }

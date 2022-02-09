@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.plugins.deviceidentifier.plugin;
 
+import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierDefinition;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
-import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DeviceIdentifierPluginHandler implements PluginHandler {
+public class DeviceIdentifierPluginHandler extends AbstractPluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
     public static final String PLUGIN_TYPE_DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
@@ -43,25 +43,32 @@ public class DeviceIdentifierPluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PLUGIN_TYPE_DEVICE_IDENTIFIER.equalsIgnoreCase(plugin.type());
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-
-            final Class<?> pluginClass = classloader.loadClass(plugin.clazz());
-            LOGGER.info("Register a new device identifier plugin: {} [{}]", plugin.id(), plugin.clazz());
+            LOGGER.info("Register a new identity provider plugin: {} [{}]", plugin.id(), plugin.clazz());
 
             Assert.isAssignable(DeviceIdentifier.class, pluginClass);
 
-            DeviceIdentifier deviceIdentifier = createInstance((Class<DeviceIdentifier>) pluginClass);
+            var identityIdentityProvider = createInstance((Class<DeviceIdentifier>) pluginClass);
 
-            pluginManager.register(new DeviceIdentifierDefinition(deviceIdentifier, plugin));
+            pluginManager.register(new DeviceIdentifierDefinition(identityIdentityProvider, plugin));
         } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create device identifier instance", iae);
+            LOGGER.error("Unexpected error while create identity provider instance", iae);
         }
+    }
+
+    @Override
+    protected String type() {
+        return PLUGIN_TYPE_DEVICE_IDENTIFIER;
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, plugin.getClass().getClassLoader());
     }
 
     private <T> T createInstance(Class<T> clazz) throws Exception {

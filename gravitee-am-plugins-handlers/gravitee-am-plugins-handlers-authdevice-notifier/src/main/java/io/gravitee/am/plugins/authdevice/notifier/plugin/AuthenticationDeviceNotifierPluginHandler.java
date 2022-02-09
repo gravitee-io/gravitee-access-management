@@ -18,9 +18,9 @@ package io.gravitee.am.plugins.authdevice.notifier.plugin;
 import io.gravitee.am.authdevice.notifier.api.AuthenticationDeviceNotifier;
 import io.gravitee.am.plugins.authdevice.notifier.core.AuthenticationDeviceNotifierDefinition;
 import io.gravitee.am.plugins.authdevice.notifier.core.AuthenticationDeviceNotifierPluginManager;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AuthenticationDeviceNotifierPluginHandler implements PluginHandler {
+public class AuthenticationDeviceNotifierPluginHandler extends AbstractPluginHandler {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(AuthenticationDeviceNotifierPluginHandler.class);
     public static final String PLUGIN_TYPE_AUTHDEVICE_NOTIFIER = "authdevice-notifier";
@@ -43,15 +43,22 @@ public class AuthenticationDeviceNotifierPluginHandler implements PluginHandler 
 
     @Override
     public boolean canHandle(Plugin plugin)  {
-        return PLUGIN_TYPE_AUTHDEVICE_NOTIFIER.equalsIgnoreCase(plugin.type());
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
-        try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    protected String type() {
+        return PLUGIN_TYPE_AUTHDEVICE_NOTIFIER;
+    }
 
-            final Class<?> pluginClass = classloader.loadClass(plugin.clazz());
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, plugin.getClass().getClassLoader());
+    }
+
+    @Override
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
+        try {
             LOGGER.info("Register a new authentication device notifier plugin: {} [{}]", plugin.id(), plugin.clazz());
 
             Assert.isAssignable(AuthenticationDeviceNotifier.class, pluginClass);
@@ -66,7 +73,7 @@ public class AuthenticationDeviceNotifierPluginHandler implements PluginHandler 
 
     private <T> T createInstance(Class<T> clazz) throws Exception {
         try {
-            return clazz.newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
             LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;

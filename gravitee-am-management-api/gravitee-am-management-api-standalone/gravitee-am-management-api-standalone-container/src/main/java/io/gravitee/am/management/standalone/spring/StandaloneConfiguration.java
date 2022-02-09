@@ -36,6 +36,7 @@ import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.NodeMetadataResolver;
+import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
@@ -71,7 +72,8 @@ import org.springframework.context.annotation.Import;
         BotDetectionConfiguration.class,
         DeviceIdentifierConfiguration.class,
         PasswordDictionaryConfiguration.class,
-        AuthenticationDeviceNotifierConfiguration.class
+        AuthenticationDeviceNotifierConfiguration.class,
+        NodeCertificatesConfiguration.class
 })
 public class StandaloneConfiguration {
 

@@ -19,6 +19,7 @@
   [schema]="providerSchema" [data]="data"
   [options]="{'formDefaults' : { 'orderable' : false}, 'addSubmit' : false}"
   (isValid)="isValid($event)"
+  [widgets]="customWidgets"
   (onChanges)="onChanges($event)"
   framework="material-design">
 </json-schema-form>

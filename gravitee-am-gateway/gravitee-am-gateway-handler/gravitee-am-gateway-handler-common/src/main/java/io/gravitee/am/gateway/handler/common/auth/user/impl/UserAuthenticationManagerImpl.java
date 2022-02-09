@@ -100,7 +100,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         }
 
         return Observable.fromIterable(identities)
-                .flatMapMaybe(authProvider -> authenticate0(client, authentication, authProvider, preAuthenticated))
+                .flatMapMaybe(authProvider -> authenticate0(client, authentication.copy(), authProvider, preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
                 .flatMap(userAuthentication -> {
