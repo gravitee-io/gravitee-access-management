@@ -86,6 +86,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
+    public boolean hasUserProvider(String pluginType) {
+        logger.debug("Looking for an user provider for [{}]", pluginType);
+        IdentityProvider identityProvider = identityProviders.get(pluginType);
+        return identityProvider != null && identityProvider.userProvider() != null;
+    }
+
+    @Override
     public Plugin findById(String identityProviderId) {
         IdentityProvider identityProvider = identityProviders.get(identityProviderId);
         return identityProvider != null ? identityProviderPlugins.get(identityProvider) : null;
