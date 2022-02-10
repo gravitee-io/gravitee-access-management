@@ -83,12 +83,15 @@ public class UserAuthenticationServiceTest {
         when(createdUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
-        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -112,13 +115,16 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
-        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -143,7 +149,7 @@ public class UserAuthenticationServiceTest {
         when(foundUser.isAccountNonLocked()).thenReturn(false);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
 
-        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -175,7 +181,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(User.class))).thenReturn(Single.just(foundUser));
 
-        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -202,7 +208,7 @@ public class UserAuthenticationServiceTest {
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
 
-        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
@@ -229,12 +235,15 @@ public class UserAuthenticationServiceTest {
         when(createdUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        TestObserver<User> testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -262,13 +271,16 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        TestObserver<User> testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -296,6 +308,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("group-role", "group2-role"));
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
 
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
@@ -303,7 +318,7 @@ public class UserAuthenticationServiceTest {
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        TestObserver<User> testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -330,6 +345,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User existingUser = new User();
         HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
         existingAdditionalInformation.put("source", source);
@@ -341,7 +359,7 @@ public class UserAuthenticationServiceTest {
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        TestObserver<User> testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -367,6 +385,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(30);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User existingUser = new User();
         HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
         existingAdditionalInformation.put("source", source);
@@ -377,7 +398,7 @@ public class UserAuthenticationServiceTest {
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
 
-        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        TestObserver<User> testObserver = userAuthenticationService.connect(user, null).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();

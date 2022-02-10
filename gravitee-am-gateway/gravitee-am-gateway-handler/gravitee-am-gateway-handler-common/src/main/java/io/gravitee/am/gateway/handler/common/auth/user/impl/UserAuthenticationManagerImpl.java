@@ -127,7 +127,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         }
                     } else {
                         // complete user connection
-                        return connect(user);
+                        return connect(user, client);
                     }
                 })
                 .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
@@ -188,8 +188,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     @Override
-    public Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
-        return userAuthenticationService.connect(user, afterAuthentication);
+    public Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication, Client client) {
+        return userAuthenticationService.connect(user, afterAuthentication, client);
     }
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {

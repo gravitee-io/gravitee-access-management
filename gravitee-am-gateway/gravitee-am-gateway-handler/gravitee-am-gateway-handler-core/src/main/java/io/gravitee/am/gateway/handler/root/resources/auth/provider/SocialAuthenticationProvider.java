@@ -119,7 +119,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     }
 
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
-                    return userAuthenticationManager.connect(user);
+                    return userAuthenticationManager.connect(user, client);
                 })
                 .subscribe(user -> {
                     eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(endUserAuthentication, domain, client, user));

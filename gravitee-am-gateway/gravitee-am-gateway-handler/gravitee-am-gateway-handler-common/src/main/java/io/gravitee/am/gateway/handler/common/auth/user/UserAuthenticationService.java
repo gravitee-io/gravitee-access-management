@@ -37,7 +37,7 @@ public interface UserAuthenticationService {
      * @param afterAuthentication if authentication has been done by login action
      * @return user fetch or create from the repository
      */
-    Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication);
+    Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication, Client client);
 
     /**
      * Use to find a pre-authenticated user (from a previous authentication step)
@@ -69,7 +69,7 @@ public interface UserAuthenticationService {
      */
     Completable lockAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings, Client client, User user);
 
-    default Single<User> connect(io.gravitee.am.identityprovider.api.User principal) {
-        return connect(principal, true);
+    default Single<User> connect(io.gravitee.am.identityprovider.api.User principal, Client client) {
+        return connect(principal, true, client);
     }
 }

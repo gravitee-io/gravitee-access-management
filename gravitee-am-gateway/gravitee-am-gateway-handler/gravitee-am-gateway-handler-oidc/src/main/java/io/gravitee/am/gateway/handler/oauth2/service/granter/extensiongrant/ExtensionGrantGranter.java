@@ -104,7 +104,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                         additionalInformation.put("source", extensionGrant.getIdentityProvider() != null ? extensionGrant.getIdentityProvider() : extensionGrant.getId());
                         additionalInformation.put("client_id", client.getId());
                         ((DefaultUser) endUser).setAdditionalInformation(additionalInformation);
-                        return userAuthenticationManager.connect(endUser, false).toMaybe();
+                        return userAuthenticationManager.connect(endUser, false, client).toMaybe();
                     } else {
                         // Check that the user is existing from the identity provider
                         if (extensionGrant.isUserExists()) {

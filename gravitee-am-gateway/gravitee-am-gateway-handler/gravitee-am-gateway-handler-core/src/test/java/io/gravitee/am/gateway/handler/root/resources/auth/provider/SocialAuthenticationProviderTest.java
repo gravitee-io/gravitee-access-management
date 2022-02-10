@@ -82,7 +82,7 @@ public class SocialAuthenticationProviderTest {
 
         Client client = new Client();
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.connect(any(), any())).thenReturn(Single.just(new User()));
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
@@ -101,7 +101,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, times(1)).connect(any());
+        verify(userAuthenticationManager, times(1)).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
 
@@ -118,7 +118,7 @@ public class SocialAuthenticationProviderTest {
         Client client = new Client();
         client.setSingleSignOut(true);
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.connect(any(), any())).thenReturn(Single.just(new User()));
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
@@ -140,7 +140,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, times(1)).connect(any());
+        verify(userAuthenticationManager, times(1)).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
 
@@ -156,7 +156,7 @@ public class SocialAuthenticationProviderTest {
 
         Client client = new Client();
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.connect(any(), any())).thenReturn(Single.just(new User()));
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
@@ -179,7 +179,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, times(1)).connect(any());
+        verify(userAuthenticationManager, times(1)).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
 
@@ -196,7 +196,7 @@ public class SocialAuthenticationProviderTest {
         Client client = new Client();
         client.setSingleSignOut(true);
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(userAuthenticationManager.connect(any(), any())).thenReturn(Single.just(new User()));
 
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
@@ -218,7 +218,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, times(1)).connect(any());
+        verify(userAuthenticationManager, times(1)).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
 
@@ -248,7 +248,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, never()).connect(any());
+        verify(userAuthenticationManager, never()).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
 
@@ -278,7 +278,7 @@ public class SocialAuthenticationProviderTest {
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
-        verify(userAuthenticationManager, never()).connect(any());
+        verify(userAuthenticationManager, never()).connect(any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
 

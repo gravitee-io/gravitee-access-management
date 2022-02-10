@@ -117,7 +117,7 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), eq(true), any())).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -216,7 +216,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider2 = new IdentityProvider();
         identityProvider2.setId("idp-2");
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), eq(true), any())).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
@@ -282,7 +282,7 @@ public class UserAuthenticationManagerTest {
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
 
-        when(userAuthenticationService.connect(any(), eq(true))).then(invocation -> {
+        when(userAuthenticationService.connect(any(), eq(true), any())).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             return Single.error(new AccountDisabledException(idpUser.getUsername()));
         });

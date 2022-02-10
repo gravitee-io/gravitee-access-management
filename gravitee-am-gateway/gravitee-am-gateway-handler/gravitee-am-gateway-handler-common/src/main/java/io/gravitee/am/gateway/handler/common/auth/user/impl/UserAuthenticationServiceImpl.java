@@ -30,13 +30,11 @@ import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -49,10 +47,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
@@ -71,6 +66,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Domain domain;
 
     @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -83,11 +81,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private EmailService emailService;
 
     @Override
-    public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
+    public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication, Client client) {
         // save or update the user
         return saveOrUpdate(principal, afterAuthentication)
                 // check account status
-                .flatMap(user -> checkAccountStatus(user)
+                .flatMap(user -> checkAccountStatus(user, client)
                         // and enhance user information
                         .andThen(Single.defer(() -> userService.enhance(user))));
     }
@@ -183,23 +181,34 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
      * @param user Authenticated user
      * @return Completable.complete() or Completable.error(error) if account status is not ok
      */
-    private Completable checkAccountStatus(User user) {
+    private Completable checkAccountStatus(User user, Client client) {
         if (!user.isEnabled()) {
             return Completable.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
-        } else if (checkAccountPasswordExpiry(user)) {
+        } else if (checkAccountPasswordExpiry(user, client)) {
             return Completable.error( new AccountPasswordExpiredException("Account's password is expired "));
         }
         return Completable.complete();
     }
 
-    private boolean checkAccountPasswordExpiry(User user) {
-        /** If the expiryDate is set to 0 so it's disabled */
-        if(domain.getPasswordSettings() == null || (domain.getPasswordSettings() != null && domain.getPasswordSettings().getExpiryDuration() == 0))
+    /**
+     * Check the user password status
+     * @param user Authenticated user
+     * @return True if the password has expired or False if not
+     */
+    private boolean checkAccountPasswordExpiry(User user, Client client) {
+        if ((client != null && client.getPasswordSettings() == null) && (domain != null && domain.getPasswordSettings() == null)) {
             return false;
+        }
+        PasswordSettings passwordSettings = client != null ? PasswordSettings.getInstance(client, domain).orElse(null) : domain.getPasswordSettings();
+
+        /** If the expiryDate is null or set to 0 so it's disabled */
+        if (passwordSettings != null && (passwordSettings.getExpiryDuration() == null || (passwordSettings.getExpiryDuration() != null && passwordSettings.getExpiryDuration() <= 0))) {
+            return false;
+        }
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(user.getLastPasswordReset());
-        calendar.add(Calendar.DAY_OF_MONTH, domain.getPasswordSettings().getExpiryDuration());
+        calendar.setTime(user.getLastPasswordReset() != null ? user.getLastPasswordReset() : new Date());
+        calendar.add(Calendar.DAY_OF_MONTH, passwordSettings.getExpiryDuration());
 
         return calendar.compareTo(Calendar.getInstance()) < 0;
     }
