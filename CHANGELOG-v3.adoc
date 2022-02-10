@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/509?closed=1[AM - 3.10.15 (2022-02-10)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Request to management API blocked https://github.com/gravitee-io/issues/issues/7080[#7080]
+
+*_Plugins_*
+
+- `onActivated` and `onDeactivated` not called when plugin loaded https://github.com/gravitee-io/issues/issues/6942[#6942]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/500?closed=1[AM - 3.14.5 (2022-02-08)]
 
 === Bug fixes
