@@ -88,17 +88,21 @@ public class MongoAlertTriggerRepository extends AbstractManagementMongoReposito
     }
 
     @Override
-    public Single<AlertTrigger> create(AlertTrigger alertTrigger) {
-        alertTrigger.setId(alertTrigger.getId() == null ? RandomString.generate() : alertTrigger.getId());
-        return Single.fromPublisher(collection.insertOne(convert(alertTrigger)))
-                .flatMap(success -> findById(alertTrigger.getId()).toSingle());
+    public Single<AlertTrigger> create(AlertTrigger item) {
+        var alertTrigger = convert(item);
+        alertTrigger.setId(item.getId() == null ? RandomString.generate() : item.getId());
+        return Single.fromPublisher(collection.insertOne(alertTrigger))
+                .flatMap(success -> {
+                    item.setId(alertTrigger.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<AlertTrigger> update(AlertTrigger alertTrigger) {
         AlertTriggerMongo alertTriggerMongo = convert(alertTrigger);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, alertTriggerMongo.getId()), alertTriggerMongo))
-                .flatMap(updateResult -> findById(alertTriggerMongo.getId()).toSingle());
+                .flatMap(updateResult -> Single.just(alertTrigger));
     }
 
     @Override

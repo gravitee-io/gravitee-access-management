@@ -25,8 +25,6 @@ import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -67,13 +65,13 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
     public Single<Tag> create(Tag item) {
         TagMongo tag = convert(item);
         tag.setId(tag.getId() == null ? RandomString.generate() : tag.getId());
-        return Single.fromPublisher(tagsCollection.insertOne(tag)).flatMap(success -> findById(tag.getId()).toSingle());
+        return Single.fromPublisher(tagsCollection.insertOne(tag)).flatMap(success -> { item.setId(tag.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Tag> update(Tag item) {
         TagMongo tag = convert(item);
-        return Single.fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag)).flatMap(updateResult -> findById(tag.getId()).toSingle());
+        return Single.fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

@@ -75,13 +75,13 @@ public class MongoLoginAttemptRepository extends AbstractManagementMongoReposito
     public Single<LoginAttempt> create(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
         loginAttempt.setId(loginAttempt.getId() == null ? RandomString.generate() : loginAttempt.getId());
-        return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> findById(loginAttempt.getId()).toSingle());
+        return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> { item.setId(loginAttempt.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<LoginAttempt> update(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
-        return Single.fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt)).flatMap(success -> findById(loginAttempt.getId()).toSingle());
+        return Single.fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt)).flatMap(success -> Single.just(item));
     }
 
     @Override

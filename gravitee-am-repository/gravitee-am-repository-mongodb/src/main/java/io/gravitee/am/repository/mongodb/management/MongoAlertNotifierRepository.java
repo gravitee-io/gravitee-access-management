@@ -82,17 +82,21 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
     }
 
     @Override
-    public Single<AlertNotifier> create(AlertNotifier alertNotifier) {
+    public Single<AlertNotifier> create(AlertNotifier item) {
+        var alertNotifier = convert(item);
         alertNotifier.setId(alertNotifier.getId() == null ? RandomString.generate() : alertNotifier.getId());
-        return Single.fromPublisher(collection.insertOne(convert(alertNotifier)))
-                .flatMap(success -> findById(alertNotifier.getId()).toSingle());
+        return Single.fromPublisher(collection.insertOne(alertNotifier))
+                .flatMap(success -> {
+                    item.setId(alertNotifier.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<AlertNotifier> update(AlertNotifier alertNotifier) {
         AlertNotifierMongo alertNotifierMongo = convert(alertNotifier);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, alertNotifierMongo.getId()), alertNotifierMongo))
-                .flatMap(updateResult -> findById(alertNotifierMongo.getId()).toSingle());
+                .flatMap(updateResult -> Single.just(alertNotifier));
     }
 
     @Override

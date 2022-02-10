@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.policy;
 
 import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -29,6 +30,8 @@ public interface PolicyMetadata {
     String id();
 
     Class<?> policy();
+
+    PolicyContext context();
 
     Class<? extends PolicyConfiguration> configuration();
 

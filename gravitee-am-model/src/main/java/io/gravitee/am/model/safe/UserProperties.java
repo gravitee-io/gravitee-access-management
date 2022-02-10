@@ -20,10 +20,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +65,9 @@ public class UserProperties {
             roles = user.getRolesPermissions().stream().map(Role::getName).collect(Collectors.toSet());
         }
         // set claims
-        claims = new HashMap<>(user.getAdditionalInformation());
+        var userAdditionalInformation = Optional.ofNullable(user.getAdditionalInformation())
+                .orElse(new HashMap<>());
+        claims = new HashMap<>(userAdditionalInformation);
         if (user.getLoggedAt() != null) {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }
@@ -76,7 +75,7 @@ public class UserProperties {
         claims.remove("op_id_token");
         claims.remove("op_access_token");
 
-        additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
+        this.additionalInformation = claims; // use same ref as claims for additionalInfo to avoid regression on templates that used the User object before
         this.source = user.getSource();
         this.preferredLanguage = user.getPreferredLanguage();
     }

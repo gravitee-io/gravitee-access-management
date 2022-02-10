@@ -500,7 +500,6 @@ public class UserServiceTest {
         user.setSource("idp-id");
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
-        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         userService.assignRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
@@ -527,7 +526,6 @@ public class UserServiceTest {
         roles.add(role2);
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
-        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
         when(commonUserService.update(any())).thenReturn(Single.just(new User()));
 
@@ -547,7 +545,6 @@ public class UserServiceTest {
         user.setSource("idp-id");
 
         when(commonUserService.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
-        when(identityProviderManager.userProviderExists(user.getSource())).thenReturn(true);
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
         userService.revokeRoles(ReferenceType.DOMAIN, DOMAIN_ID, user.getId(), rolesIds)

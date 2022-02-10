@@ -72,8 +72,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     protected abstract T getUserService();
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
-        return getUserService().findById(referenceType, referenceId, id)
-                .map(this::setInternalStatus);
+        return getUserService().findById(referenceType, referenceId, id);
     }
 
     @Override
@@ -105,14 +104,12 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                 .flatMap(idpUser -> {
                                     // set external id
                                     updateUser.setExternalId(idpUser.getId());
-                                    return getUserService().update(referenceType, referenceId, id, updateUser)
-                                            .map(this::setInternalStatus);
+                                    return getUserService().update(referenceType, referenceId, id, updateUser);
                                 })
                                 .onErrorResumeNext(ex -> {
                                     if (ex instanceof UserNotFoundException) {
                                         // idp user does not exist, only update AM user
-                                        return getUserService().update(referenceType, referenceId, id, updateUser)
-                                                .map(this::setInternalStatus);
+                                        return getUserService().update(referenceType, referenceId, id, updateUser);
                                     }
                                     return Single.error(ex);
                                 })
@@ -265,10 +262,5 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
         }
         idpUser.setAdditionalInformation(additionalInformation);
         return idpUser;
-    }
-
-    protected User setInternalStatus(User user) {
-        user.setInternal(identityProviderManager.userProviderExists(user.getSource()));
-        return user;
     }
 }

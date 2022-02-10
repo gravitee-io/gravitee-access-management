@@ -22,17 +22,20 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.oauth2.internal.model.AccessTokenMongo;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -81,7 +84,7 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     public Single<AccessToken> create(AccessToken accessToken) {
         return Single
                 .fromPublisher(accessTokenCollection.insertOne(convert(accessToken)))
-                .flatMap(success -> findById(accessToken.getId()).toSingle());
+                .flatMap(success -> Single.just(accessToken));
     }
 
     @Override
@@ -136,7 +139,9 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
     }
 
     private List<WriteModel<AccessTokenMongo>> convert(List<AccessToken> accessTokens) {
-        return accessTokens.stream().map(accessToken -> new InsertOneModel<>(convert(accessToken))).collect(Collectors.toList());
+        return accessTokens.stream().map(this::convert)
+                .map(InsertOneModel<AccessTokenMongo>::new)
+                .collect(toList());
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {

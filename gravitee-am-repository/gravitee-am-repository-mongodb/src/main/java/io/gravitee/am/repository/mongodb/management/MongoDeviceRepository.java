@@ -84,13 +84,13 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     public Single<Device> create(Device item) {
         DeviceMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(rememberDeviceMongoCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(rememberDeviceMongoCollection.insertOne(entity)).flatMap(success -> { item.setId(entity.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Device> update(Device item) {
         DeviceMongo entity = convert(item);
-        return Single.fromPublisher(rememberDeviceMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(rememberDeviceMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

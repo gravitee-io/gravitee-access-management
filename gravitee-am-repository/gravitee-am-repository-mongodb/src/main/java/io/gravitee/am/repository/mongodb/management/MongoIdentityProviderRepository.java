@@ -92,9 +92,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         Optional<IdentityProviderMongo> optionalIdp = convert(item);
         if (optionalIdp.isPresent()) {
             var identityProvider = optionalIdp.get();
-            final String id = identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId();
-            identityProvider.setId(id);
-            return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> findById(identityProvider.getId()).toSingle());
+            identityProvider.setId(identityProvider.getId() == null ? RandomString.generate() : identityProvider.getId());
+            return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> { item.setId(identityProvider.getId()); return Single.just(item); });
         }
         return Single.error(new TechnicalException("Identity provider must be present for create"));
     }
@@ -104,8 +103,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         Optional<IdentityProviderMongo> optionalIdp = convert(item);
         if (optionalIdp.isPresent()) {
             var identityProvider = optionalIdp.get();
-            return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider))
-                    .flatMap(updateResult -> findById(identityProvider.getId()).toSingle());
+            return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> Single.just(item));
         }
         return Single.error(new TechnicalException("Identity provider must be present for update"));
     }

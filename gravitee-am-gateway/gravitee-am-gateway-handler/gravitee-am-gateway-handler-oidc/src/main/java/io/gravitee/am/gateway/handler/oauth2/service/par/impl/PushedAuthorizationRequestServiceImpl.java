@@ -118,6 +118,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
     @Override
     public Single<PushedAuthorizationRequestResponse> registerParameters(PushedAuthorizationRequest par, Client client) {
         par.setClient(client.getId()); // link parameters to the internal client identifier
+        par.setDomain(domain.getId());; // link parameters to the internal domain identifier
         par.setExpireAt(new Date(Instant.now().plusMillis(requestUriValidity).toEpochMilli()));
 
 

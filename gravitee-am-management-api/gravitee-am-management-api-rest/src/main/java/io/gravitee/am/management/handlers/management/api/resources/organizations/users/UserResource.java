@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.model.Acl;
@@ -26,7 +27,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.common.http.MediaType;
@@ -63,6 +63,9 @@ public class UserResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderService identityProviderService;
+
+    @Autowired
+    private IdentityProviderManager identityProviderManager;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -168,6 +171,7 @@ public class UserResource extends AbstractResource {
             return identityProviderService.findById(userEntity.getSource())
                     .map(idP -> {
                         userEntity.setSource(idP.getName());
+                        userEntity.setInternal(identityProviderManager.userProviderExists(idP.getType()));
                         return userEntity;
                     })
                     .defaultIfEmpty(userEntity)

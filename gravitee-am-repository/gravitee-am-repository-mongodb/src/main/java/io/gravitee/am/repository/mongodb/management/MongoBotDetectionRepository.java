@@ -44,7 +44,7 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
     public void init() {
         botDetectionMongoCollection = mongoOperations.getCollection(COLLECTION_NAME, BotDetectionMongo.class);
         super.init(botDetectionMongoCollection);
-        super.createIndex(botDetectionMongoCollection,new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
+        super.createIndex(botDetectionMongoCollection, new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1));
     }
 
     @Override
@@ -66,13 +66,18 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
     public Single<BotDetection> create(BotDetection item) {
         BotDetectionMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(botDetectionMongoCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(botDetectionMongoCollection.insertOne(entity))
+                .flatMap(success -> {
+                    item.setId(entity.getId());
+                    return Single.just(item);
+                });
     }
 
     @Override
     public Single<BotDetection> update(BotDetection item) {
         BotDetectionMongo entity = convert(item);
-        return Single.fromPublisher(botDetectionMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(botDetectionMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override

@@ -103,13 +103,13 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
     public Single<Form> create(Form item) {
         FormMongo page = convert(item);
         page.setId(page.getId() == null ? RandomString.generate() : page.getId());
-        return Single.fromPublisher(formsCollection.insertOne(page)).flatMap(success -> findById(page.getId()).toSingle());
+        return Single.fromPublisher(formsCollection.insertOne(page)).flatMap(success -> { item.setId(page.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Form> update(Form item) {
         FormMongo page = convert(item);
-        return Single.fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page)).flatMap(updateResult -> findById(page.getId()).toSingle());
+        return Single.fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override
