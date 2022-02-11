@@ -63,13 +63,13 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     public Single<Reporter> create(Reporter item) {
         ReporterMongo reporter = convert(item);
         reporter.setId(reporter.getId() == null ? RandomString.generate() : reporter.getId());
-        return Single.fromPublisher(reportersCollection.insertOne(reporter)).flatMap(success -> findById(reporter.getId()).toSingle());
+        return Single.fromPublisher(reportersCollection.insertOne(reporter)).flatMap(success -> { item.setId(reporter.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         ReporterMongo reporter = convert(item);
-        return Single.fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter)).flatMap(updateResult -> findById(reporter.getId()).toSingle());
+        return Single.fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

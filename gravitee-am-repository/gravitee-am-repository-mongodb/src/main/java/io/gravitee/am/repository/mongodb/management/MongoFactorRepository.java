@@ -65,13 +65,13 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
     public Single<Factor> create(Factor item) {
         FactorMongo authenticator = convert(item);
         authenticator.setId(authenticator.getId() == null ? RandomString.generate() : authenticator.getId());
-        return Single.fromPublisher(factorsCollection.insertOne(authenticator)).flatMap(success -> findById(authenticator.getId()).toSingle());
+        return Single.fromPublisher(factorsCollection.insertOne(authenticator)).flatMap(success -> { item.setId(authenticator.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Factor> update(Factor item) {
         FactorMongo authenticator = convert(item);
-        return Single.fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> findById(authenticator.getId()).toSingle());
+        return Single.fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

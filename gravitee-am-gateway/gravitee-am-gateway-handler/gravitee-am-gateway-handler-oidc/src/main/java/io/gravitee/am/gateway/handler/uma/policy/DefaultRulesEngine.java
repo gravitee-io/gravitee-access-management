@@ -67,6 +67,7 @@ public class DefaultRulesEngine implements RulesEngine {
                     .map(rule -> {
                         Policy policy = policyPluginManager.create(rule.type(), rule.condition());
                         policy.setMetadata(rule.metadata());
+
                         return policy;
                     })
                     .filter(Objects::nonNull)

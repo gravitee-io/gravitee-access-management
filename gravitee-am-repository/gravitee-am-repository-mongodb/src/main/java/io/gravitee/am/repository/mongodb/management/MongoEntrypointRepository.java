@@ -64,13 +64,13 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
     public Single<Entrypoint> create(Entrypoint item) {
         EntrypointMongo entrypoint = convert(item);
         entrypoint.setId(entrypoint.getId() == null ? RandomString.generate() : entrypoint.getId());
-        return Single.fromPublisher(collection.insertOne(entrypoint)).flatMap(success -> findById(entrypoint.getId()).toSingle());
+        return Single.fromPublisher(collection.insertOne(entrypoint)).flatMap(success -> { item.setId(entrypoint.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Entrypoint> update(Entrypoint item) {
         EntrypointMongo entrypoint = convert(item);
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint)).flatMap(updateResult -> findById(entrypoint.getId()).toSingle());
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

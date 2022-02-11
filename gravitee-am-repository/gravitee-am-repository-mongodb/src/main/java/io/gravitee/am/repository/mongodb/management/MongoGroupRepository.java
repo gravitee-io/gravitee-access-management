@@ -32,7 +32,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static com.mongodb.client.model.Filters.*;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -99,13 +98,13 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     public Single<Group> create(Group item) {
         GroupMongo group = convert(item);
         group.setId(group.getId() == null ? RandomString.generate() : group.getId());
-        return Single.fromPublisher(groupsCollection.insertOne(group)).flatMap(success -> findById(group.getId()).toSingle());
+        return Single.fromPublisher(groupsCollection.insertOne(group)).flatMap(success -> { item.setId(group.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Group> update(Group item) {
         GroupMongo group = convert(item);
-        return Single.fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group)).flatMap(success -> findById(group.getId()).toSingle());
+        return Single.fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group)).flatMap(success -> Single.just(item));
     }
 
     @Override

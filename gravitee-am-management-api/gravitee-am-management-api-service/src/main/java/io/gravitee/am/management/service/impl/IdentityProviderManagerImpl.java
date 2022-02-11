@@ -371,8 +371,8 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     @Override
-    public boolean userProviderExists(String identityProviderId) {
-        return userProviders.containsKey(identityProviderId) ? true : getUserProvider(identityProviderId).blockingGet() != null;
+    public boolean userProviderExists(String identityProviderType) {
+        return identityProviderPluginManager.hasUserProvider(identityProviderType);
     }
 
     private void removeUserProvider(String identityProviderId) {

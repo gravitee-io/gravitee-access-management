@@ -85,7 +85,7 @@ public class IdentityProvidersResource extends AbstractResource {
                         .flatMapPublisher(__ -> identityProviderService.findByDomain(domain))
                         .filter(identityProvider -> {
                             if (userProvider) {
-                                return identityProviderManager.userProviderExists(identityProvider.getId());
+                                return identityProviderManager.userProviderExists(identityProvider.getType());
                             }
                             return true;
                         })

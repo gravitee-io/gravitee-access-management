@@ -100,13 +100,13 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
     public Single<Credential> create(Credential item) {
         CredentialMongo credential = convert(item);
         credential.setId(credential.getId() == null ? RandomString.generate() : credential.getId());
-        return Single.fromPublisher(credentialsCollection.insertOne(credential)).flatMap(success -> findById(credential.getId()).toSingle());
+        return Single.fromPublisher(credentialsCollection.insertOne(credential)).flatMap(success -> { item.setId(credential.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Credential> update(Credential item) {
         CredentialMongo credential = convert(item);
-        return Single.fromPublisher(credentialsCollection.replaceOne(eq(FIELD_ID, credential.getId()), credential)).flatMap(updateResult -> findById(credential.getId()).toSingle());
+        return Single.fromPublisher(credentialsCollection.replaceOne(eq(FIELD_ID, credential.getId()), credential)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

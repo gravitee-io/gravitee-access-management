@@ -69,13 +69,13 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     public Single<Resource> create(Resource item) {
         ResourceMongo resource = convert(item);
         resource.setId(resource.getId() == null ? RandomString.generate() : resource.getId());
-        return Single.fromPublisher(resourceCollection.insertOne(resource)).flatMap(success -> findById(resource.getId()).toSingle());
+        return Single.fromPublisher(resourceCollection.insertOne(resource)).flatMap(success -> { item.setId(resource.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Resource> update(Resource item) {
         ResourceMongo resourceMongo = convert(item);
-        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, resourceMongo.getId()), resourceMongo)).flatMap(success -> findById(resourceMongo.getId()).toSingle());
+        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, resourceMongo.getId()), resourceMongo)).flatMap(success -> Single.just(item));
     }
 
     @Override

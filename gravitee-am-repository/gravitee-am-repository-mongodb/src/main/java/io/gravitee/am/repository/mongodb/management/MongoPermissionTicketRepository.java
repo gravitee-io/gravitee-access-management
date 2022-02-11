@@ -63,16 +63,16 @@ public class MongoPermissionTicketRepository extends AbstractManagementMongoRepo
     }
 
     @Override
-    public Single<PermissionTicket> create(PermissionTicket ticket) {
-        PermissionTicketMongo permissionTicket = convert(ticket);
+    public Single<PermissionTicket> create(PermissionTicket item) {
+        PermissionTicketMongo permissionTicket = convert(item);
         permissionTicket.setId(permissionTicket.getId() == null ? RandomString.generate() : permissionTicket.getId());
-        return Single.fromPublisher(permissionTicketCollection.insertOne(permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
+        return Single.fromPublisher(permissionTicketCollection.insertOne(permissionTicket)).flatMap(success -> { item.setId(permissionTicket.getId()); return Single.just(item); });
     }
 
     @Override
-    public Single<PermissionTicket> update(PermissionTicket ticket) {
-        PermissionTicketMongo permissionTicket = convert(ticket);
-        return Single.fromPublisher(permissionTicketCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> findById(permissionTicket.getId()).toSingle());
+    public Single<PermissionTicket> update(PermissionTicket item) {
+        PermissionTicketMongo permissionTicket = convert(item);
+        return Single.fromPublisher(permissionTicketCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> Single.just(item));
     }
 
     @Override
