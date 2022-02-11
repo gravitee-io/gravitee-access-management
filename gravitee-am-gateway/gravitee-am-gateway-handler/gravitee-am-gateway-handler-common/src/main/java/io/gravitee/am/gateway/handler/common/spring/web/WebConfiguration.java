@@ -29,6 +29,7 @@ import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -40,6 +41,11 @@ public class WebConfiguration {
     @Bean
     public CorsHandlerFactory corsHandler() {
         return new CorsHandlerFactory();
+    }
+
+    @Bean
+    public CSPHandlerFactory cspHandlerFactory(Environment environment) {
+        return new CSPHandlerFactory(environment);
     }
 
     @Bean

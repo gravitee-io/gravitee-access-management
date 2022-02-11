@@ -82,6 +82,16 @@
 #    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE, PATCH'
 #      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, X-Xsrf-Token)
 #    allow-headers: 'X-Requested-With'
+#  csp:
+#    reportOnly: false
+#    directives:
+#      - "default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval' 'unsafe-dynamic';"
+#      - "script-src * 'unsafe-inline' 'unsafe-eval';"
+#      - "connect-src * 'unsafe-inline';"
+#      - "img-src * data: blob: 'unsafe-inline';"
+#      - "frame-src *;"
+#      - "style-src * data: blob: 'unsafe-inline';"
+#      - "font-src * data: blob: 'unsafe-inline';"
 
 # Path to plugins repository
 #plugins:
