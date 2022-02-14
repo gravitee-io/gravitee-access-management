@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionary;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.validators.password.PasswordValidator;
@@ -25,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
+import java.util.Calendar;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
@@ -71,5 +75,27 @@ public class PasswordServiceImpl implements PasswordService {
                 throw validator.getCause();
             });
         }
+    }
+
+    /**
+     * Check the user password status
+     * @param user Authenticated user
+     * @return True if the password has expired or False if not
+     */
+    public boolean checkAccountPasswordExpiry(User user, Client client, Domain domain) {
+        Optional<PasswordSettings> passwordSettings = PasswordSettings.getInstance(client, domain);
+
+        /** If the expiryDate is null or set to 0 so it's disabled */
+        if (passwordSettings.isEmpty() ||
+                (passwordSettings.get().getExpiryDuration() == null
+                                || (passwordSettings.get().getExpiryDuration() != null && passwordSettings.get().getExpiryDuration() <= 0))) {
+            return false;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(user.getLastPasswordReset());
+        calendar.add(Calendar.DAY_OF_MONTH, passwordSettings.get().getExpiryDuration());
+
+        return calendar.compareTo(Calendar.getInstance()) < 0;
     }
 }

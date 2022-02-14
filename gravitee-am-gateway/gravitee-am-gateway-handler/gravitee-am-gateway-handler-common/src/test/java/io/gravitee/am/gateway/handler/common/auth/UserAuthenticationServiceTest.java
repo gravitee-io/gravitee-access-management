@@ -27,6 +27,8 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.Maybe;
@@ -60,6 +62,9 @@ public class UserAuthenticationServiceTest {
     private UserService userService;
 
     @Mock
+    private PasswordService passwordService;
+
+    @Mock
     private Domain domain;
 
     @Mock
@@ -83,9 +88,6 @@ public class UserAuthenticationServiceTest {
         when(createdUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
@@ -115,9 +117,6 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
@@ -161,10 +160,6 @@ public class UserAuthenticationServiceTest {
         String domainId = "Domain";
         String source = "SRC";
         String id = "id";
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, -5);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(3);
 
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getId()).thenReturn(id);
@@ -173,19 +168,50 @@ public class UserAuthenticationServiceTest {
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
         when(domain.getId()).thenReturn(domainId);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User foundUser = mock(User.class);
+        final Client client = mock(Client.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(foundUser.isEnabled()).thenReturn(true);
-        when(foundUser.getLastPasswordReset()).thenReturn(calendar.getTime());
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(User.class))).thenReturn(Single.just(foundUser));
+        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(true);
 
-        TestObserver testObserver = userAuthenticationService.connect(user, null).test();
+        TestObserver testObserver = userAuthenticationService.connect(user, client).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertNotComplete();
         testObserver.assertError(AccountPasswordExpiredException.class);
+    }
+
+    @Test
+    public void shouldConnect_passwordNotExpired() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = mock(User.class);
+        final Client client = mock(Client.class);
+        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        when(foundUser.isEnabled()).thenReturn(true);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(User.class))).thenReturn(Single.just(foundUser));
+        when(userService.enhance(foundUser)).thenReturn(Single.just(foundUser));
+        when(passwordService.checkAccountPasswordExpiry(any(), any(), any())).thenReturn(false);
+
+        TestObserver testObserver = userAuthenticationService.connect(user, client).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(any());
     }
 
     @Test
@@ -235,9 +261,6 @@ public class UserAuthenticationServiceTest {
         when(createdUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
         when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
@@ -271,9 +294,6 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
@@ -308,9 +328,6 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.getRoles()).thenReturn(Arrays.asList("group-role", "group2-role"));
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
 
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
@@ -345,9 +362,6 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User existingUser = new User();
         HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
         existingAdditionalInformation.put("source", source);
@@ -385,9 +399,6 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        PasswordSettings passwordSettings = new PasswordSettings();
-        passwordSettings.setExpiryDuration(30);
-        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
         final User existingUser = new User();
         HashMap<String, Object> existingAdditionalInformation = new HashMap<>();
         existingAdditionalInformation.put("source", source);

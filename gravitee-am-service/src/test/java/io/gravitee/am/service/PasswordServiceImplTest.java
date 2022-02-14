@@ -15,15 +15,24 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.password.dictionary.PasswordDictionaryImpl;
 import io.gravitee.am.service.impl.PasswordServiceImpl;
 import io.gravitee.am.service.validators.password.impl.DefaultPasswordValidatorImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Optional;
 
@@ -34,10 +43,14 @@ import static io.gravitee.am.common.oidc.StandardClaims.PHONE_NUMBER;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RunWith(MockitoJUnitRunner.class)
 public class PasswordServiceImplTest {
 
     private static final PasswordService passwordService = new PasswordServiceImpl(new DefaultPasswordValidatorImpl("default"), new PasswordDictionaryImpl(
     ).start(false));
+
+    @Mock
+    private Domain domain;
 
     @Test
     public void testPassword_min_8_characters_at_least_one_letter_one_number() {
@@ -214,6 +227,68 @@ public class PasswordServiceImplTest {
         user.setPhoneNumber("0712345678");
         Assertions.assertThat(getValidationErrorKey("somePassword-0712345678", passwordSettings, user)).hasValue("invalid password user profile");
         Assertions.assertThat(getValidationErrorKey("mY5tR0N9P@SsWoRd!", passwordSettings, user)).isEmpty();
+    }
+
+    @Test
+    public void checkAccountPasswordExpiry_clientNull_shouldReturnExpired() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(5);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -6);
+        User user = new User();
+        user.setLastPasswordReset(calendar.getTime());
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isTrue();
+    }
+
+    @Test
+    public void checkAccountPasswordExpiry_clientNull_shouldNotReturnExpired() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(5);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -4);
+        User user = new User();
+        user.setLastPasswordReset(calendar.getTime());
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isFalse();
+    }
+
+    @Test
+    public void checkAccountPasswordExpiry_clientNotNull_shouldReturnExpired() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(10);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -6);
+        User user = new User();
+        user.setLastPasswordReset(calendar.getTime());
+        Client client = new Client();
+        passwordSettings.setExpiryDuration(5);
+        client.setPasswordSettings(passwordSettings);
+
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, client, domain)).isTrue();
+    }
+
+    @Test
+    public void checkAccountPasswordExpiry_clientNotNull_shouldNotReturnExpired() {
+        PasswordSettings passwordSettings = new PasswordSettings();
+        passwordSettings.setExpiryDuration(5);
+        when(domain.getPasswordSettings()).thenReturn(passwordSettings);
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, -6);
+        User user = new User();
+        user.setLastPasswordReset(calendar.getTime());
+        Client client = new Client();
+        passwordSettings.setExpiryDuration(10);
+        client.setPasswordSettings(passwordSettings);
+
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, client, domain)).isFalse();
+    }
+
+    @Test
+    public void checkAccountPasswordExpiry_noExirationDefined_shouldNotReturnExpired() {
+        User user = new User();
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, null, domain)).isFalse();
     }
 
     private Optional<String> getValidationErrorKey(String password, PasswordSettings passwordSettings) {

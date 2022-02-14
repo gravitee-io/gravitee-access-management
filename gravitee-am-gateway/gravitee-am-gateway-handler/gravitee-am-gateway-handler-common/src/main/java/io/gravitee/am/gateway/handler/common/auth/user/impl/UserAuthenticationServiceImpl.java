@@ -36,6 +36,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -79,6 +80,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     @Override
     public Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication, Client client) {
@@ -163,7 +167,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         Maybe.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Maybe.just(user)
                 )
-                .flatMapSingle(existingUser -> update(existingUser, principal, afterAuthentication))
+                .flatMapSingle(existingUser -> {
+                    if (existingUser.getLastPasswordReset() == null){
+                        existingUser.setLastPasswordReset(existingUser.getUpdatedAt());
+                    }
+                    return update(existingUser, principal, afterAuthentication);
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
                         return create(principal, afterAuthentication);
@@ -184,33 +193,10 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Completable checkAccountStatus(User user, Client client) {
         if (!user.isEnabled()) {
             return Completable.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
-        } else if (checkAccountPasswordExpiry(user, client)) {
+        } else if (passwordService.checkAccountPasswordExpiry(user, client, domain)) {
             return Completable.error( new AccountPasswordExpiredException("Account's password is expired "));
         }
         return Completable.complete();
-    }
-
-    /**
-     * Check the user password status
-     * @param user Authenticated user
-     * @return True if the password has expired or False if not
-     */
-    private boolean checkAccountPasswordExpiry(User user, Client client) {
-        if ((client != null && client.getPasswordSettings() == null) && (domain != null && domain.getPasswordSettings() == null)) {
-            return false;
-        }
-        PasswordSettings passwordSettings = client != null ? PasswordSettings.getInstance(client, domain).orElse(null) : domain.getPasswordSettings();
-
-        /** If the expiryDate is null or set to 0 so it's disabled */
-        if (passwordSettings != null && (passwordSettings.getExpiryDuration() == null || (passwordSettings.getExpiryDuration() != null && passwordSettings.getExpiryDuration() <= 0))) {
-            return false;
-        }
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(user.getLastPasswordReset() != null ? user.getLastPasswordReset() : new Date());
-        calendar.add(Calendar.DAY_OF_MONTH, passwordSettings.getExpiryDuration());
-
-        return calendar.compareTo(Calendar.getInstance()) < 0;
     }
 
     /**
@@ -230,6 +216,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         }
         // set roles
         existingUser.setDynamicRoles(principal.getRoles());
+        if (existingUser.getLastPasswordReset() == null) {
+            existingUser.setLastPasswordReset(existingUser.getUpdatedAt());
+        }
 
         Map<String, Object> additionalInformation = ofNullable(principal.getAdditionalInformation()).orElse(Map.of());
         removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
