@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
@@ -49,6 +50,11 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
         try {
             final HttpServerRequest request = context.request();
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+
+            // client_id can be added dynamically via external protocol
+            if (!queryParams.contains(Parameters.CLIENT_ID) && request.params().contains(Parameters.CLIENT_ID)) {
+                queryParams.add(Parameters.CLIENT_ID, request.getParam(Parameters.CLIENT_ID));
+            }
 
             // Now redirect the user.
             String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);

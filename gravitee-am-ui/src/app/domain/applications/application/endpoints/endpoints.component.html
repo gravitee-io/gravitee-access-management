@@ -101,12 +101,33 @@
           <mat-hint>Endpoint where the resource owner can immediately set or modify access policies subsequent to the resource registration action</mat-hint>
           <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/uma/protection/resource_set/:resourceId/policies')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
         </mat-form-field>
-      </div><div *ngIf="cibaEnabled()">
+      </div>
+      <div *ngIf="cibaEnabled()">
         <mat-form-field appearance="outline" floatLabel="always">
           <mat-label>Backchannel Authentication endpoint</mat-label>
           <input matInput type="text" name="cibaEndpoint" [value]="endpoint('/oidc/ciba/authenticate')" disabled>
           <mat-hint>The Client Initiated Backchannel Authentication endpoint used to initiate an out-of-band authentication of the end-user</mat-hint>
           <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('//ciba/authenticate')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        </mat-form-field>
+      </div>
+      <div *ngIf="samlEnabled()">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>SAML 2.0 IdP metadata</mat-label>
+          <input matInput type="text" name="samlMetadataEndpoint" [value]="endpoint('/saml2/idp/metadata')" disabled>
+          <mat-hint>The SAML 2.0 metadata endpoint at the identity provider</mat-hint>
+          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/metadata')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>SAML 2.0 Single Sign On Service</mat-label>
+          <input matInput type="text" name="samlSsoEndpoint" [value]="endpoint('/saml2/idp/SSO')" disabled>
+          <mat-hint>The SAML 2.0 authentication request protocol endpoint at the identity provider</mat-hint>
+          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/SSO')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+        </mat-form-field>
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>SAML 2.0 Single Logout Service</mat-label>
+          <input matInput type="text" name="samlLogoutEndpoint" [value]="endpoint('/saml2/idp/logout')" disabled>
+          <mat-hint>The SAML 2.0 single logout protocol endpoint at the identity provider</mat-hint>
+          <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="endpoint('/saml2/idp/logout')" (cbOnSuccess)="valueCopied('Copied to clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
         </mat-form-field>
       </div>
     </div>

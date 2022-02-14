@@ -22,6 +22,7 @@ package io.gravitee.am.repository.mongodb.management.internal.model;
 public class ApplicationSettingsMongo {
 
     private ApplicationOAuthSettingsMongo oauth;
+    private ApplicationSAMLSettingsMongo saml;
     private AccountSettingsMongo account;
     private LoginSettingsMongo login;
     private ApplicationAdvancedSettingsMongo advanced;
@@ -34,6 +35,14 @@ public class ApplicationSettingsMongo {
 
     public void setOauth(ApplicationOAuthSettingsMongo oauth) {
         this.oauth = oauth;
+    }
+
+    public ApplicationSAMLSettingsMongo getSaml() {
+        return saml;
+    }
+
+    public void setSaml(ApplicationSAMLSettingsMongo saml) {
+        this.saml = saml;
     }
 
     public AccountSettingsMongo getAccount() {

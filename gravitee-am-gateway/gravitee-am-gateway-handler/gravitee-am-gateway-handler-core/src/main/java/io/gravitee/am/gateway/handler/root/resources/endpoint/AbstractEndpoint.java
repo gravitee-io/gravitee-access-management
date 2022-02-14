@@ -15,12 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -30,19 +34,29 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public abstract class AbstractEndpoint {
 
     private final TemplateEngine templateEngine;
 
+    protected AbstractEndpoint() {
+        templateEngine = null;
+    }
+
     protected AbstractEndpoint(TemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
     }
 
-    public abstract String getTemplateSuffix();
+    public String getTemplateSuffix() {
+        throw new NotImplementedException("No need to render a template");
+    }
 
     protected final String getTemplateFileName(Client client) {
         return getTemplateSuffix() +
@@ -67,5 +81,11 @@ public abstract class AbstractEndpoint {
 
     protected void renderPage(Map<String, Object> data, Client client, Handler<AsyncResult<Buffer>> handler) {
         templateEngine.render(data, getTemplateFileName(client), handler);
+    }
+
+    protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {
+        return context.session().get(ConstantKeys.RETURN_URL_KEY) != null ?
+                context.session().get(ConstantKeys.RETURN_URL_KEY) :
+                UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
     }
 }

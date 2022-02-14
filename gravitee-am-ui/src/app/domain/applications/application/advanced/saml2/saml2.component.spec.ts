@@ -15,21 +15,21 @@
  */
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
-import { ApplicationOAuth2Component } from './oauth2.component';
+import { ApplicationSaml2Component } from './saml2.component';
 
-describe('ApplicationOAuth2Component', () => {
-  let component: ApplicationOAuth2Component;
-  let fixture: ComponentFixture<ApplicationOAuth2Component>;
+describe('ApplicationSaml2Component', () => {
+  let component: ApplicationSaml2Component;
+  let fixture: ComponentFixture<ApplicationSaml2Component>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationOAuth2Component ]
+      declarations: [ ApplicationSaml2Component ]
     })
       .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ApplicationOAuth2Component);
+    fixture = TestBed.createComponent(ApplicationSaml2Component);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

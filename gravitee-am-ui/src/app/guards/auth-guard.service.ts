@@ -77,6 +77,10 @@ export class AuthGuard implements CanActivate {
     if (!path.data) {
       return true;
     }
+    // display SAML menu on the app settings only if the domain has enable the SAML Protocol
+    if (path.data.protocol && path.data.protocol == "SAML" && (!route.data['domain'].saml || !route.data['domain'].saml.enabled)) {
+      return false;
+    }
     // if resource (application) should not display a settings page, continue
     if (path.data.types && path.data.types.only && path.data.types.only.length > 0) {
       const app = route.parent.data['application'];

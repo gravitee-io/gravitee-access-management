@@ -59,7 +59,7 @@ import java.util.List;
 public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDomainHandler> {
 
     private static final Logger logger = LoggerFactory.getLogger(VertxSecurityDomainHandler.class);
-    private static final List<String> PROTOCOLS = Arrays.asList("discovery", "openid-connect", "scim", "users", "saml2", "account");
+    private static final List<String> PROTOCOLS = Arrays.asList("discovery", "openid-connect", "scim", "users", "saml2", "account", "saml2-idp");
     private List<ProtocolProvider> protocolProviders = new ArrayList<>();
 
     @Autowired
@@ -130,9 +130,11 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         PROTOCOLS.forEach(protocol -> {
             try {
                 ProtocolProvider protocolProvider = protocolPluginManager.create(protocol, applicationContext);
-                protocolProvider.start();
-                protocolProviders.add(protocolProvider);
-                logger.info("\t Protocol {} loaded", protocol);
+                if (protocolProvider != null) {
+                    protocolProvider.start();
+                    protocolProviders.add(protocolProvider);
+                    logger.info("\t Protocol {} loaded", protocol);
+                }
             } catch (Exception e) {
                 logger.error("\t An error occurs while loading {} protocol", protocol, e);
             }

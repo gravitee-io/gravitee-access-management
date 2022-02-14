@@ -198,9 +198,9 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
             // save enrolled factor if needed and redirect to the original url
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-            routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
+            final String returnURL = getReturnUrl(routingContext, queryParams);
 
+            routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
             if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {

@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.service.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
@@ -40,9 +39,6 @@ import java.util.Set;
  */
 public class PatchDomain {
 
-    public PatchDomain() {
-    }
-
     private Optional<String> name;
     private Optional<String> description;
     private Optional<Boolean> enabled;
@@ -50,7 +46,6 @@ public class PatchDomain {
     private Optional<String> path;
     private Optional<Boolean> vhostMode;
     private Optional<List<VirtualHost>> vhosts;
-    @JsonProperty("oidc")
     private Optional<PatchOIDCSettings> oidc;
     private Optional<UMASettings> uma;
     private Optional<SCIMSettings> scim;
@@ -61,6 +56,9 @@ public class PatchDomain {
     private Optional<SelfServiceAccountManagementSettings> selfServiceAccountManagementSettings;
     private Optional<Set<String>> tags;
     private Optional<Boolean> master;
+    private Optional<PatchSAMLSettings> saml;
+
+    public PatchDomain() {}
 
     public Optional<String> getName() {
         return name;
@@ -174,6 +172,14 @@ public class PatchDomain {
         this.master = master;
     }
 
+    public Optional<PatchSAMLSettings> getSaml() {
+        return saml;
+    }
+
+    public void setSaml(Optional<PatchSAMLSettings> saml) {
+        this.saml = saml;
+    }
+
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
         Domain toPatch = new Domain(_toPatch);
@@ -202,8 +208,13 @@ public class PatchDomain {
                 toPatch.setOidc(OIDCSettings.defaultSettings());
             }
         }
+
         if (this.passwordSettings != null) {
             this.passwordSettings.ifPresent(ps -> toPatch.setPasswordSettings(ps.patch(toPatch.getPasswordSettings())));
+        }
+
+        if (this.getSaml() != null && this.getSaml().isPresent()) {
+            toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
         }
 
         return toPatch;
@@ -244,6 +255,10 @@ public class PatchDomain {
 
         if (oidc != null && oidc.isPresent()) {
             requiredPermissions.addAll(oidc.get().getRequiredPermissions());
+        }
+
+        if (saml != null && saml.isPresent()) {
+            requiredPermissions.addAll(saml.get().getRequiredPermissions());
         }
 
         if (uma != null && uma.isPresent()) {

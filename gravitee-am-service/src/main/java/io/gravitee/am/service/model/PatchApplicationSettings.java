@@ -34,6 +34,7 @@ public class PatchApplicationSettings {
     private Optional<AccountSettings> account;
     private Optional<LoginSettings> login;
     private Optional<PatchApplicationOAuthSettings> oauth;
+    private Optional<PatchApplicationSAMLSettings> saml;
     private Optional<PatchApplicationAdvancedSettings> advanced;
     private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<PatchMFASettings> mfa;
@@ -60,6 +61,14 @@ public class PatchApplicationSettings {
 
     public void setOauth(Optional<PatchApplicationOAuthSettings> oauth) {
         this.oauth = oauth;
+    }
+
+    public Optional<PatchApplicationSAMLSettings> getSaml() {
+        return saml;
+    }
+
+    public void setSaml(Optional<PatchApplicationSAMLSettings> saml) {
+        this.saml = saml;
     }
 
     public Optional<PatchApplicationAdvancedSettings> getAdvanced() {
@@ -105,6 +114,9 @@ public class PatchApplicationSettings {
         if (this.getMfa() != null && this.getMfa().isPresent()) {
             toPatch.setMfa(this.getMfa().get().patch(toPatch.getMfa()));
         }
+        if (this.getSaml() != null && this.getSaml().isPresent()) {
+            toPatch.setSaml(this.getSaml().get().patch(toPatch.getSaml()));
+        }
         return toPatch;
     }
 
@@ -122,6 +134,10 @@ public class PatchApplicationSettings {
 
         if (oauth != null && oauth.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_OPENID);
+        }
+
+        if (saml != null && saml.isPresent()) {
+            requiredPermissions.add(Permission.APPLICATION_SAML);
         }
 
         return requiredPermissions;

@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -100,7 +99,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             final HttpServerRequest request = routingContext.request();
             if (Boolean.parseBoolean(request.getParam(SKIP_WEBAUTHN_PARAM_KEY))) {
                 queryParams.remove(SKIP_WEBAUTHN_PARAM_KEY);
-                String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+                final String returnURL = getReturnUrl(routingContext, queryParams);
                 routingContext.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);
                 // Now redirect back to the original url
                 doRedirect(routingContext.response(), returnURL);
@@ -155,7 +154,7 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
             }
 
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-            final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+            final String returnURL = getReturnUrl(ctx, queryParams);
             final Boolean skipEnrollment = webauthnRegister.getBoolean("skip_user_webauthn_registration", false);
             if (skipEnrollment) {
                 ctx.session().put(ConstantKeys.WEBAUTHN_SKIPPED_KEY, true);

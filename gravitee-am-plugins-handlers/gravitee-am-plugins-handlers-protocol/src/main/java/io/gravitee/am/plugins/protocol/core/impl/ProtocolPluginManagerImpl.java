@@ -92,8 +92,8 @@ public class ProtocolPluginManagerImpl implements ProtocolPluginManager {
                 return null;
             }
         } else {
-            logger.error("No protocol provider is registered for type {}", type);
-            throw new IllegalStateException("No protocol provider is registered for type " + type);
+            logger.info("No protocol provider is registered for type {}", type);
+            return null;
         }
     }
 

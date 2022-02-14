@@ -43,6 +43,7 @@ public class JdbcDomain {
     private boolean vhostMode = false;
     private String oidc;
     private String uma;
+    private String saml;
     @Column("login_settings")
     private String loginSettings;
     @Column("web_authn_settings")
@@ -146,6 +147,14 @@ public class JdbcDomain {
 
     public void setUma(String uma) {
         this.uma = uma;
+    }
+
+    public String getSaml() {
+        return saml;
+    }
+
+    public void setSaml(String saml) {
+        this.saml = saml;
     }
 
     public String getLoginSettings() {

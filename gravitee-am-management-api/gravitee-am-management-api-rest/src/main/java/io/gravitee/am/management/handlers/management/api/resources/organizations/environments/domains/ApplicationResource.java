@@ -325,6 +325,10 @@ public class ApplicationResource extends AbstractResource {
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
                 filteredApplicationSettings.setOauth(settings.getOauth());
             }
+
+            if (hasAnyPermission(userPermissions, Permission.APPLICATION_SAML, Acl.READ)) {
+                filteredApplicationSettings.setSaml(settings.getSaml());
+            }
         }
 
         return filteredApplication;

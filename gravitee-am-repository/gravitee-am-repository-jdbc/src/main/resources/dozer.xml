@@ -54,6 +54,10 @@
             <a>selfServiceAccountManagementSettings</a>
             <b>selfServiceAccountManagementSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.SAMLSettingsConverter">
+            <a>saml</a>
+            <b>saml</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">
@@ -222,7 +226,7 @@
             <a-hint>java.util.Map</a-hint>
         </field>
     </mapping>
-    
+
     <mapping map-null="false">
         <class-a>io.gravitee.am.model.AuthenticationFlowContext</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcAuthenticationFlowContext</class-b>

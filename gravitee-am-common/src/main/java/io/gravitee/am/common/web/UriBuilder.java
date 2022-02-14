@@ -261,6 +261,21 @@ public class UriBuilder {
         return sb.toString();
     }
 
+    public String buildRootUrl() {
+        final StringBuilder sb = new StringBuilder();
+        if (this.scheme != null) {
+            sb.append(this.scheme).append(':');
+        }
+        if (this.host != null) {
+            sb.append("//");
+            sb.append(this.host);
+            if (this.port >= 0) {
+                sb.append(":").append(this.port);
+            }
+        }
+        return sb.toString();
+    }
+
     public static boolean isHttp(String scheme) {
         return HTTP_PATTERN.matcher(scheme.toLowerCase()).matches();
     }

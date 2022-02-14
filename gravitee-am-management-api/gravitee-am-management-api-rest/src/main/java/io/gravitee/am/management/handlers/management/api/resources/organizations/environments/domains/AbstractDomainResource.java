@@ -82,6 +82,10 @@ public class AbstractDomainResource extends AbstractResource {
             filteredDomain.setOidc(domain.getOidc());
         }
 
+        if (hasAnyPermission(userPermissions, Permission.DOMAIN_SAML, Acl.READ)) {
+            filteredDomain.setSaml(domain.getSaml());
+        }
+
         if (hasAnyPermission(userPermissions, Permission.DOMAIN_UMA, Acl.READ)) {
             filteredDomain.setUma(domain.getUma());
         }

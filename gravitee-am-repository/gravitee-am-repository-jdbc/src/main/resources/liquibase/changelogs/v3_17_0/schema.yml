@@ -19,3 +19,35 @@ databaseChangeLog:
             tableName: flow_steps
             columns:
               - column: { name: condition, type: clob, constraints: { nullable: true } }
+
+        ###########
+        # domains #
+        ###########
+        - addColumn:
+            tableName: domains
+            columns:
+              - column: { name: saml, type: clob, constraints: { nullable: true } }
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DOMAIN_SAML}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DOMAIN_SAML', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DOMAIN_SAML', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_PRIMARY_OWNER', 'ORGANIZATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER', 'ENVIRONMENT_OWNER', 'DOMAIN_PRIMARY_OWNER', 'DOMAIN_OWNER');"
+
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{APPLICATION_SAML}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('APPLICATION_PRIMARY_OWNER', 'APPLICATION_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.APPLICATION_SAML', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('APPLICATION_PRIMARY_OWNER', 'APPLICATION_OWNER', 'ENVIRONMENT_PRIMARY_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.APPLICATION_SAML', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('APPLICATION_PRIMARY_OWNER', 'APPLICATION_OWNER');"

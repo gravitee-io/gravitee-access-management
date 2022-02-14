@@ -31,10 +31,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
-import io.gravitee.am.model.application.ApplicationType;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -58,6 +55,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -244,6 +242,23 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
+
+        // apply default SAML 2.0 settings
+        if (ApplicationType.SERVICE != application.getType()) {
+            if (!ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
+                try {
+                    final String url = newApplication.getRedirectUris().get(0);
+                    ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
+                    samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
+                    samlSettings.setAttributeConsumeServiceUrl(url);
+                    applicationSettings.setSaml(samlSettings);
+                } catch (Exception ex) {
+                    // silent exception
+                    // redirect_uri can use custom URI (especially for mobile deep links)
+                    LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
+                }
+            }
+        }
         application.setSettings(applicationSettings);
 
         // apply templating

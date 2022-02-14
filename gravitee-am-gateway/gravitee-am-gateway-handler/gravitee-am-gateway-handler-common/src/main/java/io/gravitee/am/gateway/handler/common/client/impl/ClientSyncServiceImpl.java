@@ -53,10 +53,24 @@ public class ClientSyncServiceImpl implements ClientSyncService {
     }
 
     @Override
+    public Maybe<Client> findByEntityId(String entityId) {
+        return findByDomainAndEntityId(domain.getId(), entityId);
+    }
+
+    @Override
     public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
         final Optional<Client> optClient = clientManager.entities()
                 .stream()
                 .filter(client -> !client.isTemplate() && client.getDomain().equals(domain) && client.getClientId().equals(clientId))
+                .findFirst();
+        return optClient.isPresent() ? Maybe.just(optClient.get()) : Maybe.empty();
+    }
+
+    @Override
+    public Maybe<Client> findByDomainAndEntityId(String domain, String entityId) {
+        final Optional<Client> optClient = clientManager.entities()
+                .stream()
+                .filter(client -> !client.isTemplate() && domain.equals(client.getDomain()) && entityId.equals(client.getEntityId()))
                 .findFirst();
         return optClient.isPresent() ? Maybe.just(optClient.get()) : Maybe.empty();
     }

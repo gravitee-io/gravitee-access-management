@@ -213,6 +213,15 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean backchannelUserCodeParameter;
 
+    // ----------- SAML Settings ----------------
+    private String entityId;
+
+    private String attributeConsumeServiceUrl;
+
+    private String singleLogoutServiceUrl;
+
+    private String samlCertificate;
+
     public Client() {
     }
 
@@ -291,6 +300,10 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.backchannelClientNotificationEndpoint = other.backchannelClientNotificationEndpoint;
         this.backchannelAuthRequestSignAlg = other.backchannelAuthRequestSignAlg;
         this.backchannelUserCodeParameter = other.backchannelUserCodeParameter;
+        this.entityId = other.entityId;
+        this.attributeConsumeServiceUrl = other.attributeConsumeServiceUrl;
+        this.singleLogoutServiceUrl = other.singleLogoutServiceUrl;
+        this.samlCertificate = other.samlCertificate;
     }
 
     public String getId() {
@@ -928,6 +941,38 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setIdentityProviders(SortedSet<ApplicationIdentityProvider> identityProviders) {
         this.identityProviders = identityProviders;
+    }
+
+    public String getEntityId() {
+        return entityId;
+    }
+
+    public void setEntityId(String entityId) {
+        this.entityId = entityId;
+    }
+
+    public String getAttributeConsumeServiceUrl() {
+        return attributeConsumeServiceUrl;
+    }
+
+    public void setAttributeConsumeServiceUrl(String attributeConsumeServiceUrl) {
+        this.attributeConsumeServiceUrl = attributeConsumeServiceUrl;
+    }
+
+    public String getSingleLogoutServiceUrl() {
+        return singleLogoutServiceUrl;
+    }
+
+    public void setSingleLogoutServiceUrl(String singleLogoutServiceUrl) {
+        this.singleLogoutServiceUrl = singleLogoutServiceUrl;
+    }
+
+    public String getSamlCertificate() {
+        return samlCertificate;
+    }
+
+    public void setSamlCertificate(String samlCertificate) {
+        this.samlCertificate = samlCertificate;
     }
 
     @Override

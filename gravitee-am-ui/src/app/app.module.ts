@@ -54,7 +54,7 @@ import {DragDropModule} from '@angular/cdk/drag-drop';
 import {FlexLayoutModule} from '@angular/flex-layout';
 import {NgxDatatableModule} from '@swimlane/ngx-datatable';
 import {CodemirrorModule} from 'ng2-codemirror';
-import {MaterialDesignFrameworkModule, MaterialSelectComponent} from '@ajsf/material';
+import {MaterialDesignFrameworkModule} from '@ajsf/material';
 import {HighchartsChartModule} from 'highcharts-angular';
 import {ClipboardModule} from 'ngx-clipboard';
 import 'codemirror';
@@ -272,6 +272,7 @@ import {ApplicationEmailComponent} from './domain/applications/application/desig
 import {ApplicationAdvancedComponent} from './domain/applications/application/advanced/advanced.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
 import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {ApplicationSaml2Component} from './domain/applications/application/advanced/saml2/saml2.component';
 import {ApplicationScopesComponent, AddScopeComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import {ApplicationTokensComponent, ClaimsInfoDialog, CreateClaimComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
@@ -403,6 +404,7 @@ import { DeviceNotifierCreationStep2Component } from './domain/settings/openid/c
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/form/form.component';
 import { UserNotificationsService } from './services/user-notifications.service';
+import { Saml2Component } from './domain/settings/saml2/saml2.component';
 
 @NgModule({
   declarations: [
@@ -567,6 +569,7 @@ import { UserNotificationsService } from './services/user-notifications.service'
     ApplicationAdvancedComponent,
     ApplicationAccountSettingsComponent,
     ApplicationOAuth2Component,
+    ApplicationSaml2Component,
     ApplicationScopesComponent,
     AddScopeComponent,
     ApplicationTokensComponent,
@@ -602,6 +605,7 @@ import { UserNotificationsService } from './services/user-notifications.service'
     OIDCProfileComponent,
     CibaComponent,
     CibaSettingsComponent,
+    Saml2Component,
     DeviceNotifiersComponent,
     DeviceNotifierComponent,
     DeviceNotifierFormComponent,

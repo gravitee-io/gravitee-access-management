@@ -138,6 +138,7 @@ import {PasswordPolicyComponent} from './domain/applications/application/advance
 import {DomainPasswordPolicyComponent} from './domain/settings/password-policy/domain-password-policy.component';
 import {ApplicationAccountSettingsComponent} from './domain/applications/application/advanced/account/account.component';
 import {ApplicationOAuth2Component} from './domain/applications/application/advanced/oauth2/oauth2.component';
+import {ApplicationSaml2Component} from './domain/applications/application/advanced/saml2/saml2.component';
 import {ApplicationScopesComponent} from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import {ApplicationTokensComponent} from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import {ApplicationGrantFlowsComponent} from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
@@ -222,6 +223,7 @@ import {UserDevicesComponent} from "./domain/settings/users/user/devices/devices
 import {UserDevicesResolver} from "./resolvers/user-devices.resolver";
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
+import { Saml2Component } from './domain/settings/saml2/saml2.component';
 import { DeviceNotifiersComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifiers.component';
 import { DeviceNotifiersCreationComponent } from './domain/settings/openid/ciba/device-notifiers/create/device-notifiers-creation.component';
 import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
@@ -1067,6 +1069,27 @@ export const routes: Routes = [
                                     }
                                   }
                                 ]
+                              },
+                              {
+                                path: 'saml2',
+                                component: ApplicationSaml2Component,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'SAML 2.0',
+                                    section: 'Settings'
+                                  },
+                                  perms: {
+                                    only: ['application_saml_read']
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER']
+                                  },
+                                  protocol: 'SAML'
+                                },
+                                resolve: {
+                                  certificates: CertificatesResolver
+                                }
                               },
                               {
                                 path: 'login',
@@ -2271,6 +2294,20 @@ export const routes: Routes = [
                         ]
                       },
                       {
+                        path: 'uma',
+                        component: UmaComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'UMA',
+                            section: 'OAuth 2.0'
+                          },
+                          perms: {
+                            only: ['domain_uma_read']
+                          }
+                        }
+                      },
+                      {
                         path: 'dcr',
                         component: DomainSettingsOpenidClientRegistrationComponent,
                         canActivate: [AuthGuard],
@@ -2362,17 +2399,20 @@ export const routes: Routes = [
                         ]
                       },
                       {
-                        path: 'uma',
-                        component: UmaComponent,
+                        path: 'saml2',
+                        component: Saml2Component,
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
-                            label: 'UMA',
-                            section: 'User-Managed Access'
+                            label: 'SAML 2.0',
+                            section: 'SAML 2.0'
                           },
                           perms: {
-                            only: ['domain_uma_read']
+                            only: ['domain_saml_read']
                           }
+                        },
+                        resolve: {
+                          certificates: CertificatesResolver
                         }
                       }
                     ]
