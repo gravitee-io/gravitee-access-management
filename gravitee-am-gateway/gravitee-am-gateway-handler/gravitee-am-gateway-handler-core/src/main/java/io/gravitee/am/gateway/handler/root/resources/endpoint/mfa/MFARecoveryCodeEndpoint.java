@@ -99,9 +99,7 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
                         .subscribe(
                                 () -> {
                                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-                                    final String returnUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                                            routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-
+                                    final String returnUrl = getReturnUrl(routingContext, queryParams);
                                     doRedirect(routingContext, returnUrl);
                                 },
                                 routingContext::fail

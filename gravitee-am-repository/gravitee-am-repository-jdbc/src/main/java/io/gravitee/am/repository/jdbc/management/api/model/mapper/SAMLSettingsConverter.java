@@ -13,34 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.common.client;
+package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 
-import io.gravitee.am.model.oidc.Client;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
-
-import java.util.List;
+import com.github.dozermapper.core.DozerConverter;
+import io.gravitee.am.model.SAMLSettings;
+import io.gravitee.am.repository.jdbc.common.JSONMapper;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ClientSyncService {
+public class SAMLSettingsConverter extends DozerConverter<SAMLSettings, String> {
 
-    Maybe<Client> findById(String id);
+    public SAMLSettingsConverter() {
+        super(SAMLSettings.class, String.class);
+    }
 
-    Maybe<Client> findByClientId(String clientId);
+    @Override
+    public String convertTo(SAMLSettings bean, String s) {
+        return JSONMapper.toJson(bean);
+    }
 
-    Maybe<Client> findByEntityId(String entityId);
-
-    Maybe<Client> findByDomainAndClientId(String domain, String clientId);
-
-    Maybe<Client> findByDomainAndEntityId(String domain, String entityId);
-
-    Single<List<Client>> findTemplates();
-
-    Client addDynamicClientRegistred(Client client);
-
-    Client removeDynamicClientRegistred(Client client);
+    @Override
+    public SAMLSettings convertFrom(String s, SAMLSettings bean) {
+        return JSONMapper.toBean(s, SAMLSettings.class);
+    }
 }

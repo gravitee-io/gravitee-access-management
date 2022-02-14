@@ -66,6 +66,8 @@ public class DomainMongo extends Auditable {
 
     private SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings;
 
+    private SAMLSettingsMongo saml;
+
     private Set<String> tags;
 
     private ReferenceType referenceType;
@@ -242,6 +244,14 @@ public class DomainMongo extends Auditable {
 
     public void setSelfServiceAccountManagementSettings(SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings) {
         this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
+    }
+
+    public SAMLSettingsMongo getSaml() {
+        return saml;
+    }
+
+    public void setSaml(SAMLSettingsMongo saml) {
+        this.saml = saml;
     }
 
     public boolean isMaster() {

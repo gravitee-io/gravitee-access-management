@@ -245,6 +245,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         ApplicationSettingsMongo applicationSettingsMongo = new ApplicationSettingsMongo();
         applicationSettingsMongo.setOauth(convert(other.getOauth()));
+        applicationSettingsMongo.setSaml(convert(other.getSaml()));
         applicationSettingsMongo.setAccount(convert(other.getAccount()));
         applicationSettingsMongo.setLogin(convert(other.getLogin()));
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
@@ -260,6 +261,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         ApplicationSettings applicationSettings = new ApplicationSettings();
         applicationSettings.setOauth(convert(other.getOauth()));
+        applicationSettings.setSaml(convert(other.getSaml()));
         applicationSettings.setAccount(convert(other.getAccount()));
         applicationSettings.setLogin(convert(other.getLogin()));
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
@@ -424,6 +426,30 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         applicationOAuthSettings.setRequireParRequest(other.isRequireParRequest());
         return applicationOAuthSettings;
+    }
+
+    private static ApplicationSAMLSettingsMongo convert(ApplicationSAMLSettings other) {
+        if (other == null) {
+            return null;
+        }
+        ApplicationSAMLSettingsMongo applicationSAMLSettingsMongo = new ApplicationSAMLSettingsMongo();
+        applicationSAMLSettingsMongo.setEntityId(other.getEntityId());
+        applicationSAMLSettingsMongo.setAttributeConsumeServiceUrl(other.getAttributeConsumeServiceUrl());
+        applicationSAMLSettingsMongo.setSingleLogoutServiceUrl(other.getSingleLogoutServiceUrl());
+        applicationSAMLSettingsMongo.setCertificate(other.getCertificate());
+        return applicationSAMLSettingsMongo;
+    }
+
+    private static ApplicationSAMLSettings convert(ApplicationSAMLSettingsMongo other) {
+        if (other == null) {
+            return null;
+        }
+        ApplicationSAMLSettings applicationSAMLSettings = new ApplicationSAMLSettings();
+        applicationSAMLSettings.setEntityId(other.getEntityId());
+        applicationSAMLSettings.setAttributeConsumeServiceUrl(other.getAttributeConsumeServiceUrl());
+        applicationSAMLSettings.setSingleLogoutServiceUrl(other.getSingleLogoutServiceUrl());
+        applicationSAMLSettings.setCertificate(other.getCertificate());
+        return applicationSAMLSettings;
     }
 
     private static ApplicationScopeSettings convert(ApplicationScopeSettingsMongo other) {

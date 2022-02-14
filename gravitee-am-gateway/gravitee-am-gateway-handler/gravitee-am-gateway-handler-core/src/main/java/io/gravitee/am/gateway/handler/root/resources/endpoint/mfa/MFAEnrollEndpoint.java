@@ -49,7 +49,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -205,7 +204,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
 
     private void redirectToAuthorize(RoutingContext routingContext) {
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnURL = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+        final String returnURL = getReturnUrl(routingContext, queryParams);
         doRedirect(routingContext.response(), returnURL);
     }
 

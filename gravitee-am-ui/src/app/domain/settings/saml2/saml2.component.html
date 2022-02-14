@@ -1,0 +1,80 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>SAML 2.0</h1>
+  <blockquote class="warning">
+    <p>
+      <mat-icon>warning_outline</mat-icon> You need to install the <b> SAML 2.0 protocol </b> plugin to set AM as a SAML 2.0 IdP server.
+    </p>
+  </blockquote>
+  <div>
+    <div fxFlex="70">
+      <form #samlSettingsForm="ngForm" (ngSubmit)="save()" (keydown.enter)="false">
+        <div class="gv-form-section" fxLayout="column">
+          <mat-slide-toggle
+            (change)="enableSAML2IdP($event)"
+            [checked]="isSAML2IdPEnabled()" [disabled]="!editMode">
+            SAML 2.0 IdP support
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Enable support for SAML 2.0 IdP protocol.</mat-hint>
+        </div>
+        <div *ngIf="domainSamlSettings.enabled">
+          <div class="gv-form-section" fxLayout="column">
+            <mat-form-field appearance="outline" floatLabel="always">
+              <mat-label>Entity ID</mat-label>
+              <input matInput type="text" placeholder="Enter the Entity ID" name="entityId" [(ngModel)]="domainSamlSettings.entityId" required [disabled]="!editMode">
+              <mat-hint>URL or URN that uniquely identifies the IdP</mat-hint>
+            </mat-form-field>
+          </div>
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Certificate</h5>
+              <small>The IdP's base-64 encoded public key certificate, which is used by the SP to verify SAML authorization responses</small>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['domain_saml_update']">
+              <mat-select placeholder="Certificate" name="certificate" [(ngModel)]="domainSamlSettings.certificate" (selectionChange)="onChange($event)">
+                <mat-option><em>None</em></mat-option>
+                <mat-option *ngFor="let certificate of certificates" [value]="certificate.id">{{ certificate.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div *ngIf="certificatePublicKeys.length > 0">
+              <div *ngFor="let certificatePublicKey of certificatePublicKeys">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>{{certificatePublicKey.fmt}}</mat-label>
+                  <textarea rows="5" matInput placeholder="Certificate" name="certificate" [value]="certificatePublicKey.payload" disabled="true"></textarea>
+                  <button mat-icon-button matSuffix matTooltip="Copy to clipboard" ngxClipboard [cbContent]="certificatePublicKey.payload" (cbOnSuccess)="valueCopied('Certificate key copied to the clipboard')" (click)="$event.preventDefault();"><mat-icon>content_copy</mat-icon></button>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div fxLayout="row" *ngIf="editMode">
+          <button mat-raised-button color="primary" [disabled]="(!samlSettingsForm.valid || samlSettingsForm.pristine) && !formChanged" type="submit">SAVE</button>
+        </div>
+      </form>
+    </div>
+    <div class="gv-page-description" fxFlex>
+      <h3>SAML 2.0 ?</h3>
+      <div class="gv-page-description-content">
+        <p>The Security Assertion Markup Language (SAML) standard defines a framework for exchanging security information between online business partners.</p>
+      </div>
+    </div>
+  </div>
+</div>

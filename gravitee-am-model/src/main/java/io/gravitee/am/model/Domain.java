@@ -159,6 +159,11 @@ public class Domain implements Resource {
      */
     private SelfServiceAccountManagementSettings selfServiceAccountManagementSettings;
 
+    /**
+     * SAML 2.0 settings
+     */
+    private SAMLSettings saml;
+
     public Domain() {
     }
 
@@ -187,6 +192,7 @@ public class Domain implements Resource {
         this.accountSettings = other.accountSettings;
         this.passwordSettings = other.passwordSettings;
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
+        this.saml = other.saml;
     }
 
     @Override
@@ -380,6 +386,14 @@ public class Domain implements Resource {
 
     public void setSelfServiceAccountManagementSettings(SelfServiceAccountManagementSettings selfServiceAccountManagementSettings) {
         this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
+    }
+
+    public SAMLSettings getSaml() {
+        return saml;
+    }
+
+    public void setSaml(SAMLSettings saml) {
+        this.saml = saml;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

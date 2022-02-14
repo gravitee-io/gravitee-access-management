@@ -62,4 +62,8 @@ export class ApplicationEndpointsComponent implements OnInit {
   scimEnabled() {
     return this.domain.scim && this.domain.scim.enabled;
   }
+
+  samlEnabled() {
+    return this.domain.saml && this.domain.saml.enabled;
+  }
 }

@@ -21,7 +21,6 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -30,7 +29,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -45,8 +43,6 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -153,7 +149,7 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
 
                                     // Now redirect back to authorization endpoint.
                                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                    final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+                                    final String returnURL = getReturnUrl(ctx, queryParams);
                                     ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
                                 });
                             });
@@ -199,10 +195,5 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                         () -> handler.handle(Future.succeededFuture()),
                         error -> handler.handle(Future.failedFuture(error))
                 );
-    }
-
-    @Override
-    public String getTemplateSuffix() {
-        throw new NotImplementedException("No need to render a template");
     }
 }

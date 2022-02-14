@@ -21,10 +21,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.SelfServiceAccountManagementSettings;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
@@ -174,6 +171,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setAccountSettings(convert(domainMongo.getAccountSettings()));
         domain.setPasswordSettings(convert(domainMongo.getPasswordSettings()));
         domain.setSelfServiceAccountManagementSettings(convert(domainMongo.getSelfServiceAccountManagementSettings()));
+        domain.setSaml(convert(domainMongo.getSaml()));
         domain.setTags(domainMongo.getTags());
         domain.setReferenceType(domainMongo.getReferenceType());
         domain.setReferenceId(domainMongo.getReferenceId());
@@ -207,6 +205,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setAccountSettings(convert(domain.getAccountSettings()));
         domainMongo.setPasswordSettings(convert(domain.getPasswordSettings()));
         domainMongo.setSelfServiceAccountManagementSettings(convert(domain.getSelfServiceAccountManagementSettings()));
+        domainMongo.setSaml(convert(domain.getSaml()));
         domainMongo.setTags(domain.getTags());
         domainMongo.setReferenceType(domain.getReferenceType());
         domainMongo.setReferenceId(domain.getReferenceId());
@@ -467,5 +466,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static SelfServiceAccountManagementSettingsMongo convert(SelfServiceAccountManagementSettings selfAccountManagementSettings) {
         return SelfServiceAccountManagementSettingsMongo.convert(selfAccountManagementSettings);
+    }
+
+    private static SAMLSettings convert(SAMLSettingsMongo samlMongo) {
+        return samlMongo != null ? samlMongo.convert() : null;
+    }
+
+    private static SAMLSettingsMongo convert(SAMLSettings saml) {
+        return SAMLSettingsMongo.convert(saml);
     }
 }

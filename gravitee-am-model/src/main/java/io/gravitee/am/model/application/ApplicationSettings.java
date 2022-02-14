@@ -33,6 +33,10 @@ public class ApplicationSettings {
      */
     private ApplicationOAuthSettings oauth;
     /**
+     * SAML 2.0 Service Provider settings
+     */
+    private ApplicationSAMLSettings saml;
+    /**
      * User Account settings
      */
     private AccountSettings account;
@@ -60,6 +64,7 @@ public class ApplicationSettings {
 
     public ApplicationSettings(ApplicationSettings other) {
         this.oauth = other.oauth != null ? new ApplicationOAuthSettings(other.oauth) : null;
+        this.saml = other.saml != null ? new ApplicationSAMLSettings(other.saml) : null;
         this.account = other.account != null ? new AccountSettings(other.account) : null;
         this.login = other.login != null ? new LoginSettings(other.login) : null;
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
@@ -73,6 +78,14 @@ public class ApplicationSettings {
 
     public void setOauth(ApplicationOAuthSettings oauth) {
         this.oauth = oauth;
+    }
+
+    public ApplicationSAMLSettings getSaml() {
+        return saml;
+    }
+
+    public void setSaml(ApplicationSAMLSettings saml) {
+        this.saml = saml;
     }
 
     public AccountSettings getAccount() {
@@ -122,5 +135,6 @@ public class ApplicationSettings {
         Optional.ofNullable(this.oauth).ifPresent(o->o.copyTo(client));
         Optional.ofNullable(getAdvanced()).ifPresent(a->a.copyTo(client));
         client.setMfaSettings(this.mfa);
+        Optional.ofNullable(this.saml).ifPresent(s->s.copyTo(client));
     }
 }
