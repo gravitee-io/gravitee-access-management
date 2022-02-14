@@ -39,8 +39,6 @@ public class VertxServerConfiguration {
     public HttpServerConfiguration httpServerConfiguration(Environment environment) {
         return HttpServerConfiguration.builder().withEnvironment(environment)
                 .withDefaultPort(8092)
-                .withDefaultKeyStoreType(null)
-                .withDefaultTrustStoreType(null)
                 .withDefaultMaxFormAttributeSize(2048)
                 .build();
     }
