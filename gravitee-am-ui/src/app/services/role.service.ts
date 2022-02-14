@@ -43,7 +43,7 @@ export class RoleService {
   }
 
   findByDomain(domainId, page, size): Observable<any> {
-    return this.http.get<any>(this.rolesURL + domainId + "/roles?page=" + page + "&=size" + size);
+    return this.http.get<any>(this.rolesURL + domainId + "/roles?page=" + page + "&size=" + size);
   }
 
   search(searchTerm, domainId,page, size): Observable<any> {
