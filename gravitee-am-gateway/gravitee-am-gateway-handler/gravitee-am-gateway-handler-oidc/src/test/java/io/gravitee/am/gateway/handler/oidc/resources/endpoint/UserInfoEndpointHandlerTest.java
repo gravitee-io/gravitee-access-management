@@ -677,6 +677,7 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
                     assertTrue(((List) claims.get(CustomClaims.GROUPS)).containsAll(Arrays.asList("group-1", "group-2")));
                     assertTrue(claims.containsKey("custom-claim"));
                     assertTrue("gravitee".equals(claims.get("custom-claim")));
+                    assertTrue("user-id".equals(claims.get("sub")));
                 }),
                 HttpStatusCode.OK_200, "OK", null);
     }
