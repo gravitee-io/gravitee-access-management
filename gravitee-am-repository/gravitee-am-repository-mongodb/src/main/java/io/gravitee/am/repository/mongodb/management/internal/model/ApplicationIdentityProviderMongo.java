@@ -23,6 +23,8 @@ public class ApplicationIdentityProviderMongo {
 
     private String identity;
 
+    private String selectionRule;
+
     private int priority;
 
     public String getIdentity() {
@@ -31,6 +33,14 @@ public class ApplicationIdentityProviderMongo {
 
     public void setIdentity(String identity) {
         this.identity = identity;
+    }
+
+    public String getSelectionRule() {
+        return selectionRule;
+    }
+
+    public void setSelectionRule(String selectionRule) {
+        this.selectionRule = selectionRule;
     }
 
     public int getPriority() {

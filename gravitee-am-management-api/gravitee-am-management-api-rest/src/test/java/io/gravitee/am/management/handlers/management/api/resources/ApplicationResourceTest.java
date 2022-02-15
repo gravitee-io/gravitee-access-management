@@ -376,8 +376,14 @@ public class ApplicationResourceTest extends JerseySpringTest {
     }
 
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders() {
-        var patchAppIdp = new ApplicationIdentityProvider("id1", 1);
-        var patchAppIdp2 = new ApplicationIdentityProvider("id2", 2);
+        var patchAppIdp = new ApplicationIdentityProvider();
+        patchAppIdp.setPriority(1);
+        patchAppIdp.setIdentity("id1");
+        patchAppIdp.setSelectionRule("rule");
+        var patchAppIdp2 = new ApplicationIdentityProvider();
+        patchAppIdp2.setPriority(2);
+        patchAppIdp2.setIdentity("id2");
+        patchAppIdp2.setSelectionRule("rule");
         var set = new TreeSet<ApplicationIdentityProvider>();
         set.add(patchAppIdp);
         set.add(patchAppIdp2);

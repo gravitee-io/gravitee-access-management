@@ -32,14 +32,13 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Mockito.*;
@@ -69,22 +68,20 @@ public class FlowServiceTest {
     public void shouldFindAll_flowDoesNotHaveType() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Flow()));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(5);
+        testObserver.assertValueCount(6);
     }
 
     @Test
     public void shouldFindAll_returnAllWhenEmpty() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(5);
+        testObserver.assertValueCount(6);
     }
 
     @Test
@@ -93,11 +90,10 @@ public class FlowServiceTest {
         flow.setType(Type.ROOT);
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow));
         TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
-
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(5);
+        testObserver.assertValueCount(6);
     }
 
     @Test
@@ -203,7 +199,7 @@ public class FlowServiceTest {
         testObserver.assertNoErrors();
 
         verify(flowRepository, times(1)).findById(ReferenceType.DOMAIN, DOMAIN, ID);
-        verify(flowRepository, times(1)).update(argThat( flow -> flow.getPost().isEmpty() && !flow.getPre().isEmpty()));
+        verify(flowRepository, times(1)).update(argThat(flow -> flow.getPost().isEmpty() && !flow.getPre().isEmpty()));
         verify(eventService, times(1)).create(any());
     }
 
@@ -224,7 +220,7 @@ public class FlowServiceTest {
 
     @Test
     public void shouldUpdate_flowNotFound() {
-        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN,"my-flow")).thenReturn(Maybe.empty());
+        when(flowRepository.findById(ReferenceType.DOMAIN, DOMAIN, "my-flow")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
         flowService.update(ReferenceType.DOMAIN, DOMAIN, "my-flow", new Flow()).subscribe(testObserver);

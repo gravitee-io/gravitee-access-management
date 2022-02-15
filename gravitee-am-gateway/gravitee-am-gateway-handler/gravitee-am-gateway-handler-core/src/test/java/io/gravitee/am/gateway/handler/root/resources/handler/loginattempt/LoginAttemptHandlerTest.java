@@ -33,10 +33,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.UUID;
+import java.util.*;
 
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static org.mockito.ArgumentMatchers.any;
@@ -132,7 +129,8 @@ public class LoginAttemptHandlerTest {
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
         var set = new TreeSet<ApplicationIdentityProvider>();
         Arrays.stream(identities).forEach(identity -> {
-            var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+            var patchAppIdp = new ApplicationIdentityProvider();
+            patchAppIdp.setIdentity(identity);
             set.add(patchAppIdp);
         });
         return set;

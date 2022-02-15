@@ -18,9 +18,11 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.Maybe;
@@ -70,6 +72,9 @@ public class SocialAuthenticationProviderTest {
     @Mock
     private EventManager eventManager;
 
+    @Mock
+    private IdentityProviderManager identityProviderManager;
+
     @Test
     public void shouldAuthenticateUser() throws Exception {
         JsonObject credentials = new JsonObject();
@@ -82,8 +87,11 @@ public class SocialAuthenticationProviderTest {
 
         Client client = new Client();
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(null);
 
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
@@ -118,8 +126,11 @@ public class SocialAuthenticationProviderTest {
         Client client = new Client();
         client.setSingleSignOut(true);
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(null);
 
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
@@ -156,8 +167,11 @@ public class SocialAuthenticationProviderTest {
 
         Client client = new Client();
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(null);
 
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);
@@ -196,8 +210,11 @@ public class SocialAuthenticationProviderTest {
         Client client = new Client();
         client.setSingleSignOut(true);
 
-        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(null);
 
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
         when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
         when(routingContext.get("client")).thenReturn(client);
         when(routingContext.get("provider")).thenReturn(authenticationProvider);

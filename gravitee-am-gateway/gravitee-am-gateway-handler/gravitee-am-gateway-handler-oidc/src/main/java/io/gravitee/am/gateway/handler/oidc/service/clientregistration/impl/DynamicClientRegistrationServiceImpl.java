@@ -240,9 +240,12 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
      * @return
      */
     private Single<Client> applyDefaultIdentityProvider(Client client) {
-        return identityProviderService.findByDomain(client.getDomain()).firstElement()
+        return identityProviderService.findByDomain(client.getDomain())
+                .firstElement()
                 .map(identityProvider -> {
-                    var appIdp = new ApplicationIdentityProvider(identityProvider.getId(), -1);
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(identityProvider.getId());
+                    appIdp.setPriority(-1);
                     client.setIdentityProviders(new TreeSet<>(Set.of(appIdp)));
                     return client;
                 }).defaultIfEmpty(client).toSingle();

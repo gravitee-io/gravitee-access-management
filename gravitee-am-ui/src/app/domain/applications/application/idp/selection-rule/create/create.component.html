@@ -16,29 +16,28 @@
 
 -->
 <h5 matDialogTitle>
-  Attribute mappings
+  Identifier-First login rule
 </h5>
 <mat-dialog-content>
   <form #attributeForm="ngForm">
     <div>
-      <mat-form-field appearance="outline">
-        <input matInput name="key" placeholder="User profile attribute" required autofocus ngModel/>
-      </mat-form-field>
+      <p>
+        When authenticating, if this rule matches, this identity provider will be chosen for redirection.
+      </p>
     </div>
     <div>
       <gv-expression-language name="value"
-                              placeholder="Raw attribute. Support EL."
+                              placeholder="Supports Expression Language"
                               ngDefaultControl
                               gvControl
-                              [ngModel]="rule"
+                              [ngModel]="selectionRule"
                               (keyup)="change($event)"
-                              required
                               inner-hint
                               rows="1"></gv-expression-language>
     </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-  <button type="button" mat-raised-button color="primary" (click)="dialogRef.close(attributeForm.value)" color="primary" [disabled]="attributeForm.invalid">Save</button>
+  <button type="button" [disabled]="data.readonly" mat-raised-button color="primary" (click)="dialogRef.close(attributeForm.value)" color="primary">Save</button>
   <button type="button" mat-button (click)="dialogRef.close()" class="dialog-cancel" style="margin-left: 20px;">Cancel</button>
 </mat-dialog-actions>

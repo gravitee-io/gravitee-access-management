@@ -35,10 +35,20 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import io.reactivex.*;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,7 +98,7 @@ public class FlowServiceImpl implements FlowService {
                 .sorted(getFlowComparator())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
-                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s", referenceType, referenceId), ex));
+                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find all flows for %s %s", referenceType, referenceId), ex));
                 });
     }
 

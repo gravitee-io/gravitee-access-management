@@ -9,7 +9,9 @@ databaseChangeLog:
         - addColumn:
             tableName: application_identities
             columns:
-              - column: { name: priority, type: integer, constraints: { nullable: false }, defaultValue: 0 }
+              - column: { name: selection_rule, type: clob, constraints: { nullable: true } }
+              - column: { name: priority, type: integer, constraints: { nullable: false }, defaultValue: -1 }
+
         ##############
         # flow_steps #
         ##############

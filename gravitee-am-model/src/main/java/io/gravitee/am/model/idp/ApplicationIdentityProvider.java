@@ -25,21 +25,23 @@ import java.util.Objects;
 public class ApplicationIdentityProvider implements Comparable<ApplicationIdentityProvider> {
 
     private String identity;
+    private String selectionRule;
     private int priority;
-
-    public ApplicationIdentityProvider() {}
-
-    public ApplicationIdentityProvider(String identity, int priority) {
-        this.identity = identity;
-        this.priority = priority;
-    }
 
     public String getIdentity() {
         return identity;
     }
 
+    public String getSelectionRule() {
+        return selectionRule;
+    }
+
     public void setIdentity(String identity) {
         this.identity = identity;
+    }
+
+    public void setSelectionRule(String selectionRule) {
+        this.selectionRule = selectionRule;
     }
 
     public int getPriority() {
@@ -55,12 +57,12 @@ public class ApplicationIdentityProvider implements Comparable<ApplicationIdenti
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ApplicationIdentityProvider that = (ApplicationIdentityProvider) o;
-        return priority == that.priority && Objects.equals(identity, that.identity);
+        return priority == that.priority && Objects.equals(identity, that.identity) && Objects.equals(selectionRule, that.selectionRule);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identity, priority);
+        return Objects.hash(identity, selectionRule, priority);
     }
 
     @Override
@@ -68,7 +70,6 @@ public class ApplicationIdentityProvider implements Comparable<ApplicationIdenti
         if (this.equals(o)) {
             return 0;
         }
-
         if (this.priority < 0 || this.priority >= o.priority) {
             return 1;
         }

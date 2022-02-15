@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+import static java.util.Objects.nonNull;
+
 /**
  * SSO Session Handler to check if the user stored in the HTTP session is still "valid" upon the incoming request
  *
@@ -177,7 +179,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
             }
 
             // both clients are sharing the same provider, continue
-            if (requestedClient.getClientId() != null &&
+            if (nonNull(requestedClient.getIdentityProviders()) &&
                     requestedClient.getIdentityProviders().stream()
                             .anyMatch(appIdp -> appIdp.getIdentity().equals(user.getSource()))) {
                 return Completable.complete();

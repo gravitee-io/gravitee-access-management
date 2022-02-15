@@ -29,6 +29,17 @@
             {{row.name}}
           </ng-template>
         </ngx-datatable-column>
+        <ngx-datatable-column *ngIf="!readonly" name="" [flexGrow]="1">
+          <ng-template let-row="row" class="mat-button-wrapper" ngx-datatable-cell-template>
+             <span (click)="add(row)" class="wrapper" style="cursor:pointer">
+               <span [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                     [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                     class="mat-icon notranslate material-icons mat-icon-no-color">
+                 {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+               </span>
+            </span>
+          </ng-template>
+        </ngx-datatable-column>
         <ngx-datatable-column name="" [flexGrow]="1">
           <ng-template let-row="row" ngx-datatable-cell-template>
              <span style="display: flex; align-items: center;">
@@ -64,6 +75,17 @@
         <ngx-datatable-column name="Social / Enterprise providers" [flexGrow]="4">
           <ng-template let-row="row" ngx-datatable-cell-template>
             {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column *ngIf="!readonly" name="" [flexGrow]="1">
+          <ng-template let-row="row" class="mat-button-wrapper" ngx-datatable-cell-template>
+             <span (click)="add(row)" class="wrapper" style="cursor:pointer">
+               <span [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
+                     [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+                     class="mat-icon notranslate material-icons mat-icon-no-color">
+                 {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+               </span>
+            </span>
           </ng-template>
         </ngx-datatable-column>
         <ngx-datatable-column name="" [flexGrow]="1">

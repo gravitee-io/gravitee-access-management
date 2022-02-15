@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.flow;
+db.getCollection("applications").find({}).forEach(function(app) {
+    if (app.identities && app.identities.length > 0) {
+        const identityProviders = app.identities.map(identity => {
+            return { "identity" : identity,  "priority" : -1 }
+        });
+        db.getCollection("applications").updateOne(
+            { "_id" : app._id },
+            { $set : { "identityProviders" : identityProviders } }
+        );
+    }
+});
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum Type {
-    ROOT,
-    LOGIN_IDENTIFIER,
-    LOGIN,
-    CONSENT,
-    REGISTER,
-    RESET_PASSWORD
-}

@@ -16,21 +16,29 @@
 package io.gravitee.am.service.model;
 
 /**
- * @author Islem TRIKI (islem.triki at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class PatchApplicationIdentityProvider {
 
     private String identity;
-
+    private String selectionRule;
     private int priority;
 
     public String getIdentity() {
         return identity;
     }
 
+    public String getSelectionRule() {
+        return selectionRule;
+    }
+
     public void setIdentity(String identity) {
         this.identity = identity;
+    }
+
+    public void setSelectionRule(String selectionRule) {
+        this.selectionRule = selectionRule;
     }
 
     public int getPriority() {

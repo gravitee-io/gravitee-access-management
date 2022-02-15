@@ -19,10 +19,12 @@ import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -45,10 +47,15 @@ import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackFailureHandler.class);
+    private final Domain domain;
 
     private AuthenticationFlowContextService authenticationFlowContextService;
 
-    public LoginCallbackFailureHandler(AuthenticationFlowContextService authenticationFlowContextService) {
+    public LoginCallbackFailureHandler(
+            Domain domain,
+            AuthenticationFlowContextService authenticationFlowContextService
+    ) {
+        this.domain = domain;
         this.authenticationFlowContextService = authenticationFlowContextService;
     }
 
@@ -99,7 +106,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             params.set(Parameters.CLIENT_ID, client.getClientId());
             params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
             params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
-            String uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path().replaceFirst("/callback", ""), params);
+            String uri = getUri(context, params);
             doRedirect(context.response(), uri);
         } catch (Exception ex) {
             logger.error("An error has occurred while redirecting to the login page", ex);
@@ -109,6 +116,14 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
                     .end();
         }
+    }
+
+    private String getUri(RoutingContext context, MultiMap params) {
+        Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+        final String replacement = loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
+        final String path = context.request().path().replaceFirst("/callback", replacement);
+        return UriBuilderRequest.resolveProxyRequest(context.request(), path, params);
     }
 
     private void doRedirect(HttpServerResponse response, String url) {

@@ -251,7 +251,8 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
     }
 
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String identity) {
-        var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+        var patchAppIdp = new ApplicationIdentityProvider();
+        patchAppIdp.setIdentity(identity);
         var set = new TreeSet<ApplicationIdentityProvider>();
         set.add(patchAppIdp);
         return set;

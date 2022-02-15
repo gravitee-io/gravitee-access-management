@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.authentication.*;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
@@ -28,7 +29,6 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -50,7 +50,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -86,26 +89,15 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
-        // Get identity providers associated to a client
-        // For each idp, try to authenticate a user
-        // Try to authenticate while the user can not be authenticated
-        // If user can't be authenticated, send an exception
-
-        // Skip external identity provider for authentication with credentials.
-        List<String> identities = client.getIdentityProviders() != null ?
-                client.getIdentityProviders()
-                        .stream()
-                        .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
-                        .filter(idp -> idp != null && !idp.isExternal())
-                        .map(IdentityProvider::getId)
-                        .collect(Collectors.toList()) : null;
-        if (identities == null || identities.isEmpty()) {
-            logger.error("No identity provider found for client : " + client.getClientId());
-            return Single.error(new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId()));
+        var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
+        if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
+            return Single.error(getInternalAuthenticationServiceException(client));
         }
 
-        return Observable.fromIterable(identities)
-                .concatMapMaybe(authProvider -> authenticate0(client, authentication.copy(), authProvider, preAuthenticated))
+        return Observable.fromIterable(applicationIdentityProviders)
+                .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
+                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
+                .concatMapMaybe(appIdp -> authenticate0(client, authentication.copy(), appIdp.getIdentity(), preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
                 .flatMap(userAuthentication -> {
@@ -120,7 +112,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
-                            }  else if (lastException instanceof NegotiateContinueException) {
+                            } else if (lastException instanceof NegotiateContinueException) {
                                 return Single.error(lastException);
                             } else {
                                 logger.error("An error occurs during user authentication", lastException);
@@ -151,26 +143,22 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         logger.debug("Trying to load user [{}]", username);
 
         // Get identity providers associated to a client
-        // For each idp, try to find the user while it can not be found
-        // If user can't be found, send an exception
+        // For each idp, try to authenticate a user
+        // Try to authenticate while the user can not be authenticated
+        // If user can't be authenticated, send an exception
 
         // Skip external identity provider for authentication with credentials.
-        List<String> identities = client.getIdentityProviders() != null ?
-                client.getIdentityProviders()
-                        .stream()
-                        .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
-                        .filter(idp -> idp != null && !idp.isExternal())
-                        .map(IdentityProvider::getId)
-                        .collect(Collectors.toList()) : null;
+        final Authentication authentication = new EndUserAuthentication(username, null, new SimpleAuthenticationContext(request));
+        var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
 
-        if (identities == null || identities.isEmpty()) {
-            logger.error("No identity provider found for client : " + client.getClientId());
-            return Maybe.error(new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId()));
+        if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
+            return Maybe.error(getInternalAuthenticationServiceException(client));
         }
 
-        final Authentication authentication = new EndUserAuthentication(username, null, new SimpleAuthenticationContext(request));
-        return Observable.fromIterable(identities)
-                .flatMapMaybe(authProvider -> loadUserByUsername0(client, authentication, authProvider, true))
+        return Observable.fromIterable(applicationIdentityProviders)
+                .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
+                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
+                .concatMapMaybe(appIdp -> loadUserByUsername0(client, authentication, appIdp.getIdentity(), true))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
                 .lastOrError()
                 .flatMapMaybe(userAuthentication -> {
@@ -192,6 +180,38 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         return userAuthenticationService.loadPreAuthenticatedUser(user);
                     }
                 });
+    }
+
+    private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client, Authentication authentication) {
+        // Get identity providers associated to a client
+        // For each idp, try to authenticate a user
+        // Try to authenticate while the user can not be authenticated
+        // If user can't be authenticated, send an exception
+
+        // Skip external identity provider for authentication with credentials.
+        if (isNull(client.getIdentityProviders())) {
+            return List.of();
+        }
+        return client.getIdentityProviders().stream().filter(appIdp -> {
+                    var identityProvider = identityProviderManager.getIdentityProvider(appIdp.getIdentity());
+                    return nonNull(identityProvider) && !identityProvider.isExternal();
+                })
+                .collect(toList());
+    }
+
+    private boolean selectionRuleMatches(String rule, Authentication authentication) {
+        try {
+            // We keep the idp if the rule is not present to keep the same behaviour
+            // The priority will define the order of the identity providers to match the rule first
+            if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
+                return true;
+            }
+            var templateEngine = authentication.getContext().getTemplateEngine();
+            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
+        } catch (Exception e) {
+            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            return false;
+        }
     }
 
     @Override
@@ -236,13 +256,19 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getId());
-                    ((DefaultUser ) user).setAdditionalInformation(additionalInformation);
+                    ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return new UserAuthentication(user, null);
                 })
                 .onErrorResumeNext(error -> {
                     logger.debug("Unable to authenticate [{}] with authentication provider [{}]", authentication.getPrincipal(), authProvider, error);
                     return Maybe.just(new UserAuthentication(null, error));
                 });
+    }
+
+    private InternalAuthenticationServiceException getInternalAuthenticationServiceException(Client client) {
+        final String msg = "No identity provider found for client : " + client.getClientId();
+        logger.error(msg);
+        return new InternalAuthenticationServiceException(msg);
     }
 
     private Completable preAuthentication(Client client, Authentication authentication, String source) {
@@ -295,15 +321,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                 // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                 // but we can't control custom IdP that's why we have to check user existence
                 return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
-                        .flatMapCompletable(user -> {
-                            return loginAttemptService.loginFailed(criteria, accountSettings)
-                                    .flatMapCompletable(loginAttempt -> {
-                                        if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
-                                            return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
-                                        }
-                                        return Completable.complete();
-                                    });
-                        });
+                        .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, accountSettings)
+                                .flatMapCompletable(loginAttempt -> {
+                                    if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                                        return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
+                                    }
+                                    return Completable.complete();
+                                })
+                        );
             }
         }
         return Completable.complete();

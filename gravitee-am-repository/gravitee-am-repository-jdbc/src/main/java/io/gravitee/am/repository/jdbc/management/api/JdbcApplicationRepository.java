@@ -142,7 +142,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     }
 
     private ApplicationIdentityProvider convertIdentity(Identity identity) {
-        var idpSettings = new ApplicationIdentityProvider(identity.getIdentity(), identity.getPriority());
+        var idpSettings = new ApplicationIdentityProvider();
+        idpSettings.setPriority(identity.getPriority());
+        idpSettings.setSelectionRule(identity.getSelectionRule());
+        idpSettings.setIdentity(identity.getIdentity());
         return idpSettings;
     }
 
@@ -372,14 +375,16 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(idp -> {
                 final String identity = databaseDialectHelper.toSql(SqlIdentifier.quoted("identity"));
+                final String selectionRule = databaseDialectHelper.toSql(SqlIdentifier.quoted("selection_rule"));
                 final String priority = databaseDialectHelper.toSql(SqlIdentifier.quoted("priority"));
                 String INSERT_STMT = "INSERT INTO application_identities" +
-                        "(application_id, " + identity + ", " + priority + ") " +
-                        "VALUES (:app, :idpid, :priority)";
+                        "(application_id, " + identity + ", " + selectionRule + ", " + priority + ") " +
+                        "VALUES (:app, :idpid, :selection_rule, :priority)";
                 final DatabaseClient.GenericExecuteSpec sql = template.getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("app", app.getId())
                         .bind("idpid", idp.getIdentity())
+                        .bind("selection_rule", idp.getSelectionRule() == null ? "" : idp.getSelectionRule())
                         .bind("priority", idp.getPriority());
                 return sql.fetch().rowsUpdated();
             }).reduce(Integer::sum));

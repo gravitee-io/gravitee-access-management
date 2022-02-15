@@ -610,7 +610,8 @@ public class UserServiceTest {
     private SortedSet<ApplicationIdentityProvider> getApplicationIdentityProviders(String... identities) {
         var set = new TreeSet<ApplicationIdentityProvider>();
         Arrays.stream(identities).forEach(identity -> {
-            var patchAppIdp = new ApplicationIdentityProvider(identity, -1);
+            var patchAppIdp = new ApplicationIdentityProvider();
+            patchAppIdp.setIdentity(identity);
             set.add(patchAppIdp);
         });
         return set;

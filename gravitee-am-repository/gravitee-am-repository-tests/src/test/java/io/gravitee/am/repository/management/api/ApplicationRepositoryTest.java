@@ -214,7 +214,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     private static ApplicationIdentityProvider getIdentityProviderSettings() {
-        final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider(UUID.randomUUID().toString(), new Random().nextInt());
+        final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider();
+        applicationIdentityProvider.setIdentity(UUID.randomUUID().toString());
+        applicationIdentityProvider.setSelectionRule(UUID.randomUUID().toString());
+        applicationIdentityProvider.setPriority(new Random().nextInt());
         return applicationIdentityProvider;
     }
 

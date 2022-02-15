@@ -72,8 +72,8 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     // set to 50 in order to also check the length of the ID field (max 64 with prefix of 12)
     public static final int TABLE_NAME_MAX_LENGTH = 50;
 
-    private ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, IdentityProvider> identityProviders = new ConcurrentHashMap<>();
 
     @Value("${management.type:mongodb}")
     private String managementBackend;
@@ -199,7 +199,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         provider.setConfiguration("{}");
         return provider;
     }
-
+    
     @Override
     public Maybe<UserProvider> getUserProvider(String userProvider) {
         if (userProvider == null) {

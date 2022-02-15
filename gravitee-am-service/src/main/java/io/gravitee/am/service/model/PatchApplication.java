@@ -136,7 +136,10 @@ public class PatchApplication {
 
     private SortedSet<ApplicationIdentityProvider> buildAppIdentityProviders(Set<PatchApplicationIdentityProvider> applicationIdentityProviders) {
         return applicationIdentityProviders.stream().map(patchAppIdp -> {
-            var appIdp = new ApplicationIdentityProvider(patchAppIdp.getIdentity(), patchAppIdp.getPriority());
+            var appIdp = new ApplicationIdentityProvider();
+            appIdp.setIdentity(patchAppIdp.getIdentity());
+            appIdp.setPriority(patchAppIdp.getPriority());
+            appIdp.setSelectionRule(patchAppIdp.getSelectionRule());
             return appIdp;
         }).collect(toCollection(TreeSet::new));
     }

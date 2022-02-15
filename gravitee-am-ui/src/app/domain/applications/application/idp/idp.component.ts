@@ -58,7 +58,6 @@ export class ApplicationIdPComponent implements OnInit {
     this.providerService.findByDomain(this.domainId).subscribe(data => {
       this.identityProviders = this.setUpIdentityProviders(data.filter(idp => !idp.external), applicationIdentityProviders);
       this.socialIdentityProviders = this.setUpIdentityProviders(data.filter(idp => idp.external), applicationIdentityProviders);
-      this.currentIdentityProvidersSize = applicationIdentityProviders.length;
       this.loadIdentities = false;
     });
   }
@@ -68,10 +67,12 @@ export class ApplicationIdPComponent implements OnInit {
       const appIdentity = applicationIdentityProviders.find(appIdp => appIdp.identity == idp.id);
       if (appIdentity) {
         idp.selected = true;
+        idp.selectionRule = appIdentity.selectionRule;
         idp.priority = appIdentity.priority;
       } else {
         idp.selected = false;
-        idp.priority = -1;
+        idp.selectionRule = "";
+        idp.priority = 0;
       }
       return idp
     });
@@ -81,7 +82,7 @@ export class ApplicationIdPComponent implements OnInit {
     const applicationIdentityProviders = this.identityProviders.concat(this.socialIdentityProviders)
       .filter(idp => idp.selected)
       .map(idp => {
-        return { 'identity': idp.id, 'priority': idp.priority}
+        return {'identity': idp.id, 'selectionRule': idp.selectionRule, 'priority': idp.priority}
       });
     this.applicationService.patch(this.domainId, this.application.id,
       {'identityProviders': applicationIdentityProviders}).subscribe(data => {
@@ -94,7 +95,6 @@ export class ApplicationIdPComponent implements OnInit {
   selectIdentityProvider(event, identityProviderId, identityProviders) {
     const idp = identityProviders.find(idp => idp.id === identityProviderId);
     idp.selected = event.checked;
-    this.updateNbCurrentSelectedIDPs();
     this.formChanged = true;
   }
 
@@ -141,13 +141,76 @@ export class ApplicationIdPComponent implements OnInit {
     if(identityProvider != null){
       identityProvider.priority = priority;
     }
-    
+
     this.formChanged = true;
   }
 
-  updateNbCurrentSelectedIDPs() {
-    const selectedApplicationIdentityProviders = this.identityProviders.concat(this.socialIdentityProviders)
-      .filter(idp => idp.selected);
-    this.currentIdentityProvidersSize = selectedApplicationIdentityProviders.length;
+  add(identityProvider) {
+    let selectionRule = identityProvider.selectionRule;
+    if (!selectionRule && !this.readonly) {
+      if (identityProvider.type === "google-am-idp") {
+        selectionRule = "{#request.params['username'] matches '.+@gmail.com$'}"
+      } else if (identityProvider.type === "azure-ad-am-idp") {
+        selectionRule = "{#request.params['username'] matches '.+@microsoft.com$'}"
+      } else {
+        selectionRule = "{#request.params['username'] matches '.+'}"
+      }
+    }
+    if (!this.readonly || selectionRule) {
+      const dialogRef = this.dialog.open(CreateIdpSelectionRuleComponent, {
+        width: '700px',
+        data: {
+          selectionRule: selectionRule,
+          readonly: this.readonly
+        }
+      });
+      dialogRef.afterClosed().subscribe(idpSelectionRule => {
+        if (idpSelectionRule && !this.readonly) {
+          identityProvider.selectionRule = idpSelectionRule.value;
+          identityProvider.selected = true;
+          this.formChanged = true;
+        }
+      });
+    }
+  }
+}
+
+@Component({
+  selector: 'create-idp-selection-rule',
+  templateUrl: './selection-rule/create/create.component.html',
+})
+export class CreateIdpSelectionRuleComponent {
+
+  spelGrammar: any;
+  selectionRule: string;
+
+  constructor(public dialogRef: MatDialogRef<CreateIdpSelectionRuleComponent>,
+              private organizationService: OrganizationService,
+              @Inject(MAT_DIALOG_DATA) public data: any
+  ) {
+    this.selectionRule = data.selectionRule;
+  }
+
+  getGrammar() {
+    if (this.spelGrammar != null) {
+      return Promise.resolve(this.spelGrammar);
+    }
+
+    return this.organizationService.spelGrammar().toPromise().then((response) => {
+      this.spelGrammar = response;
+      return this.spelGrammar;
+    });
+  }
+
+  @HostListener(':gv-expression-language:ready', ['$event.detail'])
+  setGrammar({currentTarget}) {
+    this.getGrammar().then((grammar) => {
+      currentTarget.grammar = grammar;
+      currentTarget.requestUpdate();
+    });
+  };
+
+  change($event) {
+    this.selectionRule = $event.target.value;
   }
 }
