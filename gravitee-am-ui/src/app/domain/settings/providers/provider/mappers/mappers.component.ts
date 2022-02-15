@@ -162,6 +162,7 @@ export class ProviderMappersComponent implements OnInit {
 export class CreateMapperComponent {
 
   spelGrammar: any;
+  rule: string;
 
   constructor(public dialogRef: MatDialogRef<CreateMapperComponent>,
               private elementRef: ElementRef,
@@ -193,4 +194,9 @@ export class CreateMapperComponent {
       currentTarget.requestUpdate();
     });
   };
+
+
+  change($event) {
+    this.rule = $event.target.value;
+  }
 }

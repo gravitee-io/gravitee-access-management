@@ -13,6 +13,7 @@
       "type": "string",
       "enum": [
         "root",
+        "login_identifier",
         "login",
         "consent",
         "register",
@@ -22,6 +23,7 @@
       "x-schema-form": {
         "titleMap": {
           "root": "ALL",
+          "login_identifier": "LOGIN IDENTIFIER",
           "login": "LOGIN",
           "consent": "CONSENT",
           "register": "REGISTER",

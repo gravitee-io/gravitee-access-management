@@ -60,7 +60,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     static {
         extensionPoints = Map.of(
-                Type.ROOT, List.of(ROOT),
+                Type.ROOT, List.of(ExtensionPoint.ROOT),
+                Type.LOGIN_IDENTIFIER, List.of(PRE_LOGIN_IDENTIFIER, POST_LOGIN_IDENTIFIER),
                 Type.CONSENT, List.of(PRE_CONSENT, POST_CONSENT),
                 Type.LOGIN, List.of(PRE_LOGIN, POST_LOGIN),
                 Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER),
@@ -215,6 +216,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             case LOGIN:
                 addExecutionFlow(PRE_LOGIN, flow, prePolicies);
                 addExecutionFlow(POST_LOGIN, flow, postPolicies);
+                break;
+            case LOGIN_IDENTIFIER:
+                addExecutionFlow(PRE_LOGIN_IDENTIFIER, flow, prePolicies);
+                addExecutionFlow(POST_LOGIN_IDENTIFIER, flow, postPolicies);
                 break;
             case REGISTER:
                 addExecutionFlow(PRE_REGISTER, flow, prePolicies);

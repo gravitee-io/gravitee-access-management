@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
@@ -94,6 +95,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
 
         identifierFirstLoginEndpoint = new IdentifierFirstLoginEndpoint(templateEngine, domain, botDetectionManager);
+
         router.route("/login/identifier")
                 .handler(clientRequestParseHandler)
                 .failureHandler(new ErrorHandler());
@@ -128,13 +130,53 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 .handler(routingContext -> {
                     final IdentityProvider idp = new IdentityProvider();
                     idp.setId("provider-id");
-                    idp.setDomainWhitelist(List.of("other-domain.com"));
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
                     routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+
+                    var identityProviders = new TreeSet<ApplicationIdentityProvider>();
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(idp.getId());
+                    appIdp.setSelectionRule("{#context.request['username'].endsWith('other-domain.com')}");
+                    identityProviders.add(appIdp);
+
+                    appClient.setIdentityProviders(identityProviders);
+
                     routingContext.next();
                 })
+                .handler(clientRequestParseHandler::handle)
                 .handler(identifierFirstLoginEndpoint::handle);
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+
+        testRequest(
+                HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/login?"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLoginEndpoint_noRedirectNoMatchingProviders_appIdpRuleIsNull() throws Exception {
+        router.route(HttpMethod.POST, "/login/identifier")
+                .handler(routingContext -> {
+                    final IdentityProvider idp = new IdentityProvider();
+                    idp.setId("provider-id");
+                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+
+                    var identityProviders = new TreeSet<ApplicationIdentityProvider>();
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(idp.getId());
+                    identityProviders.add(appIdp);
+
+                    appClient.setIdentityProviders(identityProviders);
+
+                    routingContext.next();
+                })
+                .handler(clientRequestParseHandler::handle)
+                .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
                 HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -153,13 +195,36 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 .handler(routingContext -> {
                     final IdentityProvider idp = new IdentityProvider();
                     idp.setId("provider-id");
-                    idp.setDomainWhitelist(List.of("other-domain.com"));
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
                     routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+
+                    var identityProviders = new TreeSet<ApplicationIdentityProvider>();
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(idp.getId());
+                    identityProviders.add(appIdp);
+
+                    appClient.setIdentityProviders(identityProviders);
                     routingContext.next();
                 })
+                .handler(clientRequestParseHandler::handle)
                 .handler(identifierFirstLoginEndpoint::handle);
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+
+        testRequest(
+                HttpMethod.POST, "/login/identifier?username=username&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/login?"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLoginEndpoint_noRedirectNoSocialIdpsInContext() throws Exception {
+        router.route(HttpMethod.POST, "/login/identifier")
+                .handler(clientRequestParseHandler::handle)
+                .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
                 HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -173,18 +238,18 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
     }
 
     @Test
-    public void shouldInvokeLoginEndpoint_redirectUsernameMatchesDomain() throws Exception {
+    public void shouldInvokeLoginEndpoint_noRedirectClientHasNoIdps() throws Exception {
         router.route(HttpMethod.POST, "/login/identifier")
                 .handler(routingContext -> {
                     final IdentityProvider idp = new IdentityProvider();
                     idp.setId("provider-id");
-                    idp.setDomainWhitelist(List.of("domain.com"));
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
-                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://host/some/provider/oauth/authorize"));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
+
                     routingContext.next();
                 })
+                .handler(clientRequestParseHandler::handle)
                 .handler(identifierFirstLoginEndpoint::handle);
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
 
         testRequest(
                 HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -192,7 +257,40 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.contains("https://host/some/provider/oauth/authorize?login_hint=username%40domain.com"));
+                    assertTrue(location.contains("/login?"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLoginEndpoint_redirectUsernameMatchesRule() throws Exception {
+        router.route(HttpMethod.POST, "/login/identifier")
+                .handler(routingContext -> {
+                    final IdentityProvider idp = new IdentityProvider();
+                    idp.setId("provider-id");
+                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://host/some/provider/oauth/authorize"));
+
+                    var identityProviders = new TreeSet<ApplicationIdentityProvider>();
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(idp.getId());
+                    appIdp.setSelectionRule("{#request.params['username'][0] matches '.+@domain.com$'}");
+                    identityProviders.add(appIdp);
+
+                    appClient.setIdentityProviders(identityProviders);
+
+                    routingContext.next();
+                })
+                .handler(clientRequestParseHandler::handle)
+                .handler(identifierFirstLoginEndpoint::handle);
+
+        testRequest(
+                HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://host/some/provider/oauth/authorize?login_hint=username%40domain.com"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -203,14 +301,21 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                 .handler(routingContext -> {
                     final IdentityProvider idp = new IdentityProvider();
                     idp.setId("provider-id");
-                    idp.setDomainWhitelist(List.of("domain.com"));
                     idp.setType("google");
                     routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
                     routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://host/some/provider/oauth/authorize"));
+
+                    var identityProviders = new TreeSet<ApplicationIdentityProvider>();
+                    var appIdp = new ApplicationIdentityProvider();
+                    appIdp.setIdentity(idp.getId());
+                    appIdp.setSelectionRule("{#request.params['username'][0] matches '.+@domain.com$'}");
+                    identityProviders.add(appIdp);
+                    appClient.setIdentityProviders(identityProviders);
                     routingContext.next();
                 })
+                .handler(clientRequestParseHandler::handle)
                 .handler(identifierFirstLoginEndpoint::handle);
-        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+
         testRequest(
                 HttpMethod.POST, "/login/identifier?username=username@domain.com&client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 null,

@@ -144,7 +144,7 @@ public class DynamicClientRegistrationServiceTest {
         when(openIDProviderMetadata.getRegistrationEndpoint()).thenReturn("https://issuer/register");
         when(openIDDiscoveryService.getConfiguration(BASE_PATH)).thenReturn(openIDProviderMetadata);
         when(openIDProviderMetadata.getIssuer()).thenReturn("https://issuer");
-        when(jwtService.encode(any(JWT.class),any(Client.class))).thenReturn(Single.just("jwt"));
+        when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("jwt"));
 
         when(clientService.create(any())).thenAnswer(i -> {
             Client res = i.getArgument(0);
@@ -200,7 +200,8 @@ public class DynamicClientRegistrationServiceTest {
         request.setClientName(Optional.of(clientName));
         request.setRedirectUris(Optional.empty());
 
-        TestObserver<Client> testObserver = dcrService.create(request,BASE_PATH).test();
+
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
                 client.getClientName().equals(clientName) &&
@@ -250,14 +251,14 @@ public class DynamicClientRegistrationServiceTest {
 
         OIDCSettings oidc = OIDCSettings.defaultSettings();
         oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
-        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid", "profile"));
         when(domain.getOidc()).thenReturn(oidc);
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         //scope is not allowed, so expecting to erase scope (no scope)
-        testObserver.assertValue(client -> this.defaultAssertion(client) && client.getScopeSettings()==null);
+        testObserver.assertValue(client -> this.defaultAssertion(client) && client.getScopeSettings() == null);
     }
 
     @Test
@@ -268,8 +269,8 @@ public class DynamicClientRegistrationServiceTest {
 
         OIDCSettings oidc = OIDCSettings.defaultSettings();
         oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
-        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
-        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid", "profile"));
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone", "email"));
         when(domain.getOidc()).thenReturn(oidc);
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
@@ -278,7 +279,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
                 client.getScopeSettings().size() == 2 &&
                 client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
-                        .containsAll(Arrays.asList("phone","email"))
+                        .containsAll(Arrays.asList("phone", "email"))
         );
     }
 
@@ -290,7 +291,7 @@ public class DynamicClientRegistrationServiceTest {
 
         OIDCSettings oidc = OIDCSettings.defaultSettings();
         oidc.getClientRegistrationSettings().setAllowedScopesEnabled(true);
-        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid","profile"));
+        oidc.getClientRegistrationSettings().setAllowedScopes(Arrays.asList("openid", "profile"));
         when(domain.getOidc()).thenReturn(oidc);
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
@@ -310,7 +311,7 @@ public class DynamicClientRegistrationServiceTest {
         request.setScope(Optional.of("openid not allowed"));
 
         OIDCSettings oidc = OIDCSettings.defaultSettings();
-        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone", "email"));
         when(domain.getOidc()).thenReturn(oidc);
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
@@ -319,7 +320,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
                 client.getScopeSettings().size() == 3 &&
                 client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
-                        .containsAll(Arrays.asList("openid","not","allowed"))
+                        .containsAll(Arrays.asList("openid", "not", "allowed"))
         );
     }
 
@@ -329,7 +330,7 @@ public class DynamicClientRegistrationServiceTest {
         request.setRedirectUris(Optional.empty());
 
         OIDCSettings oidc = OIDCSettings.defaultSettings();
-        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone","email"));
+        oidc.getClientRegistrationSettings().setDefaultScopes(Arrays.asList("phone", "email"));
         when(domain.getOidc()).thenReturn(oidc);
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
@@ -338,7 +339,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(client -> this.defaultAssertion(client) &&
                 client.getScopeSettings().size() == 2 &&
                 client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(Collectors.toList())
-                        .containsAll(Arrays.asList("phone","email"))
+                        .containsAll(Arrays.asList("phone", "email"))
         );
     }
 
@@ -351,7 +352,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getResponseTypes()==null);
+        testObserver.assertValue(client -> client.getResponseTypes() == null);
     }
 
     @Test
@@ -448,7 +449,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> defaultAssertion(client) && client.getUserinfoEncryptedResponseEnc()!=null);
+        testObserver.assertValue(client -> defaultAssertion(client) && client.getUserinfoEncryptedResponseEnc() != null);
     }
 
     @Test
@@ -509,7 +510,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> defaultAssertion(client) && client.getIdTokenEncryptedResponseEnc()!=null);
+        testObserver.assertValue(client -> defaultAssertion(client) && client.getIdTokenEncryptedResponseEnc() != null);
     }
 
     @Test
@@ -521,7 +522,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("request_uris:"));
     }
 
@@ -534,7 +535,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("Missing TLS parameter for tls_client_auth."));
     }
 
@@ -549,7 +550,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The tls_client_auth must use exactly one of the TLS parameters."));
     }
 
@@ -562,7 +563,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().equals("The self_signed_tls_client_auth requires at least a jwks or a valid jwks_uri."));
     }
 
@@ -600,7 +601,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("sector_identifier_uri:"));
     }
 
@@ -613,7 +614,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Scheme must be https for sector_identifier_uri"));
     }
 
@@ -632,7 +633,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
-        assertTrue("Should have only one exception", testObserver.errorCount()==1);
+        assertTrue("Should have only one exception", testObserver.errorCount() == 1);
         assertTrue("Unexpected start of error message", testObserver.errors().get(0).getMessage().startsWith("Unable to parse sector_identifier_uri"));
     }
 
@@ -666,7 +667,7 @@ public class DynamicClientRegistrationServiceTest {
 
         when(webClient.getAbs(sectorUri)).thenReturn(httpRequest);
         when(httpRequest.rxSend()).thenReturn(Single.just(httpResponse));
-        when(httpResponse.bodyAsString()).thenReturn("[\""+redirectUri+"\"]");
+        when(httpResponse.bodyAsString()).thenReturn("[\"" + redirectUri + "\"]");
 
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
@@ -723,8 +724,8 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getRedirectUris()==null &&
-                client.getAuthorizedGrantTypes().size()==1 &&
+        testObserver.assertValue(client -> client.getRedirectUris() == null &&
+                client.getAuthorizedGrantTypes().size() == 1 &&
                 client.getAuthorizedGrantTypes().contains("client_credentials") &&
                 client.getResponseTypes().isEmpty()
         );
@@ -749,17 +750,17 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     private boolean defaultAssertion(Client client) {
-        assertNotNull("Client is null",client);
+        assertNotNull("Client is null", client);
         assertNotNull("Client id is null", client.getClientId());
 
         assertNull("expecting no redirect_uris", client.getRedirectUris());
 
-        assertEquals("Domain is wrong",DOMAIN_ID,client.getDomain());
-        assertEquals("registration uri is wrong", "https://issuer/register"+"/"+client.getClientId(), client.getRegistrationClientUri());
+        assertEquals("Domain is wrong", DOMAIN_ID, client.getDomain());
+        assertEquals("registration uri is wrong", "https://issuer/register" + "/" + client.getClientId(), client.getRegistrationClientUri());
         assertEquals("registration token is wrong", "jwt", client.getRegistrationAccessToken());
         assertEquals("should be default value \"web\"", "web", client.getApplicationType());
 
-        assertTrue("should be default value \"code\"", client.getResponseTypes().size()==1 && client.getResponseTypes().contains("code"));
+        assertTrue("should be default value \"code\"", client.getResponseTypes().size() == 1 && client.getResponseTypes().contains("code"));
         return true;
     }
 
@@ -782,7 +783,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.patch(new Client(), request, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getJwksUri().equals("something") && client.getRedirectUris().size()==1);
+        testObserver.assertValue(client -> client.getJwksUri().equals("something") && client.getRedirectUris().size() == 1);
         verify(clientService, times(1)).update(any());
     }
 
@@ -839,7 +840,7 @@ public class DynamicClientRegistrationServiceTest {
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById(any())).thenReturn(Maybe.empty());
 
-        TestObserver<Client> testObserver = dcrService.create(request,BASE_PATH).test();
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertErrorMessage("No template found for software_id 123");
@@ -864,7 +865,7 @@ public class DynamicClientRegistrationServiceTest {
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("123")).thenReturn(Maybe.just(template));
 
-        TestObserver<Client> testObserver = dcrService.create(request,BASE_PATH).test();
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertErrorMessage("Client behind software_id is not a template");
@@ -892,18 +893,18 @@ public class DynamicClientRegistrationServiceTest {
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("123")).thenReturn(Maybe.just(template));
 
-        TestObserver<Client> testObserver = dcrService.create(request,BASE_PATH).test();
+        TestObserver<Client> testObserver = dcrService.create(request, BASE_PATH).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(client ->
                 client.getId().equals("abc") &&
-                client.getApplicationType().equals("app") &&
-                client.getClientId() != null &&
-                !client.getClientId().equals("shouldBeReplaced") &&
-                client.getRedirectUris() == null &&
-                client.getClientName().equals(ClientServiceImpl.DEFAULT_CLIENT_NAME) &&
-                client.getClientSecret() == null &&
-                client.getJwks() == null &&
-                client.getSectorIdentifierUri() == null
+                        client.getApplicationType().equals("app") &&
+                        client.getClientId() != null &&
+                        !client.getClientId().equals("shouldBeReplaced") &&
+                        client.getRedirectUris() == null &&
+                        client.getClientName().equals(ClientServiceImpl.DEFAULT_CLIENT_NAME) &&
+                        client.getClientSecret() == null &&
+                        client.getJwks() == null &&
+                        client.getSectorIdentifierUri() == null
         );
         verify(clientService, times(1)).create(any());
     }

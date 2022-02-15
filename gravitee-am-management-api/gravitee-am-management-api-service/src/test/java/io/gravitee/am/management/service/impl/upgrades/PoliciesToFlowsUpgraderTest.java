@@ -122,7 +122,7 @@ public class PoliciesToFlowsUpgraderTest {
         postConsent2.setConfiguration("POST CONSENT CONFIG");
 
         when(policyRepository.findAll()).thenReturn(Flowable.just(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent)); // rootPolicy2 first to test ordering
-        when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
+        when(flowService.defaultFlows(ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
         when(flowService.create(any(), anyString(), any())).thenReturn(Single.just(new Flow()));
         when(policyPluginService.findById(null)).thenReturn(Maybe.just(new PolicyPlugin()));
 
@@ -200,8 +200,8 @@ public class PoliciesToFlowsUpgraderTest {
         postConsent2.setConfiguration("POST CONSENT CONFIG");
 
         when(policyRepository.findAll()).thenReturn(Flowable.just(rootPolicy2, rootPolicy1, preConsent, postConsent2, postConsent)); // rootPolicy2 first to test ordering
-        when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
-        when(flowService.defaultFlows( ReferenceType.DOMAIN, MY_DOMAIN_ID2)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID2)).collect(Collectors.toList()));
+        when(flowService.defaultFlows(ReferenceType.DOMAIN, MY_DOMAIN_ID)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID)).collect(Collectors.toList()));
+        when(flowService.defaultFlows(ReferenceType.DOMAIN, MY_DOMAIN_ID2)).thenReturn(FLOWS.stream().map(type -> buildFlow(type, ReferenceType.DOMAIN, MY_DOMAIN_ID2)).collect(Collectors.toList()));
         when(flowService.create(any(), anyString(), any())).thenReturn(Single.just(new Flow()));
         when(policyPluginService.findById(null)).thenReturn(Maybe.just(new PolicyPlugin()));
 
@@ -245,7 +245,6 @@ public class PoliciesToFlowsUpgraderTest {
             return result;
         }));
     }
-
 
     private Flow buildFlow(Type type, ReferenceType referenceType, String referenceId) {
         Flow flow = new Flow();

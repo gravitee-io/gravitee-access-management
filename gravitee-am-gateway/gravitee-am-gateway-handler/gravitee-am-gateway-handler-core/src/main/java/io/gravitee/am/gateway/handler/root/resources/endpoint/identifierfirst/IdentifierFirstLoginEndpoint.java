@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
@@ -26,6 +27,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -132,36 +134,52 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
     }
 
     private void redirect(RoutingContext routingContext) {
+        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         final List<IdentityProvider> socialProviders = routingContext.get(SOCIAL_PROVIDER_CONTEXT_KEY);
-        final String username = routingContext.request().getParam(USERNAME_PARAM_KEY);
-        final String[] domainName = username.split("@");
-
-        // username is not an email, continue
-        if (domainName.length < 2) {
-            doInternalRedirect(routingContext);
-            return;
-        }
-
         // no social providers configured, continue
-        if (socialProviders == null) {
+        if (socialProviders == null || socialProviders.isEmpty()) {
             doInternalRedirect(routingContext);
             return;
         }
 
-        final IdentityProvider identityProvider = socialProviders
-                .stream()
-                .filter(s -> s.getDomainWhitelist() != null && s.getDomainWhitelist().stream().anyMatch(domainName[1]::equals))
-                .findFirst()
-                .orElse(null);
+        if (client.getIdentityProviders() == null || client.getIdentityProviders().isEmpty()) {
+            doInternalRedirect(routingContext);
+            return;
+        }
+
+        var appIdpMap = client.getIdentityProviders().stream().collect(Collectors.toMap(
+                ApplicationIdentityProvider::getIdentity, Function.identity()
+        ));
+
+        var context = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()), routingContext.data());
+        var templateEngine = context.getTemplateEngine();
+        var identityProvider = socialProviders.stream()
+                .filter(idp -> appIdpMap.containsKey(idp.getId()))
+                .filter(idp -> evaluateRule(appIdpMap.get(idp.getId()), templateEngine, idp))
+                .findFirst();
 
         // no IdP has matched, continue
-        if (identityProvider == null) {
+        if (identityProvider.isEmpty()) {
             doInternalRedirect(routingContext);
             return;
         }
 
         // else, redirect to the external provider
-        doExternalRedirect(routingContext, identityProvider);
+        doExternalRedirect(routingContext, identityProvider.get());
+    }
+
+    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine, IdentityProvider idp) {
+        var rule = appIdp.getSelectionRule();
+        // We keep the same behaviour as before, if there is no rule, no automatic redirect
+        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
+            return false;
+        }
+        try {
+            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
+        } catch (Exception e) {
+            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            return false;
+        }
     }
 
     private void doInternalRedirect(RoutingContext routingContext) {

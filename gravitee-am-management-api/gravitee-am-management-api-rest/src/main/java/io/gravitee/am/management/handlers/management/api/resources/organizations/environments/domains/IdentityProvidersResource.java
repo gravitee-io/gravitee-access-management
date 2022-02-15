@@ -137,7 +137,6 @@ public class IdentityProvidersResource extends AbstractResource {
         filteredIdentityProvider.setExternal(identityProvider.isExternal());
         filteredIdentityProvider.setSystem(identityProvider.isSystem());
         filteredIdentityProvider.setExternal(identityProvider.isExternal());
-
         return filteredIdentityProvider;
     }
 }

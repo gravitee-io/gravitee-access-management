@@ -27,7 +27,8 @@
                                 placeholder="Use attributeName=attributeValue or EL syntax."
                                 ngDefaultControl
                                 gvControl
-                                ngModel
+                                [ngModel]="rule"
+                                (keyup)="change($event)"
                                 required
                                 inner-hint
                                 rows="1"></gv-expression-language>

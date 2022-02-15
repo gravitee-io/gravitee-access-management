@@ -152,17 +152,18 @@ export class ProviderRolesComponent implements OnInit {
 export class CreateRoleMapperComponent {
   @ViewChild('userRoleForm', { static: true }) form: NgForm;
   spelGrammar: any;
+  rule: string;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<CreateRoleMapperComponent>,
               private organizationService: OrganizationService) {
+    this.rule = "";
   }
 
   ngOnInit() {
     this.organizationService.spelGrammar().toPromise().then((response) => {
       this.spelGrammar = response;
     });
-
   }
 
   getGrammar() {
@@ -189,4 +190,7 @@ export class CreateRoleMapperComponent {
     return !formValue.user;
   }
 
+  change($event) {
+    this.rule = $event.target.value;
+  }
 }

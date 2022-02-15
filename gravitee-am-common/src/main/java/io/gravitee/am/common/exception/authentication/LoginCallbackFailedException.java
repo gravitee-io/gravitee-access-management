@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.flow;
+
+package io.gravitee.am.common.exception.authentication;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
-    ROOT,
-    LOGIN_IDENTIFIER,
-    LOGIN,
-    CONSENT,
-    REGISTER,
-    RESET_PASSWORD
+public class LoginCallbackFailedException extends AuthenticationException {
+
+    public LoginCallbackFailedException(String msg) {
+        super(msg);
+    }
+
+    @Override
+    public String getErrorCode() {
+        return "login_callback_failed";
+    }
 }

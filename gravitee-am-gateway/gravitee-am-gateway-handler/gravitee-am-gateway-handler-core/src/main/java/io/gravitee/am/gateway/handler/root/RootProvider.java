@@ -216,7 +216,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // session cookie handler
         sessionAndCookieHandler(rootRouter);
 
-        // GraviteeContext handler
+        // Gravitee Context handler
         authFlowContextHandler(rootRouter);
 
         // CSRF handler
@@ -247,10 +247,18 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
         // Identifier First Login route
-        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+        rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN_IDENTIFIER))
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+
+        rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
 
         // login route
@@ -280,10 +288,10 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LogoutCallbackEndpoint(domain, clientSyncService, jwtService, userService, authenticationFlowContextService, certificateManager));
 
         // SSO/Social login route
-        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, domain));
+        Handler<RoutingContext> socialAuthHandler = SocialAuthHandler.create(new SocialAuthenticationProvider(userAuthenticationManager, eventManager, identityProviderManager, domain));
         Handler<RoutingContext> loginCallbackParseHandler = new LoginCallbackParseHandler(clientSyncService, identityProviderManager, jwtService, certificateManager);
         Handler<RoutingContext> loginCallbackOpenIDConnectFlowHandler = new LoginCallbackOpenIDConnectFlowHandler(thymeleafTemplateEngine);
-        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(authenticationFlowContextService);
+        Handler<RoutingContext> loginCallbackFailureHandler = new LoginCallbackFailureHandler(domain, authenticationFlowContextService);
         Handler<RoutingContext> loginCallbackEndpoint = new LoginCallbackEndpoint();
         Handler<RoutingContext> loginSSOPOSTEndpoint = new LoginSSOPOSTEndpoint(thymeleafTemplateEngine);
         rootRouter.get(PATH_LOGIN_CALLBACK)

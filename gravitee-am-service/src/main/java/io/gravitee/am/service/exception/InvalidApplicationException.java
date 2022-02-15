@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.flow;
+package io.gravitee.am.service.exception;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
-    ROOT,
-    LOGIN_IDENTIFIER,
-    LOGIN,
-    CONSENT,
-    REGISTER,
-    RESET_PASSWORD
+public class InvalidApplicationException extends AbstractManagementException {
+
+    public InvalidApplicationException(String message){
+        super(message);
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return 400;
+    }
 }

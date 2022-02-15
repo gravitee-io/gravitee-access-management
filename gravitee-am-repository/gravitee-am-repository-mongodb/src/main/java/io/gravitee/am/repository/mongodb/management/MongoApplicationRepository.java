@@ -720,7 +720,10 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     }
 
     private static ApplicationIdentityProvider convert(ApplicationIdentityProviderMongo idpSettingsMongo) {
-        var identityProviderSettings = new ApplicationIdentityProvider(idpSettingsMongo.getIdentity(), idpSettingsMongo.getPriority());
+        var identityProviderSettings = new ApplicationIdentityProvider();
+        identityProviderSettings.setIdentity(idpSettingsMongo.getIdentity());
+        identityProviderSettings.setSelectionRule(idpSettingsMongo.getSelectionRule());
+        identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
         return identityProviderSettings;
     }
 
@@ -733,6 +736,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     private static ApplicationIdentityProviderMongo convert(ApplicationIdentityProvider idpSettingsMongo) {
         var identityProviderSettings = new ApplicationIdentityProviderMongo();
         identityProviderSettings.setIdentity(idpSettingsMongo.getIdentity());
+        identityProviderSettings.setSelectionRule(idpSettingsMongo.getSelectionRule());
         identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
         return identityProviderSettings;
     }

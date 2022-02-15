@@ -16,10 +16,12 @@
 package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
@@ -30,9 +32,11 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -42,28 +46,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class SocialAuthenticationProvider implements UserAuthProvider {
-
-    private final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(SocialAuthenticationProvider.class);
     private final UserAuthenticationManager userAuthenticationManager;
-
     private final EventManager eventManager;
+    private final IdentityProviderManager identityProviderManager;
+    private final Domain domain;
 
-    private Domain domain;
-
-    public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager, EventManager eventManager, Domain domain) {
+    public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager,
+                                        EventManager eventManager,
+                                        IdentityProviderManager identityProviderManager,
+                                        Domain domain) {
         this.userAuthenticationManager = userAuthenticationManager;
         this.eventManager = eventManager;
+        this.identityProviderManager = identityProviderManager;
         this.domain = domain;
     }
 
@@ -90,7 +98,8 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)
                 .switchIfEmpty(Maybe.error(new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
-                .flatMapSingle(user -> {
+                .flatMapSingle(user -> checkDomainWhitelist(user, authProvider))
+                .flatMap(user -> {
                     // set source and client for the current authenticated end-user
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
@@ -130,5 +139,53 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     resultHandler.handle(Future.failedFuture(error));
                 });
 
+    }
+
+    private Single<io.gravitee.am.identityprovider.api.User> checkDomainWhitelist(io.gravitee.am.identityprovider.api.User endUser, String identityProviderId) {
+        final IdentityProvider identityProvider = this.identityProviderManager.getIdentityProvider(identityProviderId);
+        var domainWhitelist = identityProvider.getDomainWhitelist();
+        // No whitelist mean we let everyone
+        if (nonNull(domainWhitelist) && !domainWhitelist.isEmpty()) {
+            // first we check if the username is not whitelisted
+            if (!isUsernameWhitelisted(domainWhitelist, endUser.getUsername())) {
+                // if so, we check if the email set is also not whitelisted
+                if (!isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
+                    return Single.error(new LoginCallbackFailedException("could not authenticate user"));
+                }
+            }
+            // username might (but unlikely) be null, we check also if the email is set
+            else if (!isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
+                return Single.error(new LoginCallbackFailedException("could not authenticate user"));
+            }
+            // If not email nor username, we should not be loging back
+            else {
+                logger.debug("User does not have a username");
+                return Single.error(new LoginCallbackFailedException("could not authenticate user"));
+            }
+        }
+        return Single.just(endUser);
+    }
+
+    private static boolean isUsernameWhitelisted(List<String> domainWhitelist, String username) {
+        return nonNull(username) && isDomainWhitelisted(username, domainWhitelist);
+    }
+
+    private static boolean isEmailWhitelisted(List<String> domainWhitelist, String email) {
+        return nonNull(email) && isDomainWhitelisted(email, domainWhitelist);
+    }
+
+    private static boolean isDomainWhitelisted(String username, List<String> domainWhitelist) {
+        var domainName = username.split("@");
+        // username is not an email, fail
+        if (domainName.length < 2) {
+            logger.debug("Username [{}] is not an email", username);
+            return false;
+        }
+
+        if (domainWhitelist.stream().noneMatch(domainName[1].trim()::equals)) {
+            logger.debug("Username [{}] does not match domainWhitelist", username);
+            return false;
+        }
+        return true;
     }
 }
