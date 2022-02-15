@@ -1,6 +1,35 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/501?closed=1[AM - 3.15.1 (2022-02-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- NPE is raised when TLS is anable without truststore https://github.com/gravitee-io/issues/issues/7107[#7107]
+
+*_General_*
+
+- Merge 3.14.5 https://github.com/gravitee-io/issues/issues/7076[#7076]
+- Merge 3.14.6 https://github.com/gravitee-io/issues/issues/7096[#7096]
+- [OIDC] retry client initialization https://github.com/gravitee-io/issues/issues/7012[#7012]
+- [ldap] retry client initialization https://github.com/gravitee-io/issues/issues/6207[#6207]
+
+*_Management_*
+
+- Manage null or empty configuration for plugins https://github.com/gravitee-io/issues/issues/7056[#7056]
+- Pagination on role  page doesn't work https://github.com/gravitee-io/issues/issues/7103[#7103]
+
+=== Improvements
+
+*_Management-api_*
+
+- Do not expose default identity provider and audit reporter https://github.com/gravitee-io/issues/issues/6782[#6782]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/511?closed=1[AM - 3.14.6 (2022-02-10)]
 
 === Bug fixes
