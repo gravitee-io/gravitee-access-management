@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.Scope;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.IDToken;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -186,7 +187,12 @@ public class IDTokenServiceImpl implements IDTokenService {
         if (!oAuth2Request.isClientOnly() && user != null && user.getAdditionalInformation() != null) {
             boolean requestForSpecificClaims = false;
             Map<String, Object> userClaims = new HashMap<>();
-            Map<String, Object> fullProfileClaims = user.getAdditionalInformation();
+            Map<String, Object> fullProfileClaims = new HashMap<>(user.getAdditionalInformation());
+            // to be sure that this sub value coming from the IDP will not override the one provided by AM
+            // we explicitly remove it from the additional info.
+            // see https://github.com/gravitee-io/issues/issues/7118
+            fullProfileClaims.remove(StandardClaims.SUB);
+
             // 1. process the request using scope values
             if (oAuth2Request.getScopes() != null) {
                 requestForSpecificClaims = processScopesRequest(oAuth2Request.getScopes(), userClaims, fullProfileClaims, idToken);
