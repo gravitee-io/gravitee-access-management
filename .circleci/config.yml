@@ -49,7 +49,7 @@ parameters:
 orbs:
   gravitee: gravitee-io/gravitee@1.0
   secrethub: secrethub/cli@1.1.0
-  slack: circleci/slack@4.2.1
+  slack: circleci/slack@4.8.1
 
 jobs:
   secrethub:
@@ -111,7 +111,7 @@ jobs:
             - ./gravitee-am-management-api-standalone-*.zip
             - ./gravitee-am-webui-*.zip
 
-  run_postman_tests:
+  run_postman_tests_mongo:
     docker:
       - image: cimg/openjdk:17.0.1-node
       - image: mongo:4.2
@@ -164,6 +164,103 @@ jobs:
           event: fail
           mentions: "@am_team"
           template: basic_fail_1
+      - slack/notify:
+          branch_pattern: ".+"
+          event: pass
+          mentions: "@am_team"
+          template: basic_success_1
+
+  run_postman_tests_psql:
+    docker:
+      - image: cimg/openjdk:17.0.1-node
+      - image: postgres:14-alpine
+        environment:
+          POSTGRES_PASSWORD: T0pS3cr3t
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Newman
+          command: sudo npm i -g newman
+      - run:
+          name: Wait for PSQL to be up and running
+          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+      - run:
+          name: Run API, GW and Postman tests
+          command: |
+            # Prepare AM
+            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
+            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
+
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+
+            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
+            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+
+            # copy r2dbc & jdbc drivers
+            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar 
+            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar 
+            
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            
+            cp postgresql-42.3.3.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+            
+            cp postgresql-42.3.3.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+
+            # EXPORT env vart to start AM using PSQL
+            export GRAVITEE_MANAGEMENT_TYPE=jdbc
+            export GRAVITEE_MANAGEMENT_JDBC_DRIVER=postgresql
+            export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
+            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_MANAGEMENT_JDBC_DATABASE=postgres
+            export GRAVITEE_MANAGEMENT_JDBC_USERNAME=postgres
+            export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_OAUTH2_TYPE=jdbc
+            export GRAVITEE_OAUTH2_JDBC_DRIVER=postgresql
+            export GRAVITEE_OAUTH2_JDBC_HOST=localhost
+            export GRAVITEE_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
+            export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
+            export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+
+            # Start AM Management
+            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+
+            # Start AM Gateway
+            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+
+            # build & start CIBA Delegated Service
+            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
+
+            sleep 30
+
+            # Wait for AM to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+
+            sleep 30
+
+            # Run Postman tests
+            make postman
+      - slack/notify:
+          branch_pattern: ".+"
+          event: fail
+          mentions: "@am_team"
+          template: basic_fail_1
+      - slack/notify:
+          branch_pattern: ".+"
+          event: pass
+          mentions: "@am_team"
+          template: basic_success_1
 
   run_testcontainer_tests:
     executor:
@@ -449,7 +546,8 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-      - run_postman_tests:
+
+      - run_postman_tests_mongo:
           requires:
             - build
           filters:
@@ -457,6 +555,16 @@ workflows:
               only:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - run_postman_tests_psql:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
       - publish-images-azure-registry:
           context: cicd-orchestrator
           pre-steps:
