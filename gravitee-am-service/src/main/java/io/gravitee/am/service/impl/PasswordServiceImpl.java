@@ -80,6 +80,8 @@ public class PasswordServiceImpl implements PasswordService {
     /**
      * Check the user password status
      * @param user Authenticated user
+     * @param client Application
+     * @param domain current domain injected by Spring
      * @return True if the password has expired or False if not
      */
     public boolean checkAccountPasswordExpiry(User user, Client client, Domain domain) {

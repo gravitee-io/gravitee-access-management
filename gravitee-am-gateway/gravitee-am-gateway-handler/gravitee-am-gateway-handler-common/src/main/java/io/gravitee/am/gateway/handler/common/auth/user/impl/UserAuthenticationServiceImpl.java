@@ -34,7 +34,6 @@ import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -65,9 +64,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     @Autowired
     private Domain domain;
-
-    @Autowired
-    private ApplicationService applicationService;
 
     @Autowired
     private UserService userService;
