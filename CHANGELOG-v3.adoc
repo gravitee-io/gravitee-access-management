@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/512?closed=1[AM - 3.15.2 (2022-02-16)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Sub value invalid into user info https://github.com/gravitee-io/issues/issues/7118[#7118]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/501?closed=1[AM - 3.15.1 (2022-02-15)]
 
 === Bug fixes
