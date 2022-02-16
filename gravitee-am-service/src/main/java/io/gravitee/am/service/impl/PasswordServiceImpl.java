@@ -88,7 +88,7 @@ public class PasswordServiceImpl implements PasswordService {
         /** If the expiryDate is null or set to 0 so it's disabled */
         if (passwordSettings.isEmpty() ||
                 (passwordSettings.get().getExpiryDuration() == null
-                                || (passwordSettings.get().getExpiryDuration() != null && passwordSettings.get().getExpiryDuration() <= 0))) {
+                                || passwordSettings.get().getExpiryDuration() <= 0)) {
             return false;
         }
 
