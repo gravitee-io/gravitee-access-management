@@ -111,11 +111,4 @@ public interface User extends Serializable {
      * @return the last time when user has been updated
      */
     Date getUpdatedAt();
-
-    /**
-     * Returns the last time when user has updated his password
-     *
-     * @return the last time when user has updated his password
-     */
-    Date getLastPasswordReset();
 }

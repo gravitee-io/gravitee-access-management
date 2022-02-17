@@ -269,7 +269,6 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                     .flatMapSingle(idpUser -> {
                                                         // set password
                                                         ((DefaultUser) idpUser).setCredentials(password);
-                                                        ((DefaultUser) idpUser).setLastPasswordReset(new Date());
                                                         return userProvider.update(idpUser.getId(), idpUser);
                                                     })
                                                     .onErrorResumeNext(ex -> {
