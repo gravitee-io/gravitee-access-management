@@ -127,21 +127,17 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
      * @return user claims
      */
     private Map<String, Object> processClaims(User user, JWT accessToken) {
-        final Map<String, Object> fullProfileClaims = ofNullable(user.getAdditionalInformation()).orElse(Map.of());
-        if (!fullProfileClaims.containsKey(StandardClaims.SUB)) {
-            // The sub (subject) Claim MUST always be returned in the UserInfo Response.
-            // https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse
-            throw new InvalidRequestException("UserInfo response is missing required claims");
-        }
+        final Map<String, Object> additionalInfos = ofNullable(user.getAdditionalInformation()).orElse(Map.of());
+        final Map<String, Object> fullProfileClaims = new HashMap<>(additionalInfos);
+
+        // to be sure that this sub value coming from the IDP will not override the one provided by AM
+        // we explicitly remove it from the additional info.
+        // see https://github.com/gravitee-io/issues/issues/7118
+        fullProfileClaims.remove(StandardClaims.SUB);
 
         Map<String, Object> userClaims = new HashMap<>();
-        // Exchange the sub claim from the identity provider to its technical id
-        userClaims.put(StandardClaims.SUB, user.getId());
-
         // prepare requested claims
         Map<String, Object> requestedClaims = new HashMap<>();
-        // SUB claim is required
-        requestedClaims.put(StandardClaims.SUB, user.getId());
 
         boolean requestForSpecificClaims = false;
         // processing claims list
@@ -158,6 +154,11 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
 
         // remove technical claims that are useless for the calling app
         IDTokenService.EXCLUDED_CLAIMS.forEach(key -> userClaims.remove(key));
+
+        // Exchange the sub claim from the identity provider to its technical id
+        userClaims.put(StandardClaims.SUB, user.getId());
+        // SUB claim is required
+        requestedClaims.put(StandardClaims.SUB, user.getId());
 
         return (requestForSpecificClaims) ? requestedClaims : userClaims;
     }
