@@ -167,7 +167,6 @@ jobs:
       - slack/notify:
           branch_pattern: ".+"
           event: pass
-          mentions: "@am_team"
           template: basic_success_1
 
   run_postman_tests_psql:
