@@ -44,6 +44,20 @@ public class PolicyImpl implements Policy {
     }
 
     @Override
+    public void activate() throws Exception {
+        if (policyMetadata.context() != null) {
+            policyMetadata.context().onActivation();
+        }
+    }
+
+    @Override
+    public void deactivate() throws Exception {
+        if (policyMetadata.context() != null) {
+            policyMetadata.context().onDeactivation();
+        }
+    }
+
+    @Override
     public Map<String, Object> metadata() {
         return metadata;
     }

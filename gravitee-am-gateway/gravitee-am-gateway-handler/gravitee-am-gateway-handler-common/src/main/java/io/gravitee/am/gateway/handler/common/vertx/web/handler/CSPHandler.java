@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from "@angular/core/testing";
-import {UsersResolver} from "./users.resolver";
 
-describe('UsersResolver', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [UsersResolver]
-    });
-  });
+package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
-  it('should ...', inject([UsersResolver], (service: UsersResolver) => {
-    expect(service).toBeTruthy();
-  }));
-});
+import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.web.RoutingContext;
+
+/**
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public interface CSPHandler extends Handler<RoutingContext> {
+}

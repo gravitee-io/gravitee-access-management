@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.15.1-add-system-identity-provider
+      author: GraviteeSource Team
+      changes:
+        ## system column
+        ###################
+        - addColumn:
+            tableName: identities
+            columns:
+              - column: { name: system, type: boolean, constraints: { nullable: true } }

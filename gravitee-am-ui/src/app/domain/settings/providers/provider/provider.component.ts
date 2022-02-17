@@ -24,14 +24,21 @@ import {ActivatedRoute} from '@angular/router';
 export class ProviderComponent implements OnInit {
   private domainId: string;
   provider: any;
-  navLinks: any = [{'href': 'settings' , 'label': 'Settings'},
-    {'href': 'mappers' , 'label': 'User mappers'},
-    {'href': 'roles' , 'label': 'Role mappers'}];
+  navLinks: any = [];
 
   constructor(private route: ActivatedRoute) { }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.provider = this.route.snapshot.data['provider'];
+    if (this.provider.system) {
+      this.navLinks = [
+          {'href': 'mappers' , 'label': 'User mappers'},
+          {'href': 'roles' , 'label': 'Role mappers'}];
+    } else {
+      this.navLinks = [{'href': 'settings' , 'label': 'Settings'},
+            {'href': 'mappers' , 'label': 'User mappers'},
+            {'href': 'roles' , 'label': 'Role mappers'}];
+    }
   }
 }

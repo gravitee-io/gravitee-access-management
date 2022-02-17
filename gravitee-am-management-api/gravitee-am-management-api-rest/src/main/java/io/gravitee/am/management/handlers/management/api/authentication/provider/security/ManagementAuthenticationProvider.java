@@ -19,7 +19,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
-import io.gravitee.am.management.service.impl.IdentityProviderManagerImpl;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;

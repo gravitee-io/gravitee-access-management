@@ -26,4 +26,8 @@ public interface Authentication {
     Object getPrincipal();
 
     AuthenticationContext getContext();
+
+    default Authentication copy() {
+        return this;
+    }
 }

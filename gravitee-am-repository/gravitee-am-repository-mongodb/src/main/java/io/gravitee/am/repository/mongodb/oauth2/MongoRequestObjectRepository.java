@@ -64,7 +64,7 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
     public Single<RequestObject> create(RequestObject requestObject) {
         return Single
                 .fromPublisher(requestObjectCollection.insertOne(convert(requestObject)))
-                .flatMap(success -> findById(requestObject.getId()).toSingle());
+                .flatMap(success -> Single.just(requestObject));
     }
 
     @Override

@@ -73,7 +73,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         return Single
                 .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
-                .flatMap(success -> findById(authorizationCode.getId()).toSingle());
+                .flatMap(success -> Single.just(authorizationCode));
     }
 
     @Override
@@ -104,7 +104,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         if (authorizationCodeMongo.getRequestParameters() != null) {
             MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
-            authorizationCodeMongo.getRequestParameters().entrySet().forEach(entry -> requestParameters.put(entry.getKey(), (List<String>) entry.getValue()));
+            authorizationCodeMongo.getRequestParameters().forEach((key, value) -> requestParameters.put(key, (List<String>) value));
             authorizationCode.setRequestParameters(requestParameters);
         }
         return authorizationCode;
@@ -128,9 +128,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         if (authorizationCode.getRequestParameters() != null) {
             Document document = new Document();
-            authorizationCode.getRequestParameters().forEach((key, value) -> {
-                document.append(key, value);
-            });
+            authorizationCode.getRequestParameters().forEach(document::append);
             authorizationCodeMongo.setRequestParameters(document);
         }
         return authorizationCodeMongo;

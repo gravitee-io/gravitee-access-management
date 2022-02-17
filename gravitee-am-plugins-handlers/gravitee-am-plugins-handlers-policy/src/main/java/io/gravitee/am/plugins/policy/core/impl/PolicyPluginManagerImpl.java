@@ -28,10 +28,13 @@ import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.policy.PolicyPlugin;
 import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
+import io.gravitee.policy.api.PolicyContextProviderAware;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.ClassUtils;
 
 import java.io.IOException;
@@ -56,6 +59,9 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
      * Cache of constructor by policy
      */
     private Map<Class<?>, Constructor<?>> constructors = new HashMap<>();
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Autowired
     private ConfigurablePluginManager<PolicyPlugin> pluginManager;
@@ -100,7 +106,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
             try {
                 // create policy configuration
                 PluginClassLoader pluginClassLoader = pluginClassLoaderFactory.getOrCreateClassLoader(policyPlugin);
-                Class<? extends PolicyConfiguration> configurationClass =  (Class<? extends PolicyConfiguration>) ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
+                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>) ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
                 PolicyConfiguration policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
 
                 // create policy instance
@@ -115,6 +121,25 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                         .setConfiguration(configurationClass)
                         .setClassLoader(pluginClassLoader)
                         .setMethods(new PolicyMethodResolver().resolve(policyClass));
+
+                // Prepare context if defined
+                if (policyPlugin.context() != null) {
+                    Class<? extends PolicyContext> policyContextClass = (Class<? extends PolicyContext>) ClassUtils.forName(
+                            policyPlugin.context().getName(),
+                            pluginClassLoader
+                    );
+                    // Create policy context instance and initialize context provider (if used)
+                    PolicyContext context = new PolicyContextFactory().create(policyContextClass);
+
+                    if (context instanceof PolicyContextProviderAware) {
+                        ((PolicyContextProviderAware) context).setPolicyContextProvider(
+                                new SpringPolicyContextProvider(applicationContext)
+                        );
+                    }
+
+                    builder.setContext(context);
+                }
+
                 PolicyMetadata policyMetadata = builder.build();
 
                 // Create instance with matching constructor
@@ -135,6 +160,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                     } catch (IllegalAccessException | InstantiationException | InvocationTargetException ex) {
                         logger.error("Unable to instantiate policy {}", policyMetadata.policy().getName(), ex);
                     }
+
                 }
             } catch (Exception ex) {
                 logger.error("An unexpected error occurs while loading policy", ex);

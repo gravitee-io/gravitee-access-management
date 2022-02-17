@@ -17,15 +17,14 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -242,26 +241,30 @@ public class CredentialRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testDeleteByAaguid() throws TechnicalException {
-        // create credential
+    public void testDeleteByReference() throws TechnicalException {
+        // create credentials
         Credential credential = new Credential();
         credential.setCredentialId("credentialId");
         credential.setReferenceType(ReferenceType.DOMAIN);
         credential.setReferenceId("domain-id");
         credential.setUserId("user-id");
-        credential.setAaguid("aaguid");
-        Credential credentialCreated = credentialRepository.create(credential).blockingGet();
+        credentialRepository.create(credential).blockingGet();
+        Credential credential2 = new Credential();
+        credential2.setCredentialId("credentialId");
+        credential2.setReferenceType(ReferenceType.DOMAIN);
+        credential2.setReferenceId("domain-id");
+        credential2.setUserId("user-id");
+        credentialRepository.create(credential2).blockingGet();
 
         // fetch credential
         TestSubscriber<Credential> testSubscriber = credentialRepository.findByUserId(ReferenceType.DOMAIN, "domain-id", "user-id").test();
         testSubscriber.awaitTerminalEvent();
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
-        testSubscriber.assertValueCount(1);
-        testSubscriber.assertValue(c -> c.getCredentialId().equals(credentialCreated.getCredentialId()));
+        testSubscriber.assertValueCount(2);
 
-        // delete credential
-        TestObserver testObserver1 = credentialRepository.deleteByAaguid(ReferenceType.DOMAIN, "domain-id", "aaguid").test();
+        // delete credentials
+        TestObserver testObserver1 = credentialRepository.deleteByReference(ReferenceType.DOMAIN, "domain-id").test();
         testObserver1.awaitTerminalEvent();
 
         // fetch credential

@@ -71,7 +71,7 @@ public class IdentityProvidersResource extends AbstractResource {
                 .andThen(identityProviderService.findAll(ReferenceType.ORGANIZATION, organizationId)
                         .filter(identityProvider -> {
                             if (userProvider) {
-                                return identityProviderManager.userProviderExists(identityProvider.getId());
+                                return identityProviderManager.userProviderExists(identityProvider.getType());
                             }
                             return true;
                         })
@@ -97,7 +97,7 @@ public class IdentityProvidersResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.CREATE)
-                .andThen(identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser)
+                .andThen(identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser, false)
                         .map(identityProvider -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/identities/" + identityProvider.getId()))
                                 .entity(identityProvider)

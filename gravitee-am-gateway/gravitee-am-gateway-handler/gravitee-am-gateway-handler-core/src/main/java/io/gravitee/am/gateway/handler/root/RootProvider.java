@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -149,6 +150,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private CSRFHandler csrfHandler;
 
     @Autowired
+    private CSPHandler cspHandler;
+
+    @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
 
@@ -216,6 +220,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         // CSRF handler
         csrfHandler(rootRouter);
 
+        // CSP Handler
+        cspHandler(rootRouter);
+
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
         Handler<RoutingContext> clientRequestParseHandler = new ClientRequestParseHandler(clientSyncService).setRequired(true);
@@ -237,11 +244,19 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(geoIpHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.ROOT));
 
+        // Identifier First Login route
+        rootRouter.route(PATH_IDENTIFIER_FIRST_LOGIN)
+                .handler(clientRequestParseHandler)
+                .handler(botDetectionHandler)
+                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
+                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
+
         // login route
         rootRouter.get(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
+                .handler(new LoginHideFormHandler(domain))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
 
         rootRouter.post(PATH_LOGIN)
@@ -373,13 +388,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
-        //identifier First Login Route
-        rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
-                .handler(clientRequestParseHandler)
-                .handler(botDetectionHandler)
-                .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
-                .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
-
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)
                 .handler(new ErrorEndpoint(domain, thymeleafTemplateEngine, clientSyncService, jwtService));
@@ -454,7 +462,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .route(PATH_WEBAUTHN_LOGIN)
                 .handler(sessionHandler);
 
-        //Identifier First login
+        // Identifier First login endpoint
         router
                 .route(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(sessionHandler);
@@ -484,7 +492,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_WEBAUTHN_RESPONSE).handler(authenticationFlowContextHandler);
         router.route(PATH_WEBAUTHN_LOGIN).handler(authenticationFlowContextHandler);
 
-        //identifier First Login Route
+        // Identifier First Login endpoint
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(authenticationFlowContextHandler);
     }
 
@@ -501,6 +509,29 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_REGISTER).handler(csrfHandler);
         router.route(PATH_CONFIRM_REGISTRATION).handler(csrfHandler);
         router.route(PATH_RESET_PASSWORD).handler(csrfHandler);
+    }
+
+    private void cspHandler(Router router) {
+        // /login/callback does not need csp as it is not submit to our server.
+        // /oauth/consent csp is managed by handler-oidc (see OAuth2Provider).
+        router.route(PATH_LOGIN).handler(cspHandler);
+        router.route(PATH_LOGIN_CALLBACK).handler(cspHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(cspHandler);
+        router.route(PATH_LOGIN_SSO_SPNEGO).handler(cspHandler);
+        router.route(PATH_MFA_ENROLL).handler(cspHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(cspHandler);
+        router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(cspHandler);
+        router.route(PATH_LOGOUT).handler(cspHandler);
+        router.route(PATH_LOGOUT_CALLBACK).handler(cspHandler);
+        router.route(PATH_REGISTER).handler(cspHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(cspHandler);
+        router.route(PATH_RESET_PASSWORD).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).handler(cspHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).handler(cspHandler);
+        router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
+        router.route(PATH_ERROR).handler(cspHandler);
     }
 
     private void staticHandler(Router router) {

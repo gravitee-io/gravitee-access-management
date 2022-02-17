@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -33,6 +34,8 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId);
 
     Single<IdentityProvider> create(String domain);
+
+    String createProviderConfiguration(String referenceId, NewIdentityProvider identityProvider);
 
     boolean userProviderExists(String identityProviderId);
 

@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -81,13 +82,14 @@ public class ReportersResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(irrelevant -> reporterService.findByDomain(domain).toList()))
                 .flatMap(reporters ->
-                        hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
-                                .map(hasPermission -> {
-                                    if (hasPermission) {
-                                        return reporters;
-                                    }
-                                    return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
-                                })
+                    hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.READ)
+                        .map(hasPermission -> {
+                            reporters.stream().filter(Reporter::isSystem).forEach(reporter -> reporter.setConfiguration(null));
+                            if (hasPermission) {
+                                return reporters;
+                            }
+                            return reporters.stream().map(this::filterReporterInfos).collect(Collectors.toList());
+                        })
                 )
                 .subscribe(response::resume, response::resume);
     }
@@ -114,9 +116,12 @@ public class ReportersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_REPORTER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> reporterService.create(domain, newReporter, authenticatedUser)))
-                   .subscribe(reporter -> response.resume(Response.created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/reporters/" + reporter.getId()))
-                           .entity(reporter).build()), response::resume);
+                        .flatMapSingle(irrelevant -> reporterService.create(domain, newReporter, authenticatedUser, false))
+                        .map(reporter -> response.resume(Response.created(URI.create("/organizations/" + organizationId
+                                            + "/environments/" + environmentId + "/domains/" + domain + "/reporters/" + reporter.getId()))
+                                    .entity(reporter).build())
+                    ))
+                .subscribe(response::resume, response::resume);
     }
 
     @Path("{reporter}")

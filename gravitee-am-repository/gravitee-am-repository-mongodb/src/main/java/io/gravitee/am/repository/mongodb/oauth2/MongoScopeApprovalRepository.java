@@ -80,7 +80,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
     public Single<ScopeApproval> create(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
         scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? RandomString.generate() : scopeApprovalMongo.getId());
-        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> _findById(scopeApprovalMongo.getId()));
+        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> Single.just(scopeApproval));
     }
 
     @Override
@@ -92,7 +92,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
                         eq(FIELD_SCOPE, scopeApproval.getScope()))
-                , scopeApprovalMongo)).flatMap(updateResult -> _findById(scopeApprovalMongo.getId()));
+                , scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
     }
 
     @Override
@@ -106,7 +106,7 @@ public class MongoScopeApprovalRepository extends AbstractOAuth2MongoRepository 
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMapSingle(optionalApproval -> {
-                    if (!optionalApproval.isPresent()) {
+                    if (optionalApproval.isEmpty()) {
                         scopeApproval.setCreatedAt(new Date());
                         scopeApproval.setUpdatedAt(scopeApproval.getCreatedAt());
                         return create(scopeApproval);

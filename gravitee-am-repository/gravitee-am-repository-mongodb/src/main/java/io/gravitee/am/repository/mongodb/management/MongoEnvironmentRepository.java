@@ -76,19 +76,18 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
-    public Single<Environment> create(Environment environment) {
-
-        environment.setId(environment.getId() == null ? RandomString.generate() : environment.getId());
-
-        return Single.fromPublisher(collection.insertOne(convert(environment)))
-                .flatMap(success -> findById(environment.getId()).toSingle());
+    public Single<Environment> create(Environment item) {
+        var environment = convert(item);
+        environment.setId(item.getId() == null ? RandomString.generate() : item.getId());
+        return Single.fromPublisher(collection.insertOne(environment))
+                .flatMap(success -> { item.setId(environment.getId()); return Single.just(item); });
     }
 
     @Override
-    public Single<Environment> update(Environment environment) {
+    public Single<Environment> update(Environment item) {
 
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, environment.getId()), convert(environment)))
-                .flatMap(updateResult -> findById(environment.getId()).toSingle());
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, item.getId()), convert(item)))
+                .flatMap(updateResult -> Single.just(item));
     }
 
     @Override

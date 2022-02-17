@@ -135,13 +135,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
         domain.setId(domain.getId() == null ? RandomString.generate() : domain.getId());
-        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> findById(domain.getId()).toSingle());
+        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> { item.setId(domain.getId()); return Single.just(item); });
     }
 
     @Override
     public Single<Domain> update(Domain item) {
         DomainMongo domain = convert(item);
-        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> findById(domain.getId()).toSingle());
+        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> Single.just(item));
     }
 
     @Override

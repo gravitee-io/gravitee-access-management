@@ -55,6 +55,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
 
     private static final Logger logger = LoggerFactory.getLogger(FlowManagerImpl.class);
     private static final Map<Type, List<ExtensionPoint>> extensionPoints;
+
     static {
         Map<Type, List<ExtensionPoint>> aMap = new HashMap<>();
         aMap.put(Type.ROOT, Arrays.asList(ExtensionPoint.ROOT));
@@ -236,6 +237,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             logger.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
             Policy policy = policyPluginManager.create(step.getPolicy(), step.getConfiguration());
             logger.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());
+            policy.activate();
             return policy;
         } catch (Exception ex) {
             return null;

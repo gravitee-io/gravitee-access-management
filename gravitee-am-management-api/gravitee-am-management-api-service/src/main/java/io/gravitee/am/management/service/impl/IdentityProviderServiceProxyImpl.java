@@ -17,9 +17,9 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.audit.EventType;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
@@ -27,7 +27,6 @@ import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
@@ -108,20 +107,20 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
     }
 
     @Override
-    public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal) {
-        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal)
+    public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
+        return identityProviderService.create(referenceType, referenceId, newIdentityProvider, principal, system)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
+    public Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
         return identityProviderService.findById(id)
                 .switchIfEmpty(Single.error(new IdentityProviderNotFoundException(id)))
                 .flatMap(oldIdP -> filterSensitiveData(oldIdP)
                         .flatMap(safeOldIdp -> updateSensitiveData(updateIdentityProvider, oldIdP)
-                                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal))
+                                .flatMap(idpToUpdate -> identityProviderService.update(referenceType, referenceId, id, idpToUpdate, principal, isUpgrader))
                                 .flatMap(this::filterSensitiveData)
                                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).throwable(throwable))))

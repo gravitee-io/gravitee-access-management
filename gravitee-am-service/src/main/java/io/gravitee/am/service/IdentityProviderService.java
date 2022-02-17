@@ -44,9 +44,9 @@ public interface IdentityProviderService {
 
     Flowable<IdentityProvider> findByDomain(String domain);
 
-    Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal);
+    Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system);
 
-    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal);
+    Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader);
 
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
 
@@ -54,8 +54,8 @@ public interface IdentityProviderService {
         return create(domain, identityProvider, null);
     }
 
-    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider) {
-        return update(domain, id, updateIdentityProvider, null);
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader) {
+        return update(domain, id, updateIdentityProvider, null, isUpgrader);
     }
 
     default Completable delete(String domain, String identityProviderId) {
@@ -63,11 +63,11 @@ public interface IdentityProviderService {
     }
 
     default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal) {
-        return create(ReferenceType.DOMAIN, domain, identityProvider, principal);
+        return create(ReferenceType.DOMAIN, domain, identityProvider, principal, false);
     }
 
-    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal) {
-        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal);
+    default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
+        return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal, isUpgrader);
     }
 
     default Completable delete(String domain, String identityProviderId, User principal) {

@@ -93,7 +93,7 @@ public class DefaultOrganizationUpgraderTest {
 
         final Organization organization = new Organization();
         when(organizationService.createDefault()).thenReturn(Maybe.just(organization));
-        when(identityProviderService.create(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(NewIdentityProvider.class), isNull())).thenReturn(Single.just(idp));
+        when(identityProviderService.create(eq(ReferenceType.ORGANIZATION), eq(Organization.DEFAULT), any(NewIdentityProvider.class), isNull(), anyBoolean())).thenReturn(Single.just(idp));
         when(organizationService.update(eq(Organization.DEFAULT), any(PatchOrganization.class), isNull())).thenReturn(Single.just(organization));
         when(userService.create(argThat(user -> !user.isInternal()
                 && user.getUsername().equals("admin")

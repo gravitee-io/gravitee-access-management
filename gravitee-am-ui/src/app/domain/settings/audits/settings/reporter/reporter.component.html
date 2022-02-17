@@ -17,7 +17,10 @@
 -->
 <div class="gv-page-container">
   <a [routerLink]="['..']" class="gv-back-link"><small><< Back to reporters</small></a>
-  <h1>{{reporter.name}}</h1>
+  <div class="reporterTitle">
+    <h1>{{reporter.name}}</h1>
+    <mat-chip-list *ngIf="reporter.system"><mat-chip>system</mat-chip></mat-chip-list>
+  </div>
   <div class="reporter-content">
     <form #reporterForm="ngForm" fxLayout="column" fxFlex="70" >
       <div class="gv-form-section" fxLayout="column">
@@ -47,7 +50,7 @@
         </div>
       </div>
 
-      <div class="gv-form-section">
+      <div *ngIf="!reporter.system" class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>Configuration</h5>
           <mat-divider></mat-divider>
@@ -56,7 +59,6 @@
           <reporter-form *ngIf="reporter" [reporterConfiguration]="reporterConfiguration" [reporterSchema]="reporterSchema" (configurationCompleted)="enableReporterUpdate($event)"></reporter-form>
         </div>
       </div>
-
       <div fxLayout="row">
         <button mat-raised-button [disabled]="((!reporterForm.valid || reporterForm.pristine) && (!configurationIsValid || !hasName || configurationPristine) && !formChanged)" (click)="save()">SAVE</button>
       </div>

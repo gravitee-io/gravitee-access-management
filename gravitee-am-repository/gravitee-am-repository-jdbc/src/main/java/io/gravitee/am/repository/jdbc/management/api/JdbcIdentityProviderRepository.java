@@ -50,6 +50,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_ID = "id";
     public static final String COL_TYPE = "type";
     public static final String COL_NAME = "name";
+    public static final String COL_SYSTEM = "system";
     public static final String COL_EXTERNAL = "external";
     public static final String COL_REFERENCE_ID = "reference_id";
     public static final String COL_CONFIGURATION = "configuration";
@@ -64,6 +65,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_ID,
             COL_TYPE,
             COL_NAME,
+            COL_SYSTEM,
             COL_EXTERNAL,
             COL_REFERENCE_ID,
             COL_CONFIGURATION,
@@ -145,6 +147,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_SYSTEM, item.isSystem(), boolean.class);
         insertSpec = addQuotedField(insertSpec, COL_EXTERNAL, item.isExternal(), boolean.class);
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CONFIGURATION, item.getConfiguration(), String.class);
@@ -169,6 +172,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_TYPE, item.getType(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
+        update = addQuotedField(update, COL_SYSTEM, item.isSystem(), boolean.class);
         update = addQuotedField(update, COL_EXTERNAL, item.isExternal(), boolean.class);
         update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);
         update = addQuotedField(update, COL_CONFIGURATION, item.getConfiguration(), String.class);

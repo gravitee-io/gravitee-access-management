@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.policy.impl;
 
 import io.gravitee.am.gateway.policy.PolicyMetadata;
 import io.gravitee.policy.api.PolicyConfiguration;
+import io.gravitee.policy.api.PolicyContext;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -37,6 +38,7 @@ public class PolicyMetadataBuilder {
     private Map<Class<? extends Annotation>, Method> methods;
 
     private ClassLoader classLoader;
+    private PolicyContext context;
 
     public PolicyMetadataBuilder setId(String id) {
         this.id = id;
@@ -45,6 +47,11 @@ public class PolicyMetadataBuilder {
 
     public PolicyMetadataBuilder setConfiguration(Class<? extends PolicyConfiguration> configuration) {
         this.configuration = configuration;
+        return this;
+    }
+
+    public PolicyMetadataBuilder setContext(PolicyContext context) {
+        this.context = context;
         return this;
     }
 
@@ -73,6 +80,11 @@ public class PolicyMetadataBuilder {
             @Override
             public Class<?> policy() {
                 return policy;
+            }
+
+            @Override
+            public PolicyContext context() {
+                return context;
             }
 
             @Override

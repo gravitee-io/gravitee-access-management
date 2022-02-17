@@ -109,14 +109,12 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Override
     public Single<Page<User>> findByDomain(String domain, int page, int size) {
-        return findAll(DOMAIN, domain, page, size)
-                .doOnSuccess(userPage -> userPage.getData().forEach(this::setInternalStatus));
+        return findAll(ReferenceType.DOMAIN, domain, page, size);
     }
 
     @Override
     public Maybe<User> findById(String id) {
-        return userService.findById(id)
-                .map(this::setInternalStatus);
+        return userService.findById(id);
     }
 
     @Override
@@ -230,8 +228,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                             } else {
                                                                 return Single.just(user);
                                                             }
-                                                        })
-                                                        .map(this::setInternalStatus);
+                                                        });
                                             });
                                 });
                     }

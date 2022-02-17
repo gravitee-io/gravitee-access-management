@@ -32,6 +32,9 @@
               <h3>{{row.name}}</h3>
               <small>{{displayType(row.type)}}</small>
             </div>
+            <div class="idp-system">
+             <mat-chip-list *ngIf="row.system"><mat-chip>system</mat-chip></mat-chip-list>
+            </div>
           </div>
         </ng-template>
       </ngx-datatable-column>

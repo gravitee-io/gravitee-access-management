@@ -55,7 +55,10 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
     public Single<SystemTask> create(SystemTask item) {
         SystemTaskMongo task = SystemTaskMongo.convert(item);
         task.setId(task.getId() == null ? RandomString.generate() : task.getId());
-        return Single.fromPublisher(systemTaskCollection.insertOne(task)).flatMap(success -> findById(task.getId()).toSingle());
+        return Single.fromPublisher(systemTaskCollection.insertOne(task)).flatMap(success -> {
+            item.setId(task.getId());
+            return Single.just(item);
+        });
     }
 
     @Override
@@ -66,7 +69,8 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
     @Override
     public Single<SystemTask> updateIf(SystemTask item, String operationId) {
         SystemTaskMongo task = SystemTaskMongo.convert(item);
-        return Single.fromPublisher(systemTaskCollection.replaceOne(and(eq(FIELD_ID, task.getId()), eq(FIELD_OPERATION_ID, operationId)), task)).flatMap(updateResult -> findById(task.getId()).toSingle());
+        return Single.fromPublisher(systemTaskCollection.replaceOne(and(eq(FIELD_ID, task.getId()), eq(FIELD_OPERATION_ID, operationId)), task))
+                .flatMap(updateResult -> updateResult.getModifiedCount() == 1 ? Single.just(item) : findById(task.getId()).toSingle());
     }
 
     @Override

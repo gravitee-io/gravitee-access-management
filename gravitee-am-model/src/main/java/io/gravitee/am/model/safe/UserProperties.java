@@ -66,9 +66,9 @@ public class UserProperties {
             roles = user.getRolesPermissions().stream().map(Role::getName).collect(Collectors.toSet());
         }
         // set claims
-        var additionalInformation = Optional.ofNullable(user.getAdditionalInformation())
+        var userAdditionalInformation = Optional.ofNullable(user.getAdditionalInformation())
                 .orElse(new HashMap<>());
-        claims = new HashMap<>(additionalInformation);
+        claims = new HashMap<>(userAdditionalInformation);
         if (user.getLoggedAt() != null) {
             claims.put(Claims.auth_time, user.getLoggedAt().getTime() / 1000);
         }

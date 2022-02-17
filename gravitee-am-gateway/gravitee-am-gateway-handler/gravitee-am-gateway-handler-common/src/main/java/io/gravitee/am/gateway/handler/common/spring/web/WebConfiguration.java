@@ -25,9 +25,11 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessio
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.UserService;
+import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,6 +44,11 @@ public class WebConfiguration {
     }
 
     @Bean
+    public CSPHandlerFactory cspHandlerFactory(Environment environment) {
+        return new CSPHandlerFactory(environment);
+    }
+
+    @Bean
     public CookieSessionHandler sessionHandler(JWTService jwtService, CertificateManager certificateManager, UserService userService) {
         return new CookieSessionHandler(jwtService, certificateManager, userService);
     }
@@ -52,8 +59,9 @@ public class WebConfiguration {
     }
 
     @Bean
-    public CookieHandler cookieHandler(@Value("${http.cookie.secure:false}") boolean cookieSecure) {
-        return new CookieHandler(cookieSecure);
+    public CookieHandler cookieHandler(@Value("${http.cookie.secure:false}") boolean cookieSecure,
+                                       @Value("${http.cookie.sameSite:Lax}") String sameSite) {
+        return new CookieHandler(cookieSecure, CookieSameSite.valueOf(sameSite.toUpperCase()));
     }
 
     @Bean

@@ -17,11 +17,11 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.vertx.core.Handler;
 import io.vertx.core.http.Cookie;
+import io.vertx.core.http.CookieSameSite;
 import io.vertx.core.http.impl.ServerCookie;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Map;
-import java.util.Set;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -35,9 +35,11 @@ public class CookieHandler implements Handler<RoutingContext> {
 
     private static final String X_FORWARDED_PREFIX = "X-Forwarded-Prefix";
     private final boolean cookieSecure;
+    private final CookieSameSite sameSite;
 
-    public CookieHandler(boolean cookieSecure) {
+    public CookieHandler(boolean cookieSecure, CookieSameSite sameSite) {
         this.cookieSecure = cookieSecure;
+        this.sameSite = sameSite;
     }
 
     @Override
@@ -83,5 +85,8 @@ public class CookieHandler implements Handler<RoutingContext> {
 
         // There is no reason to allow javascript to access gateway's cookie.
         cookie.setHttpOnly(true);
+
+        // define explicitly the SameSite value instead of rely on the default browser behaviour
+        cookie.setSameSite(sameSite);
     }
 }

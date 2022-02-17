@@ -33,6 +33,8 @@ public class ReporterMongo extends Auditable {
 
     private String name;
 
+    private boolean system;
+
     private String type;
 
     private String dataType;
@@ -69,6 +71,14 @@ public class ReporterMongo extends Auditable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isSystem() {
+        return system;
+    }
+
+    public void setSystem(boolean system) {
+        this.system = system;
     }
 
     public String getType() {

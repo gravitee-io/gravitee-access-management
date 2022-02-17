@@ -18,9 +18,9 @@ package io.gravitee.am.plugins.certificate.plugin;
 import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.plugins.certificate.core.CertificateDefinition;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
+import io.gravitee.plugin.core.api.AbstractPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
-import io.gravitee.plugin.core.api.PluginHandler;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import org.springframework.util.Assert;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificatePluginHandler implements PluginHandler {
+public class CertificatePluginHandler extends AbstractPluginHandler {
 
     private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginHandler.class);
 
@@ -43,29 +43,36 @@ public class CertificatePluginHandler implements PluginHandler {
 
     @Override
     public boolean canHandle(Plugin plugin) {
-        return PluginType.CERTIFICATE.name().equalsIgnoreCase(plugin.type());
+        return type().equalsIgnoreCase(plugin.type());
     }
 
     @Override
-    public void handle(Plugin plugin) {
+    protected void handle(Plugin plugin, Class<?> pluginClass) {
         try {
-            ClassLoader classloader = pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-
-            final Class<?> certificateClass = classloader.loadClass(plugin.clazz());
             LOGGER.info("Register a new certificate plugin: {} [{}]", plugin.id(), plugin.clazz());
 
-            Assert.isAssignable(Certificate.class, certificateClass);
+            Assert.isAssignable(Certificate.class, pluginClass);
 
-            Certificate certificate = createInstance((Class<Certificate>) certificateClass);
+            var certificate = createInstance((Class<Certificate>) pluginClass);
             certificatePluginManager.register(new CertificateDefinition(certificate, plugin));
         } catch (Exception iae) {
             LOGGER.error("Unexpected error while create certificate instance", iae);
         }
     }
 
+    @Override
+    protected String type() {
+        return PluginType.CERTIFICATE.name();
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return  pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
+    }
+
     private <T> T createInstance(Class<T> clazz) throws Exception {
         try {
-            return clazz.newInstance();
+            return clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException ex) {
             LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
             throw ex;

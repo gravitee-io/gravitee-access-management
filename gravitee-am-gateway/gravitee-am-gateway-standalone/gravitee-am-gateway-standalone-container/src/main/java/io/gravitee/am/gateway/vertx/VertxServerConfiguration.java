@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.vertx;
 
 import io.gravitee.am.gateway.reactor.Reactor;
+import io.gravitee.node.certificates.KeyStoreLoaderManager;
 import io.gravitee.node.vertx.ReactivexVertxHttpServerFactory;
 import io.gravitee.node.vertx.configuration.HttpServerConfiguration;
 import io.vertx.reactivex.core.Vertx;
@@ -38,8 +39,6 @@ public class VertxServerConfiguration {
     public HttpServerConfiguration httpServerConfiguration(Environment environment) {
         return HttpServerConfiguration.builder().withEnvironment(environment)
                 .withDefaultPort(8092)
-                .withDefaultKeyStoreType(null)
-                .withDefaultTrustStoreType(null)
                 .withDefaultMaxFormAttributeSize(2048)
                 .build();
     }
@@ -49,8 +48,10 @@ public class VertxServerConfiguration {
     public ReactivexVertxHttpServerFactory vertxHttpServerFactory(
             Vertx vertx,
             @Qualifier("httpServerConfiguration")
-            HttpServerConfiguration httpServerConfiguration) {
-        return new ReactivexVertxHttpServerFactory(vertx, httpServerConfiguration);
+            HttpServerConfiguration httpServerConfiguration,
+            KeyStoreLoaderManager keyStoreLoaderManager
+    ) {
+        return new ReactivexVertxHttpServerFactory(vertx, httpServerConfiguration, keyStoreLoaderManager);
     }
 
     @Bean

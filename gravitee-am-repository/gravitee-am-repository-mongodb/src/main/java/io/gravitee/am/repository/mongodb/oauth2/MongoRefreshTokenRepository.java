@@ -85,7 +85,7 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
 
         return Single
                 .fromPublisher(refreshTokenCollection.insertOne(convert(refreshToken)))
-                .flatMap(success -> findById(refreshToken.getId()).toSingle());
+                .flatMap(success -> Single.just(refreshToken));
     }
 
     @Override
