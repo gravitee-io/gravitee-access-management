@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api.oidc;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
@@ -24,10 +25,14 @@ import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfigur
  * @author GraviteeSource Team
  */
 public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdentityProviderConfiguration {
-    public String getWellKnownUri();
-    public boolean isUseIdTokenForUserInfo();
-    public KeyResolver getPublicKeyResolver();
-    public SignatureAlgorithm getSignatureAlgorithm();
-    public String getResolverParameter();
-    public boolean isEncodeRedirectUri();
+    String getWellKnownUri();
+    boolean isUseIdTokenForUserInfo();
+    KeyResolver getPublicKeyResolver();
+    SignatureAlgorithm getSignatureAlgorithm();
+    String getResolverParameter();
+    boolean isEncodeRedirectUri();
+
+    default String getClientAuthenticationMethod() {
+        return ClientAuthenticationMethod.CLIENT_SECRET_POST;
+    }
 }
