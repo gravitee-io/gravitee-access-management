@@ -13,6 +13,16 @@
       "title": "Client Secret",
       "description": "OAuth 2.0 client secret"
     },
+    "clientAuthenticationMethod" : {
+      "type" : "string",
+      "title": "Client Authentication method",
+      "description": "Method for authenticating client at the token endpoint",
+      "default": "client_secret_post",
+      "enum" : [
+        "client_secret_post",
+        "client_secret_basic"
+      ]
+    },
     "wellKnownUri": {
       "type" : "string",
       "title": "Well-Known Endpoint",
