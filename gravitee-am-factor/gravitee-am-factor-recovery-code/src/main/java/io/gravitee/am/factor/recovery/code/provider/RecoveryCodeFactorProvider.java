@@ -109,12 +109,16 @@ public class RecoveryCodeFactorProvider implements FactorProvider, RecoveryFacto
     }
 
     private Completable addRecoveryCodeFactor(FactorContext context, EnrolledFactor enrolledFactor) {
-        enrolledFactor.setSecurity(createEnrolledFactorSecurity());
-        final UserService userService = context.getComponent(UserService.class);
+        try {
+            final UserService userService = context.getComponent(UserService.class);
+            enrolledFactor.setSecurity(createEnrolledFactorSecurity());
 
-        return userService
-                .addFactor(context.getUser().getId(), enrolledFactor, new DefaultUser(context.getUser()))
-                .ignoreElement();
+            return userService
+                    .addFactor(context.getUser().getId(), enrolledFactor, new DefaultUser(context.getUser()))
+                    .ignoreElement();
+        } catch (Exception ex) {
+            return Completable.error(ex);
+        }
     }
 
     private EnrolledFactorSecurity createEnrolledFactorSecurity() {
@@ -124,7 +128,11 @@ public class RecoveryCodeFactorProvider implements FactorProvider, RecoveryFacto
 
     private List<String> recoveryCodes() {
         final int length = configuration.getDigit();
+        final int count = configuration.getCount();
+        if (length <= 0 || count <= 0) {
+            throw new IllegalArgumentException("Configuration cannot be used for recovery code. Either number of digits or number of recovery code is 0 or negative.");
+        }
         logger.debug("Generating recovery code of {} digits", length);
-        return SecureRandomString.randomAlphaNumeric(length, configuration.getCount());
+        return SecureRandomString.randomAlphaNumeric(length, count);
     }
 }

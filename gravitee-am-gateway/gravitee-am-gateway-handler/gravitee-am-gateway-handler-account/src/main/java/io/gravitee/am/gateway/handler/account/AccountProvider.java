@@ -121,6 +121,15 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
                     .handler(BodyHandler.create())
                     .handler(accountHandler::getUser)
                     .handler(accountFactorsEndpointHandler::verifyFactor);
+            accountRouter.get(AccountRoutes.FACTORS_RECOVERY_CODE.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::listRecoveryCodes);
+            accountRouter.post(AccountRoutes.FACTORS_RECOVERY_CODE.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::enrollRecoveryCode);
+            accountRouter.delete(AccountRoutes.FACTORS_RECOVERY_CODE.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountFactorsEndpointHandler::deleteRecoveryCode);
 
             // WebAuthn credentials routes
             AccountWebAuthnCredentialsEndpointHandler accountWebAuthnCredentialsEndpointHandler =
