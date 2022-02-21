@@ -39,9 +39,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -175,7 +172,7 @@ public class OpenIDDiscoveryServiceTest {
     public void shouldContainsCIBAMetadata() {
         when(domain.useCiba()).thenReturn(true);
         final OpenIDProviderMetadata openIDProviderMetadata = openIDDiscoveryService.getConfiguration("/");
-        assertFalse(openIDProviderMetadata.isBackchannelUserCodeSupported());
+        assertTrue(openIDProviderMetadata.isBackchannelUserCodeSupported());
         assertTrue("ciba auth endpoint is required", openIDProviderMetadata.getBackchannelAuthenticationEndpoint().contains("ciba/authenticate"));
         assertNotNull(openIDProviderMetadata.getBackchannelAuthenticationSigningAlg());
         assertTrue(openIDProviderMetadata.getBackchannelAuthenticationSigningAlg().containsAll(JWAlgorithmUtils.getSupportedBackchannelAuthenticationSigningAl()));

@@ -1323,12 +1323,13 @@ public class DynamicClientRegistrationServiceTest {
         request.setRequestObjectEncryptionAlg(Optional.of(JWEAlgorithm.RSA_OAEP_256.getName()));
         request.setRequestObjectEncryptionEnc(Optional.of(EncryptionMethod.A256GCM.getName()));
         request.setJwksUri(Optional.of(DUMMY_JWKS_URI));
-        request.setRedirectUris(Optional.of(Arrays.asList(DUMMY_REDIRECTURI)));
+        request.setRedirectUris(Optional.of(List.of(DUMMY_REDIRECTURI)));
         request.setGrantTypes(Optional.of(List.of(GrantType.CIBA_GRANT_TYPE)));
 
         request.setBackchannelAuthRequestSignAlg(Optional.of(JWSAlgorithm.RS256.getName()));
         request.setBackchannelClientNotificationEndpoint(Optional.of("https://127.0.0..1/ciba/notif"));
         request.setBackchannelTokenDeliveryMode(Optional.of(CIBADeliveryMode.POLL));
+        request.setBackchannelUserCodeParameter(Optional.of(true));
 
         when(domain.useCiba()).thenReturn(true);
 
@@ -1340,7 +1341,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        testObserver.assertValue(client -> !client.getBackchannelUserCodeParameter());
+        testObserver.assertValue(Client::getBackchannelUserCodeParameter);
         testObserver.assertValue(client -> client.getBackchannelAuthRequestSignAlg() != null && client.getBackchannelAuthRequestSignAlg().equals(JWSAlgorithm.RS256.getName()));
         testObserver.assertValue(client -> client.getBackchannelClientNotificationEndpoint() != null && client.getBackchannelClientNotificationEndpoint().equals("https://127.0.0..1/ciba/notif"));
         testObserver.assertValue(client -> client.getBackchannelTokenDeliveryMode() != null && client.getBackchannelTokenDeliveryMode().equals(CIBADeliveryMode.POLL));

@@ -178,7 +178,7 @@ public class OpenIDDiscoveryServiceImpl implements OpenIDDiscoveryService, Initi
             openIDProviderMetadata.setBackchannelAuthenticationSigningAlg(JWAlgorithmUtils.getSupportedBackchannelAuthenticationSigningAl());
             openIDProviderMetadata.setBackchannelTokenDeliveryModesSupported(CIBADeliveryMode.SUPPORTED_DELIVERY_MODES);
             openIDProviderMetadata.setBackchannelAuthenticationEndpoint(getEndpointAbsoluteURL(basePath, CIBA_AUTHENTICATION_ENDPOINT));
-            openIDProviderMetadata.setBackchannelUserCodeSupported(false);
+            openIDProviderMetadata.setBackchannelUserCodeSupported(true);
         }
 
         final boolean mtlsEnabled = clientCert != null || (secured && !clientAuth.equalsIgnoreCase("none"));
