@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
@@ -27,7 +28,6 @@ import io.gravitee.am.gateway.handler.account.model.EnrollmentAccount;
 import io.gravitee.am.gateway.handler.account.model.UpdateEnrolledFactor;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Factor;
@@ -37,10 +37,12 @@ import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -54,14 +56,10 @@ import org.springframework.context.ApplicationContext;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
@@ -95,7 +93,7 @@ public class AccountFactorsEndpointHandler {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         accountService.getFactors(user.getReferenceId())
                 .subscribe(
-                        factors -> AccountResponseHandler.handleDefaultResponse(routingContext, factors),
+                        factors -> AccountResponseHandler.handleDefaultResponse(routingContext, filteredFactorCatalog(factors)),
                         error -> routingContext.fail(error)
                 );
     }
@@ -107,7 +105,7 @@ public class AccountFactorsEndpointHandler {
      */
     public void listEnrolledFactors(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final List<EnrolledFactor> enrolledFactors = user.getFactors() != null ? user.getFactors() : Collections.emptyList();
+        final List<EnrolledFactor> enrolledFactors = user.getFactors() != null ? filteredEnrolledFactors(user) : Collections.emptyList();
         AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactors);
     }
 
@@ -151,6 +149,11 @@ public class AccountFactorsEndpointHandler {
                     return;
                 }
 
+                if (isRecoveryCodeFactor(factor)) {
+                    routingContext.fail(new InvalidRequestException("Recovery code does not support enrollment feature. Instead, use '/api/recovery_code' endpoint to generate recovery code."));
+                    return;
+                }
+
                 // check request body parameters
                 switch (factor.getFactorType()) {
                     case CALL:
@@ -186,18 +189,6 @@ public class AccountFactorsEndpointHandler {
                             return;
                         }
                     }
-                }
-
-                //Check if the factor is a recovery factor.
-                // In case of recovery factor; recovery code is generated instead of sending challenge
-                if (isRecoveryCodeFactor(factor)) {
-                    generateRecoveryCode(routingContext, factor, (RecoveryFactor)factorProvider).subscribe(
-                            () -> {
-                                AccountResponseHandler.handleDefaultResponse(routingContext, Future.succeededFuture());
-                            },
-                            routingContext::fail
-                    );
-                    return;
                 }
 
                 // enroll factor
@@ -338,7 +329,14 @@ public class AccountFactorsEndpointHandler {
             routingContext.fail(new FactorNotFoundException(factorId));
             return;
         }
-        AccountResponseHandler.handleDefaultResponse(routingContext, optionalEnrolledFactor.get());
+
+        // Remove recovery code from enrolled factor
+        EnrolledFactor enrolledFactor = optionalEnrolledFactor.get();
+        if (RECOVERY_CODE.equals(enrolledFactor.getSecurity())) {
+            routingContext.fail(new FactorNotFoundException(factorId));
+            return;
+        }
+        AccountResponseHandler.handleDefaultResponse(routingContext, enrolledFactor);
     }
 
     /**
@@ -430,6 +428,105 @@ public class AccountFactorsEndpointHandler {
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         error -> routingContext.fail(error)
                 );
+    }
+
+    /**
+     * List recovery codes for the current user
+     * @param routingContext  the routingContext holding the current user
+     */
+    public void listRecoveryCodes(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+
+        if (user.getFactors() == null) {
+            AccountResponseHandler.handleDefaultResponse(routingContext, Collections.emptyList());
+        } else {
+            AccountResponseHandler.handleDefaultResponse(routingContext, getUserRecoveryCodes(user));
+        }
+    }
+
+    /**
+     * Enroll user to recovery code factor and generate recovery code
+     * in the process
+     * @param routingContext  the routingContext holding the current user
+     */
+    public void enrollRecoveryCode(RoutingContext routingContext) {
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final Factor recoveryCodeFactor = getClientRecoveryCodeFactor(client);
+
+        if (recoveryCodeFactor == null) {
+            routingContext.fail(new InvalidRequestException(client.getClientName() + " does not support recovery code. Please ask your administrator for further information."));
+            return;
+        }
+
+        final RecoveryFactor recoveryCodeFactorProvider = (RecoveryFactor) factorManager.get(recoveryCodeFactor.getId());
+
+        generateRecoveryCode(routingContext, recoveryCodeFactor, recoveryCodeFactorProvider).subscribe(
+                () -> {
+                    final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+                    //Need updated user data after recovery code generation, hence the accountService call
+                    accountService.get(user.getId()).subscribe(
+                            usr -> AccountResponseHandler.handleDefaultResponse(routingContext, getUserRecoveryCodes(usr))
+                    );
+                },
+                routingContext::fail
+        );
+    }
+
+    /**
+     * Delete user recovery codes
+     * @param routingContext  the routingContext holding the current user
+     */
+    public void deleteRecoveryCode(RoutingContext routingContext) {
+        final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+
+        if (user.getFactors() == null) {
+            AccountResponseHandler.handleNoBodyResponse(routingContext);
+            return;
+        }
+
+        if (user.getFactors().isEmpty()) {
+            AccountResponseHandler.handleNoBodyResponse(routingContext);
+            return;
+        }
+
+        final List<String> recoveryCodes = user.getFactors()
+                .stream()
+                .filter(ef -> ef.getSecurity() != null && RECOVERY_CODE.equals(ef.getSecurity().getType()))
+                .map(EnrolledFactor::getFactorId)
+                .collect(Collectors.toList());
+
+        if (recoveryCodes.isEmpty()) {
+            AccountResponseHandler.handleNoBodyResponse(routingContext);
+            return;
+        }
+
+        Observable.fromIterable(recoveryCodes)
+                .flatMapCompletable(recoveryCode -> accountService.removeFactor(user.getId(), recoveryCode, new DefaultUser(user)))
+                .subscribe(
+                        () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
+                        routingContext::fail
+                );
+    }
+
+    private List<String> getUserRecoveryCodes(User user){
+        final Optional<Object> securityCodes = user.getFactors()
+                .stream()
+                .filter(ef -> ef.getSecurity() != null && RECOVERY_CODE.equals(ef.getSecurity().getType()))
+                .map(EnrolledFactor::getSecurity)
+                .map(security -> security.getAdditionalData().get(RECOVERY_CODE))
+                .findFirst();
+
+        return securityCodes.map(codes -> (List<String>) codes).orElse(Collections.emptyList());
+    }
+
+    private Factor getClientRecoveryCodeFactor(Client client) {
+        for (String factorId : client.getFactors()) {
+            Factor factor = factorManager.getFactor(factorId);
+            if (isRecoveryCodeFactor(factor)) {
+                return factor;
+            }
+        }
+        return null;
     }
 
     private void findFactor(String factorId, Handler<AsyncResult<Factor>> handler) {
@@ -555,5 +652,29 @@ public class AccountFactorsEndpointHandler {
         } catch (NoSuchAlgorithmException e) {
             return 0;
         }
+    }
+
+    /**
+     * This method filter out recovery code factor
+     * @param user current user in the context
+     * @return list of EnrolledFactor without recovery codes
+     */
+    private List<EnrolledFactor> filteredEnrolledFactors(User user) {
+        return user.getFactors()
+                .stream()
+                .filter(ef -> ef.getSecurity() == null || !RECOVERY_CODE.equals(ef.getSecurity().getType()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * This method filter out recovery code factor
+     * @param factors list of Factor objects
+     * @return list of Factor without recovery codes
+     */
+    private List<Factor> filteredFactorCatalog(List<Factor> factors){
+        return factors
+                .stream()
+                .filter(factor -> !FactorType.RECOVERY_CODE.equals(factor.getFactorType()))
+                .collect(Collectors.toList());
     }
 }

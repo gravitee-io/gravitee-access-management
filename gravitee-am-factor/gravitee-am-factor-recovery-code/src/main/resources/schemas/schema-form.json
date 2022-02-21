@@ -11,12 +11,14 @@
     "digit": {
       "title": "Number of digits",
       "description": "Number of digits the user needs to enter",
-      "type": "integer"
+      "type": "integer",
+      "minimum": 1
     },
     "count": {
       "title": "Number of recovery codes",
       "description": "Number of generated recovery codes",
-      "type": "integer"
+      "type": "integer",
+      "minimum": 1
     }
   },
   "required": [
