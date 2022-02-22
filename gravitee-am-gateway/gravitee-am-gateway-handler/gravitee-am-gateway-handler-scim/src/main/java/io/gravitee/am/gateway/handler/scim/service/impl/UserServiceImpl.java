@@ -196,6 +196,8 @@ public class UserServiceImpl implements UserService {
                                         if (ex instanceof UserProviderNotFoundException) {
                                             // just store in AM
                                             userModel.setPassword(null);
+                                            // As there are no UserProvider, the user is an external one
+                                            userModel.setInternal(false);
                                             // set external id
                                             userModel.setExternalId(user.getExternalId() != null ? user.getExternalId() : userModel.getId());
                                             return userRepository.create(userModel);
