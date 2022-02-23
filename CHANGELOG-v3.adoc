@@ -1,6 +1,30 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/510?closed=1[AM - 3.10.16 (2022-02-23)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- User flagged as internal when created by SCIM https://github.com/gravitee-io/issues/issues/7177[#7177]
+
+*_Idp_*
+
+- Social identity provider with wrong `external` boolean in payload https://github.com/gravitee-io/issues/issues/7119[#7119]
+- [oauth2] add client_secret_basic authentication method https://github.com/gravitee-io/issues/issues/7156[#7156]
+
+*_Management-ui_*
+
+- Logos in social providers aren't displayed correctly https://github.com/gravitee-io/issues/issues/7124[#7124]
+
+*_Reporters_*
+
+- [mongodb] index name too long https://github.com/gravitee-io/issues/issues/7136[#7136]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/512?closed=1[AM - 3.15.2 (2022-02-16)]
 
 === Bug fixes
