@@ -528,6 +528,38 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
+  build_tmp_branch:
+    jobs:
+      - secrethub:
+          context:
+            - cicd-orchestrator
+          filters:
+            branches:
+              only:
+                - issues/#7158-webauthn-mobile-app
+      - build:
+          requires:
+            - secrethub
+          filters:
+            branches:
+              only:
+                - issues/#7158-webauthn-mobile-app
+      - publish-images-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - issues/#7158-webauthn-mobile-app
+
   build_branch:
     jobs:
       - keeper:
