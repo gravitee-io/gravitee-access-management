@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -31,9 +32,12 @@ import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -54,17 +58,19 @@ public class UserResourceTest extends JerseySpringTest {
         mockUser.setUsername("user-username");
         mockUser.setReferenceType(ReferenceType.DOMAIN);
         mockUser.setReferenceId(domainId);
-
+        mockUser.setSource("source");
+        doReturn(Maybe.empty()).when(identityProviderService).findById(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockUser)).when(userService).findById(userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final User user = readEntity(response, User.class);
-        assertEquals(domainId, user.getReferenceId());
-        assertEquals("user-username", user.getUsername());
-    }
+        final Map user = readEntity(response, HashMap.class);
+        assertEquals(domainId, user.get("referenceId"));
+        assertEquals(mockUser.getUsername(), user.get("username"));
+        assertEquals(mockUser.getSource(), user.get("sourceId"));
+     }
 
     @Test
     public void shouldGetUser_notFound() {
