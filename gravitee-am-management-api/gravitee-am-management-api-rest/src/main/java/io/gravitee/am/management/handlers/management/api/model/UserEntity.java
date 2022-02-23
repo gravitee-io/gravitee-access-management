@@ -23,8 +23,10 @@ import io.gravitee.am.model.User;
  * @author GraviteeSource Team
  */
 public class UserEntity extends User {
-
+    
     private ApplicationEntity applicationEntity;
+
+    private String sourceId;
 
     public UserEntity(User user) {
         setId(user.getId());
@@ -59,6 +61,7 @@ public class UserEntity extends User {
         setAdditionalInformation(user.getAdditionalInformation());
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
+        this.sourceId = user.getSource();
     }
 
     public ApplicationEntity getApplicationEntity() {
@@ -67,5 +70,13 @@ public class UserEntity extends User {
 
     public void setApplicationEntity(ApplicationEntity applicationEntity) {
         this.applicationEntity = applicationEntity;
+    }
+
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    public void setSourceId(String sourceId) {
+        this.sourceId = sourceId;
     }
 }

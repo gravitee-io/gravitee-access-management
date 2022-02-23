@@ -20,8 +20,8 @@ import io.gravitee.am.management.handlers.management.api.model.PasswordValue;
 import io.gravitee.am.management.handlers.management.api.model.StatusEntity;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -42,7 +42,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.ResourceContext;
 import javax.ws.rs.container.Suspended;
@@ -99,6 +107,7 @@ public class UserResource extends AbstractResource {
                                     && !user1.getReferenceId().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("User does not belong to domain");
                             }
+
                             return Maybe.just(new UserEntity(user1));
                         })
                         .flatMap(this::enhanceIdentityProvider)
