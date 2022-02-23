@@ -371,6 +371,66 @@ jobs:
           paths:
             - ./docker-tag.txt
 
+  deploy-webauthn-on-aks:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Read tag of Docker images to deploy
+          command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Will deploy Docker images with tag: ${TAG}"
+      - run:
+          name: Install Helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            helm version
+      - run:
+          name: Install Kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client=true
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Setup Git config and clone cloud-am repo
+          command: |
+            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Add SSH Key
+            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
+            ssh-add -D
+            ssh-add "${LOCAL_SSH_PRVIKEY}"
+
+            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+      - run:
+          name: Helm upgrade and 🚀 Mongo and JDBC instances
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az aks get-credentials --resource-group am-hprod --name am-hprod
+    
+            # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
+            kubectl create namespace nightly-webauthn --dry-run=client -o yaml | kubectl apply -f -
+            helm upgrade --repo https://helm.gravitee.io \
+                                    --install am-webauthn \
+                                    -n nightly-webauthn \
+                                    -f ./cloud-am/nightly/values-3.14.x-webauthn.yaml am \
+                                    --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                                    --set "api.image.tag=${TAG}" \
+                                    --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                                    --set "gateway.image.tag=${TAG}" \
+                                    --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                                    --set "ui.image.tag=${TAG}"
+
   deploy-on-aks:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -453,6 +513,7 @@ jobs:
                                     --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                                     --set "ui.image.tag=${TAG}"
             fi
+
   purge-azure-registry:
     docker:
       - image: mcr.microsoft.com/azure-cli:latest
@@ -555,6 +616,24 @@ workflows:
                 var-name: AZURE_DOCKER_REGISTRY_PASSWORD
           requires:
             - build
+          filters:
+            branches:
+              only:
+                - issues/#7158-webauthn-mobile-app
+      - deploy-webauthn-on-aks:
+          context: cicd-orchestrator
+          pre-steps:
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-id
+                var-name: AZURE_APPLICATION_ID
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/tenant
+                var-name: AZURE_TENANT
+            - secrethub/env-export:
+                secret-path: graviteeio/cicd/azure/application-secret
+                var-name: AZURE_APPLICATION_SECRET
+          requires:
+            - publish-images-azure-registry
           filters:
             branches:
               only:
