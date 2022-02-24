@@ -21,10 +21,7 @@ import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
-import io.gravitee.am.common.oidc.AuthenticationFlow;
-import io.gravitee.am.common.oidc.CustomClaims;
-import io.gravitee.am.common.oidc.ResponseType;
-import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.common.oidc.*;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -51,6 +48,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.client.HttpRequest;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -158,15 +156,23 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             return Maybe.error(new BadCredentialsException("Missing authorization code"));
         }
 
-        List<NameValuePair> urlParameters = new ArrayList<>();
+        final List<NameValuePair> urlParameters = new ArrayList<>();
+        final HttpRequest<Buffer> tokenRequest = getClient().postAbs(getConfiguration().getAccessTokenUri());
+
+        if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.equals(this.getConfiguration().getClientAuthenticationMethod())) {
+            tokenRequest.basicAuthentication(getConfiguration().getClientId(), getConfiguration().getClientSecret());
+        } else {
+            urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, getConfiguration().getClientSecret()));
+        }
+
         urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_ID, getConfiguration().getClientId()));
-        urlParameters.add(new BasicNameValuePair(Parameters.CLIENT_SECRET, getConfiguration().getClientSecret()));
         urlParameters.add(new BasicNameValuePair(Parameters.REDIRECT_URI, String.valueOf(authentication.getContext().get(Parameters.REDIRECT_URI))));
         urlParameters.add(new BasicNameValuePair(Parameters.CODE, authorizationCode));
         urlParameters.add(new BasicNameValuePair(Parameters.GRANT_TYPE, "authorization_code"));
         String bodyRequest = URLEncodedUtils.format(urlParameters);
 
-        return getClient().postAbs(getConfiguration().getAccessTokenUri())
+
+        return tokenRequest
                 .putHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(bodyRequest.length()))
                 .putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED)
                 .rxSendBuffer(Buffer.buffer(bodyRequest))

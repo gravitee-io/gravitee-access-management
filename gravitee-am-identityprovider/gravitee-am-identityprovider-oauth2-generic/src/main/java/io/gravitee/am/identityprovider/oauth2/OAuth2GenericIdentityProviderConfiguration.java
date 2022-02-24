@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.oauth2;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.oidc.OpenIDConnectIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
@@ -46,6 +47,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private Integer connectTimeout = 10000;
     private Integer idleTimeout = 10000;
     private Integer maxPoolSize = 200;
+    private String clientAuthenticationMethod = ClientAuthenticationMethod.CLIENT_SECRET_POST;
 
     public String getClientId() {
         return clientId;
@@ -194,4 +196,11 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
         this.logoutUri = logoutUri;
     }
 
+    public String getClientAuthenticationMethod() {
+        return clientAuthenticationMethod;
+    }
+
+    public void setClientAuthenticationMethod(String clientAuthenticationMethod) {
+        this.clientAuthenticationMethod = clientAuthenticationMethod;
+    }
 }

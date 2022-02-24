@@ -53,6 +53,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -102,16 +103,19 @@ public class UserServiceTest {
         User newUser = mock(User.class);
         when(newUser.getSource()).thenReturn("unknown-idp");
         when(newUser.getUserName()).thenReturn("username");
-
         when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
-        when(userRepository.create(any())).thenReturn(Single.just(new io.gravitee.am.model.User()));
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(new io.gravitee.am.model.User()));
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
+
+        assertFalse(newUserDefinition.getValue().isInternal());
     }
 
     @Test
@@ -158,14 +162,18 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn(domainId);
         when(userRepository.findByUsernameAndSource(eq(ReferenceType.DOMAIN), anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(userRepository.create(any())).thenReturn(Single.just(createdUser));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(roles));
 
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(createdUser));
+
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
+
+        assertTrue(newUserDefinition.getValue().isInternal());
     }
 
     @Test
