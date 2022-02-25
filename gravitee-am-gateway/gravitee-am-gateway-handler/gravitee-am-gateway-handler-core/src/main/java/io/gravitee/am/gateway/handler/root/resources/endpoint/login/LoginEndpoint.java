@@ -111,8 +111,9 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         Map<String, String> params = new HashMap<>(evaluableRequest.getParams().toSingleValueMap());
         params.put(ConstantKeys.ERROR_PARAM_KEY, error);
         params.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
-        if (isIdentifierFirstLoginEnabled) {
-            params.put(ConstantKeys.USERNAME_PARAM_KEY, routingContext.request().getParam(Parameters.LOGIN_HINT));
+        final String loginHint = routingContext.request().getParam(Parameters.LOGIN_HINT);
+        if (loginHint != null) {
+            params.put(ConstantKeys.USERNAME_PARAM_KEY, loginHint);
         }
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
