@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -83,6 +85,10 @@ public class LoginFailureHandler implements Handler<RoutingContext> {
         }
         if (errorDescription != null) {
             queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+        }
+        if (context.request().getParam(Parameters.LOGIN_HINT) != null) {
+            // encode login_hint parameter (to not replace '+' sign by a space ' ')
+            queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(context.request().getParam(ConstantKeys.USERNAME_PARAM_KEY)));
         }
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), queryParams, true);
         doRedirect(resp, uri);
