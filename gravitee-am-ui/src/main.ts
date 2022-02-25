@@ -19,10 +19,13 @@ import {AppModule} from './app/app.module';
 import {environment} from './environments/environment';
 import {AppConfig} from './config/app.config';
 import {forkJoin, Observable} from 'rxjs';
+import { loadDefaultTranslations } from '@gravitee/ui-components/src/lib/i18n';
 
 if (environment.production) {
   enableProdMode();
 }
+
+loadDefaultTranslations().then(_ => {});
 
 const constants = new Observable(observer => {
   fetch('constants.json', {method: 'get'}).then(response => {

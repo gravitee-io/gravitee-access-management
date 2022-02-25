@@ -42,6 +42,13 @@ public class Step {
      */
     private boolean enabled = true;
 
+    /**
+     * Step condition
+     */
+    //TODO: Implement conditional policy,
+    // right now this field serves for compatibility
+    private String condition;
+
     public String getName() {
         return name;
     }
@@ -80,5 +87,13 @@ public class Step {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
     }
 }
