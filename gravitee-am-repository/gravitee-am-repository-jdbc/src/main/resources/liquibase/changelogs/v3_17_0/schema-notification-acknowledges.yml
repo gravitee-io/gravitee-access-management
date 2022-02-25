@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 3.16.0-notification-acknowledges
+      id: 3.17.0-notification-acknowledges
       author: GraviteeSource Team
       changes:
         - createTable:
@@ -8,9 +8,12 @@ databaseChangeLog:
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: resource, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: resource_type, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: type, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: audience, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: counter, type: integer, constraints: { nullable: false } }
               - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
 
         - addPrimaryKey:
             constraintName: pk_notification_acknowledgements

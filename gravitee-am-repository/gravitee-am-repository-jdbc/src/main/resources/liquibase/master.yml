@@ -64,6 +64,6 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_16_0/schema.yml
   - include:
-      - file: liquibase/changelogs/v3_16_0/schema-notification-acknowledges.yml
+      - file: liquibase/changelogs/v3_17_0/schema-notification-acknowledges.yml
   - include:
       - file: liquibase/changelogs/v3_17_0/schema-user-notifications.yml

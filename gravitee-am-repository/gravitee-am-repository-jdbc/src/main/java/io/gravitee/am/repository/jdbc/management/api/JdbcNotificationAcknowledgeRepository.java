@@ -37,8 +37,8 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
 public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepository implements NotificationAcknowledgeRepository {
 
     public static final String COL_ID = "id";
-    public static final String COL_RESOURCE = "resource";
-    public static final String COL_AUDIENCE = "audience";
+    public static final String COL_RESOURCE = "resourceId";
+    public static final String COL_AUDIENCE = "audienceId";
     public static final String COL_TYPE = "type";
 
     protected NotificationAcknowledge toEntity(JdbcNotificationAcknowledge entity) {
@@ -76,8 +76,16 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     }
 
     @Override
+    public Single<NotificationAcknowledge> update(NotificationAcknowledge notificationAcknowledge) {
+        LOGGER.debug("update({})", notificationAcknowledge);
+        final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
+        return monoToSingle(this.template.update(entity)).map(this::toEntity);
+    }
+
+    @Override
     public Completable deleteByResourceId(String id) {
         LOGGER.debug("deleteByResourceId({})", id);
         return monoToCompletable(this.template.delete(JdbcNotificationAcknowledge.class).matching(query(where(COL_RESOURCE).is(id))).all());
     }
+
 }

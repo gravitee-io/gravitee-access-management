@@ -39,9 +39,9 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoNotificationAcknowledgeRepository extends AbstractManagementMongoRepository implements NotificationAcknowledgeRepository {
 
-    private static final String FIELD_RESOURCE_ID = "resource";
+    private static final String FIELD_RESOURCE_ID = "resourceId";
     private static final String FIELD_TYPE = "type";
-    private static final String FIELD_AUDIENCE_ID = "audience";
+    private static final String FIELD_AUDIENCE_ID = "audienceId";
 
     private MongoCollection<NotificationAcknowledgeMongo> collection;
 
@@ -81,26 +81,42 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     public Single<NotificationAcknowledge> create(NotificationAcknowledge notificationAcknowledge) {
         NotificationAcknowledgeMongo entity = convert(notificationAcknowledge);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(collection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(collection.insertOne(entity)).map(success -> {
+            notificationAcknowledge.setId(entity.getId());
+            return notificationAcknowledge;
+        });
+    }
+
+    @Override
+    public Single<NotificationAcknowledge> update(NotificationAcknowledge notificationAcknowledge) {
+        NotificationAcknowledgeMongo entity = convert(notificationAcknowledge);
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entity.getId()), entity))
+                .map(result -> notificationAcknowledge);
     }
 
     private NotificationAcknowledge convert(NotificationAcknowledgeMongo entity) {
         final NotificationAcknowledge bean = new NotificationAcknowledge();
         bean.setId(entity.getId());
-        bean.setResourceId(entity.getResource());
-        bean.setAudienceId(entity.getAudience());
+        bean.setResourceId(entity.getResourceId());
+        bean.setResourceType(entity.getResourceType());
+        bean.setAudienceId(entity.getAudienceId());
         bean.setType(entity.getType());
         bean.setCreatedAt(entity.getCreatedAt());
+        bean.setUpdatedAt(entity.getUpdatedAt());
+        bean.setCounter(entity.getCounter());
         return bean;
     }
 
     private NotificationAcknowledgeMongo convert(NotificationAcknowledge bean) {
         final NotificationAcknowledgeMongo entity = new NotificationAcknowledgeMongo();
         entity.setId(bean.getId());
-        entity.setResource(bean.getResourceId());
-        entity.setAudience(bean.getAudienceId());
+        entity.setResourceId(bean.getResourceId());
+        entity.setResourceType(bean.getResourceType());
+        entity.setAudienceId(bean.getAudienceId());
+        entity.setCounter(bean.getCounter());
         entity.setType(bean.getType());
         entity.setCreatedAt(bean.getCreatedAt());
+        entity.setUpdatedAt(bean.getUpdatedAt());
         return entity;
     }
 }

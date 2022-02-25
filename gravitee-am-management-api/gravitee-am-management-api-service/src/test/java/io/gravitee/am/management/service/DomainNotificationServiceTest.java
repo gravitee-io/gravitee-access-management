@@ -155,7 +155,7 @@ public class DomainNotificationServiceTest {
 
         Thread.sleep(1000); // wait subscription execution
 
-        verify(notifierService).register(any(), any());
+        verify(notifierService).register(any(), any(), any());
         verify(groupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
     }
 
@@ -180,8 +180,8 @@ public class DomainNotificationServiceTest {
 
         Thread.sleep(1000); // wait subscription execution
 
-        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_UI_NOTIFIER)), any());
-        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_EMAIL_NOTIFIER)), any());
+        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_UI_NOTIFIER)), any(), any());
+        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_EMAIL_NOTIFIER)), any(), any());
         verify(groupService, never()).findMembers(any(), any(), any(), anyInt(), anyInt());
     }
 
@@ -214,7 +214,7 @@ public class DomainNotificationServiceTest {
 
         Thread.sleep(1000); // wait subscription execution
 
-        verify(notifierService, times(11)).register(any(), any());
+        verify(notifierService, times(11)).register(any(), any(), any());
         verify(userService, never()).findById(any(), any(), any());
 
     }

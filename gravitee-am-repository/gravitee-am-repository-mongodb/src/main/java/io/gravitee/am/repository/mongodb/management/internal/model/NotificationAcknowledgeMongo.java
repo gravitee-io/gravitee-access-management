@@ -31,11 +31,17 @@ public class NotificationAcknowledgeMongo {
 
     private Date createdAt;
 
-    private String resource;
+    private Date updatedAt;
 
-    private String audience;
+    private String resourceId;
+
+    private String resourceType;
+
+    private String audienceId;
 
     private String type;
+
+    private int counter;
 
     public String getId() {
         return id;
@@ -53,6 +59,38 @@ public class NotificationAcknowledgeMongo {
         this.createdAt = createdAt;
     }
 
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    public String getAudienceId() {
+        return audienceId;
+    }
+
+    public void setAudienceId(String audienceId) {
+        this.audienceId = audienceId;
+    }
+
     public String getType() {
         return type;
     }
@@ -61,20 +99,12 @@ public class NotificationAcknowledgeMongo {
         this.type = type;
     }
 
-    public String getResource() {
-        return resource;
+    public int getCounter() {
+        return counter;
     }
 
-    public void setResource(String resource) {
-        this.resource = resource;
-    }
-
-    public String getAudience() {
-        return audience;
-    }
-
-    public void setAudience(String audience) {
-        this.audience = audience;
+    public void setCounter(int counter) {
+        this.counter = counter;
     }
 
     @Override
@@ -82,11 +112,11 @@ public class NotificationAcknowledgeMongo {
         if (this == o) return true;
         if (!(o instanceof NotificationAcknowledgeMongo)) return false;
         NotificationAcknowledgeMongo that = (NotificationAcknowledgeMongo) o;
-        return Objects.equals(id, that.id) && Objects.equals(resource, that.resource) && Objects.equals(audience, that.audience) && Objects.equals(type, that.type);
+        return Objects.equals(id, that.id) && Objects.equals(resourceId, that.resourceId) && Objects.equals(resourceType, that.resourceType) && Objects.equals(audienceId, that.audienceId) && Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, resource, audience, type);
+        return Objects.hash(id, resourceId, resourceType, audienceId, type);
     }
 }
