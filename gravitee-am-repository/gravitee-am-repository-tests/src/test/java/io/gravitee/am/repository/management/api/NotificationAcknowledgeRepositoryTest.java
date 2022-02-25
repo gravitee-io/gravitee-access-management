@@ -53,6 +53,43 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
     }
 
     @Test
+    public void testUpdate() throws TechnicalException {
+        NotificationAcknowledge acknowledge = new NotificationAcknowledge();
+        acknowledge.setId("testid");
+        acknowledge.setType("email-notifier");
+        acknowledge.setResourceId("resource");
+        acknowledge.setAudienceId("audience");
+        acknowledge.setCreatedAt(new Date());
+        repository.create(acknowledge).blockingGet();
+
+        TestObserver<NotificationAcknowledge> testObserver = repository.findById(acknowledge.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> d.getId().equals(acknowledge.getId()) && d.getCounter() == 1);
+
+        // increment
+        acknowledge.incrementCounter();
+
+        testObserver = repository.update(acknowledge).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> d.getId().equals(acknowledge.getId()) && d.getCounter() == 2);
+
+        // retrieve by ID to confirm the update has been done
+        testObserver = repository.findById(acknowledge.getId()).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(d -> d.getId().equals(acknowledge.getId()) && d.getCounter() == 2);
+
+    }
+
+    @Test
     public void testFindByResourceIdAndAudienceId() throws TechnicalException {
         NotificationAcknowledge acknowledge = new NotificationAcknowledge();
         acknowledge.setId("testid");

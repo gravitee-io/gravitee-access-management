@@ -22,10 +22,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.management.service.impl.notifications.CertificateNotificationCondition;
-import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
-import io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration;
-import io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils;
+import io.gravitee.am.management.service.impl.notifications.*;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
@@ -51,8 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -79,6 +75,9 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
 
     @Value("${services.notifier.am.cronExpression:0 0 5 * * *}") // default: 0 0 5 * * * (every day at 5am)
     private String cronExpression;
+
+    @Value("${services.notifier.am.timeframe.duration:2}")
+    private int timeframeDuration;
 
     @Value("${services.notifier.am.certificate.expiryThreshold:7}")
     private int certificateExpiryThreshold;
@@ -122,7 +121,9 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                                         buildUINotificationDefinition(provider, certificate, domain, user))))
                 .subscribe(definition -> {
                     if (definition.isPresent()) {
-                        notifierService.register(definition.get(), new CertificateNotificationCondition(certificateExpiryThreshold));
+                        notifierService.register(definition.get(),
+                                new CertificateNotificationCondition(certificateExpiryThreshold),
+                                new CertificateResendNotificationCondition(this.timeframeDuration));
                     }
                 });
     }
@@ -198,6 +199,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 definition.setType(TYPE_EMAIL_NOTIFIER);
                 definition.setConfiguration(mapper.writeValueAsString(notifierConfig));
                 definition.setResourceId(certificate.getId());
+                definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
                 definition.setAudienceId(user.getId());
                 definition.setCron(this.cronExpression);
                 definition.setData(data);
@@ -228,6 +230,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 definition.setType(TYPE_UI_NOTIFIER);
                 definition.setConfiguration(mapper.writeValueAsString(value));
                 definition.setResourceId(certificate.getId());
+                definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
                 definition.setAudienceId(user.getId());
                 definition.setCron(this.cronExpression);
                 definition.setData(data);

@@ -32,13 +32,20 @@ public class JdbcNotificationAcknowledge {
 
     private LocalDateTime createdAt;
 
-    @Column("resource")
+    private LocalDateTime updatedAt;
+
+    @Column("resource_id")
     private String resourceId;
 
-    @Column("audience")
+    @Column("resource_type")
+    private String resourceType;
+
+    @Column("audience_id")
     private String audienceId;
 
     private String type;
+
+    private int counter;
 
     public String getId() {
         return id;
@@ -56,12 +63,36 @@ public class JdbcNotificationAcknowledge {
         this.createdAt = createdAt;
     }
 
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public int getCounter() {
+        return counter;
+    }
+
+    public void setCounter(int counter) {
+        this.counter = counter;
+    }
+
     public String getResourceId() {
         return resourceId;
     }
 
     public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
+    }
+
+    public String getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
     }
 
     public String getAudienceId() {

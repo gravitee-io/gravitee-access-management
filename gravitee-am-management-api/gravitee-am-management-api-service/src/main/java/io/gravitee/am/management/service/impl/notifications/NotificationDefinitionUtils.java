@@ -35,6 +35,7 @@ import java.util.Map;
 public class NotificationDefinitionUtils {
     public static final String TYPE_UI_NOTIFIER = "ui-notifier";
     public static final String TYPE_EMAIL_NOTIFIER = "email-notifier";
+    public static final String RESOURCE_TYPE_CERTIFICATE = "certificate";
     public static final String NOTIFIER_DATA_USER = "user";
     public static final String NOTIFIER_DATA_DOMAIN = "domain";
     public static final String NOTIFIER_DATA_CERTIFICATE = "certificate";
