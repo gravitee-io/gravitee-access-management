@@ -38,7 +38,6 @@ import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -468,18 +467,26 @@ public class IDTokenServiceTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.empty());
         when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider));
         when(certificateManager.get(any())).thenReturn(Maybe.just(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
-        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, user).test();
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
+
         verify(certificateManager, times(1)).get(any());
-        verify(jwtService, times(1)).encode(eq(expectedJwt), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        verify(jwtService, times(1)).encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        JWT jwt = jwtCaptor.getValue();
+        assertNotNull(jwt);
+        assertTrue(jwt.get("sub") != null && expectedJwt.getSub().equals(jwt.get("sub")));
+        assertTrue(jwt.get("aud") != null && expectedJwt.getAud().equals(jwt.get("aud")));
+        assertTrue(jwt.get("email") != null && expectedJwt.get(StandardClaims.EMAIL).equals(jwt.get("email")));
+        assertTrue(jwt.get("address") == null);
     }
 
     @Test
@@ -505,10 +512,11 @@ public class IDTokenServiceTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
         when(certificateManager.findByAlgorithm(any())).thenReturn(Maybe.just(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
         when(certificateManager.defaultCertificateProvider()).thenReturn(new io.gravitee.am.gateway.certificate.CertificateProvider(defaultCertificateProvider));
         when(certificateManager.get(any())).thenReturn(Maybe.just(new io.gravitee.am.gateway.certificate.CertificateProvider(certificateProvider)));
-        when(jwtService.encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
+        when(jwtService.encode(jwtCaptor.capture(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class))).thenReturn(Single.just("test"));
 
         TestObserver<String> testObserver = idTokenService.create(oAuth2Request, client, user).test();
         testObserver.awaitTerminalEvent();
@@ -517,7 +525,13 @@ public class IDTokenServiceTest {
 
         verify(certificateManager).findByAlgorithm(any());
         verify(certificateManager).get(any());
-        verify(jwtService, times(1)).encode(eq(expectedJwt), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        verify(jwtService, times(1)).encode(any(), any(io.gravitee.am.gateway.certificate.CertificateProvider.class));
+        JWT jwt = jwtCaptor.getValue();
+        assertNotNull(jwt);
+        assertTrue(jwt.get("sub") != null && expectedJwt.getSub().equals(jwt.get("sub")));
+        assertTrue(jwt.get("aud") != null && expectedJwt.getAud().equals(jwt.get("aud")));
+        assertTrue(jwt.get("email") != null && expectedJwt.get(StandardClaims.EMAIL).equals(jwt.get("email")));
+        assertTrue(jwt.get("address") != null && expectedJwt.get(StandardClaims.ADDRESS).equals(jwt.get("address")));
     }
 
     @Test

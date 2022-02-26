@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api.oidc;
 
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.oidc.jwt.KeyResolver;
 import io.gravitee.am.identityprovider.api.social.SocialIdentityProviderConfiguration;
 
@@ -36,4 +37,7 @@ public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdenti
 
     boolean isEncodeRedirectUri();
 
+    default String getClientAuthenticationMethod() {
+        return ClientAuthenticationMethod.CLIENT_SECRET_POST;
+    }
 }

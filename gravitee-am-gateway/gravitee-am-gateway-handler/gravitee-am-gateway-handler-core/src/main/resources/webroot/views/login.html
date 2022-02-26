@@ -33,8 +33,8 @@
                         <div class="input-textfield">
                             <label for="username">Username</label>
                             <input type="text" id="username" name="username"
-                                   th:value="${identifierFirstLoginEnabled ? param.username : ''}" autofocus="autofocus" required
-                                   th:readonly="${identifierFirstLoginEnabled}"
+                                   th:value="${param.username}" autofocus="autofocus" required
+                                   th:readonly="${param.username != null}"
                             />
                         </div>
                         <div class="input-textfield">
