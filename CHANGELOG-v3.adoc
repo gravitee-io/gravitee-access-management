@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/514?closed=1[AM - 3.14.7 (2022-02-26)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Assign user login using login_hint https://github.com/gravitee-io/issues/issues/7197[#7197]
+- Email aliases interpretation after login failure https://github.com/gravitee-io/issues/issues/7200[#7200]
+
+*_General_*
+
+- Merge 3.10.16 https://github.com/gravitee-io/issues/issues/7186[#7186]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/510?closed=1[AM - 3.10.16 (2022-02-23)]
 
 === Bug fixes
