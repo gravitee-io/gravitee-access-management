@@ -24,30 +24,29 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public interface SocialIdentityProviderConfiguration extends IdentityProviderConfiguration {
+    String getClientId();
 
-    public String getClientId();
+    String getClientSecret();
 
-    public String getClientSecret();
+    Set<String> getScopes();
 
-    public Set<String> getScopes();
+    String getUserAuthorizationUri();
 
-    public String getUserAuthorizationUri();
+    String getAccessTokenUri();
 
-    public String getAccessTokenUri();
+    String getLogoutUri();
 
-    public String getLogoutUri();
+    String getUserProfileUri();
 
-    public String getUserProfileUri();
+    String getCodeParameter();
 
-    public String getCodeParameter();
+    String getResponseType();
 
-    public String getResponseType();
+    Integer getConnectTimeout();
 
-    public Integer getConnectTimeout();
+    Integer getIdleTimeout();
 
-    public Integer getIdleTimeout();
-
-    public Integer getMaxPoolSize();
+    Integer getMaxPoolSize();
 
     default boolean isStoreOriginalTokens(){
         return false;
