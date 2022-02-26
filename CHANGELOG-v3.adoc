@@ -1,6 +1,21 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/513?closed=1[AM - 3.15.3 (2022-02-26)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.14.7 https://github.com/gravitee-io/issues/issues/7203[#7203]
+
+*_Plugin_*
+
+- [notifier] update notifier plugin version to include "hide sensitive data" feature https://github.com/gravitee-io/issues/issues/7166[#7166]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/514?closed=1[AM - 3.14.7 (2022-02-26)]
 
 === Bug fixes
