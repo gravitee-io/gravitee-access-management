@@ -1,6 +1,31 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/479?closed=1[AM - 3.16.0 (2022-02-28)]
+
+=== Bug fixes
+
+*_General_*
+
+- Execute non regression test on RDBMS backend https://github.com/gravitee-io/issues/issues/7125[#7125]
+- Merge 3.15.1 https://github.com/gravitee-io/issues/issues/7121[#7121]
+- Merge 3.15.2 https://github.com/gravitee-io/issues/issues/7122[#7122]
+- Merge 3.15.3 https://github.com/gravitee-io/issues/issues/7204[#7204]
+
+=== Features
+
+*_Idp_*
+
+- [saml] EncryptedAssertion support https://github.com/gravitee-io/issues/issues/6835[#6835]
+
+*_Management_*
+
+- Password expiration policy https://github.com/gravitee-io/issues/issues/6836[#6836]
+- [mfa] Skip enrollment options https://github.com/gravitee-io/issues/issues/6188[#6188]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/513?closed=1[AM - 3.15.3 (2022-02-26)]
 
 === Bug fixes
