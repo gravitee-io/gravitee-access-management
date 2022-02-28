@@ -16,17 +16,26 @@
 package io.gravitee.am.management.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.impl.DomainNotifierServiceImpl;
-import io.gravitee.am.model.*;
+import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.spring.email.EmailConfiguration;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -50,7 +59,12 @@ import static io.gravitee.am.management.service.impl.notifications.NotificationD
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -88,16 +102,13 @@ public class DomainNotificationServiceTest {
     private OrganizationUserService userService;
 
     @Mock
-    private EmailConfiguration emailConfiguration;
+    private EmailNotifierConfiguration emailConfiguration;
 
     @Mock
     private EmailService emailService;
 
     @Mock
     private ObjectMapper mapper;
-
-    @Mock
-    private CertificateProvider provider;
 
     private Certificate certificate;
     private Domain domain;
@@ -147,11 +158,9 @@ public class DomainNotificationServiceTest {
         user.setEmail("user@acme.fr");
         when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
 
-        when(emailConfiguration.isEnabled()).thenReturn(true);
-
         when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
 
-        cut.registerCertificateExpiration(provider, certificate);
+        cut.registerCertificateExpiration(certificate);
 
         Thread.sleep(1000); // wait subscription execution
 
@@ -172,11 +181,9 @@ public class DomainNotificationServiceTest {
         user.setEmail("user@acme.fr");
         when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
 
-        when(emailConfiguration.isEnabled()).thenReturn(true);
-
         when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
 
-        cut.registerCertificateExpiration(provider, certificate);
+        cut.registerCertificateExpiration(certificate);
 
         Thread.sleep(1000); // wait subscription execution
 
@@ -206,11 +213,9 @@ public class DomainNotificationServiceTest {
                 Single.just(new Page<>(tenUsers, 0, 11)),
                 Single.just(new Page<>(Arrays.asList(singleUser), 1, 11)));
 
-        when(emailConfiguration.isEnabled()).thenReturn(true);
-
         when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
 
-        cut.registerCertificateExpiration(provider, certificate);
+        cut.registerCertificateExpiration(certificate);
 
         Thread.sleep(1000); // wait subscription execution
 

@@ -25,7 +25,7 @@ import io.reactivex.Completable;
  */
 public interface DomainNotifierService {
 
-    void registerCertificateExpiration(CertificateProvider provider, Certificate certificate);
+    void registerCertificateExpiration(Certificate certificate);
 
     void unregisterCertificateExpiration(String domainId, String certificateId);
 

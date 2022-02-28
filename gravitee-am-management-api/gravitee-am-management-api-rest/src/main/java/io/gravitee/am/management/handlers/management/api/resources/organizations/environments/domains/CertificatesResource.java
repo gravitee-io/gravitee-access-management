@@ -16,6 +16,8 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
+import io.gravitee.am.management.handlers.management.api.model.CertificateStatus;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Acl;
@@ -29,7 +31,10 @@ import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
@@ -41,6 +46,8 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
 /**
@@ -59,6 +66,9 @@ public class CertificatesResource extends AbstractResource {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private Environment environment;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered certificates for a security domain",
@@ -67,7 +77,7 @@ public class CertificatesResource extends AbstractResource {
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. " +
                     "Each returned certificate is filtered and contains only basic information such as id, name and type.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = Certificate.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered certificates for a security domain", response = CertificateEntity.class, responseContainer = "Set"),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -75,7 +85,7 @@ public class CertificatesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @QueryParam("use") String use,
             @Suspended final AsyncResponse response) {
-
+        final int certificateExpiryThreshold = environment.getProperty("services.certificate.expiryThreshold", Integer.class, 14);
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
@@ -90,7 +100,7 @@ public class CertificatesResource extends AbstractResource {
                             // no value, return true as sig should be the default
                             return true;
                         })
-                        .map(this::filterCertificateInfos)
+                        .map(cert -> this.filterCertificateInfos(cert, certificateExpiryThreshold))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                         .toList()
                         .map(sortedCertificates -> Response.ok(sortedCertificates).build()))
@@ -132,12 +142,21 @@ public class CertificatesResource extends AbstractResource {
         return resourceContext.getResource(CertificateResource.class);
     }
 
-    private Certificate filterCertificateInfos(Certificate certificate) {
-        Certificate filteredCertificate = new Certificate();
+    private Certificate filterCertificateInfos(Certificate certificate, int certificateExpiryThreshold) {
+        CertificateEntity filteredCertificate = new CertificateEntity();
         filteredCertificate.setId(certificate.getId());
         filteredCertificate.setName(certificate.getName());
         filteredCertificate.setType(certificate.getType());
-
+        filteredCertificate.setExpiresAt(certificate.getExpiresAt());
+        filteredCertificate.setStatus(CertificateStatus.VALID);
+        if (certificate.getExpiresAt() != null) {
+            final Instant now = Instant.now();
+            if (certificate.getExpiresAt().getTime() <= now.toEpochMilli()) {
+                filteredCertificate.setStatus(CertificateStatus.EXPIRED);
+            } else if (certificate.getExpiresAt().getTime() < now.plus(certificateExpiryThreshold, ChronoUnit.DAYS).toEpochMilli()) {
+                filteredCertificate.setStatus(CertificateStatus.WILL_EXPIRE);
+            }
+        }
         return filteredCertificate;
     }
 }

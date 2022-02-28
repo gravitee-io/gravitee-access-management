@@ -40,6 +40,8 @@ public class Certificate {
 
     private Date updatedAt;
 
+    private Date expiresAt;
+
     public Certificate() {
     }
 
@@ -52,6 +54,7 @@ public class Certificate {
         this.metadata = other.metadata;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+        this.expiresAt = other.expiresAt;
     }
 
     public String getId() {
@@ -116,5 +119,13 @@ public class Certificate {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Date getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Date expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

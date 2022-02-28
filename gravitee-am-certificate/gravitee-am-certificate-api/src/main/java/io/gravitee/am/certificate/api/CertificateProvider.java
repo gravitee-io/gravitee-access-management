@@ -19,7 +19,6 @@ import io.gravitee.am.model.jose.JWK;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 
-import javax.swing.text.html.Option;
 import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Date;

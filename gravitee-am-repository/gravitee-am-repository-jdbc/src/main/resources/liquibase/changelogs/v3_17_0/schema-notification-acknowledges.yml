@@ -7,10 +7,10 @@ databaseChangeLog:
             tableName: notification_acknowledgements
             columns:
               - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: resource, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: resource_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: resource_type, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: type, type: nvarchar(64), constraints: { nullable: false } }
-              - column: { name: audience, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: audience_id, type: nvarchar(64), constraints: { nullable: false } }
               - column: { name: counter, type: integer, constraints: { nullable: false } }
               - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
               - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
@@ -24,10 +24,10 @@ databaseChangeLog:
             tableName: notification_acknowledgements
             columns:
               - column:
-                  name: resource
+                  name: resource_id
               - column:
                   name: type
               - column:
-                  name: audience
+                  name: audience_id
             indexName: notification_acknowledgements_3col
             unique: true

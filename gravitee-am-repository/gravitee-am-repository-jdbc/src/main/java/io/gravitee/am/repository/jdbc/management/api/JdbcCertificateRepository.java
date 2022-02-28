@@ -33,8 +33,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
@@ -52,6 +54,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public static final String COL_METADATA = "metadata";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_EXPIRES_AT = "expires_at";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -61,7 +64,8 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
             COL_NAME,
             COL_METADATA,
             COL_CREATED_AT,
-            COL_UPDATED_AT
+            COL_UPDATED_AT,
+            COL_EXPIRES_AT
     );
 
     private String INSERT_STATEMENT;
@@ -130,6 +134,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_METADATA, item.getMetadata());
         insertSpec = addQuotedField(insertSpec,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
 
         Mono<Integer> action = insertSpec.fetch().rowsUpdated();
 
@@ -151,11 +156,24 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = databaseDialectHelper.addJsonField(update, COL_METADATA, item.getMetadata());
         update = addQuotedField(update,COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update,COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update,COL_EXPIRES_AT, dateConverter.convertTo(item.getExpiresAt(), null), LocalDateTime.class);
 
         Mono<Integer> updateAction = update.fetch().rowsUpdated();
 
         return monoToSingle(updateAction).flatMap((i) -> this.findById(item.getId()).toSingle())
                 .doOnError((error) -> LOGGER.error("unable to update certificate with id {}", item.getId(), error));
+    }
+
+    @Override
+    public Completable updateExpirationDate(String certificateId, Date expiresAt) {
+        LOGGER.debug("update Certificate expiration date with id {} with value '{}'", certificateId, expiresAt);
+
+        DatabaseClient.GenericExecuteSpec update = template.getDatabaseClient().sql("UPDATE certificates SET " + COL_EXPIRES_AT + " = :" + COL_EXPIRES_AT + " WHERE " + COL_ID +" = :"+COL_ID);
+        update = addQuotedField(update,COL_ID, certificateId, String.class);
+        update = addQuotedField(update, COL_EXPIRES_AT, dateConverter.convertTo(expiresAt, null), LocalDateTime.class);
+
+        Mono<Integer> updateAction = update.fetch().rowsUpdated();;
+        return monoToCompletable(updateAction);
     }
 
     @Override

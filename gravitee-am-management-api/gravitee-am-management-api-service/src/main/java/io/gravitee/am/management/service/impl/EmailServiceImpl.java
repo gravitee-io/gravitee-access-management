@@ -67,7 +67,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.registration.token.expire-after:86400}")
     private Integer registrationExpireAfter;
 
-    @Value("${services.notifier.am.certificate.expiryEmailSubject:Certificate will expire soon}")
+    @Value("${services.certificate.expiryEmailSubject:Certificate will expire soon}")
     private String certificateExpirySubject;
 
     @Autowired
