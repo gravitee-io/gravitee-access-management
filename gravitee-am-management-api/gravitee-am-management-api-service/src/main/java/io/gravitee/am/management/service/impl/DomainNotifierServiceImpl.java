@@ -18,7 +18,6 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import freemarker.template.TemplateException;
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.management.service.EmailService;
@@ -58,29 +57,23 @@ import static io.gravitee.am.management.service.impl.notifications.NotificationD
 public class DomainNotifierServiceImpl implements DomainNotifierService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DomainNotifierServiceImpl.class);
 
-    @Value("${services.notifier.am.email.enabled:true}")
+    @Value("${notifiers.email.enabled:false}")
     private boolean emailNotifierEnabled;
 
-    @Value("${services.notifier.am.email.sslTrustAll:false}")
-    private boolean emailSSLTrustAll;
-
-    @Value("${services.notifier.am.email.sslKeyStore}")
-    private String emailSSLKeyStore;
-
-    @Value("${services.notifier.am.email.sslKeyStorePassword}")
-    private String emailSSLKeyStorePassword;
-
-    @Value("${services.notifier.am.ui.enabled:true}")
+    @Value("${notifiers.ui.enabled:true}")
     private boolean uiNotifierEnabled;
 
-    @Value("${services.notifier.am.cronExpression:0 0 5 * * *}") // default: 0 0 5 * * * (every day at 5am)
-    private String cronExpression;
+    @Value("${services.certificate.cronExpression:0 0 5 * * *}") // default: 0 0 5 * * * (every day at 5am)
+    private String certificateCronExpression;
 
-    @Value("${services.notifier.am.timeframe.duration:2}")
-    private int timeframeDuration;
+    @Value("${services.certificate.resendAfter:2}")
+    private int certificateExpiryResendAfter;
 
-    @Value("${services.notifier.am.certificate.expiryThreshold:7}")
+    @Value("${services.certificate.expiryThreshold:14}")
     private int certificateExpiryThreshold;
+
+    @Value("${services.certificate.enabled:true}")
+    private boolean certificateNotificationEnabled = true;
 
     @Autowired
     private NotifierService notifierService;
@@ -104,7 +97,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     private OrganizationUserService userService;
 
     @Autowired
-    private EmailConfiguration emailConfiguration;
+    private EmailNotifierConfiguration emailConfiguration;
 
     @Autowired
     private EmailService emailService;
@@ -112,32 +105,41 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     @Autowired
     private ObjectMapper mapper;
 
-    public void registerCertificateExpiration(CertificateProvider provider, Certificate certificate) {
-        findDomain(certificate.getDomain())
-                .flatMapPublisher(domain ->
-                        retrieveDomainOwners(domain)
-                                .flatMap(user -> Flowable.fromArray(
-                                        buildEmailNotificationDefinition(provider, certificate, domain, user),
-                                        buildUINotificationDefinition(provider, certificate, domain, user))))
-                .subscribe(definition -> {
-                    if (definition.isPresent()) {
-                        notifierService.register(definition.get(),
-                                new CertificateNotificationCondition(certificateExpiryThreshold),
-                                new CertificateResendNotificationCondition(this.timeframeDuration));
-                    }
-                });
+    @Override
+    public void registerCertificateExpiration(Certificate certificate) {
+        if (this.certificateNotificationEnabled) {
+            findDomain(certificate.getDomain())
+                    .flatMapPublisher(domain ->
+                            retrieveDomainOwners(domain)
+                                    .flatMap(user -> Flowable.fromArray(
+                                            buildEmailNotificationDefinition(certificate, domain, user),
+                                            buildUINotificationDefinition(certificate, domain, user))))
+                    .subscribe(definition -> {
+                        if (definition.isPresent()) {
+                            notifierService.register(definition.get(),
+                                    new CertificateNotificationCondition(certificateExpiryThreshold),
+                                    new CertificateResendNotificationCondition(this.certificateExpiryResendAfter));
+                        }
+                    });
+        }
     }
 
     @Override
     public void unregisterCertificateExpiration(String domainId, String certificateId) {
-        final Domain domain = findDomain(domainId).blockingGet();
-        retrieveDomainOwners(domain).blockingForEach(user -> this.notifierService.unregister(certificateId, TYPE_EMAIL_NOTIFIER, user.getId()));
+        if (this.certificateNotificationEnabled) {
+            final Domain domain = findDomain(domainId).blockingGet();
+            retrieveDomainOwners(domain).blockingForEach(user -> this.notifierService.unregister(certificateId, TYPE_EMAIL_NOTIFIER, user.getId()));
+        }
     }
 
     @Override
     public Completable deleteCertificateExpirationAcknowledge(String certificateId) {
-        LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
-        return this.notifierService.deleteAcknowledge(certificateId);
+        if (this.certificateNotificationEnabled) {
+            LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
+            return this.notifierService.deleteAcknowledge(certificateId);
+        } else {
+            return Completable.complete();
+        }
     }
 
     private Flowable<User> retrieveDomainOwners(Domain domain) {
@@ -178,19 +180,19 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 });
     }
 
-    private Optional<NotificationDefinition> buildEmailNotificationDefinition(CertificateProvider provider, Certificate certificate, Domain domain, User user) {
-        if (emailNotifierEnabled && emailConfiguration.isEnabled() && !Strings.isNullOrEmpty(user.getEmail())) {
+    private Optional<NotificationDefinition> buildEmailNotificationDefinition(Certificate certificate, Domain domain, User user) {
+        if (emailNotifierEnabled && !Strings.isNullOrEmpty(user.getEmail())) {
             try {
 
                 Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
                         .withDomain(domain)
                         .withUser(user)
-                        .withCertificate(certificate, provider.getExpirationDate().orElse(null))
+                        .withCertificate(certificate)
                         .build();
 
                 final Email email = emailService.getFinalEmail(domain, null, Template.CERTIFICATE_EXPIRATION, user, data);
 
-                final EmailNotifierConfiguration notifierConfig = new EmailNotifierConfiguration(emailConfiguration, emailSSLTrustAll, emailSSLKeyStore, emailSSLKeyStorePassword);
+                EmailNotifierConfiguration notifierConfig = new EmailNotifierConfiguration(this.emailConfiguration);
                 notifierConfig.setSubject(email.getSubject());
                 notifierConfig.setBody(email.getContent());
                 notifierConfig.setTo(user.getEmail());
@@ -201,7 +203,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 definition.setResourceId(certificate.getId());
                 definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
                 definition.setAudienceId(user.getId());
-                definition.setCron(this.cronExpression);
+                definition.setCron(this.certificateCronExpression);
                 definition.setData(data);
 
                 return Optional.of(definition);
@@ -214,13 +216,13 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
         return Optional.empty();
     }
 
-    private Optional<NotificationDefinition> buildUINotificationDefinition(CertificateProvider provider, Certificate certificate, Domain domain, User user) {
+    private Optional<NotificationDefinition> buildUINotificationDefinition(Certificate certificate, Domain domain, User user) {
         if (uiNotifierEnabled) {
             try {
                 Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
                         .withDomain(domain)
                         .withUser(user)
-                        .withCertificate(certificate, provider.getExpirationDate().orElse(null))
+                        .withCertificate(certificate)
                         .build();
 
                 ManagementUINotifierConfiguration value = new ManagementUINotifierConfiguration();
@@ -232,7 +234,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                 definition.setResourceId(certificate.getId());
                 definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
                 definition.setAudienceId(user.getId());
-                definition.setCron(this.cronExpression);
+                definition.setCron(this.certificateCronExpression);
                 definition.setData(data);
 
                 return Optional.of(definition);

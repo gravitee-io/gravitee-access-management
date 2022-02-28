@@ -166,6 +166,41 @@ services:
     cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
     #exclude: login_attemps, refresh_token      # coma separated list of table to exclude from the purge process
 
+  # platform notifier service
+  notifier:
+    enabled: true
+    tryAvoidDuplicateNotification: false
+
+  # Rules about certificate expiry notifications.
+  # Require the platform notifier service.
+  certificate:
+    enabled: true
+    # frequency on which the notifier mechanism will test
+    # if new notifications need to be send
+    # default: 0 0 5 * * * (every day at 5am)
+    cronExpression: 0 0 5 * * *
+    # send notification if certificate is going to expire in less than 14 days
+    expiryThreshold: 14
+    # resend notification after 2 days
+    resendAfter: 2
+    # Subject of the email send by the email notifier
+    expiryEmailSubject: Certificate will expire soon
+
+notifiers:
+  email:
+    enabled: false
+    host: smtp.my.domain
+    port: 587
+    username: user@my.domain
+    password: password
+    from: noreply@my.domain
+    startTLSEnabled: false
+    sslTrustAll: false
+    #sslKeyStore: /path/to/keystore
+    #sslKeyStorePassword: changeme
+  ui:
+    enabled: true
+
 domains:
   certificates:
     default:
@@ -351,11 +386,11 @@ alerts:
     name: "Too many login failures detected"
     description: "More than {threshold}% of logins are in failure over the last {window} second(s)"
     # the threshold rate in % to reach before notify. Default 10% of login failures.
-    threshold: 50
+    threshold: 10
     # the minimum sample size. Default 1000 login attempts.
-    sampleSize: 4
+    sampleSize: 1000
     # window time in seconds. Default 600s (10 minutes).
-    window: 60
+    window: 600
     # severity of the alert (INFO, WARNING, CRITICAL). Default WARNING.
     severity: WARNING
 

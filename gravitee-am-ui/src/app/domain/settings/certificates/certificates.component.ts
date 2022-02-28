@@ -19,6 +19,8 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CertificateService } from '../../../services/certificate.service';
 import { DialogService } from 'app/services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
+import internal from 'stream';
+import { AppConfig } from 'config/app.config';
 
 @Component({
   selector: 'app-certificates',
@@ -36,6 +38,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   };
   certificates: any[];
   domainId: string;
+  threshold: number;
 
   constructor(private certificateService: CertificateService, private dialogService: DialogService,
               private snackbarService: SnackbarService, private route: ActivatedRoute, private dialog: MatDialog) { }
@@ -74,6 +77,24 @@ export class DomainSettingsCertificatesComponent implements OnInit {
       return this.certificateTypes[type];
     }
     return type;
+  }
+
+  certificateWillExpire(cert) {
+    return (cert.status == 'will_expire')
+  }
+
+  certificateIsExpired(cert) {
+    return (cert.status == 'expired')
+  }
+
+  expireInDays(expiry) {
+    return Math.ceil( (expiry - Date.now()) / (1000 * 3600 * 24));
+  }
+
+  private computeDate(days) {
+    var result = new Date();
+    result.setDate(result.getDate() + days);
+    return result;
   }
 
   delete(id, event) {

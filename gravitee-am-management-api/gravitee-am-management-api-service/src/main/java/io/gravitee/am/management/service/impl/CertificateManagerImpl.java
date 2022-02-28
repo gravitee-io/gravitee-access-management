@@ -23,6 +23,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -148,7 +151,20 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                     certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
             if (certificateProvider != null) {
                 certificateProviders.put(certificate.getId(), certificateProvider);
-                notifierService.registerCertificateExpiration(certificateProvider, certificate);
+                // expiration date is extracted from the Certificate by the provider
+                // we update the certificate definition only if the expiration date has changed
+                final Optional<Date> expirationDate = certificateProvider.getExpirationDate();
+                expirationDate.ifPresent(expiresAt -> {
+                    // set the value into the object to be sure that the info will be present during
+                    // the notification registration
+                    if (certificate.getExpiresAt() == null || !certificate.getExpiresAt().equals(expiresAt)) {
+                        certificateService.updateExpirationDate(certificate.getId(), expiresAt)
+                                .doOnError(err -> logger.warn("Unable to update expiration date for certificate {} due to: {}", certificate.getId(), err.getMessage()))
+                                .subscribe();
+                    }
+                    certificate.setExpiresAt(expiresAt);
+                });
+                notifierService.registerCertificateExpiration(certificate);
             } else {
                 notifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
                 notifierService.deleteCertificateExpirationAcknowledge(certificate.getId()).blockingAwait();

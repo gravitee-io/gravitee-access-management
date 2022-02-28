@@ -67,3 +67,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_17_0/schema-notification-acknowledges.yml
   - include:
       - file: liquibase/changelogs/v3_17_0/schema-user-notifications.yml
+  - include:
+      - file: liquibase/changelogs/v3_17_0/schema-certificate-expiry.yml

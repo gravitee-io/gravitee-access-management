@@ -22,7 +22,6 @@ import io.gravitee.am.model.safe.CertificateProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.node.api.notifier.NotificationDefinition;
-import org.bouncycastle.operator.MacCalculatorProvider;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -53,7 +52,6 @@ public class NotificationDefinitionUtils {
         private User user;
         private Domain domain;
         private Certificate certificate;
-        private Date certificateExpirationDate;
 
         public ParametersBuilder withUser(User user) {
             this.user = user;
@@ -65,9 +63,8 @@ public class NotificationDefinitionUtils {
             return this;
         }
 
-        public ParametersBuilder withCertificate(Certificate certificate, Date expiration) {
+        public ParametersBuilder withCertificate(Certificate certificate) {
             this.certificate = certificate;
-            this.certificateExpirationDate = expiration;
             return this;
         }
 
@@ -82,7 +79,7 @@ public class NotificationDefinitionUtils {
             }
 
             if (certificate != null) {
-                result.put(NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate, certificateExpirationDate));
+                result.put(NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate));
             }
 
             return result;

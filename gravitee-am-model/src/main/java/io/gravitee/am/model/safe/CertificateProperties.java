@@ -25,19 +25,19 @@ import java.util.Date;
  */
 public class CertificateProperties {
 
-    private String id;
+    private final String id;
 
-    private String name;
+    private final String name;
 
-    private String type;
+    private final String type;
 
-    private Date expiresAt;
+    private final Date expiresAt;
 
-    public CertificateProperties(Certificate certificate, Date expirationDate) {
+    public CertificateProperties(Certificate certificate) {
         this.id = certificate.getId();
         this.name = certificate.getName();
         this.type = certificate.getType();
-        this.expiresAt = expirationDate;
+        this.expiresAt = certificate.getExpiresAt();
     }
 
     public String getId() {

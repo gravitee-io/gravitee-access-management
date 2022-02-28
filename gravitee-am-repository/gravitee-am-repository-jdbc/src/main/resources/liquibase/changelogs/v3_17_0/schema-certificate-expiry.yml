@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.17.0-certificate-expiry
+      author: GraviteeSource Team
+      changes:
+        - addColumn:
+            tableName: certificates
+            columns:
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }

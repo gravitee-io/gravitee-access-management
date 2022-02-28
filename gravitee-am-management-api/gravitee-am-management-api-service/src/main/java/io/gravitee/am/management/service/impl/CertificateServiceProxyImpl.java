@@ -39,6 +39,8 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
@@ -100,6 +102,11 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).oldValue(safeOldCert).certificate(certificate)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class).principal(principal).type(EventType.CERTIFICATE_UPDATED).throwable(throwable))))
                 );
+    }
+
+    @Override
+    public Completable updateExpirationDate(String certificateId, Date expirationDate) {
+        return this.certificateService.updateExpirationDate(certificateId, expirationDate);
     }
 
     @Override

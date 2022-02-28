@@ -19,6 +19,8 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
+import java.util.Date;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -37,6 +39,8 @@ public class CertificateMongo extends Auditable {
     private String domain;
 
     private Document metadata;
+
+    private Date expiresAt;
 
     public String getId() {
         return id;
@@ -84,6 +88,14 @@ public class CertificateMongo extends Auditable {
 
     public void setMetadata(Document metadata) {
         this.metadata = metadata;
+    }
+
+    public Date getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(Date expiresAt) {
+        this.expiresAt = expiresAt;
     }
 
     @Override

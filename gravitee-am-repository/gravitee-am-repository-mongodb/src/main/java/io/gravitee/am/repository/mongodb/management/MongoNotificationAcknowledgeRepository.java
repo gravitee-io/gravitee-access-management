@@ -62,7 +62,7 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     }
 
     @Override
-    public Maybe<NotificationAcknowledge> findByResourceIdAndAudienceId(String resource, String type, String audience) {
+    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resource, String type, String audience) {
         return Observable.fromPublisher(collection.find(and(
                     eq(FIELD_RESOURCE_ID, resource),
                     eq(FIELD_TYPE, type),

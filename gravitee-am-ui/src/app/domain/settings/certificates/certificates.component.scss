@@ -21,3 +21,24 @@
     padding: 0 !important;
   }
 }
+
+.certificate-expiry {
+  margin: 5px;
+  h3 {
+    font-size: 14px;
+    font-weight: normal;
+    margin: 0;
+  }
+}
+
+
+.warning {
+  font-size: 18px;
+  margin-left: 5px;
+  color: orange;
+}
+.alert {
+  font-size: 18px;
+  margin-left: 5px;
+  color: red;
+}

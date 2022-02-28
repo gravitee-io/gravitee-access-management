@@ -40,6 +40,8 @@ public class JdbcCertificate {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
+    @Column("expires_at")
+    private LocalDateTime expiresAt;
 
     public String getId() {
         return id;
@@ -103,5 +105,13 @@ public class JdbcCertificate {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }

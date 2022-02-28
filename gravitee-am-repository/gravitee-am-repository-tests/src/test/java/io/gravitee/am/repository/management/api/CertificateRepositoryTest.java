@@ -16,17 +16,18 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.am.repository.exceptions.TechnicalException;
+import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -70,6 +71,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         certificate.setType("PEM");
         certificate.setCreatedAt(new Date());
         certificate.setUpdatedAt(new Date());
+        certificate.setExpiresAt(new Date());
         certificate.setMetadata(metadata);
         return certificate;
     }
@@ -95,6 +97,7 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(d -> certificate.getMetadata().size() == d.getMetadata().size());
         testObserver.assertValue(d -> certificate.getMetadata().keySet().containsAll(d.getMetadata().keySet()));
         testObserver.assertValue(d -> !certificate.getMetadata().containsKey("file") || certificate.getMetadata().get("file") instanceof byte[]);
+        testObserver.assertValue(d -> d.getExpiresAt() != null);
     }
 
     @Test
@@ -131,6 +134,25 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getName().equals(updatedCertificate.getName()));
+    }
+
+    @Test
+    public void testUpdateExpirationDate() throws TechnicalException {
+        Certificate certificate = buildCertificate();
+        Certificate certificateCreated = certificateRepository.create(certificate).blockingGet();
+
+        final Date exp = new Date(Instant.now().plus(5, ChronoUnit.DAYS).toEpochMilli());
+
+        final TestObserver<Void> testObserver = certificateRepository.updateExpirationDate(certificateCreated.getId(), exp).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+
+        TestObserver<Certificate> testUpdatedValueObs = certificateRepository.findById(certificateCreated.getId()).test();
+        testUpdatedValueObs.awaitTerminalEvent();
+        testUpdatedValueObs.assertComplete();
+        testUpdatedValueObs.assertNoErrors();
+        testUpdatedValueObs.assertValue(d -> d.getId().equals(certificateCreated.getId()));
+        testUpdatedValueObs.assertValue(d -> d.getExpiresAt().equals(exp));
     }
 
     @Test

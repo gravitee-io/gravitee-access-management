@@ -16,7 +16,6 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import freemarker.template.Configuration;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.UserNotificationService;
 import io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration;
@@ -62,11 +61,9 @@ public class UserNotificationServiceImpl implements UserNotificationService {
     @Lazy
     private ManagementUITemplateProvider uiTemplateProvider;
 
-    private final Configuration config = new Configuration(Configuration.VERSION_2_3_28);
-
     @Override
     public CompletableFuture<Void> send(Notification notification, Map<String, Object> param) {
-        CompletableFuture future = new CompletableFuture();
+        var future = new CompletableFuture<Void>();
 
         final UserProperties audience = (UserProperties) param.get(NotificationDefinitionUtils.NOTIFIER_DATA_USER);
         final DomainProperties domain = (DomainProperties) param.get(NotificationDefinitionUtils.NOTIFIER_DATA_DOMAIN);
@@ -100,7 +97,7 @@ public class UserNotificationServiceImpl implements UserNotificationService {
                 }, future::completeExceptionally);
 
             } catch (Exception e) {
-                logger.warn("Unable to deserialize ManagementUI Notifier configuration : {}");
+                logger.warn("Unable to deserialize ManagementUI Notifier configuration : {}", e.getMessage());
                 future.completeExceptionally(e);
             }
         }

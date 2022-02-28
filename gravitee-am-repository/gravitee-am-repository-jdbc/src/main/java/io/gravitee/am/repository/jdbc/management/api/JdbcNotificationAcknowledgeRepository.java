@@ -59,7 +59,7 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public Maybe<NotificationAcknowledge> findByResourceIdAndAudienceId(String resource, String type, String audience) {
+    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resource, String type, String audience) {
         LOGGER.debug("findByResourceIdAndAudienceId({},{},{})", resource, type, audience);
         return monoToMaybe(this.template.select(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_RESOURCE).is(resource).and(where(COL_TYPE).is(type)).and(where(COL_AUDIENCE).is(audience))))

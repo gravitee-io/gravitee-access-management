@@ -26,6 +26,7 @@ import org.bson.types.Binary;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,8 @@ import static com.mongodb.client.model.Filters.eq;
  */
 @Component
 public class MongoCertificateRepository extends AbstractManagementMongoRepository implements CertificateRepository {
+
+    protected static final String FIELD_EXPIRES_AT = "expiresAt";
 
     private MongoCollection<CertificateMongo> certificatesCollection;
 
@@ -81,6 +84,17 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
     }
 
     @Override
+    public Completable updateExpirationDate(String certificateId, Date expiresAt) {
+        Document expDocument = new Document();
+        expDocument.put(FIELD_EXPIRES_AT, expiresAt);
+
+        Document updateObject = new Document();
+        updateObject.put("$set", expDocument);
+
+        return Completable.fromPublisher(certificatesCollection.updateOne(eq(FIELD_ID, certificateId), updateObject));
+    }
+
+    @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)));
     }
@@ -105,6 +119,8 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         }
         certificate.setCreatedAt(certificateMongo.getCreatedAt());
         certificate.setUpdatedAt(certificateMongo.getUpdatedAt());
+        certificate.setExpiresAt(certificateMongo.getExpiresAt());
+
         return certificate;
     }
 
@@ -122,6 +138,8 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         certificateMongo.setMetadata(certificate.getMetadata() != null ? new Document(certificate.getMetadata()) : new Document());
         certificateMongo.setCreatedAt(certificate.getCreatedAt());
         certificateMongo.setUpdatedAt(certificate.getUpdatedAt());
+        certificateMongo.setExpiresAt(certificate.getExpiresAt());
+
         return certificateMongo;
     }
 }

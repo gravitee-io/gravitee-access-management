@@ -21,10 +21,10 @@
     <ngx-datatable class="material"
                    [columnMode]="'flex'"
                    [headerHeight]="40"
-                   [footerHeight]="40"
+                   [footerHeight]="50"
                    [rowHeight]="50"
                    [rows]='certificates'>
-      <ngx-datatable-column name="Certificates" [flexGrow]="4" [cellClass]="'certificate-name-cell'">
+      <ngx-datatable-column name="Certificates" prop="name" [flexGrow]="2" [cellClass]="'certificate-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
           <div class="certificate-header" fxLayout="row">
             <div class="certificate-icon">
@@ -34,6 +34,19 @@
               <h3>{{row.name}}</h3>
               <small>{{displayType(row.type)}}</small>
             </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Expiry" prop="expiresAt" [flexGrow]="2">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="certificate-expiry" fxLayout="row">
+            <h3>{{row.expiresAt |  date:'medium' }}</h3>
+            <span *ngIf="certificateWillExpire(row)">
+              <mat-icon class="warning" matTooltip="expiring in {{expireInDays(row.expiresAt)}} days">warning</mat-icon>
+            </span>
+            <span *ngIf="certificateIsExpired(row)">
+              <mat-icon class="alert" matTooltip="expired">error</mat-icon>
+            </span>
           </div>
         </ng-template>
       </ngx-datatable-column>

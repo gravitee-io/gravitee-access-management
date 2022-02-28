@@ -24,6 +24,8 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import java.util.Date;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -47,6 +49,8 @@ public interface CertificateService {
     Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
 
     Completable delete(String certificateId, User principal);
+
+    Completable updateExpirationDate(String certificateId, Date expirationDate);
 
     default Single<Certificate> create(String domain, NewCertificate newCertificate) {
         return create(domain, newCertificate, null);

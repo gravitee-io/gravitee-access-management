@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
+package io.gravitee.am.management.handlers.management.api.model;
 
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-
-import java.util.Date;
-import java.util.Set;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificateRepository extends CrudRepository<Certificate, String> {
+public class CertificateEntity extends Certificate {
 
-    Flowable<Certificate> findAll();
+    private CertificateStatus status;
 
-    Flowable<Certificate> findByDomain(String domain);
+    public CertificateStatus getStatus() {
+        return status;
+    }
 
-    Completable updateExpirationDate(String  certificateId, Date expiresAt);
+    public void setStatus(CertificateStatus status) {
+        this.status = status;
+    }
 }

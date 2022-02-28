@@ -334,6 +334,15 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
+    public Completable updateExpirationDate(String certificateId, Date expirationDate) {
+        if (expirationDate == null) {
+            LOGGER.warn("updateExpirationDate call with null for certificate '{}'", certificateId);
+            return Completable.complete();
+        }
+        return this.certificateRepository.updateExpirationDate(certificateId, expirationDate);
+    }
+
+    @Override
     public Single<Certificate> create(String domain) {
         // Define the default certificate
         // Create a default PKCS12 certificate: io.gravitee.am.certificate.pkcs12.PKCS12Configuration
