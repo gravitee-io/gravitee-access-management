@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.AbstractRequestReso
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.Single;
@@ -39,6 +40,7 @@ import java.time.Instant;
 import java.util.Date;
 
 import static io.gravitee.am.jwt.DefaultJWTParser.evaluateExp;
+import static org.springframework.util.ObjectUtils.nullSafeEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -93,7 +95,13 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                         LOGGER.warn("login_hint match multiple users or no one");
                         throw new InvalidRequestException("Invalid hint");
                     }
-                    authRequest.setSubject(users.get(0).getId());
+                    User user = users.get(0);
+                    var user_code = user.get("user_code");
+                    if (!nullSafeEquals(authRequest.userCode, user_code)) {
+                        LOGGER.warn("Invalid user_code provided");
+                        throw new InvalidRequestException("Invalid user_code");
+                    }
+                    authRequest.setSubject(user.getId());
                     return authRequest;
                 });
 

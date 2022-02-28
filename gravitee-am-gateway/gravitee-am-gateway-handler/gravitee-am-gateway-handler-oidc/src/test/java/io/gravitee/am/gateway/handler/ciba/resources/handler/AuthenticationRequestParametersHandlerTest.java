@@ -235,7 +235,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
         CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
         cibaRequest.setLoginHint("username");
         cibaRequest.setScopes(Set.of("openid"));
-        cibaRequest.setAcrValues(Arrays.asList("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
         cibaRequest.setBindingMessage("msg");
 
         client.setBackchannelUserCodeParameter(true);
@@ -253,6 +253,68 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
                 CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
                 null,
                 HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldRejectRequest_UserCodeMismatch() throws Exception {
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        cibaRequest.setUserCode("4567");
+
+        client.setBackchannelUserCodeParameter(true);
+
+        handlerUnderTest.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.putAdditionalInformation("user_code", "1234");
+        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldAcceptRequest_UserCode() throws Exception {
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        cibaRequest.setUserCode("1234");
+
+        client.setBackchannelUserCodeParameter(true);
+
+        handlerUnderTest.setCibaRequest(cibaRequest);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.putAdditionalInformation("user_code", "1234");
+        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
     }
 
     @Test

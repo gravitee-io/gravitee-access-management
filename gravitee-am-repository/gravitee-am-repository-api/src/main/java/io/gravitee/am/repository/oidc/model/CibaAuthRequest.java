@@ -76,6 +76,11 @@ public class CibaAuthRequest {
 
     private String deviceNotifierId;
 
+    /**
+     * PIN associated with a User's profile that can provide an additional level of authenticity for push messages received on their device.
+     */
+    private String userCode;
+
     public String getId() {
         return id;
     }
@@ -162,5 +167,13 @@ public class CibaAuthRequest {
 
     public void setDeviceNotifierId(String deviceNotifierId) {
         this.deviceNotifierId = deviceNotifierId;
+    }
+
+    public String getUserCode() {
+        return userCode;
+    }
+
+    public void setUserCode(String userCode) {
+        this.userCode = userCode;
     }
 }

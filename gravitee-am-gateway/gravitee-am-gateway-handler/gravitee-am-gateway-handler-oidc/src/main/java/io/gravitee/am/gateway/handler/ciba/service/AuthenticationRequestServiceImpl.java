@@ -97,6 +97,7 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         entity.setStatus(AuthenticationRequestStatus.ONGOING.name());
         entity.setCreatedAt(new Date(now.toEpochMilli()));
         entity.setLastAccessAt(new Date(now.toEpochMilli()));
+        entity.setUserCode(request.getUserCode());
         // as the application has to be informed of an expired request, we add retention time to the ttl
         // to avoid removing the request information from the database when ttl has expired
         entity.setExpireAt(new Date(now.plusSeconds(ttl + requestRetentionInSec).toEpochMilli()));
