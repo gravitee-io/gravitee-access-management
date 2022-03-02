@@ -52,6 +52,7 @@
 #      type: jks # Supports jks, pem, pkcs12
 #      path: ${gravitee.home}/security/truststore.jks
 #      password: secret
+#
 #  cookie:
 #    secure: false # Default is false for demonstration purpose but we highly recommend you to enable cookie secure.
 #    sameSite: Lax
@@ -60,6 +61,19 @@
 #      timeout: 1800000 # (in milliseconds)
 #  csrf:
 #    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
+#  cors:
+#      Allows to configure the header Access-Control-Allow-Origin (default value: *)
+#      '*' is a valid value but is considered as a security risk as it will be opened to cross origin requests from anywhere.
+#    allow-origin: http://developer.mycompany.com
+#      Allows to define how long the result of the preflight request should be cached for (default value; 1728000 [20 days])
+#    max-age: 864000
+#      Which methods to allow (default value: OPTIONS, GET, POST, PUT, DELETE, PATCH)
+#    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE, PATCH'
+#      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, X-Xsrf-Token)
+#    allow-headers: 'X-Requested-With'
+#      Allows the use of credentials (cookies, authorization headers, or TLS client certificates) when performing the request
+#      default is `false`
+#    allow-credentials: true
 
 # Path to plugins repository
 #plugins:
