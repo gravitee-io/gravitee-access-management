@@ -42,7 +42,8 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
                 .create(environment.getProperty("http.cors.allow-origin", String.class, "*"))
                 .allowedHeaders(getStringPropertiesAsList("http.cors.allow-headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, x-xsrf-token"))
                 .allowedMethods(getHttpMethodPropertiesAsList("http.cors.allow-methods", "GET, POST, PUT, PATCH, DELETE"))
-                .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400)));
+                .maxAgeSeconds(environment.getProperty("http.cors.max-age", Integer.class, 86400)))
+                .allowCredentials(environment.getProperty("http.cors.allow-credentials", Boolean.class, false));
     }
 
     @Override
@@ -55,7 +56,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
         if (property == null) {
             property = defaultValue;
         }
-        return new HashSet<>(asList(property.replaceAll("\\s+","").split(",")));
+        return new HashSet<>(asList(property.replaceAll("\\s+", "").split(",")));
     }
 
     private Set<HttpMethod> getHttpMethodPropertiesAsList(final String propertyKey, final String defaultValue) {
@@ -64,7 +65,7 @@ public class CorsHandlerFactory implements FactoryBean<CorsHandler> {
             property = defaultValue;
         }
 
-        return asList(property.replaceAll("\\s+","").split(","))
+        return asList(property.replaceAll("\\s+", "").split(","))
                 .stream()
                 .map(method -> HttpMethod.valueOf(method))
                 .collect(Collectors.toSet());
