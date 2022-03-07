@@ -31,6 +31,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -65,14 +66,38 @@ public class FlowServiceTest {
     private final static String DOMAIN = "domain1";
 
     @Test
-    public void shouldFindAll() {
+    public void shouldFindAll_flowDoesNotHaveType() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new Flow()));
-        TestObserver testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).toList().test();
+        TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
 
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(1);
+        testObserver.assertValueCount(5);
+    }
+
+    @Test
+    public void shouldFindAll_returnAllWhenEmpty() {
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.empty());
+        TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(5);
+    }
+
+    @Test
+    public void shouldFindAll_returnWhenFlowIsExisting() {
+        var flow = new Flow();
+        flow.setType(Type.ROOT);
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow));
+        TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(5);
     }
 
     @Test

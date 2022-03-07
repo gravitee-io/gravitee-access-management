@@ -37,19 +37,22 @@ import io.gravitee.am.service.reporter.builder.management.FlowAuditBuilder;
 import io.micrometer.core.instrument.util.IOUtils;
 import io.reactivex.Observable;
 import io.reactivex.*;
+import java.io.InputStream;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.io.InputStream;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import static java.nio.charset.Charset.defaultCharset;
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -75,25 +78,38 @@ public class FlowServiceImpl implements FlowService {
     public Flowable<Flow> findAll(ReferenceType referenceType, String referenceId, boolean excludeApps) {
         LOGGER.debug("Find all flows for {} {}", referenceType, referenceId);
         return flowRepository.findAll(referenceType, referenceId)
-                .filter(f -> (!excludeApps) ? true : f.getApplication() == null)
-                .sorted(getFlowComparator())
+                .filter(f -> !excludeApps || f.getApplication() == null)
+                .toMap(Flow::getType)
+                .flattenAsFlowable(flows -> Stream.of(Type.values())
+                        .map(type -> ofNullable(flows.get(type)).orElse(buildFlow(type, referenceType, referenceId)))
+                        .collect(toList())
+                )
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId)))
-            .onErrorResumeNext(ex -> {
-                LOGGER.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
-                return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s", referenceType, referenceId), ex));
-            });
+                .sorted(getFlowComparator())
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to find all flows for {} {}", referenceType, referenceId, ex);
+                    return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s", referenceType, referenceId), ex));
+                });
     }
 
     @Override
     public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
         LOGGER.debug("Find all flows for {} {} and application {}", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType, referenceId, application)
-                .sorted(getFlowComparator())
+                .toMap(Flow::getType)
+                .flattenAsFlowable(flows -> Stream.of(Type.values())
+                        .map(type -> ofNullable(flows.get(type)).orElseGet(() -> {
+                            var newFlow = buildFlow(type, referenceType, referenceId);
+                            newFlow.setApplication(application);
+                            return newFlow;
+                        })).collect(toList())
+                )
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId))
                         .map(flow -> {
                             flow.setApplication(application);
                             return flow;
                         }))
+                .sorted(getFlowComparator())
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error has occurred while trying to find all flows for {} {} and application {}", referenceType, referenceId, application, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error has occurred while trying to find a all flows for %s %s and application %s", referenceType, referenceId, application), ex));
@@ -102,12 +118,9 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public List<Flow> defaultFlows(ReferenceType referenceType, String referenceId) {
-        return Arrays.asList(
-            buildFlow(Type.ROOT, referenceType, referenceId),
-            buildFlow(Type.LOGIN, referenceType, referenceId),
-            buildFlow(Type.CONSENT, referenceType, referenceId),
-            buildFlow(Type.REGISTER, referenceType, referenceId)
-        );
+        return Stream.of(Type.values())
+                .map(type -> buildFlow(type, referenceType, referenceId))
+                .collect(toUnmodifiableList());
     }
 
     @Override
@@ -118,11 +131,11 @@ public class FlowServiceImpl implements FlowService {
             return Maybe.empty();
         }
         return flowRepository.findById(referenceType, referenceId, id)
-            .onErrorResumeNext(ex -> {
-                LOGGER.error("An error has occurred while trying to find a flow using its referenceType {}, referenceId {} and id {}", referenceType, referenceId, id, ex);
-                return Maybe.error(new TechnicalManagementException(
-                    String.format("An error has occurred while trying to find a flow using its referenceType %s, referenceId %s and id %s", referenceType, referenceId, id), ex));
-            });
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to find a flow using its referenceType {}, referenceId {} and id {}", referenceType, referenceId, id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error has occurred while trying to find a flow using its referenceType %s, referenceId %s and id %s", referenceType, referenceId, id), ex));
+                });
     }
 
     @Override
@@ -133,16 +146,16 @@ public class FlowServiceImpl implements FlowService {
             return Maybe.empty();
         }
         return flowRepository.findById(id)
-            .onErrorResumeNext(ex -> {
-                LOGGER.error("An error has occurred while trying to find a flow using its id {}", id, ex);
-                return Maybe.error(new TechnicalManagementException(
-                    String.format("An error has occurred while trying to find a flow using its id %s", id), ex));
-            });
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error has occurred while trying to find a flow using its id {}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error has occurred while trying to find a flow using its id %s", id), ex));
+                });
     }
 
     @Override
     public Single<Flow> create(ReferenceType referenceType, String referenceId, Flow flow, User principal) {
-        LOGGER.debug("Create a new flow {} for referenceType {} and referenceId", flow, referenceType, referenceId);
+        LOGGER.debug("Create a new flow {} for referenceType {} and referenceId {}", flow, referenceType, referenceId);
         return create0(referenceType, referenceId, null, flow, principal);
     }
 
@@ -157,52 +170,52 @@ public class FlowServiceImpl implements FlowService {
         LOGGER.debug("Update a flow {} ", flow);
 
         return flowRepository.findById(referenceType, referenceId, id)
-            .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
-            .flatMapSingle(oldFlow -> {
+                .switchIfEmpty(Maybe.error(new FlowNotFoundException(id)))
+                .flatMapSingle(oldFlow -> {
 
-                // if type isn't define, continue as the oldFlow will contains the right value
-                if (flow.getType() != null && !oldFlow.getType().equals(flow.getType())) {
-                    throw new InvalidParameterException("Type of flow '" + flow.getName() +"' can't be updated");
-                }
+                    // if type isn't define, continue as the oldFlow will contains the right value
+                    if (flow.getType() != null && !oldFlow.getType().equals(flow.getType())) {
+                        throw new InvalidParameterException("Type of flow '" + flow.getName() + "' can't be updated");
+                    }
 
-                Flow flowToUpdate = new Flow(oldFlow);
-                flowToUpdate.setName(flow.getName());
-                flowToUpdate.setEnabled(flow.isEnabled());
-                flowToUpdate.setCondition(flow.getCondition());
-                flowToUpdate.setPre(flow.getPre());
-                flowToUpdate.setPost(flow.getPost());
-                flowToUpdate.setUpdatedAt(new Date());
-                if (flow.getOrder() != null) {
-                    flowToUpdate.setOrder(flow.getOrder());
-                }
+                    Flow flowToUpdate = new Flow(oldFlow);
+                    flowToUpdate.setName(flow.getName());
+                    flowToUpdate.setEnabled(flow.isEnabled());
+                    flowToUpdate.setCondition(flow.getCondition());
+                    flowToUpdate.setPre(flow.getPre());
+                    flowToUpdate.setPost(flow.getPost());
+                    flowToUpdate.setUpdatedAt(new Date());
+                    if (flow.getOrder() != null) {
+                        flowToUpdate.setOrder(flow.getOrder());
+                    }
 
-                if (Type.ROOT.equals(flowToUpdate.getType())) {
-                    // Pre or Post steps are not supposed to be null in the UI-Component
-                    // force the ROOT post with emptyList to avoid UI issue
-                    flowToUpdate.setPost(emptyList());
-                }
-                return flowRepository.update(flowToUpdate)
-                    // create event for sync process
-                    .flatMap(flow1 -> {
-                        Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(flow1.getId(), flow1.getReferenceType(), flow1.getReferenceId(), Action.UPDATE));
-                        if (Type.ROOT.equals(flow1.getType())) {
-                            // Pre or Post steps are not supposed to be null in the UI-Component
-                            // force the ROOT post with emptyList to avoid UI issue
-                            flow1.setPost(emptyList());
-                        }
-                        return eventService.create(event).flatMap(__ -> Single.just(flow1));
-                    })
-                    .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).oldValue(oldFlow).flow(flow1)))
-                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).throwable(throwable)));
+                    if (Type.ROOT.equals(flowToUpdate.getType())) {
+                        // Pre or Post steps are not supposed to be null in the UI-Component
+                        // force the ROOT post with emptyList to avoid UI issue
+                        flowToUpdate.setPost(emptyList());
+                    }
+                    return flowRepository.update(flowToUpdate)
+                            // create event for sync process
+                            .flatMap(flow1 -> {
+                                Event event = new Event(io.gravitee.am.common.event.Type.FLOW, new Payload(flow1.getId(), flow1.getReferenceType(), flow1.getReferenceId(), Action.UPDATE));
+                                if (Type.ROOT.equals(flow1.getType())) {
+                                    // Pre or Post steps are not supposed to be null in the UI-Component
+                                    // force the ROOT post with emptyList to avoid UI issue
+                                    flow1.setPost(emptyList());
+                                }
+                                return eventService.create(event).flatMap(__ -> Single.just(flow1));
+                            })
+                            .doOnSuccess(flow1 -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).oldValue(oldFlow).flow(flow1)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(FlowAuditBuilder.class).principal(principal).type(EventType.FLOW_UPDATED).throwable(throwable)));
 
-            })
-            .onErrorResumeNext(ex -> {
-                if (ex instanceof AbstractManagementException) {
-                    return Single.error(ex);
-                }
-                LOGGER.error("An error has occurred while trying to update a flow", ex);
-                return Single.error(new TechnicalManagementException("An error has occurred while trying to update a flow", ex));
-            });
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error has occurred while trying to update a flow", ex);
+                    return Single.error(new TechnicalManagementException("An error has occurred while trying to update a flow", ex));
+                });
     }
 
     @Override
@@ -282,7 +295,7 @@ public class FlowServiceImpl implements FlowService {
 
                     flows.forEach(flow -> {
                         if (flow.getId() != null && mapOfExistingFlows.containsKey(flow.getId()) && !mapOfExistingFlows.get(flow.getId()).getType().equals(flow.getType())) {
-                            throw new InvalidParameterException("Type of flow '" + flow.getName() +"' can't be updated");
+                            throw new InvalidParameterException("Type of flow '" + flow.getName() + "' can't be updated");
                         }
                     });
 
@@ -369,7 +382,7 @@ public class FlowServiceImpl implements FlowService {
         if (Type.ROOT.equals(type)) {
             flow.setName("ALL");
         } else {
-            flow.setName(type.name());
+            flow.setName(type.name().replace("_", " "));
         }
         flow.setType(type);
         flow.setReferenceType(referenceType);
