@@ -29,5 +29,7 @@ public enum ExtensionPoint {
     PRE_CONSENT,
     POST_CONSENT,
     PRE_REGISTER,
-    POST_REGISTER
+    POST_REGISTER,
+    PRE_RESET_PASSWORD,
+    POST_RESET_PASSWORD
 }

@@ -34,18 +34,18 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import static io.gravitee.am.common.policy.ExtensionPoint.*;
 import static io.gravitee.am.gateway.handler.common.flow.FlowPredicate.alwaysTrue;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,12 +57,13 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private static final Map<Type, List<ExtensionPoint>> extensionPoints;
 
     static {
-        Map<Type, List<ExtensionPoint>> aMap = new HashMap<>();
-        aMap.put(Type.ROOT, Arrays.asList(ExtensionPoint.ROOT));
-        aMap.put(Type.CONSENT, Arrays.asList(ExtensionPoint.PRE_CONSENT, ExtensionPoint.POST_CONSENT));
-        aMap.put(Type.LOGIN, Arrays.asList(ExtensionPoint.PRE_LOGIN, ExtensionPoint.POST_LOGIN));
-        aMap.put(Type.REGISTER, Arrays.asList(ExtensionPoint.PRE_REGISTER, ExtensionPoint.POST_REGISTER));
-        extensionPoints = Collections.unmodifiableMap(aMap);
+        extensionPoints = Map.of(
+                Type.ROOT, List.of(ROOT),
+                Type.CONSENT, List.of(PRE_CONSENT, POST_CONSENT),
+                Type.LOGIN, List.of(PRE_LOGIN, POST_LOGIN),
+                Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER),
+                Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD)
+        );
     }
 
     @Autowired
@@ -77,8 +78,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     @Autowired
     private EventManager eventManager;
 
-    private ConcurrentMap<String, Flow> flows = new ConcurrentHashMap<>();
-    private ConcurrentMap<ExtensionPoint, Set<ExecutionFlow>> policies = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Flow> flows = new ConcurrentHashMap<>();
+    private final ConcurrentMap<ExtensionPoint, Set<ExecutionFlow>> policies = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -150,7 +151,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 Stream.concat(
                         domainExecutionPolicies.stream(),
                         applicationExecutionPolicies.stream()
-                ).collect(Collectors.toList()));
+                ).collect(toList()));
     }
 
     private void updateFlow(String flowId, FlowEvent flowEvent) {
@@ -197,39 +198,41 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
         }
 
         // load policies
-        List<Policy> prePolicies = flow.getPre()
-                .stream()
-                .filter(Step::isEnabled)
-                .map(this::createPolicy)
-                .filter(policy -> policy != null)
-                .collect(Collectors.toList());
-        List<Policy> postPolicies = flow.getPost()
-                .stream()
-                .filter(Step::isEnabled)
-                .map(this::createPolicy)
-                .filter(policy -> policy != null)
-                .collect(Collectors.toList());
+        var prePolicies = loadPolicies(flow.getPre());
+        var postPolicies = loadPolicies(flow.getPost());
 
         switch (flow.getType()) {
             case ROOT:
                 // for root type, fetch only the pre step policies
-                addExecutionFlow(ExtensionPoint.ROOT, flow, prePolicies);
+                addExecutionFlow(ROOT, flow, prePolicies);
                 break;
             case CONSENT:
-                addExecutionFlow(ExtensionPoint.PRE_CONSENT, flow, prePolicies);
-                addExecutionFlow(ExtensionPoint.POST_CONSENT, flow, postPolicies);
+                addExecutionFlow(PRE_CONSENT, flow, prePolicies);
+                addExecutionFlow(POST_CONSENT, flow, postPolicies);
                 break;
             case LOGIN:
-                addExecutionFlow(ExtensionPoint.PRE_LOGIN, flow, prePolicies);
-                addExecutionFlow(ExtensionPoint.POST_LOGIN, flow, postPolicies);
+                addExecutionFlow(PRE_LOGIN, flow, prePolicies);
+                addExecutionFlow(POST_LOGIN, flow, postPolicies);
                 break;
             case REGISTER:
-                addExecutionFlow(ExtensionPoint.PRE_REGISTER, flow, prePolicies);
-                addExecutionFlow(ExtensionPoint.POST_REGISTER, flow, postPolicies);
+                addExecutionFlow(PRE_REGISTER, flow, prePolicies);
+                addExecutionFlow(POST_REGISTER, flow, postPolicies);
+                break;
+            case RESET_PASSWORD:
+                addExecutionFlow(PRE_RESET_PASSWORD, flow, prePolicies);
+                addExecutionFlow(POST_RESET_PASSWORD, flow, postPolicies);
                 break;
             default:
                 throw new IllegalArgumentException("No suitable flow type found for : " + flow.getType());
         }
+    }
+
+    private List<Policy> loadPolicies(List<Step> steps) {
+        return steps.stream()
+                .filter(Step::isEnabled)
+                .map(this::createPolicy)
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 
     private Policy createPolicy(Step step) {
@@ -271,16 +274,16 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 .filter(executionFlow -> (excludeApps) ? executionFlow.getApplication() == null : client.getId().equals(executionFlow.getApplication()))
                 .filter(executionFlow -> filter.evaluate(executionFlow.condition))
                 .map(ExecutionFlow::getPolicies)
-                .filter(executionPolicies -> executionPolicies != null)
+                .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
-    private class ExecutionFlow {
-        private String flowId;
-        private List<Policy> policies;
-        private String application;
-        private String condition;
+    private static class ExecutionFlow {
+        private final String flowId;
+        private final List<Policy> policies;
+        private final String application;
+        private final String condition;
 
         public ExecutionFlow(Flow flow, List<Policy> policies) {
             this.flowId = flow.getId();

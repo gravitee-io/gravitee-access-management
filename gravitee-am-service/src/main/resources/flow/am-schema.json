@@ -15,7 +15,8 @@
         "root",
         "login",
         "consent",
-        "register"
+        "register",
+        "reset_password"
       ],
       "default": "root",
       "x-schema-form": {
@@ -23,7 +24,8 @@
           "root": "ALL",
           "login": "LOGIN",
           "consent": "CONSENT",
-          "register": "REGISTER"
+          "register": "REGISTER",
+          "reset_password": "RESET PASSWORD"
         },
         "disabled" : [
           {"$def":  "id"},

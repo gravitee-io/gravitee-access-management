@@ -23,5 +23,6 @@ public enum Type {
     ROOT,
     LOGIN,
     CONSENT,
-    REGISTER
+    REGISTER,
+    RESET_PASSWORD
 }

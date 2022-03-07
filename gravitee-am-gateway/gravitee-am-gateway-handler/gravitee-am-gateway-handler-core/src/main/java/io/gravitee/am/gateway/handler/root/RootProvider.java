@@ -385,12 +385,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(clientRequestParseHandlerOptional)
                 .handler(userTokenRequestParseHandler)
                 .handler(new ResetPasswordOneTimeTokenHandler())
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain));
         rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(new ResetPasswordOneTimeTokenHandler())
                 .handler(passwordPolicyRequestParseHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
 
         // error route
