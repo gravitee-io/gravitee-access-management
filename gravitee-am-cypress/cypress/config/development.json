@@ -3,8 +3,8 @@
   "supportFile": "cypress/support/index.ts",
   "env": {
     "baseUrl": "http://localhost/am/ui",
-    "managementUrl": "http://localhost/am",
-    "gatewayUrl": "http://localhost/am",
+    "managementUrl": "http://localhost:8093",
+    "gatewayUrl": "http://localhost:8092",
     "cibaDelegateNotifierUrl": "http://localhost:8080/ciba",
     "admin_user_login": "admin",
     "admin_user_password": "adminadmin",

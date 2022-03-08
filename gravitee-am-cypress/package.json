@@ -5,6 +5,9 @@
   "description": "Gravitee.io AM - Cypress",
   "scripts": {
     "test": "cypress open",
+    "am-dev": "cypress open --env configFile=development",
+    "am-prod": "cypress open --env configFile=production",
+    "am-docker": "cypress open --env configFile=docker",
     "lint": "echo 'Lint to be configured'",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix",
     "lint:license": "license-check-and-add check -f license-check-config.json",
@@ -18,7 +21,7 @@
     "@types/faker": "5.5.9",
     "@types/node": "14.18.5",
     "ansi-regex": "6.0.1",
-    "cypress": "8.7.0",
+    "cypress": "^8.7.0",
     "cypress-terminal-report": "3.4.1",
     "har-validator": "5.1.5",
     "license-check-and-add": "^4.0.3",

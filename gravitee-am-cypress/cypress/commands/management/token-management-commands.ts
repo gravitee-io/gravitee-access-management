@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export interface BasicAuthentication {
-  username: string;
-  password: string;
-}
-
-export interface User extends BasicAuthentication {
-  firstName: string;
-  lastName: string;
-  email: string;
-  additionalInformation: object;
-}
+export const requestAdminAccessToken = () => {
+    return cy.request({
+        url: Cypress.env().managementUrl + '/management/auth/token',
+        method: 'POST',
+        auth: {
+            user: 'admin',
+            password: 'adminadmin'
+        },
+        form: true,
+        body: {
+            grant_type: 'password',
+            username: 'admin',
+            password: 'adminadmin'
+        }
+    }).should(response => expect(response.status).to.eq(200))
+};

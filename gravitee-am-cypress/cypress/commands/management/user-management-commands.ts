@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export interface BasicAuthentication {
-  username: string;
-  password: string;
-}
+import {User} from "../../model/users";
+import {getDomainManagerUrl} from "./utils";
 
-export interface User extends BasicAuthentication {
-  firstName: string;
-  lastName: string;
-  email: string;
-  additionalInformation: object;
-}
+export const createUser = (domain, accessToken, user: User) => {
+    return cy.request({
+        url: getDomainManagerUrl() + `${domain}/users`,
+        method: 'POST',
+        auth: {bearer: accessToken},
+        body: user
+    }).should(response => expect(response.status).to.eq(201));
+};

@@ -877,10 +877,6 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                             (!request.getBackchannelClientNotificationEndpoint().get().startsWith("https")) )) {
                 return Single.error(new InvalidClientMetadataException("Missing or Invalid backchannel_client_notification_endpoint"));
             }
-
-            if (request.getBackchannelUserCodeParameter() != null && request.getBackchannelUserCodeParameter().isPresent() && request.getBackchannelUserCodeParameter().get()) {
-                return Single.error(new InvalidClientMetadataException("Unsupported backchannel_user_code_parameter"));
-            }
         }
 
         return Single.just(request);
