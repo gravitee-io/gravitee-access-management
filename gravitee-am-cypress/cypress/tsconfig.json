@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "ES6",
-    "lib": ["es2020", "dom"],
-    "types": ["cypress"]
-  },
-  "include": ["**/*.ts", "support/commands.js", "plugins/index.js"]
-}

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {BasicAuthentication, User} from "../model/users";
-
-export const ADMIN_USER: BasicAuthentication = {
-  username: Cypress.env("admin_user_login"),
-  password: Cypress.env("admin_user_password"),
+export const getDomainManagerUrl = (domainId: String) => {
+    const domainPathParam = domainId ? `${domainId}` : '';
+    return process.env.AM_MANAGEMENT_URL
+        + `/management/organizations/${process.env.AM_DEF_ORG_ID}`
+        + `/environments/${process.env.AM_DEF_ENV_ID}/domains/${domainPathParam}`;
 };
