@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export interface BasicAuthentication {
-  username: string;
-  password: string;
-}
-
-export interface User extends BasicAuthentication {
-  firstName: string;
-  lastName: string;
-  email: string;
-  additionalInformation?: object;
-}
+export const getDomainManagerUrl = (domainId:String) => {
+    const defaultOrganizationId = Cypress.env().defaultOrganizationId;
+    const defaultEnvironmentId = Cypress.env().defaultEnvironmentId;
+    const domainPathParam = domainId ? `${domainId}` : '';
+    return Cypress.env().managementUrl
+        + `/management/organizations/${defaultOrganizationId}/environments/${defaultEnvironmentId}/domains/`
+        + domainPathParam;
+};

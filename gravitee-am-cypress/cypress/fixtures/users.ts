@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BasicAuthentication } from "../model/users";
+import {BasicAuthentication, User} from "../model/users";
 
 export const ADMIN_USER: BasicAuthentication = {
   username: Cypress.env("admin_user_login"),

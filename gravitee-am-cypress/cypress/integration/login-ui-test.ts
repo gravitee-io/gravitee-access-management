@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { loginPageElements } from "../fixtures/elemets/login-page-elements";
+import { loginPageElements } from "../fixtures/elements/login-page-elements";
 import { ADMIN_USER } from "../fixtures/users";
 
 const {

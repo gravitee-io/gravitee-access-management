@@ -34,3 +34,5 @@ gravitee-am-cypress/cypress/screenshots/
 **/node_modules/
 **/.vscode
 .dccache
+cypress.env.json
+gravitee-am-cypress/cypress/config/development.json
