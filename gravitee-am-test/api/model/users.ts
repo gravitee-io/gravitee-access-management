@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+export interface BasicAuthentication {
+  username: string;
+  password: string;
+}
 
-export const loginPageElements = {
-  loginFormTitle: ".login-form-title > label",
-  loginFormSubTitle: ".login-form-title > span",
-  loginFormLogo: "img",
-  userName: "#username",
-  password: "#password",
-  signInButton:
-    ".login-form-actions > .mdl-button > .mdl-button__ripple-container",
-  dashboardLogo: ".logo-image",
-};
+export interface User extends BasicAuthentication {
+  firstName: string;
+  lastName: string;
+  email: string;
+  additionalInformation?: object;
+}

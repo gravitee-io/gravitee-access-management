@@ -29,10 +29,10 @@ audit-logs
 gravitee-am-ui/.vscode/
 
 # Cypress
-gravitee-am-cypress/cypress/videos/
-gravitee-am-cypress/cypress/screenshots/
+gravitee-am-test/cypress/videos/
+gravitee-am-test/cypress/screenshots/
 **/node_modules/
 **/.vscode
 .dccache
 cypress.env.json
-gravitee-am-cypress/cypress/config/development.json
+gravitee-am-test/api/config/development.json
