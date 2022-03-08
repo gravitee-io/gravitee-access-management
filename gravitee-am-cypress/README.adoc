@@ -1,0 +1,23 @@
+= Cypress Integration Tests
+
+Open a terminal in the `gravitee-am-cypress` directory.
+
+==== Build
+
+Execute `npm install`. You usually only need to do this once, i.e. after cloning the AM repo or when dependencies have changed.
+
+==== Run tests with default config
+
+Execute `npm test`. This will open Cypress in a dedicated browser window, from where you can run every test or individual tests.
+
+==== Run tests against development environment
+
+Execute `npm run am-dev`. Be sure to set the `cypress/config/development.json` environment file to match your own local AM settings.
+
+==== Run against docker
+
+Execute `npm run am-docker`.
+
+==== Run against production
+
+Execute `npm run am-prod`.

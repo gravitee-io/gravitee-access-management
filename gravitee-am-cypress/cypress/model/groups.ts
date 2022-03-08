@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export interface BasicAuthentication {
-  username: string;
-  password: string;
-}
-
-export interface User extends BasicAuthentication {
-  firstName: string;
-  lastName: string;
-  email: string;
-  additionalInformation?: object;
+export class Group {
+    id?: string;
+    name: string;
+    roles?: Array<string>;
+    members?: Array<string>;
+    created_at?: number;
+    updated_at?: number;
+    referenceType?: string;
+    referenceId?: string;
 }
