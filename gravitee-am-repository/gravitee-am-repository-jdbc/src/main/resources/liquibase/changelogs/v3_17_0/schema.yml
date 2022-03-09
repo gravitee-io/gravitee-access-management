@@ -10,3 +10,10 @@ databaseChangeLog:
             tableName: application_identities
             columns:
               - column: { name: priority, type: integer, constraints: { nullable: false }, defaultValue: 0 }
+        ##############
+        # flow_steps #
+        ##############
+        - addColumn:
+            tableName: flow_steps
+            columns:
+              - column: { name: condition, type: clob, constraints: { nullable: true } }

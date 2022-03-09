@@ -21,16 +21,19 @@ import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.gateway.policy.PolicyException;
 import io.gravitee.am.gateway.policy.impl.processor.PolicyChainProcessorFailure;
+import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.policy.api.PolicyResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,7 +61,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
         if (policyIterator.hasNext()) {
             Policy policy = policyIterator.next();
             try {
-                if (policy.isRunnable()) {
+                if (isRunnable(policy)) {
                     // enhance execution context with policy metadata
                     if (policy.metadata() != null) {
                         policy.metadata().forEach(executionContext::setAttribute);
@@ -73,7 +76,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
                     doNext(executionContext.request(), executionContext.response());
                 }
             } catch (Exception ex) {
-                final String message = "An error occurs in policy[" + policy.id()+"] error["+ Throwables.getStackTraceAsString(ex)+"]";
+                final String message = "An error occurs in policy[" + policy.id() + "] error[" + Throwables.getStackTraceAsString(ex) + "]";
                 LOGGER.error(message);
                 request.metrics().setMessage(message);
                 if (errorHandler != null) {
@@ -85,6 +88,25 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
             next.handle(executionContext);
         }
 
+    }
+
+    private boolean isRunnable(Policy policy) {
+        if (!policy.isRunnable()) {
+            return false;
+        }
+
+        final String condition = policy.condition();
+        if (isNullOrEmpty(condition) || condition.isBlank()) {
+            return true;
+        }
+
+        final TemplateEngine templateEngine = executionContext.getTemplateEngine();
+        try {
+            return nonNull(templateEngine) && templateEngine.getValue(condition.trim(), Boolean.class);
+        } catch (Exception e) {
+            LOGGER.warn("Could not execute rule [{}] for policy [{}]", condition, policy.id(), e);
+            return false;
+        }
     }
 
     @Override
@@ -102,7 +124,7 @@ public class PolicyChain extends AbstractProcessor<ExecutionContext> implements 
         doNext(context.request(), context.response());
     }
 
-    private void execute(Policy policy, Object ... args) throws PolicyChainException {
+    private void execute(Policy policy, Object... args) throws PolicyChainException {
         try {
             policy.execute(args);
         } catch (PolicyException pe) {

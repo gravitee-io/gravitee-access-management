@@ -33,6 +33,7 @@ public class PolicyImpl implements Policy {
     private final Object policyInst;
     private PolicyMetadata policyMetadata;
     private Map<String, Object> metadata;
+    private String condition;
 
     private PolicyImpl(Object policyInst) {
         this.policyInst = policyInst;
@@ -41,6 +42,11 @@ public class PolicyImpl implements Policy {
     @Override
     public String id() {
         return policyMetadata.id();
+    }
+
+    @Override
+    public String condition() {
+        return condition;
     }
 
     @Override
@@ -119,10 +125,16 @@ public class PolicyImpl implements Policy {
         return this;
     }
 
+    private PolicyImpl condition(String condition) {
+        this.condition = condition;
+        return this;
+    }
+
     public static class Builder {
 
         private final Object policyInstance;
         private PolicyMetadata policyMetadata;
+        private String condition;
 
         private Builder(Object policyInstance) {
             this.policyInstance = policyInstance;
@@ -133,9 +145,15 @@ public class PolicyImpl implements Policy {
             return this;
         }
 
+        public Builder condition(String condition) {
+            this.condition = condition;
+            return this;
+        }
+
         public PolicyImpl build() {
             return new PolicyImpl(policyInstance)
-                    .definition(policyMetadata);
+                    .definition(policyMetadata)
+                    .condition(condition);
         }
     }
 }

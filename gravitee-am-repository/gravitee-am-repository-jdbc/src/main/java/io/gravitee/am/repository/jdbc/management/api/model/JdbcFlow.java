@@ -144,6 +144,7 @@ public class JdbcFlow {
         private String description;
         private String configuration;
         private boolean enabled = true;
+        private String condition;
 
         public String getFlowId() {
             return flowId;
@@ -209,9 +210,16 @@ public class JdbcFlow {
             this.enabled = enabled;
         }
 
+        public String getCondition() {
+            return condition;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
+        }
     }
 
-    public static enum StepType {
+    public enum StepType {
         pre,
         post
     }

@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.core.processor.Processor;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.flow.FlowPredicate;
+import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.PolicyChainHandlerImpl;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.policy.Policy;
@@ -74,7 +74,7 @@ public class PolicyChainHandlerTest {
 
     @Test
     public void shouldNotInvoke_noPolicies() {
-        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.emptyList()));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
         when(routingContext.request()).thenReturn(request);
@@ -86,14 +86,14 @@ public class PolicyChainHandlerTest {
         when(routingContext.request()).thenReturn(request);
         policyChainHandler.handle(routingContext);
 
-        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class));
+        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class));
         verify(policyChainProcessorFactory, never()).create(any(), any());
         verify(executionContextFactory).create(any());
     }
 
     @Test
     public void shouldInvoke_onePolicy() {
-        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class))).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.singletonList(policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
         when(routingContext.request()).thenReturn(request);
@@ -107,14 +107,14 @@ public class PolicyChainHandlerTest {
 
         policyChainHandler.handle(routingContext);
 
-        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class));
+        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class));
         verify(policyChainProcessorFactory, times(1)).create(any(), any());
         verify(executionContextFactory, times(1)).create(any());
     }
 
     @Test
     public void shouldInvoke_manyPolicies() {
-        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class))).thenReturn(Single.just(Arrays.asList(policy, policy)));
+        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Arrays.asList(policy, policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
         when(routingContext.request()).thenReturn(request);
@@ -129,7 +129,7 @@ public class PolicyChainHandlerTest {
         policyChainHandler.handle(routingContext);
 
         // should be only call once
-        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(FlowPredicate.class));
+        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class));
         verify(policyChainProcessorFactory, times(1)).create(any(), any());
         verify(executionContextFactory, times(1)).create(any());
     }

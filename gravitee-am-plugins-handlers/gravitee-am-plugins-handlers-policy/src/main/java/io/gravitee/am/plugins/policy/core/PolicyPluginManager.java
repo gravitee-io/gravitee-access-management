@@ -27,7 +27,12 @@ import java.util.Collection;
  */
 public interface PolicyPluginManager {
 
-    Policy create(String type, String configuration);
+
+    Policy create(String type, String condition, String configuration);
+
+    default Policy create(String type, String configuration) {
+        return create(type, null, configuration);
+    }
 
     Collection<PolicyPlugin> getAll();
 
