@@ -19,7 +19,8 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.FlowEvent;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.flow.FlowPredicate;
+import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
+import io.gravitee.am.gateway.handler.common.flow.execution.ExecutionFlow;
 import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
@@ -44,7 +45,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.common.policy.ExtensionPoint.*;
-import static io.gravitee.am.gateway.handler.common.flow.FlowPredicate.alwaysTrue;
+import static io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate.alwaysTrue;
+import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -120,7 +122,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     }
 
     @Override
-    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, FlowPredicate filter) {
+    public Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, ExecutionPredicate filter) {
         if (filter == null) {
             filter = alwaysTrue();
         }
@@ -238,7 +240,7 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private Policy createPolicy(Step step) {
         try {
             logger.info("\tInitializing policy: {} [{}]", step.getName(), step.getPolicy());
-            Policy policy = policyPluginManager.create(step.getPolicy(), step.getConfiguration());
+            Policy policy = policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration());
             logger.info("\tPolicy : {} [{}] has been loaded", step.getName(), step.getPolicy());
             policy.activate();
             return policy;
@@ -269,57 +271,19 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private List<Policy> getExecutionPolicies(Set<ExecutionFlow> executionFlows,
                                               Client client,
                                               boolean excludeApps,
-                                              FlowPredicate filter) {
+                                              ExecutionPredicate predicate) {
         return executionFlows.stream()
-                .filter(executionFlow -> (excludeApps) ? executionFlow.getApplication() == null : client.getId().equals(executionFlow.getApplication()))
-                .filter(executionFlow -> filter.evaluate(executionFlow.condition))
+                .filter(executionFlow -> excludeApps(client, excludeApps, executionFlow))
+                .filter(executionFlow -> predicate.evaluate(executionFlow.getCondition()))
                 .map(ExecutionFlow::getPolicies)
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream)
                 .collect(toList());
     }
 
-    private static class ExecutionFlow {
-        private final String flowId;
-        private final List<Policy> policies;
-        private final String application;
-        private final String condition;
-
-        public ExecutionFlow(Flow flow, List<Policy> policies) {
-            this.flowId = flow.getId();
-            this.policies = policies;
-            this.application = flow.getApplication();
-            this.condition = flow.getCondition();
-        }
-
-        public String getFlowId() {
-            return flowId;
-        }
-
-        public List<Policy> getPolicies() {
-            return policies;
-        }
-
-        public String getApplication() {
-            return application;
-        }
-
-        public String getCondition() {
-            return condition;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ExecutionFlow that = (ExecutionFlow) o;
-            return Objects.equals(flowId, that.flowId);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(flowId);
-        }
+    private boolean excludeApps(Client client, boolean excludeApps, ExecutionFlow executionFlow) {
+        return excludeApps ? isNull(executionFlow.getApplication()) : client.getId().equals(executionFlow.getApplication());
     }
+
 }
 

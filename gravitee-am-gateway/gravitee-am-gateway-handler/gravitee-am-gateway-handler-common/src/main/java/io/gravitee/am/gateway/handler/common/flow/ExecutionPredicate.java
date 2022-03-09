@@ -21,27 +21,26 @@ import io.gravitee.gateway.api.ExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Predicate;
-
-import static org.springframework.util.StringUtils.isEmpty;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FlowPredicate {
-    private final Logger LOGGER = LoggerFactory.getLogger(FlowPredicate.class);
+public class ExecutionPredicate {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutionPredicate.class);
     private final TemplateEngine templateEngine;
 
     private final boolean value;
 
-    private FlowPredicate() {
+    private ExecutionPredicate() {
         this.value = true;
         this.templateEngine = null;
     }
 
-    private FlowPredicate(TemplateEngine templateEngine) {
+    private ExecutionPredicate(TemplateEngine templateEngine) {
         this.templateEngine = templateEngine;
         this.value = false;
     }
@@ -49,18 +48,18 @@ public class FlowPredicate {
     public boolean evaluate(String expression) {
         try {
             return value ||
-                    (templateEngine != null && (isEmpty(expression) || templateEngine.getValue(expression, boolean.class)));
+                    (nonNull(templateEngine) && (isNullOrEmpty(expression) || templateEngine.getValue(expression, boolean.class)));
         } catch (ExpressionEvaluationException e) {
             LOGGER.warn("Unable to evaluate the expression '{}' as a boolean value", expression, LOGGER.isDebugEnabled() ? e : null);
             return false;
         }
     }
 
-    public static FlowPredicate alwaysTrue() {
-        return new FlowPredicate();
+    public static ExecutionPredicate alwaysTrue() {
+        return new ExecutionPredicate();
     }
 
-    public static FlowPredicate from(ExecutionContext executionContext) {
-        return new FlowPredicate(executionContext.getTemplateEngine());
+    public static ExecutionPredicate from(ExecutionContext executionContext) {
+        return new ExecutionPredicate(executionContext.getTemplateEngine());
     }
 }

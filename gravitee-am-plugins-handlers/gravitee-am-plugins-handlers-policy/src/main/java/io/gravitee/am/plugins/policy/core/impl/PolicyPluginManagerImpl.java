@@ -30,19 +30,18 @@ import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyConfiguration;
 import io.gravitee.policy.api.PolicyContext;
 import io.gravitee.policy.api.PolicyContextProviderAware;
-import org.reflections.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.ClassUtils;
-
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.ClassUtils;
 
 import static org.reflections.ReflectionUtils.withModifier;
 import static org.reflections.ReflectionUtils.withParametersCount;
@@ -72,6 +71,8 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
 
+
+
     @Override
     public Collection<PolicyPlugin> getAll() {
         return pluginManager.findAll();
@@ -98,7 +99,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     }
 
     @Override
-    public Policy create(String type, String configuration) {
+    public Policy create(String type, String condition, String configuration) {
         logger.debug("Creating a policy for [{}]", type);
         PolicyPlugin policyPlugin = pluginManager.get(type);
 
@@ -154,6 +155,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
                         if (policyInst != null) {
                             return PolicyImpl
                                     .target(policyInst)
+                                    .condition(condition)
                                     .definition(policyMetadata)
                                     .build();
                         }

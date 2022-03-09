@@ -85,6 +85,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
     public static final String COL_STEP_DESCRIPTION = "description";
     public static final String COL_STEP_CONFIGURATION = "configuration";
     public static final String COL_STEP_ENABLED = "enabled";
+    public static final String COL_STEP_CONDITION = "condition";
 
     private static final List<String> stepsColumns = List.of(
             COL_STEP_ID,
@@ -94,7 +95,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             COL_STEP_POLICY,
             COL_STEP_DESCRIPTION,
             COL_STEP_CONFIGURATION,
-            COL_STEP_ENABLED
+            COL_STEP_ENABLED,
+            COL_STEP_CONDITION
     );
 
     private String INSERT_STATEMENT;
@@ -124,7 +126,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({})", id);
         return flowRepository.findById(id)
                 .map(this::toEntity)
-                .flatMapSingleElement(flow ->  completeFlow(flow));
+                .flatMapSingleElement(this::completeFlow);
     }
 
     @Override
@@ -172,7 +174,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
 
     private Mono<Integer> persistFlowSteps(Flow item, List<Step> steps, JdbcFlow.StepType type) {
         List<JdbcFlow.JdbcStep> jdbcPostSteps = new ArrayList<>();
-        for( int i = 0; i < steps.size(); ++i) {
+        for (int i = 0; i < steps.size(); ++i) {
             JdbcFlow.JdbcStep bean = convertToJdbcStep(item, steps.get(i), type);
             bean.setOrder(i + 1);
             jdbcPostSteps.add(bean);
@@ -187,6 +189,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
             insert = step.getConfiguration() != null ? insert.bind(COL_STEP_CONFIGURATION, step.getConfiguration()) : insert.bindNull(COL_STEP_CONFIGURATION, String.class);
             insert = insert.bind(COL_STEP_STAGE_ORDER, step.getOrder());
             insert = insert.bind(COL_STEP_ENABLED, step.isEnabled());
+            insert = step.getCondition() != null ? insert.bind(COL_STEP_CONDITION, step.getCondition()) : insert.bindNull(COL_STEP_CONDITION, String.class);
             return insert.fetch().rowsUpdated();
         }).reduce(Integer::sum);
     }

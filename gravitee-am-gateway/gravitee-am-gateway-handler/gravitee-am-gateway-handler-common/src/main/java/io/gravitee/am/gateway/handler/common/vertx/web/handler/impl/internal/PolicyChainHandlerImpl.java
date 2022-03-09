@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.flow.FlowPredicate;
+import io.gravitee.am.gateway.handler.common.flow.ExecutionPredicate;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
@@ -132,7 +132,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
     }
 
     private void resolve(ExecutionContext executionContext, Handler<AsyncResult<List<Policy>>> handler) {
-        flowManager.findByExtensionPoint(extensionPoint, (Client)executionContext.getAttribute(ConstantKeys.CLIENT_CONTEXT_KEY), FlowPredicate.from(executionContext))
+        flowManager.findByExtensionPoint(extensionPoint, (Client)executionContext.getAttribute(ConstantKeys.CLIENT_CONTEXT_KEY), ExecutionPredicate.from(executionContext))
                 .subscribe(
                         policies -> handler.handle(Future.succeededFuture(policies)),
                         error -> handler.handle(Future.failedFuture(error)));

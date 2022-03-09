@@ -29,9 +29,6 @@ import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.ExecutionContext;
-import io.gravitee.gateway.api.Request;
-import io.gravitee.gateway.api.Response;
-import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.Flowable;
 import io.reactivex.observers.TestObserver;
 import org.junit.Assert;
@@ -79,7 +76,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, never()).create(anyString(), anyString());
+        verify(policyPluginManager, never()).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -97,7 +94,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, never()).create(anyString(), anyString());
+        verify(policyPluginManager, never()).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -115,7 +112,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, never()).create(anyString(), anyString());
+        verify(policyPluginManager, never()).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -137,7 +134,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, never()).create(anyString(), anyString());
+        verify(policyPluginManager, never()).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -156,7 +153,7 @@ public class FlowManagerTest {
         Policy policy = mock(Policy.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration())).thenReturn(policy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
@@ -165,7 +162,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, times(1)).create(anyString(), anyString());
+        verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -174,6 +171,7 @@ public class FlowManagerTest {
         when(step.isEnabled()).thenReturn(true);
         when(step.getPolicy()).thenReturn("step-policy");
         when(step.getConfiguration()).thenReturn("step-configuration");
+        when(step.getCondition()).thenReturn("step-condition");
 
         Flow flow = mock(Flow.class);
         when(flow.getId()).thenReturn("flow-id");
@@ -184,7 +182,7 @@ public class FlowManagerTest {
         Policy policy = mock(Policy.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration())).thenReturn(policy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
@@ -193,7 +191,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.size() == 1);
             return true;
         });
-        verify(policyPluginManager, times(1)).create(anyString(), anyString());
+        verify(policyPluginManager, times(1)).create(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -213,7 +211,7 @@ public class FlowManagerTest {
         Policy policy = mock(Policy.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration())).thenReturn(policy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, null, null).test();
@@ -222,7 +220,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, times(1)).create(anyString(), anyString());
+        verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -244,7 +242,7 @@ public class FlowManagerTest {
         when(client.getId()).thenReturn("other-app-id");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration())).thenReturn(policy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
@@ -253,7 +251,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.isEmpty());
             return true;
         });
-        verify(policyPluginManager, times(1)).create(anyString(), anyString());
+        verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -275,7 +273,7 @@ public class FlowManagerTest {
         when(client.getId()).thenReturn("app-id");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(step.getPolicy(), step.getConfiguration())).thenReturn(policy);
+        when(policyPluginManager.create(step.getPolicy(), step.getCondition(), step.getConfiguration())).thenReturn(policy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(flow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
@@ -284,7 +282,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.size() == 1);
             return true;
         });
-        verify(policyPluginManager, times(1)).create(anyString(), anyString());
+        verify(policyPluginManager, times(1)).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -319,8 +317,8 @@ public class FlowManagerTest {
         when(client.getId()).thenReturn("app-id");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getConfiguration())).thenReturn(domainPolicy);
-        when(policyPluginManager.create(appStep.getPolicy(), appStep.getConfiguration())).thenReturn(appPolicy);
+        when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getCondition(), domainStep.getConfiguration())).thenReturn(domainPolicy);
+        when(policyPluginManager.create(appStep.getPolicy(), appStep.getCondition(), appStep.getConfiguration())).thenReturn(appPolicy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
         TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, null).test();
@@ -330,7 +328,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.get(0).id().equals(appPolicy.id()));
             return true;
         });
-        verify(policyPluginManager, times(2)).create(anyString(), anyString());
+        verify(policyPluginManager, times(2)).create(anyString(), eq(null), anyString());
     }
 
     @Test
@@ -367,11 +365,11 @@ public class FlowManagerTest {
         when(client.isFlowsInherited()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getConfiguration())).thenReturn(domainPolicy);
-        when(policyPluginManager.create(appStep.getPolicy(), appStep.getConfiguration())).thenReturn(appPolicy);
+        when(policyPluginManager.create(domainStep.getPolicy(), domainStep.getCondition(), domainStep.getConfiguration())).thenReturn(domainPolicy);
+        when(policyPluginManager.create(appStep.getPolicy(), appStep.getCondition(), appStep.getConfiguration())).thenReturn(appPolicy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
-        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, FlowPredicate.alwaysTrue()).test();
+        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, ExecutionPredicate.alwaysTrue()).test();
         obs.awaitTerminalEvent();
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 2);
@@ -379,7 +377,7 @@ public class FlowManagerTest {
             Assert.assertTrue(policies.get(1).id().equals(appPolicy.id()));
             return true;
         });
-        verify(policyPluginManager, times(2)).create(anyString(), anyString());
+        verify(policyPluginManager, times(2)).create(anyString(), eq(null), anyString());
     }
 
 
@@ -417,20 +415,20 @@ public class FlowManagerTest {
         when(client.isFlowsInherited()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(policyPluginManager.create(appStep.getPolicy(), appStep.getConfiguration())).thenReturn(appPolicy);
+        when(policyPluginManager.create(appStep.getPolicy(), appStep.getCondition(), appStep.getConfiguration())).thenReturn(appPolicy);
         when(flowService.findAll(ReferenceType.DOMAIN, domain.getId())).thenReturn(Flowable.just(domainFlow, appFlow));
         flowManager.afterPropertiesSet();
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(executionContext.getTemplateEngine()).thenReturn(TemplateEngine.templateEngine());
 
-        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, FlowPredicate.from(executionContext)).test();
+        TestObserver<List<Policy>> obs = flowManager.findByExtensionPoint(ExtensionPoint.PRE_CONSENT, client, ExecutionPredicate.from(executionContext)).test();
         obs.awaitTerminalEvent();
         obs.assertValue(policies -> {
             Assert.assertTrue(policies.size() == 1);
             Assert.assertTrue(policies.get(0).id().equals(appPolicy.id()));
             return true;
         });
-        verify(policyPluginManager, times(2)).create(anyString(), anyString());
+        verify(policyPluginManager, times(2)).create(anyString(), eq(null), anyString());
     }
 }

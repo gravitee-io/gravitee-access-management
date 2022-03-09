@@ -63,7 +63,7 @@ public class DefaultRulesEngine implements RulesEngine {
     protected List<Policy> resolve(List<Rule> rules) {
         if (rules != null && ! rules.isEmpty()) {
             return rules.stream()
-                    .filter(rule -> rule.enabled())
+                    .filter(Rule::enabled)
                     .map(rule -> {
                         Policy policy = policyPluginManager.create(rule.type(), rule.condition());
                         policy.setMetadata(rule.metadata());

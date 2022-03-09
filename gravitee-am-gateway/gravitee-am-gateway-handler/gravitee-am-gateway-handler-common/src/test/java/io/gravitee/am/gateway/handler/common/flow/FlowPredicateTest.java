@@ -41,55 +41,55 @@ public class FlowPredicateTest {
 
     @Test
     public void shouldAlwaysReturnTrue_condition_null() {
-        FlowPredicate predicate = FlowPredicate.alwaysTrue();
+        ExecutionPredicate predicate = ExecutionPredicate.alwaysTrue();
         assertTrue(predicate.evaluate(null));
     }
 
     @Test
     public void shouldAlwaysReturnTrue_condition_empty() {
-        FlowPredicate predicate = FlowPredicate.alwaysTrue();
+        ExecutionPredicate predicate = ExecutionPredicate.alwaysTrue();
         assertTrue(predicate.evaluate(""));
     }
 
     @Test
     public void shouldAlwaysReturnTrue_condition_true() {
-        FlowPredicate predicate = FlowPredicate.alwaysTrue();
+        ExecutionPredicate predicate = ExecutionPredicate.alwaysTrue();
         assertTrue(predicate.evaluate("true"));
     }
 
     @Test
     public void shouldAlwaysReturnTrue_condition_false() {
-        FlowPredicate predicate = FlowPredicate.alwaysTrue();
+        ExecutionPredicate predicate = ExecutionPredicate.alwaysTrue();
         assertTrue(predicate.evaluate("false"));
     }
 
     @Test
     public void shouldReturnTrue_condition_null() {
-        FlowPredicate predicate = FlowPredicate.from(ctx);
+        ExecutionPredicate predicate = ExecutionPredicate.from(ctx);
         assertTrue(predicate.evaluate(null));
     }
 
     @Test
     public void shouldReturnTrue_condition_empty() {
-        FlowPredicate predicate = FlowPredicate.from(ctx);
+        ExecutionPredicate predicate = ExecutionPredicate.from(ctx);
         assertTrue(predicate.evaluate(""));
     }
 
     @Test
     public void shouldReturnTrue_condition_true() {
-        FlowPredicate predicate = FlowPredicate.from(ctx);
+        ExecutionPredicate predicate = ExecutionPredicate.from(ctx);
         assertTrue(predicate.evaluate("true"));
     }
 
     @Test
     public void shouldReturnFalse_condition_false() {
-        FlowPredicate predicate = FlowPredicate.from(ctx);
+        ExecutionPredicate predicate = ExecutionPredicate.from(ctx);
         assertFalse(predicate.evaluate("false"));
     }
 
     @Test
     public void shouldReturnFalse_ExpressionException() {
-        FlowPredicate predicate = FlowPredicate.from(ctx);
+        ExecutionPredicate predicate = ExecutionPredicate.from(ctx);
         assertFalse(predicate.evaluate("{#invalid}"));
     }
 }

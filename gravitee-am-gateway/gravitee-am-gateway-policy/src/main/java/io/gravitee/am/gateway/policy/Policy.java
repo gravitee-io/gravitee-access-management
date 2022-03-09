@@ -27,6 +27,8 @@ public interface Policy {
 
     Map<String, Object> metadata();
 
+    String condition();
+
     default void setMetadata(Map<String, Object> metadata) {};
 
     default void execute(Object ... args) throws PolicyException {}

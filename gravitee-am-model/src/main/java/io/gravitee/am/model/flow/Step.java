@@ -45,8 +45,6 @@ public class Step {
     /**
      * Step condition
      */
-    //TODO: Implement conditional policy,
-    // right now this field serves for compatibility
     private String condition;
 
     public String getName() {

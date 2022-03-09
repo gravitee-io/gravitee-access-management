@@ -20,9 +20,7 @@ import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
 import io.reactivex.Single;
-
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,6 +28,6 @@ import java.util.function.Predicate;
  */
 public interface FlowManager extends Service {
 
-    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, FlowPredicate filter);
+    Single<List<Policy>> findByExtensionPoint(ExtensionPoint extensionPoint, Client client, ExecutionPredicate filter);
 
 }

@@ -43,10 +43,10 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindAll() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
         flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setReferenceId("DOMAIN1");
-        Flow flow2 = buildFlow(2,3);
+        Flow flow2 = buildFlow(2, 3);
         flow2.setReferenceType(ReferenceType.DOMAIN);
         flow2.setReferenceId("DOMAIN1");
 
@@ -65,10 +65,10 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByApplication() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
         flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setReferenceId("DOMAIN1");
-        Flow flow2 = buildFlow(2,3);
+        Flow flow2 = buildFlow(2, 3);
         flow2.setReferenceType(ReferenceType.DOMAIN);
         flow2.setReferenceId("DOMAIN1");
         flow2.setApplication("APP1");
@@ -87,7 +87,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByRefAndId() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
         flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setReferenceId("DOMAIN1");
 
@@ -138,7 +138,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByWithStep() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
 
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
@@ -152,7 +152,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByWithMultipleStep() {
-        Flow flow = buildFlow(4,3);
+        Flow flow = buildFlow(4, 3);
 
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
@@ -200,10 +200,10 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testUpdateWithStep() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
-        Flow flowUpdated = buildFlow(2,3);
+        Flow flowUpdated = buildFlow(2, 3);
         flowUpdated.setId(flowCreated.getId());
         flowUpdated.setName("testNameUpdated");
 
@@ -219,10 +219,10 @@ public class FlowRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testUpdateWithoutStep() {
-        Flow flow = buildFlow(1,1);
+        Flow flow = buildFlow(1, 1);
         Flow flowCreated = flowRepository.create(flow).blockingGet();
 
-        Flow flowUpdated = buildFlow(0,0);
+        Flow flowUpdated = buildFlow(0, 0);
         flowUpdated.setId(flowCreated.getId());
         flowUpdated.setName("testNameUpdated");
 
@@ -255,46 +255,37 @@ public class FlowRepositoryTest extends AbstractManagementTest {
     private Flow buildFlow(int nbPreSteps, int nbPostSteps) {
         String rand = UUID.randomUUID().toString();
         Flow flow = new Flow();
-        flow.setName("ROOT"+rand);
+        flow.setName("ROOT" + rand);
         flow.setCreatedAt(new Date());
         flow.setUpdatedAt(new Date());
-        flow.setCondition("condition"+rand);
+        flow.setCondition("condition" + rand);
         flow.setEnabled(true);
         flow.setOrder(5);
-        flow.setReferenceId("refId"+rand);
+        flow.setReferenceId("refId" + rand);
         flow.setReferenceType(ReferenceType.DOMAIN);
         flow.setType(Type.REGISTER);
 
-        if (nbPreSteps > 0 ) {
-            List<Step> preSteps = new ArrayList<>();
-            for (int i = 0; i < nbPreSteps; ++i) {
-                Step preStep = new Step();
-                preStep.setName("Step" + i + " " + rand);
-                preStep.setEnabled(true);
-                preStep.setConfiguration("ConfigStep"+ i + " " + rand);
-                preStep.setPolicy("policy step1");
-                preStep.setDescription("description step"+ i + " " + rand);
+        flow.setPre(buildSteps(nbPreSteps, rand));
+        flow.setPost(buildSteps(nbPostSteps, rand));
 
-                preSteps.add(preStep);
-            }
-            flow.setPre(preSteps);
-        }
+        return flow;
+    }
 
-        if (nbPostSteps > 0 ) {
-            List<Step> postSteps = new ArrayList<>();
-            for (int i = 0; i < nbPostSteps; ++i) {
+    private List<Step> buildSteps(int nbSteps, String rand) {
+        List<Step> steps = new ArrayList<>();
+        if (nbSteps > 0) {
+            for (int i = 0; i < nbSteps; ++i) {
                 Step postStep = new Step();
                 postStep.setName("Step" + i + " " + rand);
                 postStep.setEnabled(true);
-                postStep.setConfiguration("ConfigStep"+ i + " " + rand);
+                postStep.setConfiguration("ConfigStep" + i + " " + rand);
                 postStep.setPolicy("policy step1");
-                postStep.setDescription("description step"+ i + " " + rand);
+                postStep.setDescription("description step" + i + " " + rand);
+                postStep.setCondition("condition " + i);
 
-                postSteps.add(postStep);
+                steps.add(postStep);
             }
-            flow.setPost(postSteps);
         }
-
-        return flow;
+        return steps;
     }
 }

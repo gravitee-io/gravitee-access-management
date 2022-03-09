@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "0cdb0387-134e-43c1-8752-6b8e2ec4bdb9",
+		"_postman_id": "e49efe0f-20a1-44f9-87e9-15932d5a7415",
 		"name": "Gravitee.io - AM - Flows - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -773,7 +773,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\"name\":\"CONSENT\",\"pre\":[{\"name\":\"HTTP Callout\",\"policy\":\"policy-http-callout\",\"description\":\"Pre-check User\",\"enabled\":true,\"configuration\":\"{\\\"method\\\":\\\"GET\\\",\\\"exitOnError\\\":false,\\\"errorCondition\\\":\\\"{#calloutResponse.status == 200}\\\",\\\"errorStatusCode\\\":\\\"500\\\",\\\"url\\\":\\\"https://api.gravitee.io/echo\\\",\\\"variables\\\":[{\\\"value\\\":\\\"Custom-Variable\\\",\\\"name\\\":\\\"X-Custom-Variable\\\"}],\\\"errorContent\\\":\\\"test\\\"}\"}],\"post\":[],\"enabled\":true,\"type\":\"consent\"}"
+							"raw": "{\n    \"name\": \"CONSENT\",\n    \"pre\": [\n        {\n            \"name\": \"HTTP Callout\",\n            \"policy\": \"policy-http-callout\",\n            \"description\": \"Pre-check User\",\n            \"enabled\": true,\n            \"configuration\": \"{\\\"method\\\":\\\"GET\\\",\\\"exitOnError\\\":false,\\\"errorCondition\\\":\\\"{#calloutResponse.status == 200}\\\",\\\"errorStatusCode\\\":\\\"500\\\",\\\"url\\\":\\\"https://api.gravitee.io/echo\\\",\\\"variables\\\":[{\\\"value\\\":\\\"Custom-Variable\\\",\\\"name\\\":\\\"X-Custom-Variable\\\"}],\\\"errorContent\\\":\\\"test\\\"}\"\n        }\n    ],\n    \"post\": [],\n    \"enabled\": true,\n    \"type\": \"consent\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/flows/{{flow}}",
@@ -1015,6 +1015,431 @@
 									"    var location = postman.getResponseHeader(\"Location\");",
 									"    pm.environment.set('redirection', location);",
 									"    tests['Redirect to Authorization Endpoint'] = location.includes('/oauth/consent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/logout",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"logout"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pre Login Conditional",
+			"item": [
+				{
+					"name": "Create login flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"var body = JSON.parse(responseBody);",
+									"var consentFlow = body.filter(flowObj => flowObj.type === 'login')[0];",
+									"pm.environment.set('flow', consentFlow.id);",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 6000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"type": "text",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"name\": \"LOGIN\",\n        \"pre\": [\n            {\n                \"condition\": \"\",\n                \"configuration\": \"{\\\"method\\\":\\\"GET\\\",\\\"exitOnError\\\":false,\\\"errorCondition\\\":\\\"{#calloutResponse.status >= 400 and #calloutResponse.status <= 599}\\\",\\\"errorStatusCode\\\":\\\"500\\\",\\\"variables\\\":[{\\\"value\\\":\\\"{#jsonPath(#calloutResponse.content, '$.headers.Host')}\\\",\\\"name\\\":\\\"my-server\\\"}],\\\"url\\\":\\\"https://api.gravitee.io/echo\\\"}\",\n                \"description\": \"\",\n                \"enabled\": true,\n                \"name\": \"HTTP Callout\",\n                \"policy\": \"policy-http-callout\"\n            },\n            {\n                \"condition\": \"\",\n                \"configuration\": \"{\\\"properties\\\":[{\\\"key\\\":\\\"my-additional-attribute\\\",\\\"value\\\":\\\"{#context.attributes['my-server']}\\\"}]}\",\n                \"description\": \"\",\n                \"enabled\": true,\n                \"name\": \"Enrich Authentication Flow\",\n                \"policy\": \"policy-am-enrich-auth-flow\"\n            },\n            {\n                \"condition\": \"{#context.attributes['authFlow']['my-additional-attribute'] != 'api.gravitee.io'}\",\n                \"configuration\": \"{\\\"time\\\":3000,\\\"timeUnit\\\":\\\"MILLISECONDS\\\"}\",\n                \"description\": \"\",\n                \"enabled\": true,\n                \"name\": \"Latency\",\n                \"policy\": \"latency\"\n            }\n        ],\n        \"post\": [],\n        \"enabled\": true,\n        \"type\": \"login\"\n    }\n]"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/flows",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"flows"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Login Flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be redirected\", function () {",
+									"    pm.response.to.be.redirection;",
+									"    pm.response.to.have.header('Location');",
+									"});",
+									"",
+									"pm.test(\"Should be a redirection to login page\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domainHrid\");",
+									"    ",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"oauth",
+								"authorize",
+								""
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{clientId}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://auth-nightly.gravitee.io/myApp/callback"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response Time is less than 3 seconds\", function () {",
+									"     tests['Response Time is less than 3 seconds'] = pm.response.responseTime < 3000;",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{redirection}}",
+							"host": [
+								"{{redirection}}"
+							]
+						},
+						"description": "The client does not have a redirect_uri define"
+					},
+					"response": []
+				},
+				{
+					"name": "Update login flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// wait for sync process",
+									"setTimeout(function(){}, 6000);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"LOGIN\",\n    \"pre\": [\n        {\n            \"condition\": \"\",\n            \"configuration\": \"{\\\"method\\\":\\\"GET\\\",\\\"exitOnError\\\":false,\\\"errorCondition\\\":\\\"{#calloutResponse.status >= 400 and #calloutResponse.status <= 599}\\\",\\\"errorStatusCode\\\":\\\"500\\\",\\\"variables\\\":[{\\\"value\\\":\\\"{#jsonPath(#calloutResponse.content, '$.headers.Host')}\\\",\\\"name\\\":\\\"my-server\\\"}],\\\"url\\\":\\\"https://api.gravitee.io/echo\\\"}\",\n            \"description\": \"\",\n            \"enabled\": true,\n            \"name\": \"HTTP Callout\",\n            \"policy\": \"policy-http-callout\"\n        },\n        {\n            \"condition\": \"\",\n            \"configuration\": \"{\\\"properties\\\":[{\\\"key\\\":\\\"my-additional-attribute\\\",\\\"value\\\":\\\"{#context.attributes['my-server']}\\\"}]}\",\n            \"description\": \"\",\n            \"enabled\": true,\n            \"name\": \"Enrich Authentication Flow\",\n            \"policy\": \"policy-am-enrich-auth-flow\"\n        },\n        {\n            \"condition\": \"{#context.attributes['authFlow']['my-additional-attribute'] == 'api.gravitee.io'}\",\n            \"configuration\": \"{\\\"time\\\":3000,\\\"timeUnit\\\":\\\"MILLISECONDS\\\"}\",\n            \"description\": \"\",\n            \"enabled\": true,\n            \"name\": \"Latency\",\n            \"policy\": \"latency\"\n        }\n    ],\n    \"post\": [],\n    \"enabled\": true,\n    \"type\": \"login\"\n}"
+						},
+						"url": {
+							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/flows/{{flow}}",
+							"host": [
+								"{{management_url}}"
+							],
+							"path": [
+								"management",
+								"organizations",
+								"{{defaultOrganizationId}}",
+								"environments",
+								"{{defaultEnvironmentId}}",
+								"domains",
+								"{{domain}}",
+								"flows",
+								"{{flow}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Login Flow",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 302\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"pm.test(\"Should be a redirection to login page\", function() {",
+									"    var location = postman.getResponseHeader('Location');",
+									"    let domain = pm.environment.get(\"domainHrid\");",
+									"    ",
+									"    tests['Redirect to login page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/login') && location.includes('client_id=' + pm.environment.get('clientId'));",
+									"    ",
+									"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/{{domainHrid}}/oauth/authorize/?response_type=code&client_id={{clientId}}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback&state=1234-5678-9876&scope=openid",
+							"host": [
+								"{{gateway_url}}"
+							],
+							"path": [
+								"{{domainHrid}}",
+								"oauth",
+								"authorize",
+								""
+							],
+							"query": [
+								{
+									"key": "response_type",
+									"value": "code"
+								},
+								{
+									"key": "client_id",
+									"value": "{{clientId}}"
+								},
+								{
+									"key": "redirect_uri",
+									"value": "https://auth-nightly.gravitee.io/myApp/callback"
+								},
+								{
+									"key": "state",
+									"value": "1234-5678-9876"
+								},
+								{
+									"key": "scope",
+									"value": "openid"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redirect to login form",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response Time is greater than than 3 seconds\", function () {",
+									"     tests['Response Time is greater than than 3 seconds'] = pm.response.responseTime > 3000;",
+									"});",
+									"",
+									"pm.test(\"Should be ok\", function () {",
+									"    pm.response.to.be.ok;",
+									"    ",
+									"    // Extract the XSRF token to send it with the next request.",
+									"    var responseHTML = cheerio.load(pm.response.text());",
+									"    var xsrfToken = responseHTML('[name=\"X-XSRF-TOKEN\"]').val();",
+									"    const action = responseHTML('form').attr('action');",
+									"    pm.environment.set('xsrf', xsrfToken);",
+									"    pm.environment.set('action', action);",
 									"});"
 								],
 								"type": "text/javascript"
