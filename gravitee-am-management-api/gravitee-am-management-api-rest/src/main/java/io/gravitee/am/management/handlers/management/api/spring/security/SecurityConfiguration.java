@@ -332,7 +332,11 @@ public class SecurityConfiguration {
         config.setAllowedMethods(getPropertiesAsList("http.cors.allow-methods", "OPTIONS, GET, POST, PUT, PATCH, DELETE"));
         config.setExposedHeaders(getPropertiesAsList("http.cors.exposed-headers", "ETag, " + DEFAULT_CSRF_HEADER_NAME));
         config.setMaxAge(environment.getProperty("http.cors.max-age", Long.class, 1728000L));
-        config.setAllowCredentials(environment.getProperty("http.cors.allow-credentials", Boolean.class, false));
+        final Boolean allowCredentials = environment.getProperty("http.cors.allow-credentials", Boolean.class, false);
+        if (allowCredentials) {
+            // define only if the boolean is set to true otherwise UI can't connect the REST API with default AM settings
+            config.setAllowCredentials(allowCredentials);
+        }
 
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
