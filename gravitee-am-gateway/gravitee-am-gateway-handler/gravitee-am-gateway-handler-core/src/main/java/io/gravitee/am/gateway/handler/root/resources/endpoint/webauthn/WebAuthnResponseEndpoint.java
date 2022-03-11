@@ -145,10 +145,11 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                         ctx.fail(401);
                                         return;
                                     }
-                                    // save the user into the context
+                                    // save the user and login completed status into the context
                                     ctx.getDelegate().setUser(user);
                                     ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
                                     ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
+                                    ctx.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, Boolean.TRUE);
 
                                     // Now redirect back to authorization endpoint.
                                     final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
