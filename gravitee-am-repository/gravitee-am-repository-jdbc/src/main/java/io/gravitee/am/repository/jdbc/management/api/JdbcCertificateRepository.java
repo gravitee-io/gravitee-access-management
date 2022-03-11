@@ -172,7 +172,7 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
         update = addQuotedField(update,COL_ID, certificateId, String.class);
         update = addQuotedField(update, COL_EXPIRES_AT, dateConverter.convertTo(expiresAt, null), LocalDateTime.class);
 
-        Mono<Integer> updateAction = update.fetch().rowsUpdated();;
+        Mono<Integer> updateAction = update.fetch().rowsUpdated();
         return monoToCompletable(updateAction);
     }
 

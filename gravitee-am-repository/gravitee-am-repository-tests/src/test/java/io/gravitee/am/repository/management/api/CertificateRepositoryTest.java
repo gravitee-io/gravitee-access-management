@@ -152,7 +152,10 @@ public class CertificateRepositoryTest extends AbstractManagementTest {
         testUpdatedValueObs.assertComplete();
         testUpdatedValueObs.assertNoErrors();
         testUpdatedValueObs.assertValue(d -> d.getId().equals(certificateCreated.getId()));
-        testUpdatedValueObs.assertValue(d -> d.getExpiresAt().equals(exp));
+        testUpdatedValueObs.assertValue(d -> {
+            // MSSQL may have few ms drift so we only evaluate at the second level
+            return d.getExpiresAt().toInstant().getEpochSecond() == d.getExpiresAt().toInstant().getEpochSecond();
+        });
     }
 
     @Test
