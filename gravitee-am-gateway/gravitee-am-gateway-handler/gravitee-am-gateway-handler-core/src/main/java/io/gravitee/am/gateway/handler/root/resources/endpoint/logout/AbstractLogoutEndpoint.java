@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
@@ -148,7 +149,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                 (routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null);
 
         // clear context and session
-        Completable clearSessionCompletable = endUser != null ? userService.logout(endUser, Boolean.TRUE.valueOf(routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER)), getAuthenticatedUser(endUser, routingContext)) : Completable.complete();
+        Completable clearSessionCompletable = endUser != null ? userService.logout(endUser, needToInvalidateTokens(routingContext), getAuthenticatedUser(endUser, routingContext)) : Completable.complete();
         Completable clearContextCompletable = routingContext.session() != null ? authenticationFlowContextService.clearContext(routingContext.session().get(ConstantKeys.TRANSACTION_ID_KEY)) : Completable.complete();
 
         clearSessionCompletable
@@ -164,6 +165,19 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                         },
                         error -> routingContext.fail(error)
                 );
+    }
+
+    private boolean needToInvalidateTokens(RoutingContext routingContext) {
+        // look at the invalidate_tokens parameter into the current URL or ino the initial parameters
+        // if the Single SignOut is enabled.
+        String invalidateTokens = routingContext.request().getParam(INVALIDATE_TOKENS_PARAMETER);
+        if (Strings.isNullOrEmpty(invalidateTokens) && routingContext.data().containsKey(ConstantKeys.PARAM_CONTEXT_KEY)) {
+            MultiMap initialQueryParam = routingContext.get(ConstantKeys.PARAM_CONTEXT_KEY);
+            if (initialQueryParam.contains(INVALIDATE_TOKENS_PARAMETER)) {
+                invalidateTokens = initialQueryParam.get(INVALIDATE_TOKENS_PARAMETER);
+            }
+        }
+        return Boolean.TRUE.valueOf(invalidateTokens);
     }
 
     private void doRedirect0(RoutingContext routingContext, String url) {
