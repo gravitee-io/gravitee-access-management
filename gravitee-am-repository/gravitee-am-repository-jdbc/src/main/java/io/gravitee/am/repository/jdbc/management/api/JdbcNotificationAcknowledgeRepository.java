@@ -37,8 +37,9 @@ import static reactor.adapter.rxjava.RxJava2Adapter.*;
 public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepository implements NotificationAcknowledgeRepository {
 
     public static final String COL_ID = "id";
-    public static final String COL_RESOURCE = "resourceId";
-    public static final String COL_AUDIENCE = "audienceId";
+    public static final String COL_RESOURCE = "resource_id";
+    public static final String COL_RESOURCE_TYPE = "resource_type";
+    public static final String COL_AUDIENCE = "audience_id";
     public static final String COL_TYPE = "type";
 
     protected NotificationAcknowledge toEntity(JdbcNotificationAcknowledge entity) {
@@ -59,10 +60,13 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resource, String type, String audience) {
-        LOGGER.debug("findByResourceIdAndAudienceId({},{},{})", resource, type, audience);
+    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resourceId, String resourceType, String type, String audience) {
+        LOGGER.debug("findByResourceIdAndAudienceId({},{},{},{})", resourceId, resourceType, type, audience);
         return monoToMaybe(this.template.select(JdbcNotificationAcknowledge.class)
-                .matching(query(where(COL_RESOURCE).is(resource).and(where(COL_TYPE).is(type)).and(where(COL_AUDIENCE).is(audience))))
+                .matching(query(where(COL_RESOURCE).is(resourceId)
+                        .and(where(COL_RESOURCE_TYPE).is(resourceType))
+                        .and(where(COL_TYPE).is(type))
+                        .and(where(COL_AUDIENCE).is(audience))))
                 .first())
                 .map(this::toEntity);
     }
@@ -83,9 +87,11 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public Completable deleteByResourceId(String id) {
-        LOGGER.debug("deleteByResourceId({})", id);
-        return monoToCompletable(this.template.delete(JdbcNotificationAcknowledge.class).matching(query(where(COL_RESOURCE).is(id))).all());
+    public Completable deleteByResourceId(String resourceId, String resourceType) {
+        LOGGER.debug("deleteByResourceId({}, {})", resourceId, resourceType);
+        return monoToCompletable(this.template.delete(JdbcNotificationAcknowledge.class)
+                .matching(query(where(COL_RESOURCE).is(resourceId).and(where(COL_RESOURCE_TYPE).is(resourceType))))
+                .all());
     }
 
 }

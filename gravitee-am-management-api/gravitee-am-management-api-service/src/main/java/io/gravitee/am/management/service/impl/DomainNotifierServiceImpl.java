@@ -21,15 +21,29 @@ import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.management.service.impl.notifications.*;
-import io.gravitee.am.model.*;
+import io.gravitee.am.management.service.impl.notifications.CertificateNotificationCondition;
+import io.gravitee.am.management.service.impl.notifications.CertificateResendNotificationCondition;
+import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
+import io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration;
+import io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils;
+import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Environment;
+import io.gravitee.am.model.Membership;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationUserService;
+import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.spring.email.EmailConfiguration;
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.Completable;
@@ -47,7 +61,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.*;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.RESOURCE_TYPE_CERTIFICATE;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -127,8 +143,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     @Override
     public void unregisterCertificateExpiration(String domainId, String certificateId) {
         if (this.certificateNotificationEnabled) {
-            final Domain domain = findDomain(domainId).blockingGet();
-            retrieveDomainOwners(domain).blockingForEach(user -> this.notifierService.unregister(certificateId, TYPE_EMAIL_NOTIFIER, user.getId()));
+            this.notifierService.unregisterAll(certificateId, RESOURCE_TYPE_CERTIFICATE);
         }
     }
 
@@ -136,7 +151,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     public Completable deleteCertificateExpirationAcknowledge(String certificateId) {
         if (this.certificateNotificationEnabled) {
             LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
-            return this.notifierService.deleteAcknowledge(certificateId);
+            return this.notifierService.deleteAcknowledge(certificateId, RESOURCE_TYPE_CERTIFICATE);
         } else {
             return Completable.complete();
         }

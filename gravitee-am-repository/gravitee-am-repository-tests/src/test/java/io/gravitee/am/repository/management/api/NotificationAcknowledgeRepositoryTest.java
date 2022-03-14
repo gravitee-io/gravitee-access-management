@@ -108,7 +108,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         acknowledge.setCounter(1);
         repository.create(acknowledge).blockingGet();
 
-        TestObserver<NotificationAcknowledge> testObserver = repository.findByResourceIdAndTypeAndAudienceId(acknowledge.getResourceId(), acknowledge.getType(), acknowledge.getAudienceId()).test();
+        TestObserver<NotificationAcknowledge> testObserver = repository.findByResourceIdAndTypeAndAudienceId(acknowledge.getResourceId(), acknowledge.getResourceType(), acknowledge.getType(), acknowledge.getAudienceId()).test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
@@ -118,7 +118,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
 
     @Test
     public void testNotFound() throws TechnicalException {
-        final TestObserver<NotificationAcknowledge> test = repository.findByResourceIdAndTypeAndAudienceId("unknown", "unknown", "unknonwn").test();
+        final TestObserver<NotificationAcknowledge> test = repository.findByResourceIdAndTypeAndAudienceId("unknown", "unknown", "unknown", "unknonwn").test();
         test.awaitTerminalEvent();
         test.assertNoValues();
     }
@@ -142,7 +142,7 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         testObserver.assertNoErrors();
         testObserver.assertValue(d -> d.getId().equals(acknowledge.getId()));
 
-        final TestObserver<Void> test = repository.deleteByResourceId(acknowledge.getResourceId()).test();
+        final TestObserver<Void> test = repository.deleteByResourceId(acknowledge.getResourceId(), acknowledge.getResourceType()).test();
         test.awaitTerminalEvent();
         test.assertNoErrors();
 

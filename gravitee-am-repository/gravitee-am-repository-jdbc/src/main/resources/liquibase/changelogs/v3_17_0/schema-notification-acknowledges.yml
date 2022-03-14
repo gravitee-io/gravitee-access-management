@@ -26,8 +26,10 @@ databaseChangeLog:
               - column:
                   name: resource_id
               - column:
+                  name: resource_type
+              - column:
                   name: type
               - column:
                   name: audience_id
-            indexName: notification_acknowledgements_3col
+            indexName: notification_acknowledgements_4col
             unique: true
