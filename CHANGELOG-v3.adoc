@@ -1,6 +1,31 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/520?closed=1[AM - 3.10.17 (2022-03-14)]
+
+=== Bug fixes
+
+*_Cors_*
+
+- Handle `allow-credentials` CORS configuration https://github.com/gravitee-io/issues/issues/7221[#7221]
+
+*_Gateway_*
+
+- Invalidate tokens on user logout https://github.com/gravitee-io/issues/issues/7270[#7270]
+
+*_General_*
+
+- Login with WebAuthn loops when "prompt=login" parameter is present in the login url https://github.com/gravitee-io/issues/issues/7262[#7262]
+
+=== Improvements
+
+*_Cors_*
+
+- Handle `allow-credentials` CORS configuration https://github.com/gravitee-io/issues/issues/7221[#7221]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/479?closed=1[AM - 3.16.0 (2022-02-28)]
 
 === Bug fixes
