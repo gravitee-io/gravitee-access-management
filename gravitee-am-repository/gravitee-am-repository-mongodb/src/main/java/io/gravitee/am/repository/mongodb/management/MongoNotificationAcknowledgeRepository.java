@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Filters.eq;
 public class MongoNotificationAcknowledgeRepository extends AbstractManagementMongoRepository implements NotificationAcknowledgeRepository {
 
     private static final String FIELD_RESOURCE_ID = "resourceId";
+    private static final String FIELD_RESOURCE_TYPE = "resourceType";
     private static final String FIELD_TYPE = "type";
     private static final String FIELD_AUDIENCE_ID = "audienceId";
 
@@ -62,9 +63,10 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     }
 
     @Override
-    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resource, String type, String audience) {
+    public Maybe<NotificationAcknowledge> findByResourceIdAndTypeAndAudienceId(String resourceId, String resourceType, String type, String audience) {
         return Observable.fromPublisher(collection.find(and(
-                    eq(FIELD_RESOURCE_ID, resource),
+                    eq(FIELD_RESOURCE_ID, resourceId),
+                    eq(FIELD_RESOURCE_TYPE, resourceType),
                     eq(FIELD_TYPE, type),
                     eq(FIELD_AUDIENCE_ID, audience)))
                 .first())
@@ -73,8 +75,8 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
     }
 
     @Override
-    public Completable deleteByResourceId(String id) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_RESOURCE_ID, id)));
+    public Completable deleteByResourceId(String id, String resourceType) {
+        return Completable.fromPublisher(collection.deleteOne(and(eq(FIELD_RESOURCE_ID, id), eq(FIELD_RESOURCE_TYPE, resourceType))));
     }
 
     @Override
