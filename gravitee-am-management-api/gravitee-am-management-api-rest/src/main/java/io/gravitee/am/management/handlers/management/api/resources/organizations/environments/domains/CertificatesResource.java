@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.CertificateEntity
 import io.gravitee.am.management.handlers.management.api.model.CertificateStatus;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.impl.DomainNotifierServiceImpl;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.permissions.Permission;
@@ -31,9 +32,7 @@ import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
@@ -48,7 +47,10 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,6 +71,8 @@ public class CertificatesResource extends AbstractResource {
     @Autowired
     private Environment environment;
 
+    private List<Integer> certificateExpiryThresholds;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "List registered certificates for a security domain",
@@ -85,7 +89,9 @@ public class CertificatesResource extends AbstractResource {
             @PathParam("domain") String domain,
             @QueryParam("use") String use,
             @Suspended final AsyncResponse response) {
-        final int certificateExpiryThreshold = environment.getProperty("services.certificate.expiryThreshold", Integer.class, 14);
+
+        processExpiryThresholds();
+
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.LIST)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
@@ -100,11 +106,23 @@ public class CertificatesResource extends AbstractResource {
                             // no value, return true as sig should be the default
                             return true;
                         })
-                        .map(cert -> this.filterCertificateInfos(cert, certificateExpiryThreshold))
+                        .map(cert -> this.filterCertificateInfos(cert, certificateExpiryThresholds.get(0)))
                         .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                         .toList()
                         .map(sortedCertificates -> Response.ok(sortedCertificates).build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+    private void processExpiryThresholds() {
+        final String expiryThresholds = environment.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
+        if (this.certificateExpiryThresholds == null) {
+            this.certificateExpiryThresholds = List.of(expiryThresholds.trim().split(","))
+                    .stream()
+                    .map(String::trim)
+                    .map(Integer::valueOf)
+                    .sorted(Comparator.reverseOrder())
+                    .collect(Collectors.toList());
+        }
     }
 
     @POST

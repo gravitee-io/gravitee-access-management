@@ -182,10 +182,8 @@ services:
     # if new notifications need to be send
     # default: 0 0 5 * * * (every day at 5am)
     cronExpression: 0 0 5 * * *
-    # send notification if certificate is going to expire in less than 14 days
-    expiryThreshold: 14
-    # resend notification after 2 days
-    resendAfter: 2
+    # send notification if certificate is going to expire in less than 20 days, then 15 days before...
+    expiryThresholds: 20,15,10,5,1
     # Subject of the email send by the email notifier
     expiryEmailSubject: Certificate will expire soon
 

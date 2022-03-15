@@ -20,7 +20,10 @@ import io.gravitee.node.api.notifier.NotificationDefinition;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.getCertificateExpirationDate;
 
@@ -30,17 +33,21 @@ import static io.gravitee.am.management.service.impl.notifications.NotificationD
  */
 public class CertificateNotificationCondition implements NotificationCondition {
 
-    private int certificateExpiryThreshold;
+    private List<Integer> certificateExpiryThresholds;
 
-    public CertificateNotificationCondition(int certificateExpiryThreshold) {
-        this.certificateExpiryThreshold = certificateExpiryThreshold;
+    public CertificateNotificationCondition(List<Integer> certificateExpiryThresholds) {
+        if (Objects.isNull(certificateExpiryThresholds) || certificateExpiryThresholds.isEmpty()) {
+            throw new IllegalArgumentException("certificateExpiryThresholds requires at least one entry");
+        }
+        this.certificateExpiryThresholds = certificateExpiryThresholds;
     }
 
     @Override
     public boolean test(NotificationDefinition def) {
         final Date certificateExpirationDate = getCertificateExpirationDate(def);
         if (certificateExpirationDate != null) {
-            return certificateExpirationDate.getTime() < Instant.now().plus(certificateExpiryThreshold, ChronoUnit.DAYS).toEpochMilli();
+            // for the first condition we only check the highest expiry value
+            return certificateExpirationDate.getTime() < Instant.now().plus(certificateExpiryThresholds.get(0), ChronoUnit.DAYS).toEpochMilli();
         }
         return false;
     }
