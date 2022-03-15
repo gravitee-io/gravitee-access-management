@@ -52,13 +52,17 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration.CERTIFICATE_EXPIRY_TPL;
 import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.RESOURCE_TYPE_CERTIFICATE;
@@ -70,8 +74,9 @@ import static io.gravitee.am.management.service.impl.notifications.NotificationD
  * @author GraviteeSource Team
  */
 @Component
-public class DomainNotifierServiceImpl implements DomainNotifierService {
+public class DomainNotifierServiceImpl implements DomainNotifierService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(DomainNotifierServiceImpl.class);
+    public static final String DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS = "20,15,10,5,1";
 
     @Value("${notifiers.email.enabled:false}")
     private boolean emailNotifierEnabled;
@@ -82,14 +87,13 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     @Value("${services.certificate.cronExpression:0 0 5 * * *}") // default: 0 0 5 * * * (every day at 5am)
     private String certificateCronExpression;
 
-    @Value("${services.certificate.resendAfter:2}")
-    private int certificateExpiryResendAfter;
-
-    @Value("${services.certificate.expiryThreshold:14}")
-    private int certificateExpiryThreshold;
+    private List<Integer> certificateExpiryThresholds;
 
     @Value("${services.certificate.enabled:true}")
     private boolean certificateNotificationEnabled = true;
+
+    @Autowired
+    private org.springframework.core.env.Environment env;
 
     @Autowired
     private NotifierService notifierService;
@@ -122,6 +126,17 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     private ObjectMapper mapper;
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        final String expiryThresholds = env.getProperty("services.certificate.expiryThresholds", String.class, DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
+        this.certificateExpiryThresholds = List.of(expiryThresholds.trim().split(","))
+                .stream()
+                .map(String::trim)
+                .map(Integer::valueOf)
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public void registerCertificateExpiration(Certificate certificate) {
         if (this.certificateNotificationEnabled) {
             findDomain(certificate.getDomain())
@@ -133,8 +148,8 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
                     .subscribe(definition -> {
                         if (definition.isPresent()) {
                             notifierService.register(definition.get(),
-                                    new CertificateNotificationCondition(certificateExpiryThreshold),
-                                    new CertificateResendNotificationCondition(this.certificateExpiryResendAfter));
+                                    new CertificateNotificationCondition(this.certificateExpiryThresholds),
+                                    new CertificateResendNotificationCondition(this.certificateExpiryThresholds));
                         }
                     });
         }

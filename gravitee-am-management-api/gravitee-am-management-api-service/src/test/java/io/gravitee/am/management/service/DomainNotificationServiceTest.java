@@ -110,12 +110,17 @@ public class DomainNotificationServiceTest {
     @Mock
     private ObjectMapper mapper;
 
+    @Mock
+    private org.springframework.core.env.Environment propertiesEnv;
+
     private Certificate certificate;
     private Domain domain;
     private Environment env;
 
     @Before
-    public void prepareTest() {
+    public void prepareTest() throws Exception {
+        when(propertiesEnv.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS))
+                .thenReturn(DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
         ReflectionTestUtils.setField(cut, "emailNotifierEnabled", true);
         env = new Environment();
         env.setId(ENV_ID);
@@ -140,6 +145,7 @@ public class DomainNotificationServiceTest {
         role2.setId("role#2");
         when(roleService.findDefaultRole(ORGANIZATION_ID, DefaultRole.DOMAIN_OWNER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(role2));
 
+        cut.afterPropertiesSet();
     }
 
     @After
