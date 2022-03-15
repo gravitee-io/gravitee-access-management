@@ -5,6 +5,21 @@
     border: 1px solid rgb(226, 229, 231);
 }
 
-:host ::ng-deep.ngx-datatable.material .datatable-footer {
-  display: none;
+.idp-priority {
+  margin-top: -15px;
+  button, .empty-row {
+    width: 25px;
+    height: 25px;
+    line-height: 25px;
+  }
+}
+
+
+:host ::ng-deep {
+  .ngx-datatable .datatable-body .datatable-body-row>div {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  .ngx-datatable.material .datatable-footer {
+    display: none;
+  }
 }

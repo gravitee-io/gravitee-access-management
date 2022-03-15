@@ -63,6 +63,7 @@ export class ApplicationIdPComponent implements OnInit {
   }
 
   private setUpIdentityProviders(identityProviders, applicationIdentityProviders) {
+    let startedIndex = Math.max.apply(Math, applicationIdentityProviders.map(function(o) { return o.priority; }))
     return identityProviders.map(idp => {
       const appIdentity = applicationIdentityProviders.find(appIdp => appIdp.identity == idp.id);
       if (appIdentity) {
@@ -72,7 +73,7 @@ export class ApplicationIdPComponent implements OnInit {
       } else {
         idp.selected = false;
         idp.selectionRule = "";
-        idp.priority = 0;
+        idp.priority = startedIndex + 1;
       }
       return idp
     });
@@ -133,6 +134,20 @@ export class ApplicationIdPComponent implements OnInit {
   isIdentityProviderSelected(identityProviderId, identityProviders) {
     const identityProvider = identityProviders.find(idp => idp.id === identityProviderId);
     return identityProvider !== undefined && identityProvider.selected;
+  }
+
+  lowerPriority(index, identityProviders) {
+    identityProviders[index].priority = index + 1;
+    identityProviders[index + 1].priority = index;
+    identityProviders.sort((a, b) => a.priority > b.priority ? 1 : -1);
+    this.formChanged = true;
+  }
+
+  higherPriority(index, identityProviders) {
+    identityProviders[index].priority = index - 1;
+    identityProviders[index - 1].priority = index;
+    identityProviders.sort((a, b) => a.priority > b.priority ? 1 : -1);
+    this.formChanged = true;
   }
 
   setIdpPriority(event, identityProviderId, identityProviders) {
