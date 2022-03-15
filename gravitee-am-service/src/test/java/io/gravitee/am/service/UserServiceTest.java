@@ -44,6 +44,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
 
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -63,7 +64,7 @@ public class UserServiceTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl()
+            new EmailValidatorImpl(EMAIL_PATTERN)
     );
 
     @Mock

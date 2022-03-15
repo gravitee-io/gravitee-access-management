@@ -38,6 +38,7 @@ import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.validators.email.EmailValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -64,6 +65,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Value("${user.registration.token.expire-after:86400}")
     private Integer expireAfter;
+
+    @Autowired
+    private EmailValidator emailValidator;
 
     @Autowired
     private EmailService emailService;
