@@ -22,6 +22,7 @@ import {ApplicationService} from "../../../../services/application.service";
 import {AuthService} from "../../../../services/auth.service";
 import {MAT_DIALOG_DATA, MatDialog, MatDialogRef} from '@angular/material/dialog';
 import {OrganizationService} from "../../../../services/organization.service";
+import {CdkDrag, moveItemInArray} from "@angular/cdk/drag-drop";
 
 @Component({
   selector: 'app-idp',
@@ -31,7 +32,6 @@ import {OrganizationService} from "../../../../services/organization.service";
 export class ApplicationIdPComponent implements OnInit {
   private domainId: string;
   private identities: any;
-  private currentIdentityProvidersSize: number;
   priorities: any[];
   loadIdentities = true;
   application: any;
@@ -54,12 +54,16 @@ export class ApplicationIdPComponent implements OnInit {
     this.application = this.route.snapshot.data['application'];
     this.identities = this.route.snapshot.data['identities'];
     this.readonly = !this.authService.hasPermissions(['application_identity_provider_update']);
-    const applicationIdentityProviders = this.application.identityProviders || [];
     this.providerService.findByDomain(this.domainId).subscribe(data => {
-      this.identityProviders = this.setUpIdentityProviders(data.filter(idp => !idp.external), applicationIdentityProviders);
-      this.socialIdentityProviders = this.setUpIdentityProviders(data.filter(idp => idp.external), applicationIdentityProviders);
+      this.loadIdentityProviders(data.filter(idp => !idp.external), data.filter(idp => idp.external));
       this.loadIdentities = false;
     });
+  }
+
+  private static sortFunction() {
+    return (a, b) => {
+      return a.priority > b.priority ? 1 : -1
+    };
   }
 
   private setUpIdentityProviders(identityProviders, applicationIdentityProviders) {
@@ -72,23 +76,37 @@ export class ApplicationIdPComponent implements OnInit {
       } else {
         idp.selected = false;
         idp.selectionRule = "";
-        idp.priority = 0;
+        idp.priority = identityProviders.length;
       }
       return idp
-    });
+    }).sort(ApplicationIdPComponent.sortFunction());
   }
 
   update() {
-    const applicationIdentityProviders = this.identityProviders.concat(this.socialIdentityProviders)
-      .filter(idp => idp.selected)
+    const applicationIdentityProviders = ApplicationIdPComponent.prepareIdpUpdate(this.identityProviders)
+      .concat(ApplicationIdPComponent.prepareIdpUpdate(this.socialIdentityProviders))
       .map(idp => {
         return {'identity': idp.id, 'selectionRule': idp.selectionRule, 'priority': idp.priority}
       });
     this.applicationService.patch(this.domainId, this.application.id,
       {'identityProviders': applicationIdentityProviders}).subscribe(data => {
       this.application = data;
+      this.loadIdentityProviders(this.identityProviders, this.socialIdentityProviders);
       this.formChanged = false;
       this.snackbarService.open('Application updated');
+    });
+  }
+
+  private loadIdentityProviders(identityProviders, socialIdentityProviders) {
+    const applicationIdentityProviders = this.application.identityProviders || [];
+    this.identityProviders = this.setUpIdentityProviders(identityProviders, applicationIdentityProviders);
+    this.socialIdentityProviders = this.setUpIdentityProviders(socialIdentityProviders, applicationIdentityProviders)
+  }
+
+  private static prepareIdpUpdate(identityProviders) {
+    return identityProviders.filter(idp => idp.selected).map((idp, idx) => {
+      idp.priority = idx;
+      return idp;
     });
   }
 
@@ -113,6 +131,11 @@ export class ApplicationIdPComponent implements OnInit {
     return null;
   }
 
+  changePriority(identityProviders, $event) {
+    moveItemInArray(identityProviders, $event.previousIndex, $event.currentIndex);
+    this.formChanged = true;
+  }
+
   getIdentityProviderTypeIcon(type) {
     const provider = this.getIdentityProvider(type);
     if (provider && provider.icon) {
@@ -133,16 +156,6 @@ export class ApplicationIdPComponent implements OnInit {
   isIdentityProviderSelected(identityProviderId, identityProviders) {
     const identityProvider = identityProviders.find(idp => idp.id === identityProviderId);
     return identityProvider !== undefined && identityProvider.selected;
-  }
-
-  setIdpPriority(event, identityProviderId, identityProviders) {
-    let priority = event.target.value;
-    let identityProvider = identityProviders.find(idp => idp.id === identityProviderId);
-    if(identityProvider != null){
-      identityProvider.priority = priority;
-    }
-
-    this.formChanged = true;
   }
 
   add(identityProvider) {

@@ -18,100 +18,72 @@
 <div fxLayout="column" fxFlex="70">
   <div class="application-idp-content-providers">
     <div *ngIf="hasIdentityProviders()">
-      <ngx-datatable class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='identityProviders'>
-        <ngx-datatable-column name="Identity Providers" [flexGrow]="4">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column *ngIf="!readonly" name="" [flexGrow]="1">
-          <ng-template let-row="row" class="mat-button-wrapper" ngx-datatable-cell-template>
-             <span (click)="add(row)" class="wrapper" style="cursor:pointer">
-               <span [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
-                     [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+      <div fxLayout="row" class="example-box">
+        <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Identity providers</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
+      </div>
+      <div cdkDropList class="example-list">
+        <div fxLayout="row" class="example-box" *ngFor="let idp of identityProviders; index as i" cdkDrag
+             (cdkDragDropped)="changePriority(identityProviders, $event)">
+          <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
+          <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
+            <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
+            <small>{{ displayType(idp.type) }}</small>
+          </div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center">
+            <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
+               <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
+                     [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
                      class="mat-icon notranslate material-icons mat-icon-no-color">
-                 {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+                 {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
                </span>
             </span>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-             <span style="display: flex; align-items: center;">
-               <div [innerHTML]="getIdentityProviderTypeIcon(row.type) | safe:'html' "></div>
-               <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
-            </span>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id, this.identityProviders)"
-                              [checked]="row.selected" [disabled]="readonly">
+          </div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center">
+            <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.identityProviders)"
+                              [checked]="idp.selected" [disabled]="readonly">
             </mat-slide-toggle>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Priority" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-form-field *ngIf="isIdentityProviderSelected(row.id, this.identityProviders)" style="margin-top: -10px; align-items: center; width: 50px;" appearance="outline" floatLabel="always">
-              <input id="{{ 'input_' + row.id }}" matInput type="text" placeholder="" name="priority" type="number"
-                      value="{{row.priority}}" [readonly]="readonly" [min]="0" max="{{this.currentIdentityProvidersSize - 1 }}" (change)="setIdpPriority($event, row.id, this.identityProviders)">
-            </mat-form-field>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
+          </div>
+         <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
+        </div>
+      </div>
     </div>
     <div style="margin-top: 20px;" *ngIf="hasSocialIdentityProviders()">
-      <ngx-datatable class="material"
-                     [columnMode]="'flex'"
-                     [headerHeight]="40"
-                     [footerHeight]="40"
-                     [rowHeight]="50"
-                     [rows]='socialIdentityProviders'>
-        <ngx-datatable-column name="Social / Enterprise providers" [flexGrow]="4">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}}
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column *ngIf="!readonly" name="" [flexGrow]="1">
-          <ng-template let-row="row" class="mat-button-wrapper" ngx-datatable-cell-template>
-             <span (click)="add(row)" class="wrapper" style="cursor:pointer">
-               <span [matTooltip]="row.selectionRule ? 'Selection rule' : 'New selection rule'"
-                     [style]="row.selectionRule ? 'color: green' : 'color: grey'"
+      <div fxLayout="row" class="example-box">
+        <div fxLayout="column" class="column" fxLayoutAlign="left left"><small>Social / Enterprise providers</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Type</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selection rule</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Selected</small></div>
+        <div fxLayout="column" class="column" fxLayoutAlign="center center"><small>Priority</small></div>
+      </div>
+      <div cdkDropList class="example-list">
+        <div fxLayout="row" class="example-box" *ngFor="let idp of socialIdentityProviders; index as i" cdkDrag
+             (cdkDragDropped)="changePriority(socialIdentityProviders, $event)">
+          <div fxLayout="column" class="column" fxLayoutAlign="left left">{{idp.name}}</div>
+          <div fxLayout="column flex" class="column" fxLayoutAlign="center center">
+            <small [innerHTML]="getIdentityProviderTypeIcon(idp.type) | safe:'html'"></small>
+            <small>{{ displayType(idp.type) }}</small>
+          </div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center">
+            <span (click)="add(idp)" class="wrapper" style="cursor:pointer">
+               <span [matTooltip]="idp.selectionRule ? 'Selection rule' : 'New selection rule'"
+                     [style]="idp.selectionRule ? 'color: green' : 'color: grey'"
                      class="mat-icon notranslate material-icons mat-icon-no-color">
-                 {{ row.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
+                 {{ idp.selectionRule ? 'playlist_add_check' : 'playlist_add_plus' }}
                </span>
             </span>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-             <span style="display: flex; align-items: center;">
-               <div [innerHTML]="getIdentityProviderTypeIcon(row.type) | safe:'html' "></div>
-               <small style="margin-left: 5px;">{{displayType(row.type)}}</small>
-            </span>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-slide-toggle (change)="selectIdentityProvider($event, row.id, this.socialIdentityProviders)"
-                              [checked]="row.selected" [disabled]="readonly">
+          </div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center">
+            <mat-slide-toggle (change)="selectIdentityProvider($event, idp.id, this.socialIdentityProviders)"
+                              [checked]="idp.selected" [disabled]="readonly">
             </mat-slide-toggle>
-          </ng-template>
-        </ngx-datatable-column>
-        <ngx-datatable-column name="Priority" [flexGrow]="1">
-          <ng-template let-row="row" ngx-datatable-cell-template>
-            <mat-form-field *ngIf="isIdentityProviderSelected(row.id, this.socialIdentityProviders)" style="margin-top: -10px; align-items: center; width: 50px;" appearance="outline" floatLabel="always">
-              <input matInput type="text" placeholder="" name="priority" type="number"
-                      value="{{row.priority}}" [readonly]="readonly" [min]="0" max="{{ this.currentIdentityProvidersSize - 1 }}" (change)="setIdpPriority($event, row.id, this.socialIdentityProviders)">
-            </mat-form-field>
-          </ng-template>
-        </ngx-datatable-column>
-      </ngx-datatable>
+          </div>
+          <div fxLayout="column" class="column" fxLayoutAlign="center center">{{ i + 1 }}</div>
+        </div>
+      </div>
     </div>
 
     <app-emptystate *ngIf="!loadIdentities && !hasIdentityProviders() && !hasSocialIdentityProviders()"
@@ -120,7 +92,8 @@
                     [icon]="'people'"></app-emptystate>
   </div>
 
-  <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row" style="margin-top: 20px;">
+  <div *ngIf="!loadIdentities && !readonly && (hasIdentityProviders() || hasSocialIdentityProviders())" fxLayout="row"
+       style="margin-top: 20px;">
     <button mat-raised-button color="primary" type="button" [disabled]="!formChanged" (click)="update()">SAVE</button>
   </div>
 
@@ -130,6 +103,15 @@
   <div class="gv-page-description-content">
     <p>
       Identity sources for authenticating and retrieving information about your users.
+    </p>
+    <p>
+      You can apply a selection rule by clicking on the
+      <span style="color: grey" class="mat-icon notranslate material-icons mat-icon-no-color">playlist_add_plus</span> or
+      <span style="color: green" class="mat-icon notranslate material-icons mat-icon-no-color">playlist_add_check</span> icon
+      to match your identity provider at login.
+    </p>
+    <p>
+      Change the processing order of authentication by drag-and-dropping your identity providers
     </p>
   </div>
 </div>
