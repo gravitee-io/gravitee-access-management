@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "7f2d6889-7a3e-41f0-a261-ffe4e9bb036e",
+		"_postman_id": "e4fbebb2-fed8-4eb7-b301-ce361971b7c4",
 		"name": "Gravitee.io - AM - User Management - app version",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -1110,7 +1110,7 @@
 													"",
 													"pm.test(\"UM - create user - email invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[jensen.barba: must be a well-formed email address]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Value [jensen.barba] is not a valid email.\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1342,7 +1342,7 @@
 													"",
 													"pm.test(\"UM - create user - email too long\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"Value [jensen.barbara@maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaail.com] is not a valid email.\");",
+													"    pm.expect(jsonData.message).to.eql(\"[jensen.barbara@maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaail.com: must not be greater than 320]\");",
 													"});"
 												],
 												"type": "text/javascript"
@@ -1979,7 +1979,7 @@
 													"",
 													"pm.test(\"UM - create user - email invalid\", function () {",
 													"    var jsonData = pm.response.json();",
-													"    pm.expect(jsonData.message).to.eql(\"[jensen.barba: must be a well-formed email address]\");",
+													"    pm.expect(jsonData.message).to.eql(\"Value [jensen.barba] is not a valid email.\");",
 													"});"
 												],
 												"type": "text/javascript"
