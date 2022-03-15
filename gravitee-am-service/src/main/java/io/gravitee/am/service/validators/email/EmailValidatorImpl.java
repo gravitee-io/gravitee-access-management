@@ -38,7 +38,7 @@ public class EmailValidatorImpl implements EmailValidator {
 
     private final Pattern pattern;
 
-    public EmailValidatorImpl(@Value("${user.email.policy.pattern:'" + EMAIL_PATTERN + "'}") String emailPattern) {
+    public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern) {
         this.pattern = Pattern.compile(ofNullable(emailPattern)
                 .filter(not(Strings::isNullOrEmpty))
                 .filter(not(String::isBlank))
