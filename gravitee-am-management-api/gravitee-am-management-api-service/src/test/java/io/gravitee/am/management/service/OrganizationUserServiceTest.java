@@ -80,7 +80,7 @@ public class OrganizationUserServiceTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl()
+            new EmailValidatorImpl("")
     );
 
     @Test

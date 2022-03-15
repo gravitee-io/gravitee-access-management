@@ -196,21 +196,4 @@ public class UsersResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
         verify(organizationUserService).createGraviteeUser(any(), any(), any());
     }
-
-    @Test
-    public void shouldNotCreateOrganizationUser_InvalidEmail() {
-        final NewUser entity = new NewUser();
-        entity.setUsername("test");
-        entity.setPassword("password");
-        entity.setEmail("email.fr");
-        final Response response = target("organizations")
-                .path(ORGANIZATION_DEFAULT)
-                .path("users")
-                .request()
-                .post(Entity.entity(entity, MediaType.APPLICATION_JSON_TYPE));
-
-        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-        verify(organizationUserService, never()).createGraviteeUser(any(), any(), any());
-    }
-
 }

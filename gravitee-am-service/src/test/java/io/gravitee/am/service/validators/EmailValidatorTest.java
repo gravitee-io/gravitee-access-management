@@ -15,11 +15,10 @@
  */
 package io.gravitee.am.service.validators;
 
-import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
-import org.junit.Before;
 import org.junit.Test;
 
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -39,6 +38,7 @@ public class EmailValidatorTest {
             "email@gravitee-io.com",
             "_______@gravitee.io",
             "firstname-lastname@gravitee.io",
+            "firstname-lastname@gravitee.io"
     };
 
     private static final String[] INVALID_EMAILS = {
@@ -51,17 +51,25 @@ public class EmailValidatorTest {
             "email.@gravitee.io",
             "email..email@gravitee.io",
             "email@gravitee",
+            "email@gravitee",
             "email@gravitee..io"
     };
-    private EmailValidator emailValidator;
 
-    @Before
-    public void before(){
-        emailValidator = new EmailValidatorImpl();
-    }
+
+    private static final String[] VALID_EXTENDED_EMAILS = {
+            "émail@gravitee.io",
+            "émail@gråvitèê.iø",
+            "电子邮件@重力.阿约",
+            "めーる@ぐらびてぃー.あよ",
+            "メール@グラビティー.アヨ",
+            "이메일@중력.아요",
+            "почта@гравитация.Айо",
+            "ηλεκτρονικόταχυδρομείο@βαρύτητα.ιο"
+    };
 
     @Test
     public void validate() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN);
         for (String email : VALID_EMAILS) {
             assertTrue(email + " should be valid", emailValidator.validate(email));
         }
@@ -69,8 +77,17 @@ public class EmailValidatorTest {
 
     @Test
     public void validate_notValid() {
+        var emailValidator = new EmailValidatorImpl(EMAIL_PATTERN);
         for (String email : INVALID_EMAILS) {
             assertFalse(email + " should be invalid", emailValidator.validate(email));
+        }
+    }
+
+    @Test
+    public void validate_extended() {
+        var emailValidator = new EmailValidatorImpl("^[\\p{L}0-9_+-]+(?:\\.[\\p{L}0-9_+-]+)*@(?:[\\p{L}0-9-]+\\.)+[\\p{L}]{2,7}$");
+        for (String email : VALID_EXTENDED_EMAILS) {
+            assertTrue(email + " should be valid", emailValidator.validate(email));
         }
     }
 }
