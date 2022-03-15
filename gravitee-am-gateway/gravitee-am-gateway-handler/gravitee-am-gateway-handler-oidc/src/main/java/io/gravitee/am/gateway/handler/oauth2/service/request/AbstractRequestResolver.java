@@ -27,6 +27,7 @@ import io.reactivex.Single;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.oidc.Scope.OPENID;
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 
 /**
@@ -109,8 +110,8 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + requestScopes.stream().collect(Collectors.joining(SCOPE_DELIMITER))));
         }
 
-        // only put default values if there is no requested scopes
-        if (requestScopes == null || requestScopes.isEmpty()) {
+        // only put default values if there are no requested scopes or only 'openid'
+        if (requestScopes == null || requestScopes.isEmpty() || requestScopes.stream().allMatch(scope -> scope.equals(OPENID.getKey()))) {
             request.setScopes(resolvedScopes);
         }
 

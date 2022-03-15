@@ -103,7 +103,7 @@ public class TokenRequestResolverTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        // Request should have been enhanced with all of user's permissions, even though only one has been requested
+        // Request should only be enhanced with the requested scopes for which the user has permission
         List<String> expectedScopes = new ArrayList<>(reqScopes);
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 2);
     }
@@ -138,6 +138,39 @@ public class TokenRequestResolverTest {
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 1);
+    }
+
+    @Test
+    public void shouldResolveTokenRequest_openIdScope() {
+        final String scope = "openid";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        // Request none of the three user scopes
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Request should have been enhanced with all of user's permissions as we provided just the openid scope.
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(userScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
 
     @Test
