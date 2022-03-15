@@ -78,6 +78,23 @@ public class AuthorizationRequestResolverTest {
     }
 
     @Test
+    public void shouldResolveAuthorizationRequest_openIdScope() {
+        final String redirectUri = "http://localhost:8080/callback";
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setScopes(Set.of("openid"));
+        authorizationRequest.setRedirectUri(redirectUri);
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope("openid");
+        setting.setDefaultScope(true);
+        client.setScopeSettings(List.of(setting));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+    }
+
+    @Test
     public void shouldResolveAuthorizationRequest_noRequestedScope() {
         final String scope = "read";
         final String redirectUri = "http://localhost:8080/callback";
