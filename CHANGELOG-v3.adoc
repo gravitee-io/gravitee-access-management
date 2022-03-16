@@ -1,6 +1,22 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/518?closed=1[AM - 3.15.4 (2022-03-16)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Enhance scopes should work at least with the `openid` scope https://github.com/gravitee-io/issues/issues/7290[#7290]
+- Invalid email with accented characters https://github.com/gravitee-io/issues/issues/7289[#7289]
+
+*_General_*
+
+- Merge 3.10.17 https://github.com/gravitee-io/issues/issues/7291[#7291]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/520?closed=1[AM - 3.10.17 (2022-03-14)]
 
 === Bug fixes
