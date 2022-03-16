@@ -70,6 +70,9 @@
 #    allow-methods: 'OPTIONS, GET, POST, PUT, DELETE, PATCH'
 #      Which headers to allow (default values: Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With, If-Match, X-Xsrf-Token)
 #    allow-headers: 'X-Requested-With'
+#      Allows the use of credentials (cookies, authorization headers, or TLS client certificates) when performing the request
+#      default is `false`
+#    allow-credentials: true
 #  csrf:
     # Allows to enable or disable the CSRF protection (default is enabled).
 #    enabled: true
@@ -236,6 +239,9 @@ email:
 
 # User management configuration
 user:
+  email:
+    policy:
+      pattern: ^[a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$
   # Password complexity validation policy
   # Applications should enforce password complexity rules to discourage easy to guess passwords.
   # Passwords should require a minimum level of complexity that makes sense for the application and its user population.
