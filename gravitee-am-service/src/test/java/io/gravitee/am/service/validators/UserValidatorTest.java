@@ -23,6 +23,7 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import org.junit.Test;
 
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.*;
 
@@ -36,7 +37,7 @@ public class UserValidatorTest {
             NAME_STRICT_PATTERN,
             NAME_LAX_PATTERN,
             USERNAME_PATTERN,
-            new EmailValidatorImpl()
+            new EmailValidatorImpl(EMAIL_PATTERN)
     );
 
     @Test

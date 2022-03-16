@@ -15,9 +15,13 @@
  */
 package io.gravitee.am.service.validators.email;
 
+import com.google.common.base.Strings;
+import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.regex.Pattern;
+import static java.util.Optional.ofNullable;
+import static java.util.function.Predicate.not;
 
 /**
  * An email validator based on the rules defined by OWASP and excluding '*' and '&' characters.
@@ -32,7 +36,15 @@ public class EmailValidatorImpl implements EmailValidator {
     public static final int EMAIL_MAX_LENGTH = 320;
     public static final String EMAIL_PATTERN = "^[a-zA-Z0-9_+-]+(?:\\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
 
-    private static final Pattern PATTERN = Pattern.compile(EMAIL_PATTERN);
+    private final Pattern pattern;
+
+    public EmailValidatorImpl(@Value("${user.email.policy.pattern:" + EMAIL_PATTERN + "}") String emailPattern) {
+        this.pattern = Pattern.compile(ofNullable(emailPattern)
+                .filter(not(Strings::isNullOrEmpty))
+                .filter(not(String::isBlank))
+                .orElse(EMAIL_PATTERN)
+        );
+    }
 
     /**
      * Validate the email against owasp pattern.
@@ -43,6 +55,6 @@ public class EmailValidatorImpl implements EmailValidator {
      */
     @Override
     public Boolean validate(String email) {
-        return email == null || (email.length() <= EMAIL_MAX_LENGTH && PATTERN.matcher(email).matches());
+        return email == null || (email.length() <= EMAIL_MAX_LENGTH && pattern.matcher(email).matches());
     }
 }

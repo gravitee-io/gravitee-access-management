@@ -17,13 +17,13 @@ package io.gravitee.am.service.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.gravitee.am.model.IUser;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
 import java.util.Date;
 import java.util.Map;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
-import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
+import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_MAX_LENGTH;
+
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -37,7 +37,7 @@ public class NewUser implements IUser {
     private String password;
 
     @NotBlank
-    @Pattern(regexp = EMAIL_PATTERN, message = "must be a well-formed email address")
+    @Size(max = EMAIL_MAX_LENGTH, message = "must not be greater than " + EMAIL_MAX_LENGTH)
     private String email;
 
     private String firstName;
