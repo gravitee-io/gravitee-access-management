@@ -60,8 +60,9 @@
           <ng-template let-rowIndex="rowIndex" let-row="row" ngx-datatable-cell-template>
             <div fxFlex fxLayout="column" class="idp-priority">
               <div *ngIf="rowIndex === 0" class="empty-row"></div>
-              <button *ngIf="rowIndex !== 0" [disabled]="!row.selected" mat-icon-button (click)="higherPriority(rowIndex, identityProviders)"><mat-icon>expand_less</mat-icon></button>
-              <button *ngIf="rowIndex !== identityProviders.length -1" [disabled]="!row.selected" mat-icon-button (click)="lowerPriority(rowIndex, identityProviders)"><mat-icon>expand_more</mat-icon></button>
+
+              <button *ngIf="row.priority > 0" [disabled]="!row.selected" mat-icon-button (click)="lowerPriority(rowIndex, identityProviders)"><mat-icon>expand_less</mat-icon></button>
+              <button *ngIf="row.priority < identityProviders.length - 1" [disabled]="!row.selected" mat-icon-button (click)="higherPriority(rowIndex, identityProviders)"><mat-icon>expand_more</mat-icon></button>
             </div>
             <p>{{row.priority}}</p>
           </ng-template>
@@ -111,8 +112,8 @@
           <ng-template let-rowIndex="rowIndex" let-row="row" ngx-datatable-cell-template>
             <div fxFlex fxLayout="column" class="idp-priority">
               <div *ngIf="rowIndex === 0" class="empty-row"></div>
-              <button *ngIf="rowIndex !== 0" [disabled]="!row.selected" mat-icon-button (click)="higherPriority(rowIndex, socialIdentityProviders)"><mat-icon>expand_less</mat-icon></button>
-              <button *ngIf="rowIndex !== socialIdentityProviders.length -1" [disabled]="!row.selected" mat-icon-button (click)="lowerPriority(rowIndex, socialIdentityProviders)"><mat-icon>expand_more</mat-icon></button>
+              <button *ngIf="row.priority > 0" [disabled]="!row.selected" mat-icon-button (click)="lowerPriority(rowIndex, socialIdentityProviders)"><mat-icon>expand_less</mat-icon></button>
+              <button *ngIf="row.priority < socialIdentityProviders.length - 1" [disabled]="!row.selected" mat-icon-button (click)="higherPriority(rowIndex, socialIdentityProviders)"><mat-icon>expand_more</mat-icon></button>
             </div>
             <p>{{row.priority}}</p>
           </ng-template>

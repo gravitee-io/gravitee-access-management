@@ -63,7 +63,6 @@ export class ApplicationIdPComponent implements OnInit {
   }
 
   private setUpIdentityProviders(identityProviders, applicationIdentityProviders) {
-    let startedIndex = Math.max.apply(Math, applicationIdentityProviders.map(function(o) { return o.priority; }))
     return identityProviders.map(idp => {
       const appIdentity = applicationIdentityProviders.find(appIdp => appIdp.identity == idp.id);
       if (appIdentity) {
@@ -73,7 +72,7 @@ export class ApplicationIdPComponent implements OnInit {
       } else {
         idp.selected = false;
         idp.selectionRule = "";
-        idp.priority = startedIndex + 1;
+        idp.priority = identityProviders.indexOf(idp);
       }
       return idp
     });
@@ -137,26 +136,27 @@ export class ApplicationIdPComponent implements OnInit {
   }
 
   lowerPriority(index, identityProviders) {
-    identityProviders[index].priority = index + 1;
-    identityProviders[index + 1].priority = index;
-    identityProviders.sort((a, b) => a.priority > b.priority ? 1 : -1);
-    this.formChanged = true;
+    const previousPriority = identityProviders[index].priority - 1;
+    if (previousPriority >= 0) {
+      this.applyPriority(identityProviders, index, previousPriority);
+    }
   }
 
   higherPriority(index, identityProviders) {
-    identityProviders[index].priority = index - 1;
-    identityProviders[index - 1].priority = index;
-    identityProviders.sort((a, b) => a.priority > b.priority ? 1 : -1);
-    this.formChanged = true;
+    const nextPriority = identityProviders[index].priority + 1;
+    if (nextPriority < identityProviders.length) {
+      this.applyPriority(identityProviders, index, nextPriority);
+    }
   }
 
-  setIdpPriority(event, identityProviderId, identityProviders) {
-    let priority = event.target.value;
-    let identityProvider = identityProviders.find(idp => idp.id === identityProviderId);
-    if(identityProvider != null){
-      identityProvider.priority = priority;
+  private applyPriority(identityProviders, index, priority) {
+    const currentIdp = identityProviders[index];
+    const idpWithPriorityToApply = identityProviders.find(idp => idp.priority == priority);
+    if (idpWithPriorityToApply) {
+      idpWithPriorityToApply.priority = currentIdp.priority;
     }
-
+    currentIdp.priority = priority;
+    identityProviders.sort((a, b) => a.priority > b.priority ? 1 : -1);
     this.formChanged = true;
   }
 
