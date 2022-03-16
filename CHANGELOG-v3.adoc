@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/526?closed=1[AM - 3.16.1 (2022-03-16)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge 3.15.4 https://github.com/gravitee-io/issues/issues/7318[#7318]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/518?closed=1[AM - 3.15.4 (2022-03-16)]
 
 === Bug fixes
