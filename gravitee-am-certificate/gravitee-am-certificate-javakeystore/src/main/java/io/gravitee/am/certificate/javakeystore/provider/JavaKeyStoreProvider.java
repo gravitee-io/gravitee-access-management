@@ -15,143 +15,39 @@
  */
 package io.gravitee.am.certificate.javakeystore.provider;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.KeyUse;
-import io.gravitee.am.certificate.api.CertificateFormat;
-import io.gravitee.am.certificate.api.CertificateKey;
+import io.gravitee.am.certificate.api.AbstractCertificateProvider;
 import io.gravitee.am.certificate.api.CertificateMetadata;
-import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.certificate.api.DefaultKey;
-import io.gravitee.am.certificate.api.RSAKeyUtils;
-import io.gravitee.am.certificate.api.X509CertUtils;
 import io.gravitee.am.certificate.javakeystore.JavaKeyStoreConfiguration;
-import io.gravitee.am.common.jwt.SignatureAlgorithm;
-import io.gravitee.am.model.jose.JWK;
-import io.gravitee.am.model.jose.RSAKey;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.security.Key;
-import java.security.KeyPair;
 import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.security.KeyStoreException;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JavaKeyStoreProvider implements CertificateProvider, InitializingBean {
-
-    private Date expirationDate;
-    private KeyPair keyPair;
-    private Certificate cert;
-    private JWKSet jwkSet;
-    private Set<JWK> keys;
-    private SignatureAlgorithm signature = SignatureAlgorithm.RS256;
-    private io.gravitee.am.certificate.api.Key certificateKey;
-    private List<CertificateKey> certificateKeys;
-
+public class JavaKeyStoreProvider extends AbstractCertificateProvider implements InitializingBean {
     @Autowired
     private JavaKeyStoreConfiguration configuration;
-
     @Autowired
     private CertificateMetadata certificateMetadata;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Object file = certificateMetadata.getMetadata().get(CertificateMetadata.FILE);
-        Objects.requireNonNull(file, "A jks file is required to use Java KeyStore certificate");
-
-        try (InputStream is = new ByteArrayInputStream((byte[]) file)) {
-            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keystore.load(is, configuration.getStorepass().toCharArray());
-            // generate JWK set
-            // TODO : should be moved to the gravitee-am-jwt module
-            jwkSet = JWKSet.load(keystore, name -> configuration.getKeypass().toCharArray());
-            keys = getKeys();
-            // generate Key pair
-            Key key = keystore.getKey(configuration.getAlias(), configuration.getKeypass().toCharArray());
-            if (key instanceof PrivateKey) {
-                // Get certificate of public key
-                cert = keystore.getCertificate(configuration.getAlias());
-                // create key pair
-                keyPair = new KeyPair(cert.getPublicKey(), (PrivateKey) key);
-                // create key
-                certificateKey = new DefaultKey(configuration.getAlias(), keyPair);
-                // update metadata
-                certificateMetadata.getMetadata().put(CertificateMetadata.DIGEST_ALGORITHM_NAME, signature.getDigestName());
-                // generate public certificate keys
-                certificateKeys = new ArrayList<>();
-                // get Signing Algorithm name
-                if (cert instanceof X509Certificate) {
-                    signature = getSignature(((X509Certificate) cert).getSigAlgName());
-                    String pem = X509CertUtils.toPEMString((X509Certificate) cert);
-                    certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
-                    expirationDate = ((X509Certificate) cert).getNotAfter();
-                }
-                certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) keyPair.getPublic())));
-            } else {
-                throw new IllegalArgumentException("A RSA Signer must be supplied");
-            }
-        }
+        createCertificateKeys(certificateMetadata());
     }
 
     @Override
-    public Optional<Date> getExpirationDate() {
-        return Optional.ofNullable(this.expirationDate);
+    protected String invalidCertificateFileMessage() {
+        return "A jks file is required to use Java KeyStore certificate";
     }
 
     @Override
-    public Flowable<JWK> privateKey() {
-        // CertificateProvider only manage RSA key.
-        com.nimbusds.jose.jwk.JWK nimbusJwk = new com.nimbusds.jose.jwk.RSAKey.Builder((RSAPublicKey) ((KeyPair) certificateKey.getValue()).getPublic())
-                .privateKey((RSAPrivateKey) ((KeyPair) certificateKey.getValue()).getPrivate())
-                .keyID(configuration.getAlias())
-                .build();
-        return Flowable.fromIterable(convert(nimbusJwk, true).collect(Collectors.toList()));
-    }
-
-    @Override
-    public Single<io.gravitee.am.certificate.api.Key> key() {
-        return Single.just(certificateKey);
-    }
-
-    @Override
-    public Single<String> publicKey() {
-        // fallback to ssh-rsa
-        return Single.just(
-                certificateKeys
-                        .stream()
-                        .filter(c -> c.getFmt().equals(CertificateFormat.SSH_RSA))
-                        .map(CertificateKey::getPayload)
-                        .findFirst()
-                        .get());
-    }
-
-    @Override
-    public Single<List<CertificateKey>> publicKeys() {
-        return Single.just(certificateKeys);
-    }
-
-    @Override
-    public Flowable<JWK> keys() {
-        return Flowable.fromIterable(keys);
+    protected KeyStore keyStore() throws KeyStoreException {
+        return KeyStore.getInstance(KeyStore.getDefaultType());
     }
 
     @Override
@@ -160,113 +56,27 @@ public class JavaKeyStoreProvider implements CertificateProvider, InitializingBe
     }
 
     @Override
-    public Certificate certificate() {
-        return cert;
-    }
-
-    private Set<JWK> getKeys() {
-        return jwkSet.toPublicJWKSet().getKeys().stream().flatMap(this::convert).collect(Collectors.toSet());
-    }
-
-    // TODO : should be moved to the gravitee-am-jwt module
-    private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk) {
-        final Set<String> useFor = configuration.getUse() == null || configuration.getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : configuration.getUse();
-        return useFor.stream().map(use -> createRSAKey(nimbusJwk, false, use));
-    }
-
-    private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate) {
-        final Set<String> useFor = configuration.getUse() == null || configuration.getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : configuration.getUse();
-        return useFor.stream().map(use -> createRSAKey(nimbusJwk, includePrivate, use));
-    }
-
-    private JWK createRSAKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
-        RSAKey jwk = new RSAKey();
-        if (nimbusJwk.getKeyType() != null) {
-            jwk.setKty(nimbusJwk.getKeyType().getValue());
-        }
-
-        if (nimbusJwk.getKeyUse() != null) {
-            jwk.setUse(nimbusJwk.getKeyUse().identifier());
-        } else {
-            jwk.setUse(use);
-        }
-
-        if (nimbusJwk.getKeyOperations() != null) {
-            jwk.setKeyOps(nimbusJwk.getKeyOperations().stream().map(keyOperation -> keyOperation.identifier()).collect(Collectors.toSet()));
-        }
-
-        if (configuration.getAlgorithm() != null && !configuration.getAlgorithm().isEmpty()) {
-            jwk.setAlg(configuration.getAlgorithm());
-        } else if (nimbusJwk.getAlgorithm() != null) {
-            jwk.setAlg(nimbusJwk.getAlgorithm().getName());
-        }
-        if (nimbusJwk.getKeyID() != null) {
-            jwk.setKid(nimbusJwk.getKeyID());
-        }
-        if (nimbusJwk.getX509CertURL() != null) {
-            jwk.setX5u(nimbusJwk.getX509CertURL().toString());
-        }
-        if (nimbusJwk.getX509CertChain() != null) {
-            jwk.setX5c(nimbusJwk.getX509CertChain().stream().map(cert -> cert.toString()).collect(Collectors.toSet()));
-        }
-        if (nimbusJwk.getX509CertThumbprint() != null) {
-            jwk.setX5t(nimbusJwk.getX509CertThumbprint().toString());
-        }
-        if (nimbusJwk.getX509CertSHA256Thumbprint() != null) {
-            jwk.setX5tS256(nimbusJwk.getX509CertSHA256Thumbprint().toString());
-        }
-
-        // specific RSA Key
-        com.nimbusds.jose.jwk.RSAKey nimbusRSAJwk = (com.nimbusds.jose.jwk.RSAKey) nimbusJwk;
-        if (nimbusRSAJwk.getPublicExponent() != null) {
-            jwk.setE(nimbusRSAJwk.getPublicExponent().toString());
-        }
-        if (nimbusRSAJwk.getModulus() != null) {
-            jwk.setN(nimbusRSAJwk.getModulus().toString());
-        }
-
-        if (includePrivate) {
-            if (nimbusRSAJwk.getPrivateExponent() != null) {
-                jwk.setD(nimbusRSAJwk.getPrivateExponent().toString());
-            }
-
-            if (nimbusRSAJwk.getFirstPrimeFactor() != null) {
-                jwk.setP(nimbusRSAJwk.getFirstPrimeFactor().toString());
-            }
-
-            if (nimbusRSAJwk.getFirstFactorCRTExponent() != null) {
-                jwk.setDp(nimbusRSAJwk.getFirstFactorCRTExponent().toString());
-            }
-
-            if (nimbusRSAJwk.getFirstCRTCoefficient() != null) {
-                jwk.setQi(nimbusRSAJwk.getFirstCRTCoefficient().toString());
-            }
-
-            if (nimbusRSAJwk.getSecondPrimeFactor() != null) {
-                jwk.setQ(nimbusRSAJwk.getSecondPrimeFactor().toString());
-            }
-
-            if (nimbusRSAJwk.getSecondFactorCRTExponent() != null) {
-                jwk.setDq(nimbusRSAJwk.getSecondFactorCRTExponent().toString());
-            }
-        }
-
-        return jwk;
-    }
-
-    private SignatureAlgorithm getSignature(String signingAlgorithm) {
-        return Stream.of(SignatureAlgorithm.values())
-                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName() != null)
-                .filter(signatureAlgorithm -> signatureAlgorithm.getJcaName().equals(signingAlgorithm))
-                .findFirst()
-                .orElse(SignatureAlgorithm.RS256);
+    protected String getStorepass() {
+        return configuration.getStorepass();
     }
 
     @Override
-    public String signatureAlgorithm() {
-        if (configuration.getAlgorithm() != null) {
-            return configuration.getAlgorithm();
-        }
-        return signature.getValue();
+    protected String getAlias() {
+        return configuration.getAlias();
+    }
+
+    @Override
+    protected String getKeypass() {
+        return configuration.getKeypass();
+    }
+
+    @Override
+    protected Set<String> getUse() {
+        return configuration.getUse();
+    }
+
+    @Override
+    protected String getAlgorithm() {
+        return configuration.getAlgorithm();
     }
 }
