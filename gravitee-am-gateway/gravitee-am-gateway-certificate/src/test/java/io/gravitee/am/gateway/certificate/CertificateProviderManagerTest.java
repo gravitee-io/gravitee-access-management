@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
-import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 
 import javax.crypto.spec.SecretKeySpec;
