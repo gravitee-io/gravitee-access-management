@@ -148,7 +148,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService {
     }
 
     @Override
-    public Completable deleteCertificateExpirationAcknowledge(String certificateId) {
+    public Completable deleteCertificateExpirationAcknowledgement(String certificateId) {
         if (this.certificateNotificationEnabled) {
             LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
             return this.notifierService.deleteAcknowledge(certificateId, RESOURCE_TYPE_CERTIFICATE);

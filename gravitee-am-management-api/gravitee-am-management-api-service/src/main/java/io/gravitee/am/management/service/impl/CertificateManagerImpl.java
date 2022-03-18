@@ -23,7 +23,6 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.model.UpdateCertificate;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
@@ -134,7 +133,9 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
     private void updateCertificate(String domainId, String certificateId) {
         logger.info("Management API has received a deploy certificate event for {}", certificateId);
         notifierService.unregisterCertificateExpiration(domainId, certificateId);
-        notifierService.deleteCertificateExpirationAcknowledge(certificateId).blockingAwait();
+        notifierService.deleteCertificateExpirationAcknowledgement(certificateId)
+                .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificateId, err.getMessage()))
+                .subscribe();
         deployCertificate(certificateId);
     }
 
@@ -142,7 +143,9 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
         logger.info("Management API has received a undeploy certificate event for {}", certificateId);
         certificateProviders.remove(certificateId);
         notifierService.unregisterCertificateExpiration(domainId, certificateId);
-        notifierService.deleteCertificateExpirationAcknowledge(certificateId).blockingAwait();
+        notifierService.deleteCertificateExpirationAcknowledgement(certificateId)
+                .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificateId, err.getMessage()))
+                .subscribe();
     }
 
     private void loadCertificate(Certificate certificate) {
@@ -167,7 +170,9 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                 notifierService.registerCertificateExpiration(certificate);
             } else {
                 notifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
-                notifierService.deleteCertificateExpirationAcknowledge(certificate.getId()).blockingAwait();
+                notifierService.deleteCertificateExpirationAcknowledgement(certificate.getId())
+                        .doOnError(err -> logger.warn("Unable to delete notification acknowledge for certificate {} due to: {}", certificate.getId(), err.getMessage()))
+                        .subscribe();
                 certificateProviders.remove(certificate.getId());
             }
         } catch (Exception ex) {

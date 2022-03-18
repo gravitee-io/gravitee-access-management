@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.management.service;
 
-import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.model.Certificate;
 import io.reactivex.Completable;
 
@@ -29,5 +28,5 @@ public interface DomainNotifierService {
 
     void unregisterCertificateExpiration(String domainId, String certificateId);
 
-    Completable deleteCertificateExpirationAcknowledge(String certificateId);
+    Completable deleteCertificateExpirationAcknowledgement(String certificateId);
 }
