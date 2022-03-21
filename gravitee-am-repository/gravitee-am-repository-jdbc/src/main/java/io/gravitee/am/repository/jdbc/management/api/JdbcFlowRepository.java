@@ -203,6 +203,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         bean.setEnabled(step.isEnabled());
         bean.setName(step.getName());
         bean.setPolicy(step.getPolicy());
+        bean.setCondition(step.getCondition());
         return bean;
     }
 
@@ -213,6 +214,7 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         bean.setEnabled(entity.isEnabled());
         bean.setName(entity.getName());
         bean.setPolicy(entity.getPolicy());
+        bean.setCondition(entity.getCondition());
         return bean;
     }
 
