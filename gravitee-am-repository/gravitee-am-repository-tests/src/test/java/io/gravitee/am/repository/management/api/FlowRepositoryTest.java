@@ -121,6 +121,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
                 result = result && o.getPre().get(i).getConfiguration().equals(flow.getPre().get(i).getConfiguration());
                 result = result && o.getPre().get(i).getPolicy().equals(flow.getPre().get(i).getPolicy());
                 result = result && o.getPre().get(i).getDescription().equals(flow.getPre().get(i).getDescription());
+                result = result && o.getPre().get(i).getCondition().equals(flow.getPre().get(i).getCondition());
             }
             return result;
         });
@@ -131,6 +132,7 @@ public class FlowRepositoryTest extends AbstractManagementTest {
                 result = result && o.getPost().get(i).getConfiguration().equals(flow.getPost().get(i).getConfiguration());
                 result = result && o.getPost().get(i).getPolicy().equals(flow.getPost().get(i).getPolicy());
                 result = result && o.getPost().get(i).getDescription().equals(flow.getPost().get(i).getDescription());
+                result = result && o.getPost().get(i).getCondition().equals(flow.getPost().get(i).getCondition());
             }
             return result;
         });
