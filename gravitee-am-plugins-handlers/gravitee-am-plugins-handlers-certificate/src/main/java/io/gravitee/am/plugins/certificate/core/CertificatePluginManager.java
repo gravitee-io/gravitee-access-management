@@ -15,26 +15,77 @@
  */
 package io.gravitee.am.plugins.certificate.core;
 
+import io.gravitee.am.certificate.api.Certificate;
+import io.gravitee.am.certificate.api.CertificateConfiguration;
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificatePluginManager {
+public class CertificatePluginManager
+        extends ProviderPluginManager<Certificate, CertificateProvider, CertificateProviderConfiguration>
+        implements AmPluginManager<Certificate> {
 
-    void register(CertificateDefinition certificatePluginDefinition);
+    private final Logger logger = LoggerFactory.getLogger(CertificatePluginManager.class);
 
-    Collection<Plugin> getAll();
+    private final ConfigurationFactory<CertificateConfiguration> certificateConfigurationFactory;
 
-    Plugin findById(String certificateId);
+    @Autowired
+    public CertificatePluginManager(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<CertificateConfiguration> certificateConfigurationFactory
+    ) {
+        super(pluginContextFactory);
+        this.certificateConfigurationFactory = certificateConfigurationFactory;
+    }
 
-    CertificateProvider create(String type, String configuration, Map<String, Object> metadata);
+    @Override
+    public CertificateProvider create(CertificateProviderConfiguration providerConfig) {
+        logger.debug("Looking for a certificate provider for [{}]", providerConfig.getType());
+        Certificate certificate = instances.get(providerConfig.getType());
 
-    String getSchema(String certificateId) throws IOException;
+        if (certificate != null) {
+            Class<? extends CertificateConfiguration> configurationClass = certificate.configuration();
+            var certificateConfiguration = certificateConfigurationFactory.create(configurationClass, providerConfig.getConfiguration());
+
+            CertificateMetadata certificateMetadata = new CertificateMetadata();
+            certificateMetadata.setMetadata(providerConfig.getMetadata());
+
+            return createProvider(
+                    plugins.get(certificate),
+                    certificate.certificateProvider(),
+                    List.of(
+                            new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration),
+                            new CertificateMetadataBeanFactoryPostProcessor(certificateMetadata)
+                    )
+            );
+        } else {
+            logger.error("No certificate provider is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No certificate provider is registered for type " + providerConfig.getType());
+        }
+    }
+
+    private static class CertificateMetadataBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateMetadata> {
+        private CertificateMetadataBeanFactoryPostProcessor(CertificateMetadata metadata) {
+            super("metadata", metadata);
+        }
+    }
+
+    private static class CertificateConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateConfiguration> {
+        private CertificateConfigurationBeanFactoryPostProcessor(CertificateConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

@@ -15,26 +15,63 @@
  */
 package io.gravitee.am.plugins.factor.core;
 
+import io.gravitee.am.factor.api.Factor;
+import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorPluginManager {
+public class FactorPluginManager
+        extends ProviderPluginManager<Factor, FactorProvider, ProviderConfiguration>
+        implements AmPluginManager<Factor> {
 
-    void register(FactorDefinition factorDefinition);
+    private final Logger logger = LoggerFactory.getLogger(FactorPluginManager.class);
+    private final ConfigurationFactory<FactorConfiguration> factorConfigurationFactory;
 
-    Collection<Plugin> getAll();
+    public FactorPluginManager(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<FactorConfiguration> factorConfigurationConfigurationFactory
+    ) {
+        super(pluginContextFactory);
+        this.factorConfigurationFactory = factorConfigurationConfigurationFactory;
+    }
 
-    Plugin findById(String factorId);
+    @Override
+    public FactorProvider create(ProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for a factor for [{}]", providerConfiguration.getType());
+        Factor factor = instances.get(providerConfiguration.getType());
 
-    FactorProvider create(String type, String configuration);
+        if (factor != null) {
+            Class<? extends FactorConfiguration> configurationClass = factor.configuration();
+            var factorConfiguration = factorConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
 
-    String getSchema(String factorId) throws IOException;
+            return createProvider(
+                    plugins.get(factor),
+                    factor.factorProvider(),
+                    List.of(new FactorConfigurationBeanFactoryPostProcessor(factorConfiguration))
+            );
+        } else {
+            logger.error("No factor is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No factor is registered for type " + providerConfiguration.getType());
+        }
+    }
 
+
+    private static class FactorConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<FactorConfiguration> {
+        private FactorConfigurationBeanFactoryPostProcessor(FactorConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

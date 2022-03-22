@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.handler.manager.botdetection.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.botdetection.api.BotDetectionProvider;
 import io.gravitee.am.common.event.BotDetectionEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.botdetection.api.BotDetectionContext;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.Domain;
@@ -29,21 +29,21 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -57,8 +57,8 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     public static final String TEMPLATE_KEY_BOT_DETECTION_PLUGIN = "bot_detection_plugin";
     public static final String TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION = "bot_detection_configuration";
 
-    private ConcurrentMap<String, BotDetectionProvider> providers = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, BotDetection> botDetections = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, BotDetectionProvider> providers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, BotDetection> botDetections = new ConcurrentHashMap<>();
 
     @Autowired
     private BotDetectionService botDetectionService;
@@ -160,7 +160,7 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
         LOGGER.info("Domain {} has received {} bot detection event for {}", domain.getName(), eventType, pluginId);
         botDetectionService.findById(pluginId)
                 .subscribe(
-                        detectionPlugin -> updateBotDetection(detectionPlugin),
+                        this::updateBotDetection,
                         error -> LOGGER.error("Unable to load bot detection for domain {}", domain.getName(), error),
                         () -> LOGGER.error("No bot detection found with id {}", pluginId));
     }
@@ -174,7 +174,8 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
 
     private void updateBotDetection(BotDetection detection) {
         try {
-            BotDetectionProvider botDetectionProvider = botDetectionPluginManager.create(detection.getType(), detection.getConfiguration());
+            var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
+            BotDetectionProvider botDetectionProvider = botDetectionPluginManager.create(providerConfig);
             final BotDetectionProvider previousProvider = this.providers.put(detection.getId(), botDetectionProvider);
             stopBotDetectionProvider(previousProvider);
             this.botDetections.put(detection.getId(), detection);

@@ -15,26 +15,67 @@
  */
 package io.gravitee.am.plugins.extensiongrant.core;
 
+import io.gravitee.am.extensiongrant.api.ExtensionGrant;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantPluginManager {
+public class ExtensionGrantPluginManager
+        extends ProviderPluginManager<ExtensionGrant, ExtensionGrantProvider, ExtensionGrantProviderConfiguration>
+        implements AmPluginManager<ExtensionGrant> {
 
-    void register(ExtensionGrantDefinition extensionGrantDefinition);
+    private final Logger logger = LoggerFactory.getLogger(ExtensionGrantPluginManager.class);
+    private final ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory;
 
-    Collection<Plugin> getAll();
+    public ExtensionGrantPluginManager(PluginContextFactory pluginContextFactory,
+                                       ConfigurationFactory<ExtensionGrantConfiguration> extensionGrantConfigurationFactory) {
+        super(pluginContextFactory);
+        this.extensionGrantConfigurationFactory = extensionGrantConfigurationFactory;
+    }
 
-    Plugin findById(String identityProviderId);
+    @Override
+    public ExtensionGrantProvider create(ExtensionGrantProviderConfiguration providerConfig) {
+        logger.debug("Looking for an extension grant provider for [{}]", providerConfig.getType());
+        ExtensionGrant extensionGrant = instances.get(providerConfig.getType());
 
-    ExtensionGrantProvider create(String type, String configuration, AuthenticationProvider authenticationProvider);
+        if (extensionGrant != null) {
+            Class<? extends ExtensionGrantConfiguration> configurationClass = extensionGrant.configuration();
+            var extensionGrantConfiguration = extensionGrantConfigurationFactory.create(configurationClass, providerConfig.getConfiguration());
 
-    String getSchema(String tokenGranterId) throws IOException;
+            return createProvider(plugins.get(extensionGrant), extensionGrant.provider(),
+                    List.of(
+                            new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
+                            new ExtensionGrantIdentityProviderFactoryPostProcessor(providerConfig.getAuthenticationProvider())
+                    )
+            );
+        } else {
+            logger.error("No extension grant provider is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No extension grant provider is registered for type " + providerConfig.getType());
+        }
+    }
+
+    private static class ExtensionGrantConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ExtensionGrantConfiguration> {
+        private ExtensionGrantConfigurationBeanFactoryPostProcessor(ExtensionGrantConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
+
+    private static class ExtensionGrantIdentityProviderFactoryPostProcessor extends NamedBeanFactoryPostProcessor<AuthenticationProvider> {
+        private ExtensionGrantIdentityProviderFactoryPostProcessor(AuthenticationProvider authenticationProvider) {
+            super("authenticationProvider", authenticationProvider);
+        }
+    }
 }

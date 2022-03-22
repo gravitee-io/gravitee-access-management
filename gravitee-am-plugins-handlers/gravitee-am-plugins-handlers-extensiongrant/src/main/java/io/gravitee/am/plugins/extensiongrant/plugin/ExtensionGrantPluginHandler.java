@@ -16,45 +16,28 @@
 package io.gravitee.am.plugins.extensiongrant.plugin;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrant;
-import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantDefinition;
-import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
+import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ExtensionGrantPluginHandler extends AbstractPluginHandler {
+public class ExtensionGrantPluginHandler extends AmPluginHandler<ExtensionGrant> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(ExtensionGrantPluginHandler.class);
 
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private ExtensionGrantPluginManager extensionGrantPluginManager;
-
     @Override
-    public boolean canHandle(Plugin plugin) {
-        return type().equalsIgnoreCase(plugin.type());
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new extension grant plugin: {} [{}]", plugin.id(), plugin.clazz());
-
-            Assert.isAssignable(ExtensionGrant.class, pluginClass);
-
-            var extensionGrant = createInstance((Class<ExtensionGrant>) pluginClass);
-            extensionGrantPluginManager.register(new ExtensionGrantDefinition(extensionGrant, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create extension grant instance", iae);
-        }
+    protected Class<ExtensionGrant> getClazz() {
+        return ExtensionGrant.class;
     }
 
     @Override
@@ -62,17 +45,4 @@ public class ExtensionGrantPluginHandler extends AbstractPluginHandler {
         return PluginType.EXTENSION_GRANT.name();
     }
 
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
-    }
 }

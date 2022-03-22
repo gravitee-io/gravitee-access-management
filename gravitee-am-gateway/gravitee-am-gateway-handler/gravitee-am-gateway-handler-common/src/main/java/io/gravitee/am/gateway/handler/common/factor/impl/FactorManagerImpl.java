@@ -24,6 +24,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -43,8 +44,8 @@ import java.util.concurrent.ConcurrentMap;
 public class FactorManagerImpl extends AbstractService implements FactorManager, InitializingBean, EventListener<FactorEvent, Payload> {
 
     private static final Logger logger = LoggerFactory.getLogger(FactorManagerImpl.class);
-    private ConcurrentMap<String, FactorProvider> factorProviders = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, Factor> factors = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, FactorProvider> factorProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Factor> factors = new ConcurrentHashMap<>();
 
     @Autowired
     private FactorService factorService;
@@ -63,7 +64,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         logger.info("Initializing factors for domain {}", domain.getName());
         factorService.findByDomain(domain.getId())
                 .subscribe(
-                        factor -> updateFactor(factor),
+                        this::updateFactor,
                         error -> logger.error("Unable to initialize factors for domain {}", domain.getName(), error));
     }
 
@@ -118,7 +119,7 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
         logger.info("Domain {} has received {} factor event for {}", domain.getName(), eventType, factorId);
         factorService.findById(factorId)
                 .subscribe(
-                        factor -> updateFactor(factor),
+                        this::updateFactor,
                         error -> logger.error("Unable to load factor for domain {}", domain.getName(), error),
                         () -> logger.error("No factor found with id {}", factorId));
     }
@@ -131,7 +132,8 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
 
     private void updateFactor(Factor factor) {
         try {
-            FactorProvider factorProvider = factorPluginManager.create(factor.getType(), factor.getConfiguration());
+            var factorProviderConfig = new ProviderConfiguration(factor.getType(), factor.getConfiguration());
+            var factorProvider = factorPluginManager.create(factorProviderConfig);
             this.factorProviders.put(factor.getId(), factorProvider);
             this.factors.put(factor.getId(), factor);
             logger.info("Factor {} loaded for domain {}", factor.getName(), domain.getName());

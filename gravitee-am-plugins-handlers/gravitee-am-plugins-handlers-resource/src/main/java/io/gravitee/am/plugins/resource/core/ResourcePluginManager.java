@@ -15,27 +15,60 @@
  */
 package io.gravitee.am.plugins.resource.core;
 
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.resource.api.Resource;
+import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ResourcePluginManager {
+public class ResourcePluginManager
+        extends ProviderPluginManager<Resource, ResourceProvider, ProviderConfiguration>
+        implements AmPluginManager<Resource> {
 
-    void register(ResourceDefinition resourceDefinition);
+    private final Logger logger = LoggerFactory.getLogger(ResourcePluginManager.class);
 
-    Collection<Plugin> getAll();
+    private final ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory;
 
-    Plugin findById(String resourceId);
+    public ResourcePluginManager(PluginContextFactory pluginContextFactory,
+                                 ConfigurationFactory<ResourceConfiguration> resourceConfigurationFactory) {
+        super(pluginContextFactory);
+        this.resourceConfigurationFactory = resourceConfigurationFactory;
+    }
 
-    ResourceProvider create(String type, String configuration);
+    @Override
+    public ResourceProvider create(ProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for a resource for [{}]", providerConfiguration.getType());
+        Resource resource = instances.get(providerConfiguration.getType());
 
-    String getSchema(String resourceId) throws IOException;
+        if (resource != null) {
+            Class<? extends ResourceConfiguration> configurationClass = resource.configuration();
+            ResourceConfiguration resourceConfiguration = resourceConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
+            return createProvider(
+                    plugins.get(resource),
+                    resource.resourceProvider(),
+                    List.of(new ResourceConfigurationBeanFactoryPostProcessor(resourceConfiguration))
+            );
+        } else {
+            logger.error("No resource is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No resource is registered for type " + providerConfiguration.getType());
+        }
+    }
 
-    String getIcon(String resourceId) throws IOException;
+    private class ResourceConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ResourceConfiguration> {
+        private ResourceConfigurationBeanFactoryPostProcessor(ResourceConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

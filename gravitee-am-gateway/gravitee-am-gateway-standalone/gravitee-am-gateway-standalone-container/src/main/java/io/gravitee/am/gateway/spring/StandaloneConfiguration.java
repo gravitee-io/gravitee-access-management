@@ -25,18 +25,18 @@ import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
-import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierConfiguration;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
-import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
-import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
-import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierConfiguration;
-import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
-import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
-import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
-import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
-import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
-import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
-import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
+import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
+import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
+import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
+import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
+import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
+import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
+import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
+import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
+import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
+import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
+import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.certificates.spring.NodeCertificatesConfiguration;
@@ -62,19 +62,19 @@ import org.springframework.context.annotation.Import;
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
         PluginConfiguration.class,
-        IdentityProviderConfiguration.class,
-        CertificateConfiguration.class,
-        ExtensionGrantConfiguration.class,
-        ReporterConfiguration.class,
-        ProtocolConfiguration.class,
-        PolicyConfiguration.class,
+        IdentityProviderSpringConfiguration.class,
+        CertificateSpringConfiguration.class,
+        ExtensionGrantSpringConfiguration.class,
+        ReporterSpringConfiguration.class,
+        ProtocolSpringConfiguration.class,
+        PolicySpringConfiguration.class,
         AlertPluginConfiguration.class,
-        FactorConfiguration.class,
-        ResourceConfiguration.class,
-        BotDetectionConfiguration.class,
-        DeviceIdentifierConfiguration.class,
+        FactorSpringConfiguration.class,
+        ResourceSpringConfiguration.class,
+        BotDetectionSpringConfiguration.class,
+        DeviceIdentifierSpringConfiguration.class,
         PasswordDictionaryConfiguration.class,
-        AuthenticationDeviceNotifierConfiguration.class,
+        AuthenticationDeviceNotifierSpringConfiguration.class,
         NodeCertificatesConfiguration.class
 })
 public class StandaloneConfiguration {

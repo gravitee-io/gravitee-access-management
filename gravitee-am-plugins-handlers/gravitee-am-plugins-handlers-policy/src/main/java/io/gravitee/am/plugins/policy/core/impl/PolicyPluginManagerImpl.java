@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyMetadata;
 import io.gravitee.am.gateway.policy.impl.PolicyImpl;
 import io.gravitee.am.gateway.policy.impl.PolicyMetadataBuilder;
-import io.gravitee.am.plugins.policy.core.PolicyConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.PluginClassLoader;
@@ -66,7 +66,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     private ConfigurablePluginManager<PolicyPlugin> pluginManager;
 
     @Autowired
-    private PolicyConfigurationFactory policyConfigurationFactory;
+    private ConfigurationFactory<PolicyConfiguration> policyConfigurationFactory;
 
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
@@ -107,8 +107,9 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
             try {
                 // create policy configuration
                 PluginClassLoader pluginClassLoader = pluginClassLoaderFactory.getOrCreateClassLoader(policyPlugin);
-                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>) ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
-                PolicyConfiguration policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
+                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>)
+                        ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
+                var policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
 
                 // create policy instance
                 Object policyInst;

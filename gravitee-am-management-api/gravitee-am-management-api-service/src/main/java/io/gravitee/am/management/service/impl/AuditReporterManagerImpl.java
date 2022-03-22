@@ -21,6 +21,7 @@ import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.am.service.DomainService;
@@ -40,17 +41,17 @@ import io.reactivex.functions.BiConsumer;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import static java.util.Arrays.asList;
 
@@ -104,7 +105,8 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         // init internal reporter (organization reporter)
         NewReporter organizationReporter = reporterService.createInternal();
         logger.info("Initializing internal " + organizationReporter.getType() + " audit reporter");
-        internalReporter = reporterPluginManager.create(organizationReporter.getType(), organizationReporter.getConfiguration(), null);
+        var providerConfiguration = new ReporterProviderConfiguration(organizationReporter.getType(), organizationReporter.getConfiguration());
+        internalReporter = reporterPluginManager.create(providerConfiguration);
         logger.info("Internal audit " + organizationReporter.getType() + " reporter initialized");
 
         logger.info("Initializing audit reporters");
@@ -193,8 +195,8 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
                 .entrySet()
                 .stream()
                 .filter(entry -> domain.equals(entry.getKey().getDomain()))
-                .map(entry -> entry.getValue())
-                .filter(reporter -> reporter.canSearch())
+                .map(Entry::getValue)
+                .filter(Reporter::canSearch)
                 .findFirst();
 
         if (optionalReporter.isPresent()) {
@@ -221,7 +223,7 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         logger.info("Management API has received a deploy reporter event for {}", reporterId);
         reporterService.findById(reporterId)
                 .subscribe(
-                        reporter -> loadReporter(reporter),
+                        this::loadReporter,
                         error -> logger.error("Unable to deploy reporter {}", reporterId, error),
                         () -> logger.error("No reporter found with id {}", reporterId));
     }
@@ -296,7 +298,8 @@ public class AuditReporterManagerImpl extends AbstractService<AuditReporterManag
         public void accept(GraviteeContext graviteeContext, Throwable throwable) throws Exception {
             if (graviteeContext != null) {
                 if (reporter.isEnabled()) {
-                    Reporter auditReporter = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), graviteeContext);
+                    var providerConfig = new ReporterProviderConfiguration(reporter, graviteeContext);
+                    var auditReporter = reporterPluginManager.create(providerConfig);
                     if (auditReporter != null) {
                         logger.info("Initializing audit reporter : {} for domain {}", reporter.getName(), reporter.getDomain());
                         Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporter.getDomain(), auditReporter);

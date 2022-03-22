@@ -32,8 +32,9 @@
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>
-            <groupId>io.gravitee.plugin</groupId>
-            <artifactId>gravitee-plugin-core</artifactId>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>

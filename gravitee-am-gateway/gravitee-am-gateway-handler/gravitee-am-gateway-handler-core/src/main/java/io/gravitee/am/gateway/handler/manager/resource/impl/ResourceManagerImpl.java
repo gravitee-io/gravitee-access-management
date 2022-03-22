@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.service.ServiceResourceService;
@@ -60,7 +61,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     @Autowired
     private ServiceResourceService resourceService;
 
-    private Map<String, ResourceProvider> resourceProviders = new ConcurrentHashMap<>();
+    private final Map<String, ResourceProvider> resourceProviders = new ConcurrentHashMap<>();
 
     @Override
     protected void doStart() throws Exception {
@@ -77,8 +78,8 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
         logger.info("Dispose event listener for resource events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ResourceEvent.class, domain.getId());
         // stop providers and remove them from the local cache
-        Set<String> resourceIds = new HashSet(this.resourceProviders.keySet());
-        resourceIds.stream().forEach(this::unloadResource);
+        Set<String> resourceIds = new HashSet<>(this.resourceProviders.keySet());
+        resourceIds.forEach(this::unloadResource);
     }
 
     @Override
@@ -88,7 +89,8 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
-                            ResourceProvider provider = resourcePluginManager.create(res.getType(), res.getConfiguration());
+                            var providerConfiguration = new ProviderConfiguration(res.getType(), res.getConfiguration());
+                            ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
                             provider.start();
                             resourceProviders.put(res.getId(), provider);
                             logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
@@ -121,13 +123,13 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     private void loadResource(String resourceId) {
         resourceService.findById(resourceId)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException("Resource " + resourceId + " not found")))
-                .map(res -> resourcePluginManager.create(res.getType(), res.getConfiguration()))
+                .map(res -> resourcePluginManager.create(new ProviderConfiguration(res.getType(), res.getConfiguration())))
                 .subscribe(
                         provider -> {
                             provider.start();
                             this.resourceProviders.put(resourceId, provider);
                         },
-                        error -> logger.error("Initialization of Resource provider '{}' failed", error));
+                        error -> logger.error("Initialization of Resource provider '{}' failed", resourceId, error));
     }
 
     private void refreshResource(String resourceId) {
@@ -143,7 +145,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 this.resourceProviders.remove(resourceId);
             }
         } catch (Exception e) {
-            logger.error("Resource '{}' stopped with error", e);
+            logger.error("Resource '{}' stopped with error", resourceId, e);
         }
     }
 }

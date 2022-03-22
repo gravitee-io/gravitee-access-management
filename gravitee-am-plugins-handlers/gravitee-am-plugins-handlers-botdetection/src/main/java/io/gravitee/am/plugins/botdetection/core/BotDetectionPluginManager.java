@@ -15,25 +15,60 @@
  */
 package io.gravitee.am.plugins.botdetection.core;
 
+import io.gravitee.am.botdetection.api.BotDetection;
+import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
 import io.gravitee.am.botdetection.api.BotDetectionProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BotDetectionPluginManager {
+public class BotDetectionPluginManager
+        extends ProviderPluginManager<BotDetection, BotDetectionProvider, ProviderConfiguration>
+        implements AmPluginManager<BotDetection> {
 
-    void register(BotDetectionDefinition definition);
+    private final static Logger logger = LoggerFactory.getLogger(BotDetectionPluginManager.class);
+    private final ConfigurationFactory<BotDetectionConfiguration> botDetectionConfigurationFactory;
 
-    Collection<Plugin> getAll();
+    public BotDetectionPluginManager(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<BotDetectionConfiguration> botDetectionConfigurationFactory) {
+        super(pluginContextFactory);
+        this.botDetectionConfigurationFactory = botDetectionConfigurationFactory;
+    }
 
-    Plugin findById(String pluginId);
+    @Override
+    public BotDetectionProvider create(ProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for a bot detection for [{}]", providerConfiguration.getType());
+        var botDetection = instances.get(providerConfiguration.getType());
 
-    BotDetectionProvider create(String type, String configuration);
+        if (botDetection != null) {
+            var configurationClass = botDetection.configuration();
+            var botDetectionConfiguration = botDetectionConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
 
-    String getSchema(String pluginId) throws IOException;
+            return createProvider(
+                    plugins.get(botDetection),
+                    botDetection.botDetectionProvider(),
+                    List.of(new BotDetectionConfigurationBeanFactoryPostProcessor(botDetectionConfiguration)));
+        } else {
+            logger.error("No bot detection is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No bot detection is registered for type " + providerConfiguration.getType());
+        }
+    }
+
+    private static class BotDetectionConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<BotDetectionConfiguration> {
+        private BotDetectionConfigurationBeanFactoryPostProcessor(BotDetectionConfiguration bean) {
+            super("configuration", bean);
+        }
+    }
 }

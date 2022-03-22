@@ -24,11 +24,24 @@ import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Single;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.List;
+import javax.annotation.Priority;
+import javax.inject.Named;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -43,20 +56,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
-
-import javax.annotation.Priority;
-import javax.inject.Named;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -287,8 +286,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public CertificatePluginManager certificatePluginManager() {
-            return mock(CertificatePluginManager.class);
+        public AmPluginManager<CertificateManager> certificatePluginManager() {
+            return mock(AmPluginManager.class);
         }
 
         @Bean

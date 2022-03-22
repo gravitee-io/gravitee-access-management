@@ -24,7 +24,7 @@ import java.util.List;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EnrichProfilePolicyConfiguration  implements PolicyConfiguration {
+public class EnrichProfilePolicyConfiguration implements PolicyConfiguration {
 
     private List<Property> properties = new ArrayList<>();
 

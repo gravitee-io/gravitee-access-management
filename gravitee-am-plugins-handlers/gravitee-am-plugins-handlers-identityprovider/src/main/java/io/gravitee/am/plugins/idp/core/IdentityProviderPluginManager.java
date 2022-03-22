@@ -16,38 +16,117 @@
 package io.gravitee.am.plugins.idp.core;
 
 import io.gravitee.am.certificate.api.CertificateManager;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.identityprovider.api.UserProvider;
+import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.common.service.Service;
 import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Map;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import io.vertx.reactivex.core.Vertx;
+import java.util.*;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.Import;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface IdentityProviderPluginManager {
+public abstract class IdentityProviderPluginManager extends
+        ProviderPluginManager<IdentityProvider, AuthenticationProvider, AuthenticationProviderConfiguration>
+        implements AmPluginManager<IdentityProvider> {
 
-    void register(IdentityProviderDefinition identityProviderPluginDefinition);
-
-    Map<IdentityProvider, Plugin> getAll();
-
-    Plugin findById(String identityProviderId);
-
-    AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager);
-
-    UserProvider create(String type, String configuration);
-
-    boolean hasUserProvider(String pluginType);
-
-    String getSchema(String identityProviderId) throws IOException;
-
-    default AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper) {
-        return create(type, configuration, mappers, roleMapper, null);
+    protected IdentityProviderPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
     }
 
-    String getIcon(String identityProviderId) throws IOException;
+    public Map<IdentityProvider, Plugin> getAllEntries() {
+        return this.plugins;
+    }
+
+    public abstract boolean hasUserProvider(String pluginType);
+
+    public abstract UserProvider create(String type, String configuration);
+
+    protected UserProvider createUserProvider(
+            Plugin plugin,
+            Class<? extends UserProvider> providerClass,
+            List<BeanFactoryPostProcessor> beanFactoryPostProcessors) throws Exception {
+        if (providerClass == null) {
+            return null;
+        }
+
+        UserProvider provider = createInstance(providerClass);
+        final Import annImport = providerClass.getAnnotation(Import.class);
+        Set<Class<?>> configurations = (annImport != null) ?
+                new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
+
+        ApplicationContext pluginApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
+            @Override
+            public Set<Class<?>> configurations() {
+                return configurations;
+            }
+
+            @Override
+            public ConfigurableApplicationContext applicationContext() {
+                ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
+                beanFactoryPostProcessors.forEach(configurableApplicationContext::addBeanFactoryPostProcessor);
+                return configurableApplicationContext;
+            }
+        });
+
+        pluginApplicationContext.getAutowireCapableBeanFactory().autowireBean(provider);
+
+        if (provider instanceof InitializingBean) {
+            ((InitializingBean) provider).afterPropertiesSet();
+        }
+
+        if (provider instanceof Service) {
+            ((Service) provider).start();
+        }
+
+        return provider;
+    }
+
+    protected static class IdentityProviderConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<IdentityProviderConfiguration> {
+        public IdentityProviderConfigurationBeanFactoryPostProcessor(IdentityProviderConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
+
+    protected static class CertificateManagerBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateManager> {
+        public CertificateManagerBeanFactoryPostProcessor(CertificateManager certificateManager) {
+            super("certificateManager", certificateManager);
+        }
+    }
+
+    protected static class IdentityProviderMapperBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<IdentityProviderMapper> {
+        public IdentityProviderMapperBeanFactoryPostProcessor(IdentityProviderMapper mapper) {
+            super("mapper", mapper);
+        }
+    }
+
+    protected static class IdentityProviderRoleMapperBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<IdentityProviderRoleMapper> {
+        public IdentityProviderRoleMapperBeanFactoryPostProcessor(IdentityProviderRoleMapper roleMapper) {
+            super("roleMapper", roleMapper);
+        }
+    }
+
+    protected static class PropertiesBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<Properties> {
+        public PropertiesBeanFactoryPostProcessor(Properties properties) {
+            super("graviteeProperties", properties);
+        }
+    }
+
+    protected static class VertxBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<Vertx> {
+        public VertxBeanFactoryPostProcessor(Vertx vertx) {
+            super("vertx", vertx);
+        }
+    }
 }

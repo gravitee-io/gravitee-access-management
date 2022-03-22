@@ -25,6 +25,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
@@ -43,6 +44,7 @@ public class CertificatePluginServiceImpl implements CertificatePluginService {
     private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginServiceImpl.class);
 
     @Autowired
+    @Qualifier("certificatePluginManager")
     private CertificatePluginManager certificatePluginManager;
 
     @Override
