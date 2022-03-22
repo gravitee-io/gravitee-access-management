@@ -24,15 +24,15 @@ import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
-import io.gravitee.am.plugins.botdetection.spring.BotDetectionConfiguration;
-import io.gravitee.am.plugins.certificate.spring.CertificateConfiguration;
-import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantConfiguration;
-import io.gravitee.am.plugins.factor.spring.FactorConfiguration;
-import io.gravitee.am.plugins.idp.spring.IdentityProviderConfiguration;
-import io.gravitee.am.plugins.policy.spring.PolicyConfiguration;
-import io.gravitee.am.plugins.protocol.spring.ProtocolConfiguration;
-import io.gravitee.am.plugins.reporter.spring.ReporterConfiguration;
-import io.gravitee.am.plugins.resource.spring.ResourceConfiguration;
+import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
+import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
+import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
+import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
+import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
+import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
+import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
+import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
+import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.container.NodeFactory;
 import io.gravitee.node.vertx.spring.VertxConfiguration;
@@ -40,7 +40,6 @@ import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.gravitee.plugin.alert.spring.AlertPluginConfiguration;
 import io.gravitee.plugin.core.spring.PluginConfiguration;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.DatabindCodec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -57,16 +56,16 @@ import org.springframework.context.annotation.Import;
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
         PluginConfiguration.class,
-        IdentityProviderConfiguration.class,
-        CertificateConfiguration.class,
-        ExtensionGrantConfiguration.class,
-        ReporterConfiguration.class,
-        ProtocolConfiguration.class,
-        PolicyConfiguration.class,
+        IdentityProviderSpringConfiguration.class,
+        CertificateSpringConfiguration.class,
+        ExtensionGrantSpringConfiguration.class,
+        ReporterSpringConfiguration.class,
+        ProtocolSpringConfiguration.class,
+        PolicySpringConfiguration.class,
         AlertPluginConfiguration.class,
-        FactorConfiguration.class,
-        ResourceConfiguration.class,
-        BotDetectionConfiguration.class
+        FactorSpringConfiguration.class,
+        ResourceSpringConfiguration.class,
+        BotDetectionSpringConfiguration.class
 })
 public class StandaloneConfiguration {
 

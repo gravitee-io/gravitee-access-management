@@ -13,27 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.gravitee.am.plugins.botdetection.core;
 
+import io.gravitee.am.botdetection.api.BotDetection;
+import io.gravitee.am.botdetection.api.BotDetectionConfiguration;
 import io.gravitee.am.botdetection.api.BotDetectionProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface BotDetectionPluginManager {
+public abstract class BotDetectionPluginManager
+        extends ProviderPluginManager<BotDetection, BotDetectionProvider, ProviderConfiguration>
+        implements AMPluginManager<BotDetection> {
 
-    void register(BotDetectionDefinition definition);
+    public BotDetectionPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Collection<Plugin> getAll();
-
-    Plugin findById(String pluginId);
-
-    BotDetectionProvider create(String type, String configuration);
-
-    String getSchema(String pluginId) throws IOException;
+    protected static class BotDetectionConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<BotDetectionConfiguration> {
+        public BotDetectionConfigurationBeanFactoryPostProcessor(BotDetectionConfiguration bean) {
+            super("configuration", bean);
+        }
+    }
 }

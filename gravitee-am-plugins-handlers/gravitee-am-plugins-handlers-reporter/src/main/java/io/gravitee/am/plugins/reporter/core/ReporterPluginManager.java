@@ -16,25 +16,35 @@
 package io.gravitee.am.plugins.reporter.core;
 
 import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.reporter.api.Reporter;
+import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterPluginManager {
+public abstract class ReporterPluginManager
+        extends ProviderPluginManager<Reporter, io.gravitee.am.reporter.api.provider.Reporter, ReporterProviderConfiguration>
+        implements AMPluginManager<Reporter> {
 
-    void register(ReporterDefinition reporterDefinition);
+    protected ReporterPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Reporter create(String type, String configuration, GraviteeContext context);
 
-    Collection<Plugin> getAll();
+    protected static class GraviteeContextBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<GraviteeContext> {
+        public GraviteeContextBeanFactoryPostProcessor(GraviteeContext context) {
+            super("graviteeContext", context);
+        }
+    }
 
-    Plugin findById(String reporterId);
-
-    String getSchema(String reporterId) throws IOException;
+    protected static class ReporterConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ReporterConfiguration> {
+        public ReporterConfigurationBeanFactoryPostProcessor(ReporterConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

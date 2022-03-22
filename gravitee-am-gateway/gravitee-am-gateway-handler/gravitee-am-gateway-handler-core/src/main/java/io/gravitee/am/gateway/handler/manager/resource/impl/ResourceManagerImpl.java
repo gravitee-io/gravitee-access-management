@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.resource.core.ResourcePluginManager;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.service.FactorService;
@@ -97,7 +98,8 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
-                            ResourceProvider provider = resourcePluginManager.create(res.getType(), res.getConfiguration());
+                            var providerConfiguration = new ProviderConfiguration(res.getType(), res.getConfiguration());
+                            ResourceProvider provider = resourcePluginManager.create(providerConfiguration);
                             provider.start();
                             resourceProviders.put(res.getId(), provider);
                             logger.info("Resource {} loaded for domain {}", res.getName(), domain.getName());
@@ -130,7 +132,7 @@ public class ResourceManagerImpl extends AbstractService implements ResourceMana
     private void loadResource(String resourceId) {
         resourceService.findById(resourceId)
                 .switchIfEmpty(Maybe.error(new ResourceNotFoundException("Resource " + resourceId + " not found")))
-                .map(res -> resourcePluginManager.create(res.getType(), res.getConfiguration()))
+                .map(res -> resourcePluginManager.create(new ProviderConfiguration(res.getType(), res.getConfiguration())))
                 .subscribe(
                         provider -> {
                             provider.start();

@@ -33,8 +33,9 @@
     <dependencies>
         <!-- Gravitee.io -->
         <dependency>
-            <groupId>io.gravitee.plugin</groupId>
-            <artifactId>gravitee-plugin-core</artifactId>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -43,10 +44,5 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Jackson libraries -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
     </dependencies>
 </project>

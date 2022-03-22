@@ -25,6 +25,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.common.event.Event;
@@ -152,9 +153,14 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
             // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper(), certificateManager);
+            var authProviderConfig = new AuthenticationProviderConfiguration(
+                    identityProvider.getType(),
+                    identityProvider.getConfiguration(),
+                    identityProvider.getMappers(),
+                    identityProvider.getRoleMapper(),
+                    certificateManager
+            );
+            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();

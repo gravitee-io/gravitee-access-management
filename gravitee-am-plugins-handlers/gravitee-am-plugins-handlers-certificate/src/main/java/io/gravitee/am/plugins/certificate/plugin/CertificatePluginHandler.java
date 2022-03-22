@@ -16,30 +16,20 @@
 package io.gravitee.am.plugins.certificate.plugin;
 
 import io.gravitee.am.certificate.api.Certificate;
-import io.gravitee.am.plugins.certificate.core.CertificateDefinition;
-import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.am.plugins.handlers.api.plugin.AMPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificatePluginHandler extends AbstractPluginHandler {
+public class CertificatePluginHandler extends AMPluginHandler<Certificate> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(CertificatePluginHandler.class);
-
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private CertificatePluginManager certificatePluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -47,17 +37,13 @@ public class CertificatePluginHandler extends AbstractPluginHandler {
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new certificate plugin: {} [{}]", plugin.id(), plugin.clazz());
+    protected Logger getLogger() {
+        return LOGGER;
+    }
 
-            Assert.isAssignable(Certificate.class, pluginClass);
-
-            var certificate = createInstance((Class<Certificate>) pluginClass);
-            certificatePluginManager.register(new CertificateDefinition(certificate, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create certificate instance", iae);
-        }
+    @Override
+    protected Class<Certificate> getClazz() {
+        return Certificate.class;
     }
 
     @Override
@@ -65,17 +51,4 @@ public class CertificatePluginHandler extends AbstractPluginHandler {
         return PluginType.CERTIFICATE.name();
     }
 
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return  pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
-    }
 }

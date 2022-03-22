@@ -22,21 +22,21 @@ import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -138,9 +138,13 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
             // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper());
+            var authProviderConfig = new AuthenticationProviderConfiguration(
+                    identityProvider.getType(),
+                    identityProvider.getConfiguration(),
+                    identityProvider.getMappers(),
+                    identityProvider.getRoleMapper()
+            );
+            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();

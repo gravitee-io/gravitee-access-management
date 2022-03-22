@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
@@ -205,7 +206,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     private void startReporterProvider(Reporter reporter, GraviteeContext context) {
         if (reporter.isEnabled()) {
             logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
+            var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
+            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 
             if (reporterProvider != null) {
                 try {

@@ -15,20 +15,20 @@
  */
 package io.gravitee.am.management.service.impl.plugins;
 
+import io.gravitee.am.botdetection.api.BotDetection;
 import io.gravitee.am.management.service.BotDetectionPluginService;
-import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.BotDetectionPlugin;
 import io.gravitee.plugin.core.api.Plugin;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -39,8 +39,12 @@ public class BotDetectionPluginServiceImpl implements BotDetectionPluginService 
 
     private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginServiceImpl.class);
 
+    private final AMPluginManager<BotDetection> pluginManager;
+
     @Autowired
-    private BotDetectionPluginManager pluginManager;
+    public BotDetectionPluginServiceImpl(AMPluginManager<BotDetection> pluginManager) {
+        this.pluginManager = pluginManager;
+    }
 
     @Override
     public Single<List<BotDetectionPlugin>> findAll() {

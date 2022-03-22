@@ -15,16 +15,22 @@
  */
 package io.gravitee.am.plugins.protocol.core;
 
+import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import org.springframework.context.ApplicationContext;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ProtocolPluginManager {
+public abstract class ProtocolPluginManager
+        extends ProviderPluginManager<Protocol, ProtocolProvider, ProtocolProviderConfiguration>
+        implements AMPluginManager<Protocol> {
 
-    void register(ProtocolDefinition protocolDefinition);
-
-    ProtocolProvider create(String type, ApplicationContext parentContext);
+    protected ProtocolPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 }

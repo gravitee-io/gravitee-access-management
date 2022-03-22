@@ -22,11 +22,8 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.NoJWTBuilder;
 import io.gravitee.am.jwt.NoJWTParser;
 import io.gravitee.am.model.Certificate;
-import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
+import io.gravitee.am.plugins.certificate.core.impl.CertificatePluginManagerImpl;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -34,6 +31,9 @@ import java.security.PublicKey;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -45,7 +45,7 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
     private final ConcurrentMap<String, CertificateProvider> certificateProviders = new ConcurrentHashMap<>();
 
     @Autowired
-    private CertificatePluginManager certificatePluginManager;
+    private CertificatePluginManagerImpl certificatePluginManager;
 
     @Override
     public void create(Certificate certificate) {
@@ -102,7 +102,8 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
 
     private void deploy(Certificate certificate) {
         // create underline provider
-        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+        var providerConfig = new CertificateProviderConfiguration(certificate);
+        io.gravitee.am.certificate.api.CertificateProvider provider = certificatePluginManager.create(providerConfig);
         // create certificate provider
         if (provider != null) {
             CertificateProvider certificateProvider = create(provider);

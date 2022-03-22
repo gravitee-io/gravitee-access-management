@@ -34,7 +34,6 @@ public class IdentityProviderRoleMapperFactoryImpl implements IdentityProviderRo
     public <T extends IdentityProviderRoleMapper> T create(Class<T> clazz, Map<String, String[]> roles) {
         if (clazz != null) {
             logger.debug("Create a new instance of identity provider roles for class: {}", clazz.getName());
-
             try {
                 T identityProviderRoleMapper = clazz.newInstance();
                 identityProviderRoleMapper.setRoles(roles);
@@ -44,7 +43,6 @@ public class IdentityProviderRoleMapperFactoryImpl implements IdentityProviderRo
                 logger.error("Unable to create an identity provider roles", ex);
             }
         }
-
         return null;
     }
 }

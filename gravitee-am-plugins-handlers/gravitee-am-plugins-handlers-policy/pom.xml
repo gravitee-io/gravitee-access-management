@@ -42,10 +42,10 @@
             <artifactId>gravitee-plugin-policy</artifactId>
         </dependency>
 
-        <!-- Jackson libraries -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 </project>

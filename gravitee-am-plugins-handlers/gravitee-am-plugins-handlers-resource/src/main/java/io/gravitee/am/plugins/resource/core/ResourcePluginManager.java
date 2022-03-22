@@ -15,27 +15,30 @@
  */
 package io.gravitee.am.plugins.resource.core;
 
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.am.resource.api.Resource;
+import io.gravitee.am.resource.api.ResourceConfiguration;
 import io.gravitee.am.resource.api.ResourceProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ResourcePluginManager {
+public abstract class ResourcePluginManager
+        extends ProviderPluginManager<Resource, ResourceProvider, ProviderConfiguration>
+        implements AMPluginManager<Resource> {
 
-    void register(ResourceDefinition resourceDefinition);
+    protected ResourcePluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Collection<Plugin> getAll();
-
-    Plugin findById(String resourceId);
-
-    ResourceProvider create(String type, String configuration);
-
-    String getSchema(String resourceId) throws IOException;
-
-    String getIcon(String resourceId) throws IOException;
+    protected class ResourceConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ResourceConfiguration> {
+        public ResourceConfigurationBeanFactoryPostProcessor(ResourceConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

@@ -16,67 +16,33 @@
 package io.gravitee.am.plugins.botdetection.plugin;
 
 import io.gravitee.am.botdetection.api.BotDetection;
-import io.gravitee.am.plugins.botdetection.core.BotDetectionDefinition;
-import io.gravitee.am.plugins.botdetection.core.BotDetectionPluginManager;
-import io.gravitee.plugin.core.api.AbstractPluginHandler;
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.am.plugins.handlers.api.plugin.AMPluginHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class BotDetectionPluginHandler extends AbstractPluginHandler {
+public class BotDetectionPluginHandler extends AMPluginHandler<BotDetection> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginHandler.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(BotDetectionPluginHandler.class);
+
     public static final String PLUGIN_TYPE_BOT_DETECTION = "BOT_DETECTION";
 
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private BotDetectionPluginManager pluginManager;
-
     @Override
-    public boolean canHandle(Plugin plugin) {
-        return type().equalsIgnoreCase(plugin.type());
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new bot detection plugin: {} [{}]", plugin.id(), plugin.clazz());
-
-            Assert.isAssignable(BotDetection.class, pluginClass);
-
-            var botDetection = createInstance((Class<BotDetection>) pluginClass);
-
-            pluginManager.register(new BotDetectionDefinition(botDetection, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create bot detection instance", iae);
-        }
+    protected Class<BotDetection> getClazz() {
+        return BotDetection.class;
     }
 
     @Override
     protected String type() {
         return PLUGIN_TYPE_BOT_DETECTION;
-    }
-
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
     }
 }

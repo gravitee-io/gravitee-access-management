@@ -13,28 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.gravitee.am.plugins.certificate.core;
 
+import io.gravitee.am.certificate.api.Certificate;
+import io.gravitee.am.certificate.api.CertificateConfiguration;
+import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CertificatePluginManager {
+public abstract class CertificatePluginManager
+        extends ProviderPluginManager<Certificate, CertificateProvider, CertificateProviderConfiguration>
+        implements AMPluginManager<Certificate> {
 
-    void register(CertificateDefinition certificatePluginDefinition);
+    protected CertificatePluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Collection<Plugin> getAll();
+    protected static class CertificateMetadataBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateMetadata> {
 
-    Plugin findById(String certificateId);
+        public CertificateMetadataBeanFactoryPostProcessor(CertificateMetadata metadata) {
+            super("metadata", metadata);
+        }
+    }
 
-    CertificateProvider create(String type, String configuration, Map<String, Object> metadata);
+    protected static class CertificateConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<CertificateConfiguration> {
 
-    String getSchema(String certificateId) throws IOException;
+        public CertificateConfigurationBeanFactoryPostProcessor(CertificateConfiguration configuration) {
+            super("configuration", configuration);
+        }
+
+    }
 }

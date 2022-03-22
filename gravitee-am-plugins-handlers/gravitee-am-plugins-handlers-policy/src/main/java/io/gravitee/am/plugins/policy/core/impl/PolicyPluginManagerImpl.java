@@ -20,7 +20,7 @@ import io.gravitee.am.gateway.policy.Policy;
 import io.gravitee.am.gateway.policy.PolicyMetadata;
 import io.gravitee.am.gateway.policy.impl.PolicyImpl;
 import io.gravitee.am.gateway.policy.impl.PolicyMetadataBuilder;
-import io.gravitee.am.plugins.policy.core.PolicyConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.plugin.core.api.ConfigurablePluginManager;
 import io.gravitee.plugin.core.api.PluginClassLoader;
@@ -30,19 +30,18 @@ import io.gravitee.plugin.policy.internal.PolicyMethodResolver;
 import io.gravitee.policy.api.PolicyConfiguration;
 import io.gravitee.policy.api.PolicyContext;
 import io.gravitee.policy.api.PolicyContextProviderAware;
-import org.reflections.ReflectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.ClassUtils;
-
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.reflections.ReflectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.ClassUtils;
 
 import static org.reflections.ReflectionUtils.withModifier;
 import static org.reflections.ReflectionUtils.withParametersCount;
@@ -67,7 +66,7 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
     private ConfigurablePluginManager<PolicyPlugin> pluginManager;
 
     @Autowired
-    private PolicyConfigurationFactory policyConfigurationFactory;
+    private ConfigurationFactory<PolicyConfiguration> policyConfigurationFactory;
 
     @Autowired
     private PluginClassLoaderFactory pluginClassLoaderFactory;
@@ -106,8 +105,9 @@ public class PolicyPluginManagerImpl implements PolicyPluginManager {
             try {
                 // create policy configuration
                 PluginClassLoader pluginClassLoader = pluginClassLoaderFactory.getOrCreateClassLoader(policyPlugin);
-                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>) ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
-                PolicyConfiguration policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
+                Class<? extends PolicyConfiguration> configurationClass = (Class<? extends PolicyConfiguration>)
+                        ClassUtils.forName(policyPlugin.configuration().getName(), pluginClassLoader);
+                var policyConfiguration = policyConfigurationFactory.create(configurationClass, configuration);
 
                 // create policy instance
                 Object policyInst;

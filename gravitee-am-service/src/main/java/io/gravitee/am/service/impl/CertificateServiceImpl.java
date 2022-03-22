@@ -29,7 +29,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.plugins.certificate.core.CertificateSchema;
+import io.gravitee.am.plugins.certificate.core.schema.CertificateSchema;
 import io.gravitee.am.repository.management.api.CertificateRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.CertificateNotFoundException;

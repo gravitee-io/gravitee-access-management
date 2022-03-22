@@ -19,157 +19,59 @@ import io.gravitee.am.certificate.api.Certificate;
 import io.gravitee.am.certificate.api.CertificateConfiguration;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.CertificateProvider;
-import io.gravitee.am.plugins.certificate.core.CertificateConfigurationFactory;
-import io.gravitee.am.plugins.certificate.core.CertificateDefinition;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
-import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificatePluginManagerImpl implements CertificatePluginManager {
+public class CertificatePluginManagerImpl extends CertificatePluginManager  {
 
     private final Logger logger = LoggerFactory.getLogger(CertificatePluginManagerImpl.class);
-    private final static String SCHEMAS_DIRECTORY = "schemas";
-    private final Map<String, Certificate> certificates = new HashMap<>();
-    private final Map<Certificate, Plugin> certificatePlugins = new HashMap<>();
+
+    private final ConfigurationFactory<CertificateConfiguration> certificateConfigurationFactory;
 
     @Autowired
-    private PluginContextFactory pluginContextFactory;
-
-    @Autowired
-    private CertificateConfigurationFactory certificateConfigurationFactory;
-
-    @Override
-    public void register(CertificateDefinition certificatePluginDefinition) {
-        certificates.putIfAbsent(certificatePluginDefinition.getPlugin().id(),
-                certificatePluginDefinition.getCertificate());
-
-        certificatePlugins.putIfAbsent(certificatePluginDefinition.getCertificate(),
-                certificatePluginDefinition.getPlugin());
+    public CertificatePluginManagerImpl(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<CertificateConfiguration> certificateConfigurationFactory
+    ) {
+        super(pluginContextFactory);
+        this.certificateConfigurationFactory = certificateConfigurationFactory;
     }
 
     @Override
-    public Collection<Plugin> getAll() {
-        return certificatePlugins.values();
-    }
-
-    @Override
-    public Plugin findById(String certificateId) {
-        Certificate certificate = certificates.get(certificateId);
-        return (certificate != null) ? certificatePlugins.get(certificate) : null;
-    }
-
-    @Override
-    public CertificateProvider create(String type, String configuration, Map<String, Object> metadata) {
-        logger.debug("Looking for a certificate provider for [{}]", type);
-        Certificate certificate = certificates.get(type);
+    public CertificateProvider create(CertificateProviderConfiguration providerConfig) {
+        logger.debug("Looking for a certificate provider for [{}]", providerConfig.getType());
+        Certificate certificate = instances.get(providerConfig.getType());
 
         if (certificate != null) {
             Class<? extends CertificateConfiguration> configurationClass = certificate.configuration();
-            CertificateConfiguration certificateConfiguration = certificateConfigurationFactory.create(configurationClass, configuration);
+            var certificateConfiguration = certificateConfigurationFactory.create(configurationClass, providerConfig.getConfiguration());
 
             CertificateMetadata certificateMetadata = new CertificateMetadata();
-            certificateMetadata.setMetadata(metadata);
+            certificateMetadata.setMetadata(providerConfig.getMetadata());
 
-            return create0(
-                    certificatePlugins.get(certificate),
+            return createProvider(
+                    plugins.get(certificate),
                     certificate.certificateProvider(),
-                    certificateConfiguration,
-                    certificateMetadata);
+                    List.of(
+                            new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration),
+                            new CertificateMetadataBeanFactoryPostProcessor(certificateMetadata)
+                    )
+            );
         } else {
-            logger.error("No certificate provider is registered for type {}", type);
-            throw new IllegalStateException("No certificate provider is registered for type " + type);
-        }
-    }
-
-    @Override
-    public String getSchema(String certificateId) throws IOException {
-        Certificate certificate = certificates.get(certificateId);
-        Path policyWorkspace = certificatePlugins.get(certificate).path();
-
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
-
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
-
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
-            }
-        }
-
-        return null;
-    }
-
-    private <T> T create0(Plugin plugin, Class<T> certificateClass, CertificateConfiguration certificateConfiguration, CertificateMetadata metadata) {
-        if (certificateClass == null) {
-            return null;
-        }
-
-        try {
-            T certificateObj = createInstance(certificateClass);
-            final Import annImport = certificateClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
-
-            ApplicationContext idpApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
-                }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add certificate configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new CertificateConfigurationBeanFactoryPostProcessor(certificateConfiguration));
-
-                    // Add certificate metadata bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new CertificateMetadataBeanFactoryPostProcessor(metadata));
-
-                    return configurableApplicationContext;
-                }
-            });
-
-            idpApplicationContext.getAutowireCapableBeanFactory().autowireBean(certificateObj);
-
-            if (certificateObj instanceof InitializingBean) {
-                ((InitializingBean) certificateObj).afterPropertiesSet();
-            }
-
-            return certificateObj;
-        } catch (Exception ex) {
-            logger.error("An unexpected error occurs while loading certificate", ex);
-            return null;
-        }
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            logger.error("Unable to instantiate class: {}", ex);
-            throw ex;
+            logger.error("No certificate provider is registered for type {}", providerConfig.getType());
+            throw new IllegalStateException("No certificate provider is registered for type " + providerConfig.getType());
         }
     }
 }

@@ -15,26 +15,30 @@
  */
 package io.gravitee.am.plugins.factor.core;
 
+import io.gravitee.am.factor.api.Factor;
+import io.gravitee.am.factor.api.FactorConfiguration;
 import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface FactorPluginManager {
+public abstract class FactorPluginManager
+        extends ProviderPluginManager<Factor, FactorProvider, ProviderConfiguration>
+        implements AMPluginManager<Factor> {
 
-    void register(FactorDefinition factorDefinition);
+    protected FactorPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Collection<Plugin> getAll();
-
-    Plugin findById(String factorId);
-
-    FactorProvider create(String type, String configuration);
-
-    String getSchema(String factorId) throws IOException;
-
+    protected static class FactorConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<FactorConfiguration> {
+        public FactorConfigurationBeanFactoryPostProcessor(FactorConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

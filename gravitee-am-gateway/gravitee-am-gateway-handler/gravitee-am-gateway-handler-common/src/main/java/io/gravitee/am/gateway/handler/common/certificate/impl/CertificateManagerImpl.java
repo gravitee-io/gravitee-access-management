@@ -160,7 +160,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     @Override
     public Maybe<CertificateProvider> findByAlgorithm(String algorithm) {
 
-        if(algorithm==null || algorithm.trim().isEmpty()) {
+        if (algorithm == null || algorithm.trim().isEmpty()) {
             return Maybe.empty();
         }
 
@@ -168,12 +168,12 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
                 .providers()
                 .stream()
                 .filter(certificateProvider ->
-                        certificateProvider!=null && certificateProvider.getProvider()!=null &&
-                        algorithm.equals(certificateProvider.getProvider().signatureAlgorithm())
+                        certificateProvider != null && certificateProvider.getProvider() != null &&
+                                algorithm.equals(certificateProvider.getProvider().signatureAlgorithm())
                 )
                 .findFirst();
 
-        return certificate.isPresent()?Maybe.just(certificate.get()):Maybe.empty();
+        return certificate.map(Maybe::just).orElseGet(Maybe::empty);
     }
 
     @Override

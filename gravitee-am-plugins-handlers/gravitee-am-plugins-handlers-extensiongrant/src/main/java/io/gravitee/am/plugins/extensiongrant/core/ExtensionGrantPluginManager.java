@@ -15,26 +15,37 @@
  */
 package io.gravitee.am.plugins.extensiongrant.core;
 
+
+import io.gravitee.am.extensiongrant.api.ExtensionGrant;
+import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AMPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ExtensionGrantPluginManager {
+public abstract class ExtensionGrantPluginManager
+        extends ProviderPluginManager<ExtensionGrant, ExtensionGrantProvider, ExtensionGrantProviderConfiguration>
+        implements AMPluginManager<ExtensionGrant> {
 
-    void register(ExtensionGrantDefinition extensionGrantDefinition);
+    protected ExtensionGrantPluginManager(PluginContextFactory pluginContextFactory) {
+        super(pluginContextFactory);
+    }
 
-    Collection<Plugin> getAll();
+    protected static class ExtensionGrantConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ExtensionGrantConfiguration> {
+        public ExtensionGrantConfigurationBeanFactoryPostProcessor(ExtensionGrantConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 
-    Plugin findById(String identityProviderId);
-
-    ExtensionGrantProvider create(String type, String configuration, AuthenticationProvider authenticationProvider);
-
-    String getSchema(String tokenGranterId) throws IOException;
+    protected static class ExtensionGrantIdentityProviderFactoryPostProcessor extends NamedBeanFactoryPostProcessor<AuthenticationProvider> {
+        public ExtensionGrantIdentityProviderFactoryPostProcessor(AuthenticationProvider authenticationProvider) {
+            super("authenticationProvider", authenticationProvider);
+        }
+    }
 }

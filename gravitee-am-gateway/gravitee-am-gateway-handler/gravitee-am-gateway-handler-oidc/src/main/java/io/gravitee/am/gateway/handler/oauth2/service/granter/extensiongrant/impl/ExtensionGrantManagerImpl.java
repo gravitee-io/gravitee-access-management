@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.imp
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ExtensionGrantEvent;
-import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.user.UserService;
@@ -33,20 +32,20 @@ import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantPluginManager;
+import io.gravitee.am.plugins.extensiongrant.core.ExtensionGrantProviderConfiguration;
 import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -166,7 +165,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     logger.info("\tExtension grant identity provider: {}, loaded", extensionGrant.getIdentityProvider());
                 }
             }
-            ExtensionGrantProvider extensionGrantProvider = extensionGrantPluginManager.create(extensionGrant.getType(), extensionGrant.getConfiguration(), authenticationProvider);
+
+            var providerConfiguration = new ExtensionGrantProviderConfiguration(extensionGrant, authenticationProvider);
+            var extensionGrantProvider = extensionGrantPluginManager.create(providerConfiguration);
             ExtensionGrantGranter extensionGrantGranter = new ExtensionGrantGranter(extensionGrantProvider, extensionGrant,
                     userAuthenticationManager, tokenService, tokenRequestResolver, identityProviderManager, userService);
             // backward compatibility, set min date to the extension grant granter to choose the good one for the old clients

@@ -17,60 +17,55 @@ package io.gravitee.am.plugins.protocol.core.impl;
 
 import io.gravitee.am.gateway.handler.api.Protocol;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
-import io.gravitee.am.plugins.protocol.core.ProtocolDefinition;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
+import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
+import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.env.ConfigurableEnvironment;
-
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ProtocolPluginManagerImpl implements ProtocolPluginManager {
+public class ProtocolPluginManagerImpl extends ProtocolPluginManager {
 
     private static final Logger logger = LoggerFactory.getLogger(ProtocolPluginManagerImpl.class);
-    private final Map<String, Protocol> protocols = new HashMap<>();
-    private final Map<Protocol, Plugin> protocolPlugins = new HashMap<>();
+    private final PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Override
-    public void register(ProtocolDefinition protocolDefinition) {
-        protocols.putIfAbsent(protocolDefinition.getPlugin().id(),
-                protocolDefinition.getProtocol());
-
-        protocolPlugins.putIfAbsent(protocolDefinition.getProtocol(),
-                protocolDefinition.getPlugin());
-
+    public ProtocolPluginManagerImpl(
+            PluginContextFactory pluginContextFactory,
+            PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory
+    ) {
+        super(pluginContextFactory);
+        this.pluginClassLoaderFactory = pluginClassLoaderFactory;
     }
 
     @Override
-    public ProtocolProvider create(String type, ApplicationContext parentContext) {
-        logger.debug("Looking for an protocol provider for [{}]", type);
-        Protocol protocol = protocols.get(type);
+    public ProtocolProvider create(ProtocolProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for an protocol provider for [{}]", providerConfiguration.getType());
+        Protocol protocol = instances.get(providerConfiguration.getType());
         if (protocol != null) {
             try {
                 ProtocolProvider protocolProvider = createInstance(protocol.protocolProvider());
-                Plugin plugin = protocolPlugins.get(protocol);
+                Plugin plugin = plugins.get(protocol);
+
+                final ApplicationContext parentContext = providerConfiguration.getApplicationContext();
+                final Environment environment = parentContext.getEnvironment();
 
                 AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
                 context.setParent(parentContext);
                 context.setClassLoader(pluginClassLoaderFactory.getOrCreateClassLoader(plugin));
-                context.setEnvironment((ConfigurableEnvironment) parentContext.getEnvironment());
+                context.setEnvironment((ConfigurableEnvironment) environment);
 
                 PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
                 configurer.setIgnoreUnresolvablePlaceholders(true);
@@ -92,17 +87,8 @@ public class ProtocolPluginManagerImpl implements ProtocolPluginManager {
                 return null;
             }
         } else {
-            logger.error("No protocol provider is registered for type {}", type);
-            throw new IllegalStateException("No protocol provider is registered for type " + type);
-        }
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            logger.error("Unable to instantiate class: {}", ex);
-            throw ex;
+            logger.error("No protocol provider is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No protocol provider is registered for type " + providerConfiguration.getType());
         }
     }
 }

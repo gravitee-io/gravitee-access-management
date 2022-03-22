@@ -15,164 +15,55 @@
  */
 package io.gravitee.am.plugins.reporter.core.impl;
 
-import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.plugins.reporter.core.ReporterConfigurationFactory;
-import io.gravitee.am.plugins.reporter.core.ReporterDefinition;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
-import io.gravitee.common.service.AbstractService;
-import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.Import;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ReporterPluginManagerImpl implements ReporterPluginManager {
+public class ReporterPluginManagerImpl extends ReporterPluginManager {
 
     private final Logger logger = LoggerFactory.getLogger(ReporterPluginManagerImpl.class);
 
-    private final static String SCHEMAS_DIRECTORY = "schemas";
-    private final Map<String, Reporter> reporters = new HashMap<>();
-    private final Map<Reporter, Plugin> reporterPlugins = new HashMap<>();
+    private final ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory;
 
-    @Autowired
-    private PluginContextFactory pluginContextFactory;
-
-    @Autowired
-    private ReporterConfigurationFactory reporterConfigurationFactory;
-
-    @Override
-    public void register(ReporterDefinition reporterDefinition) {
-        reporters.putIfAbsent(reporterDefinition.getPlugin().id(),
-                reporterDefinition.getReporter());
-
-        reporterPlugins.putIfAbsent(reporterDefinition.getReporter(),
-                reporterDefinition.getPlugin());
+    public ReporterPluginManagerImpl(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory
+    ) {
+        super(pluginContextFactory);
+        this.reporterConfigurationFactory = reporterConfigurationFactory;
     }
 
     @Override
-    public Collection<Plugin> getAll() {
-        return reporterPlugins.values();
-    }
-
-    @Override
-    public Plugin findById(String reporterId) {
-        Reporter reporter = reporters.get(reporterId);
-        return (reporter != null) ? reporterPlugins.get(reporter) : null;
-    }
-
-    @Override
-    public String getSchema(String reporterId) throws IOException {
-        Reporter reporter = reporters.get(reporterId);
-        Path policyWorkspace = reporterPlugins.get(reporter).path();
-
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
-
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
-
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
-            }
-        }
-
-        return null;
-    }
-
-    @Override
-    public io.gravitee.am.reporter.api.provider.Reporter create(String type, String configuration, GraviteeContext context) {
-        logger.debug("Looking for an reporter provider for [{}]", type);
-        Reporter reporter = reporters.get(type);
+    public io.gravitee.am.reporter.api.provider.Reporter create(ReporterProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for an reporter provider for [{}]", providerConfiguration.getType());
+        Reporter reporter = instances.get(providerConfiguration.getType());
 
         if (reporter != null) {
             Class<? extends ReporterConfiguration> configurationClass = reporter.configuration();
-            ReporterConfiguration reporterConfiguration = reporterConfigurationFactory.create(configurationClass, configuration);
-
-            return create0(reporterPlugins.get(reporter),
-                    reporter.auditReporter(),
-                    reporterConfiguration,
-                    context);
+            var reporterConfiguration = reporterConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
+            if (providerConfiguration.getGraviteeContext() != null) {
+                return createProvider(plugins.get(reporter), reporter.auditReporter(), List.of(
+                                new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
+                                new GraviteeContextBeanFactoryPostProcessor(providerConfiguration.getGraviteeContext())
+                        )
+                );
+            }
+            return createProvider(plugins.get(reporter), reporter.auditReporter(),
+                    List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration))
+            );
         } else {
-            logger.error("No reporter provider is registered for type {}", type);
-            throw new IllegalStateException("No reporter provider is registered for type " + type);
-        }
-    }
-
-
-    private <T> T create0(Plugin plugin, Class<T> auditReporterClass, ReporterConfiguration reporterConfiguration, GraviteeContext context) {
-        if (auditReporterClass == null) {
-            return null;
-        }
-
-        try {
-            T auditReporterObj = createInstance(auditReporterClass);
-            final Import annImport = auditReporterClass.getAnnotation(Import.class);
-            Set<Class<?>> configurations = (annImport != null) ?
-                    new HashSet<>(Arrays.asList(annImport.value())) : Collections.emptySet();
-
-            ApplicationContext reporterApplicationContext = pluginContextFactory.create(new AnnotationBasedPluginContextConfigurer(plugin) {
-                @Override
-                public Set<Class<?>> configurations() {
-                    return configurations;
-                }
-
-                @Override
-                public ConfigurableApplicationContext applicationContext() {
-                    ConfigurableApplicationContext configurableApplicationContext = super.applicationContext();
-
-                    // Add reporter configuration bean
-                    configurableApplicationContext.addBeanFactoryPostProcessor(
-                            new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration));
-
-                    // Add gravitee context bean to provide execution context information to the reporter.
-                    // this is useful for some reporter like the file-reporter
-                    if (context != null) {
-                        configurableApplicationContext.addBeanFactoryPostProcessor(
-                                new GraviteeContextBeanFactoryPostProcessor(context));
-                    }
-
-                    return configurableApplicationContext;
-                }
-            });
-
-            if (auditReporterObj instanceof AbstractService) {
-                ((AbstractService<?>) auditReporterObj).setApplicationContext(reporterApplicationContext);
-            }
-            reporterApplicationContext.getAutowireCapableBeanFactory().autowireBean(auditReporterObj);
-            if (auditReporterObj instanceof InitializingBean) {
-                ((InitializingBean) auditReporterObj).afterPropertiesSet();
-            }
-
-            return auditReporterObj;
-        } catch (Exception ex) {
-            logger.error("An unexpected error occurs while loading reporter", ex);
-            return null;
-        }
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            logger.error("Unable to instantiate class: {}", ex);
-            throw ex;
+            logger.error("No reporter provider is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No reporter provider is registered for type " + providerConfiguration.getType());
         }
     }
 }

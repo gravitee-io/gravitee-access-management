@@ -16,30 +16,20 @@
 package io.gravitee.am.plugins.idp.plugin;
 
 import io.gravitee.am.identityprovider.api.IdentityProvider;
-import io.gravitee.am.plugins.idp.core.IdentityProviderDefinition;
-import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
-import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.am.plugins.handlers.api.plugin.AMPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IdentityProviderPluginHandler extends AbstractPluginHandler {
+public class IdentityProviderPluginHandler extends AMPluginHandler<IdentityProvider> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
-
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private IdentityProviderPluginManager identityProviderPluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -47,36 +37,17 @@ public class IdentityProviderPluginHandler extends AbstractPluginHandler {
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new identity provider plugin: {} [{}]", plugin.id(), plugin.clazz());
+    protected Logger getLogger() {
+        return LOGGER;
+    }
 
-            Assert.isAssignable(IdentityProvider.class, pluginClass);
-
-            var identityIdentityProvider = createInstance((Class<IdentityProvider>) pluginClass);
-
-            identityProviderPluginManager.register(new IdentityProviderDefinition(identityIdentityProvider, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create identity provider instance", iae);
-        }
+    @Override
+    protected Class<IdentityProvider> getClazz() {
+        return IdentityProvider.class;
     }
 
     @Override
     protected String type() {
         return PluginType.IDENTITY_PROVIDER.name();
-    }
-
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, plugin.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
     }
 }
