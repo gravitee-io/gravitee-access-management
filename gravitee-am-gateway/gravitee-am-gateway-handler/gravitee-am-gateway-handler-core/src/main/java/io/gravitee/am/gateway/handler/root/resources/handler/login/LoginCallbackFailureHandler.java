@@ -121,7 +121,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
     private String getUri(RoutingContext context, MultiMap params) {
         Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
-        final String replacement = loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
+        final String replacement = loginSettings != null && loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
         final String path = context.request().path().replaceFirst("/callback", replacement);
         return UriBuilderRequest.resolveProxyRequest(context.request(), path, params);
     }
