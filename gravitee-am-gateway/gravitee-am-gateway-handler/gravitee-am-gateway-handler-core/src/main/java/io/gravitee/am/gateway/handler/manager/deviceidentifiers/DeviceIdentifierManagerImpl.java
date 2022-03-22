@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -53,8 +54,8 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierManagerImpl.class);
     public static final String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";
 
-    private ConcurrentMap<String, DeviceIdentifierProvider> providers = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, DeviceIdentifier> deviceIdentifiers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, DeviceIdentifierProvider> providers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, DeviceIdentifier> deviceIdentifiers = new ConcurrentHashMap<>();
 
     @Autowired
     private DeviceIdentifierService deviceIdentifierService;
@@ -135,7 +136,8 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
 
     private void updateDeviceIdentifier(DeviceIdentifier detection) {
         try {
-            var provider = deviceIdentifierPluginManager.create(detection.getType(), detection.getConfiguration());
+            var providerConfig = new ProviderConfiguration(detection.getType(), detection.getConfiguration());
+            var provider = deviceIdentifierPluginManager.create(providerConfig);
             this.deviceIdentifiers.put(detection.getId(), detection);
             this.providers.put(detection.getId(), provider);
             LOGGER.info("Device identifier {} loaded for domain {}", detection.getName(), domain.getName());

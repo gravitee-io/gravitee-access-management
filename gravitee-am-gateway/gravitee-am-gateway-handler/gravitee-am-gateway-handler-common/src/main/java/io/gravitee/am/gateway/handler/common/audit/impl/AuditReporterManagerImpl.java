@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
@@ -35,14 +36,13 @@ import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.reactivex.core.RxHelper;
 import io.vertx.reactivex.core.Vertx;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import reactor.util.function.Tuples;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,7 +71,7 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     @Autowired
     private EnvironmentService environmentService;
 
-    private ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporters = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporters = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -205,7 +205,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
     private void startReporterProvider(Reporter reporter, GraviteeContext context) {
         if (reporter.isEnabled()) {
             logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
-            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(reporter.getType(), reporter.getConfiguration(), context);
+            var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
+            io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 
             if (reporterProvider != null) {
                 try {
@@ -240,9 +241,8 @@ public class AuditReporterManagerImpl extends AbstractService implements AuditRe
 
     @Override
     public io.gravitee.am.reporter.api.provider.Reporter getReporter() {
-       return reporters.entrySet()
+       return reporters.values()
                 .stream()
-                .map(entry -> entry.getValue())
                 .filter(reporter -> reporter.canSearch())
                 .findFirst()
                 .orElse(null);

@@ -16,25 +16,71 @@
 package io.gravitee.am.plugins.reporter.core;
 
 import io.gravitee.am.common.utils.GraviteeContext;
-import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.reporter.api.Reporter;
+import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterPluginManager {
+public class ReporterPluginManager
+        extends ProviderPluginManager<Reporter, io.gravitee.am.reporter.api.provider.Reporter, ReporterProviderConfiguration>
+        implements AmPluginManager<Reporter> {
 
-    void register(ReporterDefinition reporterDefinition);
+    private final Logger logger = LoggerFactory.getLogger(ReporterPluginManager.class);
 
-    Reporter create(String type, String configuration, GraviteeContext context);
+    private final ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory;
 
-    Collection<Plugin> getAll();
+    public ReporterPluginManager(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory
+    ) {
+        super(pluginContextFactory);
+        this.reporterConfigurationFactory = reporterConfigurationFactory;
+    }
 
-    Plugin findById(String reporterId);
+    @Override
+    public io.gravitee.am.reporter.api.provider.Reporter create(ReporterProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for an reporter provider for [{}]", providerConfiguration.getType());
+        Reporter reporter = instances.get(providerConfiguration.getType());
 
-    String getSchema(String reporterId) throws IOException;
+        if (reporter != null) {
+            Class<? extends ReporterConfiguration> configurationClass = reporter.configuration();
+            var reporterConfiguration = reporterConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
+            if (providerConfiguration.getGraviteeContext() != null) {
+                return createProvider(plugins.get(reporter), reporter.auditReporter(), List.of(
+                                new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
+                                new GraviteeContextBeanFactoryPostProcessor(providerConfiguration.getGraviteeContext())
+                        )
+                );
+            }
+            return createProvider(plugins.get(reporter), reporter.auditReporter(),
+                    List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration))
+            );
+        } else {
+            logger.error("No reporter provider is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No reporter provider is registered for type " + providerConfiguration.getType());
+        }
+    }
+
+
+    private static class GraviteeContextBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<GraviteeContext> {
+        private GraviteeContextBeanFactoryPostProcessor(GraviteeContext context) {
+            super("graviteeContext", context);
+        }
+    }
+
+    private static class ReporterConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ReporterConfiguration> {
+        private ReporterConfigurationBeanFactoryPostProcessor(ReporterConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

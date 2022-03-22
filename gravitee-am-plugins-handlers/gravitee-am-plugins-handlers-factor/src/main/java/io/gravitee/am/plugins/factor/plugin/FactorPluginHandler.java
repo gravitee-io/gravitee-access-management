@@ -16,27 +16,20 @@
 package io.gravitee.am.plugins.factor.plugin;
 
 import io.gravitee.am.factor.api.Factor;
-import io.gravitee.am.plugins.factor.core.FactorDefinition;
-import io.gravitee.am.plugins.factor.core.FactorPluginManager;
-import io.gravitee.plugin.core.api.*;
+import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
+import io.gravitee.plugin.core.api.Plugin;
+import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FactorPluginHandler extends AbstractPluginHandler {
+public class FactorPluginHandler extends AmPluginHandler<Factor> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(FactorPluginHandler.class);
-
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private FactorPluginManager pluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -44,36 +37,17 @@ public class FactorPluginHandler extends AbstractPluginHandler {
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new factor plugin: {} [{}]", plugin.id(), plugin.clazz());
+    protected Logger getLogger() {
+        return LOGGER;
+    }
 
-            Assert.isAssignable(Factor.class, pluginClass);
-
-            var factor = createInstance((Class<Factor>) pluginClass);
-
-            pluginManager.register(new FactorDefinition(factor, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create factor instance", iae);
-        }
+    @Override
+    protected Class<Factor> getClazz() {
+        return Factor.class;
     }
 
     @Override
     protected String type() {
         return PluginType.FACTOR.name();
-    }
-
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
     }
 }

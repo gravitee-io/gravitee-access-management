@@ -15,68 +15,33 @@
  */
 package io.gravitee.am.plugins.reporter.plugin;
 
-import io.gravitee.am.plugins.reporter.core.ReporterDefinition;
-import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
+import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.am.reporter.api.Reporter;
-import io.gravitee.plugin.core.api.AbstractPluginHandler;
-import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ReporterPluginHandler extends AbstractPluginHandler {
+public class ReporterPluginHandler extends AmPluginHandler<Reporter> {
 
     private static final String AM_REPORTER_PLUGIN_TYPE = "am-reporter";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterPluginHandler.class);
 
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private ReporterPluginManager reporterPluginManager;
-
     @Override
-    public boolean canHandle(Plugin plugin) {
-        return type().equalsIgnoreCase(plugin.type());
+    protected Logger getLogger() {
+        return LOGGER;
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new reporter plugin: {} [{}]", plugin.id(), plugin.clazz());
-
-            Assert.isAssignable(Reporter.class, pluginClass);
-
-            var reporter = createInstance((Class<Reporter>) pluginClass);
-
-            reporterPluginManager.register(new ReporterDefinition(reporter, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create reporter instance", iae);
-        }
+    protected Class<Reporter> getClazz() {
+        return Reporter.class;
     }
 
     @Override
     protected String type() {
         return AM_REPORTER_PLUGIN_TYPE;
-    }
-
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, this.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
     }
 }

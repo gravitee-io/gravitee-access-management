@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
+import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
@@ -93,7 +94,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
     @Override
     protected void doStop() throws Exception {
-        logger.info("Security domain ["+ domain.getName() + "] handler is now stopping, closing context...");
+        logger.info("Security domain [" + domain.getName() + "] handler is now stopping, closing context...");
 
         stopComponents();
         stopProtocols();
@@ -129,7 +130,8 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
         PROTOCOLS.forEach(protocol -> {
             try {
-                ProtocolProvider protocolProvider = protocolPluginManager.create(protocol, applicationContext);
+                var providerConfig = new ProtocolProviderConfiguration(protocol, applicationContext);
+                var protocolProvider = protocolPluginManager.create(providerConfig);
                 if (protocolProvider != null) {
                     protocolProvider.start();
                     protocolProviders.add(protocolProvider);

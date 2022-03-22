@@ -20,16 +20,14 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.IdentityProviderPlugin;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.internal.PluginManifestProperties;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -60,7 +58,7 @@ public class IdentityProviderPluginServiceImpl implements IdentityProviderPlugin
     @Override
     public Single<List<IdentityProviderPlugin>> findAll(Boolean external, List<String> expand) {
         LOGGER.debug("List all identity provider plugins");
-        return Observable.fromIterable(identityProviderPluginManager.getAll().entrySet())
+        return Observable.fromIterable(identityProviderPluginManager.getAllEntries().entrySet())
             .filter(entry -> (external != null && external) ? entry.getKey().external() : !entry.getKey().external())
             .map(entry -> convert(entry.getValue(), expand))
             .toList()

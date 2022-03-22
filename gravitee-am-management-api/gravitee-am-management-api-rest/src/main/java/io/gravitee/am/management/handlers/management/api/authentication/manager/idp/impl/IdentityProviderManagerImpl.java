@@ -22,21 +22,21 @@ import io.gravitee.am.management.service.InMemoryIdentityProviderListener;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -60,13 +60,13 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
     @Autowired
     private io.gravitee.am.management.service.IdentityProviderManager commonIdentityProviderManager;
 
-    private ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
 
     /*
      * Providers that are not persisted into the backend. ("gravitee" provider and the ones defined into the gravitee.yaml file)
      */
-    private Set<String> transientProviders = new HashSet<>();
+    private final Set<String> transientProviders = new HashSet<>();
 
     @Override
     public AuthenticationProvider get(String id) {
@@ -138,9 +138,8 @@ public class IdentityProviderManagerImpl implements IdentityProviderManager, Ini
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
             // create and start the new provider
-            AuthenticationProvider authenticationProvider =
-                    identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(),
-                            identityProvider.getMappers(), identityProvider.getRoleMapper());
+            var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider);
+            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
             if (authenticationProvider != null) {
                 // start the authentication provider
                 authenticationProvider.start();

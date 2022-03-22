@@ -32,6 +32,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>gravitee-am-plugins-handlers-api</module>
         <module>gravitee-am-plugins-handlers-identityprovider</module>
         <module>gravitee-am-plugins-handlers-extensiongrant</module>
         <module>gravitee-am-plugins-handlers-certificate</module>

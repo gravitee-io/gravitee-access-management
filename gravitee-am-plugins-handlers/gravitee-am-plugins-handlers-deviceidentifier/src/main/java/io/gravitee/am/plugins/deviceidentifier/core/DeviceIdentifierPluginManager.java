@@ -15,25 +15,61 @@
  */
 package io.gravitee.am.plugins.deviceidentifier.core;
 
+import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
+import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
-import io.gravitee.plugin.core.api.Plugin;
-
-import java.io.IOException;
-import java.util.Collection;
+import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
+import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
+import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
+import io.gravitee.plugin.core.api.PluginContextFactory;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceIdentifierPluginManager {
+public class DeviceIdentifierPluginManager
+        extends ProviderPluginManager<DeviceIdentifier, DeviceIdentifierProvider, ProviderConfiguration>
+        implements AmPluginManager<DeviceIdentifier> {
 
-    void register(DeviceIdentifierDefinition definition);
+    private final static Logger logger = LoggerFactory.getLogger(DeviceIdentifierPluginManager.class);
+    private final ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory;
 
-    Collection<Plugin> getAll();
+    public DeviceIdentifierPluginManager(
+            PluginContextFactory pluginContextFactory,
+            ConfigurationFactory<DeviceIdentifierConfiguration> deviceIdentifierConfigurationFactory) {
+        super(pluginContextFactory);
+        this.deviceIdentifierConfigurationFactory = deviceIdentifierConfigurationFactory;
+    }
 
-    Plugin findById(String pluginId);
+    @Override
+    public DeviceIdentifierProvider create(ProviderConfiguration providerConfiguration) {
+        logger.debug("Looking for a device identifier for [{}]", providerConfiguration.getType());
+        var deviceIdentifier = instances.get(providerConfiguration.getType());
 
-    DeviceIdentifierProvider create(String type, String configuration);
+        if (deviceIdentifier != null) {
+            Class<? extends DeviceIdentifierConfiguration> configurationClass = deviceIdentifier.configuration();
+            var deviceIdentifierConfiguration = deviceIdentifierConfigurationFactory.create(configurationClass, providerConfiguration.getConfiguration());
 
-    String getSchema(String pluginId) throws IOException;
+            return createProvider(
+                    plugins.get(deviceIdentifier),
+                    deviceIdentifier.deviceIdentifierProvider(),
+                    List.of(
+                            new DeviceIdentifierConfigurationBeanFactoryPostProcessor(deviceIdentifierConfiguration)
+                    ));
+        } else {
+            logger.error("No device identifier is registered for type {}", providerConfiguration.getType());
+            throw new IllegalStateException("No device identifier is registered for type " + providerConfiguration.getType());
+        }
+    }
+
+    private class DeviceIdentifierConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<DeviceIdentifierConfiguration> {
+        private DeviceIdentifierConfigurationBeanFactoryPostProcessor(DeviceIdentifierConfiguration configuration) {
+            super("configuration", configuration);
+        }
+    }
 }

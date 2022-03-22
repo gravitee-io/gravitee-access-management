@@ -22,6 +22,7 @@ import io.gravitee.am.management.service.DomainNotifierService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
+import io.gravitee.am.plugins.certificate.core.CertificateProviderConfiguration;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -150,8 +151,8 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
 
     private void loadCertificate(Certificate certificate) {
         try {
-            CertificateProvider certificateProvider =
-                    certificatePluginManager.create(certificate.getType(), certificate.getConfiguration(), certificate.getMetadata());
+            var providerConfig = new CertificateProviderConfiguration(certificate);
+            var certificateProvider = certificatePluginManager.create(providerConfig);
             if (certificateProvider != null) {
                 certificateProviders.put(certificate.getId(), certificateProvider);
                 // expiration date is extracted from the Certificate by the provider

@@ -16,30 +16,19 @@
 package io.gravitee.am.plugins.deviceidentifier.plugin;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
-import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierDefinition;
-import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
-import io.gravitee.plugin.core.api.AbstractPluginHandler;
+import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.plugin.core.api.Plugin;
-import io.gravitee.plugin.core.api.PluginClassLoaderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.Assert;
 
 /**
  * @author Rémi Sultan  (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DeviceIdentifierPluginHandler extends AbstractPluginHandler {
+public class DeviceIdentifierPluginHandler extends AmPluginHandler<DeviceIdentifier> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierPluginHandler.class);
     public static final String PLUGIN_TYPE_DEVICE_IDENTIFIER = "DEVICE_IDENTIFIER";
-
-    @Autowired
-    private PluginClassLoaderFactory pluginClassLoaderFactory;
-
-    @Autowired
-    private DeviceIdentifierPluginManager pluginManager;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -47,36 +36,17 @@ public class DeviceIdentifierPluginHandler extends AbstractPluginHandler {
     }
 
     @Override
-    protected void handle(Plugin plugin, Class<?> pluginClass) {
-        try {
-            LOGGER.info("Register a new identity provider plugin: {} [{}]", plugin.id(), plugin.clazz());
+    protected Logger getLogger() {
+        return LOGGER;
+    }
 
-            Assert.isAssignable(DeviceIdentifier.class, pluginClass);
-
-            var identityIdentityProvider = createInstance((Class<DeviceIdentifier>) pluginClass);
-
-            pluginManager.register(new DeviceIdentifierDefinition(identityIdentityProvider, plugin));
-        } catch (Exception iae) {
-            LOGGER.error("Unexpected error while create identity provider instance", iae);
-        }
+    @Override
+    protected Class<DeviceIdentifier> getClazz() {
+        return DeviceIdentifier.class;
     }
 
     @Override
     protected String type() {
         return PLUGIN_TYPE_DEVICE_IDENTIFIER;
-    }
-
-    @Override
-    protected ClassLoader getClassLoader(Plugin plugin) {
-        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, plugin.getClass().getClassLoader());
-    }
-
-    private <T> T createInstance(Class<T> clazz) throws Exception {
-        try {
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            LOGGER.error("Unable to instantiate class: {}", clazz.getName(), ex);
-            throw ex;
-        }
     }
 }
