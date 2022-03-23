@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.reactivex.core.Vertx;
@@ -32,6 +33,7 @@ import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
 import io.vertx.reactivex.ext.web.handler.CorsHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -63,6 +65,10 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
 
     @Autowired
     private CorsHandler corsHandler;
+
+    @Autowired
+    @Qualifier("managementJwtBuilder")
+    private JWTBuilder jwtBuilder;
 
     @Override
     protected void doStart() throws Exception {
@@ -133,13 +139,19 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
 
             // WebAuthn credentials routes
             AccountWebAuthnCredentialsEndpointHandler accountWebAuthnCredentialsEndpointHandler =
-                    new AccountWebAuthnCredentialsEndpointHandler(accountService);
+                    new AccountWebAuthnCredentialsEndpointHandler(accountService, jwtBuilder);
             accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountWebAuthnCredentialsEndpointHandler::listEnrolledWebAuthnCredentials);
             accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountWebAuthnCredentialsEndpointHandler::getEnrolledWebAuthnCredential);
+            accountRouter.delete(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountWebAuthnCredentialsEndpointHandler::deleteWebAuthnCredential);
+            accountRouter.post(AccountRoutes.API_TOKEN.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountWebAuthnCredentialsEndpointHandler::createToken);
 
             // error handler
             accountRouter.route().failureHandler(new ErrorHandler());

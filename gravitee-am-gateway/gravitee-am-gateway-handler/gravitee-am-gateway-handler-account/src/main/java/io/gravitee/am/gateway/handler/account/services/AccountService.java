@@ -55,4 +55,7 @@ public interface AccountService {
     Single<List<Credential>> getWebAuthnCredentials(User user);
 
     Single<Credential> getWebAuthnCredential(String id);
+
+    Completable removeWebAuthnCredential(String id);
+
 }

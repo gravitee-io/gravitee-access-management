@@ -15,13 +15,16 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
+import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -31,7 +34,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.exception.NotImplementedException;
-import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -46,6 +48,10 @@ import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.atomic.AtomicReference;
+
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_REDIRECT_URI;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_REGISTRATION_TOKEN;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -66,8 +72,8 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
     public WebAuthnResponseEndpoint(UserAuthenticationManager userAuthenticationManager,
                                     WebAuthn webAuthn,
                                     CredentialService credentialService,
-                                    Domain domain) {
-        super(userAuthenticationManager);
+                                    Domain domain, UserService userService) {
+        super(userAuthenticationManager, userService);
         this.webAuthn = webAuthn;
         this.credentialService = credentialService;
         this.domain = domain;
@@ -138,24 +144,27 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                     ctx.fail(401);
                                     return;
                                 }
-                                // update the credential
-                                updateCredential(authenticationContext, credentialId, userId, credentialHandler -> {
-                                    if (credentialHandler.failed()) {
-                                        logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
-                                        ctx.fail(401);
-                                        return;
-                                    }
-                                    // save the user and login completed status into the context
-                                    ctx.getDelegate().setUser(user);
-                                    ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
-                                    ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
-                                    ctx.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
 
-                                    // Now redirect back to authorization endpoint.
-                                    final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                    final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-                                    ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
-                                });
+                                final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
+                                final AtomicReference<String> redirectUri = new AtomicReference<>();
+
+                                if (isSelfRegistration(queryParams)) {
+                                    validateToken(queryParams.get(WEBAUTHN_REGISTRATION_TOKEN), handler -> {
+                                        if (handler.failed()) {
+                                            ctx.fail(401);
+                                            return;
+                                        }
+
+                                        final JWT token = handler.result().getToken();
+                                        redirectUri.set((String) token.get(WEBAUTHN_REDIRECT_URI));
+
+                                        updateCredentialAndRedirect(ctx, authenticationContext, username, credentialId,
+                                                userId, user, queryParams, redirectUri);
+                                    });
+                                } else {
+                                    updateCredentialAndRedirect(ctx, authenticationContext, username, credentialId,
+                                            userId, user, queryParams, redirectUri);
+                                }
                             });
                         } else {
                             logger.error("Unexpected exception", authenticate.cause());
@@ -169,6 +178,29 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
             logger.error("Unexpected exception", e);
             ctx.fail(e);
         }
+    }
+
+    private void updateCredentialAndRedirect(RoutingContext ctx, AuthenticationContext authenticationContext,
+                                             String username, String credentialId, String userId, User user,
+                                             MultiMap queryParams, AtomicReference<String> redirectUri){
+        updateCredential(authenticationContext, credentialId, userId, credentialHandler -> {
+            if (credentialHandler.failed()) {
+                logger.error("An error has occurred while authenticating user {}", username, credentialHandler.cause());
+                ctx.fail(401);
+                return;
+            }
+            // save the user into the context
+            ctx.getDelegate().setUser(user);
+            ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, Boolean.TRUE);
+            ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
+            ctx.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, Boolean.TRUE);
+
+            // Now redirect back the redirect_uri if present, otherwise redirect to authorization endpoint.
+            final String returnURL = redirectUri.get() != null
+                    ? redirectUri.get()
+                    : UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+            ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
+        });
     }
 
     private AuthenticationContext createAuthenticationContext(RoutingContext context) {

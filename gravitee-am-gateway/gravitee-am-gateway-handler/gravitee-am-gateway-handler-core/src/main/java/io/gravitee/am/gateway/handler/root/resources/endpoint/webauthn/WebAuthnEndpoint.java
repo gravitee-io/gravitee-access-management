@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
@@ -25,8 +27,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
+
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_REGISTRATION_TOKEN;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,15 +40,18 @@ import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
 public abstract class WebAuthnEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     protected final UserAuthenticationManager userAuthenticationManager;
+    private UserService userService;
 
-    WebAuthnEndpoint(TemplateEngine templateEngine, UserAuthenticationManager userAuthenticationManager) {
+    WebAuthnEndpoint(TemplateEngine templateEngine, UserAuthenticationManager userAuthenticationManager, UserService userService) {
         super(templateEngine);
         this.userAuthenticationManager = userAuthenticationManager;
+        this.userService = userService;
     }
 
-    WebAuthnEndpoint(UserAuthenticationManager userAuthenticationManager) {
+    WebAuthnEndpoint(UserAuthenticationManager userAuthenticationManager, UserService userService) {
         super(null);
         this.userAuthenticationManager = userAuthenticationManager;
+        this.userService = userService;
     }
 
     /**
@@ -90,4 +98,17 @@ public abstract class WebAuthnEndpoint extends AbstractEndpoint implements Handl
             return true;
         }
     }
+
+    protected boolean isSelfRegistration(MultiMap queryParams) {
+        return queryParams.get(WEBAUTHN_REGISTRATION_TOKEN) != null;
+    }
+
+    protected void validateToken(String token, Handler<AsyncResult<UserToken>> handler) {
+        userService.verifyToken(token)
+                .subscribe(
+                        userToken ->
+                                handler.handle(Future.succeededFuture(userToken)),
+                        error -> handler.handle(Future.failedFuture(error)));
+    }
+
 }

@@ -31,7 +31,8 @@ public enum AccountRoutes {
     FACTORS_RECOVERY_CODE("/api/auth/recovery_code"),
     FACTORS_VERIFY("/api/factors/:factorId/verify"),
     WEBAUTHN_CREDENTIALS("/api/webauthn/credentials"),
-    WEBAUTHN_CREDENTIALS_BY_ID("/api/webauthn/credentials/:credentialId");
+    WEBAUTHN_CREDENTIALS_BY_ID("/api/webauthn/credentials/:credentialId"),
+    API_TOKEN("/api/token");
 
     private String route;
 
