@@ -54,6 +54,17 @@ object SimulationSettings {
   val REQUEST_PER_SEC = Integer.getInteger("requests", 100)
   val REQUEST_RAMP_DURATION = Integer.getInteger("req-ramp-during", 10)
   val REQUEST_HOLD_DURING = Integer.getInteger("req-hold-during", 1800)
+  val REPEAT = Integer.getInteger("repeat", 10)
+  val QUERY = System.getProperty("query", "")
+  val EVENT = System.getProperty("event", "")
+  val USER = System.getProperty("user", "admin")
+  val START = System.getProperty("start", "")
+  val END = System.getProperty("end", "")
+  val FIELD = System.getProperty("field", "")
+  val OPERATOR = System.getProperty("operator", "")
+  val VALUE = System.getProperty("value", "")
+  val CONDITION = System.getProperty("condition", "")
+
 
   // ========================================
   // User Feeder
