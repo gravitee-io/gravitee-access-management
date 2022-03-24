@@ -57,10 +57,7 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
-  graviteeio_version:
-    type: string
-    default: ''
-    description: "Gravitee.io Release version number (semver) ?"
+    
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
