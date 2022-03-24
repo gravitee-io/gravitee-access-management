@@ -175,6 +175,15 @@ oauth2:
     port: ${ds.mongodb.port}
 #    ensureIndexOnStart: true
 
+# Gateway HTTP server
+http:
+  cookie:
+    secure: false # Default is false for demonstration purpose but we highly recommend you to enable cookie secure.
+    sameSite: Lax
+    session:
+      name: GRAVITEE_IO_AM_SESSION
+      timeout: 1800000 # (in milliseconds)
+
 # Configuration of additional reporters
 #reporters:
 #  file:
