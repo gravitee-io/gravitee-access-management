@@ -7,7 +7,7 @@ parameters:
     default: pull_requests
   gio_product:
     type: enum
-    enum: [releam_v2, am_v3, none]
+    enum: [am_v2, am_v3, none]
     default: none
   dry_run:
     type: boolean
