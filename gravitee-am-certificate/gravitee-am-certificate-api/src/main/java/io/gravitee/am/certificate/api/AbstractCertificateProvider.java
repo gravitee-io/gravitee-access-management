@@ -24,6 +24,7 @@ import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -45,6 +46,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractCertificateProvider implements CertificateProvider {
+    @Autowired
+    protected CertificateMetadata certificateMetadata;
     private Date expirationDate;
     private Certificate cert;
     private JWKSet jwkSet;

@@ -32,8 +32,6 @@ import java.util.Set;
 public class JavaKeyStoreProvider extends AbstractCertificateProvider implements InitializingBean {
     @Autowired
     private JavaKeyStoreConfiguration configuration;
-    @Autowired
-    private CertificateMetadata certificateMetadata;
 
     @Override
     public void afterPropertiesSet() throws Exception {

@@ -34,8 +34,6 @@ public class PKCS12Provider extends AbstractCertificateProvider implements Initi
     private final static String KEYSTORE_TYPE = "pkcs12";
     @Autowired
     private PKCS12Configuration configuration;
-    @Autowired
-    private CertificateMetadata certificateMetadata;
 
     @Override
     public void afterPropertiesSet() throws Exception {
