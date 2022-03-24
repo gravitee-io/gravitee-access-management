@@ -45,6 +45,22 @@ parameters:
     type: string
     default: "cicd"
     description: "Release version number to use to publish the Docker nightly images ?"
+  prune:
+    type: boolean
+    default: false
+    description: "Do you want to [docker system prune -f --all] ? (clean up all cached docker images)"
+  tag_latest:
+    type: boolean
+    default: false
+    description: "Is this latest version of the Product ?"
+  tag_latest_support:
+    type: boolean
+    default: true
+    description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+  graviteeio_version:
+    type: string
+    default: ''
+    description: "Gravitee.io Release version number (semver) ?"
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
@@ -679,7 +695,7 @@ workflows:
                 var-name: AZURE_APPLICATION_SECRET
   docker_build_and_push_am_v2:
     when:
-      equal: [ am_v2, << pipeline.parameters.gio_product >> ]
+      equal: [ am_v2, << pipeline.parameters.gio_action >> ]
     jobs:
       # ---
       # Builds and push AM Community Edition Images
@@ -689,7 +705,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          gio_product: << pipeline.parameters.gio_product >>
+          gio_product: << pipeline.parameters.gio_action >>
       # ---
       # Builds and push AM v2 Entreprise Edition Images
       - am/build_n_push_am_ee_v2_gateway_job:
@@ -716,7 +732,7 @@ workflows:
 
   docker_build_and_push_am_v3:
     when:
-      equal: [ am_v3, << pipeline.parameters.gio_product >> ]
+      equal: [ am_v3, << pipeline.parameters.gio_action >> ]
     jobs:
       # ---
       # Builds and push AM Community Edition Images
@@ -726,7 +742,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          gio_product: << pipeline.parameters.gio_product >>
+          gio_product: << pipeline.parameters.gio_action >>
       # ---
       # Builds and push AM v3 Entreprise Edition Images
       - am/build_n_push_am_ee_v3_gateway_job:
