@@ -20,8 +20,9 @@ import { ConsentsResolver } from './consents.resolver';
 describe('ConsentsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ConsentsResolver]
-    });
+    providers: [ConsentsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ConsentsResolver], (service: ConsentsResolver) => {

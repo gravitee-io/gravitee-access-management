@@ -23,8 +23,9 @@ describe('EmailComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ EmailComponent ]
-    })
+    declarations: [EmailComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('ApplicationFactorsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationFactorsComponent ]
-    })
+    declarations: [ApplicationFactorsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

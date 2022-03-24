@@ -23,8 +23,9 @@ describe('GroupSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ GroupSettingsComponent ]
-    })
+    declarations: [GroupSettingsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

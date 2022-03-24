@@ -23,8 +23,9 @@ describe('RoleCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ RoleCreationComponent ]
-    })
+    declarations: [RoleCreationComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

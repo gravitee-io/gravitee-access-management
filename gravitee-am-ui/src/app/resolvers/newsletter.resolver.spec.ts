@@ -20,8 +20,9 @@ import { NewsletterResolver } from './newsletter.resolver';
 describe('NewsletterResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [NewsletterResolver]
-    });
+    providers: [NewsletterResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([NewsletterResolver], (service: NewsletterResolver) => {

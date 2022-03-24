@@ -23,8 +23,9 @@ describe('SettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProviderSettingsComponent ]
-    })
+    declarations: [ProviderSettingsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

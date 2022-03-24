@@ -23,8 +23,9 @@ describe('UserApplicationsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserApplicationsComponent ]
-    })
+    declarations: [UserApplicationsComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

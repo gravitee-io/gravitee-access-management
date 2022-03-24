@@ -1,10 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
 @import '~@gravitee/ui-components/assets/css/gravitee-console-theme.css';
 @import '~@swimlane/ngx-datatable/themes/material.css';
 @import '~@swimlane/ngx-datatable/assets/icons.css';
 @import '~codemirror/lib/codemirror.css';
-@import '~@angular/material/theming';
-@include mat-core();
+@include mat.core();
 
 /* Theme */
 $graviteeio-am-primary-palette: (
@@ -23,20 +23,20 @@ $graviteeio-am-primary-palette: (
   A400: #78909c,
   A700: #455a64,
   contrast: (
-    50: $dark-primary-text,
-    100: $dark-primary-text,
-    200: $dark-primary-text,
-    300: $dark-primary-text,
-    400: $light-primary-text,
-    500: $light-primary-text,
-    600: $light-primary-text,
-    700: $light-primary-text,
-    800: $light-primary-text,
-    900: $light-primary-text,
-    A100: $dark-primary-text,
-    A200: $dark-primary-text,
-    A400: $light-primary-text,
-    A700: $light-primary-text,
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: white,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: rgba(black, 0.87),
+    A400: white,
+    A700: white,
   )
 );
 
@@ -56,73 +56,73 @@ $graviteeio-am-accent-palette: (
   A400: #2979ff,
   A700: #2962ff,
   contrast: (
-    50: $dark-primary-text,
-    100: $dark-primary-text,
-    200: $dark-primary-text,
-    300: $dark-primary-text,
-    400: $dark-primary-text,
-    500: $light-primary-text,
-    600: $light-primary-text,
-    700: $light-primary-text,
-    800: $light-primary-text,
-    900: $light-primary-text,
-    A100: $dark-primary-text,
-    A200: $light-primary-text,
-    A400: $light-primary-text,
-    A700: $light-primary-text,
+    50: rgba(black, 0.87),
+    100: rgba(black, 0.87),
+    200: rgba(black, 0.87),
+    300: rgba(black, 0.87),
+    400: rgba(black, 0.87),
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: rgba(black, 0.87),
+    A200: white,
+    A400: white,
+    A700: white,
   )
 );
 
 /* Configure theme */
-$graviteeio-am-primary: mat-palette($graviteeio-am-primary-palette);
-$graviteeio-am-accent:  mat-palette($graviteeio-am-accent-palette);
-$graviteeio-am-main-theme: mat-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
+$graviteeio-am-primary: mat.define-palette($graviteeio-am-primary-palette);
+$graviteeio-am-accent:  mat.define-palette($graviteeio-am-accent-palette);
+$graviteeio-am-main-theme: mat.define-light-theme($graviteeio-am-primary, $graviteeio-am-accent);
 @mixin graviteeio-am-theme($theme) {
   $primary: map-get($theme, primary);
   $accent: map-get($theme, accent);
   .gv-sidenav {
-    background-color: mat-color($primary, 500);
+    background-color: mat.get-color-from-palette($primary, 500);
   }
   .mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-edit, .mat-step-header .mat-step-icon-state-done {
-    background-color: mat-color($primary, 500);
+    background-color: mat.get-color-from-palette($primary, 500);
   }
   material-add-reference-widget {
     .mat-raised-button.mat-accent {
-      background-color: mat-color($primary, 500);
+      background-color: mat.get-color-from-palette($primary, 500);
     }
   }
   a {
-    color: mat-color($primary, 500);
+    color: mat.get-color-from-palette($primary, 500);
     &.active, &:hover {
-      color: mat-color($accent, 500);
+      color: mat.get-color-from-palette($accent, 500);
     }
     &.gv-accent-link {
-      color: mat-color($accent, 500);
+      color: mat.get-color-from-palette($accent, 500);
       &:hover {
-        color: mat-color($accent, 500);
+        color: mat.get-color-from-palette($accent, 500);
       }
     }
   }
   .gv-accent-color {
-    color: mat-color($accent, 500);
+    color: mat.get-color-from-palette($accent, 500);
   }
   .application-creation-step1-container {
     .application-creation-step1-content {
       mat-card {
         &.selected, i.selected {
-          border: 1px solid mat-color($accent, 500);
+          border: 1px solid mat.get-color-from-palette($accent, 500);
         }
       }
     }
   }
   .not-found-content-description {
-    border-top: 8px solid mat-color($primary, 500);;
+    border-top: 8px solid mat.get-color-from-palette($primary, 500);;
   }
   .gv-splash-screen {
     background: #fdfdfd
   }
 }
-@include angular-material-theme($graviteeio-am-main-theme);
+@include mat.all-component-themes($graviteeio-am-main-theme);
 @include graviteeio-am-theme($graviteeio-am-main-theme);
 
 /* Material Icons */

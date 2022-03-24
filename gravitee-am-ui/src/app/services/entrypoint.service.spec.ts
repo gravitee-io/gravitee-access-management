@@ -20,8 +20,9 @@ import { EntrypointService } from './tag.service';
 describe('EntrypointService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EntrypointService]
-    });
+    providers: [EntrypointService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should be created', inject([EntrypointService], (service: EntrypointService) => {

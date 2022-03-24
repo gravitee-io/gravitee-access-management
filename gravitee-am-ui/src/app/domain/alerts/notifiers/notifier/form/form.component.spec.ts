@@ -23,8 +23,9 @@ describe('AlertNotifierFormComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [AlertNotifierFormComponent]
-    })
+    declarations: [AlertNotifierFormComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

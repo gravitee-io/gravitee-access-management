@@ -23,8 +23,9 @@ describe('ApplicationMetadataComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationMetadataComponent ]
-    })
+    declarations: [ApplicationMetadataComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

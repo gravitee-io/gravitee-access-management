@@ -19,8 +19,9 @@ import {GroupsResolver} from "./groups.resolver";
 describe('GroupsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GroupsResolver]
-    });
+    providers: [GroupsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([GroupsResolver], (service: GroupsResolver) => {

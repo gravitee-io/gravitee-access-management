@@ -19,8 +19,9 @@ import {ScopeService} from "./scope.service";
 describe('ScopeService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ScopeService]
-    });
+    providers: [ScopeService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ScopeService], (service: ScopeService) => {

@@ -23,8 +23,9 @@ describe('LogoutComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ LogoutComponent ]
-    })
+    declarations: [LogoutComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('ApplicationMembershipsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationMembershipsComponent ]
-    })
+    declarations: [ApplicationMembershipsComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

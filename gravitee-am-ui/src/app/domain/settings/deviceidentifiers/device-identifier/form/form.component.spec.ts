@@ -23,8 +23,9 @@ describe('BotDetectionFormComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DeviceIdentifierFormComponent ]
-    })
+    declarations: [DeviceIdentifierFormComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

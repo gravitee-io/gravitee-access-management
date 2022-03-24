@@ -23,8 +23,9 @@ describe('UserRolesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserRolesComponent ]
-    })
+    declarations: [UserRolesComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

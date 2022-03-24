@@ -20,8 +20,9 @@ import { SidenavService } from './sidenav.service';
 describe('SidenavService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SidenavService]
-    });
+    providers: [SidenavService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([SidenavService], (service: SidenavService) => {

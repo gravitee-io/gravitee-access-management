@@ -20,8 +20,9 @@ import { PlatformFlowSchemaResolver } from './platform-flow-schema.resolver';
 describe('PlatformFlowSchemaResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PlatformFlowSchemaResolver]
-    });
+    providers: [PlatformFlowSchemaResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([PlatformFlowSchemaResolver], (service: PlatformFlowSchemaResolver) => {

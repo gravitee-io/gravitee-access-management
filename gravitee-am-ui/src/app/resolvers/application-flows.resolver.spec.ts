@@ -20,8 +20,9 @@ import { ApplicationFlowsResolver } from './application-flows.resolver';
 describe('ApplicationFlowsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApplicationFlowsResolver]
-    });
+    providers: [ApplicationFlowsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ApplicationFlowsResolver], (service: ApplicationFlowsResolver) => {

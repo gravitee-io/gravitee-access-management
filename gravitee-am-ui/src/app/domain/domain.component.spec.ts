@@ -23,8 +23,9 @@ describe('DomainComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainComponent ]
-    })
+    declarations: [DomainComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

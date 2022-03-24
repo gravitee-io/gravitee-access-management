@@ -23,8 +23,9 @@ describe('EntypointsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ EntrypointsComponent ]
-    })
+    declarations: [EntrypointsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

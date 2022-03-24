@@ -23,8 +23,9 @@ describe('ApplicationIdPComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationIdPComponent ]
-    })
+    declarations: [ApplicationIdPComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

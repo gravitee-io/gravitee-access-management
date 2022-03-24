@@ -20,8 +20,9 @@ import { DomainResolver } from './domain.resolver';
 describe('DomainResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainResolver]
-    });
+    providers: [DomainResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DomainResolver], (service: DomainResolver) => {

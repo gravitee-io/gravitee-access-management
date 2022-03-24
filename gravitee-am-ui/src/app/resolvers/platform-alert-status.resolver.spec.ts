@@ -20,8 +20,9 @@ import {PlatformAlertStatusResolver} from "./platform-alert-status.resolver";
 describe('PlatformAlertStatusResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PlatformAlertStatusResolver]
-    });
+    providers: [PlatformAlertStatusResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([PlatformAlertStatusResolver], (service: PlatformAlertStatusResolver) => {

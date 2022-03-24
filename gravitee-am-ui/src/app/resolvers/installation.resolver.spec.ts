@@ -20,8 +20,9 @@ import { InstallationResolver } from './applications.resolver';
 describe('InstallationResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [InstallationResolver]
-    });
+    providers: [InstallationResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([InstallationResolver], (service: InstallationResolver) => {

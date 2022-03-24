@@ -23,8 +23,9 @@ describe('DomainSettingsLoginComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsLoginComponent ]
-    })
+    declarations: [DomainSettingsLoginComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

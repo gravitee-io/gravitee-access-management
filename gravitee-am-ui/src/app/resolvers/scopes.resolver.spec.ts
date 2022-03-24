@@ -19,8 +19,9 @@ import {ScopesResolver} from "./scopes.resolver";
 describe('ScopesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ScopesResolver]
-    });
+    providers: [ScopesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ScopesResolver], (service: ScopesResolver) => {

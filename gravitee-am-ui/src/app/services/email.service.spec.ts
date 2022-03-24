@@ -19,8 +19,9 @@ import {EmailService} from "./email.service";
 describe('EmailService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EmailService]
-    });
+    providers: [EmailService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([EmailService], (service: EmailService) => {

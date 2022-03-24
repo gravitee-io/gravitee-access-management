@@ -19,8 +19,9 @@ import {ResourcePluginsResolver} from './resource-plugins.resolver';
 describe('ResourcePluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ResourcePluginsResolver]
-    });
+    providers: [ResourcePluginsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ResourcePluginsResolver], (service: ResourcePluginsResolver) => {

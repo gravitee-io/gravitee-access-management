@@ -20,8 +20,9 @@ import { SettingsResolver } from './settings.resolver';
 describe('SettingsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SettingsResolver]
-    });
+    providers: [SettingsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([SettingsResolver], (service: SettingsResolver) => {

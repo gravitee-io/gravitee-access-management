@@ -19,8 +19,9 @@ import {FormService} from "./form.service";
 describe('FormService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FormService]
-    });
+    providers: [FormService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([FormService], (service: FormService) => {

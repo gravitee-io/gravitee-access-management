@@ -20,8 +20,9 @@ import { ResourceService } from './resource.service';
 describe('ResourceService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ResourceService]
-    });
+    providers: [ResourceService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ResourceService], (service: ResourceService) => {

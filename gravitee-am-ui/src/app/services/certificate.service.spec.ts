@@ -19,8 +19,9 @@ import {CertificateService} from "./certificate.service";
 describe('CertificateService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CertificateService]
-    });
+    providers: [CertificateService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([CertificateService], (service: CertificateService) => {

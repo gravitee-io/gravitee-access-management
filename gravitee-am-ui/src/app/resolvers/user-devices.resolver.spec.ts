@@ -21,8 +21,9 @@ import {UserDevicesResolver} from "./user-devices.resolver";
 describe('UserDevicesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserDevicesResolver]
-    });
+    providers: [UserDevicesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([UserDevicesResolver], (service: UserDevicesResolver) => {

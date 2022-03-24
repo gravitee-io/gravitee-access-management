@@ -23,8 +23,9 @@ describe('EntrypointCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ EntrypointCreationComponent ]
-    })
+    declarations: [EntrypointCreationComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

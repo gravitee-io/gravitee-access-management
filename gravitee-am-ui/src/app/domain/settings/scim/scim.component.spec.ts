@@ -23,8 +23,9 @@ describe('ScimComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ScimComponent ]
-    })
+    declarations: [ScimComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

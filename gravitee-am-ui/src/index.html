@@ -26,6 +26,11 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="stylesheet" href="assets/theme/gravitee.css">
   <script src="webcomponents/webcomponents-loader.js"></script>
+  <script src="@asciidoctor/asciidoctor.js"></script>
+  <script>
+    // Preload the asciidoctor dependencies before ui-component because asciidoctor not work with asynchronous esm import (or something like that)
+    window._gvAsciidoctor = Asciidoctor();
+  </script>
 </head>
 <body>
   <!--[if lt IE 10]>

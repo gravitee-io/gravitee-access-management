@@ -23,8 +23,9 @@ describe('ManagementGeneralComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ManagementGeneralComponent ]
-    })
+    declarations: [ManagementGeneralComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

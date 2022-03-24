@@ -19,8 +19,9 @@ import {SignCertificatesResolver} from "./sign-certificates.resolver";
 describe('SignCertificatesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [SignCertificatesResolver]
-    });
+    providers: [SignCertificatesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([SignCertificatesResolver], (service: SignCertificatesResolver) => {

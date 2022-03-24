@@ -23,8 +23,9 @@ describe('UserHistoryComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserHistoryComponent ]
-    })
+    declarations: [UserHistoryComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

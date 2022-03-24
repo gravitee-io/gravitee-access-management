@@ -21,8 +21,9 @@ import {DeviceIdentifierService} from "./device-identifier.service";
 describe('DeviceIdentifierService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DialogService]
-    });
+    providers: [DialogService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DeviceIdentifierService], (service: DeviceIdentifierService) => {

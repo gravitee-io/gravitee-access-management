@@ -23,8 +23,9 @@ describe('RoleComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ EntrypointComponent ]
-    })
+    declarations: [EntrypointComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('ExtensionGrantCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ExtensionGrantCreationStep2Component ]
-    })
+    declarations: [ExtensionGrantCreationStep2Component],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

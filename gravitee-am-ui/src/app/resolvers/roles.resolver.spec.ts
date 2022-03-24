@@ -19,8 +19,9 @@ import {RolesResolver} from "./roles.resolver";
 describe('RolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RolesResolver]
-    });
+    providers: [RolesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([RolesResolver], (service: RolesResolver) => {

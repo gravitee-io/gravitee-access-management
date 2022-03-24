@@ -23,8 +23,9 @@ describe('DomainAlertNotifiersComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DomainAlertNotifiersComponent]
-    })
+    declarations: [DomainAlertNotifiersComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('LoginSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ LoginSettingsComponent ]
-    })
+    declarations: [LoginSettingsComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

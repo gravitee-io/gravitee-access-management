@@ -23,8 +23,9 @@ describe('UserCredentialComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ UserCredentialComponent ]
-    })
+    declarations: [UserCredentialComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

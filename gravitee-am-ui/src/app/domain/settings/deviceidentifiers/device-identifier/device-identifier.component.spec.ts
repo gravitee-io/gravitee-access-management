@@ -23,8 +23,9 @@ describe('DeviceIdentifierComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DeviceIdentifierComponent ]
-    })
+    declarations: [DeviceIdentifierComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('ReporterComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ReporterComponent ]
-    })
+    declarations: [ReporterComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

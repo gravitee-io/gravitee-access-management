@@ -20,8 +20,9 @@ import { PluginPoliciesResolver } from './plugin-policies.resolver';
 describe('PluginPoliciesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PluginPoliciesResolver]
-    });
+    providers: [PluginPoliciesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([PluginPoliciesResolver], (service: PluginPoliciesResolver) => {

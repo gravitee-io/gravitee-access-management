@@ -23,8 +23,9 @@ describe('SnackbarComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SnackbarComponent ]
-    })
+    declarations: [SnackbarComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

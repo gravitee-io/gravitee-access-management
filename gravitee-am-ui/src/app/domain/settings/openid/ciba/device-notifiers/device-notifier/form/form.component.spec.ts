@@ -23,8 +23,9 @@ describe('DeviceNotifierFormComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DeviceNotifierFormComponent ]
-    })
+    declarations: [DeviceNotifierFormComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

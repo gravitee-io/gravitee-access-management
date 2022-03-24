@@ -19,8 +19,9 @@ import { PageRolesResolver } from "./page-roles.resolver";
 describe('PageRolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [PageRolesResolver]
-    });
+    providers: [PageRolesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([PageRolesResolver], (service: PageRolesResolver) => {

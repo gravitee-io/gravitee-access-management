@@ -14,7 +14,11 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "aot": true,
+            "allowedCommonJsDependencies": [
+              "crypto-browserify",
+              "stream-browserify",
+              "readable-stream"
+            ],
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -52,13 +56,24 @@
                 "glob": "**/*.svg",
                 "input": "node_modules/@gravitee/ui-components/assets/icons",
                 "output": "icons/"
+              },
+              {
+                "glob": "asciidoctor.js",
+                "input": "node_modules/@asciidoctor/core/dist/browser",
+                "output": "@asciidoctor/"
               }
             ],
             "styles": [
               "src/styles.scss",
               "src/font-libre-franklin.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -72,7 +87,6 @@
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
@@ -83,7 +97,8 @@
                 }
               ]
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
@@ -107,16 +122,6 @@
           "options": {
             "tsConfig": "src/tsconfig.spec.json"
           }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "src/tsconfig.app.json",
-              "src/tsconfig.spec.json"
-            ],
-            "exclude": []
-          }
         }
       }
     },
@@ -130,15 +135,6 @@
           "options": {
             "protractorConfig": "./protractor.conf.js",
             "devServerTarget": "gravitee-am-ui:serve"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "e2e/tsconfig.e2e.json"
-            ],
-            "exclude": []
           }
         }
       }

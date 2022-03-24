@@ -23,8 +23,9 @@ describe('ExtensionGrantComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorComponent ]
-    })
+    declarations: [FactorComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

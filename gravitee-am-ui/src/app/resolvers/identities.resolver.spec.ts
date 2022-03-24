@@ -20,8 +20,9 @@ import { IdentitiesResolver } from './identities.resolver';
 describe('IdentitiesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [IdentitiesResolver]
-    });
+    providers: [IdentitiesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([IdentitiesResolver], (service: IdentitiesResolver) => {

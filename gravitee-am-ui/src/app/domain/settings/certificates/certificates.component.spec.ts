@@ -23,8 +23,9 @@ describe('DomainSettingsCertificatesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsCertificatesComponent ]
-    })
+    declarations: [DomainSettingsCertificatesComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

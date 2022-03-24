@@ -19,8 +19,9 @@ import {DomainFlowsResolver} from './domain-flows.resolver';
 describe('DomainFlowsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainFlowsResolver]
-    });
+    providers: [DomainFlowsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DomainFlowsResolver], (service: DomainFlowsResolver) => {

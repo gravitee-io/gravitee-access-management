@@ -20,8 +20,9 @@ import { RoleResolver } from "./role.resolver";
 describe('RoleResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RoleResolver]
-    });
+    providers: [RoleResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([RoleResolver], (service: RoleResolver) => {

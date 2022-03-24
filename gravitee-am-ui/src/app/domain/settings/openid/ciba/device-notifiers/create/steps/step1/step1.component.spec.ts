@@ -23,8 +23,9 @@ describe('DeviceNotifierCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DeviceNotifierCreationStep1Component ]
-    })
+    declarations: [DeviceNotifierCreationStep1Component],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('MappersComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProviderMappersComponent ]
-    })
+    declarations: [ProviderMappersComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

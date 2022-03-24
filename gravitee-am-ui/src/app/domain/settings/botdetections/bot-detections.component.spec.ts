@@ -23,8 +23,9 @@ describe('DomainSettingsBotDetectionsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsBotDetectionsComponent ]
-    })
+    declarations: [DomainSettingsBotDetectionsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

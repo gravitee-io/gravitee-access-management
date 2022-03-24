@@ -23,8 +23,9 @@ describe('WidgetDataTableComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetDataTableComponent ]
-    })
+    declarations: [WidgetDataTableComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

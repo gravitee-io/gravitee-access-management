@@ -23,8 +23,9 @@ describe('Step1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [DomainAlertNotifierCreationStep1Component]
-    })
+    declarations: [DomainAlertNotifierCreationStep1Component],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 
