@@ -23,8 +23,9 @@ describe('BotDetectionCreationStep2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ BotDetectionCreationStep2Component ]
-    })
+    declarations: [BotDetectionCreationStep2Component],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

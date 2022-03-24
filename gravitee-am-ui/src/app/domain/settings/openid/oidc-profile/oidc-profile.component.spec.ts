@@ -23,8 +23,9 @@ describe('OIDCProfileComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ OIDCProfileComponent ]
-    })
+    declarations: [OIDCProfileComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

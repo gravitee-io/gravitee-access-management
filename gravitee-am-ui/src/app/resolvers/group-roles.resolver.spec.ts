@@ -20,8 +20,9 @@ import {GroupRolesResolver} from "./group-roles.resolver";
 describe('GroupRolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GroupRolesResolver]
-    });
+    providers: [GroupRolesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([GroupRolesResolver], (service: GroupRolesResolver) => {

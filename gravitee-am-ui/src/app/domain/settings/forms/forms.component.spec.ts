@@ -23,8 +23,9 @@ describe('DomainSettingsFormsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsFormsComponent ]
-    })
+    declarations: [DomainSettingsFormsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

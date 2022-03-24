@@ -23,8 +23,9 @@ describe('ProviderComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ProviderComponent ]
-    })
+    declarations: [ProviderComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

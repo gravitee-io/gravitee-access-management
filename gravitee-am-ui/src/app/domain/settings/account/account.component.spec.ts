@@ -23,8 +23,9 @@ describe('DomainSettingsAccountComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsAccountComponent ]
-    })
+    declarations: [DomainSettingsAccountComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

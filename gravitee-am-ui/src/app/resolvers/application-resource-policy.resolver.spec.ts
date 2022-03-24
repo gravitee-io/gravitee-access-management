@@ -20,8 +20,9 @@ import { ApplicationResourcePolicyResolver } from './application-resource-policy
 describe('ApplicationResourcePolicyResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApplicationResourcePolicyResolver]
-    });
+    providers: [ApplicationResourcePolicyResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ApplicationResourcePolicyResolver], (service: ApplicationResourcePolicyResolver) => {

@@ -23,8 +23,9 @@ describe('FormsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ FormsComponent ]
-    })
+    declarations: [FormsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

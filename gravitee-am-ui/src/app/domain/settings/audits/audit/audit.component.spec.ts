@@ -23,8 +23,9 @@ describe('AuditComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ AuditComponent ]
-    })
+    declarations: [AuditComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

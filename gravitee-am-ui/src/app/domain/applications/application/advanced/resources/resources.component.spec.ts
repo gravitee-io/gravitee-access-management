@@ -23,8 +23,9 @@ describe('ApplicationResourcesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationResourcesComponent ]
-    })
+    declarations: [ApplicationResourcesComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

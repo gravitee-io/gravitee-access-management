@@ -31,9 +31,10 @@ describe('AuditService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuditService, OrganizationService],
-      imports: [HttpClientTestingModule],
-    });
+    providers: [AuditService, OrganizationService],
+    imports: [HttpClientTestingModule],
+    teardown: { destroyAfterEach: false }
+});
 
     httpTestingController = TestBed.get(HttpTestingController);
     auditService = TestBed.get(AuditService);

@@ -20,8 +20,9 @@ import {NavigationService} from './navigation.service';
 describe('NavigationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [NavigationService]
-    });
+    providers: [NavigationService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([NavigationService], (service: NavigationService) => {

@@ -20,8 +20,9 @@ import {GroupMembersResolver} from "./group-members.resolver";
 describe('GroupMembersResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [GroupMembersResolver]
-    });
+    providers: [GroupMembersResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([GroupMembersResolver], (service: GroupMembersResolver) => {

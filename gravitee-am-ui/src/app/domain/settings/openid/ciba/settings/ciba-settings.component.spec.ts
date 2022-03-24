@@ -23,8 +23,9 @@ describe('CibaComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CibaSettingsComponent ]
-    })
+    declarations: [CibaSettingsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

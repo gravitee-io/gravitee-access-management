@@ -30,9 +30,10 @@ describe('AnalyticsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AnalyticsService],
-      imports: [HttpClientTestingModule],
-    });
+    providers: [AnalyticsService],
+    imports: [HttpClientTestingModule],
+    teardown: { destroyAfterEach: false }
+});
 
     httpTestingController = TestBed.get(HttpTestingController);
     analyticsService = TestBed.get(AnalyticsService);

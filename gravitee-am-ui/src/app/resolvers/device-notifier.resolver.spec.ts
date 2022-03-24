@@ -19,8 +19,9 @@ import { DeviceNotifierResolver } from './device-notifier.resolver';
 describe('DeviceNotifierResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DeviceNotifierResolver]
-    });
+    providers: [DeviceNotifierResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DeviceNotifierResolver], (service: DeviceNotifierResolver) => {

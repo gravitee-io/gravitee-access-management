@@ -23,8 +23,9 @@ describe('SidenavSettingsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SidenavSettingsComponent ]
-    })
+    declarations: [SidenavSettingsComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

@@ -19,8 +19,9 @@ import {CertificatesResolver} from "./certificates.resolver";
 describe('CertificatesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CertificatesResolver]
-    });
+    providers: [CertificatesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([CertificatesResolver], (service: CertificatesResolver) => {

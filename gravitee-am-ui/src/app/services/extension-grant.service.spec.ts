@@ -19,8 +19,9 @@ import {ExtensionGrantService} from "./extension-grant.service";
 describe('ExtensionGrantService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ExtensionGrantService]
-    });
+    providers: [ExtensionGrantService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ExtensionGrantService], (service: ExtensionGrantService) => {

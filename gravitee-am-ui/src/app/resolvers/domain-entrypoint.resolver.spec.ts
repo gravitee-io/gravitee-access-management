@@ -19,8 +19,9 @@ import { DomainEntrypointResolver } from './domain-entrypoint.resolver';
 describe('DomainEntrypointdResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DomainEntrypointResolver]
-    });
+    providers: [DomainEntrypointResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DomainEntrypointResolver], (service: DomainEntrypointResolver) => {

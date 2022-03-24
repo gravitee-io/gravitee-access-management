@@ -23,7 +23,8 @@ describe('ApplicationOAuth2Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationOAuth2Component ]
+      declarations: [ ApplicationOAuth2Component ],
+      teardown: { destroyAfterEach: false }
     })
       .compileComponents();
   }));

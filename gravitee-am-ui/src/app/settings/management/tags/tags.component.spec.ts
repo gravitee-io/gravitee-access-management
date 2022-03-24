@@ -23,8 +23,9 @@ describe('TagsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ TagsComponent ]
-    })
+    declarations: [TagsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

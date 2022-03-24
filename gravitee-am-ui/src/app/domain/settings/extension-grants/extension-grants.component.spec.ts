@@ -23,8 +23,9 @@ describe('DomainSettingsExtensionGrantsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsExtensionGrantsComponent ]
-    })
+    declarations: [DomainSettingsExtensionGrantsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

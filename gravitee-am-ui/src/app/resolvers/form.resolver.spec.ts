@@ -20,8 +20,9 @@ import { FormResolver } from './form.resolver';
 describe('FormResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FormResolver]
-    });
+    providers: [FormResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([FormResolver], (service: FormResolver) => {

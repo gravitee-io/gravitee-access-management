@@ -23,8 +23,9 @@ describe('CertificateCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CertificateCreationComponent ]
-    })
+    declarations: [CertificateCreationComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

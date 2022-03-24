@@ -19,8 +19,9 @@ import {RoleService} from "./role.service";
 describe('RoleService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [RoleService]
-    });
+    providers: [RoleService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([RoleService], (service: RoleService) => {

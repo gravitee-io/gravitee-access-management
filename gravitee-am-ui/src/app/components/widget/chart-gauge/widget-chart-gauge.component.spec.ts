@@ -23,8 +23,9 @@ describe('WidgetChartGaugeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ WidgetChartGaugeComponent ]
-    })
+    declarations: [WidgetChartGaugeComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

@@ -23,8 +23,9 @@ describe('FactorCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ FactorCreationStep1Component ]
-    })
+    declarations: [FactorCreationStep1Component],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

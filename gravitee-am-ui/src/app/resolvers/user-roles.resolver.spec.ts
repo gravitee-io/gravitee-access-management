@@ -20,8 +20,9 @@ import {UserRolesResolver} from "./user-roles.resolver";
 describe('UserRolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserRolesResolver]
-    });
+    providers: [UserRolesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([UserRolesResolver], (service: UserRolesResolver) => {

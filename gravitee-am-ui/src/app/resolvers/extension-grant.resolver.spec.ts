@@ -20,8 +20,9 @@ import { ExtensionGrantResolver } from "./extension-grant.resolver";
 describe('ExtensionGrantResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ExtensionGrantResolver]
-    });
+    providers: [ExtensionGrantResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ExtensionGrantResolver], (service: ExtensionGrantResolver) => {

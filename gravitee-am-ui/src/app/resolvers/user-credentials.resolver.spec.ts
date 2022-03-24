@@ -20,8 +20,9 @@ import {UserCredentialsResolver} from './user-credentials.resolver';
 describe('UserCredentialsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserCredentialsResolver]
-    });
+    providers: [UserCredentialsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([UserCredentialsResolver], (service: UserCredentialsResolver) => {

@@ -20,8 +20,9 @@ import { ApplicationService } from './application.service';
 describe('ApplicationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApplicationService]
-    });
+    providers: [ApplicationService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ApplicationService], (service: ApplicationService) => {

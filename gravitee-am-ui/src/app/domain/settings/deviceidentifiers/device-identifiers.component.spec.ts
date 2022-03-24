@@ -23,8 +23,9 @@ describe('DomainSettingsDeviceIdentifiersComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsDeviceIdentifiersComponent ]
-    })
+    declarations: [DomainSettingsDeviceIdentifiersComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

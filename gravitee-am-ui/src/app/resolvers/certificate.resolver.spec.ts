@@ -20,8 +20,9 @@ import { CertificateResolver } from "./certificate.resolver";
 describe('CertificateResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [CertificateResolver]
-    });
+    providers: [CertificateResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([CertificateResolver], (service: CertificateResolver) => {

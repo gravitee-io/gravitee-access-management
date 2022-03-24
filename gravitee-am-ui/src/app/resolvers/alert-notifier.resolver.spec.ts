@@ -20,8 +20,9 @@ import {AlertNotifierResolver} from "./alert-notifier.resolver";
 describe('AlertNotifierResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AlertNotifierResolver]
-    });
+    providers: [AlertNotifierResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([AlertNotifierResolver], (service: AlertNotifierResolver) => {

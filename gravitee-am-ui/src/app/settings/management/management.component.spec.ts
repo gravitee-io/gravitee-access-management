@@ -23,8 +23,9 @@ describe('ManagementComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ManagementComponent ]
-    })
+    declarations: [ManagementComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

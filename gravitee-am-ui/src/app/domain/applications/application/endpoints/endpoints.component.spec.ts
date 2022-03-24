@@ -23,8 +23,9 @@ describe('ApplicationEndpointsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationEndpointsComponent ]
-    })
+    declarations: [ApplicationEndpointsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

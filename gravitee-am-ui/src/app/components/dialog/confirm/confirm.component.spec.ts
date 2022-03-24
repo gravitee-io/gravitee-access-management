@@ -23,8 +23,9 @@ describe('ConfirmComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ConfirmComponent ]
-    })
+    declarations: [ConfirmComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

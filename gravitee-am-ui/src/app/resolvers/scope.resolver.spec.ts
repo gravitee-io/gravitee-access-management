@@ -20,8 +20,9 @@ import { ScopeResolver } from "./scope.resolver";
 describe('ScopeResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ScopeResolver]
-    });
+    providers: [ScopeResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([ScopeResolver], (service: ScopeResolver) => {

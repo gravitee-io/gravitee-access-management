@@ -20,8 +20,9 @@ import {BotDetectionPluginsResolver} from "./bot-detection-plugins.resolver";
 describe('BotDetectionPluginsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [BotDetectionPluginsResolver]
-    });
+    providers: [BotDetectionPluginsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([BotDetectionPluginsResolver], (service: BotDetectionPluginsResolver) => {

@@ -19,8 +19,9 @@ import {EnrolledFactorsResolver} from './enrolled-factors.resolver';
 describe('EnrolledFactorsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EnrolledFactorsResolver]
-    });
+    providers: [EnrolledFactorsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([EnrolledFactorsResolver], (service: EnrolledFactorsResolver) => {

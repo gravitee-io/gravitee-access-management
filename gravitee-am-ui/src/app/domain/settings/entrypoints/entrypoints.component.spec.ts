@@ -23,8 +23,9 @@ describe('DomainSettingsEntrypointsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsEntrypointsComponent ]
-    })
+    declarations: [DomainSettingsEntrypointsComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

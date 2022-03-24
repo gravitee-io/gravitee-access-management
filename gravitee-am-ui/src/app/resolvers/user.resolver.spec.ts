@@ -20,8 +20,9 @@ import {UserResolver} from "./user.resolver";
 describe('UserResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [UserResolver]
-    });
+    providers: [UserResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([UserResolver], (service: UserResolver) => {

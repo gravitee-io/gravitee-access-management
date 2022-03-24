@@ -20,8 +20,9 @@ import {EntrypointResolver} from './entrypoint.resolver';
 describe('EntrypointResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EntrypointResolver]
-    });
+    providers: [EntrypointResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([EntrypointResolver], (service: EntrypointResolver) => {

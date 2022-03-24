@@ -20,8 +20,9 @@ import {DeviceIdentifiersResolver} from "./device-identifiers.resolver";
 describe('DeviceIdentifiersResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FactorPluginsResolver]
-    });
+    providers: [FactorPluginsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DeviceIdentifiersResolver], (service: DeviceIdentifiersResolver) => {

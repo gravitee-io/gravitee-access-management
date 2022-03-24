@@ -23,8 +23,9 @@ describe('DomainDashboardComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainDashboardComponent ]
-    })
+    declarations: [DomainDashboardComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

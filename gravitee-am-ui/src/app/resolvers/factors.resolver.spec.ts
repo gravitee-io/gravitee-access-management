@@ -19,8 +19,9 @@ import {FactorsResolver} from './factors.resolver';
 describe('FactorsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [FactorsResolver]
-    });
+    providers: [FactorsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([FactorsResolver], (service: FactorsResolver) => {

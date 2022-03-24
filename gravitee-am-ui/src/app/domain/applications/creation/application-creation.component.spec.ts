@@ -23,8 +23,9 @@ describe('ApplicationCreationComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ApplicationCreationComponent ]
-    })
+    declarations: [ApplicationCreationComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

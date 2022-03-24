@@ -19,8 +19,9 @@ import {AuditsResolver} from "./audits.resolver";
 describe('AuditsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuditsResolver]
-    });
+    providers: [AuditsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([AuditsResolver], (service: AuditsResolver) => {

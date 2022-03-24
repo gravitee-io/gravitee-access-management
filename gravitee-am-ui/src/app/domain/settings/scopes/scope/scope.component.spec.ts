@@ -23,8 +23,9 @@ describe('ScopeComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ ScopeComponent ]
-    })
+    declarations: [ScopeComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

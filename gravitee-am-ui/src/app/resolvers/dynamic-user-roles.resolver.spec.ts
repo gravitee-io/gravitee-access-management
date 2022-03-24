@@ -21,8 +21,9 @@ import {DynamicUserRolesResolver} from "./dynamic-user-roles.resolver";
 describe('DynamicUserRolesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DynamicUserRolesResolver]
-    });
+    providers: [DynamicUserRolesResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([DynamicUserRolesResolver], (service: DynamicUserRolesResolver) => {

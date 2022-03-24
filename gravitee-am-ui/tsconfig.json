@@ -1,6 +1,15 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "paths": {
+      "crypto": [
+        "../node_modules/crypto-browserify",
+      ],
+      "stream": [
+        "../node_modules/stream-browserify",
+        ".../node_modules/readable-stream"
+      ],
+    },
     "downlevelIteration": true,
     "importHelpers": true,
     "outDir": "./dist/out-tsc",
@@ -13,7 +22,9 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "target": "es2015",
-    "types": ["jest"],
+    "types": [
+      "jest"
+    ],
     "lib": [
       "es2016",
       "dom"

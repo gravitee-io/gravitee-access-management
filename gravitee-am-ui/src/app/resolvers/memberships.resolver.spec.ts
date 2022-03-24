@@ -19,8 +19,9 @@ import {MembershipsResolver} from "./memberships.resolver";
 describe('MembershipsResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [MembershipsResolver]
-    });
+    providers: [MembershipsResolver],
+    teardown: { destroyAfterEach: false }
+});
   });
 
   it('should ...', inject([MembershipsResolver], (service: MembershipsResolver) => {

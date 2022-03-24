@@ -23,8 +23,9 @@ describe('DomainSettingsWebAuthnComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsWebAuthnComponent ]
-    })
+    declarations: [DomainSettingsWebAuthnComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

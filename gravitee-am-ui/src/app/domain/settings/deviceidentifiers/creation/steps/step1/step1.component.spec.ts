@@ -23,8 +23,9 @@ describe('DeviceIdentifiersCreationStep1Component', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DeviceIdentifierCreationStep1Component ]
-    })
+    declarations: [DeviceIdentifierCreationStep1Component],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

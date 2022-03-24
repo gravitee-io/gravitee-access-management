@@ -23,8 +23,9 @@ describe('DomainSettingsFlowsComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsFlowsComponent ]
-    })
+    declarations: [DomainSettingsFlowsComponent],
+    teardown: { destroyAfterEach: false }
+})
       .compileComponents();
   }));
 

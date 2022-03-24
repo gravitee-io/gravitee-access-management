@@ -23,8 +23,9 @@ describe('DomainSettingsResourcesComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsResourcesComponent ]
-    })
+    declarations: [DomainSettingsResourcesComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 

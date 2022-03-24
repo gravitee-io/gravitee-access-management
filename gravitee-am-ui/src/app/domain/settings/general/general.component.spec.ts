@@ -23,8 +23,9 @@ describe('DomainSettingsGeneralComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ DomainSettingsGeneralComponent ]
-    })
+    declarations: [DomainSettingsGeneralComponent],
+    teardown: { destroyAfterEach: false }
+})
     .compileComponents();
   }));
 
