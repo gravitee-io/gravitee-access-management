@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   gio_action:
     type: enum
-    enum: [release, publish_rpms, pull_requests, am_v2, am_v2]
+    enum: [release, publish_rpms, pull_requests, am_v2, am_v3]
     default: pull_requests
   dry_run:
     type: boolean
@@ -690,7 +690,7 @@ workflows:
             - secrethub/env-export:
                 secret-path: graviteeio/cicd/azure/application-secret
                 var-name: AZURE_APPLICATION_SECRET
-                
+
   docker_build_and_push_am_v2:
     when:
       equal: [ am_v2, << pipeline.parameters.gio_action >> ]
