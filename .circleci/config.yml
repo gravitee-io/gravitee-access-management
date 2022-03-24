@@ -57,7 +57,7 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
-    
+
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
@@ -690,6 +690,7 @@ workflows:
             - secrethub/env-export:
                 secret-path: graviteeio/cicd/azure/application-secret
                 var-name: AZURE_APPLICATION_SECRET
+                
   docker_build_and_push_am_v2:
     when:
       equal: [ am_v2, << pipeline.parameters.gio_action >> ]
