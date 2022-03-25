@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractSensitiveProxy {
 
+    protected static final String DEFAULT_SCHEMA_CONFIG = "{}";
+
     private static final String PROPERTIES_SCHEMA_KEY = "properties";
     private static final String SENSITIVE_SCHEMA_KEY = "sensitive";
 

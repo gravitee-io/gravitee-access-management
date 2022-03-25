@@ -97,19 +97,20 @@ public class BotDetectionPluginManagerImpl implements BotDetectionPluginManager 
     @Override
     public String getSchema(String pluginId) throws IOException {
         BotDetection detection = botDetections.get(pluginId);
-        Path policyWorkspace = botDetectionPlugins.get(detection).path();
+        if (botDetectionPlugins.containsKey(detection)) {
+            Path policyWorkspace = botDetectionPlugins.get(detection).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+            File[] schemas = policyWorkspace.toFile().listFiles(
+                    pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
+            if (schemas.length == 1) {
+                File schemaDir = schemas[0];
 
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                if (schemaDir.listFiles().length > 0) {
+                    return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                }
             }
         }
-
         return null;
     }
 
