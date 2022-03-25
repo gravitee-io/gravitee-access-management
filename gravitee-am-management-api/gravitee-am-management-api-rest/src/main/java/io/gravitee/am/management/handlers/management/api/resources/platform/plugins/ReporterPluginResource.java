@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.ReporterPluginService;
 import io.gravitee.am.management.service.exception.ReporterPluginNotFoundException;
-import io.gravitee.am.management.service.exception.ReporterPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -71,10 +70,9 @@ public class ReporterPluginResource {
 
         // Check that the identity provider exists
         reporterPluginService.findById(reporterId)
-                .switchIfEmpty(Maybe.error(new ReporterPluginNotFoundException(reporterId)))
                 .flatMap(irrelevant -> reporterPluginService.getSchema(reporterId))
-                .switchIfEmpty(Maybe.error(new ReporterPluginSchemaNotFoundException(reporterId)))
                 .map(reporterPluginSchema -> Response.ok(reporterPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }

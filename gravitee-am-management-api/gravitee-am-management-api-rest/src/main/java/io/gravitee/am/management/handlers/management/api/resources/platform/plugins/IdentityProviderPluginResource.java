@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginNotFoundException;
-import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -73,11 +72,9 @@ public class IdentityProviderPluginResource {
 
         // Check that the identity provider exists
         identityProviderPluginService.findById(identityProviderId)
-                .switchIfEmpty(Maybe.error(new IdentityProviderPluginNotFoundException(identityProviderId)))
                 .flatMap(irrelevant -> identityProviderPluginService.getSchema(identityProviderId))
-                .switchIfEmpty(Maybe.error(new IdentityProviderPluginSchemaNotFoundException(identityProviderId)))
                 .map(identityProviderPluginSchema -> Response.ok(identityProviderPluginSchema).build())
-                .subscribe(response::resume, response::resume
-                );
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
+                .subscribe(response::resume, response::resume);
     }
 }

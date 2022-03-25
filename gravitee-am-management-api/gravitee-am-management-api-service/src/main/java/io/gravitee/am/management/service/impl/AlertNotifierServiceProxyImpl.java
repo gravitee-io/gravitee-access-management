@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.AlertNotifierServiceProxy;
+import io.gravitee.am.management.service.exception.NotifierPluginSchemaNotFoundException;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.ReferenceType;
@@ -105,12 +106,27 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
 
     private Single<AlertNotifier> filterSensitiveData(AlertNotifier alertNotifier) {
         return notifierPluginService.getSchema(alertNotifier.getType())
+                .map(Optional::ofNullable)
+                .onErrorResumeNext(error -> {
+                    if (error instanceof NotifierPluginSchemaNotFoundException) {
+                        return Single.just(Optional.empty());
+                    } else {
+                        return Single.error(error);
+                    }
+                })
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new AlertNotifier(alertNotifier);
-                    var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    if (schema.isPresent()) {
+                        var schemaNode = objectMapper.readTree(schema.get());
+                        var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    } else {
+                        // not schema , remove all the configuration to avoid sensitive data leak
+                        // this case may happen when the plugin zip file has been removed from the plugins directory
+                        // (set empty object to avoid NullPointer on the UI)
+                        filteredEntity.setConfiguration(DEFAULT_SCHEMA_CONFIG);
+                    }
                     return filteredEntity;
                 });
     }
@@ -118,7 +134,7 @@ public class AlertNotifierServiceProxyImpl extends AbstractSensitiveProxy implem
     private Single<PatchAlertNotifier> updateSensitiveData(PatchAlertNotifier patchAlertNotifier, AlertNotifier alertNotifier) {
         return notifierPluginService.getSchema(alertNotifier.getType())
                 .map(schema -> {
-                    var updateConfig = objectMapper.readTree(patchAlertNotifier.getConfiguration().orElse("{}"));
+                    var updateConfig = objectMapper.readTree(patchAlertNotifier.getConfiguration().orElse(DEFAULT_SCHEMA_CONFIG));
                     var oldConfig = objectMapper.readTree(alertNotifier.getConfiguration());
                     var schemaConfig = objectMapper.readTree(schema);
                     super.updateSensitiveData(updateConfig, oldConfig, schemaConfig, str ->

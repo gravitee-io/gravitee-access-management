@@ -84,24 +84,26 @@ export class ProviderSettingsComponent implements OnInit {
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService.identitySchema(this.provider.type).subscribe(data => {
       this.providerSchema = data;
-      // handle default null values
-      let self = this;
-      Object.keys(this.providerSchema['properties']).forEach(function(key) {
-        self.providerSchema['properties'][key].default = '';
-      });
-      // Backport for SAML plugins not handling encrypted assertions
-      if (
-        this.providerSchema.properties.graviteeCertificate &&
-        !this.providerSchema.properties.graviteeEncryptedAssertionCertificate
-      ){
-        this.certificates = this.route.snapshot.data['certificates'];
-        if (this.certificates && this.certificates.length > 0) {
-          this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
-          this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { 'type' : 'select' };
-          this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
-            map[obj.id] = obj.name;
-            return map;
-          }, {});
+      if (data) {
+        // handle default null values
+        let self = this;
+        Object.keys(this.providerSchema['properties']).forEach(function(key) {
+          self.providerSchema['properties'][key].default = '';
+        });
+        // Backport for SAML plugins not handling encrypted assertions
+        if (
+          this.providerSchema.properties.graviteeCertificate &&
+          !this.providerSchema.properties.graviteeEncryptedAssertionCertificate
+        ){
+          this.certificates = this.route.snapshot.data['certificates'];
+          if (this.certificates && this.certificates.length > 0) {
+            this.providerSchema.properties.graviteeCertificate.enum = _.flatMap(this.certificates, 'id');
+            this.providerSchema.properties.graviteeCertificate['x-schema-form'] = { 'type' : 'select' };
+            this.providerSchema.properties.graviteeCertificate['x-schema-form'].titleMap = this.certificates.reduce(function(map, obj) {
+              map[obj.id] = obj.name;
+              return map;
+            }, {});
+          }
         }
       }
     });
