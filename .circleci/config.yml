@@ -48,24 +48,24 @@ parameters:
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
-  secrethub: secrethub/cli@1.1.0
+  keeper: gravitee-io/keeper@0.6.0
 
 jobs:
-  secrethub:
+  keeper:
     docker:
       - image: 'cimg/base:stable'
     environment:
-      DEV_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.dev.xml'
-      RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.non.dry.run.xml'
-      DRY_RELEASE_MAVEN_SETTINGS: 'secrethub://graviteeio/cicd/graviteebot/infra/maven/dry-run/artifactory/settings.xml'
-      GIO_GPG_PUB_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_pub_key'
-      GIO_GPG_PRV_KEY: 'secrethub://graviteeio/cicd/graviteebot/gpg/armor_format_private_key'
-      GIT_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/git/user/name'
-      GIT_USER_EMAIL: 'secrethub://graviteeio/cicd/graviteebot/git/user/email'
-      DOCKERHUB_USER_NAME: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-name'
-      DOCKERHUB_USER_TOKEN: 'secrethub://graviteeio/cicd/graviteebot/infra/dockerhub-user-token'
+      DEV_MAVEN_SETTINGS: keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml
+      RELEASE_MAVEN_SETTINGS: keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml
+      DRY_RELEASE_MAVEN_SETTINGS: keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml
+      GIO_GPG_PUB_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
+      GIO_GPG_PRV_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
+      GIT_USER_NAME: keeper://IZd-yvsMopfQEa_0j1SDvg/field/login
+      GIT_USER_EMAIL: keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email
+      DOCKERHUB_USER_NAME: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
+      DOCKERHUB_USER_TOKEN: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
     steps:
-      - secrethub/exec:
+      - keeper/exec:
           command: |
             echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
             mkdir -p /tmp/gravit33bot/.secrets/.gungpg
@@ -78,7 +78,7 @@ jobs:
             mkdir -p /tmp/gravit33bot/.secrets/dockerhub
             echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
             echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
-      - secrethub/install
+            
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -280,12 +280,12 @@ workflows:
 
   build_branch:
     jobs:
-      - secrethub:
+      - keeper:
           context:
             - cicd-orchestrator
       - build:
           requires:
-            - secrethub
+            - keeper
           filters:
             branches:
               only:
@@ -294,11 +294,11 @@ workflows:
       - publish-images-azure-registry:
           context: cicd-orchestrator
           pre-steps:
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
                 var-name: AZURE_DOCKER_REGISTRY_USERNAME
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
                 var-name: AZURE_DOCKER_REGISTRY_PASSWORD
           requires:
             - build
@@ -310,14 +310,14 @@ workflows:
       - deploy-on-aks:
           context: cicd-orchestrator
           pre-steps:
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/application-id
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
                 var-name: AZURE_APPLICATION_ID
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/tenant
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
                 var-name: AZURE_TENANT
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/application-secret
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
                 var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
@@ -389,12 +389,12 @@ workflows:
       - purge-azure-registry:
           context: cicd-orchestrator
           pre-steps:
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/application-id
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
                 var-name: AZURE_APPLICATION_ID
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/tenant
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
                 var-name: AZURE_TENANT
-            - secrethub/env-export:
-                secret-path: graviteeio/cicd/azure/application-secret
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
                 var-name: AZURE_APPLICATION_SECRET
