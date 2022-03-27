@@ -63,14 +63,14 @@ jobs:
             mkdir -p /tmp/gravit33bot/.secrets/.gungpg
             ksm secret notation keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml > /tmp/gravit33bot/.secrets/release.settings.xml
             ksm secret notation keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml > /tmp/gravit33bot/.secrets/dry.release.settings.xml
-            ksm secret notation keeper://u2dz7IP-w9E0NKsUeyCAYA/custom_field/public_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
-            ksm secret notation keeper://u2dz7IP-w9E0NKsUeyCAYA/custom_field/private_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
+            ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
+            ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
             ksm secret notation keeper://IZd-yvsMopfQEa_0j1SDvg/field/login > /tmp/gravit33bot/git_user_name
             ksm secret notation keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email > /tmp/gravit33bot/git_user_email
             mkdir -p /tmp/gravit33bot/.secrets/dockerhub
             ksm secret notation keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login > /tmp/gravit33bot/.secrets/dockerhub/user_name
             ksm secret notation keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password > /tmp/gravit33bot/.secrets/dockerhub/user_token
-      - keeper/install
+            
       - persist_to_workspace:
           root: /tmp
           paths:
