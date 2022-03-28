@@ -16,13 +16,21 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
+
+import java.util.Map;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static java.util.Objects.isNull;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -30,14 +38,16 @@ import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
  */
 public class MfaFilterContext {
 
+    private final RoutingContext routingContext;
     private final Client client;
     private final Session session;
     private boolean isAmfaRuleTrue;
     private boolean isStepUpRuleTrue;
 
-    public MfaFilterContext(Client client, Session session) {
+    public MfaFilterContext(RoutingContext routingContext, Client client) {
+        this.routingContext = routingContext;
         this.client = client;
-        this.session = session;
+        this.session = routingContext.session();
     }
 
     public String getAmfaRule() {
@@ -92,5 +102,15 @@ public class MfaFilterContext {
 
     public Object getLoginAttempt() {
         return session.get(LOGIN_ATTEMPT_KEY);
+    }
+
+    public Map<String, Object> getEvaluableContext() {
+        final Map<String, Object> data = getEvaluableAttributes(routingContext);
+        final Object loginAttempt = this.getLoginAttempt();
+        data.put(LOGIN_ATTEMPT_KEY, isNull(loginAttempt) ? 0 : loginAttempt);
+        return Map.of(
+                "request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())),
+                "context", new EvaluableExecutionContext(data)
+        );
     }
 }
