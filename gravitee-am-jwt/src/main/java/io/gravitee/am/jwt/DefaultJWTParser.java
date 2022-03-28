@@ -18,6 +18,7 @@ package io.gravitee.am.jwt;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
@@ -34,6 +35,8 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.PublicKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.text.ParseException;
 import java.time.Instant;
@@ -47,12 +50,12 @@ import java.util.stream.Collectors;
 public class DefaultJWTParser implements JWTParser {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultJWTParser.class);
-    private final JWSVerifier verifier;
-    private long allowedClockSkewMillis = 0;
+    public static final String NO_MATCHING_JWT_PARSER_FOR_KEY = "No matching JWT parser for key : ";
+    private JWSVerifier verifier;
 
     public DefaultJWTParser(final Key key) throws InvalidKeyException {
-        if (key instanceof RSAPublicKey) {
-            this.verifier = new RSASSAVerifier((RSAPublicKey) key);
+        if (key instanceof PublicKey) {
+            initialiseVerifier((PublicKey) key);
             // if JCA doesn't support at least the PS256 algorithm (jdk <= 8)
             // add BouncyCastle JCA provider
             if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {
@@ -65,7 +68,21 @@ public class DefaultJWTParser implements JWTParser {
                 throw new InvalidKeyException(e);
             }
         } else {
-            throw new InvalidKeyException("No matching JWT parser for key : " + key);
+            throw new InvalidKeyException(NO_MATCHING_JWT_PARSER_FOR_KEY + key);
+        }
+    }
+
+    private void initialiseVerifier(PublicKey key) throws InvalidKeyException {
+        if (key instanceof RSAPublicKey){
+            verifier = new RSASSAVerifier((RSAPublicKey) key);
+        } else if (key instanceof ECPublicKey) {
+            try {
+                verifier = new ECDSAVerifier((ECPublicKey) key);
+            } catch (JOSEException e) {
+                throw new InvalidKeyException(e);
+            }
+        } else {
+            throw new InvalidKeyException(NO_MATCHING_JWT_PARSER_FOR_KEY + key);
         }
     }
 
@@ -91,10 +108,11 @@ public class DefaultJWTParser implements JWTParser {
             // https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-30#section-4.1.4
             // token MUST NOT be accepted on or after any specified exp time
             Instant now = Instant.now();
-            evaluateExp(jwt.getExp(), now, this.allowedClockSkewMillis);
+            long allowedClockSkewMillis = 0;
+            evaluateExp(jwt.getExp(), now, allowedClockSkewMillis);
             // https://tools.ietf.org/html/draft-ietf-oauth-json-web-token-30#section-4.1.5
             // token MUST NOT be accepted before any specified nbf time
-            evaluateNbf(jwt.getNbf(), now, this.allowedClockSkewMillis);
+            evaluateNbf(jwt.getNbf(), now, allowedClockSkewMillis);
             return jwt;
         } catch (ParseException ex) {
             logger.debug("The following JWT token : {} is malformed", payload);
@@ -117,8 +135,8 @@ public class DefaultJWTParser implements JWTParser {
     /**
      * Throw {@link ExpiredJWTException} if now is before nbf
      *
-     * @param nbf
-     * @param now
+     * @param nbf the not before time
+     * @param now the current time
      */
     public static void evaluateNbf(long nbf, Instant now, long clockSkew) {
         if (nbf > 0) {
@@ -137,8 +155,8 @@ public class DefaultJWTParser implements JWTParser {
     /**
      * Throw {@link ExpiredJWTException} if exp is after now
      *
-     * @param exp
-     * @param now
+     * @param exp the expiration time of the JWT
+     * @param now the current time
      */
     public static void evaluateExp(long exp, Instant now, long clockSkew) {
         if (exp > 0) {

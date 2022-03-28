@@ -78,10 +78,13 @@ import java.util.Date;
 @Primary
 public class CertificateServiceImpl implements CertificateService {
 
+    public static final String ECDSA = "ECDSA";
     /**
      * Logger.
      */
     private final Logger LOGGER = LoggerFactory.getLogger(CertificateServiceImpl.class);
+    private static final String RSA = "RSA";
+    private static final String EC = "EC";
 
     @Lazy
     @Autowired
@@ -372,7 +375,7 @@ public class CertificateServiceImpl implements CertificateService {
                         final String keyPass = environment.getProperty("domains.certificates.default.keypass", String.class, "gravitee");
                         final String storePass = environment.getProperty("domains.certificates.default.storepass", String.class, "gravitee");
 
-                        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+                        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(getAlgorithmCategory(sigAlgName));
                         keyPairGenerator.initialize(keySize);
                         KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
@@ -406,6 +409,18 @@ public class CertificateServiceImpl implements CertificateService {
                         return create(domain, certificate);
                     }
                 });
+    }
+
+    private String getAlgorithmCategory(String sigAlgName) {
+        String category;
+        if (sigAlgName.endsWith(RSA)) {
+            category = RSA;
+        } else if (sigAlgName.endsWith(ECDSA)) {
+            category = EC;
+        } else {
+            throw new IllegalArgumentException("Unsupported signing algorithm");
+        }
+        return category;
     }
 
     private X509Certificate generateCertificate(String dn, KeyPair keyPair, int validity, String sigAlgName) throws GeneralSecurityException, IOException, OperatorCreationException {

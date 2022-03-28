@@ -16,16 +16,16 @@
 package io.gravitee.am.gateway.handler.oidc.service.utils;
 
 import com.nimbusds.jose.EncryptionMethod;
-import com.nimbusds.jose.JWSAlgorithm;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.nimbusds.jose.JWEAlgorithm.*;
+import static com.nimbusds.jose.JWSAlgorithm.*;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 
 /**
@@ -38,15 +38,14 @@ public class JWAlgorithmUtils {
     /**
      * Unless we want specific values for id_token, userinfo, authorization and so on, we will share same settings.
      */
-    private static final Set<String> SUPPORTED_SIGNING_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            JWSAlgorithm.PS256.getName(), JWSAlgorithm.PS384.getName(), JWSAlgorithm.PS512.getName(),
-            JWSAlgorithm.RS256.getName(), JWSAlgorithm.RS384.getName(), JWSAlgorithm.RS512.getName(),
-            JWSAlgorithm.HS256.getName(), JWSAlgorithm.HS384.getName(), JWSAlgorithm.HS512.getName()
-    )));
+    private static final Set<String> SUPPORTED_SIGNING_ALG = Set.of(
+            ES256.getName(), ES384.getName(), ES512.getName(),
+            PS256.getName(), PS384.getName(), PS512.getName(),
+            RS256.getName(), RS384.getName(), RS512.getName(),
+            HS256.getName(), HS384.getName(), HS512.getName());
 
-    public static final boolean isSignAlgCompliantWithFapi(String alg) {
-        // ES256 is also authorized by FAPI but not managed by AM
-        return JWSAlgorithm.PS256.getName().equals(alg);
+    public static boolean isSignAlgCompliantWithFapi(String alg) {
+        return PS256.getName().equals(alg) || ES256.getName().equals(alg);
     }
 
 
@@ -69,7 +68,7 @@ public class JWAlgorithmUtils {
 
     )));
 
-    public static final boolean isKeyEncCompliantWithFapiBrazil(String enc) {
+    public static boolean isKeyEncCompliantWithFapiBrazil(String enc) {
         // RSA_OAP_256 should be used but FAPI Brazil specify RSA_OAEP
         return RSA_OAEP.getName().equals(enc) || RSA_OAEP_256.getName().equals(enc);
     }
@@ -77,12 +76,9 @@ public class JWAlgorithmUtils {
     /**
      * See https://tools.ietf.org/html/rfc7518#section-5.1
      */
-    private static final Set<String> SUPPORTED_CONTENT_ENCRYPTION_ALG = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            EncryptionMethod.A128CBC_HS256.getName(), EncryptionMethod.A192CBC_HS384.getName(), EncryptionMethod.A256CBC_HS512.getName(),
-            EncryptionMethod.A128GCM.getName(), EncryptionMethod.A192GCM.getName(), EncryptionMethod.A256GCM.getName()
-    )));
+    private static final Set<String> SUPPORTED_CONTENT_ENCRYPTION_ALG = Set.of(EncryptionMethod.A128CBC_HS256.getName(), EncryptionMethod.A192CBC_HS384.getName(), EncryptionMethod.A256CBC_HS512.getName(), EncryptionMethod.A128GCM.getName(), EncryptionMethod.A192GCM.getName(), EncryptionMethod.A256GCM.getName());
 
-    public static final boolean isContentEncCompliantWithFapiBrazil(String enc) {
+    public static boolean isContentEncCompliantWithFapiBrazil(String enc) {
         return EncryptionMethod.A256GCM.getName().equals(enc);
     }
 
@@ -90,7 +86,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of userinfo signing algorithm.
      */
     public static List<String> getSupportedUserinfoSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -106,7 +102,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of userinfo key encryption algorithm.
      */
     public static List<String> getSupportedUserinfoResponseAlg() {
-        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -121,7 +117,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of userinfo content encryption algorithm.
      */
     public static List<String> getSupportedUserinfoResponseEnc() {
-        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -143,7 +139,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of id token signing algorithm.
      */
     public static List<String> getSupportedIdTokenSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -158,7 +154,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of id token key encryption algorithm.
      */
     public static List<String> getSupportedIdTokenResponseAlg() {
-        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -173,7 +169,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of id token content encryption algorithm.
      */
     public static List<String> getSupportedIdTokenResponseEnc() {
-        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -192,13 +188,10 @@ public class JWAlgorithmUtils {
     }
 
     /**
-     * Authorization
-     */
-    /**
      * @return the supported list of authorization response signing algorithm.
      */
     public static List<String> getSupportedAuthorizationSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -214,7 +207,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of authorization response key encryption algorithm.
      */
     public static List<String> getSupportedAuthorizationResponseAlg() {
-        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -229,7 +222,7 @@ public class JWAlgorithmUtils {
      * @return the supported list of authorization response content encryption algorithm.
      */
     public static List<String> getSupportedAuthorizationResponseEnc() {
-        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
@@ -251,21 +244,21 @@ public class JWAlgorithmUtils {
      * @return the supported list of token introspection signing algorithm.
      */
     public static List<String> getSupportedIntrospectionEndpointAuthSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
      * @return the supported list of request object signing algorithm.
      */
     public static List<String> getSupportedRequestObjectSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     /**
      * @return the supported list of token endpoint auth signing algorithm.
      */
     public static List<String> getSupportedTokenEndpointAuthSigningAlg() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     public static boolean isValidRequestObjectSigningAlg(String algorithm) {
@@ -273,7 +266,7 @@ public class JWAlgorithmUtils {
     }
 
     public static List<String> getSupportedRequestObjectAlg() {
-        return Collections.unmodifiableList(SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_KEY_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     public static boolean isValidRequestObjectAlg(String algorithm) {
@@ -285,8 +278,9 @@ public class JWAlgorithmUtils {
     }
 
     public static List<String> getSupportedRequestObjectEnc() {
-        return Collections.unmodifiableList(SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_CONTENT_ENCRYPTION_ALG.stream().sorted().collect(toUnmodifiableList());
     }
+
     /**
      * @return the default userinfo content encryption algorithm when userinfo_encrypted_response_alg is informed
      */
@@ -295,7 +289,7 @@ public class JWAlgorithmUtils {
     }
 
     public static List<String> getSupportedBackchannelAuthenticationSigningAl() {
-        return Collections.unmodifiableList(SUPPORTED_SIGNING_ALG.stream().sorted().collect(Collectors.toList()));
+        return SUPPORTED_SIGNING_ALG.stream().sorted().collect(toUnmodifiableList());
     }
 
     public static boolean isValidBackchannelAuthenticationSigningAl(String algorithm) {

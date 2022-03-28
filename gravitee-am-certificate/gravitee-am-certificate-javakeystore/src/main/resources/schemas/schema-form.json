@@ -30,6 +30,9 @@
       "description": "The algorithm used to sign the JWT tokens.",
       "type" : "string",
       "enum" : [
+        "ES256",
+        "ES384",
+        "ES512",
         "RS256",
         "RS384",
         "RS512",
@@ -40,6 +43,9 @@
       "x-schema-form": {
         "type": "select",
         "titleMap": {
+          "ES256": "ES256 (ECDSA using P-256 and SHA-256)",
+          "ES384": "ES384 (ECDSA using P-384 and SHA-384)",
+          "ES512": "ES512 (ECDSA using P-512 and SHA-512)",
           "RS256": "RS256 (RSASSA-PKCS1-v1_5 using SHA-256)",
           "RS384": "RS384 (RSASSA-PKCS1-v1_5 using SHA-384)",
           "RS512": "RS512 (RSASSA-PKCS1-v1_5 using SHA-512)",

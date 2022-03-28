@@ -15,7 +15,13 @@
  */
 package io.gravitee.am.jwt;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.KeyLengthException;
+import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton;
@@ -34,6 +40,7 @@ import javax.crypto.SecretKey;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.PrivateKey;
+import java.security.interfaces.ECPrivateKey;
 import java.text.ParseException;
 
 /**
@@ -51,7 +58,15 @@ public class DefaultJWTBuilder implements JWTBuilder {
                              final String signatureAlgorithm,
                              final String keyId) throws InvalidKeyException {
         if (key instanceof PrivateKey) {
-            signer = new RSASSASigner((PrivateKey) key, true);
+            if ( key.getAlgorithm().equals("RSA")){
+                signer = new RSASSASigner((PrivateKey) key, true);
+            } else {
+                try {
+                    signer = new ECDSASigner((ECPrivateKey) key);
+                } catch (JOSEException e) {
+                    throw new InvalidKeyException(e);
+                }
+            }
             // if JCA doesn't support at least the PS256 algorithm (jdk <= 8)
             // add BouncyCastle JCA provider
             if (!JCASupport.isSupported(JWSAlgorithm.PS256)) {

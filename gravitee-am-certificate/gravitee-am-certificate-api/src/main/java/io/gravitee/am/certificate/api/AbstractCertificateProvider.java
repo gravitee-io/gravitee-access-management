@@ -20,6 +20,7 @@ import com.nimbusds.jose.jwk.KeyOperation;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.util.Base64;
 import io.gravitee.am.common.jwt.SignatureAlgorithm;
+import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
 import io.gravitee.am.model.jose.RSAKey;
 import io.reactivex.Flowable;
@@ -28,14 +29,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -46,6 +53,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractCertificateProvider implements CertificateProvider {
+    public static final String RSA = "RSA";
+    public static final String EC = "EC";
     @Autowired
     protected CertificateMetadata certificateMetadata;
     private Date expirationDate;
@@ -87,12 +96,16 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
                     certificateKeys.add(new CertificateKey(CertificateFormat.PEM, pem));
                     expirationDate = ((X509Certificate) cert).getNotAfter();
                 }
-                certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) keyPair.getPublic())));
+                PublicKey publicKey = keyPair.getPublic();
+                if (publicKey.getAlgorithm().equals(RSA)){
+                    certificateKeys.add(new CertificateKey(CertificateFormat.SSH_RSA, RSAKeyUtils.toSSHRSAString((RSAPublicKey) publicKey)));
+                } else if (publicKey.getAlgorithm().equals(EC)){
+                    certificateKeys.add(new CertificateKey(CertificateFormat.ECSDA, toEcdsaString((ECPublicKey) publicKey)));
+                }
             } else {
-                throw new IllegalArgumentException("A RSA Signer must be supplied");
+                throw new IllegalArgumentException("An ECSDA or RSA Signer must be supplied");
             }
         }
-
     }
 
     protected abstract String getStorepass();
@@ -167,19 +180,29 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
         return signature.getValue();
     }
 
+    private String toEcdsaString(ECPublicKey publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance(EC);
+        X509EncodedKeySpec keySpec = keyFactory.getKeySpec(publicKey, X509EncodedKeySpec.class);
+        return new String(java.util.Base64.getEncoder().encode(keySpec.getEncoded()));
+    }
+
     private Set<JWK> getKeys() {
         return jwkSet.toPublicJWKSet().getKeys().stream().flatMap(nimbusJwk -> convert(nimbusJwk, false)).collect(Collectors.toSet());
     }
 
     private Stream<JWK> convert(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate) {
         final Set<String> useFor = getUse() == null || getUse().isEmpty() ? Set.of(KeyUse.SIGNATURE.getValue()) : getUse();
-        return useFor.stream().map(use -> createRSAKey(nimbusJwk, includePrivate, use));
+        return useFor.stream().map(use -> createKey(nimbusJwk, includePrivate, use));
     }
 
-    private JWK createRSAKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
-        RSAKey jwk = new RSAKey();
-        if (nimbusJwk.getKeyType() != null) {
-            jwk.setKty(nimbusJwk.getKeyType().getValue());
+    private JWK createKey(com.nimbusds.jose.jwk.JWK nimbusJwk, boolean includePrivate, String use) {
+        String keyType = nimbusJwk.getKeyType().toString();
+        JWK jwk;
+        if (keyType.equals(RSA)) {
+            jwk = new RSAKey();
+        }
+        else {
+            jwk = new ECKey();
         }
 
         if (nimbusJwk.getKeyUse() != null) {
@@ -213,41 +236,63 @@ public abstract class AbstractCertificateProvider implements CertificateProvider
             jwk.setX5tS256(nimbusJwk.getX509CertSHA256Thumbprint().toString());
         }
 
-        // specific RSA Key
-        com.nimbusds.jose.jwk.RSAKey nimbusRSAJwk = (com.nimbusds.jose.jwk.RSAKey) nimbusJwk;
-        if (nimbusRSAJwk.getPublicExponent() != null) {
-            jwk.setE(nimbusRSAJwk.getPublicExponent().toString());
+        if (keyType.equals(RSA)) {
+            createRsaJwk((com.nimbusds.jose.jwk.RSAKey) nimbusJwk, includePrivate, (RSAKey) jwk);
         }
-        if (nimbusRSAJwk.getModulus() != null) {
-            jwk.setN(nimbusRSAJwk.getModulus().toString());
+        else {
+            createEcJwk((com.nimbusds.jose.jwk.ECKey) nimbusJwk, includePrivate, (ECKey) jwk);
+        }
+        return jwk;
+    }
+
+    private void createEcJwk(com.nimbusds.jose.jwk.ECKey nimbusEcJwk, boolean includePrivate, ECKey jwk) {
+        if (nimbusEcJwk.getCurve() != null) {
+            jwk.setCrv(nimbusEcJwk.getCurve().toString());
+        }
+        if (nimbusEcJwk.getX() != null) {
+            jwk.setX(nimbusEcJwk.getX().toString());
+        }
+        if (nimbusEcJwk.getY() != null) {
+            jwk.setY(nimbusEcJwk.getY().toString());
+        }
+        if (includePrivate) {
+            jwk.setD(nimbusEcJwk.getD().toString());
+        }
+    }
+
+    private void createRsaJwk(com.nimbusds.jose.jwk.RSAKey nimbusRsaJwk, boolean includePrivate, RSAKey jwk) {
+        if (nimbusRsaJwk.getPublicExponent() != null) {
+            jwk.setE(nimbusRsaJwk.getPublicExponent().toString());
+        }
+        if (nimbusRsaJwk.getModulus() != null) {
+            jwk.setN(nimbusRsaJwk.getModulus().toString());
         }
 
         if (includePrivate) {
-            if (nimbusRSAJwk.getPrivateExponent() != null) {
-                jwk.setD(nimbusRSAJwk.getPrivateExponent().toString());
+            if (nimbusRsaJwk.getPrivateExponent() != null) {
+                jwk.setD(nimbusRsaJwk.getPrivateExponent().toString());
             }
 
-            if (nimbusRSAJwk.getFirstPrimeFactor() != null) {
-                jwk.setP(nimbusRSAJwk.getFirstPrimeFactor().toString());
+            if (nimbusRsaJwk.getFirstPrimeFactor() != null) {
+                jwk.setP(nimbusRsaJwk.getFirstPrimeFactor().toString());
             }
 
-            if (nimbusRSAJwk.getFirstFactorCRTExponent() != null) {
-                jwk.setDp(nimbusRSAJwk.getFirstFactorCRTExponent().toString());
+            if (nimbusRsaJwk.getFirstFactorCRTExponent() != null) {
+                jwk.setDp(nimbusRsaJwk.getFirstFactorCRTExponent().toString());
             }
 
-            if (nimbusRSAJwk.getFirstCRTCoefficient() != null) {
-                jwk.setQi(nimbusRSAJwk.getFirstCRTCoefficient().toString());
+            if (nimbusRsaJwk.getFirstCRTCoefficient() != null) {
+                jwk.setQi(nimbusRsaJwk.getFirstCRTCoefficient().toString());
             }
 
-            if (nimbusRSAJwk.getSecondPrimeFactor() != null) {
-                jwk.setQ(nimbusRSAJwk.getSecondPrimeFactor().toString());
+            if (nimbusRsaJwk.getSecondPrimeFactor() != null) {
+                jwk.setQ(nimbusRsaJwk.getSecondPrimeFactor().toString());
             }
 
-            if (nimbusRSAJwk.getSecondFactorCRTExponent() != null) {
-                jwk.setDq(nimbusRSAJwk.getSecondFactorCRTExponent().toString());
+            if (nimbusRsaJwk.getSecondFactorCRTExponent() != null) {
+                jwk.setDq(nimbusRsaJwk.getSecondFactorCRTExponent().toString());
             }
         }
-        return jwk;
     }
 
     private SignatureAlgorithm getSignature(String signingAlgorithm) {

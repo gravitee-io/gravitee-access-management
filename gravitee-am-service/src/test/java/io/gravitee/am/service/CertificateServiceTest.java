@@ -31,13 +31,15 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
+
+import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 
@@ -65,6 +67,9 @@ public class CertificateServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private Environment environment;
 
     @Mock
     private CertificatePluginService certificatePluginService;
@@ -189,10 +194,40 @@ public class CertificateServiceTest {
     }
 
     @Test
-    @Ignore
-    public void shouldCreate_defaultCertificate() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(CertificateSchema.class))).thenReturn(new CertificateSchema());
+    public void shouldCreate_defaultCertificate_Rsa() throws Exception {
+        TestObserver<Certificate> testObserver = defaultCertificate(2048, "SHA256withRSA");
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void shouldCreate_defaultCertificate_Ec() throws Exception {
+        TestObserver<Certificate> testObserver = defaultCertificate(256, "SHA256withECDSA");
+        testObserver.assertComplete();
+    }
+
+    @Test
+    public void unsupportedAlgorithmThrowsException() throws Exception {
+        TestObserver<Certificate> testObserver = defaultCertificate(256, "RSASSA-PSS");
+        testObserver.assertError(IllegalArgumentException.class);
+    }
+
+    private TestObserver<Certificate> defaultCertificate(int keySize, String algorithm) throws Exception {
+        when(environment.getProperty(eq("domains.certificates.default.keysize"), any(), any())).thenReturn(keySize);
+        when(environment.getProperty(eq("domains.certificates.default.validity"), any(), any())).thenReturn(365);
+        when(environment.getProperty(eq("domains.certificates.default.name"), any(), any())).thenReturn("cn=Gravitee.io");
+        when(environment.getProperty(eq("domains.certificates.default.algorithm"), any(), any())).thenReturn(algorithm);
+        when(environment.getProperty(eq("domains.certificates.default.alias"), any(), any())).thenReturn("default");
+        when(environment.getProperty(eq("domains.certificates.default.keypass"), any(), any())).thenReturn("gravitee");
+        when(environment.getProperty(eq("domains.certificates.default.storepass"), any(), any())).thenReturn("gravitee");
+
+        when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+
+        CertificateSchema schema = new CertificateSchema();
+        schema.setProperties(Collections.emptyMap());
+        when(objectMapper.readValue(anyString(), eq(CertificateSchema.class))).thenReturn(schema);
         when(objectMapper.createObjectNode()).thenReturn(mock(ObjectNode.class));
+        when(objectMapper.writeValueAsString(any(ObjectNode.class))).thenReturn("certificate");
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just("{\n" +
                         "  \"type\" : \"object\",\n" +
@@ -227,9 +262,9 @@ public class CertificateServiceTest {
                         "    \"keypass\"\n" +
                         "  ]\n" +
                         "}"));
-        TestObserver testObserver = certificateService.create("my-domain").test();
+        TestObserver<Certificate> testObserver = certificateService.create("my-domain").test();
         testObserver.awaitTerminalEvent();
-
-        testObserver.assertComplete();
+//        testObserver.assertComplete();
+        return testObserver;
     }
 }
