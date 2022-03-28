@@ -100,6 +100,9 @@ public class UserServiceTest {
     @Mock
     private MembershipService membershipService;
 
+    @Mock
+    private TokenService tokenService;
+
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
             NAME_STRICT_PATTERN,
@@ -432,11 +435,14 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
 
         userService.resetPassword(domain, user.getId(), password, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
+
+        verify(tokenService).deleteByUserId(any());
     }
 
     @Test
@@ -461,12 +467,14 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
 
         userService.resetPassword(domain, user.getId(), password, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
         verify(userProvider, times(1)).create(any());
+        verify(tokenService).deleteByUserId(any());
     }
 
     @Test

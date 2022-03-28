@@ -38,6 +38,8 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
@@ -51,6 +53,8 @@ import java.util.function.BiFunction;
  * @author GraviteeSource Team
  */
 public abstract class AbstractUserService<T extends io.gravitee.am.service.CommonUserService> implements CommonUserService {
+
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     protected IdentityProviderManager identityProviderManager;
