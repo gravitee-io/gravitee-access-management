@@ -109,10 +109,10 @@
         <json-smart.version>2.4.7</json-smart.version>
         <jackson-bom.version>2.10.5.20201202</jackson-bom.version>
         <reactor-netty.version>1.0.15</reactor-netty.version>
-        <sonar.skip>true</sonar.skip>
         <commons-io.version>2.11.0</commons-io.version>
 
         <!-- External plugins versions -->
+
         <gravitee-policy-callout-http.version>1.13.1</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.0.0</gravitee-policy-groovy.version>
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
@@ -125,6 +125,9 @@
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
         <jdk.version>11</jdk.version>
+
+        <!-- Sonar - Jacoco -->
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -411,56 +414,98 @@
     </dependencies>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
-        <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <version>3.2.0</version>
-            <configuration>
-                <doclint>none</doclint>
-                <source>${jdk.version}</source>
-            </configuration>
-        </plugin>
-        <plugin>
-            <groupId>com.mycila</groupId>
-            <artifactId>license-maven-plugin</artifactId>
-            <version>2.11</version>
-            <configuration>
-                <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
-                <properties>
-                    <owner>The Gravitee team</owner>
-                    <email>http://gravitee.io</email>
-                </properties>
-                <excludes>
-                    <exclude>LICENSE.txt</exclude>
-                    <exclude>Jenkinsfile</exclude>
-                    <exclude>**/README</exclude>
-                    <exclude>src/main/packaging/**</exclude>
-                    <exclude>src/test/resources/**</exclude>
-                    <exclude>src/main/resources/**</exclude>
-                    <exclude>src/main/webapp/**</exclude>
-                    <exclude>node_modules/**</exclude>
-                    <exclude>**/node_modules/**</exclude>
-                    <exclude>dist/**</exclude>
-                    <exclude>.tmp/**</exclude>
-                    <exclude>bower_components/**</exclude>
-                    <exclude>.*</exclude>
-                    <exclude>.*/**</exclude>
-                    <exclude>**/*.adoc</exclude>
-                    <exclude>**/LICENSE_TEMPLATE.txt</exclude>
-                </excludes>
-                <mapping>    <ts>SLASHSTAR_STYLE</ts>    <js>SLASHSTAR_STYLE</js>    </mapping>
-            </configuration>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>check</goal>
-                    </goals>
-                    <phase>validate</phase>
-                </execution>
-
-            </executions>
-        </plugin>
-      </plugins>
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.11</version>
+                <configuration>
+                    <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+                    <properties>
+                        <owner>The Gravitee team</owner>
+                        <email>http://gravitee.io</email>
+                    </properties>
+                    <excludes>
+                        <exclude>LICENSE.txt</exclude>
+                        <exclude>Jenkinsfile</exclude>
+                        <exclude>**/README</exclude>
+                        <exclude>src/main/packaging/**</exclude>
+                        <exclude>src/test/resources/**</exclude>
+                        <exclude>src/main/resources/**</exclude>
+                        <exclude>src/main/webapp/**</exclude>
+                        <exclude>node_modules/**</exclude>
+                        <exclude>**/node_modules/**</exclude>
+                        <exclude>dist/**</exclude>
+                        <exclude>.tmp/**</exclude>
+                        <exclude>bower_components/**</exclude>
+                        <exclude>.*</exclude>
+                        <exclude>.*/**</exclude>
+                        <exclude>**/*.adoc</exclude>
+                        <exclude>**/LICENSE_TEMPLATE.txt</exclude>
+                        <exclude>sonar-project.properties</exclude>
+                    </excludes>
+                    <mapping>
+                        <ts>SLASHSTAR_STYLE</ts>
+                        <js>SLASHSTAR_STYLE</js>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>validate</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <doclint>none</doclint>
+                    <source>${jdk.version}</source>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine
+                    >@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.util.regex=ALL-UNNAMED --add-opens
+                        java.base/java.util.stream=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
     </build>
 </project>

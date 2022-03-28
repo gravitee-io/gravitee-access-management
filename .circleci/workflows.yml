@@ -502,6 +502,55 @@ jobs:
               PURGE_UI="acr purge --filter 'am-management-ui:3-${minor}-x-.*' --untagged --ago 1d --keep 3"
               az acr run --cmd "$PURGE_UI" --registry graviteeio /dev/null
             done
+  coverage_build:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Maven Package
+          command: |
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            echo $AM_VERSION > am.version
+            mvn -s /tmp/.circleci.settings.xml verify -pl \!gravitee-am-ui
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./*
+
+  run_sonarcloud_analysis:
+    description: A job that run Sonarcloud analysis
+    parameters:
+      working_directory:
+        description: "Directory where the Sonarcloud analysis will be run"
+        default: "."
+        type: string
+    docker:
+      - image: sonarsource/sonar-scanner-cli
+    resource_class: xlarge
+    steps:
+      - run:
+          name: Add SSH tool
+          command: apk add --no-cache openssh
+      - checkout
+      - attach_workspace:
+          at: .
+      - keeper/env-export:
+          secret-url: keeper://9x9YgyU6DWzux4DPoHAzDQ/field/password
+          var-name: SONAR_TOKEN
+      - run:
+          name: Run Sonarcloud Analysis
+          working_directory: << parameters.working_directory >>
+          command: |
+            export AM_VERSION=$(cat ./am.version)
+            sonar-scanner -Dsonar.projectVersion=${AM_VERSION}
 workflows:
   version: 2.1
   # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
@@ -711,6 +760,20 @@ workflows:
             - keeper/env-export:
                 secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
                 var-name: AZURE_APPLICATION_SECRET
+
+  sonarcloud_analysis:
+    jobs:
+      - keeper:
+          context:
+            - cicd-orchestrator
+      - coverage_build:
+          requires:
+            - keeper
+      - run_sonarcloud_analysis:
+          context:
+            - cicd-orchestrator
+          requires:
+            - coverage_build
 
 #  build_ciba_container:
 #    when:
