@@ -54,7 +54,7 @@ jobs:
   keeper:
     docker:
       - image: 'cimg/base:stable' 
-   environment:
+    environment:
       DEV_MAVEN_SETTINGS: keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml
       RELEASE_MAVEN_SETTINGS: keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml
       DRY_RELEASE_MAVEN_SETTINGS: keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml
