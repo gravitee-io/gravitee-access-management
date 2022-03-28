@@ -48,28 +48,36 @@ parameters:
 
 orbs:
   gravitee: gravitee-io/gravitee@1.0
-  keeper: gravitee-io/keeper@0.5.0
+  keeper: gravitee-io/keeper@0.6.0
 
 jobs:
   keeper:
     docker:
       - image: 'cimg/base:stable' 
+   environment:
+      DEV_MAVEN_SETTINGS: keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml
+      RELEASE_MAVEN_SETTINGS: keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml
+      DRY_RELEASE_MAVEN_SETTINGS: keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml
+      GIO_GPG_PUB_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
+      GIO_GPG_PRV_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
+      GIT_USER_NAME: keeper://IZd-yvsMopfQEa_0j1SDvg/field/login
+      GIT_USER_EMAIL: keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email
+      DOCKERHUB_USER_NAME: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
+      DOCKERHUB_USER_TOKEN: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
     steps:
-      - keeper/install
-      - run:
-          name: Get ksm secrets
+      - keeper/exec:
           command: |
-            ksm secret notation keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml > /tmp/.circleci.settings.xml
+            echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
             mkdir -p /tmp/gravit33bot/.secrets/.gungpg
-            ksm secret notation keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml > /tmp/gravit33bot/.secrets/release.settings.xml
-            ksm secret notation keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml > /tmp/gravit33bot/.secrets/dry.release.settings.xml
-            ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
-            ksm secret notation keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
-            ksm secret notation keeper://IZd-yvsMopfQEa_0j1SDvg/field/login > /tmp/gravit33bot/git_user_name
-            ksm secret notation keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email > /tmp/gravit33bot/git_user_email
+            echo $RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/release.settings.xml
+            echo $DRY_RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/dry.release.settings.xml
+            echo $GIO_GPG_PUB_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
+            echo $GIO_GPG_PRV_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
+            echo $GIT_USER_NAME > /tmp/gravit33bot/git_user_name
+            echo $GIT_USER_EMAIL > /tmp/gravit33bot/git_user_email
             mkdir -p /tmp/gravit33bot/.secrets/dockerhub
-            ksm secret notation keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login > /tmp/gravit33bot/.secrets/dockerhub/user_name
-            ksm secret notation keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password > /tmp/gravit33bot/.secrets/dockerhub/user_token
+            echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
+            echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
             
       - persist_to_workspace:
           root: /tmp
