@@ -17,7 +17,6 @@ import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {DomainService} from '../../services/domain.service';
 import {SnackbarService} from '../../services/snackbar.service';
-import {NgForm} from "@angular/forms";
 
 @Component({
   selector: 'app-creation',
@@ -44,7 +43,10 @@ export class DomainCreationComponent implements OnInit {
     this.domainService.create(this.domain).subscribe(data => {
       this.createDomainBtn.nativeElement.loading = false;
       this.snackbarService.open('Domain ' + data.name + ' created');
-      this.router.navigate(['..', data.hrid], { relativeTo: this.route })
+      this.router.navigate(['..', data.hrid], { relativeTo: this.route });
+    }, error => {
+      this.createDomainBtn.nativeElement.loading = false;
+      this.snackbarService.openFromComponent('Errors', [error.error.message]);
     });
   }
 }

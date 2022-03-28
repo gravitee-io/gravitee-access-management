@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.jwt;
 
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
@@ -27,6 +30,8 @@ import org.junit.Test;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
@@ -34,6 +39,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -44,30 +50,29 @@ import static org.junit.Assert.assertTrue;
 public class DefaultJWTParserTest {
 
     @Test
+    public void shouldParse_ec() throws Exception {
+        ECKey ecKey = new ECKeyGenerator(Curve.P_256)
+                .keyID("123")
+                .generate();
+        ECPrivateKey rsaPrivateKey = ecKey.toECPrivateKey();
+        ECPublicKey rsaPublicKey = ecKey.toECPublicKey();
+        String algorithm = SignatureAlgorithm.ES256.getValue();
+        JWTBuilder jwtBuilder  = new DefaultJWTBuilder(rsaPrivateKey, algorithm, ecKey.getKeyID());
+        JWTParser jwtParser = new DefaultJWTParser(rsaPublicKey);
+        assertJwt(jwtBuilder, jwtParser, algorithm);
+    }
+
+    @Test
     public void shouldParse_rsa() throws Exception {
         RSAKey rsaJWK = new RSAKeyGenerator(2048)
                 .keyID("123")
                 .generate();
         RSAPrivateKey rsaPrivateKey = rsaJWK.toRSAPrivateKey();
         RSAPublicKey rsaPublicKey = rsaJWK.toRSAPublicKey();
-        JWTBuilder jwtBuilder  = new DefaultJWTBuilder(rsaPrivateKey, SignatureAlgorithm.RS256.getValue(), rsaJWK.getKeyID());
+        String algorithm = SignatureAlgorithm.RS256.getValue();
+        JWTBuilder jwtBuilder  = new DefaultJWTBuilder(rsaPrivateKey, algorithm, rsaJWK.getKeyID());
         JWTParser jwtParser = new DefaultJWTParser(rsaPublicKey);
-
-        JWT jwt = new JWT();
-        jwt.setIss("https://gravitee.io");
-        jwt.setSub("alice");
-        jwt.setIat(Instant.now().plus(24 * 365, ChronoUnit.HOURS).getEpochSecond());
-        jwt.setExp(Instant.now().plus(24 * 365 * 2, ChronoUnit.HOURS).getEpochSecond());
-        String signedJWT = jwtBuilder.sign(jwt);
-
-        // check header
-        String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), "UTF-8");
-        assertTrue(header.equals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"RS256\"}"));
-
-        JWT parsedJWT = jwtParser.parse(signedJWT);
-        assertEquals("alice", parsedJWT.getSub());
-        assertEquals("https://gravitee.io", parsedJWT.getIss());
-        assertTrue(new Date().before(new Date(parsedJWT.getExp() * 1000)));
+        assertJwt(jwtBuilder, jwtParser, algorithm);
     }
 
     @Test(expected = SignatureException.class)
@@ -163,7 +168,7 @@ public class DefaultJWTParserTest {
         String signedJWT = jwtBuilder.sign(jwt);
 
         // check header
-        String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), "UTF-8");
+        String header = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), UTF_8);
         assertTrue(header.equals("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"HS256\"}"));
 
         JWT parsedJWT = jwtParser.parse(signedJWT);
@@ -244,5 +249,24 @@ public class DefaultJWTParserTest {
         JWTParser jwtParser = new DefaultJWTParser(secretKeySpec);
 
         jwtParser.parse("malformed-token");
+    }
+
+    private void assertJwt(JWTBuilder jwtBuilder, JWTParser jwtParser, String algorithm) {
+        JWT jwt = new JWT();
+        jwt.setIss("https://gravitee.io");
+        jwt.setSub("alice");
+        jwt.setIat(Instant.now().plus(24 * 365, ChronoUnit.HOURS).getEpochSecond());
+        jwt.setExp(Instant.now().plus(24 * 365 * 2, ChronoUnit.HOURS).getEpochSecond());
+        String signedJWT = jwtBuilder.sign(jwt);
+
+        // check header
+        String actualHeader = new String(Base64.getDecoder().decode(signedJWT.split("\\.")[0]), UTF_8);
+        String expectedHeader = String.format("{\"kid\":\"123\",\"typ\":\"JWT\",\"alg\":\"%s\"}", algorithm);
+        assertEquals(expectedHeader, actualHeader);
+
+        JWT parsedJWT = jwtParser.parse(signedJWT);
+        assertEquals("alice", parsedJWT.getSub());
+        assertEquals("https://gravitee.io", parsedJWT.getIss());
+        assertTrue(new Date().before(new Date(parsedJWT.getExp() * 1000)));
     }
 }

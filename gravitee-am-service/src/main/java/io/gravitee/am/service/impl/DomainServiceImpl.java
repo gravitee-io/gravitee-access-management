@@ -162,9 +162,9 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Find domain by ID: {}", id);
         return domainRepository.findById(id)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find a domain using its ID: {}", id, ex);
+                    LOGGER.error("An error occurred while trying to find a domain using its ID: {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to find a domain using its ID: %s", id), ex));
+                            String.format("An error occurred while trying to find a domain using its ID: %s", id), ex));
                 });
     }
 
@@ -213,8 +213,8 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findAll()
                 .toList()
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find all domains", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find all domains", ex));
+                    LOGGER.error("An error occurred while trying to find all domains", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to find all domains", ex));
                 });
     }
 
@@ -229,8 +229,8 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Find domains by id in {}", ids);
         return domainRepository.findByIdIn(ids)
                 .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find domains by id in {}", ids, ex);
-                    return Flowable.error(new TechnicalManagementException("An error occurs while trying to find domains by id in", ex));
+                    LOGGER.error("An error occurred while trying to find domains by id in {}", ids, ex);
+                    return Flowable.error(new TechnicalManagementException("An error occurred while trying to find domains by id in", ex));
                 });
     }
 
@@ -298,8 +298,8 @@ public class DomainServiceImpl implements DomainService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to create a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to create a domain", ex));
+                    LOGGER.error("An error occurred while trying to create a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain", ex));
                 })
                 .doOnSuccess(domain -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).domain(domain).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_CREATED).referenceType(ReferenceType.ENVIRONMENT).referenceId(environmentId).throwable(throwable)));
@@ -325,8 +325,8 @@ public class DomainServiceImpl implements DomainService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to update a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to update a domain", ex));
+                    LOGGER.error("An error occurred while trying to update a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to update a domain", ex));
                 });
     }
 
@@ -359,8 +359,8 @@ public class DomainServiceImpl implements DomainService {
                         return Single.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to patch a domain", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to patch a domain", ex));
+                    LOGGER.error("An error occurred while trying to patch a domain", ex);
+                    return Single.error(new TechnicalManagementException("An error occurred while trying to patch a domain", ex));
                 });
     }
 
@@ -471,8 +471,8 @@ public class DomainServiceImpl implements DomainService {
                         return Completable.error(ex);
                     }
 
-                    LOGGER.error("An error occurs while trying to delete security domain {}", domainId, ex);
-                    return Completable.error(new TechnicalManagementException("An error occurs while trying to delete security domain " + domainId, ex));
+                    LOGGER.error("An error occurred while trying to delete security domain {}", domainId, ex);
+                    return Completable.error(new TechnicalManagementException("An error occurred while trying to delete security domain " + domainId, ex));
                 });
     }
 
