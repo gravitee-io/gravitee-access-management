@@ -33,6 +33,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
@@ -90,6 +91,9 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
 
     @Autowired
     protected io.gravitee.am.service.UserService userService;
+
+    @Autowired
+    protected TokenService tokenService;
 
     @Override
     protected io.gravitee.am.service.UserService getUserService() {
@@ -296,7 +300,14 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                             user.setLastPasswordReset(new Date());
                                             user.setUpdatedAt(new Date());
                                             return userService.update(user);
-                                        })
+                                        })// after audit, invalidate tokens whatever is the domain or app settings
+                                        // as it is an admin action here, we want to force the user to login
+                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUserId(updatedUser.getId())
+                                                .toSingleDefault(updatedUser)
+                                                .onErrorResumeNext(err -> {
+                                                    logger.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
+                                                    return Single.just(updatedUser);
+                                                })))
                                         .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                                         .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user).throwable(throwable)));
                             });

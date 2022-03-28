@@ -243,6 +243,15 @@ export class AccountSettingsComponent implements OnInit, OnChanges {
     this.formChanged = true;
   }
 
+  enableInvalidateTokens(event) {
+    this.accountSettings.resetPasswordInvalidateTokens = event.checked;
+    this.formChanged = true;
+  }
+
+  isInvalidateTokensEnabled() {
+    return this.accountSettings && this.accountSettings.resetPasswordInvalidateTokens;
+  }
+
   formIsValid() {
     if (this.accountSettings.loginAttemptsDetectionEnabled) {
       if (this.accountSettings.maxLoginAttempts < 1) {

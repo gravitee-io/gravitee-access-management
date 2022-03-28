@@ -45,6 +45,7 @@ public class AccountSettingsMongo {
     private boolean resetPasswordCustomForm;
     private List<FormFieldMongo> resetPasswordCustomFormFields;
     private boolean resetPasswordConfirmIdentity;
+    private boolean resetPasswordInvalidateTokens;
 
     public boolean isInherited() {
         return inherited;
@@ -198,6 +199,14 @@ public class AccountSettingsMongo {
         this.resetPasswordConfirmIdentity = resetPasswordConfirmIdentity;
     }
 
+    public boolean isResetPasswordInvalidateTokens() {
+        return resetPasswordInvalidateTokens;
+    }
+
+    public void setResetPasswordInvalidateTokens(boolean resetPasswordInvalidateTokens) {
+        this.resetPasswordInvalidateTokens = resetPasswordInvalidateTokens;
+    }
+
     public AccountSettings convert() {
         AccountSettings accountSettings = new AccountSettings();
         accountSettings.setInherited(isInherited());
@@ -223,6 +232,7 @@ public class AccountSettingsMongo {
         } else {
             accountSettings.setResetPasswordCustomFormFields(null);
         }
+        accountSettings.setResetPasswordInvalidateTokens(isResetPasswordInvalidateTokens());
         return accountSettings;
     }
 
@@ -254,7 +264,7 @@ public class AccountSettingsMongo {
         } else {
             accountSettingsMongo.setResetPasswordCustomFormFields(null);
         }
-
+        accountSettingsMongo.setResetPasswordInvalidateTokens(accountSettings.isResetPasswordInvalidateTokens());
         return accountSettingsMongo;
     }
 }
