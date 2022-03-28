@@ -17,13 +17,8 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
-import io.gravitee.am.gateway.handler.context.EvaluableRequest;
-import io.vertx.reactivex.core.http.HttpServerRequest;
 
-import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -33,18 +28,12 @@ import java.util.function.Supplier;
 public class StepUpAuthenticationFilter extends MfaContextHolder implements Supplier<Boolean> {
 
     private final RuleEngine ruleEngine;
-    private final HttpServerRequest request;
-    private final Map<String, Object> data;
 
     public StepUpAuthenticationFilter(
             MfaFilterContext context,
-            RuleEngine ruleEngine,
-            HttpServerRequest request,
-            Map<String, Object> data) {
+            RuleEngine ruleEngine) {
         super(context);
         this.ruleEngine = ruleEngine;
-        this.request = request;
-        this.data = data;
     }
 
     @Override
@@ -64,10 +53,6 @@ public class StepUpAuthenticationFilter extends MfaContextHolder implements Supp
     }
 
     protected boolean isStepUpAuthentication(String selectionRule) {
-        var parameters = Map.of(
-                "request", new EvaluableRequest(new VertxHttpServerRequest(request.getDelegate())),
-                "context", new EvaluableExecutionContext(data)
-        );
-        return ruleEngine.evaluate(selectionRule, parameters, Boolean.class, false);
+        return ruleEngine.evaluate(selectionRule, context.getEvaluableContext(), Boolean.class, false);
     }
 }
