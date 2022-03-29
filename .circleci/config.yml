@@ -86,7 +86,7 @@ jobs:
             - gravit33bot
   build:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.2
     resource_class: xlarge
     steps:
       - attach_workspace:
@@ -112,7 +112,7 @@ jobs:
 
   run_postman_tests_mongo:
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.2-node
       - image: mongo:4.2
     resource_class: small
     steps:
@@ -171,7 +171,7 @@ jobs:
 
   run_postman_tests_psql:
     docker:
-      - image: cimg/openjdk:17.0.1-node
+      - image: cimg/openjdk:17.0.2-node
       - image: postgres:14-alpine
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
@@ -285,7 +285,7 @@ jobs:
 
   publish-fapi-resource-images-azure-registry:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.2
     resource_class: small
     steps:
       - checkout
@@ -321,7 +321,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:17.0.1
+      - image: cimg/openjdk:17.0.2
     resource_class: small
     steps:
       - checkout
