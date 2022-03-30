@@ -1,6 +1,48 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/503?closed=1[AM - 3.17.0 (2022-03-30)]
+
+=== Bug fixes
+
+*_Management_*
+
+- Typo on selection rule modal https://github.com/gravitee-io/issues/issues/7357[#7357]
+
+=== Features
+
+*_Gateway_*
+
+- Configure AM as a SAML 2.0 Identity Provider https://github.com/gravitee-io/issues/issues/7011[#7011]
+- Self account management manage MFA recovery codes https://github.com/gravitee-io/issues/issues/7147[#7147]
+
+*_Management_*
+
+- Certificates expiration notification - UI notification bar https://github.com/gravitee-io/issues/issues/6881[#6881]
+- Certificates expiration notification - display certificate expiration date in the UI https://github.com/gravitee-io/issues/issues/7175[#7175]
+- Certificates expiration notification - notification service https://github.com/gravitee-io/issues/issues/6879[#6879]
+- Certificates expiration notification - notification timeframe https://github.com/gravitee-io/issues/issues/6882[#6882]
+- Certificates expiration notification - watcher service https://github.com/gravitee-io/issues/issues/6880[#6880]
+- Certificates expiration notification https://github.com/gravitee-io/issues/issues/6833[#6833]
+- Manage identity provider priority https://github.com/gravitee-io/issues/issues/6519[#6519]
+- [gateway] add RESET_PASSWORD flow https://github.com/gravitee-io/issues/issues/7015[#7015]
+- [gateway] conditional policies https://github.com/gravitee-io/issues/issues/7016[#7016]
+- [idp] handle redirection to Identity Provider via Expression language https://github.com/gravitee-io/issues/issues/5167[#5167]
+- [mfa] Recovery codes https://github.com/gravitee-io/issues/issues/7014[#7014]
+
+=== Improvements
+
+*_Management_*
+
+- Improve certificate expiry configuration https://github.com/gravitee-io/issues/issues/7271[#7271]
+
+*_Management-ui_*
+
+- Improve UX for IdP priority order https://github.com/gravitee-io/issues/issues/7286[#7286]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/526?closed=1[AM - 3.16.1 (2022-03-16)]
 
 === Bug fixes
