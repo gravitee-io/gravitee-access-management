@@ -1,0 +1,744 @@
+version: 2.1
+
+parameters:
+  gio_action:
+    type: enum
+    enum: [release, publish_rpms, pull_requests]
+    default: pull_requests
+  dry_run:
+    type: boolean
+    default: true
+    description: "Run in dry run mode?"
+  maven_profile_id:
+    type: string
+    default: "gravitee-dry-run"
+    description: "Maven ID of the Maven profile to use for a dry run ?"
+  ee_id_provider_cas_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the CAS identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_id_provider_kerberos_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the Kerberos identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_id_provider_saml_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the SAML2 identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_gravitee_license_version:
+    type: string
+    default: ''
+    description: "The semver version number of the Gravitee License to bundle with Gravitee AM Enterprise Edition"
+  ee_gravitee_ae_connector_version:
+    type: string
+    default: ''
+    description: "The semver version number of the Gravitee Alert Engine connector to bundle with Gravitee AM Enterprise Edition"
+  secrethub_org:
+    type: string
+    default: "gravitee-lab"
+    description: "SecretHub Org to use to fetch secrets ?"
+  secrethub_repo:
+    type: string
+    default: "cicd"
+    description: "SecretHub Repo to use to fetch secrets ?"
+  graviteeio_version:
+    type: string
+    default: "cicd"
+    description: "Release version number to use to publish the Docker nightly images ?"
+  run-container-test:
+    type: boolean
+    default: false
+orbs:
+  gravitee: gravitee-io/gravitee@1.0
+  keeper: gravitee-io/keeper@0.6.1
+  slack: circleci/slack@4.8.1
+
+jobs:
+  keeper:
+    docker:
+      - image: 'cimg/base:stable'
+    environment:
+      DEV_MAVEN_SETTINGS: keeper://nqy-K-htPBh88tqMCzKJEQ/custom_field/xml
+      RELEASE_MAVEN_SETTINGS: keeper://R4pzRhcCQgKAGZ9L3YuxDQ/custom_field/xml
+      DRY_RELEASE_MAVEN_SETTINGS: keeper://SBYuGgef6eCouVZWDI-7GQ/custom_field/xml
+      GIO_GPG_PUB_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
+      GIO_GPG_PRV_KEY: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
+      GIT_USER_NAME: keeper://IZd-yvsMopfQEa_0j1SDvg/field/login
+      GIT_USER_EMAIL: keeper://IZd-yvsMopfQEa_0j1SDvg/custom_field/email
+      DOCKERHUB_USER_NAME: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/login
+      DOCKERHUB_USER_TOKEN: keeper://cooU9UoXIk8Kj0hsP2rkBw/field/password
+    steps:
+      - keeper/exec:
+          command: |
+            echo $DEV_MAVEN_SETTINGS > /tmp/.circleci.settings.xml
+            mkdir -p /tmp/gravit33bot/.secrets/.gungpg
+            echo $RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/release.settings.xml
+            echo $DRY_RELEASE_MAVEN_SETTINGS > /tmp/gravit33bot/.secrets/dry.release.settings.xml
+            echo $GIO_GPG_PUB_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.pub.key
+            echo $GIO_GPG_PRV_KEY > /tmp/gravit33bot/.secrets/.gungpg/graviteebot.gpg.priv.key
+            echo $GIT_USER_NAME > /tmp/gravit33bot/git_user_name
+            echo $GIT_USER_EMAIL > /tmp/gravit33bot/git_user_email
+            mkdir -p /tmp/gravit33bot/.secrets/dockerhub
+            echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
+            echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
+            
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - .circleci.settings.xml
+            - gravit33bot
+  build:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: xlarge
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Maven Package
+          command: |
+            mvn -s /tmp/.circleci.settings.xml install -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
+            cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
+            cp ./gravitee-am-ui/target/*.zip ~/
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - ./gravitee-am-gateway-standalone-*.zip
+            - ./gravitee-am-management-api-standalone-*.zip
+            - ./gravitee-am-webui-*.zip
+
+  run_postman_tests_mongo:
+    docker:
+      - image: cimg/openjdk:17.0.1-node
+      - image: mongo:4.2
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Newman
+          command: sudo npm i -g newman
+      - run:
+          name: Wait for Mongo to be up and running
+          command: timeout 15s bash -c 'until nc -vz localhost 27017; do sleep 2; done'
+      - run:
+          name: Run API, GW and Postman tests
+          command: |
+            # Prepare AM
+            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
+            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
+            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            # Start AM Management
+            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            # Start AM Gateway
+            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            # build & start CIBA Delegated Service
+            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
+            sleep 30
+            # Wait for AM to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            sleep 30
+            # Run Postman tests
+            make postman
+      - slack/notify:
+          branch_pattern: ".+"
+          event: fail
+          mentions: "@am_team"
+          template: basic_fail_1
+      - slack/notify:
+          branch_pattern: ".+"
+          event: pass
+          mentions: "@am_team"
+          template: basic_success_1
+
+  run_postman_tests_psql:
+    docker:
+      - image: cimg/openjdk:17.0.1-node
+      - image: postgres:14-alpine
+        environment:
+          POSTGRES_PASSWORD: T0pS3cr3t
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp/workspace
+      - checkout
+      - run:
+          name: Install Newman
+          command: sudo npm i -g newman
+      - run:
+          name: Wait for PSQL to be up and running
+          command: timeout 15s bash -c 'until nc -vz localhost 5432; do sleep 2; done'
+      - run:
+          name: Run API, GW and Postman tests
+          command: |
+            # Prepare AM
+            unzip /tmp/workspace/gravitee-am-gateway-standalone-*.zip
+            unzip /tmp/workspace/gravitee-am-management-api-standalone-*.zip
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            curl https://download.gravitee.io/plugins/services/gravitee-service-geoip-1.2.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-1.2.0.zip
+            curl https://repo.maven.apache.org/maven2/io/gravitee/am/resource/gravitee-am-resource-mfa-mock/3.12.1/gravitee-am-resource-mfa-mock-3.12.1.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip
+            cp gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-mfa-mock-3.12.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/
+            # copy r2dbc & jdbc drivers
+            curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar 
+            curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar 
+            
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            
+            cp postgresql-42.3.3.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+            
+            cp postgresql-42.3.3.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
+            # EXPORT env vart to start AM using PSQL
+            export GRAVITEE_MANAGEMENT_TYPE=jdbc
+            export GRAVITEE_MANAGEMENT_JDBC_DRIVER=postgresql
+            export GRAVITEE_MANAGEMENT_JDBC_HOST=localhost
+            export GRAVITEE_MANAGEMENT_JDBC_PORT=5432
+            export GRAVITEE_MANAGEMENT_JDBC_DATABASE=postgres
+            export GRAVITEE_MANAGEMENT_JDBC_USERNAME=postgres
+            export GRAVITEE_MANAGEMENT_JDBC_PASSWORD=T0pS3cr3t
+            export GRAVITEE_OAUTH2_TYPE=jdbc
+            export GRAVITEE_OAUTH2_JDBC_DRIVER=postgresql
+            export GRAVITEE_OAUTH2_JDBC_HOST=localhost
+            export GRAVITEE_OAUTH2_JDBC_PORT=5432
+            export GRAVITEE_OAUTH2_JDBC_DATABASE=postgres
+            export GRAVITEE_OAUTH2_JDBC_USERNAME=postgres
+            export GRAVITEE_OAUTH2_JDBC_PASSWORD=T0pS3cr3t
+            # Start AM Management
+            gravitee-am-management-api-standalone-${AM_VERSION}/bin/gravitee &
+            # Start AM Gateway
+            gravitee-am-gateway-standalone-${AM_VERSION}/bin/gravitee &
+            # build & start CIBA Delegated Service
+            mvn -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
+            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
+            sleep 30
+            # Wait for AM to be up and running
+            timeout 30s bash -c 'until nc -vz localhost 8093; do sleep 2; done'
+            timeout 30s bash -c 'until nc -vz localhost 8092; do sleep 2; done'
+            sleep 30
+            # Run Postman tests
+            make postman
+      - slack/notify:
+          branch_pattern: ".+"
+          event: fail
+          mentions: "@am_team"
+          template: basic_fail_1
+      - slack/notify:
+          branch_pattern: ".+"
+          event: pass
+          mentions: "@am_team"
+          template: basic_success_1
+
+  run_testcontainer_tests:
+    executor:
+      name: gravitee/cicdmachine
+      os_name: "ubuntu"
+      os_version: "2004"
+      os_patch: "202101-01"
+      machine_size: "xlarge"
+
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Build
+          command: |
+            echo "Run only repositories and reporters tests, other JUnit tests have been run by the 'pull_request' job"
+            mvn install -pl \!gravitee-am-ui -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.circleci.settings.xml
+  publish-fapi-resource-images-azure-registry:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Build & Publish FAPI Resource API Docker Image to Azure Registry
+          command: |
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-fapi-resource-api:${TAG}
+            mvn -pl gravitee-am-fapi-resource-api package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+  publish-ciba-resource-images-azure-registry:
+    docker:
+      - image: circleci/openjdk:11.0.3-jdk-stretch
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Build & Publish CIBA Delegated Service Docker Image to Azure Registry
+          command: |
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-ciba-resource-api:${TAG}
+            mvn -f gravitee-am-ciba-delegated-service/pom.xml package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+  
+  publish-images-azure-registry:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: small
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp
+      - setup_remote_docker
+      - run:
+          name: Compute Tag for Docker images
+          command: |
+            # Compute tag with branch name, commmit SHA and timestamp. Then slugify it to be sure it can be handled by Docker
+            export TAG=$(echo "${CIRCLE_BRANCH:0:15}-${CIRCLE_SHA1:0:7}-$(date +%s)" | sed -E 's/[~^]+//g' | sed -E 's/[^a-zA-Z0-9]+/-/g' | sed -E 's/^-+|-+$//g' | tr A-Z a-z)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Docker images will be tagged with: ${TAG}"
+            echo $TAG > /tmp/docker-tag.txt
+      - run:
+          name: Build & Publish Management API Docker Image to Azure Registry
+          command: |
+            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            echo "Gravitee AM version: ${AM_VERSION}"
+            export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
+            docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+      - snyk/scan:
+          severity-threshold: high
+          docker-image-name: ${IMAGE_TAG}
+          fail-on-issues: false
+      - run:
+          name: Push API Docker image
+          command: |
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - run:
+          name: Build & Publish Gateway Docker Image to Azure Registry
+          command: |
+            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
+            docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+      - snyk/scan:
+          severity-threshold: high
+          docker-image-name: ${IMAGE_TAG}
+          fail-on-issues: false
+      - run:
+          name: Push Gateway Docker image
+          command: |           
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - run:
+          name: Build & Publish Web UI Docker Image to Azure Registry
+          command: |
+            cp -fr docker/management-ui/config /tmp/
+            cp -fr docker/management-ui/run.sh /tmp/
+            export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
+            echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
+            docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
+      - snyk/scan:
+          severity-threshold: high
+          docker-image-name: ${IMAGE_TAG}
+          fail-on-issues: false
+      - run:
+          name: Push Web UI Docker image
+          command: |            
+            echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
+            docker push ${IMAGE_TAG}
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - ./docker-tag.txt
+
+  deploy-on-aks:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Read tag of Docker images to deploy
+          command: |
+            export TAG=$(cat /tmp/docker-tag.txt)
+            # Workaround for sharing this variable to the next steps
+            echo "export TAG=$TAG" >> $BASH_ENV
+            echo "Will deploy Docker images with tag: ${TAG}"
+      - run:
+          name: Install Helm
+          command: |
+            curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+            helm version
+      - run:
+          name: Install Kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            mv ./kubectl /usr/local/bin/kubectl
+            kubectl version --client=true
+      - add_ssh_keys:
+          fingerprints:
+            - "ac:88:23:8f:c6:0f:7d:f0:fc:df:73:20:34:56:02:6c"
+      - run:
+          name: Setup Git config and clone cloud-am repo
+          command: |
+            # For details see https://circleci.com/docs/2.0/gh-bb-integration/#establishing-the-authenticity-of-an-ssh-host
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            # Add SSH Key
+            export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
+            ssh-add -D
+            ssh-add "${LOCAL_SSH_PRVIKEY}"
+            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+      - run:
+          name: Helm upgrade and 🚀 Mongo and JDBC instances
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az aks get-credentials --resource-group am-hprod --name am-hprod
+            if [ "${CIRCLE_BRANCH}" == "master" ]
+            then
+            helm upgrade --repo https://helm.gravitee.io \
+                        --install am \
+                        -n nightly \
+                        -f ./cloud-am/nightly/values.yaml am \
+                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                        --set "api.image.tag=${TAG}" \
+                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                        --set "gateway.image.tag=${TAG}" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                        --set "ui.image.tag=${TAG}"
+            helm upgrade --repo https://helm.gravitee.io \
+                        --install am-psql \
+                        -n nightly-postgres \
+                        -f ./cloud-am/nightly/values-psql.yaml am \
+                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                        --set "api.image.tag=${TAG}" \
+                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                        --set "gateway.image.tag=${TAG}" \
+                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                        --set "ui.image.tag=${TAG}"
+            else
+            # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
+            kubectl create namespace nightly-${CIRCLE_BRANCH//./-} --dry-run=client -o yaml | kubectl apply -f -
+            helm upgrade --repo https://helm.gravitee.io \
+                                    --install am-${CIRCLE_BRANCH//./-} \
+                                    -n nightly-${CIRCLE_BRANCH//./-} \
+                                    -f ./cloud-am/nightly/values-$CIRCLE_BRANCH.yaml am \
+                                    --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                                    --set "api.image.tag=${TAG}" \
+                                    --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                                    --set "gateway.image.tag=${TAG}" \
+                                    --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                                    --set "ui.image.tag=${TAG}"
+            fi
+  purge-azure-registry:
+    docker:
+      - image: mcr.microsoft.com/azure-cli:latest
+    resource_class: small
+    steps:
+      - run:
+          name: 🗑 Let's purge all AM images older than 1d
+          command: |
+            az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
+            az acr run --cmd "acr purge --filter 'am-gateway:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-api:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            az acr run --cmd "acr purge --filter 'am-management-ui:master-.*' --untagged --ago 1d --keep 3" --registry graviteeio /dev/null
+            # use an iteration from 5 to 20 to avoid updating the ci config at each version
+            for minor in `seq 5 20`
+            do
+              PURGE_GW="acr purge --filter 'am-gateway:3-${minor}-x-.*' --untagged --ago 1d --keep 3"
+              az acr run --cmd "$PURGE_GW" --registry graviteeio /dev/null
+              PURGE_API="acr purge --filter 'am-management-api:3-${minor}-x-.*' --untagged --ago 1d --keep 3"
+              az acr run --cmd "$PURGE_API" --registry graviteeio /dev/null
+              PURGE_UI="acr purge --filter 'am-management-ui:3-${minor}-x-.*' --untagged --ago 1d --keep 3"
+              az acr run --cmd "$PURGE_UI" --registry graviteeio /dev/null
+            done
+workflows:
+  version: 2.1
+  # -- typically this workflow is executed on pull requests events for Community Edition Gravitee Repositories
+  pull_requests:
+    when:
+      and:
+        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - gravitee/d_pull_requests_secrets:
+          context: cicd-orchestrator
+          name: pr_secrets_resolution
+      - gravitee/d_pull_requests_ce:
+          name: process_pull_request
+          requires:
+            - pr_secrets_resolution
+          # "What is the maven ID of the maven profile to use to build and deploy SNAPSHOTS to Prviate Artifactory ?"
+          maven_profile_id: 'gio-dev'
+          # nexus_snapshots_url: 'https://oss.sonatype.org/content/repositories/snapshots'
+          # nexus_snapshots_server_id: 'sonatype-nexus-snapshots'
+          # container_gun_image_org: 'cimg'
+          # container_gun_image_name: 'openjdk'
+          # container_gun_image_tag: '17.0.1'
+          container_size: 'xlarge'
+          filters:
+            branches:
+              ignore:
+                - master
+                # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
+      - approve-tests-mongo-psql:
+          type: approval
+          requires: 
+            - process_pull_request
+      - run_postman_tests_mongo:
+          requires:
+            - approve-tests-mongo-psql
+      - run_postman_tests_psql:
+          requires:
+            - approve-tests-mongo-psql
+  testcontainer_tests:
+    when: << pipeline.parameters.run-container-test >>   
+    #when:
+    #  and:
+    #    - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - keeper:
+          context:
+            - cicd-orchestrator
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - run_testcontainer_tests:
+          context: cicd-orchestrator
+          requires:
+            - keeper
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+  build_branch:
+    jobs:
+      - keeper:
+          context:
+            - cicd-orchestrator
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - build:
+          requires:
+            - keeper
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - run_postman_tests_mongo:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - run_postman_tests_psql:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+      - publish-images-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
+                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+            - keeper/env-export:
+                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
+                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - deploy-on-aks:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
+                var-name: AZURE_APPLICATION_ID
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
+                var-name: AZURE_TENANT
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
+                var-name: AZURE_APPLICATION_SECRET
+          requires:
+            - publish-images-azure-registry
+          filters:
+            branches:
+              only:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+  release:
+    when:
+      and:
+        - equal: [ release, << pipeline.parameters.gio_action >> ]
+        - not : << pipeline.parameters.dry_run >>
+    jobs:
+      - gravitee/d_am_release_secrets:
+          context: cicd-orchestrator
+          name: 'am_release_secrets'
+      - gravitee/d_am_release:
+          requires:
+            - am_release_secrets
+          dry_run: << pipeline.parameters.dry_run >>
+          maven_profile_id: 'gio-release'
+          ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
+          ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
+          ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
+          ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
+          ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
+
+  release_dry_run:
+    when:
+      and:
+        - equal: [ release, << pipeline.parameters.gio_action >> ]
+        - << pipeline.parameters.dry_run >>
+    jobs:
+      - gravitee/d_am_release_secrets:
+          context: cicd-orchestrator
+          name: 'am_release_secrets'
+      - gravitee/d_am_release:
+          requires:
+            - am_release_secrets
+          dry_run: << pipeline.parameters.dry_run >>
+          maven_profile_id: 'gravitee-dry-run'
+          ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
+          ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
+          ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
+          ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
+          ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
+
+  publish_rpms:
+    when:
+      equal: [ publish_rpms, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - gravitee/publish_am_rpms:
+          context: cicd-orchestrator
+          secrethub_org: graviteeio
+          secrethub_repo: cicd
+          gio_release_version: << pipeline.parameters.graviteeio_version >>
+
+  daily-purge-azure-registry:
+    triggers:
+      - schedule:
+          cron: "0 1 * * 1"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - purge-azure-registry:
+          context: cicd-orchestrator
+          pre-steps:
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/login
+                var-name: AZURE_APPLICATION_ID
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/custom_field/tenant
+                var-name: AZURE_TENANT
+            - keeper/env-export:
+                secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
+                var-name: AZURE_APPLICATION_SECRET
+
+#  build_ciba_container:
+#    when:
+#      and:
+#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+#    jobs:
+#      - secrethub:
+#          context:
+#            - cicd-orchestrator
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#      - publish-ciba-resource-images-azure-registry:
+#          context: cicd-orchestrator
+#          pre-steps:
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+#          requires:
+#            - secrethub
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+
+#  build_fapi_container:
+#    when:
+#      and:
+#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+#    jobs:
+#      - secrethub:
+#          context:
+#            - cicd-orchestrator
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#      - publish-fapi-resource-images-azure-registry:
+#          context: cicd-orchestrator
+#          pre-steps:
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
+#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
+#            - secrethub/env-export:
+#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
+#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
+#          requires:
+#            - secrethub
+#          filters:
+#            branches:
+#              ignore:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
