@@ -181,7 +181,7 @@ public class OIDCProvider extends AbstractService<ProtocolProvider> implements P
         userInfoAuthHandler.extractClient(true);
         userInfoAuthHandler.forceEndUserToken(true);
 
-        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, discoveryService);
+        Handler<RoutingContext> userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, discoveryService, environment);
         oidcRouter.route("/userinfo").handler(corsHandler);
         oidcRouter
                 .route(HttpMethod.GET, "/userinfo")
