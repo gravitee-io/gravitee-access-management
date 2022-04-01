@@ -22,6 +22,9 @@ jobs:
             sudo apt-get update
             sudo apt-get install jq
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
+            echo $CIRCLE_BUILD_URL
+            echo $API_URL
+            echo $CIRCLE_API_TOKEN
             FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.status? == "pass")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
