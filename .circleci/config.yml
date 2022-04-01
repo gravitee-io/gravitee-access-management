@@ -16,7 +16,7 @@ jobs:
           echo "line 4"
           exit 1
       - run:
-          when: on_fail
+          #when: on_fail
           name: Generate last log lines for slack message
           command: |
             sudo apt-get update
@@ -32,7 +32,7 @@ jobs:
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       - slack/notify:
           channel: 'devsecops'
-          event: fail
+          event: always
           custom: |
             {
               "blocks": [
