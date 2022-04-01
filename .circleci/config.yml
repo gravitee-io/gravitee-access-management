@@ -22,7 +22,10 @@ jobs:
             #sudo apt-get update
             #sudo apt-get install jq
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
-            #FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}")
+            echo $CIRCLE_BUILD_URL
+            echo $API_URL
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}")
+            echo $FAILED_STEP
             #ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
             #STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}"
