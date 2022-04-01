@@ -22,10 +22,10 @@ jobs:
             sudo apt-get update
             sudo apt-get install jq
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
-            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | .[] | {allocation_id, step}')
-            ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
-            STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
-            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}")
+            #ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            #STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/&circle-token=$CIRCLE_API_TOKEN"
             sed -i 's/\r$//g' slack_response.txt
             SLACK_MESSAGE=$(cat slack_response.txt | tail -n 10 | sed '$!s/$/\\n/' | tr -d '\n')
             echo $SLACK_MESSAGE
