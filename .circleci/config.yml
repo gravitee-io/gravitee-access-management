@@ -19,8 +19,8 @@ jobs:
           when: always
           name: Generate last log lines for slack message
           command: |
-            sudo apt-get update
-            sudo apt-get install jq
+            #sudo apt-get update
+            #sudo apt-get install jq
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
             #FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}")
             #ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
