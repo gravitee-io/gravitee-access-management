@@ -14,7 +14,7 @@ jobs:
           echo "line 3"
           echo
           echo "line 4"
-          exit 0
+          exit 1
       - run:
           when: always
           name: Generate last log lines for slack message
