@@ -8,13 +8,15 @@ jobs:
     docker:
       - image: cimg/base:stable
     steps:
-      - run: |
-          echo "line 1"
-          echo "line 2"
-          echo "line 3"
-          echo
-          echo "line 4"
-          exit 0
+      - run: 
+          name: 'slack'
+          command: |
+            echo "line 1"
+            echo "line 2"
+            echo "line 3"
+            echo
+            echo "line 4"
+            exit 0
       - run:
           when: always
           name: Generate last log lines for slack message
@@ -25,7 +27,7 @@ jobs:
             echo $CIRCLE_BUILD_URL
             echo $API_URL
             echo $CIRCLE_API_TOKEN
-            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.status? == "success")) | .[] | {allocation_id, step}')
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "slack")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
             echo $ALLOCATION_ID
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
