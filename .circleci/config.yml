@@ -1,13 +1,70 @@
 version: 2.1
-setup: true
+
 orbs:
-  path-filtering: circleci/path-filtering@0.0.2
+  slack: circleci/slack@4.2.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run: |
+          echo "line 1"
+          echo "line 2"
+          echo "line 3"
+          echo
+          echo "line 4"
+          exit 1
+      - run:
+          when: on_fail
+          name: Generate last log lines for slack message
+          command: |
+            sudo apt-get update
+            sudo apt-get install jq
+            API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.status? == "failed")) | .[] | {allocation_id, step}')
+            ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
+            sed -i 's/\r$//g' slack_response.txt
+            SLACK_MESSAGE=$(cat slack_response.txt | tail -n 10 | sed '$!s/$/\\n/' | tr -d '\n')
+            echo $SLACK_MESSAGE
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
+      - slack/notify:
+          channel: 'devsecops'
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "```${SLACK_MESSAGE}```"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Build failed, above is last few lines of the log"
+                  },
+                  "accessory": {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "Click Me",
+                      "emoji": true
+                    },
+                    "value": "click_me_123",
+                    "url": "${CIRCLE_BUILD_URL}",
+                    "action_id": "button-action"
+                  }
+                }
+              ]
+            }
 workflows:
-  containter-test-check:
-    jobs:    
-      - path-filtering/filter:
-          base-revision: << pipeline.git.branch >>
-          config-path: ".circleci/workflows.yml"
-          mapping: |
-            gravitee-am-reporter/.* run-container-test true
-            gravitee-am-repository/.* run-container-test true
+  version: 2
+  build-workflow:
+    jobs:
+      - build
