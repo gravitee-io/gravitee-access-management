@@ -331,7 +331,7 @@ jobs:
           severity-threshold: high
           docker-image-name: ${IMAGE_TAG}
           fail-on-issues: false
-     - run:
+      - run:
           when: always
           name: Generate last log lines for slack message
           command: |
