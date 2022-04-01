@@ -16,7 +16,7 @@ jobs:
           echo "line 4"
           exit 1
       - run:
-          when: on_fail
+          when: always
           name: Generate last log lines for slack message
           command: |
             sudo apt-get update
