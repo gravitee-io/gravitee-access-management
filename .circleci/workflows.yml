@@ -301,7 +301,7 @@ jobs:
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
 
-  slack-msg-scan:
+  slack-msg-filter:
     docker:
       - image: cimg/openjdk:17.0.1
     resource_class: small
