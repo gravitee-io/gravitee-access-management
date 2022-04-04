@@ -327,12 +327,11 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-      - run:
-          name: test snyk scan
-          snyk/scan:
-            severity-threshold: high
-            docker-image-name: ${IMAGE_TAG}
-            fail-on-issues: false
+      - snyk/scan:
+          severity-threshold: high
+          docker-image-name: ${IMAGE_TAG}
+          additional-arguments: "test1"
+          fail-on-issues: false
       - run:
           when: always
           name: Generate last log lines for slack message
@@ -340,7 +339,7 @@ jobs:
             #sudo apt-get update
             #sudo apt-get install jq
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
-            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "test snyk scan")) | .[] | {allocation_id, step}')
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
