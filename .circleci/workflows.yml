@@ -333,19 +333,8 @@ jobs:
                   "text": {
                     "type": "mrkdwn",
                     "text": "```${SLACK_MESSAGE}```"
-                 },
-                 "accessory": {
-                   "type": "button",
-                   "text": {
-                     "type": "plain_text",
-                     "text": "Click here for scan details",
-                     "emoji": true
-                   },
-                   "value": "click_me_123",
-                   "url": "${CIRCLE_BUILD_URL}",
-                   "action_id": "button-action"                    
-                  }
-                }
+                 }
+                } 
               ]
             }
           event: always 
