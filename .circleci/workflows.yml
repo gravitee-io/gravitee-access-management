@@ -54,6 +54,39 @@ orbs:
   slack: circleci/slack@4.8.1
   snyk: snyk/snyk@1.1.2
 
+commands:
+  notify-snyk-result:
+      #docker:
+      #    - image: cimg/openjdk:17.0.1
+      #resource_class: small
+      steps:
+          - slack/notify:
+                channel: 'devsecops'
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "```${SLACK_MESSAGE}```"
+                       },
+                       "accessory": {
+                         "type": "button",
+                         "text": {
+                           "type": "plain_text",
+                           "text": "Click here for scan details",
+                           "emoji": true
+                         },
+                         "value": "click_me_123",
+                         "url": "${CIRCLE_BUILD_URL}",
+                         "action_id": "button-action"                    
+                        }
+                      }
+                    ]
+                  }
+                event: always   
+
 jobs:
   keeper:
     docker:
@@ -300,38 +333,6 @@ jobs:
             mvn -f gravitee-am-ciba-delegated-service/pom.xml package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
-
-  notify-snyk-result:
-      docker:
-          - image: cimg/openjdk:17.0.1
-      resource_class: small
-      steps:
-          - slack/notify:
-                channel: 'devsecops'
-                custom: |
-                  {
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "```${SLACK_MESSAGE}```"
-                       },
-                       "accessory": {
-                         "type": "button",
-                         "text": {
-                           "type": "plain_text",
-                           "text": "Click here for scan details",
-                           "emoji": true
-                         },
-                         "value": "click_me_123",
-                         "url": "${CIRCLE_BUILD_URL}",
-                         "action_id": "button-action"                    
-                        }
-                      }
-                    ]
-                  }
-                event: always   
           
   publish-images-azure-registry:
     docker:
