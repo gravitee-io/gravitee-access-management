@@ -328,6 +328,7 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
       - snyk/scan:
+          organization: gravitee.io
           severity-threshold: high
           docker-image-name: ${IMAGE_TAG}
           fail-on-issues: false
@@ -387,6 +388,7 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
       - snyk/scan:
+          organization: gravitee.io      
           severity-threshold: high
           docker-image-name: ${IMAGE_TAG}
           fail-on-issues: false
@@ -396,9 +398,12 @@ jobs:
           command: |
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
             FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
+            echo $FAILED_STEP
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            echo $ALLOCATION_ID
             ALLOCATION_ID=$(echo "${ALLOCATION_ID}" | jq '.[1]')
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            echo $STEP
             STEP=$(echo "${STEP}" | jq '.[1]')
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
             sed -i 's/\r$//g' slack_response.txt
