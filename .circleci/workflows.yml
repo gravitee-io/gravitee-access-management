@@ -302,6 +302,9 @@ jobs:
             docker push ${IMAGE_TAG}
 
   notify-snyk-result:
+      docker:
+          - image: cimg/openjdk:17.0.1
+      resource_class: small
       steps:
           - slack/notify:
                 channel: 'devsecops'
