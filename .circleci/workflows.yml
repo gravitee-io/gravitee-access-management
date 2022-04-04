@@ -59,6 +59,7 @@ commands:
       steps:
           - snyk/scan:
               organization: gravitee.io
+              monitor-on-build: false
               severity-threshold: critical
               docker-image-name: ${IMAGE_TAG}
               fail-on-issues: false  
@@ -379,7 +380,6 @@ jobs:
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
             sed -i 's/\r$//g' slack_response.txt
             SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
-            echo $SLACK_MESSAGE
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV     
       - notify-snyk-result 
       - run:
@@ -410,7 +410,6 @@ jobs:
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
             sed -i 's/\r$//g' slack_response.txt
             SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
-            echo $SLACK_MESSAGE
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV     
       - notify-snyk-result
       - run:
@@ -435,14 +434,13 @@ jobs:
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
             FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
-            
+            echo $ALLOCATION_ID
             ALLOCATION_ID=$(echo $ALLOCATION_ID | cut -d' ' -f3)
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
             STEP=$(echo $STEP | cut -d' ' -f3)
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
             sed -i 's/\r$//g' slack_response.txt
             SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
-            echo $SLACK_MESSAGE
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV      
       - notify-snyk-result 
       - run:
