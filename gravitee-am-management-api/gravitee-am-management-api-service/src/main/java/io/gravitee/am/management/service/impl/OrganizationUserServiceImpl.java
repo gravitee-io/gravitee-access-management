@@ -155,6 +155,7 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 });
     }
 
+    @Override
     public Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal) {
         if (password == null || !passwordService.isValid(password)) {
             return Completable.error(InvalidPasswordException.of("Field [password] is invalid", "invalid_password_value"));
@@ -172,5 +173,16 @@ public class OrganizationUserServiceImpl extends AbstractUserService<io.gravitee
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).user(user)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_PASSWORD_RESET).throwable(throwable)))
                 .ignoreElement();
+    }
+
+    @Override
+    public Single<User> updateLogoutDate(ReferenceType referenceType, String referenceId, String id) {
+        return getUserService().findById(referenceType, referenceId, id)
+                .flatMap(user -> {
+                    final Date now = new Date();
+                    user.setLastLogoutAt(now);
+                    user.setUpdatedAt(now);
+                    return getUserService().update(user);
+                });
     }
 }

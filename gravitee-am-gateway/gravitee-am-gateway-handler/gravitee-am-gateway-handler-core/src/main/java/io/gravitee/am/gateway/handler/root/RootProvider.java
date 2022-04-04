@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -142,6 +143,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private CookieSessionHandler sessionHandler;
+
+    @Autowired
+    private SSOSessionHandler ssoSessionHandler;
 
     @Autowired
     private CookieHandler cookieHandler;
@@ -424,11 +428,14 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_CHALLENGE)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
 
         // Logout endpoint
         router

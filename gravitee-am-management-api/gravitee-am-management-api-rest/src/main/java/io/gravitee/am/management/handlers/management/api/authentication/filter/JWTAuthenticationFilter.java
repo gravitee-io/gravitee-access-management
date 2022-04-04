@@ -22,6 +22,9 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.web.Http401UnauthorizedEntryPoint;
+import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpHeaders;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.session.SessionAuthenticationException;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import javax.servlet.FilterChain;
@@ -46,7 +50,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
@@ -71,6 +80,9 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
     @Autowired
     @Qualifier("managementJwtParser")
     private JWTParser jwtParser;
+
+    @Autowired
+    private OrganizationUserService userService;
 
     @Autowired
     private Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint;
@@ -114,7 +126,10 @@ public class JWTAuthenticationFilter extends AbstractAuthenticationProcessingFil
             Map<String, Object> claims = new HashMap<>(payload);
             claims.put(Claims.ip_address, remoteAddress(request));
             claims.put(Claims.user_agent, userAgent(request));
-
+            User orgUser = userService.findById(ReferenceType.ORGANIZATION, (String)payload.get("org"), (String) claims.get(StandardClaims.SUB)).blockingGet();
+            if (orgUser.getLastLogoutAt() != null && orgUser.getLastLogoutAt().after(new Date(payload.getIat()*1000))) {
+                throw new SessionAuthenticationException("Session expired");
+            }
             DefaultUser user = new DefaultUser((String) claims.get(StandardClaims.PREFERRED_USERNAME));
             user.setId((String) claims.get(StandardClaims.SUB));
             user.setAdditionalInformation(claims);
