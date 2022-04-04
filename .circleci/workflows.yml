@@ -330,7 +330,7 @@ jobs:
       - snyk/scan:
           severity-threshold: high
           docker-image-name: ${IMAGE_TAG}
-          tag: api-test
+          tags: api-test
           fail-on-issues: false
       - run:
           when: always
