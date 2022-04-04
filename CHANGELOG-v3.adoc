@@ -1,6 +1,32 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/527?closed=1[AM - 3.15.5 (2022-04-04)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Enrich context for adaptative mfa https://github.com/gravitee-io/issues/issues/7393[#7393]
+- Remove active tokens when a user reset its password https://github.com/gravitee-io/issues/issues/7365[#7365]
+
+*_Management_*
+
+- Cannot access IdP list if a plugin has been removed https://github.com/gravitee-io/issues/issues/7366[#7366]
+
+=== Improvements
+
+*_Gateway_*
+
+- Provide a legacy mode for the openid `scope` https://github.com/gravitee-io/issues/issues/7413[#7413]
+
+*_Management_*
+
+- Add the id of the Identity Provider on GET /domains/:domaind/users/:userid https://github.com/gravitee-io/issues/issues/7108[#7108]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/503?closed=1[AM - 3.17.0 (2022-03-30)]
 
 === Bug fixes
