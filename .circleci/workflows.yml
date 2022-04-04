@@ -400,6 +400,7 @@ jobs:
             FAILED_STEP=$(curl "https://circleci.com/aechpi/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
             ALLOCATION_ID=$(echo $ALLOCATION_ID | sed 's/ //g')
+            echo $ALLOCATION_ID
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
             STEP=$(echo $STEP | sed 's/ //g')
             curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
