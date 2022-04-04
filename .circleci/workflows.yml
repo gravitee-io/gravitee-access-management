@@ -435,6 +435,7 @@ jobs:
             API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
             FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
             ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            
             ALLOCATION_ID=$(echo $ALLOCATION_ID | cut -d' ' -f3)
             STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
             STEP=$(echo $STEP | cut -d' ' -f3)
