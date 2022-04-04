@@ -236,7 +236,11 @@
             <version>${jdbc-postgresql.version}</version>
             <scope>provided</scope>
         </dependency>
-
+            <!--
+            Gravitee only uses this dependency to test the connectivity to MariaDB databases
+            and does not supply or bundle the mariadb-java-client in the software as per the license in:
+            https://github.com/mariadb-corporation/mariadb-connector-j/blob/master/LICENSE
+            -->
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
