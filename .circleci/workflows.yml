@@ -55,6 +55,44 @@ orbs:
   snyk: snyk/snyk@1.1.2
   am: gravitee-io/gravitee-am@1.0.8
 
+commands:
+  docker-scan:
+      steps:
+          - snyk/scan:
+              organization: gravitee.io
+              monitor-on-build: false
+              severity-threshold: critical
+              docker-image-name: ${IMAGE_TAG}
+              fail-on-issues: false  
+
+  notify-snyk-result:
+      steps:
+          - slack/notify:
+                channel: 'am-ci-notifications'
+                custom: |
+                  {
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "```${SLACK_MESSAGE}```"
+                       },
+                       "accessory": {
+                         "type": "button",
+                         "text": {
+                           "type": "plain_text",
+                           "text": "Click here for scan details",
+                           "emoji": true
+                         },
+                         "value": "click_me_123",
+                         "url": "${CIRCLE_BUILD_URL}",
+                         "action_id": "button-action"                    
+                        }
+                      }
+                    ]
+                  }
+                event: always   
 jobs:
   keeper:
     docker:
@@ -328,10 +366,20 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-      - snyk/scan:
-          severity-threshold: high
-          docker-image-name: ${IMAGE_TAG}
-          fail-on-issues: false
+      - docker-scan
+      - run:
+          when: always
+          name: Generate last log lines for slack message
+          command: |
+            API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
+            ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
+            sed -i 's/\r$//g' slack_response.txt
+            SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV     
+      - notify-snyk-result 
       - run:
           name: Push API Docker image
           command: |
@@ -344,10 +392,22 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-      - snyk/scan:
-          severity-threshold: high
-          docker-image-name: ${IMAGE_TAG}
-          fail-on-issues: false
+      - docker-scan
+      - run:
+          when: always
+          name: Generate last log lines for slack message
+          command: |
+            API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
+            ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            ALLOCATION_ID=$(echo $ALLOCATION_ID | cut -d' ' -f2)
+            STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            STEP=$(echo $STEP | cut -d' ' -f2)
+            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
+            sed -i 's/\r$//g' slack_response.txt
+            SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV     
+      - notify-snyk-result
       - run:
           name: Push Gateway Docker image
           command: |           
@@ -362,10 +422,22 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-      - snyk/scan:
-          severity-threshold: high
-          docker-image-name: ${IMAGE_TAG}
-          fail-on-issues: false
+      - docker-scan
+      - run:
+          when: always
+          name: Generate last log lines for slack message1
+          command: |
+            API_URL=$(echo $CIRCLE_BUILD_URL | cut -d/ -f4-7)
+            FAILED_STEP=$(curl "https://circleci.com/api/v1.1/project/${API_URL}?circle-token=${CIRCLE_API_TOKEN}" | jq '.steps | .[] | flatten | map(select(.name? == "Run Snyk")) | .[] | {allocation_id, step}')
+            ALLOCATION_ID=$(echo "${FAILED_STEP}" | jq -r '.allocation_id')
+            ALLOCATION_ID=$(echo $ALLOCATION_ID | cut -d' ' -f3)
+            STEP=$(echo "${FAILED_STEP}" | jq -r '.step')
+            STEP=$(echo $STEP | cut -d' ' -f3)
+            curl -o slack_response.txt "https://circleci.com/api/v1.1/project/${API_URL}/output/${STEP}/0?file=true&allocation-id=${ALLOCATION_ID}&circle-token=$CIRCLE_API_TOKEN"
+            sed -i 's/\r$//g' slack_response.txt
+            SLACK_MESSAGE=$(cat slack_response.txt | tail -n 15 | sed '$!s/$/\\n/' | tr -d '\n')
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV      
+      - notify-snyk-result
       - run:
           name: Push Web UI Docker image
           command: |            
