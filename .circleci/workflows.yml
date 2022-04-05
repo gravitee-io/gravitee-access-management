@@ -53,6 +53,7 @@ orbs:
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
   snyk: snyk/snyk@1.1.2
+  am: gravitee-io/gravitee-am@dev:1.0.8
 
 jobs:
   keeper:
@@ -559,10 +560,10 @@ workflows:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
     jobs:
-      - gravitee/d_pull_requests_secrets:
+      - am/d_pull_requests_secrets:
           context: cicd-orchestrator
           name: pr_secrets_resolution
-      - gravitee/d_pull_requests_ce:
+      - am/d_pull_requests_ce:
           name: process_pull_request
           requires:
             - pr_secrets_resolution
@@ -578,8 +579,17 @@ workflows:
             branches:
               ignore:
                 - master
-                # - /^[0-999].[0-999].x/ # Ignore support branches, because they are checked with noightly ? Would make sense...
-
+                - /^[0-999].[0-999].x/
+      - approve-tests-mongo-psql:
+          type: approval
+          requires:
+            - process_pull_request
+      - run_postman_tests_mongo:
+          requires:
+            - approve-tests-mongo-psql
+      - run_postman_tests_psql:
+          requires:
+            - approve-tests-mongo-psql
 
   non_regression_tests:
     when:
