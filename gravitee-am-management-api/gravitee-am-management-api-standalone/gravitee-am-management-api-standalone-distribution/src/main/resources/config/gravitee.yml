@@ -285,7 +285,7 @@ user:
     email:
       #subject: Please reset your password
     token:
-    #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
+    #expire-after: 300 # the end of validity of the token in seconds for reset password email (default 300 = 5 minutes)
 
 # Gateway entry point used in emails
 gateway:

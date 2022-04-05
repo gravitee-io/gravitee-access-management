@@ -65,7 +65,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.resetPassword.email.subject:Please reset your password}")
     private String resetPasswordSubject;
 
-    @Value("${user.resetPassword.token.expire-after:86400}")
+    @Value("${user.resetPassword.token.expire-after:300}")
     private Integer resetPasswordExpireAfter;
 
     @Value("${user.blockedAccount.email.subject:Account has been locked}")
@@ -77,7 +77,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${user.mfaChallenge.email.subject:Verification Code}")
     private String mfaChallengeSubject;
 
-    @Value("${user.mfaChallenge.token.expire-after:600}")
+    @Value("${user.mfaChallenge.token.expire-after:300}")
     private Integer mfaChallengeExpireAfter;
 
     @Autowired

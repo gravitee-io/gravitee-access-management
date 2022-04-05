@@ -144,6 +144,13 @@ public class EmailFactorProvider implements FactorProvider {
             UserService userService = context.getComponent(UserService.class);
             EmailService emailService = context.getComponent(EmailService.class);
 
+            // Code Expiration date is present, that mean the code has not been validated
+            // check if the code has expired to know if we have to generate a new code or send the same
+            if (enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class) != null &&
+                    Instant.now().isAfter(Instant.ofEpochMilli(enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class)))) {
+                incrementMovingFactor(enrolledFactor);
+            }
+
             // register mfa code to make it available into the TemplateEngine values
             Map<String, Object> params =  context.getTemplateValues();
             params.put(FactorContext.KEY_CODE, generateOTP(enrolledFactor));
@@ -170,7 +177,9 @@ public class EmailFactorProvider implements FactorProvider {
     }
 
     String generateOTP(EnrolledFactor enrolledFactor) throws NoSuchAlgorithmException, InvalidKeyException {
-        return HOTP.generateOTP(SharedSecret.base32Str2Bytes(enrolledFactor.getSecurity().getValue()), enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Integer.class), configuration.getReturnDigits(), false, 0);
+        return HOTP.generateOTP(SharedSecret.base32Str2Bytes(enrolledFactor.getSecurity().getValue()),
+                enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue(),
+                configuration.getReturnDigits(), false, 0);
     }
 
     @Override
@@ -181,10 +190,14 @@ public class EmailFactorProvider implements FactorProvider {
     @Override
     public Single<EnrolledFactor> changeVariableFactorSecurity(EnrolledFactor factor) {
         return Single.fromCallable(() -> {
-            int counter = factor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Integer.class);
-            factor.getSecurity().putData(FactorDataKeys.KEY_MOVING_FACTOR, counter + 1);
+            incrementMovingFactor(factor);
             factor.getSecurity().removeData(FactorDataKeys.KEY_EXPIRE_AT);
             return factor;
         });
+    }
+
+    private void incrementMovingFactor(EnrolledFactor factor) {
+        long counter = factor.getSecurity().getData(FactorDataKeys.KEY_MOVING_FACTOR, Number.class).longValue();
+        factor.getSecurity().putData(FactorDataKeys.KEY_MOVING_FACTOR, counter + 1);
     }
 }
