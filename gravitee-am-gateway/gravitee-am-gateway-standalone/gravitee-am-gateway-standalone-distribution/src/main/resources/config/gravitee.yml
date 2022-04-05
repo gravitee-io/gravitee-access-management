@@ -260,12 +260,17 @@ user:
     email:
       #subject: Please reset your password
     token:
-      #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
+      #expire-after: 300 # the end of validity of the token in seconds for reset password email (default 300 = 5 minutes)
   blockedAccount:
       email:
       #subject: Account has been locked
       token:
       #expire-after: 86400 # the end of validity of the token in seconds for blocked account email (default 86400 = a day)
+  mfaChallenge:
+      email:
+      #subject: Verification Code
+      token:
+      #expire-after: 300 # the end of validity of the token in seconds for MFA email (default 300 = 5 minutes)
 
 handlers:
   request:
