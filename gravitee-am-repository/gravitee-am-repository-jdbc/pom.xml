@@ -50,7 +50,7 @@
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
         <reactor-adapter.version>3.4.6</reactor-adapter.version>
         <reactor-core.version>3.4.13</reactor-core.version>
-        <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
+        <spring-data-r2dbc.version>1.4.2</spring-data-r2dbc.version>
     </properties>
 
     <dependencyManagement>
