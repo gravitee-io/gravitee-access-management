@@ -53,7 +53,7 @@ orbs:
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
   snyk: snyk/snyk@1.1.2
-  am: gravitee-io/gravitee-am@dev:1.0.8
+  am: gravitee-io/gravitee-am@1.0.8
 
 jobs:
   keeper:
@@ -108,31 +108,6 @@ jobs:
             cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
             cp ./gravitee-am-ui/target/*.zip ~/
-      - persist_to_workspace:
-          root: ~/
-          paths:
-            - ./gravitee-am-gateway-standalone-*.zip
-            - ./gravitee-am-management-api-standalone-*.zip
-            - ./gravitee-am-webui-*.zip
-
-  build_services_for_e2e:
-    docker:
-      - image: cimg/openjdk:17.0.1
-    resource_class: xlarge
-    steps:
-      - attach_workspace:
-          at: /tmp
-      - checkout
-      - restore_cache:
-          keys:
-            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
-            - gio-gravitee-pull-requests-dependencies
-      - run:
-          name: Maven Package
-          command: |
-            mvn -s /tmp/.circleci.settings.xml install -DskipTests -DaltDeploymentRepository=${NEXUS_SNAPSHOTS_SERVER_ID}::default::${NEXUS_SNAPSHOTS_URL}
-            cp ./gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/gravitee-am-gateway-standalone-distribution-zip/target/*.zip ~/
-            cp ./gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/gravitee-am-management-api-standalone-distribution-zip/target/*.zip ~/
       - persist_to_workspace:
           root: ~/
           paths:
@@ -590,38 +565,6 @@ workflows:
       - run_postman_tests_psql:
           requires:
             - approve-tests-mongo-psql
-
-  non_regression_tests:
-    when:
-      and:
-        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-    jobs:
-      - approve-tests-mongo-psql:
-          type: approval
-          filters:
-            branches: 
-              ignore:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-      - keeper:
-          requires:
-            - approve-tests-mongo-psql
-          context:
-            - cicd-orchestrator
-          filters:
-            branches:
-              ignore:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-      - build_services_for_e2e:
-          requires:
-            - keeper
-      - run_postman_tests_mongo:
-          requires:
-            - build_services_for_e2e
-      - run_postman_tests_psql:
-          requires:
-            - build_services_for_e2e
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>   
