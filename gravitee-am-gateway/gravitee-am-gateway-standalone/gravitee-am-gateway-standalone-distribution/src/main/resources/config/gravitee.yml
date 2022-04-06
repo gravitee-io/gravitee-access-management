@@ -96,6 +96,11 @@
 #      - "frame-src *;"
 #      - "style-src * data: blob: 'unsafe-inline';"
 #      - "font-src * data: blob: 'unsafe-inline';"
+#  # xframe section allows to activate the X-Frame-Options header
+#  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+#  # if not action (DENY or SAMEORIGIN) is specified, the X-Frame-Options header will no be set into the response
+#  xframe:
+#    action: DENY
 
 # Path to plugins repository
 #plugins:
