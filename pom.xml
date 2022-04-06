@@ -71,7 +71,7 @@
         <gravitee-node.version>1.16.1</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.27.1</gravitee-gateway-api.version>
-        <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
+        <gravitee-expression-language.version>1.9.2</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.7.0</gravitee-cockpit-api.version>
         <spring.version>5.2.17.RELEASE</spring.version>
