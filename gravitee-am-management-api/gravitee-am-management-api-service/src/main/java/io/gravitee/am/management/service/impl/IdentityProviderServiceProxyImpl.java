@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -134,23 +135,32 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
 
     private Single<IdentityProvider> filterSensitiveData(IdentityProvider idp) {
         return identityProviderPluginService.getSchema(idp.getType())
-                .switchIfEmpty(Single.error(new IdentityProviderPluginSchemaNotFoundException(idp.getType())))
+                .map(Optional::ofNullable)
+                .defaultIfEmpty(Optional.empty())
+                .toSingle()
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new IdentityProvider(idp);
-                    var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
-                    if (KERBEROS_AM_IDP.equals(filteredEntity.getType())) {
-                        this.filterNestedSensitiveData(schemaNode, configurationNode,
-                                "/properties/ldapConfig",
-                                "/ldapConfig"
-                        );
+                    if (schema.isPresent()) {
+                        var schemaNode = objectMapper.readTree(schema.get());
+                        var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                        if (KERBEROS_AM_IDP.equals(filteredEntity.getType())) {
+                            this.filterNestedSensitiveData(schemaNode, configurationNode,
+                                    "/properties/ldapConfig",
+                                    "/ldapConfig"
+                            );
+                        }
+                        // We enforce sensitive data filtering on Inline User Passwords
+                        if (INLINE_AM_IDP.equals(filteredEntity.getType())) {
+                            filterSensitiveInlineIdpData(configurationNode);
+                        }
+                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    } else {
+                        // not schema for the IDP, remove all the configuration to avoid sensitive data leak
+                        // this case may happen when the plugin zip file has been removed from the plugins directory
+                        // (set empty object to avoid NullPointer on the UI)
+                        filteredEntity.setConfiguration(DEFAULT_SCHEMA_CONFIG);
                     }
-                    // We enforce sensitive data filtering on Inline User Passwords
-                    if (INLINE_AM_IDP.equals(filteredEntity.getType())) {
-                        filterSensitiveInlineIdpData(configurationNode);
-                    }
-                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
                     return filteredEntity;
                 });
     }

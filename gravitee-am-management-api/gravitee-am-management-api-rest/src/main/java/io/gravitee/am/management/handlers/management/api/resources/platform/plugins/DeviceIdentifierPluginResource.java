@@ -65,10 +65,9 @@ public class DeviceIdentifierPluginResource {
             notes = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("deviceIdentifier") String deviceIdentifierId, @Suspended final AsyncResponse response) {
         deviceIdentifierPluginService.findById(deviceIdentifierId)
-                .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifierId)))
                 .flatMap(__ -> deviceIdentifierPluginService.getSchema(deviceIdentifierId))
-                .switchIfEmpty(Maybe.error(new DeviceIdentifierNotFoundException(deviceIdentifierId)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }

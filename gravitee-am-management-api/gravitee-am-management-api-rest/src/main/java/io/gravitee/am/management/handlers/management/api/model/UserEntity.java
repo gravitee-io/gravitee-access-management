@@ -26,6 +26,8 @@ public class UserEntity extends User {
 
     private ApplicationEntity applicationEntity;
 
+    private String sourceId;
+
     public UserEntity(User user) {
         setId(user.getId());
         setExternalId(user.getExternalId());
@@ -60,6 +62,7 @@ public class UserEntity extends User {
         setCreatedAt(user.getCreatedAt());
         setUpdatedAt(user.getUpdatedAt());
         setLastPasswordReset(user.getLastPasswordReset());
+        this.sourceId = user.getSource();
     }
 
     public ApplicationEntity getApplicationEntity() {
@@ -68,5 +71,13 @@ public class UserEntity extends User {
 
     public void setApplicationEntity(ApplicationEntity applicationEntity) {
         this.applicationEntity = applicationEntity;
+    }
+
+    public String getSourceId() {
+        return sourceId;
+    }
+
+    public void setSourceId(String sourceId) {
+        this.sourceId = sourceId;
     }
 }

@@ -51,6 +51,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import java.util.*;
 
@@ -77,12 +78,17 @@ public class UserInfoEndpointHandlerTest extends RxWebTestBase {
     @Mock
     private OpenIDDiscoveryService openIDDiscoveryService;
 
-    @InjectMocks
-    private UserInfoEndpoint userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService);
+    @Mock
+    private Environment env;
+
+    private UserInfoEndpoint userInfoEndpoint;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        when(env.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false)).thenReturn(false);
+        userInfoEndpoint = new UserInfoEndpoint(userService, jwtService, jweService, openIDDiscoveryService, env);
 
         router.route(HttpMethod.GET, "/userinfo")
                 .handler(userInfoEndpoint);

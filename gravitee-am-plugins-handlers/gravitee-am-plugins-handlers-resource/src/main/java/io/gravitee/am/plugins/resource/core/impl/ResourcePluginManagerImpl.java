@@ -101,19 +101,20 @@ public class ResourcePluginManagerImpl implements ResourcePluginManager {
     @Override
     public String getSchema(String resId) throws IOException {
         Resource resource = resources.get(resId);
-        Path policyWorkspace = resourcePlugins.get(resource).path();
+        if (resourcePlugins.containsKey(resource)) {
+            Path policyWorkspace = resourcePlugins.get(resource).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+            File[] schemas = policyWorkspace.toFile().listFiles(
+                    pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
+            if (schemas.length == 1) {
+                File schemaDir = schemas[0];
 
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                if (schemaDir.listFiles().length > 0) {
+                    return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                }
             }
         }
-
         return null;
     }
 

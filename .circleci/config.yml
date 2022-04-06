@@ -49,7 +49,7 @@ parameters:
 orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
-  slack: circleci/slack@4.8.1
+  slack: circleci/slack@4.2.1
 
 jobs:
   keeper:
@@ -79,12 +79,12 @@ jobs:
             mkdir -p /tmp/gravit33bot/.secrets/dockerhub
             echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
             echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
-            
       - persist_to_workspace:
           root: /tmp
           paths:
             - .circleci.settings.xml
             - gravit33bot
+
   build:
     docker:
       - image: cimg/openjdk:17.0.1

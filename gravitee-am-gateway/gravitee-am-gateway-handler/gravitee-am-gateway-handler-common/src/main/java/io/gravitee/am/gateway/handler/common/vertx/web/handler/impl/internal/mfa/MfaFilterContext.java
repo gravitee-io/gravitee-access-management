@@ -16,22 +16,30 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
+import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.EnrollmentSettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
+import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
+
+import java.util.Map;
 
 import java.util.Date;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static java.util.Objects.isNull;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -41,16 +49,18 @@ import static java.util.Optional.ofNullable;
  */
 public class MfaFilterContext {
 
+    private final RoutingContext routingContext;
     private final Client client;
     private final Session session;
     private final User endUser;
     private boolean isAmfaRuleTrue;
     private boolean isStepUpRuleTrue;
 
-    public MfaFilterContext(Client client, Session session, User endUser) {
+    public MfaFilterContext(RoutingContext routingContext, Client client) {
+        this.routingContext = routingContext;
         this.client = client;
-        this.session = session;
-        this.endUser = endUser;
+        this.session = routingContext.session();
+        this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
     }
 
     public String getAmfaRule() {
@@ -116,6 +126,16 @@ public class MfaFilterContext {
 
     public Object getLoginAttempt() {
         return session.get(LOGIN_ATTEMPT_KEY);
+    }
+
+    public Map<String, Object> getEvaluableContext() {
+        final Map<String, Object> data = getEvaluableAttributes(routingContext);
+        final Object loginAttempt = this.getLoginAttempt();
+        data.put(LOGIN_ATTEMPT_KEY, isNull(loginAttempt) ? 0 : loginAttempt);
+        return Map.of(
+                "request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())),
+                "context", new EvaluableExecutionContext(data)
+        );
     }
 
     public boolean hasEndUserAlreadyEnrolled() {
