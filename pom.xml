@@ -98,7 +98,7 @@
         <zxing.version>3.4.1</zxing.version>
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
-        <swagger.version>1.6.5</swagger.version>
+        <swagger.version>1.6.6</swagger.version>
         <hibernate-validator.version>6.1.5.Final</hibernate-validator.version>
         <ldaptive.version>1.2.4</ldaptive.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
@@ -480,8 +480,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine
-                    >@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+                    <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.util.regex=ALL-UNNAMED --add-opens
                         java.base/java.util.stream=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED
                     </argLine>
