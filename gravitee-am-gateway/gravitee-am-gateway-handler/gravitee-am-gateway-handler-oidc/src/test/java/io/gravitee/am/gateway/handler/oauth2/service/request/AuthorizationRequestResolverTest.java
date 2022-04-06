@@ -239,6 +239,40 @@ public class AuthorizationRequestResolverTest {
     }
 
     @Test
+    public void shouldResolveAuthorizationRequest_userPermissionsRequestedAny_LegacyMode() {
+        final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        List<String> authScopes = new ArrayList<>();
+        authScopes.add(scope);
+        authScopes.add(userScopes.get(1)); // Request only the second of the three user scopes
+        authorizationRequest.setScopes(new HashSet<>(authScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+        client.setEnhanceScopesWithUserPermissions(true);
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(scopeManager.alwaysProvideEnhancedScopes()).thenReturn(true);
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Request should have been enhanced with all of user's permissions, even though only one has been requested
+        List<String> expectedScopes = new ArrayList<>(authScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+    }
+
+    @Test
     public void shouldResolveAuthorizationRequest_userPermissionsRequestedNone() {
     	final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
@@ -269,5 +303,39 @@ public class AuthorizationRequestResolverTest {
 
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 1);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_userPermissionsRequestedNone_legacyMode() {
+    	final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        // Request none of the three user scopes
+        authorizationRequest.setScopes(new HashSet<>(Arrays.asList(scope)));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+        client.setEnhanceScopesWithUserPermissions(true);
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(scopeManager.alwaysProvideEnhancedScopes()).thenReturn(true);
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+
+        // Request should have been enhanced with all of user's permissions, even though none of them has been requested
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
 }

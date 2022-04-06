@@ -16,23 +16,44 @@
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@RunWith(MockitoJUnitRunner.class)
 public class TokenRequestResolverTest {
+
+    @Mock
+    private ScopeManager scopeManager;
 
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
+    @Before
+    public void init() {
+        reset(scopeManager);
+        tokenRequestResolver.setScopeManager(scopeManager);
+    }
     @Test
     public void shouldNotResolveTokenRequest_unknownScope() {
         final String scope = "read";
@@ -109,6 +130,38 @@ public class TokenRequestResolverTest {
     }
 
     @Test
+    public void shouldResolveTokenRequest_withUser_permissionsRequestedAny_legacy() {
+        final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        reqScopes.add(userScopes.get(1)); // Request only the second of the three user scopes
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(scopeManager.alwaysProvideEnhancedScopes()).thenReturn(true);
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Request should only be enhanced with the requested scopes for which the user has permission
+        List<String> expectedScopes = new ArrayList<>(reqScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
+    }
+
+    @Test
     public void shouldResolveTokenRequest_withUser_permissionsRequestedNone() {
         final String scope = "read";
         final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
@@ -138,6 +191,39 @@ public class TokenRequestResolverTest {
         List<String> expectedScopes = new ArrayList<>();
         expectedScopes.add(scope);
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 1);
+    }
+
+    @Test
+    public void shouldResolveTokenRequest_withUser_permissionsRequestedNone_legacyMode() {
+        final String scope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2", "user3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        // Request none of the three user scopes
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(scopeManager.alwaysProvideEnhancedScopes()).thenReturn(true);
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Request should have been enhanced with all of user's permissions, even though none of them has been requested
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
 
     @Test
