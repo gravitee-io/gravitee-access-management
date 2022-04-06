@@ -111,7 +111,12 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         }
 
         // only put default values if there are no requested scopes or only 'openid'
-        if (requestScopes == null || requestScopes.isEmpty() || requestScopes.stream().allMatch(scope -> scope.equals(OPENID.getKey()))) {
+        // since https://github.com/gravitee-io/issues/issues/3839, enhanced scopes are added only if there are no requested scopes
+        // but we introduce legacy behaviour with https://github.com/gravitee-io/issues/issues/7455 for user convenience.
+        if (requestScopes == null
+                || requestScopes.isEmpty()
+                || requestScopes.stream().allMatch(scope -> scope.equals(OPENID.getKey()))
+                || scopeManager.alwaysProvideEnhancedScopes()) {
             request.setScopes(resolvedScopes);
         }
 
