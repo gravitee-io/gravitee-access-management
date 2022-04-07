@@ -1,5 +1,71 @@
 version: 2.1
 setup: true
+
+parameters:
+  gio_action:
+    type: enum
+    enum: [release, publish_rpms, pull_requests]
+    default: pull_requests
+  gio_product:
+    type: enum
+    enum: [am_v3, none]
+    default: none
+  dry_run:
+    type: boolean
+    default: true
+    description: "Run in dry run mode?"
+  maven_profile_id:
+    type: string
+    default: "gravitee-dry-run"
+    description: "Maven ID of the Maven profile to use for a dry run ?"
+  ee_id_provider_cas_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the CAS identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_id_provider_kerberos_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the Kerberos identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_id_provider_saml_version:
+    type: string
+    default: ''
+    description: "For Gravitee AM Release : The semver version number of the SAML2 identity provider plugin to bundle with Gravitee AM Enterprise Edition"
+  ee_gravitee_license_version:
+    type: string
+    default: ''
+    description: "The semver version number of the Gravitee License to bundle with Gravitee AM Enterprise Edition"
+  ee_gravitee_ae_connector_version:
+    type: string
+    default: ''
+    description: "The semver version number of the Gravitee Alert Engine connector to bundle with Gravitee AM Enterprise Edition"
+  secrethub_org:
+    type: string
+    default: "gravitee-lab"
+    description: "SecretHub Org to use to fetch secrets ?"
+  secrethub_repo:
+    type: string
+    default: "cicd"
+    description: "SecretHub Repo to use to fetch secrets ?"
+  graviteeio_version:
+    type: string
+    default: "cicd"
+    description: "Release version number to use to publish the Docker nightly images ?"
+  run-container-test:
+    type: boolean
+    default: false
+  prune:
+    type: boolean
+    default: false
+    description: "Do you want to [docker system prune -f --all] ? (clean up all cached docker images)"
+  tag_latest:
+    type: boolean
+    default: false
+    description: "Is this latest version of the Product ?"
+  tag_latest_support:
+    type: boolean
+    default: true
+    description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+    
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
 workflows:
