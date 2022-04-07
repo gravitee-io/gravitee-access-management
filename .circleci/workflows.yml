@@ -5,6 +5,10 @@ parameters:
     type: enum
     enum: [release, publish_rpms, pull_requests]
     default: pull_requests
+  gio_product:
+    type: enum
+    enum: [am_v3, none]
+    default: none
   dry_run:
     type: boolean
     default: true
@@ -48,12 +52,25 @@ parameters:
   run-container-test:
     type: boolean
     default: false
+  prune:
+    type: boolean
+    default: false
+    description: "Do you want to [docker system prune -f --all] ? (clean up all cached docker images)"
+  tag_latest:
+    type: boolean
+    default: false
+    description: "Is this latest version of the Product ?"
+  tag_latest_support:
+    type: boolean
+    default: true
+    description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
+    
 orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
   snyk: snyk/snyk@1.1.2
-  am: gravitee-io/gravitee-am@1.0.8
+  am: gravitee-io/gravitee-am@1.0
 
 commands:
   docker-scan:
@@ -799,6 +816,43 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
+
+  docker_build_and_push_am_v3:
+    when:
+      equal: [ am_v3, << pipeline.parameters.gio_product >> ]
+    jobs:
+      # ---
+      # Builds and push AM Community Edition Images
+      - am/build_n_push_am_ce_job:
+          name: 'building ce dockerfile'
+          context: cicd-orchestrator
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          gio_product: << pipeline.parameters.gio_product >>
+      # ---
+      # Builds and push AM v3 Entreprise Edition Images
+      - am/build_n_push_am_ee_v3_gateway_job:
+          context: cicd-orchestrator
+          requires:
+            - building ce dockerfile
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+      - am/build_n_push_am_ee_v3_api_job:
+          context: cicd-orchestrator
+          requires:
+            - building ce dockerfile
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+      - am/build_n_push_am_ee_v3_ui_job:
+          context: cicd-orchestrator
+          requires:
+            - building ce dockerfile
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
 #  build_ciba_container:
 #    when:
