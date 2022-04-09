@@ -24,6 +24,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
+import io.gravitee.am.gateway.handler.common.utils.FreemarkerDataHelper;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -43,10 +44,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
 
@@ -112,6 +110,50 @@ public class EmailServiceImpl implements EmailService {
             // send email
             sendEmail(email, user, client);
 
+        }
+    }
+
+    @Override
+    public void send(Email email) {
+        if (enabled) {
+            try {
+                // sanitize data
+                final Map<String, Object> params = FreemarkerDataHelper.generateData(email.getParams());
+                // compute email to
+                final List<String> to = new ArrayList<>();
+                for (String emailTo: email.getTo()) {
+                    to.add(processTemplateIntoString(
+                            new Template("to", new StringReader(emailTo), freemarkerConfiguration),
+                            params));
+                }
+                // compute email from
+                final String from = processTemplateIntoString(
+                        new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
+                        params);
+                // compute email fromName
+                final String fromName = processTemplateIntoString(
+                        new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
+                        params);
+                // compute email subject
+                final String subject = processTemplateIntoString(
+                        new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration),
+                        params);
+                // compute email content
+                final String content = processTemplateIntoString(
+                        new Template("content", new StringReader(email.getContent()), freemarkerConfiguration),
+                        params);
+                // send the email
+                final Email emailToSend = new Email(email);
+                emailToSend.setFrom(from);
+                emailToSend.setFromName(fromName);
+                emailToSend.setTo(to.toArray(new String[0]));
+                emailToSend.setSubject(subject);
+                emailToSend.setContent(content);
+                emailService.send(emailToSend);
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).email(email));
+            } catch (Exception ex) {
+                auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(domain.getId()).email(email).throwable(ex));
+            }
         }
     }
 

@@ -1,0 +1,53 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:policy:am:send:email:SendEmailPolicyConfiguration",
+  "properties" : {
+    "template" : {
+      "type" : "string",
+      "title": "Template",
+      "description": "The email's template name. For log and audit purpose"
+    },
+    "from" : {
+      "type" : "string",
+      "title": "From",
+      "description": "The email's FROM address (support freemarker). Example: no-reply@mycompany.com"
+    },
+    "fromName" : {
+      "type" : "string",
+      "title": "From name",
+      "description": "The email's FROM name (support freemarker). Example: [Support Team]"
+    },
+    "to" : {
+      "type" : "string",
+      "title": "To",
+      "description": "The email's TO address (support freemarker). Example: ${user.email}"
+    },
+    "subject": {
+      "type" : "string",
+      "title": "Subject",
+      "description": "The email's subject (support freemarker)"
+    },
+    "content": {
+      "type" : "string",
+      "title": "Content",
+      "x-schema-form": {
+        "type": "codemirror",
+        "codemirrorOptions": {
+          "placeholder": "The email's payload (support freemarker)",
+          "lineWrapping": true,
+          "lineNumbers": true,
+          "allowDropFileTypes": true,
+          "autoCloseTags": true,
+          "mode": "html"
+        }
+      }
+    }
+  },
+  "required": [
+    "template",
+    "from",
+    "to",
+    "subject",
+    "content"
+  ]
+}
