@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.regex.Pattern;
+
 import static io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder.*;
 
 /**
@@ -56,7 +58,12 @@ public class JdbcAuthenticationProviderConfiguration {
         }
 
         if (configuration.getPasswordEncoder().startsWith(SHA)) {
-            MessageDigestPasswordEncoder passwordEncoder =  new SHAPasswordEncoder(configuration.getPasswordEncoder());
+            MessageDigestPasswordEncoder passwordEncoder;
+            if (configuration.getPasswordEncoder().endsWith("+MD5")) {
+                passwordEncoder = new SHAMD5PasswordEncoder(configuration.getPasswordEncoder().split(Pattern.quote("+"))[0]);
+            } else {
+                passwordEncoder = new SHAPasswordEncoder(configuration.getPasswordEncoder());
+            }
             passwordEncoder.setEncodeSaltAsBase64("Base64".equals(configuration.getPasswordEncoding()));
             passwordEncoder.setSaltLength(configuration.getPasswordSaltLength());
             return passwordEncoder;

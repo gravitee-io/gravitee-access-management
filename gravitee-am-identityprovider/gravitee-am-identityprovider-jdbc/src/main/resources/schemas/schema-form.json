@@ -87,7 +87,7 @@
     },
     "passwordEncoder" : {
       "type": "string",
-      "enum": ["BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "None"],
+      "enum": ["BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "SHA-256+MD5", "None"],
       "default": "BCrypt",
       "title": "Password encoder",
       "description": "The encoding mechanism used to store user password value."
