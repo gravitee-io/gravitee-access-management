@@ -71,7 +71,7 @@ public class FlowServiceTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(6);
+        testObserver.assertValueCount(7);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class FlowServiceTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(6);
+        testObserver.assertValueCount(7);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class FlowServiceTest {
         testObserver.awaitTerminalEvent();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(6);
+        testObserver.assertValueCount(7);
     }
 
     @Test
