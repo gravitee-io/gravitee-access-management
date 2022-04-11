@@ -225,10 +225,6 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
                 break;
-            case HTTP:
-                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
-                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.HTTP, params.get("http")));
-                break;
         }
         return enrolledFactor;
     }

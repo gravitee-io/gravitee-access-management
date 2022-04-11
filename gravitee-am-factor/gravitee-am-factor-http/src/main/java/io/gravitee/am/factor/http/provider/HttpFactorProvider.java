@@ -19,25 +19,16 @@ import io.gravitee.am.factor.api.Enrollment;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.factor.http.HttpFactorConfiguration;
-import io.gravitee.am.factor.utils.SharedSecret;
-import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
-import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.resource.api.mfa.MFAChallenge;
-import io.gravitee.am.resource.api.mfa.MFALink;
 import io.gravitee.am.resource.api.mfa.MFAResourceProvider;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static io.gravitee.am.factor.api.FactorContext.KEY_ENROLLED_FACTOR;
-import static io.gravitee.am.resource.api.mfa.MFAType.HTTP;
 
 public class HttpFactorProvider implements FactorProvider {
 
@@ -47,13 +38,11 @@ public class HttpFactorProvider implements FactorProvider {
 
     @Override
     public Completable verify(FactorContext context) {
-        final var code = context.getData(FactorContext.KEY_CODE, String.class);
-        final var enrolledFactor = context.getData(FactorContext.KEY_ENROLLED_FACTOR, EnrolledFactor.class);
         var component = context.getComponent(ResourceManager.class);
         var provider = component.getResourceProvider(configuration.getGraviteeResource());
         if (provider instanceof MFAResourceProvider) {
             var mfaProvider = (MFAResourceProvider) provider;
-            var challenge = new MFAChallenge(enrolledFactor.getChannel().getTarget(), code);//TODO get challenge from resource
+            var challenge = new MFAChallenge("From resource again?", "123456");//TODO will pass the FactorContext
             return mfaProvider.verify(challenge);
         } else {
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication with type HTTP"));
@@ -62,42 +51,11 @@ public class HttpFactorProvider implements FactorProvider {
 
     @Override
     public Single<Enrollment> enroll(String account) {
-        return Single.fromCallable(() -> new Enrollment(SharedSecret.generate()));
+        return Single.fromCallable(Enrollment::new);
     }
 
     @Override
     public boolean checkSecurityFactor(EnrolledFactor factor) {
-        boolean valid = true;
-        if (factor != null) {
-            EnrolledFactorSecurity securityFactor = factor.getSecurity();
-            if (securityFactor == null || securityFactor.getValue() == null) {
-                logger.warn("No shared secret in form - did you forget to include shared secret value ?");
-                valid = false;
-            }
-        }
-        return valid;
-    }
-
-    @Override
-    public Completable sendChallenge(FactorContext context) {
-        //TODO need access to current user, applicatoin and request (params, headers, body)
-        User user = context.getUser();
-        Client client = context.getClient();
-        EvaluableRequest request = context.getData(FactorContext.KEY_REQUEST, EvaluableRequest.class);
-        final var enrolledFactor = context.getData(KEY_ENROLLED_FACTOR, EnrolledFactor.class);
-        var component = context.getComponent(ResourceManager.class);
-        var provider = component.getResourceProvider(configuration.getGraviteeResource());
-
-
-        //TODO This prob isn't what I need; look at EmailProvider.sendEmail etc, probably need a send method on the Http resource that
-        //will accept  request/user/app details
-        if (provider instanceof MFAResourceProvider) {
-            var mfaProvider = (MFAResourceProvider)provider;
-            var link = new MFALink(HTTP, "Address comes from resource");
-            return mfaProvider.send(link);
-        } else {
-            return Completable.error(
-                    new TechnicalException("Resource referenced can't be used for MultiFactor Authentication  with type HTTP"));
-        }
+        return true;
     }
 }

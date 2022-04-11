@@ -36,7 +36,9 @@ public interface FactorProvider {
 
     default boolean needChallengeSending() { return true; }
 
-    Completable sendChallenge(FactorContext context);
+    default Completable sendChallenge(FactorContext context) {
+        return Completable.complete();
+    }
 
     default boolean useVariableFactorSecurity() {
         return false;
