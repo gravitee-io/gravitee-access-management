@@ -118,7 +118,7 @@
         <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>1.4.0</gravitee-policy-latency.version>
-        <gravitee-license-node.version>1.2.1</gravitee-license-node.version>
+        <gravitee-license-node.version>1.1.0</gravitee-license-node.version>
         <gravitee-cockpit-connectors.version>2.0.1</gravitee-cockpit-connectors.version>
         <gravitee-notifier-webhook.version>1.1.0</gravitee-notifier-webhook.version>
         <gravitee-notifier-email.version>1.4.1</gravitee-notifier-email.version>
