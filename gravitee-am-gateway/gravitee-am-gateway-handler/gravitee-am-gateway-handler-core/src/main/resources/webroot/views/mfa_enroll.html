@@ -133,6 +133,23 @@
                             </div>
                             <input type="hidden" th:id="'sharedSecret' + ${factIter.index}" th:name="'sharedSecret' + ${factIter.index}" th:value="${factor.enrollment.key}" />
                         </div>
+
+                        <!-- HTTP FACTOR -->
+                        <div th:if="${factor.factorType == 'HTTP'}" class="mfa-enroll-form-description">
+                            <div>
+                                <ul class="mdl-list">
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                            <span>2. Finish set up</span>
+                                            <span class="mdl-list__item-text-body">
+                                                Go to the next step and enter the code provided by HTTP.
+                                            </span>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
                         <!--
                         END OF MFA FACTORS SWITCH
                         -->
@@ -154,6 +171,7 @@
                             <button th:if="${factor.factorType == 'TOTP'}"  type="submit" th:data1="${factor.id}" th:data2="'sharedSecret' + ${factIter.index}" th:onclick="javascript:assignSharedSecret(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}"  type="submit" th:data1="${factor.id}" th:data2="'phoneFact' + ${factIter.index}" th:onclick="javascript:checkPhoneNumber(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'EMAIL'}"  type="submit" th:data1="${factor.id}" th:data2="'emailFact' + ${factIter.index}" th:data3="'sharedSecret' + ${factIter.index}" th:onclick="javascript:checkEmail(event, this.getAttribute('data1'), this.getAttribute('data2'), this.getAttribute('data3'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'HTTP'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                         </div>
                     </form>
                 </div>
