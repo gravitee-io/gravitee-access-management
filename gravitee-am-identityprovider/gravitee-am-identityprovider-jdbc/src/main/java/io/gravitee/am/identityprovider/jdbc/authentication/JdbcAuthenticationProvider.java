@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.jdbc.authentication;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.*;
@@ -27,14 +28,13 @@ import io.r2dbc.spi.Statement;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.util.StringUtils;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -138,10 +138,10 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     }
 
     private User createUser(AuthenticationContext authContext, Map<String, Object> claims) {
-        // get username
-        String username = claims.get(configuration.getUsernameAttribute()).toString();
         // get sub
-        String sub = claims.containsKey(configuration.getIdentifierAttribute()) ? claims.get(configuration.getIdentifierAttribute()).toString() : username;
+        String sub = getClaim(claims, configuration.getIdentifierAttribute(), null);
+        // get username
+        String username = getClaim(claims, configuration.getUsernameAttribute(), sub);
         // compute metadata
         computeMetadata(claims);
 
@@ -155,6 +155,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(StandardClaims.SUB, sub);
         additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
+
         // apply user mapping
         Map<String, Object> mappedAttributes = applyUserMapping(authContext, claims);
         additionalInformation.putAll(mappedAttributes);
@@ -174,9 +175,17 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         if (configuration.isUseDedicatedSalt()) {
             additionalInformation.remove(configuration.getPasswordSaltAttribute());
         }
-        user.setAdditionalInformation(additionalInformation);
 
+        if (additionalInformation.isEmpty() || additionalInformation.get(StandardClaims.SUB) == null) {
+            throw new InternalAuthenticationServiceException("The 'sub' claim for the user is required");
+        }
+
+        user.setAdditionalInformation(additionalInformation);
         return user;
+    }
+
+    private String getClaim(Map<String, Object> claims, String userAttribute, String defaultValue) {
+        return claims.containsKey(userAttribute) ? claims.get(userAttribute).toString() : defaultValue;
     }
 
     private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
