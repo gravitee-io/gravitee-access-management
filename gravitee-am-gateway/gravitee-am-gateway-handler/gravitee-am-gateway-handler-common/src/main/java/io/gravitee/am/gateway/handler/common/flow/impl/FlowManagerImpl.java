@@ -65,7 +65,8 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
                 Type.CONSENT, List.of(PRE_CONSENT, POST_CONSENT),
                 Type.LOGIN, List.of(PRE_LOGIN, POST_LOGIN),
                 Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER),
-                Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD)
+                Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD),
+                Type.REGISTRATION_CONFIRMATION, List.of(PRE_REGISTRATION_CONFIRMATION, POST_REGISTRATION_CONFIRMATION)
         );
     }
 
@@ -228,6 +229,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             case RESET_PASSWORD:
                 addExecutionFlow(PRE_RESET_PASSWORD, flow, prePolicies);
                 addExecutionFlow(POST_RESET_PASSWORD, flow, postPolicies);
+                break;
+            case REGISTRATION_CONFIRMATION:
+                addExecutionFlow(PRE_REGISTRATION_CONFIRMATION, flow, prePolicies);
+                addExecutionFlow(POST_REGISTRATION_CONFIRMATION, flow, postPolicies);
                 break;
             default:
                 throw new IllegalArgumentException("No suitable flow type found for : " + flow.getType());
