@@ -124,7 +124,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                 searchQuery);
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
-        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+        Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
         return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
     }
 
@@ -139,7 +139,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     searchQuery);
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery)).first(0l);
-            Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
+            Single<Set<User>> usersOperation = Observable.fromPublisher(usersCollection.find(mongoQuery).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
             return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
