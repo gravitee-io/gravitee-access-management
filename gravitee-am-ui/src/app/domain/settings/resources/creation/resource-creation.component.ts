@@ -53,4 +53,12 @@ export class ResourceCreationComponent implements OnInit {
       this.configurationIsValid;
   }
 
+  isHttpResource() {
+    if (this.resource) {
+      const type = this.resource.type;
+      return type ? type.includes('http-am-resource') : false;
+    }
+    return false;
+  }
+
 }

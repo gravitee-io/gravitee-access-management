@@ -88,4 +88,12 @@ export class ResourceComponent implements OnInit {
         }
       });
   }
+
+  isHttpResource() {
+    if (this.resourceSchema) {
+      const resourceId = this.resourceSchema.id;
+      return resourceId ? resourceId.includes('HttpResourceConfiguration') : false;
+    }
+    return false;
+  }
 }

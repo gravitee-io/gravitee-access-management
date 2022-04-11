@@ -46,6 +46,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallb
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
@@ -343,7 +344,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
