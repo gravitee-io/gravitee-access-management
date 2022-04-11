@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.resource.api.mfa;
+package io.gravitee.am.factor.http;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum MFAType {
-    SMS,
-    EMAIL,
-    HTTP,
-    CALL
+import io.gravitee.am.factor.api.FactorConfiguration;
+
+public class HttpFactorConfiguration implements FactorConfiguration {
+    private String graviteeResource;
+
+    public String getGraviteeResource() {
+        return graviteeResource;
+    }
+
+    public void setGraviteeResource(String graviteeResource) {
+        this.graviteeResource = graviteeResource;
+    }
 }

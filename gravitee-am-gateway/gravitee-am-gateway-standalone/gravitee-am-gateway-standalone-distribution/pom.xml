@@ -282,6 +282,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.factor</groupId>
+            <artifactId>gravitee-am-factor-http</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.gateway.handler</groupId>
             <artifactId>gravitee-am-gateway-handler-discovery</artifactId>
             <version>${project.version}</version>
@@ -633,19 +641,22 @@
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
-                              <artifactItem>
+
+                                <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-sms</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
+
                                 <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-call</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
-                              <artifactItem>
+
+                                <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-email</artifactId>
                                     <version>${project.version}</version>
@@ -655,6 +666,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-recovery-code</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-http</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

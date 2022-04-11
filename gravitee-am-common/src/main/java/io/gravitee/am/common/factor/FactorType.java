@@ -26,6 +26,7 @@ public enum FactorType {
     SMS("SMS"),
     EMAIL("EMAIL"),
     CALL("CALL"),
+    HTTP("HTTP"),
     RECOVERY_CODE("RECOVERY CODE");
 
     FactorType(String type) {
@@ -39,6 +40,7 @@ public enum FactorType {
         if (EMAIL.getType().equalsIgnoreCase(type)) return EMAIL;
         if (CALL.getType().equalsIgnoreCase(type)) return CALL;
         if (RECOVERY_CODE.getType().equalsIgnoreCase(type)) return RECOVERY_CODE;
+        if (HTTP.getType().equalsIgnoreCase(type)) return HTTP;
         throw new NoSuchElementException(String.format("No factor type for provided string of %s", type));
     }
 

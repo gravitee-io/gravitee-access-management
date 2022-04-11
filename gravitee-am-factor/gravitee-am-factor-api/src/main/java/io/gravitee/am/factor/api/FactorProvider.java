@@ -34,7 +34,7 @@ public interface FactorProvider {
 
     boolean checkSecurityFactor(EnrolledFactor securityFactor);
 
-    boolean needChallengeSending();
+    default boolean needChallengeSending() { return true; }
 
     Completable sendChallenge(FactorContext context);
 

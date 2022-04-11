@@ -1,3 +1,10 @@
+package io.gravitee.am.factor.http.provider;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
 /**
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  * <p>
@@ -13,15 +20,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.resource.api.mfa;
+public class HttpFactorProviderTest {
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum MFAType {
-    SMS,
-    EMAIL,
-    HTTP,
-    CALL
+    @Before
+    public void setUp() throws Exception {
+    }
+
+    @Test
+    public void verify() {
+    }
 }

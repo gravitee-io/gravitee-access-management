@@ -24,10 +24,11 @@ import { OrganizationService } from "../../../../../../services/organization.ser
 export class FactorCreationStep1Component implements OnInit {
   private factorTypes: any = {
     'otp-am-factor' : 'Generic OTP Factor',
-    'email-am-factor' : 'EMAIL Factor',
+    'email-am-factor' : 'Email Factor',
     'sms-am-factor' : 'SMS Factor',
     'call-am-factor' : 'Call Factor',
-    'recovery-code-am-factor': 'Recovery Code Factor'
+    'recovery-code-am-factor': 'Recovery Code Factor',
+    'http-am-factor': 'HTTP Factor'
   };
   @Input() factor: any;
   factors: any[];

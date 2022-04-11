@@ -24,8 +24,9 @@ import {ActivatedRoute} from '@angular/router';
 export class DomainSettingsFactorsComponent implements OnInit {
   private factorTypes: any = {
     'otp' : 'Generic OTP Factor',
-    'email' : 'EMAIL Factor',
+    'email' : 'Email Factor',
     'sms' : 'SMS Factor',
+    'http' : 'HTTP Factor',
     'call' : 'Call Factor',
     'recovery_code' : 'Recovery Code Factor'
   };
@@ -35,6 +36,7 @@ export class DomainSettingsFactorsComponent implements OnInit {
     'email': 'sms',
     'sms': 'email',
     'call': 'call',
+    'http': 'http',
     'recovery_code': 'autorenew'
   };
 

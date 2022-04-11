@@ -284,6 +284,14 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.factor</groupId>
+            <artifactId>gravitee-am-factor-http</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- AM Policies -->
         <dependency>
             <groupId>io.gravitee.am.policy</groupId>
@@ -639,6 +647,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.factor</groupId>
                                     <artifactId>gravitee-am-factor-recovery-code</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.factor</groupId>
+                                    <artifactId>gravitee-am-factor-http</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

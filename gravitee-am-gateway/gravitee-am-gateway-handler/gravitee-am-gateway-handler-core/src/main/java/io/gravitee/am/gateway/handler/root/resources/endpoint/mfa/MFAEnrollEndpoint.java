@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static java.util.Optional.ofNullable;
 
@@ -183,15 +184,15 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             FactorProvider provider = optFactor.get().getValue();
             if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
                 // save enrolled factor for the current user and continue
-                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
+                routingContext.session().put(ENROLLED_FACTOR_ID_KEY, factorId);
                 if (sharedSecret != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
+                    routingContext.session().put(ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
                 }
                 if (phoneNumber != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
+                    routingContext.session().put(ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
                 }
                 if (emailAddress != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
+                    routingContext.session().put(ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
                 }
                 redirectToAuthorize(routingContext);
             } else {
@@ -223,6 +224,10 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
             case EMAIL:
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
                 enrolledFactor.setChannel(new EnrolledFactorChannel(Type.EMAIL, params.get("email")));
+                break;
+            case HTTP:
+                enrolledFactor.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.SHARED_SECRET, params.get("sharedSecret")));
+                enrolledFactor.setChannel(new EnrolledFactorChannel(Type.HTTP, params.get("http")));
                 break;
         }
         return enrolledFactor;
