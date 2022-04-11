@@ -133,14 +133,17 @@ export class UsersComponent implements OnInit {
     this.selectedApplications = null;
     this.selectedIdPs = null;
     this.selectedDisabledUsers = false;
+    this.page.pageNumber = 0;
     this.loadUsers(this.searchValue);
   }
 
   onSearch() {
+    this.page.pageNumber = 0;
     this.loadUsers(this.searchValue);
   }
 
   onAdvancedSearch() {
+    this.page.pageNumber = 0;
     this.displayAdvancedSearchMode = false;
     let searchQuery = '';
     if (this.selectedApplications && this.selectedApplications.length > 0) {
@@ -172,7 +175,7 @@ export class UsersComponent implements OnInit {
 
   setPage(pageInfo) {
     this.page.pageNumber = pageInfo.offset;
-    this.loadUsers(null);
+    this.loadUsers(this.searchValue);
   }
 
   accountLocked(user) {
