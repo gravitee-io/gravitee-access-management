@@ -49,6 +49,8 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -208,15 +210,15 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                             enrolledFactors.forEach(e -> e.setPrimary(false));
                         }
                         // if the Factor already exists, update the target and the security value
-                        Optional<EnrolledFactor> optFactor = enrolledFactors.stream()
+                        var foundFactor = enrolledFactors.stream()
                                 .filter(existingFactor -> existingFactor.getFactorId().equals(enrolledFactor.getFactorId()))
                                 .findFirst();
-                        if (optFactor.isPresent()) {
-                            EnrolledFactor factorToUpdate = new EnrolledFactor(optFactor.get());
-                            factorToUpdate.setStatus(enrolledFactor.getStatus());
-                            factorToUpdate.setChannel(enrolledFactor.getChannel());
-                            factorToUpdate.setSecurity(enrolledFactor.getSecurity());
-                            factorToUpdate.setPrimary(enrolledFactor.isPrimary());
+                        if (foundFactor.isPresent()) {
+                            var factorToUpdate = new EnrolledFactor(foundFactor.get());
+                            factorToUpdate.setStatus(ofNullable(enrolledFactor.getStatus()).orElse(factorToUpdate.getStatus()));
+                            factorToUpdate.setChannel(ofNullable(enrolledFactor.getChannel()).orElse(factorToUpdate.getChannel()));
+                            factorToUpdate.setSecurity(ofNullable(enrolledFactor.getSecurity()).orElse(factorToUpdate.getSecurity()));
+                            factorToUpdate.setPrimary(ofNullable(enrolledFactor.isPrimary()).orElse(factorToUpdate.isPrimary()));
                             // update the factor
                             enrolledFactors.removeIf(ef -> factorToUpdate.getFactorId().equals(ef.getFactorId()));
                             enrolledFactors.add(factorToUpdate);
@@ -234,7 +236,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                             user.setPhoneNumbers(phoneNumbers);
                         }
                         String enrolledPhoneNumber = enrolledFactor.getChannel().getTarget();
-                        if (!phoneNumbers.stream().filter(p -> p.getValue().equals(enrolledPhoneNumber)).findFirst().isPresent()) {
+                        if (phoneNumbers.stream().noneMatch(p -> p.getValue().equals(enrolledPhoneNumber))) {
                             Attribute newPhoneNumber = new Attribute();
                             newPhoneNumber.setType("mobile");
                             newPhoneNumber.setPrimary(phoneNumbers.isEmpty());
@@ -256,7 +258,7 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
                                 emails = new ArrayList<>();
                                 user.setEmails(emails);
                             }
-                            if (!emails.stream().filter(p -> p.getValue().equals(enrolledEmail)).findFirst().isPresent()) {
+                            if (emails.stream().noneMatch(p -> p.getValue().equals(enrolledEmail))) {
                                 Attribute additionalEmail = new Attribute();
                                 additionalEmail.setPrimary(false);
                                 additionalEmail.setValue(enrolledEmail);
@@ -303,7 +305,6 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
             return;
         }
         enrolledFactors
-                .stream()
                 .forEach(enrolledFactor -> enrolledFactor.setSecurity(null));
     }
 
@@ -317,35 +318,30 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
         }
 
         // if enrolled factors not match, create an audit
-        if (newEnrolledFactors
+        return newEnrolledFactors
                 .stream()
-                .anyMatch(newEnrolledFactor -> {
-                    return oldEnrolledFactors
-                            .stream()
-                            .anyMatch(oldEnrolledFactor -> {
-                                if (!newEnrolledFactor.getFactorId().equals(oldEnrolledFactor.getFactorId())) {
-                                    return false;
-                                }
-                                // check if enrolled factor was in pending activation
-                                if (oldEnrolledFactor.getStatus().equals(FactorStatus.PENDING_ACTIVATION)) {
-                                    return true;
-                                }
-                                if (oldEnrolledFactor.getChannel() != null) {
-                                    // check if email has changed
-                                    if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
-                                        return emailInformationHasChanged(newUser, oldUser);
-                                    }
-                                    // check if phoneNumber has changed
-                                    if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
-                                        return phoneNumberInformationHasChanged(newUser, oldUser);
-                                    }
-                                }
+                .anyMatch(newEnrolledFactor -> oldEnrolledFactors
+                        .stream()
+                        .anyMatch(oldEnrolledFactor -> {
+                            if (!newEnrolledFactor.getFactorId().equals(oldEnrolledFactor.getFactorId())) {
                                 return false;
-                            });
-                })) {
-            return true;
-        }
-        return false;
+                            }
+                            // check if enrolled factor was in pending activation
+                            if (oldEnrolledFactor.getStatus().equals(FactorStatus.PENDING_ACTIVATION)) {
+                                return true;
+                            }
+                            if (oldEnrolledFactor.getChannel() != null) {
+                                // check if email has changed
+                                if (EnrolledFactorChannel.Type.EMAIL.equals(oldEnrolledFactor.getChannel().getType())) {
+                                    return emailInformationHasChanged(newUser, oldUser);
+                                }
+                                // check if phoneNumber has changed
+                                if (EnrolledFactorChannel.Type.SMS.equals(oldEnrolledFactor.getChannel().getType())) {
+                                    return phoneNumberInformationHasChanged(newUser, oldUser);
+                                }
+                            }
+                            return false;
+                        }));
     }
 
     private boolean emailInformationHasChanged(User newUser, User oldUser) {
@@ -355,14 +351,14 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
         }
 
         // if email list not match, create an audit
-        final List<Attribute> newEmails = newUser.getEmails() != null ? newUser.getEmails() : Collections.emptyList();
-        final List<Attribute> oldEmails = oldUser.getEmails() != null ? oldUser.getEmails() : Collections.emptyList();
+        final List<Attribute> newEmails = ofNullable(newUser.getEmails()).orElse(Collections.emptyList());
+        final List<Attribute> oldEmails = ofNullable(oldUser.getEmails()).orElse(Collections.emptyList());
         return newEmails.size() != oldEmails.size();
     }
 
     private boolean phoneNumberInformationHasChanged(User newUser, User oldUser) {
-        final List<Attribute> newPhoneNumbers = newUser.getPhoneNumbers() != null ? newUser.getPhoneNumbers() : Collections.emptyList();
-        final List<Attribute> oldPhoneNumbers = oldUser.getPhoneNumbers() != null ? oldUser.getPhoneNumbers() : Collections.emptyList();
+        final List<Attribute> newPhoneNumbers = ofNullable(newUser.getPhoneNumbers()).orElse(Collections.emptyList());
+        final List<Attribute> oldPhoneNumbers = ofNullable(oldUser.getPhoneNumbers()).orElse(Collections.emptyList());
         return newPhoneNumbers.size() != oldPhoneNumbers.size();
     }
 }

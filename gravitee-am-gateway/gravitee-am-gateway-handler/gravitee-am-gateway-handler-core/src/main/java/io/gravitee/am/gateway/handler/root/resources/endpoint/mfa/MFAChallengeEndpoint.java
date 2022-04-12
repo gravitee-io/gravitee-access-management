@@ -67,6 +67,7 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.g
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -321,6 +322,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         if (factor.getId().equals(savedFactorId)) {
             EnrolledFactor enrolledFactor = new EnrolledFactor();
             enrolledFactor.setFactorId(factor.getId());
+            enrolledFactor.setStatus(PENDING_ACTIVATION);
             switch (factor.getFactorType()) {
                 case OTP:
                     enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
