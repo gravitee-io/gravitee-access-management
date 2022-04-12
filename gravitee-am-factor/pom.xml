@@ -39,6 +39,5 @@
         <module>gravitee-am-factor-email</module>
         <module>gravitee-am-factor-call</module>
         <module>gravitee-am-factor-recovery-code</module>
-        <module>gravitee-am-factor-http</module>
     </modules>
 </project>
