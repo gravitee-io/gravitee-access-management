@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
@@ -22,27 +25,21 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import de.flapdoodle.embed.mongo.Command;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodProcess;
 import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
-import de.flapdoodle.embed.mongo.config.RuntimeConfigBuilder;
+import de.flapdoodle.embed.mongo.config.MongodConfig;
+import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
-import de.flapdoodle.embed.process.config.IRuntimeConfig;
-import de.flapdoodle.embed.process.config.io.ProcessOutput;
+import de.flapdoodle.embed.process.runtime.Network;
+import java.net.InetAddress;
+import java.util.Collections;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
-
-import java.util.Collections;
-
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,17 +62,15 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final IMongodConfig mongodConfig = new MongodConfigBuilder()
-                .version(Version.Main.PRODUCTION).build();
+        final MongodStarter starter = MongodStarter.getDefaultInstance();
 
-        IRuntimeConfig runtimeConfig = new RuntimeConfigBuilder()
-                .defaultsWithLogger(Command.MongoD, logger)
-                .processOutput(ProcessOutput.getDefaultInstanceSilent())
-                .build();
+        int port = Network.freeServerPort(InetAddress.getLocalHost());
+        MongodConfig mongodConfig = MongodConfig.builder()
+            .version(Version.Main.PRODUCTION)
+            .net(new Net(port, Network.localhostIsIPv6()))
+            .build();
 
-        MongodStarter runtime = MongodStarter.getInstance(runtimeConfig);
-
-        MongodExecutable mongodExecutable = runtime.prepare(mongodConfig);
+        MongodExecutable mongodExecutable = starter.prepare(mongodConfig);
         mongod = mongodExecutable.start();
 
         // cluster configuration
