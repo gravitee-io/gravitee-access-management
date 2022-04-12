@@ -16,10 +16,10 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAStep;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -38,9 +38,23 @@ public class MfaFilterChain {
         this.suppliers = isNull(suppliers) ? List.of() : List.of(suppliers);
     }
 
-    public void doFilter(MFAStep mfaStep, AuthenticationFlowChain flow, RoutingContext routingContext) {
+    public void doFilter(MFAStep mfaStep,
+                         AuthenticationFlowChain flow,
+                         RoutingContext routingContext) {
+        doFilter(mfaStep, flow, routingContext, false);
+    }
+
+    public void doFilter(MFAStep mfaStep,
+                         AuthenticationFlowChain flow,
+                         RoutingContext routingContext,
+                         boolean setStronglyAuth) {
         boolean skipMFA = suppliers.stream().anyMatch(Supplier::get);
         if (skipMFA) {
+            // Since we skip MFA, we need to input in the session that the user has
+            // completed MFA already without the need to verify a code
+            if (setStronglyAuth) {
+                routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            }
             flow.doNext(routingContext);
         } else {
             flow.exit(mfaStep);
