@@ -58,4 +58,14 @@ public class HttpFactorProvider implements FactorProvider {
     public boolean checkSecurityFactor(EnrolledFactor factor) {
         return true;
     }
+
+    @Override
+    public boolean needChallengeSending() {
+        return false;
+    }
+
+    @Override
+    public Completable sendChallenge(FactorContext context) {
+        return null;
+    }
 }
