@@ -405,10 +405,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         factorSecurity.ifPresent(enrolledFactor::setSecurity);
                     }
                     break;
-                case HTTP:
-                    enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
-                            routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
-                    break;
             }
             enrolledFactor.setCreatedAt(new Date());
             enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
