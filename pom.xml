@@ -76,7 +76,7 @@
         <gravitee-node.version>1.21.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>1.27.2</gravitee-gateway-api.version>
-        <gravitee-expression-language.version>1.5.0</gravitee-expression-language.version>
+        <gravitee-expression-language.version>1.6.0</gravitee-expression-language.version>
         <gravitee-platform-repository-api.version>1.0.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>1.9.0</gravitee-cockpit-api.version>
         <spring.version>5.3.18</spring.version>
@@ -480,8 +480,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <argLine
-                    >@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
+                    <argLine>@{argLine} --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED
                         --add-opens java.base/java.util.regex=ALL-UNNAMED --add-opens
                         java.base/java.util.stream=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED
                     </argLine>
