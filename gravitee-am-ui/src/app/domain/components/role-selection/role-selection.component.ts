@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import {FormControl} from "@angular/forms";
-import {COMMA, ENTER} from "@angular/cdk/keycodes";
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import * as _ from 'lodash';
+import { BehaviorSubject, Subscription } from 'rxjs';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'role-selection',
@@ -25,30 +26,32 @@ import * as _ from 'lodash';
   styleUrls: ['./role-selection.component.scss']
 })
 
-export class RoleSelectionComponent implements OnInit, OnChanges {
+export class RoleSelectionComponent implements OnInit {
   @Output() onRoleSelection = new EventEmitter();
   @Input('roles') domainRoles: any[] = [];
   @Input() initialSelectedRoles: any[];
   @ViewChild('roleInput', { static: true }) roleInput: ElementRef<HTMLInputElement>;
   @ViewChild(MatAutocompleteTrigger, { static: true }) trigger;
-  filteredRoles: any[] = [];
+  filteredRoles: BehaviorSubject<any[]> = new BehaviorSubject<any[]>([]);
   assignedRoles: string[] = [];
   removable = true;
   addOnBlur = true;
   separatorKeysCodes: number[] = [ENTER, COMMA];
   roleCtrl = new FormControl();
+  userInputSub: Subscription;
 
   constructor() {
   }
 
-  ngOnInit(): void {
-    this.assignedRoles = this.initialSelectedRoles ? _.map(this.initialSelectedRoles, 'id') : [];
+  ngOnDestroy(): void {
+    this.userInputSub?.unsubscribe();
   }
 
-  ngOnChanges(changes) {
-    if (changes.domainRoles.currentValue) {
-      this._filter();
-    }
+  ngOnInit(): void {
+    this.assignedRoles = this.initialSelectedRoles ? _.map(this.initialSelectedRoles, 'id') : [];
+    this.userInputSub = this.roleCtrl.valueChanges.subscribe(value => {
+      this._filterByUserInput(value);
+    });
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
@@ -75,7 +78,15 @@ export class RoleSelectionComponent implements OnInit, OnChanges {
   }
 
   private _filter(): void {
-    this.filteredRoles = this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id));
+    this.filteredRoles.next(this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id)));
     this.initialSelectedRoles = this.domainRoles.filter(selectedRole => this.assignedRoles.includes(selectedRole.id));
   }
+
+  private _filterByUserInput(value: any) {
+    const normalizedValue = value?.toLowerCase().trim();
+    const rolesNotAssignedYet = this.domainRoles.filter(domainRole => !this.assignedRoles.includes(domainRole.id));
+    const filteredRolesFromUserInput = normalizedValue ? rolesNotAssignedYet.filter(role => role.name.toLowerCase().includes(normalizedValue)) : rolesNotAssignedYet;
+    this.filteredRoles.next(filteredRolesFromUserInput);
+  }
+
 }
