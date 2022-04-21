@@ -332,6 +332,7 @@ import {ApplicationResourcePolicyComponent} from './domain/applications/applicat
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
 import {LoginSettingsComponent} from './domain/components/login/login-settings.component';
 import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
+import {ApplicationCookieSettingsComponent} from './domain/applications/application/advanced/cookie/cookie.component';
 import {ApplicationFlowsComponent} from './domain/applications/application/design/flows/flows.component';
 import {IdentitiesResolver} from './resolvers/identities.resolver';
 import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
@@ -372,6 +373,7 @@ import { BotDetectionFormComponent } from './domain/settings/botdetections/bot-d
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
 import { GvFormControlDirective } from "./directives/gv-form-control.directive";
+import { CookieSettingsComponent } from "./domain/components/cookie/cookie-settings.component";
 
 @NgModule({
   declarations: [
@@ -540,6 +542,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     ApplicationResourceComponent,
     ApplicationResourcePolicyComponent,
     ApplicationLoginSettingsComponent,
+    ApplicationCookieSettingsComponent,
     ApplicationFlowsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
@@ -560,6 +563,7 @@ import { GvFormControlDirective } from "./directives/gv-form-control.directive";
     UserAvatarComponent,
     NotFoundComponent,
     UmaComponent,
+    CookieSettingsComponent,
     LoginSettingsComponent,
     UsersSearchInfoDialog,
     NewsletterComponent,

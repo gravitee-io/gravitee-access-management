@@ -16,6 +16,7 @@
 package io.gravitee.am.model.safe;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.oidc.Client;
 
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class ClientProperties {
     private String clientId;
     private String clientName;
     private String name;
+    private CookieSettings cookieSettings;
     private Map<String, Object> metadata;
 
     public ClientProperties() {
@@ -43,6 +45,7 @@ public class ClientProperties {
         this.clientId = client.getClientId();
         this.clientName = client.getClientName();
         this.name = client.getClientName();
+        this.cookieSettings = client.getCookieSettings();
         this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
     }
 
@@ -88,6 +91,14 @@ public class ClientProperties {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public CookieSettings getCookieSettings() {
+        return cookieSettings;
+    }
+
+    public void setCookieSettings(CookieSettings cookieSettings) {
+        this.cookieSettings = cookieSettings;
     }
 
     public Map<String, Object> getMetadata() {

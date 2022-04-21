@@ -27,6 +27,7 @@ public class ApplicationSettingsMongo {
     private ApplicationAdvancedSettingsMongo advanced;
     private PasswordSettingsMongo passwordSettings;
     private MFASettingsMongo mfa;
+    private CookieSettingsMongo cookieSettings;
 
     public ApplicationOAuthSettingsMongo getOauth() {
         return oauth;
@@ -74,5 +75,13 @@ public class ApplicationSettingsMongo {
 
     public void setMfa(MFASettingsMongo mfa) {
         this.mfa = mfa;
+    }
+
+    public CookieSettingsMongo getCookieSettings() {
+        return cookieSettings;
+    }
+
+    public void setCookieSettings(CookieSettingsMongo cookieSettings) {
+        this.cookieSettings = cookieSettings;
     }
 }

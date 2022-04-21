@@ -17,20 +17,27 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.SessionSettings;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.service.UserService;
 import io.reactivex.Single;
 import io.vertx.core.Handler;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.reactivex.core.http.Cookie;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
-import java.util.concurrent.TimeUnit;
-
 import static io.vertx.ext.web.handler.SessionHandler.DEFAULT_SESSION_TIMEOUT;
+import static java.util.Objects.nonNull;
+import static java.util.function.Predicate.not;
 
 /**
  * Session handler based on minimalistic jwt Cookie.
@@ -57,6 +64,9 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     @Value("${http.cookie.session.timeout:" + DEFAULT_SESSION_TIMEOUT + "}")
     private long timeout;
 
+    @Value("${http.cookie.session.persistent:true}")
+    private boolean persistent;
+
     public CookieSessionHandler(JWTService jwtService,
                                 CertificateManager certificateManager,
                                 UserService userService) {
@@ -77,16 +87,16 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext context) {
-
         if (logger.isDebugEnabled()) {
             String uri = context.request().absoluteURI();
             if (!uri.startsWith("https:")) {
-                logger.debug("Using session cookies without https could make you susceptible to session hijacking: " + uri);
+                logger.debug("Using session cookies without https could make you susceptible to session hijacking: {}", uri);
             }
         }
 
         Cookie sessionCookie = context.getCookie(cookieName);
         CookieSession session = new CookieSession(jwtService, certificateManager.defaultCertificateProvider(), timeout);
+
 
         registerSession(context, session);
 
@@ -135,7 +145,6 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
     }
 
     private void flush(RoutingContext context, CookieSession session) {
-
         if (session.isDestroyed()) {
             context.addCookie(Cookie.cookie(cookieName, "").setMaxAge(0));
         } else {
@@ -152,16 +161,31 @@ public class CookieSessionHandler implements Handler<RoutingContext> {
         if (user instanceof User) {
             session.putUserId(((User) user).getUser().getId());
         }
-
         Cookie cookie = Cookie.cookie(cookieName, session.value());
 
         // set max age if user requested it - else it's a session cookie
-        if (timeout >= 0) {
+        if (timeout >= 0 && persistentSession(context)) {
             cookie.setMaxAge(TimeUnit.MILLISECONDS.toSeconds(timeout));
         }
 
         // All other cookie's properties are managed by a dedicated CookieHandler.
         context.addCookie(cookie);
+    }
+
+    private Boolean persistentSession(RoutingContext context) {
+        var client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        if (nonNull(client)) {
+            CookieSettings cookieSettings =
+                    (client instanceof Client) ? ((Client) client).getCookieSettings() :
+                            (client instanceof ClientProperties) ? ((ClientProperties) client).getCookieSettings() : null;
+
+            return Optional.ofNullable(cookieSettings)
+                    .filter(not(CookieSettings::isInherited))
+                    .map(CookieSettings::getSession)
+                    .map(SessionSettings::isPersistent)
+                    .orElse(persistent);
+        }
+        return persistent;
     }
 }
 
