@@ -1,6 +1,47 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/532?closed=1[AM - 3.15.6 (2022-04-19)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [management] improve session management https://github.com/gravitee-io/issues/issues/7414[#7414]
+
+*_Management_*
+
+- Make hard coded Jetty configuration configurable https://github.com/gravitee-io/issues/issues/7479[#7479]
+- Search user in management API may provide duplicates https://github.com/gravitee-io/issues/issues/7439[#7439]
+
+*_Oidc_*
+
+- [jdbc] NullPointerException when username is not given https://github.com/gravitee-io/issues/issues/7488[#7488]
+
+=== Features
+
+*_Gateway_*
+
+- Manage X-Frame-Options headers https://github.com/gravitee-io/issues/issues/7418[#7418]
+
+=== Improvements
+
+*_Gateway_*
+
+- Improve OTP token management https://github.com/gravitee-io/issues/issues/7415[#7415]
+- Provide a legacy mode for the enhanced scopes https://github.com/gravitee-io/issues/issues/7455[#7455]
+
+*_Management_*
+
+- Improve redirect_uri management https://github.com/gravitee-io/issues/issues/7420[#7420]
+
+*_Reporter_*
+
+- Improve file reporter input validation https://github.com/gravitee-io/issues/issues/7464[#7464]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/527?closed=1[AM - 3.15.5 (2022-04-04)]
 
 === Bug fixes
