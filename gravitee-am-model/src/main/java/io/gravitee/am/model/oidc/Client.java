@@ -199,6 +199,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private MFASettings mfaSettings;
 
+    private CookieSettings cookieSettings;
+
     private boolean singleSignOut;
 
     private boolean silentReAuthentication;
@@ -275,6 +277,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.flowsInherited = other.flowsInherited;
         this.mfaSettings = other.mfaSettings;
+        this.cookieSettings = other.cookieSettings;
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
     }
@@ -882,6 +885,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSilentReAuthentication(boolean silentReAuthentication) {
         this.silentReAuthentication = silentReAuthentication;
+    }
+
+    public CookieSettings getCookieSettings() {
+        return cookieSettings;
+    }
+
+    public void setCookieSettings(CookieSettings cookieSettings) {
+        this.cookieSettings = cookieSettings;
     }
 
     @Override

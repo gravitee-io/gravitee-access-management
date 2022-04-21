@@ -210,6 +210,7 @@ import { BotDetectionPluginsResolver } from './resolvers/bot-detection-plugins.r
 import { BotDetectionComponent } from './domain/settings/botdetections/bot-detection/bot-detection.component';
 import { BotDetectionResolver } from './resolvers/bot-detection.resolver';
 import { ScopesAllResolver } from "./resolvers/scopes-all.resolver";
+import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1140,6 +1141,20 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Password policy',
+                                    section: 'Security'
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read']
+                                  }
+                                }
+                              },
+                              {
+                                path: 'session',
+                                component: ApplicationCookieSettingsComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Session management',
                                     section: 'Security'
                                   },
                                   perms: {
