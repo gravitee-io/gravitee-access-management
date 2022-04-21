@@ -36,7 +36,7 @@
         [matChipInputAddOnBlur]="addOnBlur">
     </mat-chip-list>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
-      <mat-option *ngFor="let role of filteredRoles" [value]="role.id">
+      <mat-option *ngFor="let role of filteredRoles | async" [value]="role.id">
         {{role.name}}
       </mat-option>
     </mat-autocomplete>
