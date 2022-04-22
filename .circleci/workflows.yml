@@ -378,6 +378,7 @@ jobs:
       - run: my_cool_command || true        
       - run:
           name: Build & Publish Management API Docker Image to Azure Registry
+          when: always
           command: |
             set -e
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
@@ -396,11 +397,13 @@ jobs:
       #- notify-snyk-result 
       - run:
           name: Push API Docker image
+          when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             #docker push ${IMAGE_TAG}  
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
+          when: always
           command: |
             set -e
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
@@ -418,11 +421,13 @@ jobs:
       #- notify-snyk-result
       - run:
           name: Push Gateway Docker image
+          when: always
           command: |   
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             #docker push ${IMAGE_TAG}             
       - run:
           name: Build & Publish Web UI Docker Image to Azure Registry
+          when: always
           command: |
             set -e
             cp -fr docker/management-ui/config /tmp/
@@ -442,6 +447,7 @@ jobs:
       - notify-snyk-result 
       - run:
           name: Push Web UI Docker image
+          when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             #docker push ${IMAGE_TAG}         
