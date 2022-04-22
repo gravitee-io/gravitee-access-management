@@ -85,7 +85,7 @@ commands:
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": "```${SLACK_MESSAGE}```"
+                          "text": "```${SLACK_MESSAGE} - ${SLACK_MESSAGE1} - ${SLACK_MESSAGE2}```"
                        },
                        "accessory": {
                          "type": "button",
@@ -386,11 +386,9 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            snyk config set disableSuggestions=true
-            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and vulenrable paths found"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV       
+            snyk config set disableSuggestions=true      
             snyk container test ${IMAGE_TAG} --app-vulns -d
-            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and no vulenrable paths found"
+            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
             my_cool_command
       #- docker-scan
@@ -410,11 +408,9 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            snyk config set disableSuggestions=true
-            SLACK_MESSAGE1="${IMAGE_TAG} image has been tested for vulnerability using snyk and vulenrable paths found"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV       
+            snyk config set disableSuggestions=true 
             snyk container test ${IMAGE_TAG} --app-vulns -d
-            SLACK_MESSAGE1="${IMAGE_TAG} image has been tested for vulnerability using snyk and no vulenrable paths found"
+            SLACK_MESSAGE1="${IMAGE_TAG} image has been tested for vulnerability using snyk"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV
             my_cool_command
       #- docker-scan
@@ -436,11 +432,9 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            snyk config set disableSuggestions=true
-            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and vulenrable paths found"
-            echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV       
+            snyk config set disableSuggestions=true   
             snyk container test ${IMAGE_TAG} --app-vulns -d
-            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and no vulenrable paths found"
+            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk"
             echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV
             my_cool_command
       #- docker-scan
