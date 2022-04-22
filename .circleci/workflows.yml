@@ -78,29 +78,73 @@ commands:
       steps:
           - slack/notify:
                 channel: 'devsecops'
-                custom: |
-                  {
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "```${SLACK_MESSAGE}```-```${SLACK_MESSAGE1}```-```${SLACK_MESSAGE2}```"
-                       },
-                       "accessory": {
-                         "type": "button",
-                         "text": {
-                           "type": "plain_text",
-                           "text": "Click here for scan details",
-                           "emoji": true
-                         },
-                         "value": "click_me_123",
-                         "url": "${CIRCLE_BUILD_URL}",
-                         "action_id": "button-action"                    
+                custom:|
+                        {
+                        	"text": "Snyk Scan Job Status",
+                        	"blocks": [
+                        		{
+                        			"type": "header",
+                        			"text": {
+                        				"type": "plain_text",
+                        				"text": "Job Failed. :red_circle:",
+                        				"emoji": true
+                        			}
+                        		},
+                        		{
+                        			"type": "section",
+                        			"fields": [
+                        				{
+                        					"type": "mrkdwn",
+                        					"text": "*Job*: ${CIRCLE_JOB}"
+                        				}
+                        			]
+                        		},
+                        		{
+                        			"type": "section",
+                        			"fields": [
+                        				{
+                        					"type": "mrkdwn",
+                        					"text": "AM Image1: $SLACK_MESSAGE"
+                        				},
+                        				{
+                        					"type": "mrkdwn",
+                        					"text": "AM Image2: $SLACK_MESSAGE1"
+                        				},
+                        				{
+                        					"type": "mrkdwn",
+                        					"text": "AM Image3: $SLACK_MESSAGE2"
+                        				}
+                        			],
+                        			"accessory": {
+                        				"type": "image",
+                        				"image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
+                        				"alt_text": "CircleCI logo"
+                        			}
+                        		},
+                        		{
+                        			"type": "section",
+                        			"fields": [
+                        				{
+                        					"type": "mrkdwn",
+                        					"text": "*Mentions*: $SLACK_PARAM_MENTIONS"
+                        				}
+                        			]
+                        		},
+                        		{
+                        			"type": "actions",
+                        			"elements": [
+                        				{
+                        					"type": "button",
+                        					"text": {
+                        						"type": "plain_text",
+                        						"text": "View Job"
+                        					},
+                        					"url": "${CIRCLE_BUILD_URL}"
+                        				}
+                        			]
+                        		}
+                        	]
                         }
-                      }
-                    ]
-                  }
                 event: always   
 
 jobs:
