@@ -77,57 +77,31 @@ commands:
   notify-snyk-result:
       steps:
           - slack/notify:
-                channel: 'devsecops'
+                channel: 'am-ci-notifications'
                 custom: |
-                        {
-                        	"text": "Snyk Scan Job Status",
-                        	"blocks": [
-                        		{
-                        			"type": "header",
-                        			"text": {
-                        				"type": "plain_text",
-                        				"text": "Snyk Scan Job Details",
-                        				"emoji": false
-                        			}
-                        		},
-                        		{
-                        			"type": "section",
-                        			"fields": [
-                        				{
-                        					"type": "mrkdwn",
-                        					"text": "```${SLACK_MESSAGE}```"
-                        				},
-                        				{
-                        					"type": "mrkdwn",
-                        					"text": "```${SLACK_MESSAGE1}```"
-                        				},
-                        				{
-                        					"type": "mrkdwn",
-                        					"text": "```${SLACK_MESSAGE2}```"
-                        				}
-                        			],
-                        			"accessory": {
-                        				"type": "image",
-                        				"image_url": "https://snyk.io/wp-content/uploads/title-card-logo-white-1.png",
-                        				"alt_text": "Snyk logo"
-                        			}
-                        		},
-                        		{
-                        			"type": "actions",
-                        			"elements": [
-                        				{
-                        					"type": "button",
-                        					"text": {
-                        						"type": "plain_text",
-                        						"text": "Click here for scan details"
-                        					},
-                        					"url": "${CIRCLE_BUILD_URL}"
-                        				}
-                        			]
-                        		}
-                        	]
+                  {
+                    "blocks": [
+                      {
+                        "type": "section",
+                        "text": {
+                          "type": "mrkdwn",
+                          "text": "```${SLACK_MESSAGE}```"
+                       },
+                       "accessory": {
+                         "type": "button",
+                         "text": {
+                           "type": "plain_text",
+                           "text": "Click here for scan details",
+                           "emoji": true
+                         },
+                         "value": "click_me_123",
+                         "url": "${CIRCLE_BUILD_URL}",
+                         "action_id": "button-action"                    
                         }
-                event: always   
+                      }
+                    ]
+                  }
+                event: always    
 
 jobs:
   keeper:
