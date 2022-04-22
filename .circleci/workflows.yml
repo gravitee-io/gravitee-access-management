@@ -57,12 +57,23 @@ orbs:
 commands:
   docker-scan:
       steps:
-          - snyk/scan:
-              organization: gravitee.io
-              monitor-on-build: false
-              severity-threshold: critical
-              docker-image-name: ${IMAGE_TAG}
-              fail-on-issues: false  
+          - run:
+              name: install-nodesource-nodejs-snyk
+              command: |     
+                curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+                sudo apt install nodejs
+                sudo npm install snyk -g                          
+                snyk auth $SNYK_TOKEN
+          - run: # run snyk container monitor
+              name: snyk container monitor
+              command: |
+                snyk container test ${IMAGE_TAG} --app-vulns -d      
+          #- snyk/scan:
+          #    organization: gravitee.io
+          #    monitor-on-build: false
+          #    severity-threshold: critical
+          #    docker-image-name: ${IMAGE_TAG}
+          #    fail-on-issues: false  
 
   notify-snyk-result:
       steps:
