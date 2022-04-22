@@ -85,7 +85,7 @@ commands:
                         "type": "section",
                         "text": {
                           "type": "mrkdwn",
-                          "text": "```${SLACK_MESSAGE} - ${SLACK_MESSAGE1} - ${SLACK_MESSAGE2}```"
+                          "text": "```${SLACK_MESSAGE}`-`${SLACK_MESSAGE1}`-`${SLACK_MESSAGE2}```"
                        },
                        "accessory": {
                          "type": "button",
@@ -411,7 +411,7 @@ jobs:
             snyk config set disableSuggestions=true 
             snyk container test ${IMAGE_TAG} --app-vulns -d
             SLACK_MESSAGE1="${IMAGE_TAG} image has been tested for vulnerability using snyk"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV
+            echo "export SLACK_MESSAGE1='${SLACK_MESSAGE1}'" >> $BASH_ENV
             my_cool_command
       #- docker-scan
       #- notify-snyk-result
@@ -434,7 +434,7 @@ jobs:
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             snyk config set disableSuggestions=true   
             snyk container test ${IMAGE_TAG} --app-vulns -d
-            SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk"
+            SLACK_MESSAGE2="${IMAGE_TAG} image has been tested for vulnerability using snyk"
             echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV
             my_cool_command
       #- docker-scan
