@@ -95,15 +95,6 @@ commands:
                         			"fields": [
                         				{
                         					"type": "mrkdwn",
-                        					"text": "*Job*: ${CIRCLE_JOB}"
-                        				}
-                        			]
-                        		},
-                        		{
-                        			"type": "section",
-                        			"fields": [
-                        				{
-                        					"type": "mrkdwn",
                         					"text": "```${SLACK_MESSAGE}```"
                         				},
                         				{
@@ -117,18 +108,9 @@ commands:
                         			],
                         			"accessory": {
                         				"type": "image",
-                        				"image_url": "https://assets.brandfolder.com/otz5mn-bw4j2w-6jzqo8/original/circle-logo-badge-black.png",
-                        				"alt_text": "CircleCI logo"
+                        				"image_url": "https://snyk.io/wp-content/uploads/title-card-logo-white-1.png",
+                        				"alt_text": "Snyk logo"
                         			}
-                        		},
-                        		{
-                        			"type": "section",
-                        			"fields": [
-                        				{
-                        					"type": "mrkdwn",
-                        					"text": "Click here for scan details"
-                        				}
-                        			]
                         		},
                         		{
                         			"type": "actions",
