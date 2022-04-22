@@ -397,7 +397,7 @@ jobs:
           name: Push API Docker image
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}
+            #docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
           command: |
@@ -427,7 +427,7 @@ jobs:
           name: Push Gateway Docker image
           command: |           
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}             
+            #docker push ${IMAGE_TAG}             
       - run:
           name: Build & Publish Web UI Docker Image to Azure Registry
           command: |
@@ -458,7 +458,7 @@ jobs:
           name: Push Web UI Docker image
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-            docker push ${IMAGE_TAG}         
+            #docker push ${IMAGE_TAG}         
       - persist_to_workspace:
           root: /tmp
           paths:
