@@ -77,7 +77,7 @@ commands:
   notify-snyk-result:
       steps:
           - slack/notify:
-                channel: 'am-ci-notifications'
+                channel: 'devsecops'
                 custom: |
                   {
                     "blocks": [
@@ -101,7 +101,7 @@ commands:
                       }
                     ]
                   }
-                event: always    
+                event: always     
 
 jobs:
   keeper:
@@ -385,11 +385,11 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             snyk config set disableSuggestions=true      
-            snyk container test ${IMAGE_TAG} --app-vulns -d
+            snyk container test ${IMAGE_TAG} --app-vulns
             SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       #- docker-scan
-      #- notify-snyk-result 
+      - notify-snyk-result 
       - run:
           name: Push API Docker image
           when: always
@@ -405,11 +405,11 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             snyk config set disableSuggestions=true 
-            snyk container test ${IMAGE_TAG} --app-vulns -d
+            snyk container test ${IMAGE_TAG} --app-vulns
             SLACK_MESSAGE1="${IMAGE_TAG} image has been tested for vulnerability using snyk"
-            echo "export SLACK_MESSAGE1='${SLACK_MESSAGE1}'" >> $BASH_ENV
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       #- docker-scan
-      #- notify-snyk-result
+      - notify-snyk-result
       - run:
           name: Push Gateway Docker image
           when: always
@@ -427,9 +427,9 @@ jobs:
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             snyk config set disableSuggestions=true   
-            snyk container test ${IMAGE_TAG} --app-vulns -d
+            snyk container test ${IMAGE_TAG} --app-vulns
             SLACK_MESSAGE2="${IMAGE_TAG} image has been tested for vulnerability using snyk"
-            echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       #- docker-scan
       - notify-snyk-result 
       - run:
