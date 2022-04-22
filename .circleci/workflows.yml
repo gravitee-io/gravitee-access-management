@@ -86,8 +86,8 @@ commands:
                         			"type": "header",
                         			"text": {
                         				"type": "plain_text",
-                        				"text": "Job Failed. :red_circle:",
-                        				"emoji": true
+                        				"text": "Snyk Scan Job Details",
+                        				"emoji": false
                         			}
                         		},
                         		{
@@ -104,15 +104,15 @@ commands:
                         			"fields": [
                         				{
                         					"type": "mrkdwn",
-                        					"text": "AM Image1: $SLACK_MESSAGE"
+                        					"text": "```${SLACK_MESSAGE}```"
                         				},
                         				{
                         					"type": "mrkdwn",
-                        					"text": "AM Image2: $SLACK_MESSAGE1"
+                        					"text": "```${SLACK_MESSAGE1}```"
                         				},
                         				{
                         					"type": "mrkdwn",
-                        					"text": "AM Image3: $SLACK_MESSAGE2"
+                        					"text": "```${SLACK_MESSAGE2}```"
                         				}
                         			],
                         			"accessory": {
@@ -126,7 +126,7 @@ commands:
                         			"fields": [
                         				{
                         					"type": "mrkdwn",
-                        					"text": "*Mentions*: $SLACK_PARAM_MENTIONS"
+                        					"text": "Click here for scan details"
                         				}
                         			]
                         		},
@@ -137,7 +137,7 @@ commands:
                         					"type": "button",
                         					"text": {
                         						"type": "plain_text",
-                        						"text": "View Job"
+                        						"text": "Click here for scan details"
                         					},
                         					"url": "${CIRCLE_BUILD_URL}"
                         				}
