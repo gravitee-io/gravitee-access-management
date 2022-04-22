@@ -78,7 +78,7 @@ commands:
       steps:
           - slack/notify:
                 channel: 'devsecops'
-                custom:|
+                custom: |
                         {
                         	"text": "Snyk Scan Job Status",
                         	"blocks": [
