@@ -67,7 +67,7 @@ public class JdbcAuthenticationProviderConfiguration {
 
     @Bean
     public BinaryToTextEncoder binaryToTextEncoder() {
-        if (configuration.getPasswordEncoding() == null) {
+        if (configuration.getPasswordEncoding() == null || "None".equals(configuration.getPasswordEncoding())) {
             return new NoneEncoder();
         }
 

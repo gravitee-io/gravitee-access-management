@@ -95,7 +95,7 @@
       "type": "string",
       "title": "Password binary-to-text encoding",
       "description": "This property will cause the encoded pass to be returned as encoding text representation",
-      "enum" : ["Base64", "Hex"]
+      "enum" : ["Base64", "Hex", "None"]
     },
     "useDedicatedSalt" : {
       "type": "boolean",
@@ -143,6 +143,7 @@
     "identifierAttribute",
     "usernameAttribute",
     "passwordAttribute",
-    "passwordEncoder"
+    "passwordEncoder",
+    "passwordEncoding"
   ]
 }
