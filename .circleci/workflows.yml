@@ -57,21 +57,16 @@ orbs:
 commands:
   docker-scan:
       steps:
-          - run:
-              name: install-nodesource-nodejs-snyk
-              command: |     
-                curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
-                sudo apt install nodejs
-                sudo npm install snyk -g                          
-                snyk auth $SNYK_TOKEN
           - run: # run snyk container monitor
               name: snyk container monitor
               command: |
                 set -e
                 snyk config set disableSuggestions=true
                 SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and vulenrable paths found"
+                echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV       
                 snyk container test ${IMAGE_TAG} --app-vulns -d
                 SLACK_MESSAGE="${IMAGE_TAG} image has been tested for vulnerability using snyk and no vulenrable paths found"
+                echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV       
           #- snyk/scan:
           #    organization: gravitee.io
           #    monitor-on-build: false
@@ -365,6 +360,13 @@ jobs:
           at: /tmp
       - setup_remote_docker
       - run:
+          name: install-nodesource-nodejs-snyk
+          command: |     
+            curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+            sudo apt install nodejs
+            sudo npm install snyk -g                          
+            snyk auth $SNYK_TOKEN      
+      - run:
           name: Compute Tag for Docker images
           command: |
             # Compute tag with branch name, commmit SHA and timestamp. Then slugify it to be sure it can be handled by Docker
@@ -376,6 +378,7 @@ jobs:
       - run:
           name: Build & Publish Management API Docker Image to Azure Registry
           command: |
+            set -e
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo "Gravitee AM version: ${AM_VERSION}"
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
@@ -391,6 +394,7 @@ jobs:
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
           command: |
+            set -e
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
@@ -399,12 +403,13 @@ jobs:
       - notify-snyk-result
       - run:
           name: Push Gateway Docker image
-          command: |           
+          command: |   
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             #docker push ${IMAGE_TAG}             
       - run:
           name: Build & Publish Web UI Docker Image to Azure Registry
           command: |
+            set -e
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
