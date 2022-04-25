@@ -71,7 +71,7 @@ commands:
                          "type": "button",
                          "text": {
                            "type": "plain_text",
-                           "text": "Click here for scan details",
+                           "text": "Vulnerable paths found - Click here for scan details",
                            "emoji": true
                          },
                          "value": "click_me_123",
@@ -81,7 +81,7 @@ commands:
                       }
                     ]
                   }
-                event: always     
+                event: fail     
 
 jobs:
   keeper:
@@ -364,7 +364,7 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            SLACK_MESSAGE1="${IMAGE_TAG},"
+            SLACK_MESSAGE1="--AM Docker Images-- ${IMAGE_TAG},"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV   
             snyk container test ${IMAGE_TAG} --app-vulns
       #- notify-snyk-result 
@@ -402,7 +402,7 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            SLACK_MESSAGE3="${SLACK_MESSAGE}${IMAGE_TAG} images are tested for vulnerability using snyk"
+            SLACK_MESSAGE3="${SLACK_MESSAGE}${IMAGE_TAG} images are tested for application vulnerabilities using snyk"
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE3}'" >> $BASH_ENV
             snyk container test ${IMAGE_TAG} --app-vulns
       - notify-snyk-result 
