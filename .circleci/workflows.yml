@@ -386,11 +386,13 @@ jobs:
             snyk container test ${IMAGE_TAG} --app-vulns
       - run:
           name: Push API Docker image
+          when: always               
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
+          when: always           
           command: |
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
@@ -401,11 +403,13 @@ jobs:
             snyk container test ${IMAGE_TAG} --app-vulns
       - run:
           name: Push Gateway Docker image
+          when: always               
           command: |           
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Web UI Docker Image to Azure Registry
+          when: always           
           command: |
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
@@ -419,6 +423,7 @@ jobs:
       - notify-snyk-result 
       - run:
           name: Push Web UI Docker image
+          when: always               
           command: |            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
