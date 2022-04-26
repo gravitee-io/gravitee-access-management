@@ -287,7 +287,7 @@ public class OrganizationUserServiceTest {
         when(userRepository.delete("my-user")).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())).thenReturn(Flowable.just(credential));
-        when(credentialService.delete(credential.getId())).thenReturn(Completable.complete());
+        when(credentialService.delete(credential.getId(),false)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete("my-user").test();
         testObserver.awaitTerminalEvent();
@@ -297,7 +297,7 @@ public class OrganizationUserServiceTest {
 
         verify(userRepository, times(1)).delete("my-user");
         verify(eventService, times(1)).create(any());
-        verify(credentialService, times(1)).delete("credential-id");
+        verify(credentialService, times(1)).delete("credential-id", false);
     }
 
     @Test

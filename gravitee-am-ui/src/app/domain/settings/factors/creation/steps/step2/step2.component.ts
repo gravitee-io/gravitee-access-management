@@ -85,4 +85,9 @@ export class FactorCreationStep2Component implements OnInit {
     this.configurationIsValidChange.emit(this.configurationIsValid);
     this.factor.configuration = configurationWrapper.configuration;
   }
+
+  isFido2Factor(){
+    return this.factor.type.includes("fido2-am-factor");
+  }
+
 }

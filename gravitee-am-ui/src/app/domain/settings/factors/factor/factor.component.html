@@ -34,7 +34,18 @@
           </mat-form-field>
         </div>
 
-        <div class="gv-form-section">
+        <div class="gv-form-section" *ngIf="isFido2Factor()">
+          <div class="gv-form-section-title">
+            <h5>Configuration</h5>
+            <mat-divider></mat-divider>
+          </div>
+          <div>
+            <h5>This FIDO2 factor plugin is using existing WebAuthn configuration.</h5>
+            <factor-form *ngIf="factor" [factorConfiguration]="factorConfiguration" [factorSchema]="factorSchema" (configurationCompleted)="enableFactorUpdate($event)"></factor-form>
+          </div>
+        </div>
+
+        <div class="gv-form-section" *ngIf="!isFido2Factor()">
           <div class="gv-form-section-title">
             <h5>Configuration</h5>
             <mat-divider></mat-divider>

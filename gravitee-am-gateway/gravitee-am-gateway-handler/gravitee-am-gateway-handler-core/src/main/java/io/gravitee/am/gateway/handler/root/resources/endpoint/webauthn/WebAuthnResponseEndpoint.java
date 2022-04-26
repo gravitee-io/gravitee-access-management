@@ -16,9 +16,10 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.identityprovider.api.Authentication;
@@ -29,6 +30,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -43,6 +45,8 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 
 /**
  * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
@@ -62,11 +66,10 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
     private Domain domain;
     private String origin;
 
-    public WebAuthnResponseEndpoint(UserAuthenticationManager userAuthenticationManager,
-                                    WebAuthn webAuthn,
-                                    CredentialService credentialService,
-                                    Domain domain) {
-        super(userAuthenticationManager);
+    public WebAuthnResponseEndpoint(UserAuthenticationManager userAuthenticationManager, WebAuthn webAuthn,
+                                    CredentialService credentialService, Domain domain,
+                                    FactorManager factorManager, FactorService factorService) {
+        super(userAuthenticationManager, factorService, factorManager);
         this.webAuthn = webAuthn;
         this.credentialService = credentialService;
         this.domain = domain;
@@ -144,16 +147,12 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                                         ctx.fail(401);
                                         return;
                                     }
-                                    // save the user and login completed status into the context
-                                    ctx.getDelegate().setUser(user);
-                                    ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
-                                    ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
-                                    ctx.session().put(ConstantKeys.USER_LOGIN_COMPLETED_KEY, true);
 
-                                    // Now redirect back to authorization endpoint.
-                                    final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                    final String returnURL = getReturnUrl(ctx, queryParams);
-                                    ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
+                                    if (isEnrollingFido2Factor(ctx)) {
+                                        enrollFido2Factor(ctx, user, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                    } else {
+                                        manageFido2FactorEnrollmentThenRedirect(ctx, client, credentialId, user, authenticatedUser);
+                                    }
                                 });
                             });
                         } else {
@@ -198,5 +197,12 @@ public class WebAuthnResponseEndpoint extends WebAuthnEndpoint {
                         () -> handler.handle(Future.succeededFuture()),
                         error -> handler.handle(Future.failedFuture(error))
                 );
+    }
+
+    @Override
+    protected void redirectToAuthorize(RoutingContext ctx){
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
+        final String returnURL = getReturnUrl(ctx, queryParams);
+        ctx.response().putHeader(HttpHeaders.LOCATION, returnURL).end();
     }
 }

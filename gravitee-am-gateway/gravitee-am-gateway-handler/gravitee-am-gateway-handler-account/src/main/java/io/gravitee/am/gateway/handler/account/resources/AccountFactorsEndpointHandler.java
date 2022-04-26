@@ -214,7 +214,6 @@ public class AccountFactorsEndpointHandler {
                 });
             });
 
-
         } catch (DecodeException ex) {
             routingContext.fail(new InvalidRequestException("Unable to parse body message"));
         }
@@ -227,7 +226,7 @@ public class AccountFactorsEndpointHandler {
                 KEY_USER, user);
         final FactorContext recoveryFactorCtx = new FactorContext(applicationContext, factorData);
 
-        return factorProvider.generateRecoveryCode(recoveryFactorCtx);
+        return factorProvider.generateRecoveryCode(recoveryFactorCtx).ignoreElement();
     }
 
     private boolean isRecoveryCodeFactor(Factor factor) {

@@ -63,7 +63,7 @@
                         </div>
                     </div>
                     <div class="webauthn-register-form-actions">
-                        <a th:href="${skipAction}">Skip for now</a>
+                        <a th:if="${enrollingFido2Factor == null}" th:href="${skipAction}">Skip for now</a>
                         <span style="flex: 1 1 0%;"></span>
                         <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Register</button>
                     </div>

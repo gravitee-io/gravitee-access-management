@@ -23,4 +23,5 @@ public interface FactorSecurityType {
 
     String SHARED_SECRET = "SHARED_SECRET";
     String RECOVERY_CODE = "RECOVERY_CODE";
+    String WEBAUTHN_CREDENTIAL = "WEBAUTHN_CREDENTIAL";
 }

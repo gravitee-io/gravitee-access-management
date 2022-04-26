@@ -22,8 +22,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
-import java.util.List;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -45,6 +43,8 @@ public interface CredentialService {
     Completable update(ReferenceType referenceType, String referenceId, String credentialId, Credential credential);
 
     Completable delete(String id);
+
+    Completable delete(String id, boolean enforceFactorDelete);
 
     Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId);
 

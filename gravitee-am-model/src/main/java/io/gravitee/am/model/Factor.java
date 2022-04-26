@@ -123,6 +123,10 @@ public class Factor {
         this.updatedAt = updatedAt;
     }
 
+    public boolean is(FactorType type){
+        return this.factorType == type;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

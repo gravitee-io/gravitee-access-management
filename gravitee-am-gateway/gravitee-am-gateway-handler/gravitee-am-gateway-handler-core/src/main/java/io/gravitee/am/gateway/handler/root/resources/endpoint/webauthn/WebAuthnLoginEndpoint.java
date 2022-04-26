@@ -17,25 +17,27 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Completable;
@@ -62,7 +64,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.util.Optional.ofNullable;
@@ -88,8 +92,8 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                  ThymeleafTemplateEngine engine,
                                  DeviceIdentifierManager deviceIdentifierManager,
                                  DeviceService deviceService,
-                                 CredentialService credentialService) {
-        super(engine, userAuthenticationManager);
+                                 CredentialService credentialService, FactorService factorService, FactorManager factorManager) {
+        super(engine, userAuthenticationManager, factorService, factorManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
         this.deviceIdentifierManager = deviceIdentifierManager;
@@ -282,18 +286,8 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                     ctx.fail(401);
                                     return;
                                 }
-                                // save the user into the context
-                                ctx.getDelegate().setUser(user);
-                                ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
-                                ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
-                                // Now redirect back to authorization endpoint.
-                                final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-                                ctx.response()
-                                        .putHeader(HttpHeaders.LOCATION, returnURL)
-                                        .setStatusCode(302)
-                                        .end();
+                                manageFido2FactorEnrollmentThenRedirect(ctx, client, credentialId, user, authenticatedUser);
                             });
                         });
                     } else {

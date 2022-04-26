@@ -17,8 +17,10 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -47,8 +49,8 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnEndpoint {
     private final WebAuthn webAuthn;
 
     public WebAuthnLoginCredentialsEndpoint(UserAuthenticationManager userAuthenticationManager,
-                                     WebAuthn webAuthn) {
-        super(userAuthenticationManager);
+                                            WebAuthn webAuthn, FactorManager factorManager, FactorService factorService) {
+        super(userAuthenticationManager, factorService, factorManager);
         this.webAuthn = webAuthn;
     }
 

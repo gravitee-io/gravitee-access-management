@@ -17,6 +17,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
@@ -35,6 +36,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.context.ApplicationContext;
 
 import java.util.*;
 
@@ -60,6 +62,12 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
     @Mock
     private UserService userService;
 
+    @Mock
+    private FactorManager factorManager;
+
+    @Mock
+    private ApplicationContext applicationContext;
+
     private MFARecoveryCodeEndpoint mfaRecoveryCodeEndpoint;
     private Client client;
 
@@ -71,7 +79,7 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
         client.setClientId(UUID.randomUUID().toString());
         final User user = new User();
         setFactorsFor(user);
-        mfaRecoveryCodeEndpoint = new MFARecoveryCodeEndpoint(templateEngine, domain, userService);
+        mfaRecoveryCodeEndpoint = new MFARecoveryCodeEndpoint(templateEngine, domain, userService, factorManager, applicationContext);
 
         router.route()
                 .handler(ctx -> {

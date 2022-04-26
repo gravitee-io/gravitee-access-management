@@ -17,19 +17,26 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.AsyncResult;
@@ -51,8 +58,9 @@ import org.thymeleaf.util.StringUtils;
 
 import java.util.Collections;
 
+import static io.gravitee.am.common.factor.FactorType.FIDO2;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -72,8 +80,8 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                                     UserAuthenticationManager userAuthenticationManager,
                                     WebAuthn webAuthn,
                                     TemplateEngine templateEngine,
-                                    CredentialService credentialService) {
-        super(templateEngine, userAuthenticationManager);
+                                    CredentialService credentialService, FactorManager factorManager, FactorService factorService) {
+        super(templateEngine, userAuthenticationManager, factorService, factorManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
         this.credentialService = credentialService;
@@ -133,7 +141,9 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
 
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             final String skipAction = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams.set("skipWebAuthN", "true"), true);
-
+            if(isEnrollingFido2Factor(routingContext)){
+                routingContext.put(ConstantKeys.MFA_ENROLLING_FIDO2_FACTOR, "true");
+            }
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.SKIP_ACTION_KEY, skipAction);
             routingContext.put(ConstantKeys.USER_CONTEXT_KEY, userProperties);
@@ -298,18 +308,12 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
                                     ctx.fail(401);
                                     return;
                                 }
-                                // save the user into the context
-                                ctx.getDelegate().setUser(user);
-                                ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
-                                ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
 
-                                // Now redirect back to authorization endpoint.
-                                final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
-                                final String returnURL = UriBuilderRequest.resolveProxyRequest(ctx.request(), ctx.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-                                ctx.response()
-                                        .putHeader(HttpHeaders.LOCATION, returnURL)
-                                        .setStatusCode(302)
-                                        .end();
+                                if (isEnrollingFido2Factor(ctx)) {
+                                    enrollFido2Factor(ctx, user, authenticatedUser, createEnrolledFactor(session.get(ENROLLED_FACTOR_ID_KEY), credentialId));
+                                } else {
+                                    manageFido2FactorEnrollmentThenRedirect(ctx, client, credentialId, user, authenticatedUser);
+                                }
                             });
                         });
                     } else {
@@ -357,4 +361,5 @@ public class WebAuthnRegisterEndpoint extends WebAuthnEndpoint {
     public String getTemplateSuffix() {
         return Template.WEBAUTHN_REGISTER.template();
     }
+
 }

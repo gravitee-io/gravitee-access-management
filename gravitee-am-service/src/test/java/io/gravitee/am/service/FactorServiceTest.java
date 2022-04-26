@@ -16,9 +16,11 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.service.exception.FactorConfigurationException;
@@ -68,6 +70,9 @@ public class FactorServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private UserService userService;
 
     private final static String DOMAIN = "domain1";
 
@@ -304,5 +309,21 @@ public class FactorServiceTest {
         testObserver.assertNoErrors();
 
         verify(factorRepository, times(1)).delete(factor.getId());
+    }
+
+    @Test
+    public void shouldEnroll() {
+        final io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setId("anyId");
+        final EnrolledFactor enrolledFactor = new EnrolledFactor();
+        when(userService.upsertFactor(anyString(), any(EnrolledFactor.class), any(User.class))).thenReturn(Single.just(new io.gravitee.am.model.User()));
+
+        TestObserver testObserver = factorService.enrollFactor(user, enrolledFactor).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userService, times(1)).upsertFactor(any(),any(),any());
     }
 }

@@ -28,7 +28,8 @@ public enum FactorType {
     EMAIL("EMAIL"),
     CALL("CALL"),
     HTTP("HTTP"),
-    RECOVERY_CODE("RECOVERY CODE");
+    RECOVERY_CODE("RECOVERY CODE"),
+    FIDO2("FIDO2");
 
     FactorType(String type) {
         this.type = type;

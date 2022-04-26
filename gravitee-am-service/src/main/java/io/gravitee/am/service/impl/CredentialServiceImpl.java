@@ -17,9 +17,12 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.CredentialRepository;
 import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.Completable;
@@ -33,6 +36,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -46,6 +53,9 @@ public class CredentialServiceImpl implements CredentialService {
     @Lazy
     @Autowired
     private CredentialRepository credentialRepository;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Maybe<Credential> findById(String id) {
@@ -137,10 +147,41 @@ public class CredentialServiceImpl implements CredentialService {
 
     @Override
     public Completable delete(String id) {
+        return delete(id, true);
+    }
+
+    @Override
+    public Completable delete(String id, boolean enforceFactorDelete) {
         LOGGER.debug("Delete credential {}", id);
         return credentialRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new CredentialNotFoundException(id)))
-                .flatMapCompletable(email -> credentialRepository.delete(id))
+                .flatMapCompletable(credential -> {
+                    if (enforceFactorDelete) {
+                        return userService.findById(credential.getUserId()).flatMapCompletable(user -> {
+                            final List<EnrolledFactor> factors = user.getFactors();
+                            if (factors == null || factors.isEmpty()) {
+                                return credentialRepository.delete(id);
+                            }
+
+                            final Optional<EnrolledFactor> fido2Factor = factors
+                                    .stream()
+                                    .filter(enrolledFactor -> enrolledFactor.getSecurity() != null)
+                                    .filter(enrolledFactor ->
+                                            WEBAUTHN_CREDENTIAL.equals(enrolledFactor.getSecurity().getType()) &&
+                                                    enrolledFactor.getSecurity().getValue().equals(credential.getCredentialId())
+                                    )
+                                    .findFirst();
+                            if (fido2Factor.isPresent()) {
+                                CredentialCurrentlyUsedException exception = new CredentialCurrentlyUsedException(id, fido2Factor.get().getFactorId(), "Fido2 factor ");
+                                return Completable.error(exception);
+                            } else {
+                                return credentialRepository.delete(id);
+                            }
+                        });
+                    } else {
+                        return credentialRepository.delete(id);
+                    }
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

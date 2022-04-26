@@ -16,6 +16,7 @@
 package io.gravitee.am.factor.recovery.code.provider;
 
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.recovery.code.RecoveryCodeFactorConfiguration;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -37,6 +38,9 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -76,7 +80,6 @@ public class RecoveryCodeFactorProviderTest {
         factor = new Factor();
         factor.setId("anyId");
         when(factorContext.getData(FactorContext.KEY_RECOVERY_FACTOR, Factor.class)).thenReturn(factor);
-
     }
 
     @Test
@@ -85,11 +88,13 @@ public class RecoveryCodeFactorProviderTest {
         when(configuration.getDigit()).thenReturn(anyDigit);
         when(configuration.getCount()).thenReturn(anyDigit);
 
-        TestObserver<Void> test = recoveryCodeFactorProvider.generateRecoveryCode(factorContext).test();
+        TestObserver<EnrolledFactorSecurity> test = recoveryCodeFactorProvider.generateRecoveryCode(factorContext).test();
         test.awaitTerminalEvent();
 
-        test.assertNoValues();
         test.assertNoErrors();
+        EnrolledFactorSecurity security = test.values().get(0);
+        assertThat(security.getType(), is(RECOVERY_CODE));
+        assertThat(security.getAdditionalData(), notNullValue());
         verify(userService).addFactor(any(), any(), any());
     }
 

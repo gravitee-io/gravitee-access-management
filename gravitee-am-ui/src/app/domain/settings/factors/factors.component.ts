@@ -28,7 +28,8 @@ export class DomainSettingsFactorsComponent implements OnInit {
     'sms' : 'SMS Factor',
     'http' : 'HTTP Factor',
     'call' : 'Call Factor',
-    'recovery_code' : 'Recovery Code Factor'
+    'recovery_code' : 'Recovery Code Factor',
+    'fido2' : 'FIDO2 Factor'
   };
 
   private factorIcons: any = {
@@ -37,7 +38,8 @@ export class DomainSettingsFactorsComponent implements OnInit {
     'sms': 'email',
     'call': 'call',
     'http': 'http',
-    'recovery_code': 'autorenew'
+    'recovery_code': 'autorenew',
+    'fido2': 'fingerprint'
   };
 
   factors: any[];

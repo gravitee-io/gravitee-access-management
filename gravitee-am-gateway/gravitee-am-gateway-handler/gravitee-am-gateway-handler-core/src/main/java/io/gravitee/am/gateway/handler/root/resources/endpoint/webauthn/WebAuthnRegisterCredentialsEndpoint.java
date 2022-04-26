@@ -17,8 +17,10 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -45,8 +47,8 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnEndpoint {
     private final Domain domain;
     private final WebAuthn webAuthn;
 
-    public WebAuthnRegisterCredentialsEndpoint(UserAuthenticationManager userAuthenticationManager, Domain domain, WebAuthn webAuthn) {
-        super(userAuthenticationManager);
+    public WebAuthnRegisterCredentialsEndpoint(UserAuthenticationManager userAuthenticationManager, Domain domain, WebAuthn webAuthn, FactorManager factorManager, FactorService factorService) {
+        super(userAuthenticationManager, factorService, factorManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
     }
