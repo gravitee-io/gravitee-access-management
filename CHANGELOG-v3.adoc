@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/540?closed=1[AM - 3.10.18 (2022-04-26)]
+
+=== Improvements
+
+*_Gateway_*
+
+- Session persistent mode https://github.com/gravitee-io/issues/issues/7526[#7526]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/532?closed=1[AM - 3.15.6 (2022-04-19)]
 
 === Bug fixes
