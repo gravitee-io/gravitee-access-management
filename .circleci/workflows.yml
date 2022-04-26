@@ -99,7 +99,7 @@ commands:
                       }
                     ]
                   }
-                event: fail   
+                event: always   
 jobs:
   keeper:
     docker:
@@ -362,7 +362,8 @@ jobs:
             curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
             sudo apt install nodejs
             sudo npm install snyk -g                          
-            snyk auth $SNYK_TOKEN           
+            snyk auth $SNYK_TOKEN
+            snyk config set org=gravitee.io
       - run:
           name: Compute Tag for Docker images
           command: |
@@ -373,20 +374,18 @@ jobs:
             echo "Docker images will be tagged with: ${TAG}"
             echo $TAG > /tmp/docker-tag.txt
       - run:
-          name: Build & Publish Management API Docker Image to Azure Registry
-          when: always          
+          name: Build & Publish Management API Docker Image to Azure Registry   
           command: |
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo "Gravitee AM version: ${AM_VERSION}"
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-api:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            SLACK_MESSAGE1="--AM Docker Images-- ${IMAGE_TAG},"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV   
-            snyk container test ${IMAGE_TAG} --app-vulns
+            SLACK_MESSAGE1=${IMAGE_TAG}
+            echo "export SLACK_MESSAGE1='${SLACK_MESSAGE1}'" >> $BASH_ENV   
+            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d          
       - run:
-          name: Push API Docker image
-          when: always               
+          name: Push API Docker image            
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
@@ -398,18 +397,16 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            SLACK_MESSAGE2="${SLACK_MESSAGE} ${IMAGE_TAG}, "
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE2}'" >> $BASH_ENV
-            snyk container test ${IMAGE_TAG} --app-vulns
+            SLACK_MESSAGE2=${IMAGE_TAG}
+            echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV
+            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d
       - run:
-          name: Push Gateway Docker image
-          when: always               
+          name: Push Gateway Docker image           
           command: |           
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
-          name: Build & Publish Web UI Docker Image to Azure Registry
-          when: always           
+          name: Build & Publish Web UI Docker Image to Azure Registry       
           command: |
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
@@ -417,13 +414,16 @@ jobs:
             export IMAGE_TAG=graviteeio.azurecr.io/am-management-ui:${TAG}
             echo "export IMAGE_TAG=$IMAGE_TAG" >> $BASH_ENV            
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-            SLACK_MESSAGE3="${SLACK_MESSAGE}${IMAGE_TAG} images are tested for application vulnerabilities using snyk"
-            echo "export SLACK_MESSAGE='${SLACK_MESSAGE3}'" >> $BASH_ENV
-            snyk container test ${IMAGE_TAG} --app-vulns
+            SLACK_MESSAGE3=${IMAGE_TAG}
+            SLACK_MESSAGE4="-----AM Docker Images Snyk Scan-----"
+            SLACK_MESSAGE6="Following images are scanned using snyk cli for docker image and application vulnerability"
+            SLACK_MESSAGE5="Visit Snyk Console https://app.snyk.io/org/gravitee.io/projects for detail result"
+            SLACK_MESSAGE="${SLACK_MESSAGE4}\n${SLACK_MESSAGE6}\n\n${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n${SLACK_MESSAGE3}\n\n${SLACK_MESSAGE5}"
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
+            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d
       - notify-snyk-result 
       - run:
-          name: Push Web UI Docker image
-          when: always               
+          name: Push Web UI Docker image          
           command: |            
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
