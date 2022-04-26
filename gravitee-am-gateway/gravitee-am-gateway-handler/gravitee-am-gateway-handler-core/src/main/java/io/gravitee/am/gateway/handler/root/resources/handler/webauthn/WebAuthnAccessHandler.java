@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
+import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
+
+import java.util.Set;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
@@ -30,19 +34,33 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 public class WebAuthnAccessHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
+    private final FactorManager factorManager;
 
-    public WebAuthnAccessHandler(Domain domain) {
+    public WebAuthnAccessHandler(Domain domain, FactorManager factorManager) {
         this.domain = domain;
+        this.factorManager = factorManager;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
         Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
-        if (loginSettings == null || !loginSettings.isPasswordlessEnabled()) {
+        if (loginSettings == null || (!loginSettings.isPasswordlessEnabled() && !hasFidoFactor(client))) {
             routingContext.fail(404);
             return;
         }
         routingContext.next();
+    }
+
+    private boolean hasFidoFactor(Client client) {
+        Set<String> factors = client.getFactors();
+        if (factors == null || factors.isEmpty()) {
+            return false;
+        }
+
+        return factors.stream()
+                .filter(f -> factorManager.get(f) != null)
+                .map(factorManager::getFactor)
+                .anyMatch(f -> f.is(FactorType.FIDO2));
     }
 }

@@ -97,7 +97,7 @@ public class RecoveryCodeFactorProvider implements FactorProvider, RecoveryFacto
     }
 
     @Override
-    public Completable generateRecoveryCode(FactorContext context) {
+    public Single<EnrolledFactorSecurity> generateRecoveryCode(FactorContext context) {
         final Factor recoveryFactor = context.getData(FactorContext.KEY_RECOVERY_FACTOR, Factor.class);
         final EnrolledFactor enrolledFactor = new EnrolledFactor();
         enrolledFactor.setFactorId(recoveryFactor.getId());
@@ -108,16 +108,17 @@ public class RecoveryCodeFactorProvider implements FactorProvider, RecoveryFacto
         return addRecoveryCodeFactor(context, enrolledFactor);
     }
 
-    private Completable addRecoveryCodeFactor(FactorContext context, EnrolledFactor enrolledFactor) {
+    private Single<EnrolledFactorSecurity> addRecoveryCodeFactor(FactorContext context, EnrolledFactor enrolledFactor) {
         try {
             final UserService userService = context.getComponent(UserService.class);
-            enrolledFactor.setSecurity(createEnrolledFactorSecurity());
+            final EnrolledFactorSecurity enrolledFactorSecurity = createEnrolledFactorSecurity();
+            enrolledFactor.setSecurity(enrolledFactorSecurity);
 
             return userService
                     .addFactor(context.getUser().getId(), enrolledFactor, new DefaultUser(context.getUser()))
-                    .ignoreElement();
-        } catch (Exception ex) {
-            return Completable.error(ex);
+                    .map(__ -> enrolledFactorSecurity);
+        } catch (Exception exception) {
+            return Single.error(exception);
         }
     }
 

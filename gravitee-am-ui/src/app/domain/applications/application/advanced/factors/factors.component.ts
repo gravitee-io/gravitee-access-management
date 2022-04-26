@@ -36,7 +36,8 @@ export class ApplicationFactorsComponent implements OnInit {
     'EMAIL': 'EMAIL',
     'CALL': 'CALL',
     'HTTP': 'HTTP',
-    'RECOVERY_CODE' : 'Recovery Code'
+    'RECOVERY_CODE' : 'Recovery Code',
+    'FIDO2' : 'FIDO2'
   };
 
   private factorIcons: any = {
@@ -45,7 +46,8 @@ export class ApplicationFactorsComponent implements OnInit {
     'EMAIL': 'email',
     'CALL': 'call',
     'HTTP': 'http',
-    'RECOVERY_CODE': 'autorenew'
+    'RECOVERY_CODE': 'autorenew',
+    'FIDO2': 'fingerprint'
   };
 
   application: any;

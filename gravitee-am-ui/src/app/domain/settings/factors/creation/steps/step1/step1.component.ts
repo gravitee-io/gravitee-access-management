@@ -28,7 +28,8 @@ export class FactorCreationStep1Component implements OnInit {
     'sms-am-factor' : 'SMS Factor',
     'call-am-factor' : 'Call Factor',
     'http-am-factor': 'HTTP Factor',
-    'recovery-code-am-factor': 'Recovery Code Factor'
+    'recovery-code-am-factor': 'Recovery Code Factor',
+    'fido2-am-factor': 'FIDO2 Factor'
   };
   @Input() factor: any;
   factors: any[];

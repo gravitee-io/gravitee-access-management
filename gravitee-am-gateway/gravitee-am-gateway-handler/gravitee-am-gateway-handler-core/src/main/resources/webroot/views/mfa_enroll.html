@@ -150,6 +150,21 @@
                                 </ul>
                             </div>
                         </div>
+
+                        <!-- FIDO2 FACTOR -->
+                        <div th:if="${factor.factorType == 'FIDO2'}" class="mfa-enroll-form-description">
+                            <div>
+                                <ul class="mdl-list">
+                                    <li class="mdl-list__item mdl-list__item--three-line">
+                                        <span class="mdl-list__item-primary-content">
+                                            <i class="material-icons mdl-list__item-avatar">fingerprint</i>
+                                            <span>Select 'Next' button to trigger registration process</span>
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
                         <!--
                         END OF MFA FACTORS SWITCH
                         -->
@@ -172,6 +187,7 @@
                             <button th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}"  type="submit" th:data1="${factor.id}" th:data2="'phoneFact' + ${factIter.index}" th:onclick="javascript:checkPhoneNumber(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'EMAIL'}"  type="submit" th:data1="${factor.id}" th:data2="'emailFact' + ${factIter.index}" th:data3="'sharedSecret' + ${factIter.index}" th:onclick="javascript:checkEmail(event, this.getAttribute('data1'), this.getAttribute('data2'), this.getAttribute('data3'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'HTTP'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'FIDO2'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                         </div>
                     </form>
                 </div>

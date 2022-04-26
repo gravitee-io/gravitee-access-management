@@ -16,38 +16,45 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.factor.FactorDataKeys;
-import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
-import io.gravitee.am.factor.api.RecoveryFactor;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.util.Maps;
 import io.gravitee.gateway.api.el.EvaluableRequest;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
@@ -60,18 +67,33 @@ import org.springframework.context.ApplicationContext;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
+import static io.gravitee.am.common.factor.FactorType.FIDO2;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -91,14 +113,19 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private final ApplicationContext applicationContext;
     private final DeviceService deviceService;
     private final Domain domain;
+    private final CredentialService credentialService;
+    private final FactorService factorService;
 
-    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService, ApplicationContext applicationContext, Domain domain) {
+    public MFAChallengeEndpoint(FactorManager factorManager, UserService userService, TemplateEngine engine, DeviceService deviceService,
+                                ApplicationContext applicationContext, Domain domain, CredentialService credentialService, FactorService factorService) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
         this.userService = userService;
         this.deviceService = deviceService;
         this.domain = domain;
+        this.credentialService = credentialService;
+        this.factorService = factorService;
     }
 
     @Override
@@ -132,6 +159,15 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
             final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
             routingContext.put(ConstantKeys.FACTOR_KEY, factor);
+
+            if (factor.is(FIDO2)) {
+                final String webAuthnLoginPath = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
+                        routingContext.get(CONTEXT_PATH) + "/webauthn/login", queryParams, true);
+
+                routingContext.put("webAuthnLoginPath", webAuthnLoginPath);
+                routingContext.put("userName", endUser.getUsername());
+            }
+
             routingContext.put(ConstantKeys.ACTION_KEY, action);
             routingContext.put(ConstantKeys.ERROR_PARAM_KEY, error);
             //Include deviceId, so we can show/hide the "save my device" checkbox
@@ -168,7 +204,8 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             routingContext.fail(401);
             return;
         }
-        io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+
+        final io.gravitee.am.model.User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
         final Factor factor = getFactor(routingContext, client, endUser);
         MultiMap params = routingContext.request().formAttributes();
         final String code = params.get("code");
@@ -190,6 +227,13 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         factorData.put(FactorContext.KEY_CODE, code);
         factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
+
+        if(factor.is(FIDO2)){
+            factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
+            factorData.put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
+            factorData.put(ConstantKeys.PASSWORDLESS_ORIGIN, domain.getWebAuthnSettings().getOrigin());
+        }
+
         final FactorContext factorCtx = new FactorContext(applicationContext, factorData);
 
         verify(factorProvider, factorCtx, h -> {
@@ -197,10 +241,44 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                 handleException(routingContext);
                 return;
             }
-            // save enrolled factor if needed and redirect to the original url
-            final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-            final String returnURL = getReturnUrl(routingContext, queryParams);
 
+            if (factor.is(FIDO2)) {
+                final String userId = routingContext.session().get(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
+                final JsonObject webauthnResp = new JsonObject(code);
+                final String credentialId = webauthnResp.getString("id");
+                updateCredential(routingContext.request(), credentialId, userId, ch -> {
+
+                    if (ch.failed()) {
+                        final String username = routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+                        logger.error("An error has occurred while updating credential for the user {}", username, h.cause());
+                        routingContext.fail(401);
+                        return;
+                    }
+
+                    updateStrongAuthStatus(routingContext);
+
+                    if (userHasFido2Factor(endUser)) {
+                        cleanSession(routingContext);
+                        redirectToAuthorize(routingContext, client);
+                    } else {
+                        final String fidoFactorId = routingContext.session().get(ENROLLED_FACTOR_ID_KEY);
+                        factorService.enrollFactor(endUser, createEnrolledFactor(fidoFactorId, credentialId))
+                                .ignoreElement()
+                                .subscribe(
+                                () -> {
+                                    cleanSession(routingContext);
+                                    redirectToAuthorize(routingContext, client);
+                                },
+                                error -> {
+                                    logger.error("Could not update user profile with FIDO2 factor detail", error);
+                                    routingContext.fail(401);
+                                }
+                        );
+                    }
+                });
+                return;
+            }
+            // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
             if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity()) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
@@ -211,69 +289,20 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
                         return;
                     }
 
-                    // clean session
-                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
-                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
-                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
-                    routingContext.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
-
-                    // update user strong auth status
-                    routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
-                    routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                    generateRecoveryCodeAndRedirect(endUser, client, routingContext, returnURL, queryParams);
+                    cleanSession(routingContext);
+                    updateStrongAuthStatus(routingContext);
+                    redirectToAuthorize(routingContext, client);
                 });
             } else {
-                // update user strong auth status
-                routingContext.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
-                routingContext.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
-                generateRecoveryCodeAndRedirect(endUser, client, routingContext, returnURL, queryParams);
+                updateStrongAuthStatus(routingContext);
+                redirectToAuthorize(routingContext, client);
             }
         });
     }
 
-    private void generateRecoveryCodeAndRedirect(io.gravitee.am.model.User endUser, Client client,
-                                                 RoutingContext routingContext, String returnURL, MultiMap queryParams){
-        final String recoveryCodeUrl = UriBuilderRequest.resolveProxyRequest(routingContext.request(),
-                routingContext.get(CONTEXT_PATH) + "/mfa/recovery_code", queryParams, true);
-
-        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(client)) {
-            redirect(routingContext, client, returnURL);
-        } else if (hasInactiveRecoveryCode(endUser)) {
-            redirect(routingContext, client, recoveryCodeUrl);
-        }
-        else {
-            generateRecoveryCode(endUser, client).subscribe(
-                    () -> {
-                        redirect(routingContext, client, recoveryCodeUrl);
-                    },
-                    error -> {
-                        logger.error("Failed to generate recovery code. Continue with flow as verification is successful", error);
-                        redirect(routingContext, client, returnURL);
-                    }
-            );
-        }
-    }
-
-    private boolean hasInactiveRecoveryCode(User endUser) {
-        return hasRecoveryCode(endUser) && !isRecoveryCodeActivated(endUser);
-    }
-
-    private boolean hasActiveRecoveryCode(User endUser) {
-        return hasRecoveryCode(endUser) && isRecoveryCodeActivated(endUser);
-    }
-
-    private Completable generateRecoveryCode(io.gravitee.am.model.User endUser, Client client) {
-        final Factor recoveryFactor = getRecoveryFactor(client);
-        final FactorProvider recoveryFactorProvider = factorManager.get(recoveryFactor.getId());
-        final Map<String, Object> factorData = Map.of(
-                FactorContext.KEY_RECOVERY_FACTOR,
-                recoveryFactor, KEY_USER, endUser);
-        final FactorContext recoveryFactorCtx = new FactorContext(applicationContext, factorData);
-
-        return ((RecoveryFactor) recoveryFactorProvider).generateRecoveryCode(recoveryFactorCtx);
-    }
-
-    private void redirect(RoutingContext routingContext, Client client, String returnURL) {
+    private void redirectToAuthorize(RoutingContext routingContext, Client client) {
+        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
+        final String returnURL = getReturnUrl(routingContext, queryParams);
         //Register device if the device is active
         var rememberDeviceSettings = getRememberDeviceSettings(client);
         boolean rememberDeviceConsent = REMEMBER_DEVICE_CONSENT_ON.equalsIgnoreCase(routingContext.request().getParam(REMEMBER_DEVICE_CONSENT));
@@ -498,51 +527,55 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         }
     }
 
-    private Factor getRecoveryFactor(Client client) {
-        final List<Factor> recoveryFactor = client.getFactors().stream()
-                .filter(f -> factorManager.get(f) != null)
-                .map(f -> factorManager.getFactor(f))
-                .filter(f -> f.getFactorType().equals(FactorType.RECOVERY_CODE))
-                .collect(Collectors.toList());
+    private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Void>> handler) {
+        final Credential credential = new Credential();
+        credential.setUserId(userId);
+        credential.setUserAgent(RequestUtils.userAgent(request));
+        credential.setIpAddress(RequestUtils.remoteAddress(request));
 
-        return recoveryFactor.size() > 0 ? recoveryFactor.get(0) : null;
+        credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential)
+                .subscribe(
+                        () -> handler.handle(Future.succeededFuture()),
+                        error -> handler.handle(Future.failedFuture(error))
+                );
     }
 
-    private boolean isRecoveryCodeActivated(io.gravitee.am.model.User user) {
-        if (user.getFactors() == null) {
+    private void updateStrongAuthStatus(RoutingContext ctx) {
+        ctx.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+        ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
+    }
+
+    private void cleanSession(RoutingContext ctx) {
+        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
+        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
+        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
+
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
+        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
+    }
+
+    private boolean userHasFido2Factor(io.gravitee.am.model.User endUser) {
+        if (endUser.getFactors() == null || endUser.getFactors().isEmpty()) {
             return false;
         }
 
-        final Optional<EnrolledFactor> securityFactor = user.getFactors()
+        return endUser.getFactors()
                 .stream()
-                .filter(ftr -> ftr.getSecurity() != null && ftr.getSecurity().getType().equals(RECOVERY_CODE))
-                .findFirst();
-
-        return securityFactor.isPresent() && securityFactor.get().getStatus().equals(FactorStatus.ACTIVATED);
-    }
-
-    private boolean hasRecoveryCode(io.gravitee.am.model.User user) {
-        if (user.getFactors() == null) {
-            return false;
-        }
-
-        final Optional<EnrolledFactorSecurity> factorSecurity = user.getFactors()
-                .stream()
-                .filter(ftr -> ftr.getSecurity() != null && ftr.getSecurity().getType().equals(RECOVERY_CODE))
                 .map(EnrolledFactor::getSecurity)
-                .findFirst();
-
-        return factorSecurity.isPresent();
+                .filter(Objects::nonNull)
+                .anyMatch(enrolledFactorSecurity -> WEBAUTHN_CREDENTIAL.equals(enrolledFactorSecurity.getType()));
     }
 
-    private boolean recoveryFactorDisabled(Client client) {
-        final Optional<Factor> recoveryFactor = client.getFactors()
-                .stream()
-                .map(factorManager::getFactor)
-                .filter(Objects::nonNull)
-                .filter(factor -> factor.getFactorType().equals(FactorType.RECOVERY_CODE))
-                .findFirst();
+    private EnrolledFactor createEnrolledFactor(String factorId, String credentialId) {
+        final EnrolledFactor enrolledFactor = new EnrolledFactor();
+        enrolledFactor.setFactorId(factorId);
+        enrolledFactor.setStatus(ACTIVATED);
+        enrolledFactor.setCreatedAt(new Date());
+        enrolledFactor.setUpdatedAt(enrolledFactor.getCreatedAt());
+        enrolledFactor.setSecurity(new EnrolledFactorSecurity(WEBAUTHN_CREDENTIAL, credentialId));
 
-        return recoveryFactor.isEmpty();
+        return enrolledFactor;
     }
 }

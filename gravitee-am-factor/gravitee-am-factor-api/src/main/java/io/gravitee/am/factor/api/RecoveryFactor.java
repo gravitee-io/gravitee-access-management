@@ -16,12 +16,13 @@
 
 package io.gravitee.am.factor.api;
 
-import io.reactivex.Completable;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.reactivex.Single;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
 public interface RecoveryFactor {
-    Completable generateRecoveryCode(FactorContext context);
+    Single<EnrolledFactorSecurity> generateRecoveryCode(FactorContext context);
 }

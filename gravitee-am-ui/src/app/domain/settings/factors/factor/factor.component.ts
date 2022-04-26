@@ -119,4 +119,8 @@ export class FactorComponent implements OnInit {
         }
       });
   }
+
+  isFido2Factor(){
+    return this.factor.type.includes("fido2-am-factor");
+  }
 }

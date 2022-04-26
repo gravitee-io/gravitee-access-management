@@ -5789,7 +5789,8 @@
 													"",
 													"    const location = postman.getResponseHeader(\"Location\");",
 													"    pm.environment.set('redirection', location);",
-													"    tests['Location contains recovery_code'] = location.includes('/mfa/recovery_code');",
+													"    console.log(location); ",
+													"    tests['Location contains authorize'] = location.includes('/oauth/authorize');",
 													"});"
 												],
 												"type": "text/javascript"
@@ -5819,6 +5820,56 @@
 												}
 											]
 										},
+										"url": {
+											"raw": "{{redirection}}",
+											"host": [
+												"{{redirection}}"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Redirect to Authorize 3",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 302\", function () {",
+													"    pm.response.to.have.status(302);",
+													"});",
+													"",
+													"pm.test(\"Should be redirected\", function () {",
+													"    pm.response.to.be.redirection;",
+													"    pm.response.to.have.header('Location');",
+													"});",
+													"",
+													"pm.test(\"Should be a redirection to recovery code page\", function() {",
+													"    const location = postman.getResponseHeader('Location');",
+													"    const domain = pm.environment.get(\"domainHrid\");",
+													"        ",
+													"    tests['Redirect to recovery page with client_id'] = location.includes(pm.environment.get('gateway_url') + '/' + domain + '/mfa/recovery_code') && location.includes('client_id=' + pm.environment.get('clientId4'));",
+													"    ",
+													"    pm.environment.set('redirection', postman.getResponseHeader(\"Location\"));",
+													"});"
+												],
+												"type": "text/javascript"
+											}
+										},
+										{
+											"listen": "prerequest",
+											"script": {
+												"exec": [
+													""
+												],
+												"type": "text/javascript"
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [],
 										"url": {
 											"raw": "{{redirection}}",
 											"host": [

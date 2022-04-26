@@ -76,6 +76,7 @@ public interface ConstantKeys {
     String FACTORS_KEY = "factors";
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
+    String MFA_ENROLLING_FIDO2_FACTOR = "enrollingFido2Factor";
 
     String USER_MFA_ENROLLMENT = "user_mfa_enrollment";
     String MFA_FORCE_ENROLLMENT = "mfa_force_enrollment";
@@ -93,6 +94,7 @@ public interface ConstantKeys {
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
     String PASSWORDLESS_CHALLENGE_USER_ID = "passwordlessUserId";
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
+    String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";

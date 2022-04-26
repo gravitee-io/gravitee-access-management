@@ -24,12 +24,18 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.FactorRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.UserService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.FactorConfigurationException;
+import io.gravitee.am.service.exception.FactorNotFoundException;
+import io.gravitee.am.service.exception.FactorWithApplicationsException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewFactor;
 import io.gravitee.am.service.model.UpdateFactor;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -84,6 +90,9 @@ public class FactorServiceImpl implements FactorService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public Maybe<Factor> findById(String id) {
@@ -220,5 +229,16 @@ public class FactorServiceImpl implements FactorService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete factor: %s", factorId), ex));
                 });
+    }
+
+    @Override
+    public Single<io.gravitee.am.model.User> enrollFactor(String userId, EnrolledFactor enrolledFactor, User principal) {
+        LOGGER.debug("Enrolling factor {}", enrolledFactor.getFactorId());
+        try {
+            return userService.upsertFactor(userId, enrolledFactor, principal);
+        } catch (Exception ex) {
+            LOGGER.error("An error occurs while enrolling factor: {}", enrolledFactor.getFactorId(), ex);
+            return Single.error(ex);
+        }
     }
 }

@@ -15,10 +15,15 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CredentialRepository;
+import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.CredentialServiceImpl;
@@ -35,6 +40,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.List;
+
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -50,6 +57,9 @@ public class CredentialServiceTest {
 
     @Mock
     private CredentialRepository credentialRepository;
+
+    @Mock
+    private UserService userService;
 
     private final static String DOMAIN = "domain1";
 
@@ -241,14 +251,48 @@ public class CredentialServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(credentialRepository.findById("my-credential")).thenReturn(Maybe.just(new Credential()));
+        User user = new User();
+        Credential credential = new Credential();
+        credential.setCredentialId("credential-id");
+        credential.setUserId("anyId");
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        EnrolledFactorSecurity security = new EnrolledFactorSecurity();
+        security.setType(FactorSecurityType.WEBAUTHN_CREDENTIAL);
+        security.setValue("another-credential-id");
+        enrolledFactor.setSecurity(security);
+        user.setFactors(List.of(enrolledFactor));
+        when(credentialRepository.findById("my-credential")).thenReturn(Maybe.just(credential));
         when(credentialRepository.delete("my-credential")).thenReturn(Completable.complete());
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
         TestObserver testObserver = credentialService.delete("my-credential").test();
         testObserver.awaitTerminalEvent();
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-
         verify(credentialRepository, times(1)).delete("my-credential");
+    }
+
+    @Test
+    public void deleteShouldThrowException() {
+        User user = new User();
+        Credential credential = new Credential();
+        credential.setCredentialId("credential-id");
+        credential.setUserId("anyId");
+        EnrolledFactor enrolledFactor = new EnrolledFactor();
+        EnrolledFactorSecurity security = new EnrolledFactorSecurity();
+        security.setType(FactorSecurityType.WEBAUTHN_CREDENTIAL);
+        security.setValue("credential-id");
+        enrolledFactor.setSecurity(security);
+
+        user.setFactors(List.of(enrolledFactor));
+        when(credentialRepository.findById("my-credential")).thenReturn(Maybe.just(credential));
+        when(userService.findById(anyString())).thenReturn(Maybe.just(user));
+
+        TestObserver testObserver = credentialService.delete("my-credential").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertError(CredentialCurrentlyUsedException.class);
+        verify(credentialRepository, never()).delete("my-credential");
     }
 }

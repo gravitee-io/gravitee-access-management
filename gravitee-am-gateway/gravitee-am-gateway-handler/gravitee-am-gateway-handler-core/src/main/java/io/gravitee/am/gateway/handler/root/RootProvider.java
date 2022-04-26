@@ -57,7 +57,11 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.Regi
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterConfirmationSubmissionEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.register.RegisterSubmissionEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.*;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginCredentialsEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnLoginEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterCredentialsEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
@@ -92,6 +96,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.service.AbstractService;
@@ -229,6 +234,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     @Autowired
     private WebClient webClient;
 
+    @Autowired
+    private FactorService factorService;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -354,37 +362,37 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain))
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain, credentialService, factorService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
-                .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService));
+                .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService, factorManager, applicationContext));
 
         // WebAuthn route
-        Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain);
+        Handler<RoutingContext> webAuthnAccessHandler = new WebAuthnAccessHandler(domain, factorManager);
         rootRouter.route(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, credentialService));
+                .handler(new WebAuthnRegisterEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, credentialService, factorManager, factorService));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterCredentialsEndpoint(userAuthenticationManager, domain, webAuthn));
+                .handler(new WebAuthnRegisterCredentialsEndpoint(userAuthenticationManager, domain, webAuthn, factorManager, factorService));
         rootRouter.route(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, deviceIdentifierManager, deviceService, credentialService));
+                .handler(new WebAuthnLoginEndpoint(domain, userAuthenticationManager, webAuthn, thymeleafTemplateEngine, deviceIdentifierManager, deviceService, credentialService, factorService, factorManager));
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginCredentialsEndpoint(userAuthenticationManager, webAuthn));
+                .handler(new WebAuthnLoginCredentialsEndpoint(userAuthenticationManager, webAuthn, factorManager, factorService));
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain));
+                .handler(new WebAuthnResponseEndpoint(userAuthenticationManager, webAuthn, credentialService, domain, factorManager, factorService));
 
         // Registration route
         Handler<RoutingContext> registerAccessHandler = new RegisterAccessHandler(domain);

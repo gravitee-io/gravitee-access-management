@@ -266,7 +266,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     Event event = new Event(Type.USER, new Payload(user.getId(), user.getReferenceType(), user.getReferenceId(), Action.DELETE));
                     /// delete WebAuthn credentials
                     return credentialService.findByUserId(user.getReferenceType(), user.getReferenceId(), user.getId())
-                            .flatMapCompletable(credential -> credentialService.delete(credential.getId()))
+                            .flatMapCompletable(credential -> credentialService.delete(credential.getId(), false))
                             .andThen(getUserRepository().delete(userId))
                             .andThen(eventService.create(event).ignoreElement());
                 })
