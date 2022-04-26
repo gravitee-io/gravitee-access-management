@@ -372,7 +372,7 @@ jobs:
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
-            SLACK_MESSAGE1="--AM Docker Images-- ${IMAGE_TAG},"
+            SLACK_MESSAGE1=$"----AM Docker Images----"$'\n'${IMAGE_TAG}
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE1}'" >> $BASH_ENV   
             snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d            
       - run:
