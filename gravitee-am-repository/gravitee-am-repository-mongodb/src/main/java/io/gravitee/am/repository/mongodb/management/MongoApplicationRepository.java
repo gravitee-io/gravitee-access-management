@@ -19,10 +19,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.MFASettings;
-import io.gravitee.am.model.PasswordSettings;
-import io.gravitee.am.model.TokenClaim;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.common.Page;
@@ -238,6 +235,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setAdvanced(convert(other.getAdvanced()));
         applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettingsMongo.setMfa(convert(other.getMfa()));
+        applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         return applicationSettingsMongo;
     }
 
@@ -253,6 +251,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setAdvanced(convert(other.getAdvanced()));
         applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettings.setMfa(convert(other.getMfa()));
+        applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         return applicationSettings;
     }
 
@@ -482,6 +481,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static MFASettingsMongo convert(MFASettings mfaSettings) {
         return MFASettingsMongo.convert(mfaSettings);
+    }
+
+    private static CookieSettingsMongo convert(CookieSettings cookieSettings) {
+        return CookieSettingsMongo.convert(cookieSettings);
+    }
+
+    private static CookieSettings convert(CookieSettingsMongo cookieSettingsMongo) {
+        return cookieSettingsMongo != null ? cookieSettingsMongo.convert() : null;
     }
 
     private static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {

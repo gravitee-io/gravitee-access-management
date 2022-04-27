@@ -70,6 +70,7 @@
 #    sameSite: Lax
 #    session:
 #      name: session-name
+#      persistent: true
 #      timeout: 1800000 # (in milliseconds)
 #  csrf:
 #    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
