@@ -52,6 +52,7 @@ orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
+  snyk: snyk/snyk@1.1.2
 
 commands:
   docker-scan:
