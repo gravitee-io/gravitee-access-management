@@ -54,6 +54,15 @@ orbs:
   slack: circleci/slack@4.8.1
 
 commands:
+  docker-scan:
+      steps:
+          - snyk/scan:
+              organization: gravitee.io
+              monitor-on-build: true
+              severity-threshold: critical
+              docker-image-name: ${IMAGE_TAG}
+              fail-on-issues: false 
+              additional-arguments: --app-vulns
   notify-snyk-result:
       steps:
           - slack/notify:
@@ -367,8 +376,7 @@ jobs:
             docker build -f docker/management-api/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             SLACK_MESSAGE1=${IMAGE_TAG}
             echo "export SLACK_MESSAGE1='${SLACK_MESSAGE1}'" >> $BASH_ENV   
-            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d                        
-      #- notify-snyk-result 
+      - docker-scan
       - run:
           name: Push API Docker image
           #when: always
@@ -385,8 +393,7 @@ jobs:
             docker build -f docker/gateway/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             SLACK_MESSAGE2=${IMAGE_TAG}
             echo "export SLACK_MESSAGE2='${SLACK_MESSAGE2}'" >> $BASH_ENV
-            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d
-      #- notify-snyk-result
+      - docker-scan
       - run:
           name: Push Gateway Docker image
           #when: always
@@ -405,11 +412,10 @@ jobs:
             docker build -f docker/management-ui/Dockerfile-dev --build-arg GRAVITEEAM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
             SLACK_MESSAGE3=${IMAGE_TAG}
             SLACK_MESSAGE4="-----AM Docker Images Snyk Scan-----"
-            SLACK_MESSAGE6="Following images are scanned using snyk cli for docker image and application vulnerability"
-            SLACK_MESSAGE5="Visit Snyk Console https://app.snyk.io/org/gravitee.io/projects for detail result"
-            SLACK_MESSAGE="${SLACK_MESSAGE4}\n${SLACK_MESSAGE6}\n\n${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n${SLACK_MESSAGE3}\n\n${SLACK_MESSAGE5}"
+            SLACK_MESSAGE5="Following images are scanned using snyk for base image and application vulnerabilities"
+            SLACK_MESSAGE="${SLACK_MESSAGE4}\n${SLACK_MESSAGE5}\n${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n${SLACK_MESSAGE3}"      
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
-            snyk container monitor ${IMAGE_TAG} --project-name=${TAG} --app-vulns -d
+      - docker-scan 
       - notify-snyk-result 
       - run:
           name: Push Web UI Docker image
