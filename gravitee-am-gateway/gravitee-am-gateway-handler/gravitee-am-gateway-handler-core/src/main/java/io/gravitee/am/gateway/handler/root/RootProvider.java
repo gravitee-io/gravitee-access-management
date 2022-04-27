@@ -378,7 +378,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new RegisterConfirmationSubmissionEndpoint(userService));
 
         // Forgot password route
-        Handler<RoutingContext> forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
+        final var forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
+        final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD);
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
@@ -403,6 +404,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(passwordPolicyRequestParseHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService));
+        rootRouter.route(PATH_RESET_PASSWORD)
+                .failureHandler(resetPasswordFailureHandler);
 
         // error route
         rootRouter.route(HttpMethod.GET, PATH_ERROR)

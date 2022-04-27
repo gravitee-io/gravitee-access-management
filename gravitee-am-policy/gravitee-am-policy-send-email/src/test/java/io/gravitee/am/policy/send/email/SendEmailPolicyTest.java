@@ -58,12 +58,12 @@ public class SendEmailPolicyTest {
     @Before
     public void init() {
         when(executionContext.getComponent(EmailService.class)).thenReturn(emailService);
-        when(configuration.getTemplate()).thenReturn("template");
-        when(configuration.getSubject()).thenReturn("subject");
-        when(configuration.getFrom()).thenReturn("from");
-        when(configuration.getFromName()).thenReturn("fromName");
-        when(configuration.getTo()).thenReturn("to");
-        when(configuration.getContent()).thenReturn("content");
+        lenient().when(configuration.getTemplate()).thenReturn("template");
+        lenient().when(configuration.getSubject()).thenReturn("subject");
+        lenient().when(configuration.getFrom()).thenReturn("from");
+        lenient().when(configuration.getFromName()).thenReturn("fromName");
+        lenient().when(configuration.getTo()).thenReturn("to");
+        lenient().when(configuration.getContent()).thenReturn("content");
     }
 
     @Test
