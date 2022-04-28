@@ -109,7 +109,7 @@ commands:
                       }
                     ]
                   }
-                event: fail   
+                event: always   
 jobs:
   keeper:
     docker:
@@ -147,7 +147,7 @@ jobs:
   build:
     docker:
       - image: cimg/openjdk:17.0.1
-    resource_class: xlarge
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp
@@ -307,7 +307,7 @@ jobs:
       os_name: "ubuntu"
       os_version: "2004"
       os_patch: "202101-01"
-      machine_size: "xlarge"
+      machine_size: "large"
 
     steps:
       - attach_workspace:
@@ -543,7 +543,7 @@ jobs:
   coverage_build:
     docker:
       - image: cimg/openjdk:17.0.1
-    resource_class: xlarge
+    resource_class: large
     steps:
       - attach_workspace:
           at: /tmp
@@ -611,7 +611,7 @@ workflows:
           # container_gun_image_org: 'cimg'
           # container_gun_image_name: 'openjdk'
           # container_gun_image_tag: '17.0.1'
-          container_size: 'xlarge'
+          container_size: 'large'
           filters:
             branches:
               ignore:
