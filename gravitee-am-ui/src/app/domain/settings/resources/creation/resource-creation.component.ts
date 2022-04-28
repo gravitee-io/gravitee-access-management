@@ -53,10 +53,10 @@ export class ResourceCreationComponent implements OnInit {
       this.configurationIsValid;
   }
 
-  isHttpResource() {
+  isHttpFactorResource() {
     if (this.resource) {
       const type = this.resource.type;
-      return type ? type.includes('http-am-resource') : false;
+      return type ? type.includes('http-factor-am-resource') : false;
     }
     return false;
   }
