@@ -26,7 +26,7 @@ export class ResourceCreationStep1Component implements OnInit {
     'twilio-verify-am-resource' : 'Twilio Verify',
     'smtp-am-resource' : 'SMTP',
     'infobip-am-resource' : 'Infobip 2FA',
-    'http-am-resource' : 'HTTP'
+    'http-factor-am-resource' : 'HTTP Factor'
   };
   @Input() resource: any;
   resources: any[];
