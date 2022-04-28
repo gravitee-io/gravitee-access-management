@@ -97,24 +97,29 @@ public class KafkaAuditReporter extends AbstractService implements AuditReporter
 
   @Override
   protected void doStart() {
+    ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+      Map<String, String> config = new HashMap<>();
+      config.put("bootstrap.servers", this.config.getBootstrapServers());
+      config.put("acks", this.config.getAcks());
 
-    Map<String, String> config = new HashMap<>();
-    config.put("bootstrap.servers", this.config.getBootstrapServers());
-    config.put("acks", this.config.getAcks());
+      List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
+      if (additionalProperties != null && !additionalProperties.isEmpty()) {
+        additionalProperties.forEach(claimMapper -> {
+          String option = claimMapper.get("option");
+          String value = claimMapper.get("value");
+          config.put(option, value);
+        });
+      }
 
-    List<Map<String, String>> additionalProperties = this.config.getAdditionalProperties();
-    if (additionalProperties != null && !additionalProperties.isEmpty()) {
-      additionalProperties.forEach(claimMapper -> {
-        String option = claimMapper.get("option");
-        String value = claimMapper.get("value");
-        config.put(option, value);
-      });
+      Serializer<String> keySerializer = new StringSerializer();
+      Serializer<AuditMessageValueDto> valueSerializer = new JacksonSerializer<>();
+
+      this.producer = KafkaProducer.create(vertx, config, keySerializer, valueSerializer);
+    } finally {
+      Thread.currentThread().setContextClassLoader(originalClassLoader);
     }
-
-    Serializer<String> keySerializer = new StringSerializer();
-    Serializer<AuditMessageValueDto> valueSerializer = new JacksonSerializer<>();
-
-    this.producer = KafkaProducer.create(vertx, config, keySerializer, valueSerializer);
   }
 
   @Override
