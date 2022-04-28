@@ -611,7 +611,7 @@ workflows:
           # container_gun_image_org: 'cimg'
           # container_gun_image_name: 'openjdk'
           # container_gun_image_tag: '17.0.1'
-          container_size: 'xlarge'
+          container_size: 'large'
           filters:
             branches:
               ignore:
