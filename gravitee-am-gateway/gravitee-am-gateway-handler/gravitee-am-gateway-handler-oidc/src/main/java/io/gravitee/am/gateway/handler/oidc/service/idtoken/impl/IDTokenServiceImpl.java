@@ -91,6 +91,7 @@ public class IDTokenServiceImpl implements IDTokenService {
     @Autowired
     private UserService userService;
 
+    @Deprecated
     @Value("${legacy.openid.openid_scope_full_profile:false}")
     private boolean legacyOpenidScope;
 

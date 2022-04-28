@@ -34,14 +34,16 @@ export class ApplicationFactorsComponent implements OnInit {
     'OTP': 'TOTP',
     'SMS': 'SMS',
     'EMAIL': 'EMAIL',
-    'CALL': 'CALL'
+    'CALL': 'CALL',
+    'HTTP': 'HTTP'
   };
 
   private factorIcons: any = {
     'OTP': 'mobile_friendly',
     'SMS': 'sms',
     'EMAIL': 'email',
-    'CALL': 'call'
+    'CALL': 'call',
+    'HTTP': 'http'
   };
 
   application: any;

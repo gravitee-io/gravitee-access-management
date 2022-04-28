@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,6 +57,10 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     @Autowired
     private EventManager eventManager;
+
+    @Deprecated
+    @Value("${legacy.openid.always_enhance_scopes:false}")
+    private boolean alwaysProvideEnhancedScopes;
 
     @Override
     public void afterPropertiesSet() {
@@ -144,5 +149,11 @@ public class ScopeManagerImpl extends AbstractService implements ScopeManager, I
 
     public boolean isParameterizedScope(String scopeKey) {
         return Optional.ofNullable(this.scopes.get(scopeKey)).map(scope -> scope.isParameterized()).orElse(false);
+    }
+
+    @Override
+    @Deprecated
+    public boolean alwaysProvideEnhancedScopes() {
+        return this.alwaysProvideEnhancedScopes;
     }
 }

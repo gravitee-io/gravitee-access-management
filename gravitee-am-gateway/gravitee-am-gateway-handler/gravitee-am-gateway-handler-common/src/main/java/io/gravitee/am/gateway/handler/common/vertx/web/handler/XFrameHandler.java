@@ -13,34 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.resource.api.mfa;
 
-import io.gravitee.am.factor.api.FactorContext;
+package io.gravitee.am.gateway.handler.common.vertx.web.handler;
+
+import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MFAChallenge {
-    private final String target;
-    private final String code;
-    private final FactorContext factorContext;
-
-    public MFAChallenge(String target, String code, FactorContext factorContext) {
-        this.target = target;
-        this.code = code;
-        this.factorContext = factorContext;
-    }
-
-    public String getTarget() {
-        return target;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public FactorContext getFactorContext() {
-        return factorContext;
-    }
+public interface XFrameHandler extends Handler<RoutingContext> {
 }
