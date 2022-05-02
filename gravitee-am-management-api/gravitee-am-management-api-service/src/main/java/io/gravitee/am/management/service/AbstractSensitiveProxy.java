@@ -18,10 +18,16 @@ package io.gravitee.am.management.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.google.common.base.Strings;
 
+import java.net.URI;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+
+import static java.util.regex.Pattern.quote;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -33,6 +39,7 @@ public abstract class AbstractSensitiveProxy {
 
     private static final String PROPERTIES_SCHEMA_KEY = "properties";
     private static final String SENSITIVE_SCHEMA_KEY = "sensitive";
+    private static final String SENSITIVE_URI_SCHEMA_KEY = "sensitive-uri";
 
     protected static final String SENSITIVE_VALUE = "********";
     protected static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
@@ -47,6 +54,13 @@ public abstract class AbstractSensitiveProxy {
             properties.forEachRemaining(entry -> {
                 if (isSensitive(entry)) {
                     ((ObjectNode) configurationNode).put(entry.getKey(), SENSITIVE_VALUE);
+                }
+                if (isSensitiveUri(entry) && configurationNode.get(entry.getKey()) instanceof TextNode) {
+                    final String uri = configurationNode.get(entry.getKey()).asText();
+                    final String userInfo = URI.create(uri).getUserInfo();
+                    extractUriPassword(userInfo).ifPresent(passwordToHide ->
+                        ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide), SENSITIVE_VALUE))
+                    );
                 }
             });
             configurationSetter.accept(configurationNode.toString());
@@ -101,11 +115,43 @@ public abstract class AbstractSensitiveProxy {
             if (isSensitive(entry) && !valueIsUpdatable(updatedConfigurationNode, entry) && updatedConfigurationNode.isObject()) {
                 ((ObjectNode) updatedConfigurationNode).set(entry.getKey(), oldConfigurationNode.get(entry.getKey()));
             }
+            if (isSensitiveUri(entry) && updatedConfigurationNode.isObject()) {
+                final JsonNode newUri = updatedConfigurationNode.get(entry.getKey());
+                if (newUri != null && !Strings.isNullOrEmpty(newUri.asText())) {
+                    final String incomingUserInfo = URI.create(newUri.asText()).getUserInfo();
+                    final JsonNode olrUriNode = oldConfigurationNode.get(entry.getKey());
+                    if (olrUriNode != null && !Strings.isNullOrEmpty(olrUriNode.asText())) {
+                        extractUriPassword(incomingUserInfo).ifPresent(newPassword -> {
+                            if (SENSITIVE_VALUE_PATTERN.matcher(newPassword).matches()) {
+                                final String oldUserInfo = URI.create(olrUriNode.asText()).getUserInfo();
+                                extractUriPassword(oldUserInfo).or(() -> Optional.of(""))
+                                        .ifPresent(oldPwd -> ((ObjectNode) updatedConfigurationNode).put(entry.getKey(), newUri.asText().replaceFirst(quote(newPassword), oldPwd)));
+                            }
+                        });
+                    }
+                }
+            }
         };
+    }
+
+    private Optional<String> extractUriPassword(String userInfo) {
+        Optional<String> result = Optional.empty();
+        if (!Strings.isNullOrEmpty(userInfo)) {
+            final int index = userInfo.indexOf(":");
+            if (index != -1) {
+                final String pwd = userInfo.substring(index+1);
+                result = Optional.of(pwd.trim());
+            }
+        }
+        return result;
     }
 
     protected boolean isSensitive(Entry<String, JsonNode> entry) {
         return entry.getValue().has(SENSITIVE_SCHEMA_KEY) && entry.getValue().get(SENSITIVE_SCHEMA_KEY).asBoolean();
+    }
+
+    protected boolean isSensitiveUri(Entry<String, JsonNode> entry) {
+        return entry.getValue().has(SENSITIVE_URI_SCHEMA_KEY) && entry.getValue().get(SENSITIVE_URI_SCHEMA_KEY).asBoolean();
     }
 
     protected boolean valueIsUpdatable(JsonNode configNode, Entry<String, JsonNode> entry) {
