@@ -53,6 +53,7 @@
             <exclude>src/libraries/**</exclude>
             <exclude>dist/**</exclude>
             <exclude>node_modules/**</exclude>
+            <exclude>sonar-project.properties</exclude>
           </excludes>
         </configuration>
       </plugin>

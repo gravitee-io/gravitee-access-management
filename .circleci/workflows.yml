@@ -3,11 +3,11 @@ version: 2.1
 parameters:
   gio_action:
     type: enum
-    enum: [release, publish_rpms, pull_requests]
+    enum: [ release, publish_rpms, pull_requests ]
     default: pull_requests
   gio_product:
     type: enum
-    enum: [am_v3, none]
+    enum: [ am_v3, none ]
     default: none
   dry_run:
     type: boolean
@@ -64,7 +64,7 @@ parameters:
     type: boolean
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
-    
+
 orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
@@ -74,42 +74,42 @@ orbs:
 
 commands:
   docker-scan:
-      steps:
-          - snyk/scan:
-              organization: gravitee.io
-              monitor-on-build: false
-              severity-threshold: critical
-              docker-image-name: ${IMAGE_TAG}
-              fail-on-issues: false 
-              additional-arguments: --app-vulns
+    steps:
+      - snyk/scan:
+          organization: gravitee.io
+          monitor-on-build: false
+          severity-threshold: critical
+          docker-image-name: ${IMAGE_TAG}
+          fail-on-issues: false
+          additional-arguments: --app-vulns
   notify-snyk-result:
-      steps:
-          - slack/notify:
-                channel: 'am-ci-notifications'
-                custom: |
-                  {
-                    "blocks": [
-                      {
-                        "type": "section",
-                        "text": {
-                          "type": "mrkdwn",
-                          "text": "```${SLACK_MESSAGE}```"
-                       },
-                       "accessory": {
-                         "type": "button",
-                         "text": {
-                           "type": "plain_text",
-                           "text": "Click here for scan details",
-                           "emoji": true
-                         },
-                         "value": "click_me_123",
-                         "url": "${CIRCLE_BUILD_URL}",
-                         "action_id": "button-action"                    
-                        }
-                      }
-                    ]
+    steps:
+      - slack/notify:
+          channel: 'am-ci-notifications'
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "```${SLACK_MESSAGE}```"
+                 },
+                 "accessory": {
+                   "type": "button",
+                   "text": {
+                     "type": "plain_text",
+                     "text": "Click here for scan details",
+                     "emoji": true
+                   },
+                   "value": "click_me_123",
+                   "url": "${CIRCLE_BUILD_URL}",
+                   "action_id": "button-action"
                   }
-                event: always   
+                }
+              ]
+            }
+          event: always
 jobs:
   keeper:
     docker:
@@ -138,7 +138,7 @@ jobs:
             mkdir -p /tmp/gravit33bot/.secrets/dockerhub
             echo $DOCKERHUB_USER_NAME > /tmp/gravit33bot/.secrets/dockerhub/user_name
             echo $DOCKERHUB_USER_TOKEN > /tmp/gravit33bot/.secrets/dockerhub/user_token
-            
+
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -250,14 +250,14 @@ jobs:
             # copy r2dbc & jdbc drivers
             curl https://jdbc.postgresql.org/download/postgresql-42.3.3.jar -o postgresql-42.3.3.jar 
             curl https://repo1.maven.org/maven2/io/r2dbc/r2dbc-postgresql/0.8.9.RELEASE/r2dbc-postgresql-0.8.9.RELEASE.jar -o r2dbc-postgresql-0.8.9.RELEASE.jar 
-            
+
             mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
             mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
-            
+
             cp postgresql-42.3.3.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-            
+
             cp postgresql-42.3.3.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql-0.8.9.RELEASE.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
@@ -356,7 +356,7 @@ jobs:
             mvn -f gravitee-am-ciba-delegated-service/pom.xml package com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild  -Dimage=${IMAGE_TAG}
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
-  
+
   publish-images-azure-registry:
     docker:
       - image: cimg/openjdk:17.0.1
@@ -365,7 +365,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp
-      - setup_remote_docker       
+      - setup_remote_docker
       - run:
           name: Compute Tag for Docker images
           command: |
@@ -377,7 +377,7 @@ jobs:
             echo $TAG > /tmp/docker-tag.txt
       - run:
           name: Build & Publish Management API Docker Image to Azure Registry
-          when: always          
+          when: always
           command: |
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo "Gravitee AM version: ${AM_VERSION}"
@@ -389,13 +389,13 @@ jobs:
       - docker-scan
       - run:
           name: Push API Docker image
-          when: always               
+          when: always
           command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Gateway Docker Image to Azure Registry
-          when: always           
+          when: always
           command: |
             export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             export IMAGE_TAG=graviteeio.azurecr.io/am-gateway:${TAG}
@@ -406,13 +406,13 @@ jobs:
       - docker-scan
       - run:
           name: Push Gateway Docker image
-          when: always               
-          command: |           
+          when: always
+          command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - run:
           name: Build & Publish Web UI Docker Image to Azure Registry
-          when: always           
+          when: always
           command: |
             cp -fr docker/management-ui/config /tmp/
             cp -fr docker/management-ui/run.sh /tmp/
@@ -426,11 +426,11 @@ jobs:
             SLACK_MESSAGE="${SLACK_MESSAGE1}\n${SLACK_MESSAGE2}\n\n${IMAGE1}\n${IMAGE2}\n${IMAGE3}"      
             echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV
       - docker-scan
-      - notify-snyk-result 
+      - notify-snyk-result
       - run:
           name: Push Web UI Docker image
-          when: always               
-          command: |            
+          when: always
+          command: |
             echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
             docker push ${IMAGE_TAG}
       - persist_to_workspace:
@@ -562,6 +562,27 @@ jobs:
           root: .
           paths:
             - ./*
+  frontend_version_build:
+    docker:
+      - image: cimg/openjdk:17.0.1
+    resource_class: small
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore_cache:
+          keys:
+            - gio-gravitee-pull-requests-dependencies-{{ .Branch }}-{{ checksum "pom.xml" }}
+            - gio-gravitee-pull-requests-dependencies
+      - run:
+          name: Maven Package
+          command: |
+            export AM_VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+            echo $AM_VERSION > gravitee-am-ui/am.version
+      - persist_to_workspace:
+          root: .
+          paths:
+            - ./*
 
   run_sonarcloud_analysis:
     description: A job that run Sonarcloud analysis
@@ -629,7 +650,7 @@ workflows:
             - approve-tests-mongo-psql
 
   testcontainer_tests:
-    when: << pipeline.parameters.run-container-test >>   
+    when: << pipeline.parameters.run-container-test >>
     jobs:
       - keeper:
           context:
@@ -708,7 +729,7 @@ workflows:
     when:
       and:
         - equal: [ release, << pipeline.parameters.gio_action >> ]
-        - not : << pipeline.parameters.dry_run >>
+        - not: << pipeline.parameters.dry_run >>
     jobs:
       - gravitee/d_am_release_secrets:
           context: cicd-orchestrator
@@ -776,7 +797,7 @@ workflows:
                 secret-url: keeper://UryantA7MvZe8fkWwcUt8g/field/password
                 var-name: AZURE_APPLICATION_SECRET
 
-  sonarcloud_analysis:
+  sonarcloud_analysis_back:
     jobs:
       - keeper:
           context:
@@ -789,6 +810,25 @@ workflows:
             - cicd-orchestrator
           requires:
             - coverage_build
+
+  sonarcloud_analysis_front:
+    jobs:
+      - keeper:
+          context:
+            - cicd-orchestrator
+      - frontend_version_build:
+          requires:
+            - keeper
+      - run_sonarcloud_analysis:
+          name: Sonar - << matrix.working_directory >>
+          matrix:
+            parameters:
+              working_directory:
+                - "gravitee-am-ui"
+          context:
+            - cicd-orchestrator
+          requires:
+            - frontend_version_build
 
   docker_build_and_push_am_v3:
     when:
