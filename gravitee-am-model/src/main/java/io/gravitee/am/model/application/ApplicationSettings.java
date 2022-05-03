@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.application;
 
+import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
@@ -55,6 +56,11 @@ public class ApplicationSettings {
      */
     private MFASettings mfa;
 
+    /**
+     * Cookie settings
+     */
+    private CookieSettings cookieSettings;
+
     public ApplicationSettings() {
     }
 
@@ -65,6 +71,7 @@ public class ApplicationSettings {
         this.advanced = other.advanced != null ? new ApplicationAdvancedSettings(other.advanced) : null;
         this.passwordSettings = Optional.ofNullable(other.passwordSettings).map(PasswordSettings::new).orElse(null);
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
+        this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
     }
 
     public ApplicationOAuthSettings getOauth() {
@@ -115,12 +122,21 @@ public class ApplicationSettings {
         this.mfa = mfa;
     }
 
+    public CookieSettings getCookieSettings() {
+        return cookieSettings;
+    }
+
+    public void setCookieSettings(CookieSettings cookieSettings) {
+        this.cookieSettings = cookieSettings;
+    }
+
     public void copyTo(Client client) {
         client.setAccountSettings(this.account);
         client.setLoginSettings(this.login);
         client.setPasswordSettings(this.passwordSettings);
-        Optional.ofNullable(this.oauth).ifPresent(o->o.copyTo(client));
-        Optional.ofNullable(getAdvanced()).ifPresent(a->a.copyTo(client));
+        Optional.ofNullable(this.oauth).ifPresent(o -> o.copyTo(client));
+        Optional.ofNullable(getAdvanced()).ifPresent(a -> a.copyTo(client));
         client.setMfaSettings(this.mfa);
+        client.setCookieSettings(this.getCookieSettings());
     }
 }

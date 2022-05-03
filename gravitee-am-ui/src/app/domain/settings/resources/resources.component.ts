@@ -26,7 +26,7 @@ export class DomainSettingsResourcesComponent implements OnInit {
     'twilio-verify-am-resource' : 'Twilio Verify',
     'smtp-am-resource' : 'SMTP',
     'infobip-am-resource' : 'Infobip 2FA',
-    'http-am-resource' : 'HTTP'
+    'http-factor-am-resource' : 'HTTP Factor'
   };
   resources: any[];
   resourcePlugins: any[];

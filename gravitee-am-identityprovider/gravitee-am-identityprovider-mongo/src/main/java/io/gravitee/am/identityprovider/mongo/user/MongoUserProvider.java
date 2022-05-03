@@ -34,6 +34,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -52,6 +54,7 @@ import static com.mongodb.client.model.Filters.eq;
 @Import({MongoAuthenticationProviderConfiguration.class})
 public class MongoUserProvider implements UserProvider, InitializingBean {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
@@ -69,6 +72,17 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
     private MongoIdentityProviderConfiguration configuration;
 
     private MongoCollection<Document> usersCollection;
+
+    public UserProvider stop() throws Exception {
+        if (this.mongoClient != null) {
+            try {
+                this.mongoClient.close();
+            } catch (Exception e) {
+                LOGGER.debug("Unable to safely close MongoDB connection", e);
+            }
+        }
+        return this;
+    }
 
     @Override
     public Maybe<User> findByEmail(String email) {

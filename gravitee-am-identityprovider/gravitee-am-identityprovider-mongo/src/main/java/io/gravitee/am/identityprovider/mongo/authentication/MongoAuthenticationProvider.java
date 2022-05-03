@@ -69,6 +69,18 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private MongoClient mongoClient;
 
+    @Override
+    public AuthenticationProvider stop() throws Exception {
+        if (this.mongoClient != null) {
+            try {
+                this.mongoClient.close();
+            } catch (Exception e) {
+                LOGGER.debug("Unable to safely close MongoDB connection", e);
+            }
+        }
+        return this;
+    }
+
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         String username = ((String) authentication.getPrincipal()).toLowerCase();
         return findUserByMultipleField(username)

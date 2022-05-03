@@ -228,6 +228,7 @@ import { DeviceNotifiersResolver } from './resolvers/device-notifiers.resolver';
 import { DeviceNotifierPluginsResolver } from './resolvers/device-notifier-plugins.resolver';
 import { DeviceNotifierResolver } from './resolvers/device-notifier.resolver';
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
+import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1161,6 +1162,20 @@ export const routes: Routes = [
                                 data: {
                                   menu: {
                                     label: 'Password policy',
+                                    section: 'Security'
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read']
+                                  }
+                                }
+                              },
+                              {
+                                path: 'session',
+                                component: ApplicationCookieSettingsComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Session management',
                                     section: 'Security'
                                   },
                                   perms: {

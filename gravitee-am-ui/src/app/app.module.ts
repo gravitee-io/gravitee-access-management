@@ -335,6 +335,7 @@ import {ApplicationResourcePolicyComponent} from './domain/applications/applicat
 import {ApplicationResourcePolicyResolver} from './resolvers/application-resource-policy.resolver';
 import {LoginSettingsComponent} from './domain/components/login/login-settings.component';
 import {ApplicationLoginSettingsComponent} from './domain/applications/application/advanced/login/login.component';
+import {ApplicationCookieSettingsComponent} from './domain/applications/application/advanced/cookie/cookie.component';
 import {ApplicationFlowsComponent} from './domain/applications/application/design/flows/flows.component';
 import {IdentitiesResolver} from './resolvers/identities.resolver';
 import {PluginPoliciesResolver} from './resolvers/plugin-policies.resolver';
@@ -399,6 +400,7 @@ import { DeviceNotifierCreationStep1Component } from './domain/settings/openid/c
 import { DeviceNotifierCreationStep2Component } from './domain/settings/openid/ciba/device-notifiers/create/steps/step2/step2.component';
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/form/form.component';
+import { CookieSettingsComponent } from "./domain/components/cookie/cookie-settings.component";
 
 @NgModule({
   declarations: [
@@ -574,6 +576,7 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
     ApplicationResourceComponent,
     ApplicationResourcePolicyComponent,
     ApplicationLoginSettingsComponent,
+    ApplicationCookieSettingsComponent,
     ApplicationFlowsComponent,
     ManagementRolesComponent,
     ManagementRoleComponent,
@@ -603,6 +606,7 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
     DeviceNotifiersCreationComponent,
     DeviceNotifierCreationStep1Component,
     DeviceNotifierCreationStep2Component,
+    CookieSettingsComponent,
     LoginSettingsComponent,
     UsersSearchInfoDialog,
     NewsletterComponent,
