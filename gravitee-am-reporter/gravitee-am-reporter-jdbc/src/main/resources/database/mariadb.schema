@@ -16,4 +16,4 @@ CREATE INDEX IF NOT EXISTS idx_audit_access_points_id___ ON reporter_audits_acce
 CREATE INDEX IF NOT EXISTS idx_audit_access_points_alternative_id___ ON reporter_audits_access_points___(alternative_id)
 CREATE INDEX IF NOT EXISTS idx_audit_entities_id___ ON reporter_audits_entities___(audit_id)
 CREATE INDEX IF NOT EXISTS idx_audit_entities_alternative_id___ ON reporter_audits_entities___(alternative_id)
-
+CREATE INDEX IF NOT EXISTS idx_audit_entities_internal_id___ ON reporter_audits_entities___(id)

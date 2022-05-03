@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
@@ -36,6 +37,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -223,10 +225,14 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(User endUser, RoutingContext routingContext) {
         // override principal user
         DefaultUser principal = new DefaultUser(endUser.getUsername());
+        principal.setId(endUser.getId());
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
         additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
         additionalInformation.put(Claims.domain, domain.getId());
+        if (!ObjectUtils.isEmpty(endUser.getDisplayName())) {
+            additionalInformation.put(StandardClaims.NAME, endUser.getDisplayName());
+        }
         principal.setAdditionalInformation(additionalInformation);
         return principal;
     }
