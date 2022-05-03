@@ -25,12 +25,12 @@
     <parent>
         <groupId>io.gravitee.am</groupId>
         <artifactId>gravitee-am-parent</artifactId>
-        <version>3.16.2</version>
+        <version>3.16.3-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.fapi</groupId>
     <artifactId>gravitee-am-fapi-resource-api</artifactId>
-    <version>3.16.2</version>
+    <version>3.16.3-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - OIDC FAPI - Resource API</name>
 
     <properties>
