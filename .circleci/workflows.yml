@@ -65,6 +65,67 @@ parameters:
     default: true
     description: "Is this a latest support version of the Product ? (if so minor version tagging docker images). True by default."
 
+slack-pass-fail-post-step: &slack-pass-fail-post-step
+  post-steps:
+    - slack/notify:
+        channel: 'am-ci-notifications'
+        custom: |
+          {
+            "text": "",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "❌ *Failure Notification* Job #${CIRCLE_JOB} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Job"
+                    },
+                    "url": "${CIRCLE_BUILD_URL}"
+                  }
+                ]
+              }
+            ]
+          }
+        event: fail
+    - slack/notify:
+        channel: 'am-ci-notifications'
+        custom: |
+          {
+            "text": "",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "✅ *Success Notification* Job #${CIRCLE_JOB} `${CIRCLE_PROJECT_REPONAME}` on `${CIRCLE_BRANCH}`"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View Job"
+                    },
+                    "url": "${CIRCLE_BUILD_URL}"
+                  }
+                ]
+              }
+            ]
+          }
+        event: pass        
+
 orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
@@ -99,7 +160,7 @@ commands:
                    "type": "button",
                    "text": {
                      "type": "plain_text",
-                     "text": "Click here for scan details",
+                     "text": "Click here for job details",
                      "emoji": true
                    },
                    "value": "click_me_123",
@@ -375,6 +436,8 @@ jobs:
             echo "export TAG=$TAG" >> $BASH_ENV
             echo "Docker images will be tagged with: ${TAG}"
             echo $TAG > /tmp/docker-tag.txt
+            SLACK_MESSAGE="AM Docker Images Snyk Scan Job has not been executed"      
+            echo "export SLACK_MESSAGE='${SLACK_MESSAGE}'" >> $BASH_ENV            
       - run:
           name: Build & Publish Management API Docker Image to Azure Registry
           when: always
@@ -744,6 +807,7 @@ workflows:
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
           ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
           ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
+          <<: *slack-pass-fail-post-step
 
   release_dry_run:
     when:
@@ -764,6 +828,7 @@ workflows:
           ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
           ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
           ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
+          <<: *slack-pass-fail-post-step
 
   publish_rpms:
     when:
