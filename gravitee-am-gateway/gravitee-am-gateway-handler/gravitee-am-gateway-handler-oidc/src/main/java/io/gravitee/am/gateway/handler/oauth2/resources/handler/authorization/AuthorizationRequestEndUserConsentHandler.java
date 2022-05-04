@@ -69,11 +69,11 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
     @Override
     public void handle(RoutingContext routingContext) {
         final Session session = routingContext.session();
-        final HttpServerRequest request = routingContext.request();
         final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
         final io.gravitee.am.model.User user = routingContext.user() != null ? ((User) routingContext.user().getDelegate()).getUser() : null;
         final AuthorizationRequest authorizationRequest = routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
         final Set<String> requestedConsent = authorizationRequest.getScopes();
+        final String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
         // no consent to check, continue
         if (requestedConsent == null || requestedConsent.isEmpty()) {
             routingContext.next();
@@ -83,13 +83,6 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         if (Boolean.TRUE.equals(session.get(ConstantKeys.USER_CONSENT_COMPLETED_KEY))) {
             if (authorizationRequest.isApproved()) {
                 routingContext.next();
-                return;
-            }
-            // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
-            // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-            String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
-            if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
-                routingContext.fail(new InteractionRequiredException("Interaction required"));
             } else {
                 routingContext.fail(new AccessDeniedException("User denied access"));
             }
@@ -97,7 +90,6 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
         }
         // application has forced to prompt consent screen to the user
         // go to the user consent page
-        final String prompt = getOAuthParameter(routingContext, Parameters.PROMPT);
         if (prompt != null && prompt.contains("consent")) {
             redirectToConsentPage(routingContext);
             return;
@@ -119,6 +111,12 @@ public class AuthorizationRequestEndUserConsentHandler implements Handler<Routin
             if (approvedConsent.containsAll(requestedConsent)) {
                 authorizationRequest.setApproved(true);
                 routingContext.next();
+                return;
+            }
+            // if prompt=none and the Client does not have pre-configured consent for the requested Claims, throw interaction_required exception
+            // https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+            if (prompt != null && Arrays.asList(prompt.split("\\s+")).contains("none")) {
+                routingContext.fail(new InteractionRequiredException("Interaction required"));
                 return;
             }
             // else go to the user consent page
