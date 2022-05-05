@@ -48,10 +48,10 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- MongoDB driver -->
         <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-reactivestreams</artifactId>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-mongodb-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Unit tests -->

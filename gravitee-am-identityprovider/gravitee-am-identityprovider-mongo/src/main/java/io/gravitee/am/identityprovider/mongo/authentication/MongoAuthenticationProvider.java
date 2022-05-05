@@ -15,29 +15,36 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
-import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.identityprovider.api.*;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.Authentication;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.UserCredentialEvaluation;
+import io.gravitee.am.identityprovider.mongo.MongoAbstractProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Optional.ofNullable;
 
@@ -47,7 +54,7 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
-public class MongoAuthenticationProvider implements AuthenticationProvider {
+public class MongoAuthenticationProvider extends MongoAbstractProvider implements AuthenticationProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoAuthenticationProvider.class);
     private static final String FIELD_ID = "_id";
@@ -61,23 +68,10 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private IdentityProviderRoleMapper roleMapper;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private MongoIdentityProviderConfiguration configuration;
-
-    @Autowired
-    private MongoClient mongoClient;
-
     @Override
     public AuthenticationProvider stop() throws Exception {
-        if (this.mongoClient != null) {
-            try {
-                this.mongoClient.close();
-            } catch (Exception e) {
-                LOGGER.debug("Unable to safely close MongoDB connection", e);
-            }
+        if (this.clientWrapper != null) {
+            this.clientWrapper.releaseClient();
         }
         return this;
     }

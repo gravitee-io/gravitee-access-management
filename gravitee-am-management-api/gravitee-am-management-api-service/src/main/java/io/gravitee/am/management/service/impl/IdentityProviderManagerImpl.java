@@ -33,6 +33,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import org.slf4j.Logger;
@@ -129,10 +130,11 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
         logger.info("Initializing user providers");
 
-        identityProviderService.findAll().blockingForEach(identityProvider -> {
-            logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-            loadUserProvider(identityProvider);
-        });
+        identityProviderService.findAll()
+                .flatMapMaybe(identityProvider -> {
+                    logger.info("\tInitializing user provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+                    return loadUserProvider(identityProvider);
+                }).ignoreElements().blockingGet();
 
     }
 
@@ -148,7 +150,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     @Override
-    public void loadIdentityProviders() {
+    public Completable loadIdentityProviders() {
         if (this.listener != null) {
             final IdentityProvider graviteeIdp = buildOrganizationUserIdentityProvider();
 
@@ -158,8 +160,9 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             providers.forEach(listener::registerAuthenticationProvider);
 
             // load gravitee idp into this component to allow user creation and update
-            loadUserProvider(graviteeIdp);
+            return loadUserProvider(graviteeIdp).ignoreElement();
         }
+        return Completable.complete();
     }
 
     private List<IdentityProvider> loadProvidersFromConfig(){
@@ -390,23 +393,21 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
     }
 
     private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
-        try {
-            UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider.getMappers());
-            if (userProvider != null) {
-                logger.info("Initializing user provider : {}", identityProvider.getId());
-                userProvider.start();
-                userProviders.put(identityProvider.getId(), userProvider);
-                identityProviders.put(identityProvider.getId(), identityProvider);
-                return Maybe.just(userProvider);
-            } else {
-                userProviders.remove(identityProvider.getId());
-                identityProviders.remove(identityProvider.getId());
-            }
-        } catch (Exception ex) {
+        return identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+                .flatMapMaybe(userProviderOpt -> {
+                    if (userProviderOpt.isPresent()) {
+                        userProviders.put(identityProvider.getId(), userProviderOpt.get());
+                        identityProviders.put(identityProvider.getId(), identityProvider);
+                        return Maybe.just(userProviderOpt.get());
+                    } else {
+                        userProviders.remove(identityProvider.getId());
+                        identityProviders.remove(identityProvider.getId());
+                        return Maybe.empty();
+                    }
+                }).doOnError( ex -> {
             logger.error("An error has occurred while loading user provider: {} [{}]", identityProvider.getName(), identityProvider.getType(), ex);
             userProviders.remove(identityProvider.getId());
             identityProviders.remove(identityProvider.getId());
-        }
-        return Maybe.empty();
+        });
     }
 }

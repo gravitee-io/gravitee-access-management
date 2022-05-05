@@ -19,9 +19,9 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.common.MongoFactory;
+import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -41,21 +41,18 @@ import java.net.URI;
 public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
-    @Qualifier("oauth2Mongo")
-    private MongoClient mongo;
-
-    @Bean(name = "oauth2Mongo")
-    public static MongoFactory mongoFactory() {
-        return new MongoFactory(Scope.OAUTH2.getName());
-    }
+    private ConnectionProvider<MongoClient, MongoConnectionConfiguration> connectionProvider;
 
     @Bean(name = "oauth2MongoTemplate")
     public MongoDatabase mongoOperations() {
+        final MongoClient mongo = connectionProvider.getClientWrapper(Scope.OAUTH2.getName()).getClient();
         return mongo.getDatabase(getDatabaseName());
     }
 
     private String getDatabaseName() {
-        String uri = environment.getProperty("oauth2.mongodb.uri");
+        boolean useManagementSettings = environment.getProperty(Scope.OAUTH2.getName() + ".use-management-settings", Boolean.class, true);
+        String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getName() : Scope.OAUTH2.getName();
+        String uri = environment.getProperty(propertyPrefix + ".mongodb.uri");
         if (uri != null && !uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
@@ -63,6 +60,6 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
             }
         }
 
-        return environment.getProperty("oauth2.mongodb.dbname", "gravitee-am");
+        return environment.getProperty(propertyPrefix + ".mongodb.dbname", "gravitee-am");
     }
 }

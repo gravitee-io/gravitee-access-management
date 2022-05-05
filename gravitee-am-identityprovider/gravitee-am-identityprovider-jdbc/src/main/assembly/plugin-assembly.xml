@@ -73,6 +73,7 @@
 				<exclude>io.netty:netty-codec-http2</exclude>
 				<exclude>io.netty:netty-handler</exclude>
 				<exclude>io.netty:netty-handler-proxy</exclude>
+				<exclude>org.springframework:*</exclude>
 			</excludes>
 		</dependencySet>
 	</dependencySets>

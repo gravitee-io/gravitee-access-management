@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.reporter.jdbc;
+package io.gravitee.am.repository.jdbc.provider;
 
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import io.gravitee.am.repository.provider.ConnectionConfiguration;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Configuration
-@ComponentScan("io.gravitee.am.reporter.jdbc")
-public class JUnitConfiguration {
+public interface R2DBCConnectionConfiguration extends ConnectionConfiguration {
+
+
+    String getProtocol();
+
+    String getDatabase();
+
+    String getUser();
+
+    String getPassword();
+
+    List<Map<String, String>> getOptions();
+
 }

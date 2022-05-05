@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.reporter.jdbc;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 

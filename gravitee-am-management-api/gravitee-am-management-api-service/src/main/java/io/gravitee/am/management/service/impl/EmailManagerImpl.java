@@ -98,16 +98,16 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
     }
 
     @Override
-    public Email getEmail(io.gravitee.am.model.Template templateDef, User user, String defaultSubject, int defaultExpiresAfter) {
+    public Maybe<Email> getEmail(io.gravitee.am.model.Template templateDef, User user, String defaultSubject, int defaultExpiresAfter) {
         return getEmail0(templateDef, user.getReferenceType(), user.getReferenceId(), user, defaultSubject, defaultExpiresAfter);
     }
 
     @Override
-    public Email getEmail(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
+    public Maybe<Email> getEmail(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
         return getEmail0(template, referenceType, referenceId, user, defaultSubject, defaultExpiresAfter);
     }
 
-    private Email getEmail0(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
+    private Maybe<Email> getEmail0(Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter) {
         // Since https://github.com/gravitee-io/issues/issues/6590 we have to read the record in Email repository
         return innerGetEmail(template, referenceType, referenceId, user)
                 .map(customEmail -> {
@@ -123,8 +123,7 @@ public class EmailManagerImpl extends AbstractService<EmailManager> implements E
 
                 })
                 // if there is nothing in database, return the classpath copy one
-                .defaultIfEmpty(create(template.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter))
-                .blockingGet();
+                .defaultIfEmpty(create(template.template(), defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter));
     }
 
     private void removeEmail(String email) {

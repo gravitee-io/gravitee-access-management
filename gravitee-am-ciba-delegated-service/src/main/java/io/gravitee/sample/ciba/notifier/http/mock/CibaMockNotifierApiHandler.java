@@ -15,7 +15,6 @@
  */
 package io.gravitee.sample.ciba.notifier.http.mock;
 
-import com.fasterxml.jackson.databind.deser.impl.InnerClassProperty;
 import com.nimbusds.jose.JOSEObject;
 import io.gravitee.sample.ciba.notifier.http.domain.CibaDomainManager;
 import io.gravitee.sample.ciba.notifier.CibaHttpNotifier;
@@ -109,6 +108,8 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
     private void sendResponse(String transactionId, DomainReference optCallback, MultiMap formData, boolean retry) {
         Executors.defaultThreadFactory().newThread(() -> {
             try {
+                // give to the AM GW enough time to update the Request external ID
+                waitBeforeNotification();
                 webClient
                         .postAbs(optCallback.getDomainCallback())
                         .authentication(new UsernamePasswordCredentials(
@@ -119,10 +120,6 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                         .onFailure(err -> {
                             if (retry) {
                                 LOGGER.info("Retry the callback for tid {} (err: {})", transactionId, err);
-                                // give to the AM GW enough time to update the Request external ID
-                                try {
-                                    Thread.sleep(2000);
-                                } catch (InterruptedException e) { /*Silent catch*/ }
                                 sendResponse(transactionId, optCallback, formData, false);
                             } else {
                                 LOGGER.warn("Callback failed for tid {} : {}", transactionId, err);
@@ -132,5 +129,11 @@ public class CibaMockNotifierApiHandler implements Handler<RoutingContext> {
                 LOGGER.warn("Callback request failed for tid {} : {}", transactionId, e);
             }
         }).start();
+    }
+
+    private void waitBeforeNotification() {
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) { /*Silent catch*/ }
     }
 }

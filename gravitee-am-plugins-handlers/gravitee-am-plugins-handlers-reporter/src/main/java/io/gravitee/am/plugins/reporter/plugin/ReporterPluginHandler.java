@@ -17,8 +17,11 @@ package io.gravitee.am.plugins.reporter.plugin;
 
 import io.gravitee.am.plugins.handlers.api.plugin.AmPluginHandler;
 import io.gravitee.am.reporter.api.Reporter;
+import io.gravitee.plugin.core.api.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -29,6 +32,9 @@ public class ReporterPluginHandler extends AmPluginHandler<Reporter> {
 
     private static final String AM_REPORTER_PLUGIN_TYPE = "am-reporter";
     private final Logger LOGGER = LoggerFactory.getLogger(ReporterPluginHandler.class);
+
+    @Autowired
+    private ApplicationContext appContext;
 
     @Override
     protected Logger getLogger() {
@@ -43,5 +49,10 @@ public class ReporterPluginHandler extends AmPluginHandler<Reporter> {
     @Override
     protected String type() {
         return AM_REPORTER_PLUGIN_TYPE;
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, appContext.getBean("ConnectionProviderFromRepository").getClass().getClassLoader());
     }
 }

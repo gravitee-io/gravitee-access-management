@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.jdbc.configuration;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.jdbc.utils.PasswordEncoder;
+import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 
 import java.util.List;
 import java.util.Map;
@@ -25,7 +26,7 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JdbcIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class JdbcIdentityProviderConfiguration implements IdentityProviderConfiguration, R2DBCConnectionConfiguration {
 
     public static final String FIELD_ID = "id";
     public static final String FIELD_USERNAME = "username";

@@ -130,7 +130,7 @@ public class DefaultOrganizationUpgrader implements Upgrader, Ordered {
 
             if (identityProviderManager != null) {
                 // call the idpManager here to ensure that roles have been created
-                identityProviderManager.loadIdentityProviders();
+                identityProviderManager.loadIdentityProviders().blockingGet();
             }
 
             // Get organization with fresh data.

@@ -26,4 +26,5 @@ public abstract class AbstractRepositoryConfiguration {
 
     @Autowired
     protected Environment environment;
+
 }

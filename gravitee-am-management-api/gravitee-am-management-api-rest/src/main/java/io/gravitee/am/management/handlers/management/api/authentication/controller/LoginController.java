@@ -35,6 +35,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,8 +109,9 @@ public class LoginController {
                 String identityId = identity.getId();
                 SocialAuthenticationProvider socialAuthenticationProvider = (SocialAuthenticationProvider) identityProviderManager.get(identityId);
                 if (socialAuthenticationProvider != null) {
-                    final Maybe<Request> maybe = socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), RandomString.generate());
-                    authorizeUrls.put(identityId, maybe.blockingGet().getUri());
+                    final Maybe<Optional<Request>> maybe = socialAuthenticationProvider.asyncSignInUrl(buildRedirectUri(request, identityId), RandomString.generate()).map(Optional::ofNullable);
+                    maybe.blockingGet()
+                            .ifPresent(idpAuthzRequest -> authorizeUrls.put(identityId, idpAuthzRequest.getUri()));
                 }
             });
 

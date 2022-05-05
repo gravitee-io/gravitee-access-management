@@ -23,6 +23,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.RoleService;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +34,8 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
+
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,7 +78,7 @@ public class IdentityProviderManagerTest {
         role.setName("ORGANIZATION_PRIMARY_OWNER");
 
         when(roleService.findRolesByName(any(), any(), any(), any())).thenReturn(Flowable.just(role));
-        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(mock(UserProvider.class));
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
 
         cut.loadIdentityProviders();
 
@@ -104,7 +107,7 @@ public class IdentityProviderManagerTest {
         role.setId("roleid");
         role.setName("ORGANIZATION_PRIMARY_OWNER");
 
-        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(mock(UserProvider.class));
+        when(idpPluginManager.create(eq("gravitee-am-idp"), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
 
         cut.loadIdentityProviders();
 
@@ -130,8 +133,8 @@ public class IdentityProviderManagerTest {
 
     @Test
     public void shouldGetGraviteeProvider() {
-        when(this.idpPluginManager.create(any(), any(), any())).thenReturn(mock(UserProvider.class));
-        cut.loadIdentityProviders();
+        when(this.idpPluginManager.create(any(), any(), any())).thenReturn(Single.just(Optional.of(mock(UserProvider.class))));
+        cut.loadIdentityProviders().blockingGet();
 
         final TestObserver<UserProvider> observer = this.cut.getUserProvider(IdentityProviderManagerImpl.IDP_GRAVITEE).test();
 

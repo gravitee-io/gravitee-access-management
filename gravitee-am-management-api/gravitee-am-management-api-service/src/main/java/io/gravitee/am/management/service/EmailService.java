@@ -15,14 +15,14 @@
  */
 package io.gravitee.am.management.service;
 
-import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -31,14 +31,14 @@ import java.util.Map;
  */
 public interface EmailService {
 
-    void send(Domain domain, Application client, Template template, User user);
+    Completable send(Domain domain, Application client, Template template, User user);
 
-    io.gravitee.am.model.Email getEmailTemplate(Template template, User user);
+    Maybe<io.gravitee.am.model.Email> getEmailTemplate(Template template, User user);
 
     default void send(Domain domain, Template template, User user) {
-        send(domain, null, template, user);
+        send(domain, null, template, user).subscribe();
     }
 
-    Email getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params) throws IOException, TemplateException;
+    Maybe<Email> getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params);
 
 }

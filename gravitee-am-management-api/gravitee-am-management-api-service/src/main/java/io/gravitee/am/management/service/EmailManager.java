@@ -19,6 +19,7 @@ import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.common.service.Service;
+import io.reactivex.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,7 +29,7 @@ public interface EmailManager extends Service<EmailManager> {
 
     String TEMPLATE_NAME_SEPARATOR = "|";
 
-    Email getEmail(io.gravitee.am.model.Template template, User user, String defaultSubject, int defaultExpiresAfter);
+    Maybe<Email> getEmail(io.gravitee.am.model.Template template, User user, String defaultSubject, int defaultExpiresAfter);
 
-    Email getEmail(io.gravitee.am.model.Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter);
+    Maybe<Email> getEmail(io.gravitee.am.model.Template template, ReferenceType referenceType, String referenceId, User user, String defaultSubject, int defaultExpiresAfter);
 }

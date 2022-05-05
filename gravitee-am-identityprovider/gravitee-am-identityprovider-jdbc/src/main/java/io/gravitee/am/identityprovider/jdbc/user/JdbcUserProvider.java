@@ -78,7 +78,7 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                                     .first(0)
                                     .flatMapPublisher(total -> {
                                         if (total == 0) {
-                                            LOGGER.debug("SQL datatable {} doest not exists, initialize it.", configuration.getUsersTable());
+                                            LOGGER.debug("SQL datatable {} does not exist.", configuration.getUsersTable());
 
                                             final List<String> sqlStatements = reader.lines()
                                                     // remove empty line and comment
@@ -108,6 +108,63 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                 LOGGER.error("Unable to initialize the identity provider schema", e);
             }
         }
+    }
+
+    @Override
+    public Single<UserProvider> asyncStart() {
+        try {
+            super.doStart();
+        } catch (Exception e) {
+            return Single.error(e);
+        }
+
+        if (configuration.getAutoProvisioning()) {
+            LOGGER.debug("Auto provisioning of identity provider table enabled");
+            // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
+            final String sqlScript = "database/" + configuration.getProtocol() + ".schema";
+            try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(sqlScript);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(input))) {
+
+                final List<String> sqlStatements = reader.lines()
+                        // remove empty line and comment
+                        .filter(line -> !line.trim().isEmpty() && !line.trim().startsWith("--"))
+                        .map(line -> {
+                            // update table & index names
+                            String finalLine = pattern.matcher(line).replaceAll(configuration.getUsersTable());
+                            LOGGER.debug("Statement to execute: {}", finalLine);
+                            return finalLine;
+                        })
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                LOGGER.debug("Found {} statements to execute if SQL schema doesn't exist", sqlStatements.size());
+
+                return Single.fromPublisher(connectionPool.create())
+                        .flatMapPublisher(connection -> {
+                            final String tableExistsStatement = tableExists(configuration.getProtocol(), configuration.getUsersTable());
+                            return query(connection, tableExistsStatement, new Object[0])
+                                    .flatMap(Result::getRowsUpdated)
+                                    .first(0)
+                                    .flatMapPublisher(total -> {
+                                        if (total == 0) {
+                                            LOGGER.debug("SQL datatable {} doest not exists, initialize it.", configuration.getUsersTable());
+
+                                            return Flowable.fromIterable(sqlStatements)
+                                                    .flatMap(statement -> query(connection, statement, new Object[0]))
+                                                    .flatMap(Result::getRowsUpdated);
+                                        } else {
+                                            return Flowable.empty();
+                                        }
+                                    })
+                                    .doFinally(() -> Completable.fromPublisher(connection.close()).subscribe());
+                        }).toList()
+                        .map(__ -> this);
+            } catch (Exception e) {
+                LOGGER.error("Unable to initialize the identity provider schema", e);
+                return Single.error(e);
+            }
+        }
+        return Single.just(this);
     }
 
     private String tableExists(String protocol, String table) {

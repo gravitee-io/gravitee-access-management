@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan({"io.gravitee.am.repository.mongodb.oauth2", "io.gravitee.am.repository.mongodb.common"})
+@ComponentScan({"io.gravitee.am.repository.mongodb.oauth2", "io.gravitee.am.repository.mongodb.common", "io.gravitee.am.repository.mongodb.provider"})
 public class OAuthTestConfigurationLoader {
 
     @Bean

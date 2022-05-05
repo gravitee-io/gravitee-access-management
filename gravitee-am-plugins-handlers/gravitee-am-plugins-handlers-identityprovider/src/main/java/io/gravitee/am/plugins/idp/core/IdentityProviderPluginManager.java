@@ -16,7 +16,12 @@
 package io.gravitee.am.plugins.idp.core;
 
 import io.gravitee.am.certificate.api.CertificateManager;
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
@@ -24,13 +29,22 @@ import io.gravitee.common.service.Service;
 import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.gravitee.plugin.core.internal.AnnotationBasedPluginContextConfigurer;
+import io.reactivex.Single;
 import io.vertx.reactivex.core.Vertx;
-import java.util.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Import;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -52,9 +66,9 @@ public abstract class IdentityProviderPluginManager extends
 
     public abstract boolean hasUserProvider(String pluginType);
 
-    public abstract UserProvider create(String type, String configuration, Map<String, String> mappers);
+    public abstract Single<Optional<UserProvider>> create(String type, String configuration, io.gravitee.am.model.IdentityProvider identityProvider);
 
-    protected UserProvider createUserProvider(
+    protected Single<UserProvider> createUserProvider(
             Plugin plugin,
             Class<? extends UserProvider> providerClass,
             List<BeanFactoryPostProcessor> beanFactoryPostProcessors) throws Exception {
@@ -87,11 +101,13 @@ public abstract class IdentityProviderPluginManager extends
             ((InitializingBean) provider).afterPropertiesSet();
         }
 
-        if (provider instanceof Service) {
-            ((Service) provider).start();
-        }
+        return provider.asyncStart();
+    }
 
-        return provider;
+    protected static class IdentityProviderEntityBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<io.gravitee.am.model.IdentityProvider> {
+        public IdentityProviderEntityBeanFactoryPostProcessor(io.gravitee.am.model.IdentityProvider configuration) {
+            super("identityProviderEntity", configuration);
+        }
     }
 
     protected static class IdentityProviderConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<IdentityProviderConfiguration> {
