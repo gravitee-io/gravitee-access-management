@@ -21,6 +21,8 @@ import io.gravitee.plugin.core.api.Plugin;
 import io.gravitee.plugin.core.api.PluginType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -30,6 +32,9 @@ import org.slf4j.LoggerFactory;
 public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvider> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(IdentityProviderPluginHandler.class);
+
+    @Autowired
+    private ApplicationContext appContext;
 
     @Override
     public boolean canHandle(Plugin plugin) {
@@ -49,5 +54,10 @@ public class IdentityProviderPluginHandler extends AmPluginHandler<IdentityProvi
     @Override
     protected String type() {
         return PluginType.IDENTITY_PROVIDER.name();
+    }
+
+    @Override
+    protected ClassLoader getClassLoader(Plugin plugin) {
+        return pluginClassLoaderFactory.getOrCreateClassLoader(plugin, appContext.getBean("ConnectionProviderFromRepository").getClass().getClassLoader());
     }
 }

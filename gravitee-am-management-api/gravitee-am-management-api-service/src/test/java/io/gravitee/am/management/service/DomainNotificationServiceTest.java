@@ -164,7 +164,7 @@ public class DomainNotificationServiceTest {
         user.setEmail("user@acme.fr");
         when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
 
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
+        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
 
         cut.registerCertificateExpiration(certificate);
 
@@ -187,7 +187,7 @@ public class DomainNotificationServiceTest {
         user.setEmail("user@acme.fr");
         when(userService.findById(ReferenceType.ORGANIZATION, env.getOrganizationId(), member.getMemberId())).thenReturn(Single.just(user));
 
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
+        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
 
         cut.registerCertificateExpiration(certificate);
 
@@ -219,7 +219,7 @@ public class DomainNotificationServiceTest {
                 Single.just(new Page<>(tenUsers, 0, 11)),
                 Single.just(new Page<>(Arrays.asList(singleUser), 1, 11)));
 
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(new Email());
+        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
 
         cut.registerCertificateExpiration(certificate);
 

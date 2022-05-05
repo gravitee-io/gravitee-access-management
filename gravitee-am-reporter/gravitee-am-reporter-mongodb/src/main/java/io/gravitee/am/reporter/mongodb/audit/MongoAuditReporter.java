@@ -16,7 +16,11 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.client.model.*;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.analytics.Type;
@@ -34,10 +38,15 @@ import io.gravitee.am.reporter.mongodb.audit.model.AuditAccessPointMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditEntityMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditOutcomeMongo;
+import io.gravitee.am.repository.provider.ClientWrapper;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.reporter.api.Reportable;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.processors.PublishProcessor;
 import org.bson.Document;
@@ -47,21 +56,31 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Import;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Filters.in;
+import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Filters.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Import({io.gravitee.am.reporter.mongodb.spring.MongoReporterConfiguration.class})
 public class MongoAuditReporter extends AbstractService implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
@@ -89,13 +108,15 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private static final String OLD_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_target.alternativeId_1_timestamp_-1";
 
     @Autowired
-    private MongoClient mongoClient;
+    private ConnectionProvider connectionProvider;
 
     @Autowired
     private MongoReporterConfiguration configuration;
 
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
+
+    private ClientWrapper<MongoClient> clientWrapper;
 
     private MongoCollection<AuditMongo> reportableCollection;
 
@@ -147,8 +168,10 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        this.clientWrapper = this.connectionProvider.getClientWrapper();
+
         // init reportable collection
-        reportableCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
+        reportableCollection = this.clientWrapper.getClient().getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);
 
         // init indexes
         initIndexes();
@@ -181,7 +204,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
                 logger.debug("The bulk processor is processing data, wait.");
             }
 
-            mongoClient.close();
+            this.clientWrapper.releaseClient();
         } catch (Exception ex) {
             logger.error("Failed to close mongoDB client", ex);
         }

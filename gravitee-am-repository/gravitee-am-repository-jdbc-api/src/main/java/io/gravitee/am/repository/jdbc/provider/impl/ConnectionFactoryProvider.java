@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.common;
+package io.gravitee.am.repository.jdbc.provider.impl;
 
+import com.google.common.base.Strings;
+import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
+import io.gravitee.am.repository.jdbc.provider.metrics.R2DBCConnectionMetrics;
+import io.gravitee.am.repository.jdbc.provider.utils.ObjectUtils;
+import io.gravitee.node.monitoring.metrics.Metrics;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.pool.PoolingConnectionFactoryProvider;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import io.r2dbc.spi.ValidationDepth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +35,16 @@ import org.springframework.core.env.Environment;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
 
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,6 +52,10 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.*;
  */
 public class ConnectionFactoryProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionFactoryProvider.class);
+    public static final String TAG_SOURCE = "pool";
+    public static final String TAG_DRIVER = "r2dbc_driver";
+    public static final String TAG_DATABASE = "r2dbc_db";
+    public static final String TAG_SERVER = "r2dbc_server";
 
     private final Environment environment;
     private final String prefix;
@@ -45,8 +65,56 @@ public class ConnectionFactoryProvider {
         this.environment = environment;
     }
 
-    public String getDatabaseType() {
-        return environment.getProperty(prefix+"driver");
+    public static ConnectionFactory createClient(R2DBCConnectionConfiguration configuration) {
+        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+        ConnectionFactoryOptions.Builder builder = ConnectionFactoryOptions.builder()
+                .option(DRIVER, "pool")
+                .option(PROTOCOL, configuration.getProtocol())
+                .option(HOST, configuration.getHost())
+                .option(USER, configuration.getUser())
+                .option(DATABASE, configuration.getDatabase());
+
+        if (configuration.getPort() != null) {
+            builder.option(PORT, configuration.getPort());
+        }
+
+        if (configuration.getPassword() != null) {
+            builder.option(PASSWORD, configuration.getPassword());
+        }
+
+        // default values for connections
+        // may be overridden by the configuration.getOptions
+        builder
+                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, 1)
+                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, 0)
+                .option(PoolingConnectionFactoryProvider.MAX_SIZE, 10)
+                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(0, ChronoUnit.MILLIS))
+                .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
+
+        List<Map<String, String>> options = configuration.getOptions();
+        if (options != null && !options.isEmpty()) {
+            options.forEach(claimMapper -> {
+                String option = claimMapper.get("option");
+                String value = claimMapper.get("value");
+                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
+            });
+        }
+
+        ConnectionPool connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
+        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+
+        final Tags tags = Tags.of(
+                Tag.of(TAG_SOURCE, "idp-r2dbc"),
+                Tag.of(TAG_DRIVER, configuration.getProtocol()),
+                Tag.of(TAG_DATABASE, configuration.getDatabase()),
+                Tag.of(TAG_SERVER, configuration.getPort() == null ? configuration.getHost() : configuration.getHost() + ":" + configuration.getPort()));
+        new R2DBCConnectionMetrics(Metrics.getDefaultRegistry(), tags)
+                .register(connectionPool);
+
+        return connectionPool;
     }
 
     public ConnectionFactory factory() {
@@ -103,6 +171,16 @@ public class ConnectionFactoryProvider {
         }
 
         LOGGER.info("Connection pool created for {} database", prefix);
+
+        if (connectionPool instanceof ConnectionPool) {
+            final Tags tags = Tags.of(
+                    Tag.of(TAG_SOURCE, "common-pool"),
+                    Tag.of(TAG_DRIVER, getJdbcDriver()),
+                    Tag.of(TAG_DATABASE, getJdbcDatabase()),
+                    Tag.of(TAG_SERVER, Strings.isNullOrEmpty(getJdbcPort()) ? getJdbcHostname() : getJdbcHostname() + ":" + getJdbcPort()));
+            new R2DBCConnectionMetrics(Metrics.getDefaultRegistry(), tags)
+                    .register((ConnectionPool) connectionPool);
+        }
         return connectionPool;
     }
 

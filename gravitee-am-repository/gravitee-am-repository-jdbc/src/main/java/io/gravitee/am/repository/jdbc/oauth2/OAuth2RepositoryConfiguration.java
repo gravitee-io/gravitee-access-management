@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2;
 
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.jdbc.common.ConnectionFactoryProvider;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -43,24 +46,21 @@ import java.util.Optional;
 public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
-    protected ConnectionFactory connectionFactory;
+    public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
 
-    @Autowired
-    protected ConnectionFactoryProvider connectionFactoryProvider;
-
+    @Override
     @Bean
-    public ConnectionFactoryProvider connectionFactoryProvider() {
-        return new ConnectionFactoryProvider(environment, "oauth2");
+    public ConnectionFactory connectionFactory() {
+        //return new DelegatedConnectionFactory(getOauth2Pool());
+        return getOauth2Pool().getClient();
     }
 
-    @Bean
-    @Override
-    public ConnectionFactory connectionFactory() {
-        return connectionFactoryProvider().factory();
+    private R2DBCPoolWrapper getOauth2Pool() {
+        return (R2DBCPoolWrapper) connectionFactoryProvider.getClientWrapper(Scope.OAUTH2.getName());
     }
 
     protected String getDriver() {
-        return connectionFactoryProvider().getDatabaseType();
+        return getOauth2Pool().getJdbcDriver();
     }
 
     @Override
@@ -92,7 +92,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(connectionFactoryProvider, environment);
+        initializeDatabaseSchema(getOauth2Pool(), environment);
     }
 
 }

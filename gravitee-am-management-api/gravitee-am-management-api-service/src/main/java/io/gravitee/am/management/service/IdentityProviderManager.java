@@ -20,6 +20,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.common.service.Service;
+import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
@@ -41,6 +42,6 @@ public interface IdentityProviderManager extends Service<IdentityProviderManager
 
     void setListener(InMemoryIdentityProviderListener listener);
 
-    void loadIdentityProviders();
+    Completable loadIdentityProviders();
 
 }

@@ -23,9 +23,10 @@ import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.am.reporter.api.Reporter;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -83,4 +84,5 @@ public class ReporterPluginManager
             super("configuration", configuration);
         }
     }
+
 }

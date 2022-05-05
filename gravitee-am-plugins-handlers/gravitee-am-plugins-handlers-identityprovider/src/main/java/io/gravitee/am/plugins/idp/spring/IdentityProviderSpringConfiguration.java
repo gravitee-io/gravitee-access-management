@@ -26,10 +26,11 @@ import io.gravitee.am.plugins.idp.core.impl.IdentityProviderPluginManagerImpl;
 import io.gravitee.am.plugins.idp.core.impl.IdentityProviderRoleMapperFactoryImpl;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.vertx.reactivex.core.Vertx;
-import java.util.Properties;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Properties;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)

@@ -15,18 +15,17 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication.spring;
 
-import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.reactivestreams.client.MongoClient;
-import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.identityprovider.api.encoding.Base64Encoder;
 import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
 import io.gravitee.am.identityprovider.api.encoding.HexEncoder;
 import io.gravitee.am.identityprovider.api.encoding.NoneEncoder;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
-import io.gravitee.am.service.authentication.crypto.password.*;
+import io.gravitee.am.service.authentication.crypto.password.MD5PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.MessageDigestPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.SHAMD5PasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -34,8 +33,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.regex.Pattern;
 
-import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.*;
-import static java.util.Arrays.asList;
+import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT;
+import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.MD5;
+import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.SHA;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -46,26 +46,6 @@ public class MongoAuthenticationProviderConfiguration {
 
     @Autowired
     private MongoIdentityProviderConfiguration configuration;
-    @Bean
-    public MongoClient mongoClient() {
-        MongoClient mongoClient;
-        if ((this.configuration.getUri() != null) && (!this.configuration.getUri().isEmpty())) {
-            mongoClient = MongoClients.create(this.configuration.getUri());
-        } else {
-            ServerAddress serverAddress = new ServerAddress(this.configuration.getHost(), this.configuration.getPort());
-            ClusterSettings clusterSettings = ClusterSettings.builder().hosts(asList(serverAddress)).build();
-            MongoClientSettings.Builder settings = MongoClientSettings.builder().applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings));
-            if (this.configuration.isEnableCredentials()) {
-                MongoCredential credential = MongoCredential.createCredential(this.configuration
-                        .getUsernameCredentials(), this.configuration
-                        .getDatabaseCredentials(), this.configuration
-                        .getPasswordCredentials().toCharArray());
-                settings.credential(credential);
-            }
-            mongoClient = MongoClients.create(settings.build());
-        }
-        return mongoClient;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

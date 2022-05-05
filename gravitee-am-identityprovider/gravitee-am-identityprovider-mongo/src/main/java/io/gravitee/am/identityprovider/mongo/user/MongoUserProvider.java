@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
-import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
@@ -23,7 +22,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.api.encoding.BinaryToTextEncoder;
-import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.mongo.MongoAbstractProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.UserAlreadyExistsException;
@@ -36,7 +35,6 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
@@ -52,34 +50,29 @@ import static com.mongodb.client.model.Filters.eq;
  * @author GraviteeSource Team
  */
 @Import({MongoAuthenticationProviderConfiguration.class})
-public class MongoUserProvider implements UserProvider, InitializingBean {
-
+public class MongoUserProvider extends MongoAbstractProvider implements UserProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoUserProvider.class);
     private static final String FIELD_ID = "_id";
     private static final String FIELD_CREATED_AT = "createdAt";
     private static final String FIELD_UPDATED_AT = "updatedAt";
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private BinaryToTextEncoder binaryToTextEncoder;
-
-    @Autowired
-    private MongoClient mongoClient;
-
-    @Autowired
-    private MongoIdentityProviderConfiguration configuration;
 
     private MongoCollection<Document> usersCollection;
 
+    @Override
+    public void afterPropertiesSet() {
+        super.afterPropertiesSet();
+        // init users collection
+        usersCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
+        // create index on username field
+        Observable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1))).subscribe();
+    }
+
     public UserProvider stop() throws Exception {
-        if (this.mongoClient != null) {
-            try {
-                this.mongoClient.close();
-            } catch (Exception e) {
-                LOGGER.debug("Unable to safely close MongoDB connection", e);
-            }
+        if (this.clientWrapper != null) {
+            this.clientWrapper.releaseClient();
         }
         return this;
     }
@@ -177,14 +170,6 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
         return findById(id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapCompletable(idpUser -> Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))));
-    }
-
-    @Override
-    public void afterPropertiesSet() {
-        // init users collection
-        usersCollection = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
-        // create index on username field
-        Observable.fromPublisher(usersCollection.createIndex(new Document(configuration.getUsernameField(), 1))).subscribe();
     }
 
     private Maybe<User> findById(String userId) {

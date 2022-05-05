@@ -18,14 +18,38 @@ package io.gravitee.am.reporter.jdbc.audit;
 import io.gravitee.am.reporter.jdbc.JdbcReporterConfiguration;
 import io.gravitee.am.reporter.jdbc.spring.JdbcReporterSpringConfiguration;
 import io.gravitee.am.reporter.jdbc.tool.R2dbcDatabaseContainer;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCConnectionProvider;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.provider.ClientWrapper;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcConverter;
+import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
+import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.r2dbc.core.ReactiveDataAccessStrategy;
+import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.mapping.R2dbcMappingContext;
+import org.springframework.data.relational.core.mapping.NamingStrategy;
+import org.springframework.r2dbc.connection.R2dbcTransactionManager;
+import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.ReactiveTransactionManager;
 
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
+import java.util.Optional;
+
+import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
+import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
+import static io.r2dbc.spi.ConnectionFactoryOptions.HOST;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PASSWORD;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PORT;
+import static io.r2dbc.spi.ConnectionFactoryOptions.PROTOCOL;
+import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -37,15 +61,20 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
     @Autowired
     protected R2dbcDatabaseContainer dbContainer;
 
+    private ConnectionFactory connectionFactory;
+
     @Override
-    public ConnectionFactory buildConnectionFactory() {
-        ConnectionFactoryOptions options = dbContainer.getOptions();
-        options = ConnectionFactoryOptions.builder()
-                .from(options)
-                .option(DRIVER, "pool")
-                .option(PROTOCOL, options.getValue(DRIVER))
-                .build();
-        return ConnectionFactories.get(options);
+    public ConnectionFactory connectionFactory() {
+        if (connectionFactory == null) {
+            ConnectionFactoryOptions options = dbContainer.getOptions();
+            options = ConnectionFactoryOptions.builder()
+                    .from(options)
+                    .option(DRIVER, "pool")
+                    .option(PROTOCOL, options.getValue(DRIVER))
+                    .build();
+            this.connectionFactory = ConnectionFactories.get(options);
+    }
+        return this.connectionFactory;
     }
 
     @Bean
@@ -63,5 +92,66 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
         config.setTableSuffix("junit");
         config.setFlushInterval(1);
         return config;
+    }
+
+    @Component
+    public class TestContainerR2DBCConnectionProvider extends R2DBCConnectionProvider {
+        @Override
+        public void afterPropertiesSet() throws Exception {
+            // nothing to implement here for TestContainer tests
+        }
+
+        @Override
+        public ClientWrapper getClientWrapper(String name) {
+            return new R2DBCPoolWrapper(null, JdbcReporterJUnitConfiguration.this.connectionFactory());
+        }
+    }
+
+    @Bean
+    public R2dbcDialect dialectDatabase(ConnectionFactory factory) {
+        return super.getDialect(factory);
+    }
+
+    @Bean
+    ReactiveTransactionManager transactionManager(ConnectionFactory connectionFactory) {
+        return new R2dbcTransactionManager(connectionFactory);
+    }
+
+    @Override
+    public DatabaseClient databaseClient() {
+        ConnectionFactory connectionFactory = connectionFactory();
+
+        return DatabaseClient.builder() //
+                .connectionFactory(connectionFactory) //
+                .bindMarkers(getDialect(connectionFactory).getBindMarkersFactory()) //
+                .build();
+    }
+
+    @Override
+    public R2dbcEntityTemplate r2dbcEntityTemplate(DatabaseClient databaseClient, ReactiveDataAccessStrategy dataAccessStrategy) {
+        return new R2dbcEntityTemplate(databaseClient, dataAccessStrategy);
+    }
+
+    @Override
+    public R2dbcMappingContext r2dbcMappingContext(Optional<NamingStrategy> namingStrategy, R2dbcCustomConversions r2dbcCustomConversions) {
+        R2dbcMappingContext context = new R2dbcMappingContext(namingStrategy.orElse(NamingStrategy.INSTANCE));
+        context.setSimpleTypeHolder(r2dbcCustomConversions.getSimpleTypeHolder());
+
+        return context;
+    }
+
+    @Override
+    public ReactiveDataAccessStrategy reactiveDataAccessStrategy(R2dbcConverter converter) {
+        return new DefaultReactiveDataAccessStrategy(getDialect(connectionFactory()), converter);
+    }
+
+    @Override
+    public MappingR2dbcConverter r2dbcConverter(R2dbcMappingContext mappingContext, R2dbcCustomConversions r2dbcCustomConversions) {
+        return new MappingR2dbcConverter(mappingContext, r2dbcCustomConversions);
+    }
+
+    @Override
+    public R2dbcCustomConversions r2dbcCustomConversions() {
+        return new R2dbcCustomConversions(getStoreConversions(), getCustomConverters());
     }
 }

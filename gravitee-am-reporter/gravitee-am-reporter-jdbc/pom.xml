@@ -43,7 +43,6 @@
         <skip-reporters-tests>true</skip-reporters-tests>
         <reactor-core.version>3.4.13</reactor-core.version>
         <reactor-adapter.version>3.4.6</reactor-adapter.version>
-        <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
     </properties>
 
     <dependencyManagement>
@@ -67,13 +66,20 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Spring dependencies -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-core</artifactId>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-jdbc-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
@@ -81,31 +87,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-r2dbc</artifactId>
-            <version>${spring-data-r2dbc.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactive-streams</artifactId>
-                    <groupId>org.reactivestreams</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.projectreactor.addons/reactor-adapter -->
@@ -118,18 +102,6 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-unix-common</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty-core</artifactId>
-            <version>${reactor-netty.version}</version>
-        </dependency>
-
-        <!-- R2DBC -->
-        <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-pool</artifactId>
         </dependency>
 
         <!-- Guava dependencies -->

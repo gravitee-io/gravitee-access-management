@@ -125,7 +125,7 @@ public class EventManagerImpl implements EventManager {
         }
 
         if (listeners == null) {
-            listeners = new ArrayList<>();
+            listeners = Collections.synchronizedList(new ArrayList<>());
             this.listenersMap.put(new ComparableEventType(eventType, domain), listeners);
         }
 

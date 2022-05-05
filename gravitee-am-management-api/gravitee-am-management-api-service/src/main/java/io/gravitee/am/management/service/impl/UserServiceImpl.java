@@ -22,7 +22,13 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.UserService;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -33,8 +39,15 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -49,7 +62,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -215,19 +233,21 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                                                 return Single.error(ex);
                                                             }
                                                         })
-                                                        .flatMap(newUser1 -> {
-                                                            return Single.fromCallable(() -> {
-                                                                User user = transform(newUser1);
-                                                                AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-                                                                if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
-                                                                    user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
-                                                                    user.setRegistrationAccessToken(getUserRegistrationToken(user));
-                                                                }
-                                                                return user;
-                                                            }).flatMap(user -> userService.create(user)
+                                                        .flatMap(newUser1 -> Single.just(transform(newUser1)).flatMapMaybe(user -> {
+                                                               AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                                               if (newUser.isPreRegistration() && accountSettings != null && accountSettings.isDynamicUserRegistration()) {
+                                                                   return getUserRegistrationToken(user).map(token -> {
+                                                                       user.setRegistrationUserUri(domainService.buildUrl(domain, "/confirmRegistration"));
+                                                                       user.setRegistrationAccessToken(token);
+                                                                       return user;
+                                                                   }).defaultIfEmpty(user);
+                                                               }
+                                                               return Maybe.just(user);
+                                                           })
+                                                                   .toSingle()
+                                                                   .flatMap(user -> userService.create(user)
                                                                     .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
-                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable))));
-                                                        })
+                                                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).throwable(throwable)))))
                                                         .flatMap(user -> {
                                                             // end pre-registration user if required
                                                             AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
@@ -338,7 +358,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                             return checkClientFunction().apply(user.getReferenceId(), user.getClient())
                                     .map(Optional::of)
                                     .defaultIfEmpty(Optional.empty())
-                                    .doOnSuccess(optClient -> new Thread(() -> emailService.send(domain1, optClient.orElse(null), Template.REGISTRATION_CONFIRMATION, user)).start())
+                                    .doOnSuccess(optClient -> new Thread(() -> emailService.send(domain1, optClient.orElse(null), Template.REGISTRATION_CONFIRMATION, user).subscribe()).start())
                                     .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).user(user)))
                                     .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.REGISTRATION_CONFIRMATION_REQUESTED).throwable(throwable)))
                                     .ignoreElement();
@@ -476,10 +496,10 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                 .orElseGet(() -> !passwordService.isValid(password, null, user));
     }
 
-    private String getUserRegistrationToken(User user) {
+    private Maybe<String> getUserRegistrationToken(User user) {
         // fetch email to get the custom expiresAfter time
-        io.gravitee.am.model.Email email = emailService.getEmailTemplate(Template.REGISTRATION_CONFIRMATION, user);
-        return getUserRegistrationToken(user, email.getExpiresAfter());
+        return emailService.getEmailTemplate(Template.REGISTRATION_CONFIRMATION, user)
+                .map(email -> getUserRegistrationToken(user, email.getExpiresAfter()));
     }
 
     private String getUserRegistrationToken(User user, Integer expiresAfter) {

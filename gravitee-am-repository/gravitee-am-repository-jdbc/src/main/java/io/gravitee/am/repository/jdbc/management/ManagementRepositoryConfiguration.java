@@ -16,9 +16,11 @@
 package io.gravitee.am.repository.jdbc.management;
 
 import io.gravitee.am.repository.jdbc.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.jdbc.common.ConnectionFactoryProvider;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.r2dbc.spi.ConnectionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -36,33 +38,27 @@ import java.util.Optional;
  */
 @Configuration
 @ComponentScan({
-        "io.gravitee.am.repository.jdbc.management"
+        "io.gravitee.am.repository.jdbc.management",
+        "io.gravitee.am.repository.jdbc.provider"
 })
 @EnableR2dbcRepositories
 public class ManagementRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
-    protected ConnectionFactory connectionFactory;
-
-    @Autowired
-    protected ConnectionFactoryProvider connectionFactoryProvider;
-
-    @Autowired
-    private DatabaseDialectHelper databaseDialectHelper;
-
-    @Bean
-    public ConnectionFactoryProvider connectionFactoryProvider() {
-        return new ConnectionFactoryProvider(environment, "management");
-    }
+    public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
 
     @Override
     @Bean
     public ConnectionFactory connectionFactory() {
-        return connectionFactoryProvider().factory();
+        return getManagementPool().getClient();
+    }
+
+    private R2DBCPoolWrapper getManagementPool() {
+        return (R2DBCPoolWrapper) connectionFactoryProvider.getClientWrapper();
     }
 
     protected String getDriver() {
-        return connectionFactoryProvider().getDatabaseType();
+        return getManagementPool().getJdbcDriver();
     }
 
     @Override
@@ -94,6 +90,7 @@ public class ManagementRepositoryConfiguration extends AbstractRepositoryConfigu
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(connectionFactoryProvider, environment);
+        initializeDatabaseSchema(getManagementPool(), environment);
     }
+
 }
