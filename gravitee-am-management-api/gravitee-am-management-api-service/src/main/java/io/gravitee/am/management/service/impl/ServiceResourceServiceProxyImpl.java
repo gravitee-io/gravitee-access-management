@@ -38,6 +38,8 @@ import io.reactivex.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
@@ -95,13 +97,22 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
 
     private Single<ServiceResource> filterSensitiveData(ServiceResource serviceResource) {
         return resourcePluginService.getSchema(serviceResource.getType())
-                .switchIfEmpty(Single.error(new ResourcePluginNotFoundException(serviceResource.getType())))
+                .map(Optional::ofNullable)
+                .switchIfEmpty(Maybe.just(Optional.empty()))
+                .toSingle()
                 .map(schema -> {
                     // Duplicate the object to avoid side effect
                     var filteredEntity = new ServiceResource(serviceResource);
-                    var schemaNode = objectMapper.readTree(schema);
-                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
-                    super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    if (schema.isPresent()) {
+                        var schemaNode = objectMapper.readTree(schema.get());
+                        var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+                        super.filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    } else {
+                        // not schema , remove all the configuration to avoid sensitive data leak
+                        // this case may happen when the plugin zip file has been removed from the plugins directory
+                        // (set empty object to avoid NullPointer on the UI)
+                        filteredEntity.setConfiguration(DEFAULT_SCHEMA_CONFIG);
+                    }
                     return filteredEntity;
                 });
     }

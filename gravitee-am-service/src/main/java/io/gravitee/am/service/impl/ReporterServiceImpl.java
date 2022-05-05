@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
@@ -76,6 +78,9 @@ public class ReporterServiceImpl implements ReporterService {
     public static final String REPORTER_AM_FILE= "reporter-am-file";
     public static final String REPORTER_CONFIG_FILENAME = "filename";
     public static final String ADMIN_DOMAIN = "admin";
+    // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
+    // when a REST call is performed and not only check on the UI
+    public static final String FILENAME_REGEX = "^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$";
 
     @Autowired
     private Environment environment;
@@ -89,6 +94,8 @@ public class ReporterServiceImpl implements ReporterService {
 
     @Autowired
     private AuditService auditService;
+
+    private Pattern filenamePattern = Pattern.compile(FILENAME_REGEX);
 
     @Override
     public Flowable<Reporter> findAll() {
@@ -254,14 +261,17 @@ public class ReporterServiceImpl implements ReporterService {
             // for FileReporter we have to check if the filename isn't used by another reporter
             final JsonObject configuration = (JsonObject) Json.decodeValue(reporter.getConfiguration());
             final String reporterId = reporter.getId();
-
+            final String reportFilename = configuration.getString(REPORTER_CONFIG_FILENAME);
+            if (Strings.isNullOrEmpty(reportFilename) || !filenamePattern.matcher(reportFilename).matches()) {
+                return Single.error(new ReporterConfigurationException("Filename is invalid"));
+            }
             result = reporterRepository.findByDomain(reporter.getDomain())
                     .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
                     .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
                     .map(r -> (JsonObject) Json.decodeValue(r.getConfiguration()))
                     .filter(cfg ->
                             cfg.containsKey(REPORTER_CONFIG_FILENAME) &&
-                                    cfg.getString(REPORTER_CONFIG_FILENAME).equals(configuration.getString(REPORTER_CONFIG_FILENAME)))
+                                    cfg.getString(REPORTER_CONFIG_FILENAME).equals(reportFilename))
                     .count()
                     .flatMap(reporters -> {
                         if (reporters > 0) {

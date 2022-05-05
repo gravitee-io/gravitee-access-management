@@ -79,5 +79,11 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.gateway.handler</groupId>
+            <artifactId>gravitee-am-gateway-handler-context</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

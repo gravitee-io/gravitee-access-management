@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.resource.api.mfa;
 
+import io.gravitee.am.factor.api.FactorContext;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,10 +24,12 @@ package io.gravitee.am.resource.api.mfa;
 public class MFALink {
     private final MFAType channel;
     private final String target;
+    private final FactorContext factorContext;
 
-    public MFALink(MFAType channel, String target) {
+    public MFALink(MFAType channel, String target, FactorContext factorContext) {
         this.channel = channel;
         this.target = target;
+        this.factorContext = factorContext;
     }
 
     public MFAType getChannel() {
@@ -36,4 +40,7 @@ public class MFALink {
         return target;
     }
 
+    public FactorContext getFactorContext() {
+        return factorContext;
+    }
 }

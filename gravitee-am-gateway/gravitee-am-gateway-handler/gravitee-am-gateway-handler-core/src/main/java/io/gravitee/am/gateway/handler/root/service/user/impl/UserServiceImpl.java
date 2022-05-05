@@ -50,6 +50,8 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Observable;
 import io.reactivex.*;
 import io.reactivex.functions.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
@@ -71,6 +73,8 @@ import static java.util.stream.Collectors.toList;
 public class UserServiceImpl implements UserService {
 
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     private io.gravitee.am.gateway.handler.common.user.UserService userService;
@@ -311,6 +315,17 @@ public class UserServiceImpl implements UserService {
                     if (accountSettings != null && accountSettings.isDeletePasswordlessDevicesAfterResetPassword()) {
                         return credentialService.deleteByUserId(user1.getReferenceType(), user1.getReferenceId(), user1.getId())
                                 .andThen(Single.just(user1));
+                    }
+                    return Single.just(user1);
+                })
+                .flatMap(user1 -> {
+                    if (accountSettings != null && accountSettings.isResetPasswordInvalidateTokens()) {
+                        return tokenService.deleteByUserId(user1.getId())
+                                .toSingleDefault(user1)
+                                .onErrorResumeNext(err -> {
+                                    logger.warn("Tokens not invalidated for user {} due to : {}", user1.getId(), err.getMessage());
+                                    return Single.just(user1);
+                                });
                     }
                     return Single.just(user1);
                 })

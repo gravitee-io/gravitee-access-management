@@ -46,6 +46,7 @@ import java.util.HashMap;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -261,6 +262,44 @@ public class OrganizationUserServiceTest {
             assertEquals(updatedUser.getAdditionalInformation(), newUser.getAdditionalInformation());
             assertEquals(updatedUser.getPicture(), newUser.getAdditionalInformation().get(StandardClaims.PICTURE));
 
+            return true;
+        });
+    }
+
+
+    @Test
+    public void shouldUpdateUser_logoutDate() {
+        User user = new User();
+        user.setId("user#1");
+        user.setExternalId("user#1");
+        user.setSource("source");
+        user.setUsername("Username");
+        user.setFirstName("Firstname");
+        user.setLastName("Lastname");
+        user.setEmail("email@gravitee.io");
+        user.setLastLogoutAt(null);
+
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("info1", "value1");
+        additionalInformation.put("info2", "value2");
+        additionalInformation.put(StandardClaims.PICTURE, "https://gravitee.io/my-picture");
+        user.setAdditionalInformation(additionalInformation);
+
+        when(commonUserService.findById(ReferenceType.ORGANIZATION, "orga#1", user.getId())).thenReturn(Single.just(user));
+        when(commonUserService.update(any(User.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
+
+        TestObserver<User> obs = organizationUserService.updateLogoutDate(ReferenceType.ORGANIZATION, "orga#1", user.getId()).test();
+
+        obs.awaitTerminalEvent();
+        obs.assertNoErrors();
+        obs.assertValue(updatedUser -> {
+            assertEquals(updatedUser.getId(), user.getId());
+            assertEquals(updatedUser.getFirstName(), user.getFirstName());
+            assertEquals(updatedUser.getLastName(), user.getLastName());
+            assertEquals(updatedUser.getEmail(), user.getEmail());
+            assertEquals(updatedUser.getAdditionalInformation(), user.getAdditionalInformation());
+            assertEquals(updatedUser.getPicture(), user.getAdditionalInformation().get(StandardClaims.PICTURE));
+            assertTrue(updatedUser.getLastLogoutAt() != null && (System.currentTimeMillis() - updatedUser.getLastLogoutAt().getTime()) < 100);
             return true;
         });
     }

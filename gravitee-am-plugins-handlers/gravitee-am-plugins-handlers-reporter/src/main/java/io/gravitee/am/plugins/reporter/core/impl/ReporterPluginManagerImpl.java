@@ -80,19 +80,20 @@ public class ReporterPluginManagerImpl implements ReporterPluginManager {
     @Override
     public String getSchema(String reporterId) throws IOException {
         Reporter reporter = reporters.get(reporterId);
-        Path policyWorkspace = reporterPlugins.get(reporter).path();
+        if (reporterPlugins.containsKey(reporter)) {
+            Path policyWorkspace = reporterPlugins.get(reporter).path();
 
-        File[] schemas = policyWorkspace.toFile().listFiles(
-                pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
+            File[] schemas = policyWorkspace.toFile().listFiles(
+                    pathname -> pathname.isDirectory() && pathname.getName().equals(SCHEMAS_DIRECTORY));
 
-        if (schemas.length == 1) {
-            File schemaDir = schemas[0];
+            if (schemas.length == 1) {
+                File schemaDir = schemas[0];
 
-            if (schemaDir.listFiles().length > 0) {
-                return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                if (schemaDir.listFiles().length > 0) {
+                    return new String(Files.readAllBytes(schemaDir.listFiles()[0].toPath()));
+                }
             }
         }
-
         return null;
     }
 

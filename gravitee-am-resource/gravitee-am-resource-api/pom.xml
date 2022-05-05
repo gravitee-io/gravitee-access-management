@@ -50,6 +50,12 @@
             <artifactId>rxjava</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.factor</groupId>
+            <artifactId>gravitee-am-factor-api</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

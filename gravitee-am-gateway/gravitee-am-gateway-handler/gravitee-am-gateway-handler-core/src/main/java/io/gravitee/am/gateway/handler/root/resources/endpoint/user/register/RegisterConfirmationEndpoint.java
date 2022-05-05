@@ -77,7 +77,6 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
 
         // retrieve user who want to register
         User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        routingContext.put(ConstantKeys.USER_CONTEXT_KEY, user);
 
         // retrieve client (if exists)
         Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);

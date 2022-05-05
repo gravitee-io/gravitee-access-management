@@ -15,12 +15,12 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
-
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -38,6 +38,7 @@ public class PatchApplicationSettings {
     private Optional<PatchApplicationAdvancedSettings> advanced;
     private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<PatchMFASettings> mfa;
+    private Optional<CookieSettings> cookieSettings;
 
     public Optional<AccountSettings> getAccount() {
         return account;
@@ -87,6 +88,14 @@ public class PatchApplicationSettings {
         this.passwordSettings = passwordSettings;
     }
 
+    public Optional<CookieSettings> getCookieSettings() {
+        return cookieSettings;
+    }
+
+    public void setCookieSettings(Optional<CookieSettings> cookieSettings) {
+        this.cookieSettings = cookieSettings;
+    }
+
     public Optional<PatchMFASettings> getMfa() {
         return mfa;
     }
@@ -102,6 +111,7 @@ public class PatchApplicationSettings {
         // set values
         SetterUtils.safeSet(toPatch::setAccount, this.getAccount());
         SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
+        SetterUtils.safeSet(toPatch::setCookieSettings, this.getCookieSettings());
         if (this.getOauth() != null && this.getOauth().isPresent()) {
             toPatch.setOauth(this.getOauth().get().patch(toPatch.getOauth()));
         }
@@ -128,7 +138,9 @@ public class PatchApplicationSettings {
                 || login != null && login.isPresent()
                 || advanced != null && advanced.isPresent()
                 || passwordSettings != null && passwordSettings.isPresent()
-                || mfa != null && mfa.isPresent()) {
+                || mfa != null && mfa.isPresent()
+                || cookieSettings != null && cookieSettings.isPresent()
+        ) {
             requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
 

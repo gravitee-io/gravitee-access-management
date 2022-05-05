@@ -46,7 +46,6 @@ public class MongoAuthenticationProviderConfiguration {
 
     @Autowired
     private MongoIdentityProviderConfiguration configuration;
-
     @Bean
     public MongoClient mongoClient() {
         MongoClient mongoClient;

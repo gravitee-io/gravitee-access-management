@@ -130,6 +130,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     private CSPHandler cspHandler;
 
     @Autowired
+    private XFrameHandler xframeHandler;
+
+    @Autowired
     private PolicyChainHandler policyChainHandler;
 
     @Autowired
@@ -206,6 +209,8 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
         // CSP Handler
         cspHandler(oauth2Router);
+
+        xFrameHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
 
@@ -323,6 +328,10 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     private void cspHandler(Router router) {
         router.route("/consent").handler(cspHandler);
+    }
+
+    private void xFrameHandler(Router router) {
+        router.route("/consent").handler(xframeHandler);
     }
 
     private void errorHandler(Router router) {

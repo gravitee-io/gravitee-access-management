@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Arrays;
@@ -31,13 +33,24 @@ public class RoutingContextHelper {
 
     /**
      * Return the {@link RoutingContext#data()} entries without technical attributes defined in {@link #BLACKLIST_CONTEXT_ATTRIBUTES}
+     * If {@link RoutingContext#data()} doesn't contain {@link ConstantKeys#USER_CONTEXT_KEY}, then the {@link RoutingContext#user()} is added if present
+     *
      * @param routingContext
      * @return
      */
     public static Map<String, Object> getEvaluableAttributes(RoutingContext routingContext) {
         Map<String, Object> contextData = new HashMap<>(routingContext.data());
+
+        Object user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        if (user != null) {
+            contextData.put(ConstantKeys.USER_CONTEXT_KEY, user);
+        } else if (routingContext.user() != null){
+            contextData.put(ConstantKeys.USER_CONTEXT_KEY, ((User) routingContext.user().getDelegate()).getUser());
+        }
+
         // remove technical attributes
         BLACKLIST_CONTEXT_ATTRIBUTES.forEach(attribute -> contextData.remove(attribute));
         return contextData;
     }
+
 }

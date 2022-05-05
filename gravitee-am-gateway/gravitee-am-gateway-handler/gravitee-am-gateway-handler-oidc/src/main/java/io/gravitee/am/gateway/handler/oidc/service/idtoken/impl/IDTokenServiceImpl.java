@@ -47,6 +47,7 @@ import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -89,6 +90,10 @@ public class IDTokenServiceImpl implements IDTokenService {
 
     @Autowired
     private UserService userService;
+
+    @Deprecated
+    @Value("${legacy.openid.openid_scope_full_profile:false}")
+    private boolean legacyOpenidScope;
 
     @Override
     public Single<String> create(OAuth2Request oAuth2Request, Client client, User user, ExecutionContext executionContext) {
@@ -230,7 +235,9 @@ public class IDTokenServiceImpl implements IDTokenService {
      */
     private boolean processScopesRequest(Set<String> scopes, Map<String, Object> userClaims, final Map<String, Object> fullProfileClaims, Map<String, Object> requestedClaims) {
         // if full_profile requested, continue
-        if (scopes.contains(FULL_PROFILE.getKey())) {
+        // if legacy mode is enabled, also return all if only openid scope is provided
+        if (scopes.contains(FULL_PROFILE.getKey()) ||
+                (legacyOpenidScope && scopes.size() == 1 && scopes.contains(Scope.OPENID.getKey()))) {
             userClaims.putAll(fullProfileClaims);
             return false;
         }

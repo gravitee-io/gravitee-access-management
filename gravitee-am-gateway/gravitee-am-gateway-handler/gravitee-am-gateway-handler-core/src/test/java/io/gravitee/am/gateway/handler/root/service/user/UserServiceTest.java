@@ -32,6 +32,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -80,6 +81,9 @@ public class UserServiceTest {
 
     @Mock
     private CredentialService credentialService;
+
+    @Mock
+    private TokenService tokenService;
 
     @Mock
     private AuditService auditService;
@@ -131,6 +135,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -159,6 +164,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -187,6 +193,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -215,6 +222,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         verify(userProvider, times(1)).create(any());
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -238,6 +246,7 @@ public class UserServiceTest {
         testObserver.assertError(AccountInactiveException.class);
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -286,6 +295,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, never()).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -309,6 +319,7 @@ public class UserServiceTest {
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -332,6 +343,7 @@ public class UserServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(commonUserService, never()).update(any());
+        verify(tokenService, never()).deleteByUserId(any());
 
     }
 
@@ -360,6 +372,7 @@ public class UserServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -380,6 +393,7 @@ public class UserServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(EnforceUserIdentityException.class);
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -411,6 +425,7 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
         verify(commonUserService, times(1)).create(any());
         verify(commonUserService, never()).update(any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -441,6 +456,7 @@ public class UserServiceTest {
         verify(commonUserService, never()).findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString());
         verify(commonUserService, never()).create(any());
         verify(commonUserService, times(1)).update(any());
+        verify(tokenService, never()).deleteByUserId(any());
     }
 
     @Test
@@ -457,6 +473,7 @@ public class UserServiceTest {
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
+        verify(tokenService, never()).deleteByUserId(any());
 
     }
 
@@ -477,6 +494,7 @@ public class UserServiceTest {
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
+        verify(tokenService, never()).deleteByUserId(any());
 
     }
 
@@ -499,6 +517,7 @@ public class UserServiceTest {
         TestObserver testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
+        verify(tokenService, never()).deleteByUserId(any());
 
     }
 
@@ -533,6 +552,41 @@ public class UserServiceTest {
         testObserver.assertNoErrors();
 
         verify(credentialService, times(1)).deleteByUserId(any(), any(), any());
+        verify(tokenService, never()).deleteByUserId(any());
+    }
+
+    @Test
+    public void shouldResetPassword_Invalidate_Tokens() {
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isResetPasswordInvalidateTokens()).thenReturn(true);
+
+        Client client = mock(Client.class);
+        when(client.getAccountSettings()).thenReturn(accountSettings);
+
+        User user = mock(User.class);
+        when(user.getUsername()).thenReturn("username");
+        when(user.isInactive()).thenReturn(false);
+        when(user.getSource()).thenReturn("default-idp");
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
+        when(idpUser.getId()).thenReturn("idp-id");
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(commonUserService.enhance(any())).thenReturn(Single.just(user));
+        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUserId(any())).thenReturn(Completable.complete());
+
+        TestObserver testObserver = userService.resetPassword(client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(tokenService, times(1)).deleteByUserId(any());
+        verify(credentialService, never()).deleteByUserId(any(), any(), any());
     }
 
     @Test

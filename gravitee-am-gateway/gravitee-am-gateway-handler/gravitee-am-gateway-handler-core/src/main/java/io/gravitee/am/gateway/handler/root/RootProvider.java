@@ -29,6 +29,8 @@ import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -44,6 +46,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutCallb
 import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
@@ -61,18 +64,38 @@ import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDet
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.login.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackOpenIDConnectFlowHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.password.*;
-import io.gravitee.am.gateway.handler.root.resources.handler.user.register.*;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterAccessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterConfirmationSubmissionRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterProcessHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -146,6 +169,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private CookieSessionHandler sessionHandler;
 
     @Autowired
+    private SSOSessionHandler ssoSessionHandler;
+
+    @Autowired
     private CookieHandler cookieHandler;
 
     @Autowired
@@ -153,6 +179,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private CSPHandler cspHandler;
+
+    @Autowired
+    private XFrameHandler xframeHandler;
 
     @Autowired
     @Qualifier("managementUserService")
@@ -224,6 +253,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // CSP Handler
         cspHandler(rootRouter);
+
+        xFrameHandler(rootRouter);
 
         // common handler
         Handler<RoutingContext> userTokenRequestParseHandler = new UserTokenRequestParseHandler(userService);
@@ -323,7 +354,8 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(rememberDeviceSettingsHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain));
+                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext, domain))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager));
@@ -443,13 +475,17 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
         // MFA endpoint
         router.route(PATH_MFA_ENROLL)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_CHALLENGE)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
         router.route(PATH_MFA_RECOVERY_CODE)
-                .handler(sessionHandler);
+                .handler(sessionHandler)
+                .handler(ssoSessionHandler);
 
         // Logout endpoint
         router
@@ -556,6 +592,27 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         router.route(PATH_FORGOT_PASSWORD).handler(cspHandler);
         router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(cspHandler);
         router.route(PATH_ERROR).handler(cspHandler);
+    }
+
+    private void xFrameHandler(Router router) {
+        router.route(PATH_LOGIN).handler(xframeHandler);
+        router.route(PATH_LOGIN_CALLBACK).handler(xframeHandler);
+        router.route(PATH_LOGIN_SSO_POST).handler(xframeHandler);
+        router.route(PATH_LOGIN_SSO_SPNEGO).handler(xframeHandler);
+        router.route(PATH_MFA_ENROLL).handler(xframeHandler);
+        router.route(PATH_MFA_CHALLENGE).handler(xframeHandler);
+        router.route(PATH_MFA_CHALLENGE_ALTERNATIVES).handler(xframeHandler);
+        router.route(PATH_LOGOUT).handler(xframeHandler);
+        router.route(PATH_LOGOUT_CALLBACK).handler(xframeHandler);
+        router.route(PATH_REGISTER).handler(xframeHandler);
+        router.route(PATH_CONFIRM_REGISTRATION).handler(xframeHandler);
+        router.route(PATH_RESET_PASSWORD).handler(xframeHandler);
+        router.route(PATH_WEBAUTHN_REGISTER).handler(xframeHandler);
+        router.route(PATH_WEBAUTHN_RESPONSE).handler(xframeHandler);
+        router.route(PATH_WEBAUTHN_LOGIN).handler(xframeHandler);
+        router.route(PATH_FORGOT_PASSWORD).handler(xframeHandler);
+        router.route(PATH_IDENTIFIER_FIRST_LOGIN).handler(xframeHandler);
+        router.route(PATH_ERROR).handler(xframeHandler);
     }
 
     private void staticHandler(Router router) {

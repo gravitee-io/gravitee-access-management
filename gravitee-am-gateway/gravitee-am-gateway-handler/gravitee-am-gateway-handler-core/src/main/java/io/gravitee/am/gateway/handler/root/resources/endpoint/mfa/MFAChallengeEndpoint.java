@@ -149,7 +149,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             sendChallenge(factorProvider, routingContext, factor, endUser, resChallenge -> {
                 if (resChallenge.failed()) {
                     logger.error("An error has occurred when sending MFA challenge", resChallenge.cause());
-                    routingContext.fail(503);
+                    routingContext.fail(resChallenge.cause());
                     return;
                 }
                 // render the mfa challenge page
@@ -189,6 +189,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
         factorData.putAll(getEvaluableAttributes(routingContext));
         factorData.put(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         factorData.put(FactorContext.KEY_CODE, code);
+        factorData.put(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
         final FactorContext factorCtx = new FactorContext(applicationContext, factorData);
 
         verify(factorProvider, factorCtx, h -> {

@@ -35,6 +35,7 @@ export class ApplicationFactorsComponent implements OnInit {
     'SMS': 'SMS',
     'EMAIL': 'EMAIL',
     'CALL': 'CALL',
+    'HTTP': 'HTTP',
     'RECOVERY_CODE' : 'Recovery Code'
   };
 
@@ -43,6 +44,7 @@ export class ApplicationFactorsComponent implements OnInit {
     'SMS': 'sms',
     'EMAIL': 'email',
     'CALL': 'call',
+    'HTTP': 'http',
     'RECOVERY_CODE': 'autorenew'
   };
 

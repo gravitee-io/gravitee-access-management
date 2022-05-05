@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
 import io.gravitee.am.management.service.exception.AuthenticationDeviceNotifierPluginNotFoundException;
-import io.gravitee.am.management.service.exception.AuthenticationDeviceNotifierPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -70,10 +69,9 @@ public class AuthenticationDeviceNotifierPluginResource {
 
         // Check that the auth device notifier exists
         pluginService.findById(authDeviceNotifierId)
-                .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierPluginNotFoundException(authDeviceNotifierId)))
                 .flatMap(irrelevant -> pluginService.getSchema(authDeviceNotifierId))
-                .switchIfEmpty(Maybe.error(new AuthenticationDeviceNotifierPluginSchemaNotFoundException(authDeviceNotifierId)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }
