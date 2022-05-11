@@ -1,0 +1,44 @@
+#
+# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+FROM alpine:3.14 AS build-env
+LABEL maintainer="contact@graviteesource.com"
+
+ARG GRAVITEEIO_AM_VERSION=0
+
+RUN apk add --update zip unzip
+
+ADD ./graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip /tmp/
+
+RUN unzip /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip -d /tmp/
+
+FROM graviteeio/java:17
+LABEL maintainer="contact@graviteesource.com"
+
+ARG GRAVITEEIO_AM_VERSION=0
+ENV GRAVITEE_AM_HOME /opt/graviteeio-am-management-api
+
+COPY --from=build-env /tmp/graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/ /opt/graviteeio-am-management-api/
+
+RUN chgrp -R 0 ${GRAVITEE_AM_HOME} && \
+    chmod -R g=u ${GRAVITEE_AM_HOME}
+
+WORKDIR ${GRAVITEE_AM_HOME}
+
+EXPOSE 8093
+
+VOLUME ["/opt/graviteeio-am-management-api/logs"]
+
+CMD ["./bin/gravitee"]
