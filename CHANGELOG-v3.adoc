@@ -1,6 +1,32 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/538?closed=1[AM - 3.17.1 (2022-05-12)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Manage PolicyException on reset password flow https://github.com/gravitee-io/issues/issues/7574[#7574]
+
+*_General_*
+
+- Merge 3.16.2 into 3.17.x https://github.com/gravitee-io/issues/issues/7446[#7446]
+
+=== Improvements
+
+*_Idp_*
+
+- Support SHA-256+MD5 password encoding for JDBC and MongoDB https://github.com/gravitee-io/issues/issues/7404[#7404]
+
+*_Management_*
+
+- User registration acknowledgment https://github.com/gravitee-io/issues/issues/7470[#7470]
+- User reset password acknowledgment https://github.com/gravitee-io/issues/issues/7471[#7471]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/537?closed=1[AM - 3.16.2 (2022-05-03)]
 
 === Bug fixes
