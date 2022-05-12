@@ -70,6 +70,7 @@
 #    sameSite: Lax
 #    session:
 #      name: session-name
+#      persistent: true
 #      timeout: 1800000 # (in milliseconds)
 #  csrf:
 #    secret: s3cR3t4grAv1t3310AMS1g1ingDftK3y
@@ -96,6 +97,11 @@
 #      - "frame-src *;"
 #      - "style-src * data: blob: 'unsafe-inline';"
 #      - "font-src * data: blob: 'unsafe-inline';"
+#  # xframe section allows to activate the X-Frame-Options header
+#  # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+#  # if not action (DENY or SAMEORIGIN) is specified, the X-Frame-Options header will no be set into the response
+#  xframe:
+#    action: DENY
 
 # Path to plugins repository
 #plugins:
@@ -255,12 +261,17 @@ user:
     email:
       #subject: Please reset your password
     token:
-      #expire-after: 86400 # the end of validity of the token in seconds for reset password email (default 86400 = a day)
+      #expire-after: 300 # the end of validity of the token in seconds for reset password email (default 300 = 5 minutes)
   blockedAccount:
       email:
       #subject: Account has been locked
       token:
       #expire-after: 86400 # the end of validity of the token in seconds for blocked account email (default 86400 = a day)
+  mfaChallenge:
+      email:
+      #subject: Verification Code
+      token:
+      #expire-after: 300 # the end of validity of the token in seconds for MFA email (default 300 = 5 minutes)
 
 handlers:
   request:

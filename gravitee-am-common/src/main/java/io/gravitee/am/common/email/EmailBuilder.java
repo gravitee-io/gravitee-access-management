@@ -61,6 +61,11 @@ public class EmailBuilder {
         return this;
     }
 
+    public EmailBuilder content(String content) {
+        this.email.setContent(content);
+        return this;
+    }
+
     public Email build() {
         return this.email;
     }

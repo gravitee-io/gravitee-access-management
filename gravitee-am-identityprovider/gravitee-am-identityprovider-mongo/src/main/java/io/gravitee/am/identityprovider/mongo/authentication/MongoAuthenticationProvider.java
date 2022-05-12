@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.mongo.authentication;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.*;
@@ -29,13 +30,12 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +69,18 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private MongoClient mongoClient;
 
+    @Override
+    public AuthenticationProvider stop() throws Exception {
+        if (this.mongoClient != null) {
+            try {
+                this.mongoClient.close();
+            } catch (Exception e) {
+                LOGGER.debug("Unable to safely close MongoDB connection", e);
+            }
+        }
+        return this;
+    }
+
     public Maybe<User> loadUserByUsername(Authentication authentication) {
         String username = ((String) authentication.getPrincipal()).toLowerCase();
         return findUserByMultipleField(username)
@@ -79,7 +91,7 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
                     }
                     return Flowable.fromIterable(users);
                 })
-                .filter( user -> {
+                .filter(user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
 
@@ -139,58 +151,81 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
     }
 
     private User createUser(AuthenticationContext authContext, Document document) {
-        String username = document.getString(FIELD_USERNAME);
-        DefaultUser user = new DefaultUser(username);
-        Map<String, Object> claims = new HashMap<>();
+        // get sub
+        String sub = getClaim(document, FIELD_ID, null);
+        // get username
+        String username = getClaim(document, configuration.getUsernameField(), sub);
 
-        String sub = document.containsKey(FIELD_ID) ?
-                document.get(FIELD_ID) instanceof ObjectId ? ((ObjectId) document.get(FIELD_ID)).toString() : document.getString(FIELD_ID)
-                : username;
+        // create the user
+        DefaultUser user = new DefaultUser(username);
         // set technical id
         user.setId(sub);
-
         // set user roles
-        user.setRoles(getUserRoles(authContext, document));
-
-        // set claims
-        claims.put(StandardClaims.SUB, sub);
-        claims.put(StandardClaims.PREFERRED_USERNAME, username);
-        if (this.mapper != null
-                && this.mapper.getMappers() != null
-                && !this.mapper.getMappers().isEmpty()) {
-            claims.putAll(this.mapper.apply(authContext, document));
-        } else {
-            // default claims
-            // remove reserved claims
-            document.remove(FIELD_ID);
-            document.remove(FIELD_USERNAME);
-            document.remove(configuration.getPasswordField());
-            if (configuration.isUseDedicatedSalt()) {
-                document.remove(configuration.getPasswordSaltAttribute());
-            }
-            document.remove(FIELD_CREATED_AT);
-            if (document.containsKey(FIELD_UPDATED_AT)) {
-                document.put(StandardClaims.UPDATED_AT, document.get(FIELD_UPDATED_AT));
-                document.remove(FIELD_UPDATED_AT);
-            }
-            document.entrySet().forEach(entry -> claims.put(entry.getKey(), entry.getValue()));
+        user.setRoles(applyRoleMapping(authContext, document));
+        // set additional information
+        Map<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put(StandardClaims.SUB, sub);
+        additionalInformation.put(StandardClaims.PREFERRED_USERNAME, username);
+        // apply user mapping
+        Map<String, Object> mappedAttributes = applyUserMapping(authContext, document);
+        additionalInformation.putAll(mappedAttributes);
+        // update sub if user mapping has been changed
+        if (additionalInformation.containsKey(StandardClaims.SUB)) {
+            user.setId(additionalInformation.get(StandardClaims.SUB).toString());
         }
-        user.setAdditionalInformation(claims);
+        // update username if user mapping has been changed
+        if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
+            user.setUsername(additionalInformation.get(StandardClaims.PREFERRED_USERNAME).toString());
+        }
+        // remove reserved claims
+        additionalInformation.remove(FIELD_ID);
+        additionalInformation.remove(configuration.getUsernameField());
+        additionalInformation.remove(configuration.getPasswordField());
+        additionalInformation.remove(FIELD_CREATED_AT);
+        if (configuration.isUseDedicatedSalt()) {
+            additionalInformation.remove(configuration.getPasswordSaltAttribute());
+        }
+        if (additionalInformation.containsKey(FIELD_UPDATED_AT)) {
+            additionalInformation.put(StandardClaims.UPDATED_AT, document.get(FIELD_UPDATED_AT));
+            additionalInformation.remove(FIELD_UPDATED_AT);
+        }
 
+        if (additionalInformation.isEmpty() || additionalInformation.get(StandardClaims.SUB) == null) {
+            throw new InternalAuthenticationServiceException("The 'sub' claim for the user is required");
+        }
+
+        user.setAdditionalInformation(additionalInformation);
         return user;
     }
 
+    private String getClaim(Map<String, Object> claims, String userAttribute, String defaultValue) {
+        return claims.containsKey(userAttribute) ? claims.get(userAttribute).toString() : defaultValue;
+    }
+
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+","");
+        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+", "");
         return rawString;
     }
 
-    private List<String> getUserRoles(AuthenticationContext context, Document document) {
-        if (roleMapper != null) {
-            Map<String, Object> profile = new HashMap<>();
-            document.forEach((key, value) -> profile.put(key, value));
-            return roleMapper.apply(context, profile);
+    private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!mappingEnabled()) {
+            return attributes;
         }
-        return new ArrayList<>();
+        return this.mapper.apply(authContext, attributes);
+    }
+
+    private List<String> applyRoleMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!roleMappingEnabled()) {
+            return Collections.emptyList();
+        }
+        return roleMapper.apply(authContext, attributes);
+    }
+
+    private boolean mappingEnabled() {
+        return this.mapper != null;
+    }
+
+    private boolean roleMappingEnabled() {
+        return this.roleMapper != null;
     }
 }

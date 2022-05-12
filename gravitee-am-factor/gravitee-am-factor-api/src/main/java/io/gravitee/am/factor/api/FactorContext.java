@@ -15,8 +15,11 @@
  */
 package io.gravitee.am.factor.api;
 
+import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.el.TemplateContext;
+import io.gravitee.el.TemplateEngine;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
@@ -35,6 +38,7 @@ public class FactorContext {
 
     private final ApplicationContext appContext;
     private final Map<String, Object> data;
+    private TemplateEngine templateEngine;
 
     public FactorContext(ApplicationContext appContext, Map<String, Object> data) {
         this.appContext = appContext;
@@ -70,6 +74,19 @@ public class FactorContext {
 
     public Map<String, Object> getTemplateValues() {
         return getData();
+    }
+
+    public TemplateEngine getTemplateEngine() {
+        if (templateEngine == null) {
+            templateEngine = TemplateEngine.templateEngine();
+            TemplateContext templateContext = templateEngine.getTemplateContext();
+
+            if(data.get(KEY_REQUEST) != null) {
+                templateContext.setVariable("request", data.get(KEY_REQUEST));
+            }
+            templateContext.setVariable("context", new EvaluableExecutionContext(this.getTemplateValues()));
+        }
+        return templateEngine;
     }
 }
 

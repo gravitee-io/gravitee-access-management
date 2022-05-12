@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
@@ -185,6 +186,9 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSettings().getOauth().getScopeSettings().get(0).getScope().equals("scopename"));
         testObserver.assertValue(a -> a.getMetadata() != null);
         testObserver.assertValue(a -> a.getMetadata().containsKey("key1"));
+        testObserver.assertValue(a -> a.getSettings() != null && a.getSettings().getAccount() != null );
+        testObserver.assertValue(a -> a.getSettings().getAccount().isResetPasswordInvalidateTokens());
+
     }
 
     private static Application buildApplication() {
@@ -236,6 +240,10 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         scopeSettings.setDefaultScope(true);
         scopeSettings.setScopeApproval(42);
         oauth.setScopeSettings(List.of(scopeSettings));
+
+        final AccountSettings account = new AccountSettings();
+        account.setResetPasswordInvalidateTokens(true);
+        settings.setAccount(account);
         return settings;
     }
 

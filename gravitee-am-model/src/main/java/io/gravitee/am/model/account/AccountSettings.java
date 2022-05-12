@@ -121,6 +121,10 @@ public class AccountSettings {
      * If true, display the legacy form for "forgot password" page and If multiple user are found, then the customForm will be displayed
      */
     private boolean resetPasswordConfirmIdentity;
+    /**
+     * If true, all tokens generated for the user are invalidated after a reset password
+     */
+    private boolean resetPasswordInvalidateTokens;
 
     public AccountSettings() {
     }
@@ -142,6 +146,7 @@ public class AccountSettings {
         this.resetPasswordConfirmIdentity = other.resetPasswordConfirmIdentity;
         this.resetPasswordCustomForm = other.resetPasswordCustomForm;
         this.resetPasswordCustomFormFields = other.resetPasswordCustomFormFields;
+        this.resetPasswordInvalidateTokens = other.resetPasswordInvalidateTokens;
         this.useBotDetection = other.useBotDetection;
         this.botDetectionPlugin = other.botDetectionPlugin;
         this.defaultIdentityProviderForRegistration = other.defaultIdentityProviderForRegistration;
@@ -297,6 +302,14 @@ public class AccountSettings {
 
     public void setResetPasswordConfirmIdentity(boolean resetPasswordConfirmIdentity) {
         this.resetPasswordConfirmIdentity = resetPasswordConfirmIdentity;
+    }
+
+    public boolean isResetPasswordInvalidateTokens() {
+        return resetPasswordInvalidateTokens;
+    }
+
+    public void setResetPasswordInvalidateTokens(boolean resetPasswordInvalidateTokens) {
+        this.resetPasswordInvalidateTokens = resetPasswordInvalidateTokens;
     }
 
     public static AccountSettings getInstance(Domain domain, Client client) {

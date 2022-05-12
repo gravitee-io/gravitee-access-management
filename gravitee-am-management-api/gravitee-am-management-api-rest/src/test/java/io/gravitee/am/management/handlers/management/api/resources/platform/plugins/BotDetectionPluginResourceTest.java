@@ -118,7 +118,7 @@ public class BotDetectionPluginResourceTest extends JerseySpringTest {
                 .path("schema")
                 .request().get();
 
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class BotDetectionPluginResourceTest extends JerseySpringTest {
                 .path("schema")
                 .request().get();
 
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
 
     @Test

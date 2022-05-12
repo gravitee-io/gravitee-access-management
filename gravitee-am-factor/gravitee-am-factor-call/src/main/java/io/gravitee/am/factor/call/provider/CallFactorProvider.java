@@ -58,7 +58,7 @@ public class CallFactorProvider implements FactorProvider {
         ResourceProvider provider = component.getResourceProvider(configuration.getGraviteeResource());
         if (provider instanceof MFAResourceProvider) {
             var mfaProvider = (MFAResourceProvider) provider;
-            var challenge = new MFAChallenge(enrolledFactor.getChannel().getTarget(), code);
+            var challenge = new MFAChallenge(enrolledFactor.getChannel().getTarget(), code, context);
             return mfaProvider.verify(challenge);
         } else {
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication with type Call"));
@@ -77,7 +77,7 @@ public class CallFactorProvider implements FactorProvider {
         ResourceProvider provider = component.getResourceProvider(configuration.getGraviteeResource());
         if (provider instanceof MFAResourceProvider) {
             MFAResourceProvider mfaProvider = (MFAResourceProvider) provider;
-            MFALink link = new MFALink(MFAType.CALL, enrolledFactor.getChannel().getTarget());
+            MFALink link = new MFALink(MFAType.CALL, enrolledFactor.getChannel().getTarget(), context);
             return mfaProvider.send(link);
         } else {
             return Completable.error(new TechnicalException("Resource referenced can't be used for MultiFactor Authentication  with type SMS"));

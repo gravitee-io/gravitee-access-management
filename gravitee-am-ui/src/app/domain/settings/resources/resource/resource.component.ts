@@ -88,4 +88,12 @@ export class ResourceComponent implements OnInit {
         }
       });
   }
+
+  isHttpFactorResource() {
+    if (this.resource) {
+      const type = this.resource.type;
+      return type ? type.includes('http-factor-am-resource') : false;
+    }
+    return false;
+  }
 }

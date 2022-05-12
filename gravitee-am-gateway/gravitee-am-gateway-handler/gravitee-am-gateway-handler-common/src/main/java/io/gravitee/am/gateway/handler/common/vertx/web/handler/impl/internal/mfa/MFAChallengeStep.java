@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
-import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.AdaptiveMfaFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaChallengeCompleteFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipUserStronglyAuthFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.RememberDeviceFilter;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.StepUpAuthenticationFilter;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -45,16 +50,15 @@ public class MFAChallengeStep extends MFAStep {
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Session session = routingContext.session();
-        final io.gravitee.am.model.User endUser = ((User) routingContext.user().getDelegate()).getUser();
-        var context = new MfaFilterContext(client, session, endUser);
+        var context = new MfaFilterContext(routingContext, client);
 
         // Rules that makes you skip MFA challenge
         var mfaFilterChain = new MfaFilterChain(
                 new ClientNullFilter(client),
                 new NoFactorFilter(client.getFactors(), factorManager),
                 new MfaChallengeCompleteFilter(context),
-                new AdaptiveMfaFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
-                new StepUpAuthenticationFilter(context, ruleEngine, routingContext.request(), routingContext.data()),
+                new AdaptiveMfaFilter(context, ruleEngine),
+                new StepUpAuthenticationFilter(context, ruleEngine),
                 new RememberDeviceFilter(context),
                 new MfaSkipUserStronglyAuthFilter(context)
         );

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.resource.api.mfa;
 
+import io.gravitee.am.factor.api.FactorContext;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -22,10 +24,12 @@ package io.gravitee.am.resource.api.mfa;
 public class MFAChallenge {
     private final String target;
     private final String code;
+    private final FactorContext factorContext;
 
-    public MFAChallenge(String target, String code) {
+    public MFAChallenge(String target, String code, FactorContext factorContext) {
         this.target = target;
         this.code = code;
+        this.factorContext = factorContext;
     }
 
     public String getTarget() {
@@ -34,5 +38,9 @@ public class MFAChallenge {
 
     public String getCode() {
         return code;
+    }
+
+    public FactorContext getFactorContext() {
+        return factorContext;
     }
 }

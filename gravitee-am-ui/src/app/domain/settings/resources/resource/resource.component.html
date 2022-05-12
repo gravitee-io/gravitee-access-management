@@ -55,9 +55,23 @@
     </div>
     <div class="gv-page-description" fxFlex>
       <h3>Manage Resource</h3>
-      <div class="gv-page-description-content">
+      <div class="gv-page-description-content" *ngIf="!isHttpFactorResource()">
         <p>
           Resource is a configuration facility to reuse some settings.
+        </p>
+      </div>
+
+      <div class="gv-page-description-content" *ngIf="isHttpFactorResource()">
+        <h4>HTTP Factor Resource</h4>
+        <p>
+          The HTTP Factor resource facilitates HTTP requests to send and verify a generated, one time code.
+          It supports Gravitee Expression Language (EL) to configure the resource properties.
+        </p>
+        <h5>HTTP Response</h5>
+        <p>The response can be accessed via EL using xpath, e.g.: <br><b>&#123;#xpath(#response.content, ".//code") == '1234'&#125;</b><br> where code is a property of the XML response.</p>
+        <h5>Pin or Verification Code</h5>
+        <p>
+          The user pin or verification code is available in the <b>&#123;#context.attributes['code']&#125;</b> EL property after the user has submitted the code for verification.
         </p>
       </div>
     </div>

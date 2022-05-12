@@ -172,6 +172,15 @@
       </div>
       <div fxLayout="column">
         <mat-slide-toggle
+          (change)="enableInvalidateTokens($event)"
+          [checked]="isInvalidateTokensEnabled()" [disabled]="readonly">
+          Invalidate Tokens
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%;">Invalidate user's tokens after a reset password.</mat-hint>
+      </div>
+
+      <div fxLayout="column">
+        <mat-slide-toggle
           (change)="enableResetPasswordCustomForm($event)"
           [checked]="isResetPasswordCustomFormEnabled()" [disabled]="readonly">
           Allow Forgot Password form with custom fields

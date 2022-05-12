@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.model.ErrorEntity;
 import io.gravitee.am.management.service.impl.plugins.NotifierPluginService;
 import io.gravitee.am.service.model.plugin.NotifierPlugin;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.Single;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -81,6 +82,7 @@ public class NotifierPluginResource {
         notifierPluginService.findById(notifierId)
                 .flatMap(notifierPlugin -> notifierPluginService.getSchema(notifierPlugin.getId()))
                 .map(notifierPluginSchema -> Response.ok(notifierPluginSchema).build())
+                .onErrorResumeNext(err -> Single.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }

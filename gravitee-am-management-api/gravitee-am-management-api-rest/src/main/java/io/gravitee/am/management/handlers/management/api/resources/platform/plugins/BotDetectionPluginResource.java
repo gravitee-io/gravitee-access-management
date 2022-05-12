@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.exception.BotDetectionPluginNotFoundException;
-import io.gravitee.am.management.service.exception.BotDetectionPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -70,10 +69,9 @@ public class BotDetectionPluginResource {
 
         // Check that the authenticator exists
         pluginService.findById(botDetection)
-                .switchIfEmpty(Maybe.error(new BotDetectionPluginNotFoundException(botDetection)))
                 .flatMap(irrelevant -> pluginService.getSchema(botDetection))
-                .switchIfEmpty(Maybe.error(new BotDetectionPluginSchemaNotFoundException(botDetection)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }

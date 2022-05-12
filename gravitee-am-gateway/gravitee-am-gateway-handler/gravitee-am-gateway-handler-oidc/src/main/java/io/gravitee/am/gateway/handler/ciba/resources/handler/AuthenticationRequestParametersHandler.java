@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationReq
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequestResolver;
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
@@ -36,7 +37,9 @@ import org.springframework.util.StringUtils;
 
 import java.util.stream.Stream;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -49,16 +52,22 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
     private JWSService jwsService;
     private JWKService jwkService;
     private UserService userService;
+    private ScopeManager scopeManager;
 
+    private final CibaAuthenticationRequestResolver cibaRequestResolver;
     private final int bindingMessageMaxLength;
 
-    public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService) {
+    public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, ScopeManager scopeManager) {
         this.domain = domain;
         this.jwsService = jwsService;
         this.jwkService = jwkService;
         this.userService = userService;
+        this.scopeManager = scopeManager;
 
         this.bindingMessageMaxLength = domain.getOidc().getCibaSettings().getBindingMessageLength();
+
+        cibaRequestResolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService);
+        cibaRequestResolver.setScopeManager(this.scopeManager);
     }
 
     @Override
@@ -75,7 +84,7 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
             validateBindingMessage(request);
             validateUserCode(client, request);
 
-            new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService)
+            cibaRequestResolver
                     .resolve(request, client)
                     .subscribe(requestValidated -> {
                         context.put(CIBA_AUTH_REQUEST_KEY, requestValidated);

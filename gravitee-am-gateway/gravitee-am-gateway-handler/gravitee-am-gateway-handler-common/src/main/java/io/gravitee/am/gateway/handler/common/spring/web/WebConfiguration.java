@@ -18,7 +18,13 @@ package io.gravitee.am.gateway.handler.common.spring.web;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.*;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandlerFactory;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.CorsHandlerFactory;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.PolicyChainHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.AuthenticationFlowHandlerImpl;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
@@ -46,6 +52,11 @@ public class WebConfiguration {
     @Bean
     public CSPHandlerFactory cspHandlerFactory(Environment environment) {
         return new CSPHandlerFactory(environment);
+    }
+
+    @Bean
+    public XFrameHandlerFactory xframeHandlerFactory(Environment environment) {
+        return new XFrameHandlerFactory(environment);
     }
 
     @Bean

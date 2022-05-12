@@ -22,5 +22,6 @@ package io.gravitee.am.resource.api.mfa;
 public enum MFAType {
     SMS,
     EMAIL,
+    HTTP,
     CALL
 }

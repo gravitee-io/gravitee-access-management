@@ -15,14 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
-import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.oidc.StandardClaims;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
@@ -39,8 +38,15 @@ import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
@@ -69,14 +75,18 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
     private JWEService jweService;
     private OpenIDDiscoveryService openIDDiscoveryService;
 
+    private final boolean legacyOpenidScope;
+
     public UserInfoEndpoint(UserService userService,
                             JWTService jwtService,
                             JWEService jweService,
-                            OpenIDDiscoveryService openIDDiscoveryService) {
+                            OpenIDDiscoveryService openIDDiscoveryService,
+                            Environment environment) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.jweService = jweService;
         this.openIDDiscoveryService = openIDDiscoveryService;
+        this.legacyOpenidScope = environment.getProperty("legacy.openid.openid_scope_full_profile", boolean.class, false);
     }
 
     @Override
@@ -178,7 +188,9 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                          final Map<String, Object> fullProfileClaims
     ) {
         // if full_profile requested, continue
-        if (scopes.contains(Scope.FULL_PROFILE.getKey())) {
+        // if legacy mode is enabled, also return all if only openid scope is provided
+        if (scopes.contains(Scope.FULL_PROFILE.getKey()) ||
+                (legacyOpenidScope && scopes.size() == 1 && scopes.contains(Scope.OPENID.getKey()))) {
             userClaims.putAll(fullProfileClaims);
             return false;
         }

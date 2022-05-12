@@ -68,10 +68,9 @@ public class ResourcePluginResource {
                           @Suspended final AsyncResponse response) {
 
         resourcePluginService.findById(resourceId)
-                .switchIfEmpty(Maybe.error(new ResourcePluginNotFoundException(resourceId)))
                 .flatMap(irrelevant -> resourcePluginService.getSchema(resourceId))
-                .switchIfEmpty(Maybe.error(new ResourcePluginNotFoundException(resourceId)))
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }

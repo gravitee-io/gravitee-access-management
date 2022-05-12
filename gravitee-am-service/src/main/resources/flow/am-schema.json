@@ -17,6 +17,7 @@
         "login",
         "consent",
         "register",
+        "registration_confirmation",
         "reset_password"
       ],
       "default": "root",
@@ -27,7 +28,8 @@
           "login": "LOGIN",
           "consent": "CONSENT",
           "register": "REGISTER",
-          "reset_password": "RESET PASSWORD"
+          "reset_password": "RESET PASSWORD",
+          "registration_confirmation": "REGISTRATION CONFIRMATION"
         },
         "disabled" : [
           {"$def":  "id"},

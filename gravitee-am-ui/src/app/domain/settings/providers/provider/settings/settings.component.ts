@@ -83,11 +83,13 @@ export class ProviderSettingsComponent implements OnInit {
     this.updateProviderConfiguration = this.providerConfiguration;
     this.organizationService.identitySchema(this.provider.type).subscribe(data => {
       this.providerSchema = data;
-      // handle default null values
-      let self = this;
-      Object.keys(this.providerSchema['properties']).forEach(function(key) {
-        self.providerSchema['properties'][key].default = '';
-      });
+      if (data) {
+        // handle default null values
+        let self = this;
+        Object.keys(this.providerSchema['properties']).forEach(function(key) {
+          self.providerSchema['properties'][key].default = '';
+        });
+      }
     });
   }
 

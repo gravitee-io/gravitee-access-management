@@ -33,4 +33,6 @@ public interface OrganizationUserService extends CommonUserService {
     Single<User> createGraviteeUser(Organization organization, NewUser newUser, io.gravitee.am.identityprovider.api.User principal);
 
     Completable resetPassword(String organizationId, User user, String password, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> updateLogoutDate(ReferenceType referenceType, String referenceId, String id);
 }
