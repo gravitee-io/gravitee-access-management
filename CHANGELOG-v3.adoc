@@ -1,6 +1,27 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/544?closed=1[AM - 3.15.8 (2022-05-13)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Silent re-authentication flow not followed when user needs consent https://github.com/gravitee-io/issues/issues/7616[#7616]
+
+*_Management_*
+
+- User activities must use the technical ID of the user instead of the username https://github.com/gravitee-io/issues/issues/7619[#7619]
+
+=== Improvements
+
+*_Plugins_*
+
+- Improve sensitive data masking https://github.com/gravitee-io/issues/issues/7482[#7482]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/538?closed=1[AM - 3.17.1 (2022-05-12)]
 
 === Bug fixes
