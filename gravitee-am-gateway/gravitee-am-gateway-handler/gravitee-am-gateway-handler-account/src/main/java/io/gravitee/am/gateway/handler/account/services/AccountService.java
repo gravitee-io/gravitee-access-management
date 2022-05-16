@@ -21,6 +21,7 @@ import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
@@ -55,4 +56,10 @@ public interface AccountService {
     Single<List<Credential>> getWebAuthnCredentials(User user);
 
     Single<Credential> getWebAuthnCredential(String id);
+
+    Single<List<ScopeApproval>> getConsentList(User user, Client client);
+
+    Single<ScopeApproval> getConsent(String id);
+
+    Completable removeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal);
 }
