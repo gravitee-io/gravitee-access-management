@@ -321,6 +321,7 @@ public class ApplicationResource extends AbstractResource {
                 filteredApplicationSettings.setPasswordSettings(settings.getPasswordSettings());
                 filteredApplicationSettings.setMfa(settings.getMfa());
                 filteredApplicationSettings.setCookieSettings(settings.getCookieSettings());
+                filteredApplicationSettings.setRiskAssessment(settings.getRiskAssessment());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {

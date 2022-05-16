@@ -124,6 +124,7 @@
         <gravitee-notifier-email.version>1.4.1</gravitee-notifier-email.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
+        <gravitee-risk-assessment-api.version>1.0.0</gravitee-risk-assessment-api.version>
         <jdk.version>11</jdk.version>
 
         <!-- Sonar - Jacoco -->

@@ -28,13 +28,14 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
+import io.gravitee.am.service.model.PatchApplicationSettings;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.junit.Test;
-
-import javax.ws.rs.core.Response;
 import java.util.*;
+import javax.ws.rs.core.Response;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -178,6 +179,10 @@ public class ApplicationResourceTest extends JerseySpringTest {
         PatchApplication patchApplication = new PatchApplication();
         patchApplication.setDescription(Optional.of("New description"));
 
+        final PatchApplicationSettings applicationSettings = new PatchApplicationSettings();
+        applicationSettings.setRiskAssessment(Optional.of(new RiskAssessmentSettings()));
+        patchApplication.setSettings(Optional.of(applicationSettings));
+
         doReturn(Single.just(true)).when(permissionService).hasPermission(any(User.class), any(PermissionAcls.class));
         doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), any(ReferenceType.class), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
@@ -207,6 +212,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         assertNotNull(settings.getAccount());
         assertNotNull(settings.getOauth());
         assertNotNull(settings.getPasswordSettings());
+        assertNotNull(settings.getRiskAssessment());
     }
 
     @Test
@@ -368,6 +374,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         filteredApplicationSettings.setAccount(new AccountSettings());
         filteredApplicationSettings.setOauth(new ApplicationOAuthSettings());
         filteredApplicationSettings.setPasswordSettings(new PasswordSettings());
+        filteredApplicationSettings.setRiskAssessment(new RiskAssessmentSettings());
 
         mockApplication.setSettings(filteredApplicationSettings);
         mockApplication.setMetadata(Collections.singletonMap("key", "value"));

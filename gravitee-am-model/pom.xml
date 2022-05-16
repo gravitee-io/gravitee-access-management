@@ -43,5 +43,10 @@
             <artifactId>gravitee-node-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.risk.assessment.api</groupId>
+            <artifactId>gravitee-risk-assessment-api</artifactId>
+            <version>${gravitee-risk-assessment-api.version}</version>
+        </dependency>
     </dependencies>
 </project>

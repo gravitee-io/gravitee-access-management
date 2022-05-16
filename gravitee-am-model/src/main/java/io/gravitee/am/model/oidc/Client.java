@@ -25,6 +25,7 @@ import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -201,6 +202,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private CookieSettings cookieSettings;
 
+    private RiskAssessmentSettings riskAssessment;
+
     private boolean singleSignOut;
 
     private boolean silentReAuthentication;
@@ -295,6 +298,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.flowsInherited = other.flowsInherited;
         this.mfaSettings = other.mfaSettings;
         this.cookieSettings = other.cookieSettings;
+        this.riskAssessment = other.riskAssessment;
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
         this.tlsClientCertificateBoundAccessTokens = other.tlsClientCertificateBoundAccessTokens;
@@ -898,6 +902,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.cookieSettings = cookieSettings;
     }
 
+    public RiskAssessmentSettings getRiskAssessment() {
+        return riskAssessment;
+    }
+
+    public void setRiskAssessment(RiskAssessmentSettings riskAssessment) {
+        this.riskAssessment = riskAssessment;
+    }
+
     public boolean isTlsClientCertificateBoundAccessTokens() {
         return tlsClientCertificateBoundAccessTokens;
     }
@@ -984,6 +996,10 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setSamlCertificate(String samlCertificate) {
         this.samlCertificate = samlCertificate;
+    }
+
+    public boolean isBackchannelUserCodeParameter() {
+        return backchannelUserCodeParameter;
     }
 
     @Override
