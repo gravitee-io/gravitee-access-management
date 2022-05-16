@@ -20,8 +20,9 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.utils.PermissionSettingUtils;
 import io.gravitee.am.service.utils.SetterUtils;
-import java.util.HashSet;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import java.util.Optional;
 import java.util.Set;
 
@@ -39,6 +40,7 @@ public class PatchApplicationSettings {
     private Optional<PatchPasswordSettings> passwordSettings;
     private Optional<PatchMFASettings> mfa;
     private Optional<CookieSettings> cookieSettings;
+    private Optional<RiskAssessmentSettings> riskAssessment;
 
     public Optional<AccountSettings> getAccount() {
         return account;
@@ -104,6 +106,14 @@ public class PatchApplicationSettings {
         this.mfa = mfa;
     }
 
+    public Optional<RiskAssessmentSettings> getRiskAssessment() {
+        return riskAssessment;
+    }
+
+    public void setRiskAssessment(Optional<RiskAssessmentSettings> riskAssessment) {
+        this.riskAssessment = riskAssessment;
+    }
+
     public ApplicationSettings patch(ApplicationSettings _toPatch) {
         // create new object for audit purpose (patch json result)
         ApplicationSettings toPatch = _toPatch == null ? new ApplicationSettings() : new ApplicationSettings(_toPatch);
@@ -112,6 +122,7 @@ public class PatchApplicationSettings {
         SetterUtils.safeSet(toPatch::setAccount, this.getAccount());
         SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
         SetterUtils.safeSet(toPatch::setCookieSettings, this.getCookieSettings());
+        SetterUtils.safeSet(toPatch::setRiskAssessment, this.getRiskAssessment());
         if (this.getOauth() != null && this.getOauth().isPresent()) {
             toPatch.setOauth(this.getOauth().get().patch(toPatch.getOauth()));
         }
@@ -131,27 +142,6 @@ public class PatchApplicationSettings {
     }
 
     public Set<Permission> getRequiredPermissions() {
-
-        Set<Permission> requiredPermissions = new HashSet<>();
-
-        if (account != null && account.isPresent()
-                || login != null && login.isPresent()
-                || advanced != null && advanced.isPresent()
-                || passwordSettings != null && passwordSettings.isPresent()
-                || mfa != null && mfa.isPresent()
-                || cookieSettings != null && cookieSettings.isPresent()
-        ) {
-            requiredPermissions.add(Permission.APPLICATION_SETTINGS);
-        }
-
-        if (oauth != null && oauth.isPresent()) {
-            requiredPermissions.add(Permission.APPLICATION_OPENID);
-        }
-
-        if (saml != null && saml.isPresent()) {
-            requiredPermissions.add(Permission.APPLICATION_SAML);
-        }
-
-        return requiredPermissions;
+        return PermissionSettingUtils.getRequiredPermissions(this);
     }
 }
