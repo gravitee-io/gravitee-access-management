@@ -18,6 +18,7 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.service.utils.PermissionSettingUtils;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.*;
@@ -144,42 +145,7 @@ public class PatchApplication {
         }).collect(toCollection(TreeSet::new));
     }
 
-    /**
-     * Returns the list of required permission depending on what fields are filled.
-     *
-     * Ex: if settings.oauth is filled, {@link Permission#APPLICATION_OPENID} will be added to the list of required permissions cause it means the user want to update this information.
-     *
-     * @return the list of required permissions.
-     */
     public Set<Permission> getRequiredPermissions() {
-
-        Set<Permission> requiredPermissions = new HashSet<>();
-
-        if (name != null && name.isPresent()
-                || description != null && description.isPresent()
-                || enabled != null && enabled.isPresent()
-                || template != null && template.isPresent()
-                || metadata != null && metadata.isPresent()) {
-
-            requiredPermissions.add(Permission.APPLICATION_SETTINGS);
-        }
-
-        if (identityProviders != null && identityProviders.isPresent()) {
-            requiredPermissions.add(Permission.APPLICATION_IDENTITY_PROVIDER);
-        }
-
-        if (factors != null && factors.isPresent()) {
-            requiredPermissions.add(Permission.APPLICATION_FACTOR);
-        }
-
-        if (certificate != null) {
-            requiredPermissions.add(Permission.APPLICATION_CERTIFICATE);
-        }
-
-        if (settings != null && settings.isPresent()) {
-            requiredPermissions.addAll(settings.get().getRequiredPermissions());
-        }
-
-        return requiredPermissions;
+        return PermissionSettingUtils.getRequiredPermissions(this);
     }
 }

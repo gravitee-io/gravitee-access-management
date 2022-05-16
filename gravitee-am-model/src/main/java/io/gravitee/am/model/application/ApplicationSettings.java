@@ -22,6 +22,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import java.util.Optional;
 
 /**
@@ -64,6 +65,13 @@ public class ApplicationSettings {
      * Cookie settings
      */
     private CookieSettings cookieSettings;
+
+    /**
+     * Risk Assessment Settings
+     * Note: configuration can be set but effective only if EE
+     */
+    private RiskAssessmentSettings riskAssessment;
+
 
     public ApplicationSettings() {
     }
@@ -143,6 +151,14 @@ public class ApplicationSettings {
         this.cookieSettings = cookieSettings;
     }
 
+    public RiskAssessmentSettings getRiskAssessment() {
+        return riskAssessment;
+    }
+
+    public void setRiskAssessment(RiskAssessmentSettings riskAssessment) {
+        this.riskAssessment = riskAssessment;
+    }
+
     public void copyTo(Client client) {
         client.setAccountSettings(this.account);
         client.setLoginSettings(this.login);
@@ -151,6 +167,7 @@ public class ApplicationSettings {
         Optional.ofNullable(getAdvanced()).ifPresent(a -> a.copyTo(client));
         client.setMfaSettings(this.mfa);
         client.setCookieSettings(this.getCookieSettings());
-        Optional.ofNullable(this.saml).ifPresent(s->s.copyTo(client));
+        client.setRiskAssessment(this.getRiskAssessment());
+        Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
     }
 }

@@ -29,6 +29,8 @@ import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.*;
+import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.Observable;
 import io.reactivex.*;
 import org.bson.BsonDocument;
@@ -43,6 +45,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Filters.*;
+import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toSet;
@@ -249,6 +252,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettingsMongo.setMfa(convert(other.getMfa()));
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
+        applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         return applicationSettingsMongo;
     }
 
@@ -266,6 +270,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setPasswordSettings(convert(other.getPasswordSettings()));
         applicationSettings.setMfa(convert(other.getMfa()));
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
+        applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         return applicationSettings;
     }
 
@@ -527,6 +532,17 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static CookieSettings convert(CookieSettingsMongo cookieSettingsMongo) {
         return cookieSettingsMongo != null ? cookieSettingsMongo.convert() : null;
+    }
+
+    private static RiskAssessmentSettingsMongo convert(RiskAssessmentSettings riskAssessment) {
+        return RiskAssessmentSettingsMongo.convert(riskAssessment);
+    }
+
+    private static RiskAssessmentSettings convert(RiskAssessmentSettingsMongo riskAssessment) {
+        if (isNull(riskAssessment)) {
+            return null;
+        }
+        return riskAssessment.convert();
     }
 
     private static List<TokenClaim> getTokenClaims(List<TokenClaimMongo> mongoTokenClaims) {

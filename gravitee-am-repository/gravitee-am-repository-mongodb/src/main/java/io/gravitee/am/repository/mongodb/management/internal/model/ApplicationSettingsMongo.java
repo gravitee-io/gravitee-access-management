@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import io.gravitee.am.repository.mongodb.management.internal.model.risk.AssessmentSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
+
+import static java.util.Objects.isNull;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -29,6 +35,7 @@ public class ApplicationSettingsMongo {
     private PasswordSettingsMongo passwordSettings;
     private MFASettingsMongo mfa;
     private CookieSettingsMongo cookieSettings;
+    private RiskAssessmentSettingsMongo riskAssessment;
 
     public ApplicationOAuthSettingsMongo getOauth() {
         return oauth;
@@ -92,5 +99,14 @@ public class ApplicationSettingsMongo {
 
     public void setCookieSettings(CookieSettingsMongo cookieSettings) {
         this.cookieSettings = cookieSettings;
+    }
+
+    public RiskAssessmentSettingsMongo getRiskAssessment() {
+        return riskAssessment;
+    }
+
+    public ApplicationSettingsMongo setRiskAssessment(RiskAssessmentSettingsMongo riskAssessment) {
+        this.riskAssessment = riskAssessment;
+        return this;
     }
 }
