@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.account;
 
+import io.gravitee.am.gateway.handler.account.resources.AccountConsentEndpointHandler;
 import io.gravitee.am.gateway.handler.account.resources.AccountEndpointHandler;
 import io.gravitee.am.gateway.handler.account.resources.AccountFactorsEndpointHandler;
 import io.gravitee.am.gateway.handler.account.resources.AccountWebAuthnCredentialsEndpointHandler;
@@ -140,6 +141,18 @@ public class AccountProvider extends AbstractService<ProtocolProvider> implement
             accountRouter.get(AccountRoutes.WEBAUTHN_CREDENTIALS_BY_ID.getRoute())
                     .handler(accountHandler::getUser)
                     .handler(accountWebAuthnCredentialsEndpointHandler::getEnrolledWebAuthnCredential);
+
+            // Consent routes
+            AccountConsentEndpointHandler accountConsentEndpointHandler = new AccountConsentEndpointHandler(accountService);
+            accountRouter.get(AccountRoutes.CONSENT.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountConsentEndpointHandler::listConsent);
+            accountRouter.get(AccountRoutes.CONSENT_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountConsentEndpointHandler::getConsent);
+            accountRouter.delete(AccountRoutes.CONSENT_BY_ID.getRoute())
+                    .handler(accountHandler::getUser)
+                    .handler(accountConsentEndpointHandler::removeConsent);
 
             // error handler
             accountRouter.route().failureHandler(new ErrorHandler());

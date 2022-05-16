@@ -25,18 +25,13 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.exception.CredentialNotFoundException;
-import io.gravitee.am.service.exception.UserInvalidException;
-import io.gravitee.am.service.exception.UserNotFoundException;
-import io.gravitee.am.service.exception.UserProviderNotFoundException;
+import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
@@ -85,6 +80,9 @@ public class AccountServiceImpl implements AccountService {
 
     @Autowired
     private CredentialService credentialService;
+
+    @Autowired
+    private ScopeApprovalService scopeApprovalService;
 
     @Override
     public Maybe<User> get(String userId) {
@@ -183,6 +181,22 @@ public class AccountServiceImpl implements AccountService {
                     removeSensitiveData(credential);
                     return credential;
                 });
+    }
+
+    @Override
+    public Single<List<ScopeApproval>> getConsentList(User user, Client client) {
+        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(),  user.getId(), client.getClientId()).toList();
+    }
+
+    @Override
+    public Single<ScopeApproval> getConsent(String id) {
+        return scopeApprovalService.findById(id)
+                .switchIfEmpty(Single.error(new ScopeApprovalNotFoundException(id)));
+    }
+
+    @Override
+    public Completable removeConsent(String userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
+        return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
     }
 
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {
