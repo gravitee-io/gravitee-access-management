@@ -157,4 +157,11 @@ public interface ConstantKeys {
     String CIBA_AUTH_REQUEST_KEY = "ciba_authentication_request";
 
     String CSP_SCRIPT_INLINE_NONCE = "script_inline_nonce";
+
+    //User Activity
+    String USER_CONSENT_IP_LOCATION = "uc_geoip";
+    String USER_CONSENT_USER_AGENT = "uc_ua";
+    String USER_ACTIVITY_RETENTION_TIME = "user_activity_retention_time";
+    String RISK_ASSESSMENT_KEY = "risk_assessment";
+    String USER_ACTIVITY_ENABLED = "userActivityEnabled";
 }

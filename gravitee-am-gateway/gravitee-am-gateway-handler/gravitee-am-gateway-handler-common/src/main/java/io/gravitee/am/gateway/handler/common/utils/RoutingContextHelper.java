@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -44,8 +46,12 @@ public class RoutingContextHelper {
         Object user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         if (user != null) {
             contextData.put(ConstantKeys.USER_CONTEXT_KEY, user);
-        } else if (routingContext.user() != null){
+        } else if (routingContext.user() != null) {
             contextData.put(ConstantKeys.USER_CONTEXT_KEY, ((User) routingContext.user().getDelegate()).getUser());
+        }
+
+        if (routingContext.session() != null && routingContext.session().get(RISK_ASSESSMENT_KEY) != null) {
+            contextData.put(RISK_ASSESSMENT_KEY, routingContext.session().get(RISK_ASSESSMENT_KEY));
         }
 
         // remove technical attributes

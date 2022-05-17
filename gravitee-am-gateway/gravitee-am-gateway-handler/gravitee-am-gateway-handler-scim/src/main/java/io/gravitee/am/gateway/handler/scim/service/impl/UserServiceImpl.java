@@ -41,6 +41,7 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
@@ -50,17 +51,13 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -100,6 +97,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int page, int size, String baseUrl) {
@@ -395,6 +395,7 @@ public class UserServiceImpl implements UserService {
                                             String.format("An error has occurred when trying to delete user: %s", userId), ex));
                                 }
                             })
+                            .andThen(userActivityService.deleteByDomainAndUser(domain.getId(), userId))
                             .andThen(userRepository.delete(userId))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).user(user)))
                             .doOnError((error) -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).domain(domain.getId()).type(EventType.USER_DELETED).throwable(error)));
