@@ -52,8 +52,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+import static io.gravitee.am.service.utils.UserProfileUtils.buildDisplayName;
+import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayName;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -197,6 +200,21 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
      */
     private Single<User> update(User existingUser, io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
         LOGGER.debug("Updating user: username[{}]", principal.getUsername());
+
+        final boolean updateDisplayName = hasGeneratedDisplayName(existingUser);
+        if (!isNullOrEmpty(principal.getEmail())) {
+            existingUser.setEmail(principal.getEmail());
+        }
+        if (!isNullOrEmpty(principal.getLastName())) {
+            existingUser.setLastName(principal.getLastName());
+        }
+        if (!isNullOrEmpty(principal.getFirstName())) {
+            existingUser.setFirstName(principal.getFirstName());
+        }
+        if (existingUser.getFirstName() != null && updateDisplayName) {
+            existingUser.setDisplayName(buildDisplayName(existingUser));
+        }
+
         // set external id
         existingUser.setExternalId(principal.getId());
         if (afterAuthentication) {

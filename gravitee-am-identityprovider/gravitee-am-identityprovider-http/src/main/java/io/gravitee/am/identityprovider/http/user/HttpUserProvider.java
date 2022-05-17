@@ -246,7 +246,7 @@ public class HttpUserProvider implements UserProvider {
                     .map(httpResponse -> {
                         final List<HttpResponseErrorCondition> errorConditions = readResourceConfiguration.getHttpResponseErrorConditions();
                         Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
-                        return convert(user.getUsername(), userAttributes);
+                        return convert(null, userAttributes); // on find by user we do not force the username and use the payload as source of truth.
                     })
                     .onErrorResumeNext(ex -> {
                         if (ex instanceof AbstractManagementException) {

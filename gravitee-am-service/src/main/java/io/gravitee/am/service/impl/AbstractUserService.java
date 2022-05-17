@@ -26,8 +26,16 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.CommonUserService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidParameterException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -41,8 +49,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.service.utils.UserProfileUtils.buildDisplayName;
+import static io.gravitee.am.service.utils.UserProfileUtils.hasGeneratedDisplayName;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -169,7 +186,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                         user.setFirstName(newUser.getFirstName());
                         user.setLastName(newUser.getLastName());
                         if (user.getFirstName() != null) {
-                            user.setDisplayName(user.getFirstName() + (user.getLastName() != null ? " " + user.getLastName() : ""));
+                            user.setDisplayName(buildDisplayName(user));
                         }
                         user.setEmail(newUser.getEmail());
                         user.setSource(newUser.getSource());
@@ -228,11 +245,17 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                     tmpUser.setAdditionalInformation(updateUser.getAdditionalInformation());
                     UserFactorUpdater.updateFactors(oldUser.getFactors(), oldUser, tmpUser);
 
+                    final boolean generatedDisplayName = hasGeneratedDisplayName(oldUser);
+
                     oldUser.setClient(updateUser.getClient());
                     oldUser.setExternalId(updateUser.getExternalId());
                     oldUser.setFirstName(updateUser.getFirstName());
                     oldUser.setLastName(updateUser.getLastName());
-                    oldUser.setDisplayName(updateUser.getDisplayName());
+                    if (generatedDisplayName && !isNullOrEmpty(updateUser.getFirstName()) && Objects.equals(updateUser.getDisplayName(), oldUser.getDisplayName())) {
+                        oldUser.setDisplayName(buildDisplayName(oldUser));
+                    } else {
+                        oldUser.setDisplayName(updateUser.getDisplayName());
+                    }
                     oldUser.setEmail(updateUser.getEmail());
                     oldUser.setEnabled(updateUser.isEnabled());
                     oldUser.setLoggedAt(updateUser.getLoggedAt());
