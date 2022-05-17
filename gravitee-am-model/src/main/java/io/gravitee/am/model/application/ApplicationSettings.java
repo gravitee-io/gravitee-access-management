@@ -22,6 +22,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 
+import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import java.util.Optional;
 
@@ -85,6 +86,7 @@ public class ApplicationSettings {
         this.passwordSettings = Optional.ofNullable(other.passwordSettings).map(PasswordSettings::new).orElse(null);
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
+        this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
     }
 
     public ApplicationOAuthSettings getOauth() {
@@ -169,5 +171,19 @@ public class ApplicationSettings {
         client.setCookieSettings(this.getCookieSettings());
         client.setRiskAssessment(this.getRiskAssessment());
         Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
+    }
+
+    private RiskAssessmentSettings getRiskAssessment(RiskAssessmentSettings settings) {
+        return new RiskAssessmentSettings()
+                .setEnabled(settings.isEnabled())
+                .setDeviceAssessment(getAssessment(settings.getDeviceAssessment()))
+                .setIpReputationAssessment(getAssessment(settings.getIpReputationAssessment()))
+                .setGeoVelocityAssessment(getAssessment(settings.getGeoVelocityAssessment()));
+    }
+
+    private AssessmentSettings getAssessment(AssessmentSettings assessmentSettings) {
+        return new AssessmentSettings()
+                .setEnabled(assessmentSettings.isEnabled())
+                .setThresholds(assessmentSettings.getThresholds());
     }
 }

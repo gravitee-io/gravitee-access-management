@@ -1,0 +1,51 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.18.0
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # User Geo Time Coordinates #
+        ############################
+        - createTable:
+            tableName: user_activities
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_activity_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_activity_key, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: latitude, type: double, constraints: { nullable: true } }
+              - column: { name: longitude, type: double, constraints: { nullable: true } }
+              - column: { name: user_agent, type: clob, constraints: { nullable: true } }
+              - column: { name: login_attempts, type: int, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_user_activities
+            columnNames: id
+            tableName: user_activities
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_user_activities_reference_type_identifier
+            tableName: user_activities
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: user_activity_type
+              - column:
+                  name: user_activity_key
+            indexName: idx_user_activities_reference_type_identifier_type_key
+            tableName: user_activities
+            unique: false

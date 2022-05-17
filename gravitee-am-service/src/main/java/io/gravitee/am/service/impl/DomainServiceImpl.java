@@ -44,14 +44,6 @@ import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.gravitee.common.utils.IdGenerator;
 import io.reactivex.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +51,13 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -84,6 +83,9 @@ public class DomainServiceImpl implements DomainService {
     @Lazy
     @Autowired
     private DomainRepository domainRepository;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private DomainValidator domainValidator;
@@ -156,6 +158,7 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private AuthenticationDeviceNotifierService authenticationDeviceNotifierService;
+
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -397,6 +400,8 @@ public class DomainServiceImpl implements DomainService {
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
+                            //Delete all trace of activity of users for this domain
+                            .andThen(userActivityService.deleteByDomain(domainId))
                             // delete users
                             // do not delete one by one for memory consumption issue
                             // https://github.com/gravitee-io/issues/issues/6999

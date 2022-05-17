@@ -41,6 +41,11 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.risk.assessment.api.assessment.Assessment;
+import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
+import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
+import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -55,6 +60,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 import static org.mockito.ArgumentMatchers.*;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
@@ -522,6 +528,81 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldContinue_rememberDevice_with_device_assessment_enabled() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            client.setRiskAssessment(
+                    new RiskAssessmentSettings().setEnabled(true).setDeviceAssessment(
+                            new AssessmentSettings().setEnabled(true)
+                    )
+            );
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['risk_assessment'].devices.assessment.name() == 'SAFE'}");
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(RISK_ASSESSMENT_KEY, new AssessmentMessageResult().setDevices(
+                    new AssessmentResult<Double>().setAssessment(Assessment.SAFE).setResult(0D)
+            ));
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_rememberDevice_with_risk_assessment_but_no_device() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            client.setRiskAssessment(
+                    new RiskAssessmentSettings()
+            );
             MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);

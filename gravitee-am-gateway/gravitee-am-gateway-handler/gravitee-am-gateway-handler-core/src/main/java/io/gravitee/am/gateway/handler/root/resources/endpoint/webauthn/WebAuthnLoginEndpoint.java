@@ -24,13 +24,13 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.Map;
 
@@ -46,13 +46,16 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginEndpoint.class);
     private final Domain domain;
     private final DeviceIdentifierManager deviceIdentifierManager;
+    private final UserActivityService userActivityService;
 
     public WebAuthnLoginEndpoint(ThymeleafTemplateEngine engine,
                                  Domain domain,
-                                 DeviceIdentifierManager deviceIdentifierManager) {
+                                 DeviceIdentifierManager deviceIdentifierManager,
+                                 UserActivityService userActivityService) {
         super(engine);
         this.domain = domain;
         this.deviceIdentifierManager = deviceIdentifierManager;
+        this.userActivityService = userActivityService;
     }
 
     @Override
@@ -71,6 +74,8 @@ public class WebAuthnLoginEndpoint extends AbstractEndpoint implements Handler<R
             final String loginActionKey = routingContext.get(CONTEXT_PATH) + "/login";
             routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+            addUserActivityTemplateVariables(routingContext, userActivityService);
+            addUserActivityConsentTemplateVariables(routingContext);
 
             // render the webauthn login page
             final Map<String, Object> data = generateData(routingContext, domain, client);

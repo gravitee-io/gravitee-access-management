@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
@@ -66,6 +67,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginCallbackFailureHandler;
@@ -82,6 +84,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.Devi
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.RememberDeviceSettingsHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.PasswordPolicyRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.UserTokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.user.activity.UserActivityHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordAccessHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ForgotPasswordSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.user.password.ResetPasswordOneTimeTokenHandler;
@@ -106,6 +109,7 @@ import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -242,6 +246,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private WebClient webClient;
 
     @Autowired
+    public ObjectMapper objectMapper;
+
+    @Autowired
+    private UserActivityService userActivityService;
+
+    @Autowired
     private FactorService factorService;
 
     @Autowired
@@ -281,10 +291,12 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         Handler<RoutingContext> clientRequestParseHandlerOptional = new ClientRequestParseHandler(clientSyncService);
         Handler<RoutingContext> passwordPolicyRequestParseHandler = new PasswordPolicyRequestParseHandler(passwordService, domain);
         Handler<RoutingContext> botDetectionHandler = new BotDetectionHandler(domain, botDetectionManager);
-        Handler<RoutingContext> geoIpHandler = new GeoIpHandler(vertx.eventBus());
-        Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);
+        Handler<RoutingContext> dataConsentHandler = new DataConsentHandler();
+        Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
+        Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
-        final DeviceIdentifierHandler deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
+        Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
+        Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService);
 
         // Root policy chain handler
         rootRouter.route()
@@ -307,6 +319,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
+                .handler(dataConsentHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
                 .handler(new LoginSelectionRuleHandler(true))
@@ -319,14 +332,16 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginHideFormHandler(domain))
                 .handler(new LoginSelectionRuleHandler(false))
-                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
+                .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService));
 
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
+                .handler(dataConsentHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
                 .handler(deviceIdentifierHandler)
+                .handler(userActivityHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN))
                 .handler(new LoginPostEndpoint());
 
@@ -402,12 +417,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager));
+                .handler(new WebAuthnLoginEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, userActivityService));
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
+                .handler(userActivityHandler)
                 .handler(new WebAuthnLoginPostEndpoint());
         rootRouter.route(PATH_WEBAUTHN_LOGIN_CREDENTIALS)
                 .handler(clientRequestParseHandler)
@@ -418,6 +434,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnResponseHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
+                .handler(userActivityHandler)
                 .handler(new WebAuthnResponseEndpoint());
 
         // Registration route

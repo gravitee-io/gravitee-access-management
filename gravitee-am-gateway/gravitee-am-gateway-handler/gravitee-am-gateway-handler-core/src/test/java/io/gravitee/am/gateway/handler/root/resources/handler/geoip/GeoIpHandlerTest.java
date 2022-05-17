@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpSer
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -28,6 +29,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.core.http.HttpServerRequest;
+import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,15 +38,8 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.HashMap;
-
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -56,6 +51,9 @@ public class GeoIpHandlerTest {
     @Mock
     private EventBus eventBus;
 
+    @Mock
+    private UserActivityService userActivityService;
+
     @Spy
     private SpyRoutingContext routingContext;
     private HashMap<Object, Object> data;
@@ -66,10 +64,11 @@ public class GeoIpHandlerTest {
 
     @Before
     public void setUp() {
-        geoIpHandler = new GeoIpHandler(eventBus);
+        geoIpHandler = new GeoIpHandler(userActivityService, eventBus);
         client = new Client();
         client.setMfaSettings(new MFASettings());
         doReturn(client).when(routingContext).get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        doReturn(false).when(userActivityService).canSaveUserActivity();
 
         data = new HashMap<>();
         doReturn(data).when(routingContext).data();
@@ -108,6 +107,15 @@ public class GeoIpHandlerTest {
     @Test
     public void mustPerformGeoIp_ipIsThere() {
         client.getMfaSettings().setAdaptiveAuthenticationRule("{#object = 'value'}");
+        request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
+        geoIpHandler.handle(routingContext);
+        verify(eventBus, times(1)).request(
+                any(), anyString(), (Handler<AsyncResult<Message<Object>>>) Mockito.any());
+    }
+
+    @Test
+    public void mustPerformGeoIp_ipIsThere_with_userActivity() {
+        doReturn(true).when(userActivityService).canSaveUserActivity();
         request.getDelegate().headers().add(HttpHeaders.X_FORWARDED_FOR, "55.55.55.55");
         geoIpHandler.handle(routingContext);
         verify(eventBus, times(1)).request(
