@@ -47,8 +47,6 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
         executorService.execute(() -> auditReporterService.report(auditBuilder.build(objectMapper)));
     }
 
-
-
     @Override
     public void afterPropertiesSet() {
         executorService = Executors.newCachedThreadPool();

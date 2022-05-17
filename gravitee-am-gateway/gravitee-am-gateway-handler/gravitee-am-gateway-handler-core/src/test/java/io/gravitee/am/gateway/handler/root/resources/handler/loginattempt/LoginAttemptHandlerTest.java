@@ -26,6 +26,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.UserActivityService;
 import io.reactivex.Maybe;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,10 @@ public class LoginAttemptHandlerTest {
 
     @Mock
     private LoginAttemptService loginAttemptService;
+
+    @Mock
+    private UserActivityService userActivityService;
+
     private Domain domain;
     private Client client;
     private LoginAttemptHandler loginAttemptHandler;
@@ -81,7 +86,7 @@ public class LoginAttemptHandlerTest {
         doReturn(Maybe.just(attempts)).when(loginAttemptService).checkAccount(any(), any());
 
         spyRoutingContext = spy(new SpyRoutingContext());
-        loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService);
+        loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         doNothing().when(spyRoutingContext).next();
     }
 
@@ -95,6 +100,19 @@ public class LoginAttemptHandlerTest {
     @Test
     public void mustDoNextNoLoginAttemptApplied_noAdaptiveRule() {
         spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        loginAttemptHandler.handle(spyRoutingContext);
+        verify(spyRoutingContext, times(1)).next();
+    }
+
+    @Test
+    public void mustDoNextNoLoginAttemptApplied_noUserActivity() {
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.putParam(USERNAME_PARAM_KEY, "username");
+
+        final MFASettings mfaSettings = new MFASettings();
+        mfaSettings.setAdaptiveAuthenticationRule("{#variable == true}");
+        client.setMfaSettings(mfaSettings);
+
         loginAttemptHandler.handle(spyRoutingContext);
         verify(spyRoutingContext, times(1)).next();
     }
@@ -119,6 +137,18 @@ public class LoginAttemptHandlerTest {
         final MFASettings mfaSettings = new MFASettings();
         mfaSettings.setAdaptiveAuthenticationRule("{#variable == true}");
         client.setMfaSettings(mfaSettings);
+
+        loginAttemptHandler.handle(spyRoutingContext);
+        //Necessary so the reactive consumer is consumed
+        Thread.sleep(1000);
+        verify(spyRoutingContext, times(1)).next();
+    }
+
+    @Test
+    public void mustTryLoginAttemptApplied_2() throws InterruptedException {
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.putParam(USERNAME_PARAM_KEY, "username");
+        doReturn(true).when(userActivityService).canSaveUserActivity();
 
         loginAttemptHandler.handle(spyRoutingContext);
         //Necessary so the reactive consumer is consumed

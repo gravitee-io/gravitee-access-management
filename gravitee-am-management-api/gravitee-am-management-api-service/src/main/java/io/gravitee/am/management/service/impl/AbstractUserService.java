@@ -28,6 +28,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
@@ -38,15 +39,16 @@ import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -71,9 +73,13 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
     @Autowired
     protected MembershipService membershipService;
 
-    protected abstract  BiFunction<String, String, Maybe<Application>> checkClientFunction();
+    @Autowired
+    protected UserActivityService userActivityService;
+
+    protected abstract BiFunction<String, String, Maybe<Application>> checkClientFunction();
 
     protected abstract T getUserService();
+
     @Override
     public Single<User> findById(ReferenceType referenceType, String referenceId, String id) {
         return getUserService().findById(referenceType, referenceId, id);
@@ -92,7 +98,7 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                 // check client
                                 .flatMapSingle(userProvider -> {
                                     String client = updateUser.getClient() != null ? updateUser.getClient() : user.getClient();
-                                    if (client != null && referenceType == ReferenceType.DOMAIN) {
+                                    if (client != null && referenceType == DOMAIN) {
                                         return checkClient.apply(referenceId, client)
                                                 .flatMapSingle(client1 -> {
                                                     updateUser.setClient(client1.getId());
@@ -156,6 +162,8 @@ public abstract class AbstractUserService<T extends io.gravitee.am.service.Commo
                                         return Completable.error(ex);
                                     });
                         })
+                        // Delete trace of user activity
+                        .andThen((DOMAIN.equals(referenceType)) ? userActivityService.deleteByDomainAndUser(referenceId, userId) : Completable.complete())
                         .andThen(getUserService().delete(userId))
                         // remove from memberships if user is an administrative user
                         .andThen((ReferenceType.ORGANIZATION != referenceType) ? Completable.complete() :

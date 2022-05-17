@@ -136,6 +136,11 @@ a, a:hover, a:focus {
     background-color: #fff;
 }
 
+.data-consent-section {
+    font-size: 11px;
+    height: 50px;
+}
+
 /*********************
 * Social Buttons
 *********************/

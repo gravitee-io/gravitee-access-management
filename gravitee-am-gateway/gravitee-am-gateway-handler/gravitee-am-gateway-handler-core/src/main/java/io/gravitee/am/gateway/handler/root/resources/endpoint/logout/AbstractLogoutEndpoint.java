@@ -19,8 +19,8 @@ import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -34,13 +34,15 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -110,7 +112,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
             // clear state set by AM during the OP EndUserSession call
             routingContext.request().params().remove(io.gravitee.am.common.oauth2.Parameters.STATE);
             // restore parameters from the original logout request
-            for (Map.Entry<String, String> entry : originalLogoutQueryParams.entries()){
+            for (Map.Entry<String, String> entry : originalLogoutQueryParams.entries()) {
                 if (!(LOGOUT_URL_PARAMETER.equals(entry.getKey()) || Parameters.POST_LOGOUT_REDIRECT_URI.equals(entry.getKey()))) {
                     routingContext.request().params().add(entry.getKey(), originalLogoutQueryParams.get(entry.getKey()));
                 }
@@ -224,8 +226,14 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         // override principal user
         DefaultUser principal = new DefaultUser(endUser.getUsername());
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        if (routingContext.session() != null) {
+            if (canSaveIp(routingContext)) {
+                additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+            }
+            if (canSaveUserAgent(routingContext)) {
+                additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+            }
+        }
         additionalInformation.put(Claims.domain, domain.getId());
         principal.setAdditionalInformation(additionalInformation);
         return principal;

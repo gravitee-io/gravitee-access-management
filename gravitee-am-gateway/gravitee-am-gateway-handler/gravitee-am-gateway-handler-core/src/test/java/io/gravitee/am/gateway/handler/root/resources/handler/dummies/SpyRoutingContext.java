@@ -17,6 +17,8 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
@@ -33,6 +35,8 @@ public class SpyRoutingContext extends RoutingContext {
     private final DummyHttpRequest dummyHttpRequest = new DummyHttpRequest();
     private final HttpServerRequest httpServerRequest = new HttpServerRequest(dummyHttpRequest);
     private final DummySession dummySession = new DummySession();
+    private int next = 0;
+    private Buffer body;
 
     public SpyRoutingContext() {
         super(null);
@@ -43,6 +47,18 @@ public class SpyRoutingContext extends RoutingContext {
     public RoutingContext put(String key, Object obj) {
         data.put(key, obj);
         return this;
+    }
+
+
+
+    @Override
+    public void setBody(Buffer body) {
+        this.body = body;
+    }
+
+    @Override
+    public JsonObject getBodyAsJson() {
+        return this.body == null ? null : this.body.toJsonObject();
     }
 
     @Override
@@ -62,6 +78,11 @@ public class SpyRoutingContext extends RoutingContext {
 
     @Override
     public void next() {
+        next++;
+    }
+
+    public boolean verifyNext(int expected){
+        return next == expected;
     }
 
     @Override

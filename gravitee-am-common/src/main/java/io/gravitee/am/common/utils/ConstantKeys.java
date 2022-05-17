@@ -151,4 +151,11 @@ public interface ConstantKeys {
     String HTTP_SSL_ALIASES_ENDPOINTS_CIBA = "backchannel_authentication_endpoint";
 
     String CIBA_AUTH_REQUEST_KEY = "ciba_authentication_request";
+
+    //User Activity
+    String USER_CONSENT_IP_LOCATION = "uc_geoip";
+    String USER_CONSENT_USER_AGENT = "uc_ua";
+    String USER_ACTIVITY_RETENTION_TIME = "user_activity_retention_time";
+    String RISK_ASSESSMENT_KEY = "risk_assessment";
+    String USER_ACTIVITY_ENABLED = "userActivityEnabled";
 }

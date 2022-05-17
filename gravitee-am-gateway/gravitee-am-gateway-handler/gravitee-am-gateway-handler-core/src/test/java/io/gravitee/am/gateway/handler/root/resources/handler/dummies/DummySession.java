@@ -17,9 +17,9 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.dummies;
 
 import io.vertx.reactivex.ext.web.Session;
-
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -31,6 +31,91 @@ public class DummySession extends Session {
 
     public DummySession() {
         super(null);
+    }
+
+    @Override
+    public io.vertx.ext.web.Session getDelegate() {
+        return new io.vertx.ext.web.Session() {
+            @Override
+            public io.vertx.ext.web.Session regenerateId() {
+                return null;
+            }
+
+            @Override
+            public String id() {
+                return null;
+            }
+
+            @Override
+            public io.vertx.ext.web.Session put(String s, Object o) {
+                return null;
+            }
+
+            @Override
+            public io.vertx.ext.web.Session putIfAbsent(String s, Object o) {
+                return null;
+            }
+
+            @Override
+            public io.vertx.ext.web.Session computeIfAbsent(String s, Function<String, Object> function) {
+                return null;
+            }
+
+            @Override
+            public <T> T get(String s) {
+                return (T) data.get(s);
+            }
+
+            @Override
+            public <T> T remove(String s) {
+                return null;
+            }
+
+            @Override
+            public Map<String, Object> data() {
+                return null;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return false;
+            }
+
+            @Override
+            public long lastAccessed() {
+                return 0;
+            }
+
+            @Override
+            public void destroy() {
+
+            }
+
+            @Override
+            public boolean isDestroyed() {
+                return false;
+            }
+
+            @Override
+            public boolean isRegenerated() {
+                return false;
+            }
+
+            @Override
+            public String oldId() {
+                return null;
+            }
+
+            @Override
+            public long timeout() {
+                return 0;
+            }
+
+            @Override
+            public void setAccessed() {
+
+            }
+        };
     }
 
     @Override

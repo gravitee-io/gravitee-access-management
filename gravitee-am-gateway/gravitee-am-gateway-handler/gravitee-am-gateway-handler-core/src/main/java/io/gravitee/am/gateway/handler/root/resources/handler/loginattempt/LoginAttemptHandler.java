@@ -17,16 +17,14 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.LoginAttempt;
-import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.UserActivityService;
 import io.reactivex.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -50,14 +48,18 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
     private final Domain domain;
     private final IdentityProviderManager identityProviderManager;
     private final LoginAttemptService loginAttemptService;
+    private final UserActivityService userActivityService;
 
     public LoginAttemptHandler(
             Domain domain,
             IdentityProviderManager identityProviderManager,
-            LoginAttemptService loginAttemptService) {
+            LoginAttemptService loginAttemptService,
+            UserActivityService userActivityService
+    ) {
         this.domain = domain;
         this.identityProviderManager = identityProviderManager;
         this.loginAttemptService = loginAttemptService;
+        this.userActivityService = userActivityService;
     }
 
     @Override
@@ -84,7 +86,7 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
 
     private boolean canApplyLoginAttemptKey(Client client, String adaptiveRule, String username) {
         return !isNullOrEmpty(client.getId()) &&
-                !isNullOrEmpty(adaptiveRule) &&
+                (!isNullOrEmpty(adaptiveRule) || userActivityService.canSaveUserActivity()) &&
                 !isNullOrEmpty(username);
     }
 
