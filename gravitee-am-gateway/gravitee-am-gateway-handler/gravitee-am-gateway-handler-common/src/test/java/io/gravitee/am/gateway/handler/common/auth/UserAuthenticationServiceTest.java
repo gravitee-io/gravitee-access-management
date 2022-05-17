@@ -71,8 +71,7 @@ public class UserAuthenticationServiceTest {
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);
         when(user.getId()).thenReturn(id);
-        HashMap<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put("source", source);
+        HashMap<String, Object> additionalInformation = getAdditionalInformation(source);
         additionalInformation.put("op_id_token", "somevalue");
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
@@ -90,8 +89,26 @@ public class UserAuthenticationServiceTest {
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(userService, times(1)).create(argThat(u -> u.getAdditionalInformation().containsKey("op_id_token")));
+        verify(userService, times(1)).create(userAssert());
         verify(userService, never()).update(any());
+    }
+
+    private User userAssert() {
+        return argThat(user ->
+                user.getAdditionalInformation().containsKey("op_id_token") &&
+                user.getFirstName().equals("Bob") &&
+                user.getLastName().equals("Test") &&
+                user.getEmail().equals("bob@test.com")
+        );
+    }
+
+    private HashMap<String, Object> getAdditionalInformation(String source) {
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("firstName", "Bob");
+        additionalInformation.put("lastName", "Test");
+        additionalInformation.put("email", "bob@test.com");
+        return additionalInformation;
     }
 
     @Test
