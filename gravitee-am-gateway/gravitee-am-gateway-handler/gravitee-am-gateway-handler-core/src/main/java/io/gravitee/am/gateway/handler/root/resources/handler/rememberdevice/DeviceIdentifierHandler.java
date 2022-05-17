@@ -71,12 +71,12 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
             routingContext.next();
         } else {
             this.deviceService.deviceExists(domain, client.getClientId(), userId, deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
+                routingContext.session().put(DEVICE_ID, deviceId);
                 if (!isEmpty) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                 } else {
                     var deviceType = routingContext.request().getParam(DEVICE_TYPE);
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
-                    routingContext.session().put(DEVICE_ID, deviceId);
                     routingContext.session().put(DEVICE_TYPE, deviceType);
                 }
                 return Maybe.just(true);

@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifier
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
@@ -37,6 +38,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -55,20 +57,20 @@ import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -85,6 +87,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
     private final DeviceService deviceService;
     private final CredentialService credentialService;
     private final String origin;
+    private final UserActivityService userActivityService;
 
     public WebAuthnLoginEndpoint(Domain domain,
                                  UserAuthenticationManager userAuthenticationManager,
@@ -92,7 +95,11 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                  ThymeleafTemplateEngine engine,
                                  DeviceIdentifierManager deviceIdentifierManager,
                                  DeviceService deviceService,
-                                 CredentialService credentialService, FactorService factorService, FactorManager factorManager) {
+                                 CredentialService credentialService,
+                                 FactorService factorService,
+                                 FactorManager factorManager,
+                                 UserActivityService userActivityService
+    ) {
         super(engine, userAuthenticationManager, factorService, factorManager);
         this.domain = domain;
         this.webAuthn = webAuthn;
@@ -103,6 +110,7 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                 && domain.getWebAuthnSettings().getOrigin() != null) ?
                 domain.getWebAuthnSettings().getOrigin() :
                 DEFAULT_ORIGIN;
+        this.userActivityService = userActivityService;
     }
 
     @Override
@@ -131,6 +139,9 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
             final String loginActionKey = routingContext.get(CONTEXT_PATH) + "/login";
             routingContext.put(ConstantKeys.LOGIN_ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), loginActionKey, queryParams, true));
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, Collections.singletonMap(Parameters.CLIENT_ID, client.getClientId()));
+            addUserActivityTemplateVariables(routingContext, userActivityService);
+            addUserActivityConsentTemplateVariables(routingContext);
+
 
             // render the webauthn login page
             final Map<String, Object> data = generateData(routingContext, domain, client);
@@ -192,23 +203,29 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                 // check if user exists in AM
                 checkUser(client, username, new VertxHttpServerRequest(ctx.request().getDelegate()), h -> {
                     // if user doesn't exists to need to set values in the session
-                    if (h.result() != null) {
+                    final io.gravitee.am.model.User user = h.result();
+                    if (user != null) {
                         session
                                 .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
                                 .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
                                 .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
-                    if (rememberDeviceSettings.isActive()) {
-                                var deviceId = webauthnLogin.getString(DEVICE_ID);
-                                var deviceType = webauthnLogin.getString(DEVICE_TYPE);
-                                checkIfDeviceExists(ctx, client, h.result().getId(), deviceId, deviceType, rememberDeviceSettings)
-                                        .doFinally(() -> buildResponse(ctx, getAssertion))
-                                        .subscribe();
-                            } else {
-                    buildResponse(ctx, getAssertion);
-                            }
-                            } else {
-                            buildResponse(ctx, getAssertion);
-                }});
+                        Completable completable = Completable.complete();
+                        if (rememberDeviceSettings.isActive()) {
+                            var deviceId = webauthnLogin.getString(DEVICE_ID);
+                            var deviceType = webauthnLogin.getString(DEVICE_TYPE);
+                            completable = completable.andThen(checkIfDeviceExists(ctx, client, user.getId(), deviceId, deviceType, rememberDeviceSettings));
+                        }
+                        if (userActivityService.canSaveUserActivity()) {
+                            completable = completable.andThen(getUserActivityIfNecessary(ctx, user, completable));
+                        }
+                        completable
+                                .doOnError(err -> logger.error("An unexpected error has occurred: {}", err.getMessage(), err))
+                                .doFinally(() -> buildResponse(ctx, getAssertion))
+                                .subscribe();
+                    } else {
+                        buildResponse(ctx, getAssertion);
+                    }
+                });
 
             }
         });
@@ -322,16 +339,36 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
             return Completable.complete();
         } else {
             return this.deviceService.deviceExists(domain, client.getClientId(), userId, deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
+                routingContext.session().put(DEVICE_ID, deviceId);
                 if (!isEmpty) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                 } else {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
-                    routingContext.session().put(DEVICE_ID, deviceId);
                     routingContext.session().put(DEVICE_TYPE, deviceType);
                 }
                 return Maybe.just(isEmpty);
             }).ignoreElement();
         }
+    }
+
+    private Completable getUserActivityIfNecessary(RoutingContext ctx, io.gravitee.am.model.User user, Completable completable) {
+        final String userAgent = RequestUtils.userAgent(ctx.request());
+
+        var data = new HashMap<String, Object>();
+        if (canSaveIp(ctx) && ctx.get(GEOIP_KEY) != null) {
+            data.putAll(ctx.get(GEOIP_KEY));
+        }
+
+        if (canSaveUserAgent(ctx) && userAgent != null) {
+            data.put(Claims.user_agent, userAgent);
+        }
+
+        if (ctx.session() != null) {
+            data.put(LOGIN_ATTEMPT_KEY, ctx.session().get(LOGIN_ATTEMPT_KEY));
+        }
+
+        final Completable saveCompletable = userActivityService.save(domain.getId(), user.getId(), Type.LOGIN, data);
+        return completable == null ? saveCompletable : completable.andThen(saveCompletable);
     }
 
     @Override

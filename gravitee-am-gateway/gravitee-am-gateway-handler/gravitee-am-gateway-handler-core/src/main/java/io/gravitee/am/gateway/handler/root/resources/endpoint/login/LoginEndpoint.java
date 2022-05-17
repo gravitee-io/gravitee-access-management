@@ -27,19 +27,20 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
+import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_ENABLED;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.getCleanedQueryParams;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -67,12 +68,19 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
     private final Domain domain;
     private final BotDetectionManager botDetectionManager;
     private final DeviceIdentifierManager deviceIdentifierManager;
+    private final UserActivityService userActivityService;
 
-    public LoginEndpoint(TemplateEngine templateEngine, Domain domain, BotDetectionManager botDetectionManager, DeviceIdentifierManager deviceIdentifierManager) {
+    public LoginEndpoint(
+            TemplateEngine templateEngine,
+            Domain domain,
+            BotDetectionManager botDetectionManager,
+            DeviceIdentifierManager deviceIdentifierManager,
+            UserActivityService userActivityService) {
         super(templateEngine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
         this.deviceIdentifierManager = deviceIdentifierManager;
+        this.userActivityService = userActivityService;
     }
 
     @Override
@@ -96,6 +104,8 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
         routingContext.put(HIDE_FORM_CONTEXT_KEY, optionalSettings.map(LoginSettings::isHideForm).orElse(false));
         routingContext.put(IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, isIdentifierFirstLoginEnabled);
+        addUserActivityTemplateVariables(routingContext, userActivityService);
+        addUserActivityConsentTemplateVariables(routingContext);
 
         // put request in context
         EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));

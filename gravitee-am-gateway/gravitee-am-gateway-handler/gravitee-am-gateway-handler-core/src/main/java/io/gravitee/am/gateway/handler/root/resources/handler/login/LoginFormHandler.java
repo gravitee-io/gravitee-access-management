@@ -21,17 +21,21 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
+import io.gravitee.am.model.UserActivity.Type;
+import io.gravitee.am.service.UserActivityService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -42,9 +46,14 @@ public class LoginFormHandler implements Handler<RoutingContext> {
     private static final Logger logger = LoggerFactory.getLogger(LoginFormHandler.class);
 
     private final UserAuthProvider authProvider;
+    private final UserActivityService userActivityService;
 
-    public LoginFormHandler(UserAuthProvider authProvider) {
+    public LoginFormHandler(
+            UserAuthProvider authProvider,
+            UserActivityService userActivityService
+    ) {
         this.authProvider = authProvider;
+        this.userActivityService = userActivityService;
     }
 
     @Override
@@ -71,9 +80,18 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                 JsonObject authInfo = new JsonObject()
                         .put(USERNAME_PARAM_KEY, username)
                         .put(PASSWORD_PARAM_KEY, password)
-                        .put(Claims.ip_address, RequestUtils.remoteAddress(req))
-                        .put(Claims.user_agent, RequestUtils.userAgent(req))
                         .put(Parameters.CLIENT_ID, clientId);
+
+                final String ipAddress = RequestUtils.remoteAddress(req);
+                final String userAgent = RequestUtils.userAgent(req);
+
+                if (canSaveIp(context)) {
+                    authInfo.put(Claims.ip_address, ipAddress);
+                }
+
+                if (canSaveUserAgent(context)) {
+                    authInfo.put(Claims.user_agent, userAgent);
+                }
 
                 authProvider.authenticate(context, authInfo, res -> {
                     if (res.failed()) {
@@ -85,10 +103,34 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                     // set user into the context and continue
                     final User result = res.result();
                     context.getDelegate().setUser(result);
-                    context.put(ConstantKeys.USER_CONTEXT_KEY, result.getUser());
-                    context.next();
+                    final io.gravitee.am.model.User user = result.getUser();
+                    context.put(ConstantKeys.USER_CONTEXT_KEY, user);
+
+                    if (userActivityService.canSaveUserActivity()) {
+                        saveUserActivity(context, userAgent, user);
+                    } else {
+                        context.next();
+                    }
                 });
             }
         }
+    }
+
+    private void saveUserActivity(RoutingContext context, String userAgent, io.gravitee.am.model.User user) {
+        var data = new HashMap<String, Object>();
+        if (canSaveIp(context) && context.get(GEOIP_KEY) != null) {
+            data.putAll(context.get(GEOIP_KEY));
+        }
+        if (canSaveUserAgent(context) && userAgent != null) {
+            data.put(Claims.user_agent, userAgent);
+        }
+        if (context.session() != null) {
+            data.put(LOGIN_ATTEMPT_KEY, context.session().get(LOGIN_ATTEMPT_KEY));
+        }
+        userActivityService.save(user.getReferenceId(), user.getId(), Type.LOGIN, data)
+                .doOnComplete(() -> logger.debug("User Activity saved successfully"))
+                .doOnError(err -> logger.error("An unexpected error has occurred '{}'", err.getMessage(), err))
+                .doFinally(context::next)
+                .subscribe();
     }
 }

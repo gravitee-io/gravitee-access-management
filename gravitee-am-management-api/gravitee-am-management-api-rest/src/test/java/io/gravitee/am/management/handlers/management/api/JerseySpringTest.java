@@ -84,6 +84,9 @@ public abstract class JerseySpringTest {
     protected io.gravitee.am.management.service.UserService userService;
 
     @Autowired
+    protected UserActivityService userActivityService;
+
+    @Autowired
     protected ScopeService scopeService;
 
     @Autowired
@@ -223,6 +226,11 @@ public abstract class JerseySpringTest {
         @Bean
         public io.gravitee.am.management.service.UserService userService() {
             return mock(io.gravitee.am.management.service.UserService.class);
+        }
+
+        @Bean
+        public UserActivityService userActivityService() {
+            return mock(UserActivityService.class);
         }
 
         @Bean

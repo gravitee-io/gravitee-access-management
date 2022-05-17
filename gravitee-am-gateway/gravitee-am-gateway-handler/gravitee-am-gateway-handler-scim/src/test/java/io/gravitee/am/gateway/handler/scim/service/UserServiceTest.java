@@ -33,6 +33,7 @@ import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.gravitee.am.service.validators.user.UserValidatorImpl;
@@ -41,6 +42,10 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,11 +54,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
@@ -83,6 +83,9 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserActivityService userActivityService;
 
     @Mock
     private IdentityProviderManager identityProviderManager;
@@ -311,6 +314,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(userRepository.delete(userId)).thenReturn(Completable.complete());
+        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();
@@ -333,6 +337,7 @@ public class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Maybe.just(endUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
         when(userRepository.delete(userId)).thenReturn(Completable.complete());
+        when(userActivityService.deleteByDomainAndUser(domain.getId(), userId)).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.delete(userId, null).test();
         testObserver.assertNoErrors();

@@ -25,11 +25,14 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import java.util.Map;
 
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
@@ -155,7 +158,7 @@ public class MfaFilterContext {
                 .anyMatch(client.getFactors()::contains);
     }
 
-    public boolean isMfaChallengeComplete(){
+    public boolean isMfaChallengeComplete() {
         return nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
                 TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
@@ -168,5 +171,13 @@ public class MfaFilterContext {
                 .filter(factor -> ACTIVATED.equals(factor.getStatus()))
                 .map(EnrolledFactor::getFactorId)
                 .anyMatch(client.getFactors()::contains);
+    }
+
+    public boolean isDeviceRiskAssessmentEnabled() {
+        return Optional.ofNullable(client.getRiskAssessment())
+                .filter(RiskAssessmentSettings::isEnabled)
+                .map(RiskAssessmentSettings::getDeviceAssessment)
+                .map(AssessmentSettings::isEnabled)
+                .orElse(false);
     }
 }

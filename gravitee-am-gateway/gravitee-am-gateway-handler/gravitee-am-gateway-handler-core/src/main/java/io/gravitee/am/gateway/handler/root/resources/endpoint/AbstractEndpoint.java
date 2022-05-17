@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -28,13 +29,16 @@ import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.common.template.TemplateEngine;
-import org.slf4j.Logger;
-
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
 
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static java.lang.Boolean.TRUE;
 
 /**
  * @author Boualem DJELAILI (boualem.djelaili at graviteesource.com)
@@ -87,5 +91,24 @@ public abstract class AbstractEndpoint {
         return context.session().get(ConstantKeys.RETURN_URL_KEY) != null ?
                 context.session().get(ConstantKeys.RETURN_URL_KEY) :
                 UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+    }
+
+
+    protected void addUserActivityTemplateVariables(RoutingContext routingContext, UserActivityService userActivityService) {
+        routingContext.put(USER_ACTIVITY_ENABLED, userActivityService.canSaveUserActivity());
+        if (userActivityService.canSaveUserActivity()) {
+            final long time = Math.abs(userActivityService.getRetentionTime());
+            final String retentionUnit = userActivityService.getRetentionUnit().name().toLowerCase(Locale.ROOT);
+            final String retentionTime = time + " " + (time > 1 ? retentionUnit : retentionUnit.substring(0, retentionUnit.length() - 1));
+            routingContext.put(USER_ACTIVITY_RETENTION_TIME, retentionTime);
+        }
+    }
+
+    protected void addUserActivityConsentTemplateVariables(RoutingContext routingContext) {
+        final Session session = routingContext.session();
+        if (session != null) {
+            routingContext.put(USER_CONSENT_IP_LOCATION, TRUE.equals(session.get(USER_CONSENT_IP_LOCATION)));
+            routingContext.put(USER_CONSENT_USER_AGENT, TRUE.equals(session.get(USER_CONSENT_USER_AGENT)));
+        }
     }
 }

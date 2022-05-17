@@ -30,5 +30,6 @@ public enum TableName {
     auth_flow_ctx,
     pushed_authorization_requests,
     ciba_auth_requests,
-    devices
+    user_activities,
+    devices,
 }

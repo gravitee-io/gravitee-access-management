@@ -28,6 +28,13 @@ loginForm.addEventListener("submit", function(e){
     if(this.deviceType && this.deviceType.value){
         user.deviceType = this.deviceType.value;
     }
+    if(this.user_consent_ip_location && this.user_consent_ip_location.value){
+        user.user_consent_ip_location = this.user_consent_ip_location.value;
+    }
+    if(this.user_consent_user_agent && this.user_consent_user_agent.value){
+        user.user_consent_user_agent = this.user_consent_user_agent.value;
+    }
+
     w.login(user)
         .then(res => {
             clearMessage();
