@@ -64,6 +64,9 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserAuthenticationServiceImpl.class);
     private static final String SOURCE_FIELD = "source";
+    private static final String FIRST_NAME = "firstName";
+    private static final String LAST_NAME = "lastName";
+    private static final String EMAIL = "email";
 
     @Autowired
     private Domain domain;
@@ -268,6 +271,15 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             user.setSource((String) extraInformation.remove(SOURCE_FIELD));
             user.setClient((String) extraInformation.remove(Parameters.CLIENT_ID));
             user.setAdditionalInformation(extraInformation);
+            if (additionalInformation.containsKey(FIRST_NAME)) {
+                user.setFirstName((String) additionalInformation.get(FIRST_NAME));
+            }
+            if (additionalInformation.containsKey(LAST_NAME)) {
+                user.setLastName((String) additionalInformation.get(LAST_NAME));
+            }
+            if (additionalInformation.containsKey(EMAIL)) {
+                user.setEmail((String) additionalInformation.get(EMAIL));
+            }
         }
     }
 }
