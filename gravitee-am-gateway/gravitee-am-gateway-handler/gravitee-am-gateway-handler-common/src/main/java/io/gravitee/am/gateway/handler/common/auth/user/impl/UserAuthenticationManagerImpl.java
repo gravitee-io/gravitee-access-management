@@ -256,6 +256,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     Map<String, Object> additionalInformation = user.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(user.getAdditionalInformation());
                     additionalInformation.put("source", authProvider);
                     additionalInformation.put(Parameters.CLIENT_ID, client.getId());
+                    ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return new UserAuthentication(user, null);
                 })
                 .onErrorResumeNext(error -> {
