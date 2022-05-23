@@ -14,30 +14,14 @@ parameters:
     type: boolean
     default: true
     description: "Run in dry run mode?"
+  rc_requested:
+    type: boolean
+    default: false
+    description: "Do we have to release a RC"
   maven_profile_id:
     type: string
     default: "gravitee-dry-run"
     description: "Maven ID of the Maven profile to use for a dry run ?"
-  ee_id_provider_cas_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the CAS identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_id_provider_kerberos_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the Kerberos identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_id_provider_saml_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the SAML2 identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_gravitee_license_version:
-    type: string
-    default: ''
-    description: "The semver version number of the Gravitee License to bundle with Gravitee AM Enterprise Edition"
-  ee_gravitee_ae_connector_version:
-    type: string
-    default: ''
-    description: "The semver version number of the Gravitee Alert Engine connector to bundle with Gravitee AM Enterprise Edition"
   secrethub_org:
     type: string
     default: "gravitee-lab"

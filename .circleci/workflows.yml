@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   gio_action:
     type: enum
-    enum: [ release, publish_rpms, pull_requests ]
+    enum: [ release, publish_rpms, publish_docker_images, pull_requests ]
     default: pull_requests
   gio_product:
     type: enum
@@ -13,30 +13,14 @@ parameters:
     type: boolean
     default: true
     description: "Run in dry run mode?"
+  rc_requested:
+    type: boolean
+    default: false
+    description: "Do we have to release a RC"
   maven_profile_id:
     type: string
     default: "gravitee-dry-run"
     description: "Maven ID of the Maven profile to use for a dry run ?"
-  ee_id_provider_cas_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the CAS identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_id_provider_kerberos_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the Kerberos identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_id_provider_saml_version:
-    type: string
-    default: ''
-    description: "For Gravitee AM Release : The semver version number of the SAML2 identity provider plugin to bundle with Gravitee AM Enterprise Edition"
-  ee_gravitee_license_version:
-    type: string
-    default: ''
-    description: "The semver version number of the Gravitee License to bundle with Gravitee AM Enterprise Edition"
-  ee_gravitee_ae_connector_version:
-    type: string
-    default: ''
-    description: "The semver version number of the Gravitee Alert Engine connector to bundle with Gravitee AM Enterprise Edition"
   secrethub_org:
     type: string
     default: "gravitee-lab"
@@ -130,7 +114,7 @@ orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
-  am: gravitee-io/gravitee-am@1.0
+  am: gravitee-io/gravitee-am@dev:1.0.9
   snyk: snyk/snyk@1.1.2
 
 commands:
@@ -648,20 +632,7 @@ jobs:
             unzip /tmp/gravitee-am-management-api-standalone-*.zip -d graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/
             # ---
             # ---
-            
-            # ---
-            # ---
-            # Add Gravitee License library
-            wget https://download.gravitee.io/graviteeio-ee/license/gravitee-license-node-enterprise-${GRAVITEE_LICENSE_VERSION}.jar
-            wget https://download.gravitee.io/graviteeio-ee/license/gravitee-license-node-enterprise-${GRAVITEE_LICENSE_VERSION}.jar.sha1
-            sha1sum -c gravitee-license-node-enterprise-${GRAVITEE_LICENSE_VERSION}.jar.sha1
-            cp gravitee-license-node-enterprise-${GRAVITEE_LICENSE_VERSION}.jar graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/lib
-            mkdir graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/license
-            mv gravitee-license-node-enterprise-${GRAVITEE_LICENSE_VERSION}.jar graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/lib
-            mkdir graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/license
-            # ---
-            # ---
-            
+
             # ---
             # ---
             # Add AM SAML 2 IdP
@@ -1151,19 +1122,16 @@ workflows:
         - equal: [ release, << pipeline.parameters.gio_action >> ]
         - not: << pipeline.parameters.dry_run >>
     jobs:
-      - gravitee/d_am_release_secrets:
+      - am/d_am_release_secrets:
           context: cicd-orchestrator
           name: 'am_release_secrets'
-      - gravitee/d_am_release:
+      - am/d_am_release:
+          name: 'am_release_dist'
           requires:
             - am_release_secrets
           dry_run: << pipeline.parameters.dry_run >>
+          rc_requested: << pipeline.parameters.rc_requested >>
           maven_profile_id: 'gio-release'
-          ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
-          ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
-          ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
-          ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
-          ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
           <<: *slack-pass-fail-post-step
 
   release_dry_run:
@@ -1172,19 +1140,16 @@ workflows:
         - equal: [ release, << pipeline.parameters.gio_action >> ]
         - << pipeline.parameters.dry_run >>
     jobs:
-      - gravitee/d_am_release_secrets:
+      - am/d_am_release_secrets:
           context: cicd-orchestrator
           name: 'am_release_secrets'
-      - gravitee/d_am_release:
+      - am/d_am_release:
+          name: 'am_release_dist'
           requires:
             - am_release_secrets
           dry_run: << pipeline.parameters.dry_run >>
+          rc_requested: << pipeline.parameters.rc_requested >>
           maven_profile_id: 'gravitee-dry-run'
-          ee_id_provider_cas_version: << pipeline.parameters.ee_id_provider_cas_version >>
-          ee_id_provider_kerberos_version: << pipeline.parameters.ee_id_provider_kerberos_version >>
-          ee_id_provider_saml_version: << pipeline.parameters.ee_id_provider_saml_version >>
-          ee_gravitee_license_version: << pipeline.parameters.ee_gravitee_license_version >>
-          ee_gravitee_ae_connector_version: << pipeline.parameters.ee_gravitee_ae_connector_version >>
           <<: *slack-pass-fail-post-step
 
   publish_rpms:
@@ -1196,6 +1161,16 @@ workflows:
           secrethub_org: graviteeio
           secrethub_repo: cicd
           gio_release_version: << pipeline.parameters.graviteeio_version >>
+
+  publish_docker_images:
+    when:
+      equal: [ publish_docker_images, << pipeline.parameters.gio_action >> ]
+    jobs:
+      - am/build_n_push_am_ce_job:
+          context: cicd-orchestrator
+          graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
+          tag_latest: << pipeline.parameters.tag_latest >>
 
   daily-purge-azure-registry:
     triggers:
