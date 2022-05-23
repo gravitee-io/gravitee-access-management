@@ -203,13 +203,16 @@ public class EmailServiceImpl implements EmailService {
 
         Map<String, Object> params = new HashMap<>();
         params.put("user", new UserProperties(user));
-        params.put("url", redirectUrl);
         params.put("token", token);
         params.put("expireAfterSeconds", expiresAfter);
         params.put("domain", new DomainProperties(domain));
+
         if (client != null) {
             params.put("client", new ClientProperties(client));
+            redirectUrl += "&client_id=" + client.getClientId();
         }
+
+        params.put("url", redirectUrl);
 
         return params;
     }
