@@ -402,6 +402,13 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>io.gravitee.ae</groupId>
+            <artifactId>gravitee-alert-engine-connectors-ws</artifactId>
+            <version>${gravitee-ae-connectors.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>io.gravitee.notifier</groupId>
             <artifactId>gravitee-notifier-webhook</artifactId>
             <version>${gravitee-notifier-webhook.version}</version>
@@ -412,6 +419,13 @@
             <groupId>io.gravitee.notifier</groupId>
             <artifactId>gravitee-notifier-email</artifactId>
             <version>${gravitee-notifier-email.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.notifier</groupId>
+            <artifactId>gravitee-notifier-slack</artifactId>
+            <version>${gravitee-notifier-slack.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
@@ -746,6 +760,12 @@
                                     <type>zip</type>
                                 </artifactItem>
                                 <artifactItem>
+                                    <groupId>io.gravitee.ae</groupId>
+                                    <artifactId>gravitee-alert-engine-connectors-ws</artifactId>
+                                    <version>${gravitee-ae-connectors.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
                                     <groupId>io.gravitee.notifier</groupId>
                                     <artifactId>gravitee-notifier-webhook</artifactId>
                                     <version>${gravitee-notifier-webhook.version}</version>
@@ -755,6 +775,12 @@
                                     <groupId>io.gravitee.notifier</groupId>
                                     <artifactId>gravitee-notifier-email</artifactId>
                                     <version>${gravitee-notifier-email.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.notifier</groupId>
+                                    <artifactId>gravitee-notifier-slack</artifactId>
+                                    <version>${gravitee-notifier-slack.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>
