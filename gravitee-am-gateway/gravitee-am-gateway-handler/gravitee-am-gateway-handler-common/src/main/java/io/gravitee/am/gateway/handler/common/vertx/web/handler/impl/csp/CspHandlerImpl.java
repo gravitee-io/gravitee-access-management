@@ -16,13 +16,16 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.csp;
 
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import static io.gravitee.am.common.utils.ConstantKeys.CSP_SCRIPT_INLINE_NONCE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 
@@ -31,23 +34,41 @@ import static java.util.Objects.nonNull;
  * @author GraviteeSource Team
  */
 public class CspHandlerImpl implements CSPHandler {
-
+    public static final int NONCE_LENGTH = 32;
+    public static final String NONCE_PREFIX = "'nonce-";
+    public static final String NONCE_SUFIX = "'";
+    public static final String SCRIPT_SRC_DIRECTIVE = "script-src";
+    private final boolean scriptInlineNonce;
     private final io.vertx.reactivex.ext.web.handler.CSPHandler delegate;
 
-    public CspHandlerImpl(Boolean isReportOnly, List<String> directives) {
+    private String staticScriptSrcDirective;
+
+    public CspHandlerImpl(Boolean isReportOnly, List<String> directives, boolean scriptInlineNonce) {
         // adds "default-src": "self" as default configuration
         this.delegate = io.vertx.reactivex.ext.web.handler.CSPHandler.create().setReportOnly(TRUE.equals(isReportOnly));
+        this.scriptInlineNonce = scriptInlineNonce;
         addDirectives(directives);
     }
 
     private void addDirectives(List<String> directives) {
         if (nonNull(directives) && directives.size() > 0) {
-            directives.stream().map(directive -> directive.split("[ \t]", 2))
-                    .filter(directive -> directive.length == 2)
-                    .map(this::getDirectiveEntry)
+            final Map<String, String> mapOfDirectives = buildDirectivesMap(directives);
+
+            if (mapOfDirectives.containsKey(SCRIPT_SRC_DIRECTIVE)) {
+                this.staticScriptSrcDirective = mapOfDirectives.get(SCRIPT_SRC_DIRECTIVE);
+            }
+
+            mapOfDirectives.entrySet().stream()
                     .filter(e -> !e.getKey().isEmpty() && !e.getValue().isEmpty())
                     .forEach(e -> this.delegate.addDirective(e.getKey(), e.getValue()));
         }
+    }
+
+    private Map<String, String> buildDirectivesMap(List<String> directives) {
+        return directives.stream().map(directive -> directive.split("[ \t]", 2))
+                .filter(directive -> directive.length == 2)
+                .map(this::getDirectiveEntry)
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     }
 
     private Entry<String, String> getDirectiveEntry(String[] directive) {
@@ -60,6 +81,13 @@ public class CspHandlerImpl implements CSPHandler {
 
     @Override
     public void handle(RoutingContext event) {
+        if (this.scriptInlineNonce) {
+            final String nonce = SecureRandomString.randomAlphaNumeric(NONCE_LENGTH);
+            event.put(CSP_SCRIPT_INLINE_NONCE, nonce);
+            // reset the scriptDirective to avoid accumulation of nonce values
+            this.delegate.setDirective(SCRIPT_SRC_DIRECTIVE, this.staticScriptSrcDirective);
+            this.delegate.addDirective(SCRIPT_SRC_DIRECTIVE, NONCE_PREFIX + nonce + NONCE_SUFIX);
+        }
         this.delegate.handle(event);
     }
 }
