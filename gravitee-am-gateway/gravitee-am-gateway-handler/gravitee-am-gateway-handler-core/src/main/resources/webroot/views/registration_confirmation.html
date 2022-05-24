@@ -85,7 +85,7 @@
 <![endif]-->
 <script th:src="@{assets/material/material.min.js}"></script>
 <script th:src="@{assets/js/jquery-3.5.1.min.js}"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
 
     $(document).ready(function() {
         $(".mdl-textfield__input").focus(function (){

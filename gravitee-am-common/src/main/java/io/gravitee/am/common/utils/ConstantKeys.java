@@ -149,4 +149,6 @@ public interface ConstantKeys {
     String HTTP_SSL_ALIASES_ENDPOINTS_CIBA = "backchannel_authentication_endpoint";
 
     String CIBA_AUTH_REQUEST_KEY = "ciba_authentication_request";
+
+    String CSP_SCRIPT_INLINE_NONCE = "script_inline_nonce";
 }

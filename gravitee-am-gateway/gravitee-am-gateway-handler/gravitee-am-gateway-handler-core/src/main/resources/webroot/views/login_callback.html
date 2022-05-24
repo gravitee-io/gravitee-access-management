@@ -12,7 +12,7 @@
     <form id="callbackForm" th:action="@{callback}" method="post">
         <input type="hidden" th:name="urlHash" id="urlhash">
     </form>
-    <script>
+    <script th:attr="nonce=${script_inline_nonce}">
         (function() {
             document.getElementById('urlhash').value = window.location.hash;
             document.getElementById('callbackForm').submit();
