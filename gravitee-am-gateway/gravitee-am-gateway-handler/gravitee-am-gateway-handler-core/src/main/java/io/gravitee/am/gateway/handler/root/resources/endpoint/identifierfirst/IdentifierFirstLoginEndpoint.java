@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst;
 
-import com.google.common.base.Strings;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
@@ -24,10 +23,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
-import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
@@ -40,18 +36,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
-import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.model.Template.IDENTIFIER_FIRST_LOGIN;
 import static java.util.Optional.ofNullable;
 
@@ -134,55 +131,6 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
     }
 
     private void redirect(RoutingContext routingContext) {
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-        final List<IdentityProvider> socialProviders = routingContext.get(SOCIAL_PROVIDER_CONTEXT_KEY);
-        // no social providers configured, continue
-        if (socialProviders == null || socialProviders.isEmpty()) {
-            doInternalRedirect(routingContext);
-            return;
-        }
-
-        if (client.getIdentityProviders() == null || client.getIdentityProviders().isEmpty()) {
-            doInternalRedirect(routingContext);
-            return;
-        }
-
-        var appIdpMap = client.getIdentityProviders().stream().collect(Collectors.toMap(
-                ApplicationIdentityProvider::getIdentity, Function.identity()
-        ));
-
-        var context = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()), routingContext.data());
-        var templateEngine = context.getTemplateEngine();
-        var identityProvider = socialProviders.stream()
-                .filter(idp -> appIdpMap.containsKey(idp.getId()))
-                .filter(idp -> evaluateRule(appIdpMap.get(idp.getId()), templateEngine, idp))
-                .findFirst();
-
-        // no IdP has matched, continue
-        if (identityProvider.isEmpty()) {
-            doInternalRedirect(routingContext);
-            return;
-        }
-
-        // else, redirect to the external provider
-        doExternalRedirect(routingContext, identityProvider.get());
-    }
-
-    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine, IdentityProvider idp) {
-        var rule = appIdp.getSelectionRule();
-        // We keep the same behaviour as before, if there is no rule, no automatic redirect
-        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
-            return false;
-        }
-        try {
-            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
-        } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
-            return false;
-        }
-    }
-
-    private void doInternalRedirect(RoutingContext routingContext) {
         final String redirectUrl = routingContext.get(CONTEXT_PATH) + "/login";
         final HttpServerRequest request = routingContext.request();
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
@@ -191,14 +139,6 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         queryParams.add(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(request.getParam(USERNAME_PARAM_KEY)));
         final String url = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
         doRedirect0(routingContext, url);
-    }
-
-    private void doExternalRedirect(RoutingContext routingContext, IdentityProvider identityProvider) {
-        Map<String, String> urls = routingContext.get(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
-        UriBuilder uriBuilder = UriBuilder.fromHttpUrl(urls.get(identityProvider.getId()));
-        // encode login_hint parameter for external provider (Azure AD replace the '+' sign by a space ' ')
-        uriBuilder.addParameter(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY)));
-        doRedirect0(routingContext, uriBuilder.buildString());
     }
 
     private void doRedirect0(RoutingContext routingContext, String url) {

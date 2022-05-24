@@ -1,0 +1,110 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.root.resources.handler.login;
+
+import com.google.common.base.Strings;
+import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
+import io.gravitee.am.model.oidc.Client;
+import io.vertx.core.Handler;
+import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
+
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public class LoginSelectionRuleHandler  implements Handler<RoutingContext>  {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private final boolean fromIdentifierFirstLogin;
+
+    public LoginSelectionRuleHandler(boolean fromIdentifierFirstLogin) {
+        this.fromIdentifierFirstLogin = fromIdentifierFirstLogin;
+    }
+
+    @Override
+    public void handle(RoutingContext routingContext) {
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        List<IdentityProvider> socialProviders = routingContext.get(SOCIAL_PROVIDER_CONTEXT_KEY);
+        if ((socialProviders != null && !socialProviders.isEmpty())
+                && (client.getIdentityProviders() != null && !client.getIdentityProviders().isEmpty())) {
+
+        var socialProviderMap = socialProviders.stream().collect(Collectors.toMap(
+                    IdentityProvider::getId, Function.identity()
+            ));
+
+            var context = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()), routingContext.data());
+            var templateEngine = context.getTemplateEngine();
+            var identityProvider = client.getIdentityProviders().stream()
+                    .filter(appIdp -> socialProviderMap.containsKey(appIdp.getIdentity()))
+                    .filter(appIdp -> evaluateRule(appIdp, templateEngine))
+                    .findFirst();
+
+            if (identityProvider.isPresent()) {
+                Map<String, String> urls = routingContext.get(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY);
+                UriBuilder uriBuilder = UriBuilder.fromHttpUrl(urls.get(identityProvider.get().getIdentity()));
+
+                if (fromIdentifierFirstLogin) {
+                    // encode login_hint parameter for external provider (Azure AD replace the '+' sign by a space ' ')
+                    uriBuilder.addParameter(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(routingContext.request().getParam(USERNAME_PARAM_KEY)));
+                }
+
+                doRedirect(routingContext, uriBuilder.buildString());
+                return;
+            }
+        }
+
+        routingContext.next();
+    }
+
+    private void doRedirect(RoutingContext routingContext, String url) {
+        routingContext.response()
+                .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, url)
+                .setStatusCode(302)
+                .end();
+    }
+
+    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine) {
+        var rule = appIdp.getSelectionRule();
+        // We keep the same behaviour as before, if there is no rule, no automatic redirect
+        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
+            return false;
+        }
+        try {
+            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
+        } catch (Exception e) {
+            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            return false;
+        }
+    }
+}

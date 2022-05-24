@@ -71,6 +71,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFailureH
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginFormHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginNegotiateAuthenticationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.loginattempt.LoginAttemptHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice.DeviceIdentifierHandler;
@@ -290,6 +291,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(botDetectionHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_LOGIN_IDENTIFIER))
+                .handler(new LoginSelectionRuleHandler(true))
                 .handler(new IdentifierFirstLoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
 
         // login route
@@ -298,6 +300,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginHideFormHandler(domain))
+                .handler(new LoginSelectionRuleHandler(false))
                 .handler(new LoginEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, deviceIdentifierManager));
 
         rootRouter.post(PATH_LOGIN)
