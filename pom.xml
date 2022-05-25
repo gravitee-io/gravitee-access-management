@@ -78,7 +78,7 @@
         <spring-security.version>5.4.8</spring-security.version>
         <spring-integration.version>5.2.11.RELEASE</spring-integration.version>
 
-        <vertx-auth-webauthn.version>4.1.7.1</vertx-auth-webauthn.version>
+        <vertx-auth-webauthn.version>4.3.1</vertx-auth-webauthn.version>
 
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
