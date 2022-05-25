@@ -27,6 +27,8 @@ public class HttpUsersResourceConfiguration {
     private String usernameAttribute = "username";
     private HttpUsersResourcePathsConfiguration paths;
 
+    private boolean applyUserMapper;
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -65,5 +67,13 @@ public class HttpUsersResourceConfiguration {
 
     public void setPaths(HttpUsersResourcePathsConfiguration paths) {
         this.paths = paths;
+    }
+
+    public boolean isApplyUserMapper() {
+        return applyUserMapper;
+    }
+
+    public void setApplyUserMapper(boolean applyUserMapper) {
+        this.applyUserMapper = applyUserMapper;
     }
 }

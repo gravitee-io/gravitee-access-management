@@ -391,7 +391,7 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
 
     private Maybe<UserProvider> loadUserProvider(IdentityProvider identityProvider) {
         try {
-            UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+            UserProvider userProvider = identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider.getMappers());
             if (userProvider != null) {
                 logger.info("Initializing user provider : {}", identityProvider.getId());
                 userProvider.start();

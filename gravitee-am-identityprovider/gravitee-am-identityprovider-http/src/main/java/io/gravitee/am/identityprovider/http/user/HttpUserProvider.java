@@ -51,6 +51,8 @@ import org.springframework.util.StringUtils;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -71,6 +73,9 @@ public class HttpUserProvider implements UserProvider {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private IdentityProviderMapper mapper;
 
     @Override
     public Maybe<User> findByEmail(String email) {
@@ -258,21 +263,42 @@ public class HttpUserProvider implements UserProvider {
 
 
     private User convert(String username, Map<String, Object> userAttributes) {
+        // remove password key if present to avoid mapper transformation
+        // we don't want to store this value
+        userAttributes.remove("password");
+        final Map<String, Object> mappedUserAttributes = applyUserMapping(new SimpleAuthenticationContext(), userAttributes);
+
         final String identifierAttribute = configuration.getUsersResource().getIdentifierAttribute();
         final String usernameAttribute = configuration.getUsersResource().getUsernameAttribute();
-        final String id = String.valueOf(userAttributes.get(identifierAttribute));
-        final String usernameValue = (username != null) ? username : (userAttributes.get(usernameAttribute) != null) ? String.valueOf(userAttributes.get(usernameAttribute)) : id;
+        // Search the id in mapped attributes first, if missing fallback to attributes before the mapping
+        final String id = ofNullable(mappedUserAttributes.get(identifierAttribute))
+                .or(() -> ofNullable(userAttributes.get(identifierAttribute)))
+                .map(String::valueOf).orElse(null);
+
+        // Search the username in mapped attributes first, if missing fallback to attributes before the mapping
+        // if both values are null, use id
+        final String usernameValue = (username != null) ? username :
+                (mappedUserAttributes.get(usernameAttribute) != null) ? String.valueOf(mappedUserAttributes.get(usernameAttribute)) :
+                        (userAttributes.get(usernameAttribute) != null) ? String.valueOf(userAttributes.get(usernameAttribute)) : id;
+
         DefaultUser user = new DefaultUser(usernameValue);
         // set external id
         user.setId(id);
         // remove sensitive value if any
-        userAttributes.remove(identifierAttribute);
-        userAttributes.remove(usernameAttribute);
-        userAttributes.remove("password");
+        mappedUserAttributes.remove(identifierAttribute);
+        mappedUserAttributes.remove(usernameAttribute);
         Map<String, Object> claims = new HashMap<>();
-        userAttributes.forEach((k, v) -> claims.put(k, v));
+        mappedUserAttributes.forEach((k, v) -> claims.put(k, v));
         user.setAdditionalInformation(claims);
+
         return user;
+    }
+
+    private Map<String, Object> applyUserMapping(AuthenticationContext authContext, Map<String, Object> attributes) {
+        if (!this.configuration.getUsersResource().isApplyUserMapper()) {
+            return attributes;
+        }
+        return this.mapper.apply(authContext, attributes);
     }
 
     private Single<HttpResponse<Buffer>> processRequest(TemplateEngine templateEngine,

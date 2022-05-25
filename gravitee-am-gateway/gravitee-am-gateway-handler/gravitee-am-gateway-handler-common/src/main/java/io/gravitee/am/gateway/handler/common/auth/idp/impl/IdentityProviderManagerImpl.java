@@ -160,7 +160,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
                 authenticationProvider.start();
                 // init the user provider
                 UserProvider userProvider =
-                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration());
+                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider.getMappers());
                 providers.put(identityProvider.getId(), authenticationProvider);
                 identities.put(identityProvider.getId(), identityProvider);
                 if (userProvider != null) {
