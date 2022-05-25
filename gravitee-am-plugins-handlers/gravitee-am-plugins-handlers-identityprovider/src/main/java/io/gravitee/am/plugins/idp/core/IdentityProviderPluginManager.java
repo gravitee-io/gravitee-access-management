@@ -39,7 +39,7 @@ public interface IdentityProviderPluginManager {
 
     AuthenticationProvider create(String type, String configuration, Map<String, String> mappers, Map<String, String[]> roleMapper, CertificateManager certificateManager);
 
-    UserProvider create(String type, String configuration);
+    UserProvider create(String type, String configuration, Map<String, String> mappers);
 
     boolean hasUserProvider(String pluginType);
 

@@ -234,6 +234,11 @@
           "default": "username",
           "description": "Username field of your users"
         },
+        "applyUserMapper": {
+          "type": "boolean",
+          "title": "Apply User Mapper",
+          "description": "Apply User Mapper transformation on all UserProvider outputs"
+        },
         "paths": {
           "type": "object",
           "id": "urn:jsonschema:io:gravitee:am:identityprovider:http:HttpUsersResourcePathsConfiguration",

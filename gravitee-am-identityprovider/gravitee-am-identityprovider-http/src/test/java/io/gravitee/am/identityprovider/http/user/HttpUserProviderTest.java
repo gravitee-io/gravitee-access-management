@@ -17,6 +17,7 @@ package io.gravitee.am.identityprovider.http.user;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.api.UserProvider;
@@ -25,6 +26,7 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -47,8 +51,16 @@ public class HttpUserProviderTest {
     @Autowired
     private UserProvider userProvider;
 
+    @Autowired
+    private DefaultIdentityProviderMapper mapper;
+
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19998));
+
+    @Before
+    public void init() {
+        this.mapper.setMappers(Map.of());
+    }
 
     @Test
     public void shouldCreateUser() {
@@ -113,6 +125,24 @@ public class HttpUserProviderTest {
     }
 
     @Test
+    public void shouldFindUserByUsername_UserMapper() {
+        stubFor(get(urlPathEqualTo("/api/users"))
+                .withQueryParam("username", new EqualToPattern("johndoe"))
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+
+        this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
+
+        TestObserver<User> testObserver = userProvider.findByUsername("johndoe").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> u.getAdditionalInformation().containsKey("copy_of_id")
+                && "123456789".equals(u.getAdditionalInformation().get("copy_of_id")));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldFindUserByUsername_arrayResponse() {
         stubFor(get(urlPathEqualTo("/api/users"))
                 .withQueryParam("username", new EqualToPattern("johndoe"))
@@ -169,6 +199,27 @@ public class HttpUserProviderTest {
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "123456789".equals(u.getId()));
         testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
+    public void shouldUpdateUser_UserMapper() {
+        DefaultUser user = new DefaultUser("johndoe");
+
+        stubFor(put(urlPathEqualTo("/api/users/123456789"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+
+        this.mapper.setMappers(Map.of("username", "username", "id", "id", "copy_of_id", "id"));
+
+        TestObserver<User> testObserver = userProvider.update("123456789", user).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+        testObserver.assertValue(u -> u.getAdditionalInformation().containsKey("copy_of_id")
+                && "123456789".equals(u.getAdditionalInformation().get("copy_of_id")));
     }
 
     @Test

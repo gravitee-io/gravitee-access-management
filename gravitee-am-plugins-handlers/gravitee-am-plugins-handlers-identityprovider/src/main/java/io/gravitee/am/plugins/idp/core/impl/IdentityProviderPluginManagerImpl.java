@@ -124,7 +124,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
     }
 
     @Override
-    public UserProvider create(String type, String configuration) {
+    public UserProvider create(String type, String configuration, Map<String, String> mappers) {
         logger.debug("Looking for an user provider for [{}]", type);
         IdentityProvider identityProvider = identityProviders.get(type);
 
@@ -138,10 +138,13 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                 return null;
             }
 
+            Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
+            IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
+
             return create0(
                     identityProviderPlugins.get(identityProvider),
                     identityProvider.userProvider(),
-                    identityProviderConfiguration);
+                    identityProviderConfiguration, identityProviderMapper);
         } else {
             logger.error("No identity provider is registered for type {}", type);
             throw new IllegalStateException("No identity provider is registered for type " + type);
@@ -266,7 +269,7 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
         }
     }
 
-    private <T> T create0(Plugin plugin, Class<T> userProvider, IdentityProviderConfiguration identityProviderConfiguration) {
+    private <T> T create0(Plugin plugin, Class<T> userProvider, IdentityProviderConfiguration identityProviderConfiguration, IdentityProviderMapper identityProviderMapper) {
         try {
             T identityObj = createInstance(userProvider);
             final Import annImport = userProvider.getAnnotation(Import.class);
@@ -294,6 +297,10 @@ public class IdentityProviderPluginManagerImpl implements IdentityProviderPlugin
                     // Add identity provider configuration bean
                     configurableApplicationContext.addBeanFactoryPostProcessor(
                             new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration));
+
+                    // Add identity provider mapper bean
+                    configurableApplicationContext.addBeanFactoryPostProcessor(
+                            new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper()));
 
                     return configurableApplicationContext;
                 }
