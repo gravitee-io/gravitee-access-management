@@ -46,9 +46,9 @@ export class ApplicationFlowsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = this.route.snapshot.data['application'];
-    this.policies = this.route.snapshot.data['policies'] || [];
     this.flowSchema = this.route.snapshot.data['flowSettingsForm'];
     this.definition.flows = this.route.snapshot.data['flows'] || [];
+    this.initPolicies();
   }
 
   @HostListener(':gv-policy-studio:fetch-documentation', ['$event.detail'])
@@ -127,6 +127,31 @@ export class ApplicationFlowsComponent implements OnInit {
       this.application.settings &&
       this.application.settings.advanced &&
       this.application.settings.advanced.flowsInherited;
+  }
+
+  private initPolicies() {
+    this.policies = this.route.snapshot.data['policies'] || [];
+    const factors = this.route.snapshot.data['factors'] || [];
+    const appFactorIds = this.application.factors || [];
+    const filteredFactors = factors.filter(f => appFactorIds.includes(f.id));
+    this.policies.forEach(policy => {
+      let policySchema = JSON.parse(policy.schema);
+      if (policySchema.properties) {
+        for (const key in policySchema.properties) {
+          if ('graviteeFactor' === policySchema.properties[key].widget) {
+            policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
+            if (filteredFactors.length > 0) {
+              policySchema.properties[key].enum = filteredFactors.map(f => f.id);
+              policySchema.properties[key]['x-schema-form'].titleMap = filteredFactors.reduce(function(map, obj) {
+                map[obj.id] = obj.name;
+                return map;
+              }, {});
+            }
+          }
+        }
+        policy.schema = JSON.stringify(policySchema);
+      }
+    });
   }
 }
 

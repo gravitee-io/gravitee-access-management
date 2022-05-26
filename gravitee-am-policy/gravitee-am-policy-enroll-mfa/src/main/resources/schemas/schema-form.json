@@ -1,0 +1,25 @@
+{
+  "type" : "object",
+  "id" : "urn:jsonschema:io:gravitee:policy:am:enroll:mfa:EnrollMfaPolicyConfiguration",
+  "properties" : {
+    "factorId" : {
+      "title": "MFA Factor to enroll",
+      "type" : "string",
+      "widget": "graviteeFactor"
+    },
+    "value" : {
+      "title": "Value used for MFA enrollment (Support EL)",
+      "type" : "string",
+      "x-schema-form": {
+        "expression-language": true
+      }
+    },
+    "primary" : {
+      "title": "Is this MFA factor your primary method ?",
+      "type" : "boolean",
+      "default" : false
+    }
+  },"required": [
+      "factorId"
+  ]
+}

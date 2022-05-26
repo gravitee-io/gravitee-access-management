@@ -967,7 +967,8 @@ export const routes: Routes = [
                                 resolve: {
                                   flows: ApplicationFlowsResolver,
                                   policies: PluginPoliciesResolver,
-                                  flowSettingsForm: PlatformFlowSchemaResolver
+                                  flowSettingsForm: PlatformFlowSchemaResolver,
+                                  factors: FactorsResolver
                                 },
                                 data: {
                                   menu: {
@@ -1409,7 +1410,8 @@ export const routes: Routes = [
                         resolve: {
                           flows: DomainFlowsResolver,
                           policies: PluginPoliciesResolver,
-                          flowSettingsForm: PlatformFlowSchemaResolver
+                          flowSettingsForm: PlatformFlowSchemaResolver,
+                          factors: FactorsResolver
                         },
                         data: {
                           menu: {
