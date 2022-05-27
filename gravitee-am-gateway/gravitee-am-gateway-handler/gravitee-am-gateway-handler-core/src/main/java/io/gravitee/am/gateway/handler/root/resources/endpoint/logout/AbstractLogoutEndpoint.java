@@ -50,7 +50,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     private static final String INVALIDATE_TOKENS_PARAMETER = "invalidate_tokens";
-    private static final String LOGOUT_URL_PARAMETER = "target_url";
+    protected static final String LOGOUT_URL_PARAMETER = "target_url";
     private static final String DEFAULT_TARGET_URL = "/";
 
     protected Domain domain;
@@ -142,8 +142,22 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
      * Invalidate session for the current user
      *
      * @param routingContext the routing context
+     * @param redirect flag to redirect the user after the logout action
+     */
+    protected void invalidateSession(RoutingContext routingContext, boolean redirect) {
+        invalidateSession0(routingContext, redirect);
+    }
+
+    /**
+     * Invalidate session for the current user
+     *
+     * @param routingContext the routing context
      */
     protected void invalidateSession(RoutingContext routingContext) {
+        invalidateSession0(routingContext, true);
+    }
+
+    private void invalidateSession0(RoutingContext routingContext, boolean redirect) {
         final User endUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY) != null ?
                 routingContext.get(ConstantKeys.USER_CONTEXT_KEY) :
                 (routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null);
@@ -161,7 +175,11 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                             if (routingContext.session() != null) {
                                 routingContext.session().destroy();
                             }
-                            doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
+                            if (redirect) {
+                                doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
+                            } else {
+                                routingContext.response().setStatusCode(200).end();
+                            }
                         },
                         error -> routingContext.fail(error)
                 );
