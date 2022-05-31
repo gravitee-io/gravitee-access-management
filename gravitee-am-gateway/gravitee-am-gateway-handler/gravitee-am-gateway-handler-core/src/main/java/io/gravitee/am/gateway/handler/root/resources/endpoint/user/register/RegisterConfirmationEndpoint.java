@@ -91,7 +91,7 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
             return;
         }
 
-        final Map<String, String> actionParams = Map.of(Parameters.CLIENT_ID, client.getClientId());
+        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
         routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
 
         // render the registration confirmation page
