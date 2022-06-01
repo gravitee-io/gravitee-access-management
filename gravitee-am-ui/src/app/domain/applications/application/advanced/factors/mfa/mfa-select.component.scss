@@ -1,0 +1,36 @@
+:host ::ng-deep.ngx-datatable.material .datatable-footer {
+  display: none;
+}
+
+.gv-form-section {
+  .mfa-section-title {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+
+    .mfa-title{
+      width: 95%;
+    }
+
+    .mfa-chip {
+      width: 5%;
+      mat-chip-list {
+        mat-chip {
+          font-size: 11px;
+          opacity: 1.0;
+          background-color: transparent;
+          border: thin solid rgba(0, 0, 0, 0.2);
+        }
+      }
+    }
+  }
+}
+
+.factor-cell-title {
+  display: flex;
+  align-items: center;
+
+  .factor-type {
+    margin-left: 5px;
+  }
+}

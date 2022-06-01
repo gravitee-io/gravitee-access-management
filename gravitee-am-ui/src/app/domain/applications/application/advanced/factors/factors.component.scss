@@ -5,16 +5,19 @@
 blockquote {
   padding: 15px;
   margin: 10px 0;
-  border-left: .25em solid rgba(0,0,0,.11);
+  border-left: .25em solid rgba(0, 0, 0, .11);
   border-radius: 7px;
+
   p {
-    color: rgba(0,0,0,.535);
+    color: rgba(0, 0, 0, .535);
     font-size: 13px;
     margin: 0;
   }
+
   mat-icon {
     vertical-align: middle;
   }
+
   &.warning {
     background: #fff9c4;
     border-left-color: #fdd835;
