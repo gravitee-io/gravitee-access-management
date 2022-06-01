@@ -1,0 +1,67 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="gv-form-section">
+  <div class="gv-form-section-title mfa-section-title">
+    <div class="mfa-chip">
+      <mat-chip-list class="chip-opacity" [disabled]="true">
+        <mat-chip [disableRipple]="true" [selectable]="false">1</mat-chip>
+      </mat-chip-list>
+    </div>
+    <div class="mfa-title">
+      <h5>MFA</h5>
+      <small>Multi-factor Authentication adds an additional factor to the login process in order to grant user access.</small>
+    </div>
+  </div>
+  <div fxLayout="column">
+    <div *ngIf="hasFactors()">
+      <ngx-datatable class="material"
+                     [columnMode]="'flex'"
+                     [headerHeight]="40"
+                     [footerHeight]="40"
+                     [rowHeight]="50"
+                     [rows]='factors'>
+        <ngx-datatable-column name="Factors" [flexGrow]="4">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            {{row.name}}
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+                   <span class="factor-cell-title">
+                    <mat-icon>{{getFactorTypeIcon(row.factorType)}}</mat-icon>
+                    <small class="factor-type">{{displayFactorType(row.factorType)}}</small>
+                  </span>
+          </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column name="" [flexGrow]="1">
+          <ng-template let-row="row" ngx-datatable-cell-template>
+            <mat-slide-toggle (change)="selectFactor($event, row.id)"
+                              [checked]="isFactorSelected(row.id)" [disabled]="!editMode">
+            </mat-slide-toggle>
+          </ng-template>
+        </ngx-datatable-column>
+      </ngx-datatable>
+    </div>
+
+
+    <div *ngIf="!hasFactors()" style="font-size: 14px; text-align: center;">
+      <p>No multi-factor authentication has been set up.</p>
+    </div>
+  </div>
+</div>
