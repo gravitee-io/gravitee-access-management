@@ -1,6 +1,18 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/549?closed=1[AM - 3.10.19 (2022-06-02)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Better support for back channel logout with GET method https://github.com/gravitee-io/issues/issues/7679[#7679]
+- Redirect to RP after POST login error https://github.com/gravitee-io/issues/issues/7708[#7708]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/544?closed=1[AM - 3.15.8 (2022-05-13)]
 
 === Bug fixes
