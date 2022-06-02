@@ -24,6 +24,7 @@ import io.gravitee.am.service.exception.TagNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.TagServiceImpl;
 import io.gravitee.am.service.model.NewTag;
+import io.gravitee.am.service.model.UpdateTag;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
@@ -129,6 +130,40 @@ public class TagServiceTest {
         testObserver.assertNotComplete();
 
         verify(tagRepository, never()).create(any(Tag.class));
+    }
+
+    @Test
+    public void shouldUpdate_tag() {
+        UpdateTag updateTag = Mockito.mock(UpdateTag.class);
+        when(updateTag.getName()).thenReturn("my-tag");
+        when(updateTag.getDescription()).thenReturn("my-tag-desc");
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.just(new Tag()));
+        when(tagRepository.update(any())).thenReturn(Single.just(new Tag()));
+
+        TestObserver<Tag> testObserver = new TestObserver<>();
+        tagService.update("my-tag", Organization.DEFAULT, updateTag,null).subscribe(testObserver);
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertNoErrors();
+
+        verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));
+        verify(tagRepository).update(argThat(t -> Organization.DEFAULT.equals(t.getOrganizationId()) &&
+                "my-tag-desc".equals(t.getDescription())));
+    }
+
+    @Test
+    public void shouldNotUpdate_missingTag() {
+        UpdateTag updateTag = Mockito.mock(UpdateTag.class);
+        when(tagRepository.findById("my-tag", Organization.DEFAULT)).thenReturn(Maybe.empty());
+
+        TestObserver<Tag> testObserver = new TestObserver<>();
+        tagService.update("my-tag", Organization.DEFAULT, updateTag,null).subscribe(testObserver);
+
+        testObserver.awaitTerminalEvent();
+        testObserver.assertError(TagNotFoundException.class);
+
+        verify(tagRepository, times(1)).findById(eq("my-tag"), eq(Organization.DEFAULT));
+        verify(tagRepository, never()).update(any());
     }
 
     @Test
