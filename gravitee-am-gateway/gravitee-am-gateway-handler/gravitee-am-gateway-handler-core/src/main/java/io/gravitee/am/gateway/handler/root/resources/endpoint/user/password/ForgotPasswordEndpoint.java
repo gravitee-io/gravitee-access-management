@@ -16,16 +16,20 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.am.gateway.handler.root.service.user.UserService;
+import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.oidc.Client;
+import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -39,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -49,23 +54,52 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordEndpoint.class);
+
     private final Domain domain;
+
     private final BotDetectionManager botDetectionManager;
 
-    public ForgotPasswordEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager) {
+    private final UserService userService;
+
+    public ForgotPasswordEndpoint(TemplateEngine engine, Domain domain, BotDetectionManager botDetectionManager, UserService userService) {
         super(engine);
         this.domain = domain;
         this.botDetectionManager = botDetectionManager;
+        this.userService = userService;
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
+        final HttpServerRequest request = routingContext.request();
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        Single.fromCallable(() -> prepareRoutingContext(routingContext))
+                .flatMap(context -> {
+                    if (request.getParam(TOKEN_PARAM_KEY) != null) {
+                        return userService.verifyToken(request.getParam(TOKEN_PARAM_KEY))
+                                .map(UserToken::getUser)
+                                .map(user -> {
+                                    context.put(ConstantKeys.USER_CONTEXT_KEY, user);
+                                    return context;
+                                })
+                                .onErrorResumeNext(Maybe.just(context))
+                                .switchIfEmpty(Maybe.just(context))
+                                .toSingle();
+                    }
+                    return Single.just(context);
+                })
+                .map(context -> generateTemplateData(context, client))
+                .subscribe(data -> this.renderPage(routingContext, data, client, logger, "Unable to render forgot password page"));
+    }
+
+    private RoutingContext prepareRoutingContext(RoutingContext routingContext) {
         final HttpServerRequest request = routingContext.request();
         final String error = request.getParam(ConstantKeys.ERROR_PARAM_KEY);
         final String errorDescription = request.getParam(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY);
         final String success = request.getParam(ConstantKeys.SUCCESS_PARAM_KEY);
         final String warning = request.getParam(ConstantKeys.WARNING_PARAM_KEY);
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        final String email = request.getParam(ConstantKeys.EMAIL_PARAM_KEY);
         final String clientId = request.getParam(Parameters.CLIENT_ID);
 
         // add query params to context
@@ -73,6 +107,7 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
         routingContext.put(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
         routingContext.put(ConstantKeys.SUCCESS_PARAM_KEY, success);
         routingContext.put(ConstantKeys.WARNING_PARAM_KEY, warning);
+        routingContext.put(ConstantKeys.EMAIL_PARAM_KEY, email);
 
         // put parameters in context (backward compatibility)
         Map<String, String> params = new HashMap<>();
@@ -99,10 +134,13 @@ public class ForgotPasswordEndpoint extends AbstractEndpoint implements Handler<
             routingContext.put(ConstantKeys.FORGOT_PASSWORD_FIELDS_KEY, Arrays.asList(FormField.getEmailField()));
         }
 
+        return routingContext;
+    }
+
+    private Map<String, Object> generateTemplateData(RoutingContext routingContext, Client client) {
         final Map<String, Object> data = generateData(routingContext, domain, client);
         data.putAll(botDetectionManager.getTemplateVariables(domain, client));
-
-        this.renderPage(routingContext, data, client, logger, "Unable to render forgot password page");
+        return data;
     }
 
     @Override
