@@ -1,6 +1,39 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/547?closed=1[AM - 3.15.9 (2022-06-06)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Adaptive mfa may prevent factor enrollment https://github.com/gravitee-io/issues/issues/7394[#7394]
+
+*_General_*
+
+- Backport #7542 assign roles to user list not getting filtered (auto-complete) https://github.com/gravitee-io/issues/issues/7757[#7757]
+- Merge 3.10.19 into 3.15.x https://github.com/gravitee-io/issues/issues/7790[#7790]
+
+*_Idp_*
+
+- [jdbc] email field is not mapped https://github.com/gravitee-io/issues/issues/7799[#7799]
+
+*_Management_*
+
+- Not able to update the sharding tags https://github.com/gravitee-io/issues/issues/7759[#7759]
+
+=== Features
+
+*_Gateway_*
+
+- [management] automatically enroll user MFA factors https://github.com/gravitee-io/issues/issues/7753[#7753]
+
+=== Improvements
+
+*_Gateway_*
+
+- Improve Thymeleaf generateData method https://github.com/gravitee-io/issues/issues/7690[#7690]
+
 == https://github.com/gravitee-io/issues/milestone/549?closed=1[AM - 3.10.19 (2022-06-02)]
 
 === Bug fixes
