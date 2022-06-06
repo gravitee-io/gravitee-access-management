@@ -18,6 +18,7 @@ import {AppConfig} from '../../config/app.config';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {OrganizationService} from './organization.service';
+import {toHttpParams} from "../utils/http-utils";
 
 @Injectable()
 export class UserService {
@@ -151,4 +152,20 @@ export class UserService {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/devices/' + deviceId);
   }
 
+  audits(domainId, userId, page: number, size: number, type: string, status: string, from: number, to: number): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/audits', {
+      params: toHttpParams({
+        page,
+        size,
+        type,
+        status,
+        from,
+        to
+      })
+    });
+  }
+
+  audit(domainId, userId, auditId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/audits/' + auditId);
+  }
 }

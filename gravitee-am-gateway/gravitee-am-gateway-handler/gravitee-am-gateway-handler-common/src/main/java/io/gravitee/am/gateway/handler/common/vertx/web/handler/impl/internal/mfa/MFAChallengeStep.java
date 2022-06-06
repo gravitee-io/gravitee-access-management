@@ -62,6 +62,7 @@ public class MFAChallengeStep extends MFAStep {
                 new RememberDeviceFilter(context),
                 new MfaSkipUserStronglyAuthFilter(context)
         );
-        mfaFilterChain.doFilter(this, flow, routingContext);
+        // We want to force strong auth if we skip challenge
+        mfaFilterChain.doFilter(this, flow, routingContext, true);
     }
 }

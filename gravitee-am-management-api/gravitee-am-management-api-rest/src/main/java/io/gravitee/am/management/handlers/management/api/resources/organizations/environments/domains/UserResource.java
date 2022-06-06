@@ -312,6 +312,11 @@ public class UserResource extends AbstractResource {
         return resourceContext.getResource(DevicesResource.class);
     }
 
+    @Path("audits")
+    public UserAuditsResource getUserAuditsResource() {
+        return resourceContext.getResource(UserAuditsResource.class);
+    }
+
     private Maybe<UserEntity> enhanceIdentityProvider(UserEntity userEntity) {
         if (userEntity.getSource() != null) {
             return identityProviderService.findById(userEntity.getSource())

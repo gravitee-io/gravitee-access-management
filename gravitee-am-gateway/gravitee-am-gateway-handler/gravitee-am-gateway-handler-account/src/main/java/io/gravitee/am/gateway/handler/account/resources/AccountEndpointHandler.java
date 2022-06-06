@@ -84,7 +84,7 @@ public class AccountEndpointHandler {
 
     public void getActivity(RoutingContext routingContext) {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
-        final AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().user(user.getUsername()).build();
+        final AuditReportableCriteria criteria = new AuditReportableCriteria.Builder().userId(user.getId()).build();
         final int page = ContextPathParamUtil.getPageNumber(routingContext);
         final int size = ContextPathParamUtil.getPageSize(routingContext);
 

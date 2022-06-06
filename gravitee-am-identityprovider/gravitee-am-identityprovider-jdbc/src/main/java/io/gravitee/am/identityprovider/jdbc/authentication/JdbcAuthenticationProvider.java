@@ -142,6 +142,8 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         String sub = getClaim(claims, configuration.getIdentifierAttribute(), null);
         // get username
         String username = getClaim(claims, configuration.getUsernameAttribute(), sub);
+        // get email
+        String email = getClaim(claims, configuration.getEmailAttribute(), null);
         // compute metadata
         computeMetadata(claims);
 
@@ -149,6 +151,8 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         DefaultUser user = new DefaultUser(username);
         // set technical id
         user.setId(sub);
+        // set email
+        user.setEmail(email);
         // set user roles
         user.setRoles(applyRoleMapping(authContext, claims));
         // set additional information

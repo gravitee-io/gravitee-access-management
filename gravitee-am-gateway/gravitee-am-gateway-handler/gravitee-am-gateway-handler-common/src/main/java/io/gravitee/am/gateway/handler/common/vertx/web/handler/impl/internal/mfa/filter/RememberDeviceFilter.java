@@ -34,12 +34,11 @@ public class RememberDeviceFilter extends MfaContextHolder implements Supplier<B
     public Boolean get() {
         // If Adaptive MFA is active and KO (rule == false) we bypass this filter
         // Because the device could be known and skip MFA
-        if (context.isAmfaActive() && !context.isAmfaRuleTrue()) {
+        if (!context.isMfaSkipped() && context.isAmfaActive() && !context.isAmfaRuleTrue()) {
             return false;
         }
         var rememberDeviceSettings = context.getRememberDeviceSettings();
         return !context.isStepUpActive() && rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
     }
-
 
 }

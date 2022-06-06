@@ -72,13 +72,16 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
     private static final String FIELD_TYPE = "type";
     private static final String FIELD_STATUS = "outcome.status";
     private static final String FIELD_TARGET = "target.alternativeId";
+    private static final String FIELD_TARGET_ID = "target.id";
     private static final String FIELD_ACTOR = "actor.alternativeId";
+    private static final String FIELD_ACTOR_ID = "actor.id";
     private static final String FIELD_ACCESS_POINT_ID = "accessPoint.id";
     private static final String INDEX_REFERENCE_TIMESTAMP_NAME = "ref_1_time_-1";
     private static final String INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "ref_1_type_1_time_-1";
     private static final String INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "ref_1_actor_1_time_-1";
     private static final String INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "ref_1_target_1_time_-1";
     private static final String INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "ref_1_actor_1_target_1_time_-1";
+    private static final String INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME = "ref_1_actorId_1_targetId_1_time_-1";
     private static final String OLD_INDEX_REFERENCE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_timestamp_-1";
     private static final String OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME = "referenceType_1_referenceId_1_type_1_timestamp_-1";
     private static final String OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_timestamp_-1";
@@ -212,6 +215,7 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_TARGET_TIMESTAMP_NAME));
             indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR, 1).append(FIELD_TARGET, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME));
+            indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ACTOR_ID, 1).append(FIELD_TARGET_ID, 1).append(FIELD_TIMESTAMP, -1), new IndexOptions().name(INDEX_REFERENCE_ACTOR_ID_TARGET_ID_TIMESTAMP_NAME));
             Completable createNewIndexes = Observable.fromIterable(indexes.entrySet())
                     .flatMapCompletable(index -> Completable.fromPublisher(reportableCollection.createIndex(index.getKey(), index.getValue()))
                             .doOnComplete(() -> logger.debug("Created an index named: {}", index.getValue().getName()))
@@ -307,6 +311,11 @@ public class MongoAuditReporter extends AbstractService implements AuditReporter
         // event user
         if (criteria.user() != null && !criteria.user().isEmpty()) {
             filters.add(or(eq(FIELD_ACTOR, criteria.user()), eq(FIELD_TARGET, criteria.user())));
+        }
+
+        // event user technical ID
+        if (criteria.userId() != null && !criteria.userId().isEmpty()) {
+            filters.add(or(eq(FIELD_ACTOR_ID, criteria.userId()), eq(FIELD_TARGET_ID, criteria.userId())));
         }
 
         // time range

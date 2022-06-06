@@ -39,6 +39,7 @@ import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,8 +49,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -350,6 +350,54 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/domain/logout/callback&id_token_hint=opidtokenvalue&state=jwtstatevalue"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeExternalOIDCLogoutEndpoint_noTargetUrl() throws Exception {
+        JWT jwt = new JWT();
+        jwt.setAud("client-id");
+
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setPostLogoutRedirectUris(Arrays.asList("https://dev"));
+        client.setSingleSignOut(true);
+
+        when(certificateManager.defaultCertificateProvider()).thenReturn(mock(CertificateProvider.class));
+        when(jwtService.encode(any(JWT.class), any(CertificateProvider.class))).thenReturn(Single.just("jwtstatevalue"));
+
+        when(clientSyncService.findById("client-id")).thenReturn(Maybe.empty());
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        final SocialAuthenticationProvider authProvider = mock(SocialAuthenticationProvider.class);
+        final Request req = new Request();
+        req.setUri("https://oidc/logout");
+        req.setMethod(io.gravitee.common.http.HttpMethod.GET);
+        when(authProvider.signOutUrl(any())).thenReturn(Maybe.just(req));
+        when(identityProviderManager.get(any())).thenReturn(Maybe.just(authProvider));
+
+        io.vertx.reactivex.ext.web.client.HttpRequest<io.vertx.reactivex.core.buffer.Buffer> httpRequest = mock(io.vertx.reactivex.ext.web.client.HttpRequest.class);
+        io.vertx.ext.web.client.HttpResponse<io.vertx.reactivex.core.buffer.Buffer> httpResponse = mock(io.vertx.ext.web.client.HttpResponse.class);
+        when(httpResponse.statusCode()).thenReturn(200);
+        when(httpRequest.rxSend()).thenReturn(Single.just(new HttpResponse<>(httpResponse)));
+        when(webClient.getAbs(anyString())).thenReturn(httpRequest);
+
+        when(userService.logout(any(), eq(false), any())).thenReturn(Completable.complete());
+
+        router.route().order(-1).handler(routingContext -> {
+            User endUser = new User();
+            endUser.setClient("client-id");
+            final HashMap<String, Object> additionalInformation = new HashMap<>();
+            additionalInformation.put(ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY, "opidtokenvalue");
+            endUser.setAdditionalInformation(additionalInformation);
+            routingContext.put(UriBuilderRequest.CONTEXT_PATH, "/domain");
+            routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/logout",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
     }
 
     // see https://github.com/gravitee-io/issues/issues/5163

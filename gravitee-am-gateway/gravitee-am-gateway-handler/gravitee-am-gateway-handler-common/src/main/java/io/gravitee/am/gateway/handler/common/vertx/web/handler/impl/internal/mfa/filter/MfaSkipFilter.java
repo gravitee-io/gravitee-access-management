@@ -35,13 +35,8 @@ public class MfaSkipFilter extends MfaContextHolder implements Supplier<Boolean>
     @Override
     public Boolean get() {
         // We need to check whether the AMFA rule is false since we don't know
-        // If other MFA features passed or skipped MFA
-        if (context.isAmfaActive() && !context.isAmfaRuleTrue()) {
-            return false;
-        }
+        final boolean mfaSkipped = context.isMfaSkipped();
         String mfaStepUpRule = context.getStepUpRule();
-        return isNullOrEmpty(mfaStepUpRule) && context.isMfaSkipped();
+        return isNullOrEmpty(mfaStepUpRule) && mfaSkipped;
     }
-
-
 }

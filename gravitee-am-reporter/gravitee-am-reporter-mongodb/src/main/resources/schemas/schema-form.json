@@ -6,7 +6,8 @@
       "type" : "string",
       "default": "mongodb://localhost:27017",
       "title": "MongoDB connection URI",
-      "description": "Connection URI used to connect to a MongoDB instance."
+      "description": "Connection URI used to connect to a MongoDB instance.",
+      "sensitive-uri": true
     },
     "host" : {
       "type" : "string",

@@ -199,6 +199,37 @@ public class AuthorizationRequestEndUserConsentHandlerTest extends RxWebTestBase
     }
 
     @Test
+    public void shouldNotApproveRequest_promptNone() throws Exception {
+        final String clientId = "client_id";
+        final String userId = "user_id";
+        final String scope = "read";
+        Client client = new Client();
+        client.setClientId(clientId);
+
+        User user = new User();
+        user.setId(userId);
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId(clientId);
+        authorizationRequest.setScopes(Collections.singleton(scope));
+        authorizationRequest.setPrompts(Collections.singleton("none"));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
+            routingContext.put("client", client);
+            routingContext.put(CONTEXT_PATH, "/test");
+            routingContext.put(AUTHORIZATION_REQUEST_CONTEXT_KEY, authorizationRequest);
+            routingContext.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback&prompt=none",
+                null,
+                HttpStatusCode.FORBIDDEN_403, "Forbidden", null);
+    }
+
+    @Test
     public void shouldNotApproveRequest_noClientAutoApproval_userDenial() throws Exception {
         final String clientId = "client_id";
         final String userId = "user_id";

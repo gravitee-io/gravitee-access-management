@@ -17,7 +17,6 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter;
 
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-
 import java.util.function.Supplier;
 
 /**
