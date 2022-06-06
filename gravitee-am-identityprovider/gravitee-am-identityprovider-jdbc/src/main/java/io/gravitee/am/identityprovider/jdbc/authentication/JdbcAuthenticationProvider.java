@@ -36,6 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -62,38 +64,43 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                     }
                     return Flowable.fromIterable(users);
                 })
-                .filter(result -> {
+                .map(result -> {
                     // check password
                     String password = String.valueOf(result.get(configuration.getPasswordAttribute()));
                     if (password == null) {
                         LOGGER.debug("Authentication failed: password is null");
-                        return false;
+                        return new UserCredentialEvaluation<>(false, result);
                     }
 
                     if (configuration.isUseDedicatedSalt()) {
                         String hash = String.valueOf(result.get(configuration.getPasswordSaltAttribute()));
                         if (!passwordEncoder.matches(presentedPassword, password, hash)) {
                             LOGGER.debug("Authentication failed: password does not match stored value");
-                            return false;
+                            return new UserCredentialEvaluation<>(false, result);
                         }
                     } else {
                         if (!passwordEncoder.matches(presentedPassword, password)) {
                             LOGGER.debug("Authentication failed: password does not match stored value");
-                            return false;
+                            return new UserCredentialEvaluation<>(false, result);
                         }
                     }
 
-                    return true;
+                    return new UserCredentialEvaluation<>(true, result);
                 })
                 .toList()
-                .flatMapMaybe(users -> {
-                    if (users.isEmpty()) {
+                .flatMapMaybe(userEvaluations -> {
+                    if (userEvaluations.size() > 1) {
+                        LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
-                    if (users.size() > 1) {
-                        return Maybe.error(new BadCredentialsException("Bad credentials"));
-                    }
-                    return Maybe.just(createUser(authentication.getContext(), users.get(0)));
+                    var userEvaluation = userEvaluations.get(0);
+                    var user = this.createUser(authentication.getContext(), userEvaluation.getUser());
+
+                    ofNullable(authentication.getContext()).ifPresent(auth -> auth.set(ACTUAL_USERNAME, user.getUsername()));
+
+                    return userEvaluation.isPasswordValid() ?
+                            Maybe.just(user) :
+                            Maybe.error(new BadCredentialsException("Bad credentials"));
                 });
     }
 

@@ -154,7 +154,7 @@ public class LdapAuthenticationProvider extends AbstractService<AuthenticationPr
                     LdapEntry userEntry = response.getLdapEntry();
                     return userEntry;
                 } else { // authentication failed
-                    LOGGER.debug("Failed to authenticate user", response.getMessage());
+                    LOGGER.debug("Failed to authenticate user {}", response.getMessage());
                     throw new BadCredentialsException(response.getMessage());
                 }
             } catch (LdapException e) {
