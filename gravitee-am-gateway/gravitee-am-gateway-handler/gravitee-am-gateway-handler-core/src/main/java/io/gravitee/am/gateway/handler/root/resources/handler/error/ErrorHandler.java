@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.error;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.oidc.Client;
@@ -25,17 +27,17 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
+import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static java.util.Objects.isNull;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -92,19 +94,25 @@ public class ErrorHandler implements Handler<RoutingContext> {
         try {
             final HttpServerRequest request = routingContext.request();
             // prepare query parameters
-            Map<String, String> parameters = new LinkedHashMap<>();
+            MultiMap parameters = RequestUtils.getCleanedQueryParams(routingContext.request());
             // get client if exists
             Client client = routingContext.get(CLIENT_CONTEXT_KEY);
             if (client != null) {
-                parameters.put(Parameters.CLIENT_ID, client.getClientId());
+                parameters.set(Parameters.CLIENT_ID, client.getClientId());
             } else if (request.getParam(Parameters.CLIENT_ID) != null) {
-                parameters.put(Parameters.CLIENT_ID, (request.getParam(Parameters.CLIENT_ID)));
+                parameters.set(Parameters.CLIENT_ID, (request.getParam(Parameters.CLIENT_ID)));
             }
             // append error information
-            parameters.put("error", errorCode);
+            parameters.set(ConstantKeys.ERROR_PARAM_KEY, errorCode);
             if (errorDetail != null) {
-                parameters.put("error_description", errorDetail);
+                parameters.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDetail);
             }
+
+            final String token = request.getParam(TOKEN_CONTEXT_KEY);
+            if (isNull(parameters.get(TOKEN_CONTEXT_KEY)) && token != null) {
+                parameters.set(TOKEN_CONTEXT_KEY, token);
+            }
+
             // redirect
             String proxiedErrorPage = UriBuilderRequest.resolveProxyRequest(request, errorPageURL, parameters, true);
             doRedirect(routingContext.response(), proxiedErrorPage);
