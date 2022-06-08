@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.common.auth.listener;
 
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;

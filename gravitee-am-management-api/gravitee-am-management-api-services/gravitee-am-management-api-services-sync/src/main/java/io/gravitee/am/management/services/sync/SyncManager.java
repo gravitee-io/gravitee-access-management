@@ -16,13 +16,19 @@
 package io.gravitee.am.management.services.sync;
 
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.monitoring.metrics.Constants;
+import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.service.EventService;
 import io.gravitee.common.event.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.BinaryOperator;
 
 import static java.util.Comparator.comparing;
@@ -46,6 +52,8 @@ public class SyncManager {
 
     private long lastDelay = 0;
 
+    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+
     public void refresh() {
         logger.debug("Refreshing sync state...");
 
@@ -65,6 +73,7 @@ public class SyncManager {
         List<Event> events = eventService.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).blockingGet();
 
         if (events != null && !events.isEmpty()) {
+            eventsGauge.updateValue(events.size());
             // Extract only the latest events by type and id
             Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
                     .stream()
@@ -73,7 +82,11 @@ public class SyncManager {
                                     event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
                                     event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
             computeEvents(sortedEvents.values());
+        } else {
+            eventsGauge.updateValue(0);
         }
+
+
 
         lastRefreshAt = nextLastRefreshAt;
         lastDelay = System.currentTimeMillis() - nextLastRefreshAt;
