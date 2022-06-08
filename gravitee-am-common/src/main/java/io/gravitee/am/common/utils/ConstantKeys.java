@@ -58,6 +58,9 @@ public interface ConstantKeys {
     String PEER_CERTIFICATE_THUMBPRINT = "x509_thumbprint_s256";
     String DEVICE_TYPE = "deviceType";
     String DEVICE_ID = "deviceId";
+    String X_XSRF_TOKEN = "X-XSRF-TOKEN";
+    String _CSRF = "_csrf";
+    String __BODY_HANDLED = "__body-handled";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
