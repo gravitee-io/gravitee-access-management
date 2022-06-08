@@ -18,12 +18,11 @@ package io.gravitee.am.gateway.services.sync;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.monitoring.metrics.Constants;
+import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.repository.management.api.DomainRepository;
-import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.repository.management.api.OrganizationRepository;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.node.api.Node;
 import org.slf4j.Logger;
@@ -34,7 +33,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 import java.text.Collator;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
@@ -88,6 +95,8 @@ public class SyncManager implements InitializingBean {
 
     private boolean allSecurityDomainsSync = false;
 
+    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
+
     @Override
     public void afterPropertiesSet() throws Exception {
         logger.info("Starting gateway tags initialization ...");
@@ -116,6 +125,8 @@ public class SyncManager implements InitializingBean {
                 List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
 
                 if (events != null && !events.isEmpty()) {
+                    eventsGauge.updateValue(events.size());
+
                     // Extract only the latest events by type and id
                     Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
                             .stream()
@@ -124,6 +135,8 @@ public class SyncManager implements InitializingBean {
                                             event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
                                             event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
                     computeEvents(sortedEvents.values());
+                } else {
+                    eventsGauge.updateValue(0);
                 }
 
             }

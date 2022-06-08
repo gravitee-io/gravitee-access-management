@@ -25,6 +25,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.metrics.CounterHelper;
+import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
@@ -40,6 +42,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDPS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -64,6 +69,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     @Autowired
     private CertificateManager certificateManager;
+
+    private final CounterHelper idpEvtCounter = new CounterHelper(METRICS_IDP_EVENTS);
+
+    private final GaugeHelper idpGauge = new GaugeHelper(METRICS_IDPS);
 
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -93,6 +102,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
                     .flatMapSingle(this::updateAuthenticationProvider)
+                    .map(provider -> {
+                        idpGauge.incrementValue();
+                        return provider;
+                    })
                     .blockingLast();
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
@@ -120,13 +133,16 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
         if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
+            idpEvtCounter.increment();
             switch (event.type()) {
                 case DEPLOY:
+                    idpGauge.incrementValue();
                 case UPDATE:
                     updateIdentityProvider(event.content().getId(), event.type());
                     break;
                 case UNDEPLOY:
                     removeIdentityProvider(event.content().getId());
+                    idpGauge.decrementValue();
                     break;
             }
         }

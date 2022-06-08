@@ -19,30 +19,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
     <parent>
-        <groupId>io.gravitee.am.gateway</groupId>
-        <artifactId>gravitee-am-gateway</artifactId>
+        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am</groupId>
         <version>3.18.0-RC2-SNAPSHOT</version>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gravitee-am-gateway-reactor</artifactId>
-    <name>Gravitee IO - Access Management - Gateway - Reactor</name>
+    <artifactId>gravitee-am-monitoring</artifactId>
+
+    <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+    </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>io.gravitee.am.gateway.handler</groupId>
-            <artifactId>gravitee-am-gateway-handler-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am</groupId>
-            <artifactId>gravitee-am-monitoring</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-monitoring</artifactId>
+            <version>${gravitee-node.version}</version>
         </dependency>
+
     </dependencies>
-
 </project>
