@@ -1,6 +1,38 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/548?closed=1[AM - 3.17.2 (2022-06-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Confirmation pages don't use the App template https://github.com/gravitee-io/issues/issues/7744[#7744]
+- Decorate with initial parameters when handler is failing https://github.com/gravitee-io/issues/issues/7808[#7808]
+- Identifier first should not be required when using idp selection rule https://github.com/gravitee-io/issues/issues/7678[#7678]
+- Inline javascript not properly manage with CSP https://github.com/gravitee-io/issues/issues/7724[#7724]
+- ResetPassword use the wrong template in case of error https://github.com/gravitee-io/issues/issues/7734[#7734]
+- [idp][auth] handle login attempt failure when the IDP is configure to accept several username input https://github.com/gravitee-io/issues/issues/7797[#7797]
+
+*_General_*
+
+- Document the breaking change about application update https://github.com/gravitee-io/issues/issues/7623[#7623]
+
+*_Idp_*
+
+- Include user mappers during reset password https://github.com/gravitee-io/issues/issues/7530[#7530]
+- [http] display name is not updated when firstName or lastName changes https://github.com/gravitee-io/issues/issues/7531[#7531]
+
+*_Management_*
+
+- [upgrader] Application identity provider task blocked to ONGOING https://github.com/gravitee-io/issues/issues/7730[#7730]
+
+=== Improvements
+
+*_Gateway_*
+
+- [forgot-password] allow forgot password confirmation to display which email the reset password was sent to https://github.com/gravitee-io/issues/issues/7796[#7796]
+
 == https://github.com/gravitee-io/issues/milestone/547?closed=1[AM - 3.15.9 (2022-06-06)]
 
 === Bug fixes
