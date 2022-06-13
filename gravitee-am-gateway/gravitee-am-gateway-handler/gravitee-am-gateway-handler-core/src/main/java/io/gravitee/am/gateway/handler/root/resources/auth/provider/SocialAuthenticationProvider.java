@@ -146,20 +146,8 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
         var domainWhitelist = identityProvider.getDomainWhitelist();
         // No whitelist mean we let everyone
         if (nonNull(domainWhitelist) && !domainWhitelist.isEmpty()) {
-            // first we check if the username is not whitelisted
-            if (!isUsernameWhitelisted(domainWhitelist, endUser.getUsername())) {
-                // if so, we check if the email set is also not whitelisted
-                if (!isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
-                    return Single.error(new LoginCallbackFailedException("could not authenticate user"));
-                }
-            }
-            // username might (but unlikely) be null, we check also if the email is set
-            else if (!isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
-                return Single.error(new LoginCallbackFailedException("could not authenticate user"));
-            }
-            // If not email nor username, we should not be loging back
-            else {
-                logger.debug("User does not have a username");
+            // we reject the connection if neither the username nor the email are allowed
+            if (!isUsernameWhitelisted(domainWhitelist, endUser.getUsername()) && !isEmailWhitelisted(domainWhitelist, endUser.getEmail())) {
                 return Single.error(new LoginCallbackFailedException("could not authenticate user"));
             }
         }
