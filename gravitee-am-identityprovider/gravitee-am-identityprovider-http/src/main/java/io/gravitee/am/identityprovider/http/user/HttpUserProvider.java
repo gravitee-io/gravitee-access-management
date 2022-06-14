@@ -15,7 +15,12 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
-import io.gravitee.am.identityprovider.api.*;
+import com.google.common.base.Strings;
+import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.HttpIdentityProviderResponse;
 import io.gravitee.am.identityprovider.http.configuration.HttpIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.http.configuration.HttpResourceConfiguration;
@@ -49,7 +54,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -175,6 +185,53 @@ public class HttpUserProvider implements UserProvider {
         } catch (Exception ex) {
             LOGGER.error("An error has occurred while updating the user {}", updateUser.getUsername(), ex);
             return Single.error(new TechnicalManagementException("An error has occurred while updating the user", ex));
+        }
+    }
+
+    @Override
+    public Single<User> updatePassword(User user, String password) {
+        try {
+            if (Strings.isNullOrEmpty(password)) {
+                return Single.error(new IllegalArgumentException("Password required for UserProvider.updatePassword"));
+            }
+
+            // prepare request
+            final HttpUsersResourceConfiguration usersResourceConfiguration = configuration.getUsersResource();
+            final HttpResourceConfiguration updatePasswordResourceConfiguration = usersResourceConfiguration.getPaths().getUpdatePasswordResource();
+            final String updateUserURI = usersResourceConfiguration.getBaseURL() + updatePasswordResourceConfiguration.getBaseURL();
+            final HttpMethod updateUserHttpMethod = HttpMethod.valueOf(updatePasswordResourceConfiguration.getHttpMethod().toString());
+            final List<HttpHeader> updateUserHttpHeaders = updatePasswordResourceConfiguration.getHttpHeaders();
+            final String updateUserBody = updatePasswordResourceConfiguration.getHttpBody();
+
+            // prepare context
+            AuthenticationContext authenticationContext = new SimpleAuthenticationContext();
+            TemplateEngine templateEngine = authenticationContext.getTemplateEngine();
+
+            // sanitize password
+            if (!StringUtils.isEmpty(password)) {
+                ((DefaultUser) user).setCredentials(SanitizeUtils.sanitize(passwordEncoder.encode(password), updateUserBody, updateUserHttpHeaders));
+            }
+            templateEngine.getTemplateContext().setVariable(USER_CONTEXT_KEY, user);
+
+            // process request
+            final Single<HttpResponse<Buffer>> requestHandler = processRequest(templateEngine, updateUserURI, updateUserHttpMethod, updateUserHttpHeaders, updateUserBody);
+
+            return requestHandler
+                    .map(httpResponse -> {
+                        final List<HttpResponseErrorCondition> errorConditions = updatePasswordResourceConfiguration.getHttpResponseErrorConditions();
+                        Map<String, Object> userAttributes = processResponse(templateEngine, errorConditions, httpResponse);
+                        return convert(user.getUsername(), userAttributes);
+                    })
+                    .onErrorResumeNext(ex -> {
+                        if (ex instanceof AbstractManagementException) {
+                            return Single.error(ex);
+                        }
+                        LOGGER.error("An error has occurred while updating password for user {} from the remote HTTP identity provider", user.getUsername(), ex);
+                        return Single.error(new TechnicalManagementException("An error has occurred while updating user password from the remote HTTP identity provider", ex));
+                    });
+        } catch (Exception ex) {
+            LOGGER.error("An error has occurred while updating password of the user {}", user.getUsername(), ex);
+            return Single.error(new TechnicalManagementException("An error has occurred while updating password of the user", ex));
         }
     }
 
