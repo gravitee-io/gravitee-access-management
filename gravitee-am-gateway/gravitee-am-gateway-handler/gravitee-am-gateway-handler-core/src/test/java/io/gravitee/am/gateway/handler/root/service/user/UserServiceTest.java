@@ -120,7 +120,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -150,7 +150,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -179,7 +179,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -537,7 +537,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -571,7 +571,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));

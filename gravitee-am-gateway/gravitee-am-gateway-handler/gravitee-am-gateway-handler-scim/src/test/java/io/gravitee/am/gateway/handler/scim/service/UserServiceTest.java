@@ -70,6 +70,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
 
+    public static final String PASSWORD = "user-password";
     @InjectMocks
     private UserService userService = new UserServiceImpl();
 
@@ -193,7 +194,7 @@ public class UserServiceTest {
         when(existingUser.getUsername()).thenReturn("username");
 
         User scimUser = mock(User.class);
-        when(scimUser.getPassword()).thenReturn("user-password");
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
         when(scimUser.isActive()).thenReturn(true);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
@@ -215,13 +216,103 @@ public class UserServiceTest {
         ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.update(any())).thenReturn(Single.just(existingUser));
         when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
-        when(passwordService.isValid(eq("user-password"), any(), any())).thenReturn(true);
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
 
         TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
         verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userProvider).create(any());
+        verify(userProvider, never()).update(anyString(), any());
+        verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
+        assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldUpdate_UserWithExtId_and_password() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getExternalId()).thenReturn("user-extid");
+        when(existingUser.getUsername()).thenReturn("username");
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), anyString())).thenReturn(Single.just(idpUser));
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+        when(passwordService.isValid(eq(PASSWORD), any(), any())).thenReturn(true);
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userProvider, never()).create(any());
+        verify(userProvider).update(anyString(), any());
+        verify(userProvider).updatePassword(any(), eq(PASSWORD));
+        assertTrue(userCaptor.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldUpdate_UserWithExtId_and_NoPassword() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getSource()).thenReturn("user-idp");
+        when(existingUser.getExternalId()).thenReturn("user-extid");
+        when(existingUser.getUsername()).thenReturn("username");
+
+        User scimUser = mock(User.class);
+        when(scimUser.isActive()).thenReturn(true);
+
+        io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.User.class);
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+
+        Set<Role> roles = new HashSet<>();
+        Role role1 = new Role();
+        role1.setId("role-1");
+        Role role2 = new Role();
+        role2.setId("role-2");
+        roles.add(role1);
+        roles.add(role2);
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        when(userRepository.update(any())).thenReturn(Single.just(existingUser));
+        when(groupService.findByMember(existingUser.getId())).thenReturn(Flowable.empty());
+
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        verify(userRepository, times(1)).update(userCaptor.capture());
+        verify(userProvider, never()).create(any());
+        verify(userProvider).update(anyString(), any());
+        verify(userProvider, never()).updatePassword(any(), eq(PASSWORD));
         assertTrue(userCaptor.getValue().isEnabled());
     }
 
@@ -232,7 +323,7 @@ public class UserServiceTest {
         when(existingUser.getUsername()).thenReturn("username");
 
         User scimUser = mock(User.class);
-        when(scimUser.getPassword()).thenReturn("user-password");
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
         when(scimUser.isActive()).thenReturn(true);
 
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));

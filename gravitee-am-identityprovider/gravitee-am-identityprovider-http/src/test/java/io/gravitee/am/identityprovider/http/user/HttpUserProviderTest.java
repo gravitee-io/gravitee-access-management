@@ -172,6 +172,24 @@ public class HttpUserProviderTest {
     }
 
     @Test
+    public void shouldUpdatePasswrd() {
+        DefaultUser user = new DefaultUser("johndoe");
+        user.setId("123456789");
+
+        stubFor(put(urlPathEqualTo("/api/users/123456789/password"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
+
+        TestObserver<User> testObserver = userProvider.updatePassword(user, "password").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "123456789".equals(u.getId()));
+        testObserver.assertValue(u -> "johndoe".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldUpdateUser_userNotFound() {
         DefaultUser user = new DefaultUser("johndoe");
 
