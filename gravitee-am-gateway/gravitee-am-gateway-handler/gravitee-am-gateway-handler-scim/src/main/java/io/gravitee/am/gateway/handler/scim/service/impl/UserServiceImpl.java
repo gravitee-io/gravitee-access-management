@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.scim.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
@@ -42,7 +43,15 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
+import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.utils.UserFactorUpdater;
@@ -59,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
@@ -255,6 +265,15 @@ public class UserServiceImpl implements UserService {
                                 userToUpdate.setUpdatedAt(new Date());
                                 userToUpdate.setFactors(existingUser.getFactors());
                                 userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
+                                // keep previous login attempts information
+                                userToUpdate.setLoggedAt(existingUser.getLoggedAt());
+                                userToUpdate.setLoginsCount(existingUser.getLoginsCount());
+                                if (isNullOrEmpty(userToUpdate.getPassword())) {
+                                    // if password is missing, do not unlock the account
+                                    userToUpdate.setAccountLockedAt(existingUser.getAccountLockedAt());
+                                    userToUpdate.setAccountLockedUntil(existingUser.getAccountLockedUntil());
+                                    userToUpdate.setAccountNonLocked(existingUser.isAccountNonLocked());
+                                }
 
                                 // We remove the dynamic roles from the user roles to be updated in order to preserve
                                 // the roles that were assigned by the RoleMappers so that whenever the rule from the
@@ -294,7 +313,12 @@ public class UserServiceImpl implements UserService {
                                                                 if (userToUpdate.getExternalId() == null) {
                                                                     return userProvider.create(UserMapper.convert(userToUpdate));
                                                                 } else {
-                                                                    return userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate));
+                                                                    if (isNullOrEmpty(userToUpdate.getPassword())) {
+                                                                        return userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate));
+                                                                    } else {
+                                                                        return userProvider.update(userToUpdate.getExternalId(), UserMapper.convert(userToUpdate))
+                                                                                .flatMap(updatedUser -> userProvider.updatePassword(updatedUser, user.getPassword()));
+                                                                    }
                                                                 }
                                                             });
                                                 })

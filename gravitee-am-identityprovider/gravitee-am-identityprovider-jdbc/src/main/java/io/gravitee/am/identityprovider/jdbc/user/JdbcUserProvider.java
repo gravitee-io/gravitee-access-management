@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.jdbc.user;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -330,6 +331,51 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
                     }
                     ((DefaultUser) updateUser).setId(id);
                     return Single.just(updateUser);
+                });
+    }
+
+    @Override
+    public Single<User> updatePassword(User user, String password) {
+        final String sql;
+        final Object[] args;
+
+        if (Strings.isNullOrEmpty(password)) {
+            return Single.error(new IllegalArgumentException("Password required for UserProvider.updatePassword"));
+        }
+        if (configuration.isUseDedicatedSalt()) {
+            args = new Object[3];
+            sql = String.format("UPDATE %s SET %s = %s, %s = %s WHERE %s = %s",
+                    configuration.getUsersTable(),
+                    configuration.getPasswordAttribute(),
+                    getIndexParameter(1, configuration.getPasswordAttribute()),
+                    configuration.getPasswordSaltAttribute(),
+                    getIndexParameter(2, configuration.getPasswordSaltAttribute()),
+                    configuration.getIdentifierAttribute(),
+                    getIndexParameter(3, configuration.getIdentifierAttribute()));
+            byte[] salt = createSalt();
+            args[0] = passwordEncoder.encode(password, salt);
+            args[1] = binaryToTextEncoder.encode(salt);
+            args[2] = user.getId();
+        } else {
+            args = new Object[2];
+            sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s",
+                    configuration.getUsersTable(),
+                    configuration.getPasswordAttribute(),
+                    getIndexParameter(1, configuration.getPasswordAttribute()),
+                    configuration.getIdentifierAttribute(),
+                    getIndexParameter(2, configuration.getIdentifierAttribute()));
+            args[0] = passwordEncoder.encode(password);
+            args[1] = user.getId();
+        }
+
+        return query(sql, args)
+                .flatMap(Result::getRowsUpdated)
+                .first(0)
+                .flatMap(rowsUpdated -> {
+                    if (rowsUpdated == 0) {
+                        return Single.error(new UserNotFoundException(user.getId()));
+                    }
+                    return Single.just(user);
                 });
     }
 

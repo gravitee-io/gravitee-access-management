@@ -294,11 +294,7 @@ public class UserServiceImpl extends AbstractUserService<io.gravitee.am.service.
                                             // update idp user
                                             return userProvider.findByUsername(user.getUsername())
                                                     .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                                                    .flatMapSingle(idpUser -> {
-                                                        // set password
-                                                        ((DefaultUser) idpUser).setCredentials(password);
-                                                        return userProvider.update(idpUser.getId(), idpUser);
-                                                    })
+                                                    .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, password))
                                                     .onErrorResumeNext(ex -> {
                                                         if (ex instanceof UserNotFoundException) {
                                                             // idp user not found, create its account

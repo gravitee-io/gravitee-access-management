@@ -42,13 +42,22 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.EnforceUserIdentityException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserInvalidException;
+import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
 import io.gravitee.am.service.validators.email.EmailValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
+import io.reactivex.MaybeSource;
 import io.reactivex.Observable;
-import io.reactivex.*;
+import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +65,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Map.Entry;
 
 import static java.lang.Boolean.FALSE;
@@ -265,11 +279,7 @@ public class UserServiceImpl implements UserService {
                 // update the idp user
                 .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                        .flatMapSingle(idpUser -> {
-                            // set password
-                            ((DefaultUser) idpUser).setCredentials(user.getPassword());
-                            return userProvider.update(idpUser.getId(), idpUser);
-                        })
+                        .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
                         .onErrorResumeNext(ex -> {
                             if (ex instanceof UserNotFoundException) {
                                 // idp user not found, create its account

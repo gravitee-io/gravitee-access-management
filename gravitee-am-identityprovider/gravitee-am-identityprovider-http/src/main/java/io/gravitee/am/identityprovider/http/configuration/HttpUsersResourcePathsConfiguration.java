@@ -25,6 +25,7 @@ public class HttpUsersResourcePathsConfiguration {
     private HttpResourceConfiguration readResource;
     private HttpResourceConfiguration readResourceByEmail;
     private HttpResourceConfiguration updateResource;
+    private HttpResourceConfiguration updatePasswordResource;
     private HttpResourceConfiguration deleteResource;
 
     public HttpResourceConfiguration getCreateResource() {
@@ -65,5 +66,13 @@ public class HttpUsersResourcePathsConfiguration {
 
     public void setDeleteResource(HttpResourceConfiguration deleteResource) {
         this.deleteResource = deleteResource;
+    }
+
+    public HttpResourceConfiguration getUpdatePasswordResource() {
+        return updatePasswordResource;
+    }
+
+    public void setUpdatePasswordResource(HttpResourceConfiguration updatePasswordResource) {
+        this.updatePasswordResource = updatePasswordResource;
     }
 }

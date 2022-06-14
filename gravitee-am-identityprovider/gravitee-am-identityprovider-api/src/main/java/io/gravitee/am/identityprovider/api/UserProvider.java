@@ -37,6 +37,8 @@ public interface UserProvider extends Service<UserProvider> {
 
     Single<User> update(String id, User updateUser);
 
+    Single<User> updatePassword(User user, String password);
+
     Completable delete(String id);
 
     default Lifecycle.State lifecycleState() {
