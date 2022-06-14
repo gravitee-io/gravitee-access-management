@@ -33,6 +33,8 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
 
     private static final String HTTP_CSP_REPORT_ONLY = "http.csp.reportOnly";
     private static final String HTTP_CSP_DIRECTIVES = "http.csp.directives[%d]";
+    private static final String HTTP_CSP_SCRIPT_INLINE_NONCE = "http.csp.script-inline-nonce";
+
     private final Environment environment;
 
     private static CSPHandler INSTANCE;
@@ -46,10 +48,11 @@ public class CSPHandlerFactory implements FactoryBean<CSPHandler> {
         if (isNull(INSTANCE)) {
             var reportOnly = environment.getProperty(HTTP_CSP_REPORT_ONLY, Boolean.class);
             var directives = getDirectives();
-            if (isNull(reportOnly) && isNull(directives)) {
+            var scriptInlineNonce = environment.getProperty(HTTP_CSP_SCRIPT_INLINE_NONCE, Boolean.class, false);
+            if (isNull(reportOnly) && isNull(directives) && !scriptInlineNonce) {
                 INSTANCE = new NoOpCspHandler();
             } else {
-                INSTANCE = new CspHandlerImpl(reportOnly, directives);
+                INSTANCE = new CspHandlerImpl(reportOnly, directives, scriptInlineNonce);
             }
         }
         return INSTANCE;

@@ -86,7 +86,7 @@
                                             <i th:if="${factor.factorType == 'SMS'}" class="material-icons mdl-list__item-avatar">textsms</i>
                                             <span th:if="${phoneNumber != null}">1. Confirm your phone number </span>
                                             <span th:if="${phoneNumber == null}">1. Enter your phone number </span>
-                                            <input th:id="'phoneFact' + ${factIter.index}" type="tel" th:name="'phoneFact' + ${factIter.index}"  th:value="${phoneNumber}" th:data1="'phoneFact' + ${factIter.index}" onkeydown="javascript:hideError(this.getAttribute('data1'))">
+                                            <input th:id="'phoneFact' + ${factIter.index}" type="tel" th:name="'phoneFact' + ${factIter.index}"  th:value="${phoneNumber}" >
                                         </span>
                                     </li>
                                     <li th:id="'invalidphoneFact' + ${factIter.index}" class="mfa-enroll-error-info error">
@@ -114,7 +114,7 @@
                                             <i class="material-icons mdl-list__item-avatar">email</i>
                                             <span th:if="${emailAddress != null}">1. Confirm your email address </span>
                                             <span th:if="${emailAddress == null}">1. Enter your email address </span>
-                                            <input th:id="'emailFact' + ${factIter.index}" type="email" th:name="'emailFact' + ${factIter.index}"  th:value="${emailAddress}" th:data1="'emailFact' + ${factIter.index}" onkeydown="javascript:hideError(this.getAttribute('data1'))">
+                                            <input th:id="'emailFact' + ${factIter.index}" type="email" th:name="'emailFact' + ${factIter.index}"  th:value="${emailAddress}" >
                                         </span>
                                     </li>
                                     <li th:id="'invalidemailFact' + ${factIter.index}" class="mfa-enroll-error-info error">
@@ -183,10 +183,10 @@
                         <div class="mfa-enroll-form-actions">
                             <button th:if="${mfa_force_enrollment == false}" type="submit" name="user_mfa_enrollment" value="false" class="button--skipped">Skip for now</button>
                             <span style="flex: 1 1 0%;"></span>
-                            <button th:if="${factor.factorType == 'TOTP'}"  type="submit" th:data1="${factor.id}" th:data2="'sharedSecret' + ${factIter.index}" th:onclick="javascript:assignSharedSecret(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
-                            <button th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}"  type="submit" th:data1="${factor.id}" th:data2="'phoneFact' + ${factIter.index}" th:onclick="javascript:checkPhoneNumber(event, this.getAttribute('data1'), this.getAttribute('data2'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
-                            <button th:if="${factor.factorType == 'EMAIL'}"  type="submit" th:data1="${factor.id}" th:data2="'emailFact' + ${factIter.index}" th:data3="'sharedSecret' + ${factIter.index}" th:onclick="javascript:checkEmail(event, this.getAttribute('data1'), this.getAttribute('data2'), this.getAttribute('data3'))" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
-                            <button th:if="${factor.factorType == 'HTTP'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'TOTP'}" th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'EMAIL'}" th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
+                            <button th:if="${factor.factorType == 'HTTP'}" th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                             <button th:if="${factor.factorType == 'FIDO2'}"  type="submit" name="user_mfa_enrollment" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Next</button>
                         </div>
                     </form>
@@ -201,7 +201,7 @@
 <script th:src="@{../assets/material/material.min.js}"></script>
 <script th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
 <script th:src="@{../assets/js/intl-tel-input-17.0.8.min.js}"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
 /*<![CDATA[*/
 
 const intlFields = {};
@@ -226,7 +226,7 @@ function checkPhoneNumber(event, factor, eltId) {
   }
 }
 
-function assignSharedSecret(event, factor, eltId) {
+function assignSharedSecret(factor, eltId) {
   const sharedSecret = $("#" + eltId);
   $("#"+factor).find( '#sharedSecret' )[0].value = sharedSecret.val();
   $("#"+factor).submit();
@@ -249,6 +249,7 @@ function checkEmail(event, factor, eltId, sharedSecretId) {
 }
 
 $(document).ready(function() {
+
     $(".mdl-textfield__input").focus(function() {
         if (!this.value) {
             $(this).prop('required', true);
@@ -279,9 +280,30 @@ $(document).ready(function() {
     /*[# th:each="factor,factIter: ${factors}"]*/
     if ( [[${factor.factorType}]] == 'SMS' || [[${factor.factorType}]] == 'CALL' ) {
         intlFields['phoneFact'+/*[[${factIter.index}]]*/] = initializeIntlTelInput("phoneFact"+/*[[${factIter.index}]]*/, /*[[${factor.enrollment.countries}]]*/);
+        $("#submit"+/*[[${factor.id}]]*/).click((event) => {
+             checkPhoneNumber(event, /*[[${factor.id}]]*/, 'phoneFact' + /*[[${factIter.index}]]*/);
+        });
+
+        $("#phoneFact" + /*[[${factIter.index}]]*/).keydown((event) => {
+             hideError('phoneFact' + /*[[${factIter.index}]]*/);
+        });
     }
+
     if ( [[${factor.factorType}]] == 'EMAIL' ) {
         hideError("emailFact"+/*[[${factIter.index}]]*/);
+        $("#submit"+/*[[${factor.id}]]*/).click((event) => {
+            checkEmail(event, /*[[${factor.id}]]*/, 'emailFact' + /*[[${factIter.index}]]*/, 'sharedSecret' + /*[[${factIter.index}]]*/);
+        });
+
+        $("#emailFact" + /*[[${factIter.index}]]*/).keydown((event) => {
+             hideError('emailFact' + /*[[${factIter.index}]]*/);
+        });
+    }
+
+    if ( [[${factor.factorType}]] == 'TOTP' ) {
+        $("#submit"+/*[[${factor.id}]]*/).click(() => {
+            assignSharedSecret(/*[[${factor.id}]]*/, 'sharedSecret' + /*[[${factIter.index}]]*/);
+        });
     }
     /*[/]*/
 });

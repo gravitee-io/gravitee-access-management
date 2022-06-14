@@ -15,17 +15,19 @@
  */
 package io.gravitee.am.gateway.handler.common.utils;
 
-import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,15 +38,26 @@ public class ThymeleafDataHelper {
     public static Map<String, Object> generateData(RoutingContext context, Domain domain, Client client) {
         final Map<String, Object> data = new HashMap<>(context.data());
         if (domain != null) {
-            data.put(ConstantKeys.DOMAIN_CONTEXT_KEY, new DomainProperties(domain));
+            data.put(DOMAIN_CONTEXT_KEY, new DomainProperties(domain));
         }
         if (client != null) {
-            data.put(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
+            data.put(CLIENT_CONTEXT_KEY, new ClientProperties(client));
         }
-        Object user = context.get(ConstantKeys.USER_CONTEXT_KEY); // context may contain User or UserProperties according to the execution path
-        if (user != null && user instanceof User) {
-            data.put(ConstantKeys.USER_CONTEXT_KEY, new UserProperties((User)user));
-        }
+        getUser(context).ifPresent(userProperties -> data.put(USER_CONTEXT_KEY, userProperties));
         return data;
+    }
+
+    private static Optional<UserProperties> getUser(RoutingContext context) {
+        Object user = context.get(USER_CONTEXT_KEY); // context may contain User or UserProperties according to the execution path
+        Optional<UserProperties> mayHaveUser = Optional.empty();
+        User authUser;
+        if (user instanceof User) {
+            authUser = (User) user;
+            mayHaveUser = Optional.of(new UserProperties(authUser));
+        } else if (context.user() != null){
+            authUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) context.user().getDelegate()).getUser();
+            mayHaveUser = Optional.of(new UserProperties(authUser));
+        }
+        return mayHaveUser;
     }
 }

@@ -25,20 +25,17 @@ import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_IDENTITY_PROVIDER_UPGRADER;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.lang.String.format;
-import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toConcurrentMap;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -82,38 +79,46 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
                 .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
                         .map(__ -> true)
                         .onErrorResumeNext((err) -> {
-                            logger.error("Unable to update status for migrate scope options task: {}", err.getMessage());
+                            logger.error("Unable to update application identityProviders options task: {}", err.getMessage(), err);
                             return Single.just(false);
                         }))
                 .onErrorResumeNext((err) -> {
-                    logger.error("Unable to migrate scope options for applications: {}", err.getMessage());
+                    logger.error("Unable to migrate application identityProvider options for applications: {}", err.getMessage(), err);
                     return Single.just(false);
                 });
     }
 
     private Single<Application> addRuleInApplicationIdentityProvider(Application application) {
         logger.debug("Process application '{}'", application.getId());
-        var identities = identityProviderRepository.findAll(DOMAIN, application.getDomain())
-                .toList().blockingGet().stream()
-                .collect(toConcurrentMap(IdentityProvider::getId, identity()));
-        boolean modified = false;
-        for (ApplicationIdentityProvider appIdp : application.getIdentityProviders()) {
-            var idp = identities.get(appIdp.getIdentity());
-            if (idp != null) {
-                var whitelist = idp.getDomainWhitelist();
-                if (whitelist != null && !whitelist.isEmpty()) {
-                    var selectionRule = whitelist.stream()
-                            .map(pattern -> format("#request.params['username'] matches '.+@%s$'", pattern))
-                            .collect(joining(" || "));
-                    appIdp.setSelectionRule("{" + selectionRule + "}");
-                    logger.debug("Rule '{}' added to application '{}' for identityProvider '{}'",
-                            appIdp.getSelectionRule(), application.getId(), appIdp.getIdentity());
-                    modified = true;
-                }
-            }
-        }
-        logger.debug("Application '{}' processed", application.getId());
-        return modified ? applicationRepository.update(application) : Single.just(application);
+        return identityProviderRepository.findAll(DOMAIN, application.getDomain())
+                .toMap(IdentityProvider::getId)
+                .flatMap(identities -> {
+                    if (identities.isEmpty()) {
+                        logger.debug("Application '{}' processed", application.getId());
+                        return Single.just(application);
+                    }
+                    boolean modified = false;
+                    for (ApplicationIdentityProvider appIdp : application.getIdentityProviders()) {
+                        var idp = identities.get(appIdp.getIdentity());
+                        if (idp != null) {
+                            var whitelist = idp.getDomainWhitelist();
+                            if (whitelist != null && !whitelist.isEmpty()) {
+                                var selectionRule = whitelist.stream()
+                                        .map(pattern -> format("#request.params['username'] matches '.+@%s$'", pattern))
+                                        .collect(joining(" || "));
+                                appIdp.setSelectionRule("{" + selectionRule + "}");
+                                logger.debug("Rule '{}' added to application '{}' for identityProvider '{}'",
+                                        appIdp.getSelectionRule(), application.getId(), appIdp.getIdentity());
+                                modified = true;
+                            }
+                        }
+                    }
+                    logger.debug("Application '{}' processed", application.getId());
+                    return modified ? applicationRepository.update(application) : Single.just(application);
+                }).onErrorResumeNext(err -> {
+                    logger.error("Unable to update application identityProvider options for applications: {}", err.getMessage(), err);
+                    return Single.just(application);
+                });
     }
 
     private Single<SystemTask> updateSystemTask(SystemTask task, SystemTaskStatus status, String operationId) {

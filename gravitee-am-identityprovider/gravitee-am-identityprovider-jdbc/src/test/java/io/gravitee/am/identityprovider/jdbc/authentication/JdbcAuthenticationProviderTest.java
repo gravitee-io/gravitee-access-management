@@ -22,11 +22,13 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.reactivex.observers.TestObserver;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,6 +43,8 @@ public abstract class JdbcAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "bobspassword";
@@ -53,7 +57,9 @@ public abstract class JdbcAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -67,6 +73,8 @@ public abstract class JdbcAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_multifield_username() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "user01";
@@ -79,7 +87,9 @@ public abstract class JdbcAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -93,6 +103,8 @@ public abstract class JdbcAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_multifield_email() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "user01";
@@ -105,7 +117,9 @@ public abstract class JdbcAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -119,6 +133,9 @@ public abstract class JdbcAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "wrongpassword";
@@ -131,7 +148,9 @@ public abstract class JdbcAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -141,6 +160,9 @@ public abstract class JdbcAuthenticationProviderTest {
     @Test
     public void shouldNotLoadUserByUsername_authentication_usernameNotFound() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "bobspassword";
@@ -153,7 +175,9 @@ public abstract class JdbcAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(null).when(authenticationContext).get("unknownUsername");
+                return authenticationContext;
             }
         }).test();
 

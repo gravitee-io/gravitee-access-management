@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.identityprovider.http.user;
 
+import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.http.configuration.*;
 import io.gravitee.common.http.HttpHeader;
@@ -95,6 +97,7 @@ public class HttpUserProviderTestConfiguration {
         HttpUsersResourceConfiguration usersResourceConfiguration = new HttpUsersResourceConfiguration();
         usersResourceConfiguration.setBaseURL("http://localhost:19998/api");
         usersResourceConfiguration.setIdentifierAttribute("id");
+        usersResourceConfiguration.setApplyUserMapper(true);
 
         HttpUsersResourcePathsConfiguration pathsConfiguration = new HttpUsersResourcePathsConfiguration();
         pathsConfiguration.setCreateResource(createResource);
@@ -111,6 +114,11 @@ public class HttpUserProviderTestConfiguration {
     @Bean
     public UserProvider userProvider() {
         return new HttpUserProvider();
+    }
+
+    @Bean
+    public IdentityProviderMapper mapper() {
+        return new DefaultIdentityProviderMapper();
     }
 
     @Bean

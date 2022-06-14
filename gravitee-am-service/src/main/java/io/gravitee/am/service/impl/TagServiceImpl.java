@@ -124,6 +124,7 @@ public class TagServiceImpl implements TagService {
                     Tag tag = new Tag();
                     tag.setId(tagId);
                     tag.setName(updateTag.getName());
+                    tag.setOrganizationId(organizationId);
                     tag.setDescription(updateTag.getDescription());
                     tag.setCreatedAt(oldTag.getCreatedAt());
                     tag.setUpdatedAt(new Date());

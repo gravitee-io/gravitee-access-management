@@ -38,5 +38,6 @@
         <module>gravitee-am-policy-enrich-profile</module>
         <module>gravitee-am-policy-enrich-auth-flow</module>
         <module>gravitee-am-policy-send-email</module>
+        <module>gravitee-am-policy-enroll-mfa</module>
     </modules>
 </project>

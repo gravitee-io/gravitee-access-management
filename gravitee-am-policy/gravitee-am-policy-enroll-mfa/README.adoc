@@ -1,0 +1,30 @@
+= Enroll MFA policy
+
+== Description
+
+You can use the `enroll-mfa` policy to automatically enroll MFA factors based on the user profile information and that way skip
+the interactive MFA enrollment step.
+
+== Configuration
+
+|===
+|Property |Required |Description |Type |Default
+
+|MFA Factor ID
+|Yes
+|The MFA factor to enroll
+|String
+|-
+
+|Value
+|Yes (except the HTTP MFA factor)
+|The value used to enroll the MFA factor (email, phone number, ...). Support EL.
+|String
+|-
+
+|Primary
+|Yes
+|Set this factor as a primary method for the end-user
+|boolean
+|false
+|===

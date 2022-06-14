@@ -51,8 +51,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.identityprovider.api.AuthenticationProvider.ACTUAL_USERNAME;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -276,7 +278,16 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
-        return postAuthentication(client, authentication.getPrincipal().toString(), source, userAuthentication);
+       /*
+         We do not primarily rely on authentication.getPrincipal() here. The reason is that some identity providers
+         (today JDBC and MongoDB) allow you to login while checking multiple input sources (username or email).
+         If you input your email, AM will check on its own username field which might not be the email, ending in not
+         finding the user and not incrementing the login attempts.
+       */
+        String username = ofNullable(authentication.getContext())
+                .map(ctx -> (String) ctx.get(ACTUAL_USERNAME))
+                .orElse(authentication.getPrincipal().toString());
+        return postAuthentication(client, username, source, userAuthentication);
     }
 
     private Completable preAuthentication(Client client, String username, String source) {

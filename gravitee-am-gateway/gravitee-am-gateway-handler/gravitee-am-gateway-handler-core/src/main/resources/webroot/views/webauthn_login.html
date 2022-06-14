@@ -61,7 +61,7 @@
 
     <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
             th:src="@{../assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}">
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
         $(document).ready(function (){
             loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
                 if(fp.visitorId){
@@ -74,7 +74,7 @@
 
     <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
             th:src="@{../assets/js/remember-device/fingerprintjs-v3.js}"></script>
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}">
+    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
         $(document).ready(function (){
             loadFingerprintJsV3(fp => {
                 if (fp.visitorId) {

@@ -37,15 +37,18 @@ public class MfaSkipUserStronglyAuthFilter extends MfaContextHolder implements S
         // We need to check whether the AMFA, Device and Step Up rule is false since we don't know of other MFA return False
         final boolean mfaSkipped = context.isMfaSkipped();
         if (    // Whether Adaptive MFA is not true
-                context.isAmfaActive() && !context.isAmfaRuleTrue() ||
+                !mfaSkipped && context.isAmfaActive() && !context.isAmfaRuleTrue() ||
                 // Or We don't remember the device and that mfa is not skipped
-                context.getRememberDeviceSettings().isActive() && !context.deviceAlreadyExists() && !mfaSkipped ||
+                !mfaSkipped && context.getRememberDeviceSettings().isActive() && !context.deviceAlreadyExists() ||
                 // Or that Step up authentication is active and user is strongly auth or mfa is skipped
                 context.isStepUpActive() && context.isStepUpRuleTrue() && (userStronglyAuth || mfaSkipped)) {
             return false;
         } else if (
-                // Adaptive MFA may be active and may return true, we return true
-                context.isAmfaActive() && context.isAmfaRuleTrue()
+                // We need to make sure we come from a place where the user is not trying to challenge a new device
+                // AND Adaptive MFA may be active and may return true, we return true
+                context.userHasMatchingActivatedFactors()
+                        && !context.hasUserChosenAlternativeFactor()
+                        && context.isAmfaActive() && context.isAmfaRuleTrue()
         ) {
             return true;
         }

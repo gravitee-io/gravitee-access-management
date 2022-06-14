@@ -15,13 +15,13 @@
  */
 package io.gravitee.am.identityprovider.mongo.authentication;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenticationProviderConfiguration;
-import io.gravitee.am.common.exception.authentication.BadCredentialsException;
-import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.reactivex.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,12 +30,16 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = { MongoAuthenticationProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class }, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {MongoAuthenticationProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class}, loader = AnnotationConfigContextLoader.class)
 public class MongoAuthenticationProviderTest {
 
     @Autowired
@@ -44,6 +48,8 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "bobspassword";
@@ -56,7 +62,9 @@ public class MongoAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -70,6 +78,8 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_multifield_username() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "user01";
@@ -82,7 +92,9 @@ public class MongoAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -96,6 +108,8 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_multifield_email() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "user01";
@@ -108,7 +122,9 @@ public class MongoAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -122,6 +138,9 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_case_insensitive() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "bobspassword";
@@ -134,7 +153,9 @@ public class MongoAuthenticationProviderTest {
 
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 
@@ -148,6 +169,9 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_badCredentials() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "wrongpassword";
@@ -158,9 +182,12 @@ public class MongoAuthenticationProviderTest {
                 return "bob";
             }
 
+
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
         testObserver.awaitTerminalEvent();
@@ -170,6 +197,9 @@ public class MongoAuthenticationProviderTest {
     @Test
     public void shouldLoadUserByUsername_authentication_usernameNotFound() {
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+
+            private final AuthenticationContext authenticationContext = mock(AuthenticationContext.class);
+
             @Override
             public Object getCredentials() {
                 return "bobspassword";
@@ -180,9 +210,12 @@ public class MongoAuthenticationProviderTest {
                 return "unknownUsername";
             }
 
+
             @Override
             public AuthenticationContext getContext() {
-                return null;
+                doReturn(authenticationContext).when(authenticationContext).set(anyString(), anyString());
+                doReturn(getPrincipal().toString()).when(authenticationContext).get(getPrincipal().toString());
+                return authenticationContext;
             }
         }).test();
 

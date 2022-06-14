@@ -89,6 +89,9 @@
 #    allow-credentials: true
 #  csp:
 #    reportOnly: false
+#    # set true if you want to include the directive 'script-src' with the nonce value generated for inline script.
+#    # to by marked by the nonce value, your inline script has to contain th:attr="nonce=${script_inline_nonce}"
+#    script-inline-nonce: false
 #    directives:
 #      - "default-src * data: blob: filesystem: about: ws: wss: 'unsafe-inline' 'unsafe-eval' 'unsafe-dynamic';"
 #      - "script-src * 'unsafe-inline' 'unsafe-eval';"

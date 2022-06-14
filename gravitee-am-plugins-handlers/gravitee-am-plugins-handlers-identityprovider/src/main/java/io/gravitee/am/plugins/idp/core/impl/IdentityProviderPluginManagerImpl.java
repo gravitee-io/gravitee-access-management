@@ -25,6 +25,7 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import io.vertx.reactivex.core.Vertx;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -110,7 +111,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
     }
 
     @Override
-    public UserProvider create(String type, String configuration) {
+    public UserProvider create(String type, String configuration, Map<String, String> mappers) {
         logger.debug("Looking for an user provider for [{}]", type);
         var providerConfiguration = new ProviderConfiguration(type, configuration);
         IdentityProvider identityProvider = instances.get(providerConfiguration.getType());
@@ -123,6 +124,10 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                 logger.info("No user provider is registered for type {}", providerConfiguration.getType());
                 return null;
             }
+
+            Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
+            IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
+
             try {
                 return createUserProvider(
                         plugins.get(identityProvider),
@@ -130,7 +135,8 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                         List.of(
                                 new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration),
                                 new PropertiesBeanFactoryPostProcessor(graviteeProperties),
-                                new VertxBeanFactoryPostProcessor(vertx)
+                                new VertxBeanFactoryPostProcessor(vertx),
+                                new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper())
                         )
                 );
             } catch (Exception ex) {

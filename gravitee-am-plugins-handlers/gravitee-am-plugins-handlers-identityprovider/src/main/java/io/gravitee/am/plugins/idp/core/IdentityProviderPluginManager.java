@@ -52,7 +52,7 @@ public abstract class IdentityProviderPluginManager extends
 
     public abstract boolean hasUserProvider(String pluginType);
 
-    public abstract UserProvider create(String type, String configuration);
+    public abstract UserProvider create(String type, String configuration, Map<String, String> mappers);
 
     protected UserProvider createUserProvider(
             Plugin plugin,

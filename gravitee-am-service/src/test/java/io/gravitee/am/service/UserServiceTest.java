@@ -22,12 +22,17 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.exception.EmailFormatInvalidException;
+import io.gravitee.am.service.exception.InvalidUserException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.UserServiceImpl;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.gravitee.am.service.validators.user.UserValidatorImpl;
+import io.gravitee.am.service.utils.UserProfileUtils;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
+import io.gravitee.am.service.validators.user.UserValidatorImpl;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -45,9 +50,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -292,6 +306,95 @@ public class UserServiceTest {
 
         verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
         verify(userRepository, times(1)).update(any(User.class));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldUpdateDisplayName() {
+        UpdateUser updateUser = Mockito.mock(UpdateUser.class);
+        when(updateUser.getFirstName()).thenReturn("Johanna");
+        when(updateUser.getLastName()).thenReturn("Doe");
+
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setDisplayName(UserProfileUtils.buildDisplayName(user));
+        when(updateUser.getDisplayName()).thenReturn(user.getDisplayName());
+
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).update(argThat(entity -> "Johanna Doe".equals(entity.getDisplayName())));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldNotUpdateDisplayName_NoGeneratedDisplayName() {
+        final String DISPLAYNAME = "CustomDisplayName";
+        UpdateUser updateUser = Mockito.mock(UpdateUser.class);
+        when(updateUser.getFirstName()).thenReturn("Johanna");
+        when(updateUser.getLastName()).thenReturn("Doe");
+        when(updateUser.getDisplayName()).thenReturn(DISPLAYNAME);
+
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setDisplayName(DISPLAYNAME);
+
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())));
+        verify(eventService, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldUpdateDisplayName_CustomValue() {
+        final String DISPLAYNAME = "CustomDisplayName";
+        UpdateUser updateUser = Mockito.mock(UpdateUser.class);
+        when(updateUser.getFirstName()).thenReturn("Johanna");
+        when(updateUser.getLastName()).thenReturn("Doe");
+        when(updateUser.getDisplayName()).thenReturn(DISPLAYNAME);
+
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setDisplayName(UserProfileUtils.buildDisplayName(user));
+
+        when(userRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(User.class))).thenReturn(Single.just(user));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        TestObserver testObserver = userService.update(DOMAIN, "my-user", updateUser).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        verify(userRepository, times(1)).findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-user"));
+        verify(userRepository, times(1)).update(argThat(entity -> DISPLAYNAME.equals(entity.getDisplayName())));
         verify(eventService, times(1)).create(any());
     }
 

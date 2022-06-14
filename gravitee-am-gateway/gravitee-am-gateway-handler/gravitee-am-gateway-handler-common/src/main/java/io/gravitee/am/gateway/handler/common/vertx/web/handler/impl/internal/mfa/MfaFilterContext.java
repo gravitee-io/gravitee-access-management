@@ -27,15 +27,15 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
-
 import java.util.Map;
 
 import java.util.Date;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.util.Objects.isNull;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.lang.Boolean.FALSE;
@@ -128,6 +128,14 @@ public class MfaFilterContext {
         return session.get(LOGIN_ATTEMPT_KEY);
     }
 
+    public boolean hasEndUserAlreadyEnrolled() {
+        return nonNull(session.get(ENROLLED_FACTOR_ID_KEY));
+    }
+
+    public boolean hasUserChosenAlternativeFactor() {
+        return nonNull(session.get(ALTERNATIVE_FACTOR_ID_KEY));
+    }
+
     public Map<String, Object> getEvaluableContext() {
         final Map<String, Object> data = getEvaluableAttributes(routingContext);
         final Object loginAttempt = this.getLoginAttempt();
@@ -138,8 +146,13 @@ public class MfaFilterContext {
         );
     }
 
-    public boolean hasEndUserAlreadyEnrolled() {
-        return nonNull(session.get(ENROLLED_FACTOR_ID_KEY));
+    public boolean userHasMatchingFactors() {
+        if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
+            return false;
+        }
+        return endUser.getFactors().stream()
+                .map(EnrolledFactor::getFactorId)
+                .anyMatch(client.getFactors()::contains);
     }
 
     public boolean isMfaChallengeComplete(){
@@ -147,11 +160,12 @@ public class MfaFilterContext {
                 TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
 
-    public boolean userHasMatchingFactors() {
+    public boolean userHasMatchingActivatedFactors() {
         if (isNull(endUser.getFactors()) || endUser.getFactors().isEmpty()) {
             return false;
         }
         return endUser.getFactors().stream()
+                .filter(factor -> ACTIVATED.equals(factor.getStatus()))
                 .map(EnrolledFactor::getFactorId)
                 .anyMatch(client.getFactors()::contains);
     }

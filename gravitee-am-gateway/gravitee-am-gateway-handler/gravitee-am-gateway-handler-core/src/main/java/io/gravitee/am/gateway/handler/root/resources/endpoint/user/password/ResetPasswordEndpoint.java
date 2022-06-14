@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
@@ -68,11 +69,13 @@ public class ResetPasswordEndpoint extends AbstractEndpoint implements Handler<R
         copyValue(request, routingContext, ConstantKeys.TOKEN_PARAM_KEY);
 
         // put parameters in context (backward compatibility)
-        Map<String, String> params = new HashMap<>();
+        final Map<String, String> params = new HashMap<>();
         params.computeIfAbsent(ConstantKeys.ERROR_PARAM_KEY, val -> error);
         params.computeIfAbsent(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, val -> errorDescription);
         routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path()));
+
+        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
 
         // render the reset password page
         this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render reset password page");

@@ -37,7 +37,7 @@ public class UserFactorUpdater {
                     .filter(factor -> factor.getChannel() != null)
                     .forEach(factor -> {
                         // Do not manage the SMS channel type because we can't know if it is a mobile phone number...
-                        // in addition we have to know the country related to the phone number that is an information provided by the user
+                        // in addition, we have to know the country related to the phone number that is an information provided by the user
                         // during the factor enrollment
                         EnrolledFactorChannel.Type channelType = factor.getChannel().getType();
                         if (EnrolledFactorChannel.Type.EMAIL.equals(channelType)) {

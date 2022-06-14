@@ -28,6 +28,10 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -35,10 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -91,39 +92,42 @@ public class MongoAuthenticationProvider implements AuthenticationProvider {
                     }
                     return Flowable.fromIterable(users);
                 })
-                .filter(user -> {
+                .map(user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
 
                     if (password == null) {
                         LOGGER.debug("Authentication failed: password is null");
-                        return false;
+                        return new UserCredentialEvaluation<>(false, user);
                     }
 
                     if (configuration.isUseDedicatedSalt()) {
                         String hash = user.getString(configuration.getPasswordSaltAttribute());
                         if (!passwordEncoder.matches(presentedPassword, password, hash)) {
                             LOGGER.debug("Authentication failed: password does not match stored value");
-                            return false;
+                            return new UserCredentialEvaluation<>(false, user);
                         }
                     } else {
                         if (!passwordEncoder.matches(presentedPassword, password)) {
                             LOGGER.debug("Authentication failed: password does not match stored value");
-                            return false;
+                            return new UserCredentialEvaluation<>(false, user);
                         }
                     }
 
-                    return true;
+                    return new UserCredentialEvaluation<>(true, user);
                 })
                 .toList()
-                .flatMapMaybe(users -> {
-                    if (users.isEmpty()) {
+                .flatMapMaybe(userEvaluations -> {
+                    if (userEvaluations.size() > 1) {
+                        LOGGER.debug("Authentication failed: multiple accounts with same credentials");
                         return Maybe.error(new BadCredentialsException("Bad credentials"));
                     }
-                    if (users.size() > 1) {
-                        return Maybe.error(new BadCredentialsException("Bad credentials"));
-                    }
-                    return Maybe.just(this.createUser(authentication.getContext(), users.get(0)));
+                    var userEvaluation = userEvaluations.get(0);
+                    var user = this.createUser(authentication.getContext(), userEvaluation.getUser());
+                    ofNullable(authentication.getContext()).ifPresent(auth -> auth.set(ACTUAL_USERNAME, user.getUsername()));
+                    return userEvaluation.isPasswordValid() ?
+                            Maybe.just(user) :
+                            Maybe.error(new BadCredentialsException("Bad credentials"));
                 });
     }
 

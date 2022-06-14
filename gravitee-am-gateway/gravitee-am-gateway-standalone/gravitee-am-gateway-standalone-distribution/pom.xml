@@ -367,6 +367,20 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.policy</groupId>
+            <artifactId>gravitee-am-policy-enroll-mfa</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.policy</groupId>
+            <artifactId>gravitee-am-policy-send-email</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- AM Bot Detection -->
         <dependency>
@@ -722,6 +736,20 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.policy</groupId>
                                     <artifactId>gravitee-am-policy-enrich-auth-flow</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.policy</groupId>
+                                    <artifactId>gravitee-am-policy-enroll-mfa</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.policy</groupId>
+                                    <artifactId>gravitee-am-policy-send-email</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

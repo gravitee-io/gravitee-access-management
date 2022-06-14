@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
@@ -59,6 +60,8 @@ import static org.mockito.Mockito.when;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
+
+    public final LoginSelectionRuleHandler loginSelectionRuleHandler = new LoginSelectionRuleHandler(true);
 
     @Mock
     private ClientSyncService clientSyncService;
@@ -144,6 +147,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -176,6 +180,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -207,6 +212,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -224,6 +230,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
     public void shouldInvokeLoginEndpoint_noRedirectNoSocialIdpsInContext() throws Exception {
         router.route(HttpMethod.POST, "/login/identifier")
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -249,6 +256,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -282,6 +290,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(
@@ -314,6 +323,7 @@ public class IdentifierFirstLoginEndpointTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(clientRequestParseHandler::handle)
+                .handler(loginSelectionRuleHandler)
                 .handler(identifierFirstLoginEndpoint::handle);
 
         testRequest(

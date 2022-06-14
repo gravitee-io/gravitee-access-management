@@ -319,22 +319,25 @@ public class JdbcUserProvider extends JdbcAbstractProvider<UserProvider> impleme
 
     private User createUser(Map<String, Object> claims) {
         // get username
-        String username = claims.get(configuration.getUsernameAttribute()).toString();
+        String username = (String) claims.get(configuration.getUsernameAttribute());
         // get sub
-        String id = claims.get(configuration.getIdentifierAttribute()).toString();
-        // get encrypted password
-        String password = claims.get(configuration.getPasswordAttribute()) != null ? claims.get(configuration.getPasswordAttribute()).toString() : null;
+        String id = (String) claims.get(configuration.getIdentifierAttribute());
+        // get email
+        String email = (String) claims.get(configuration.getEmailAttribute());
+
         // compute metadata
         computeMetadata(claims);
 
         // create the user
         DefaultUser user = new DefaultUser(username);
         user.setId(id);
-        user.setCredentials(password);
+        user.setEmail(email);
+
         // additional claims
         Map<String, Object> additionalInformation = new HashMap<>(claims);
         claims.put(StandardClaims.SUB, id);
         claims.put(StandardClaims.PREFERRED_USERNAME, username);
+
         // remove reserved claims
         additionalInformation.remove(configuration.getIdentifierAttribute());
         additionalInformation.remove(configuration.getUsernameAttribute());

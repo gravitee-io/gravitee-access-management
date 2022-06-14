@@ -20,8 +20,11 @@ import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
-
 import java.util.Map;
+import java.util.Map.Entry;
+
+import static java.util.Objects.nonNull;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Handle proxy specific things such as resolving external url via X-Forwarded-* proxy headers
@@ -69,12 +72,18 @@ public class UriBuilderRequest {
 
         if(parameters != null) {
             queryParameters = MultiMap.caseInsensitiveMultiMap();
-            queryParameters.addAll(parameters);
+            queryParameters.addAll(getSafeParameters(parameters));
         } else {
             queryParameters = null;
         }
 
         return resolveProxyRequest(request, path, queryParameters, encoded);
+    }
+
+    private static Map<String, String> getSafeParameters(Map<String, String> parameters) {
+        return parameters.entrySet()
+                .stream().filter(entry -> nonNull(entry.getValue()))
+                .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
     public static String resolveProxyRequest(final HttpServerRequest request, final String path, final MultiMap parameters){
