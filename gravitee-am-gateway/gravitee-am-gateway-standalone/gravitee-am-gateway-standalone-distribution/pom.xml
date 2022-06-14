@@ -48,6 +48,15 @@
             <artifactId>gravitee-am-gateway-standalone-bootstrap</artifactId>
             <version>${project.version}</version>
         </dependency>
+        
+        <dependency>
+            <!--
+            Import this depency explictly otherwise it will not be included into the final bundle
+            Don't know why currently as this is a transitive dependency recognise by maven...
+            -->
+            <groupId>io.gravitee.policy</groupId>
+            <artifactId>gravitee-policy-api</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
