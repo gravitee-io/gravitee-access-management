@@ -31,23 +31,23 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
-import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Map;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Arrays.asList;
 
 /**
@@ -92,7 +92,7 @@ public class EmailFactorProvider implements FactorProvider {
     }
 
     @Override
-    public boolean checkSecurityFactor(EnrolledFactor  factor) {
+    public boolean checkSecurityFactor(EnrolledFactor factor) {
         boolean valid = false;
         if (factor != null) {
             EnrolledFactorSecurity securityFactor = factor.getSecurity();
@@ -152,7 +152,7 @@ public class EmailFactorProvider implements FactorProvider {
             }
 
             // register mfa code to make it available into the TemplateEngine values
-            Map<String, Object> params =  context.getTemplateValues();
+            Map<String, Object> params = context.getTemplateValues();
             params.put(FactorContext.KEY_CODE, generateOTP(enrolledFactor));
 
             final String recipient = enrolledFactor.getChannel().getTarget();
@@ -160,14 +160,13 @@ public class EmailFactorProvider implements FactorProvider {
 
             return provider.sendMessage(emailWrapper.getEmail())
                     .andThen(Single.just(enrolledFactor)
-                            .flatMap(ef ->  {
+                            .flatMap(ef -> {
                                 ef.setPrimary(true);
-                                ef.setStatus(FactorStatus.ACTIVATED);
                                 ef.getSecurity().putData(FactorDataKeys.KEY_EXPIRE_AT, emailWrapper.getExpireAt());
                                 return userService.addFactor(context.getUser().getId(), ef, new DefaultUser(context.getUser()));
                             }).ignoreElement());
 
-        } catch (NoSuchAlgorithmException| InvalidKeyException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             logger.error("Code generation fails", e);
             return Completable.error(new TechnicalException("Code can't be sent"));
         } catch (Exception e) {

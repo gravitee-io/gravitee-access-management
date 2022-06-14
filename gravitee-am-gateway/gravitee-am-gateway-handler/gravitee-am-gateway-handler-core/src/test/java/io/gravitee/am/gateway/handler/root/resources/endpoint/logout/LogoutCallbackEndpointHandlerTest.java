@@ -131,7 +131,7 @@ public class LogoutCallbackEndpointHandlerTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/error?client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
+                    assertTrue(location.endsWith("/error?state=myappstate&client_id=client-id&error=invalid_request&error_description=The+post_logout_redirect_uri+MUST+match+the+registered+callback+URLs"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

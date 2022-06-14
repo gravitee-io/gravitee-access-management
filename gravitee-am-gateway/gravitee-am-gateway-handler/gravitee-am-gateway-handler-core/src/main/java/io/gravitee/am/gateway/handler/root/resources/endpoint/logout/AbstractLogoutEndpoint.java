@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
@@ -36,6 +37,7 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -50,7 +52,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     private static final String INVALIDATE_TOKENS_PARAMETER = "invalidate_tokens";
-    private static final String LOGOUT_URL_PARAMETER = "target_url";
+    protected static final String LOGOUT_URL_PARAMETER = "target_url";
     private static final String DEFAULT_TARGET_URL = "/";
 
     protected Domain domain;
@@ -142,8 +144,22 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
      * Invalidate session for the current user
      *
      * @param routingContext the routing context
+     * @param redirect flag to redirect the user after the logout action
+     */
+    protected void invalidateSession(RoutingContext routingContext, boolean redirect) {
+        invalidateSession0(routingContext, redirect);
+    }
+
+    /**
+     * Invalidate session for the current user
+     *
+     * @param routingContext the routing context
      */
     protected void invalidateSession(RoutingContext routingContext) {
+        invalidateSession0(routingContext, true);
+    }
+
+    private void invalidateSession0(RoutingContext routingContext, boolean redirect) {
         final User endUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY) != null ?
                 routingContext.get(ConstantKeys.USER_CONTEXT_KEY) :
                 (routingContext.user() != null ? ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null);
@@ -161,7 +177,11 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
                             if (routingContext.session() != null) {
                                 routingContext.session().destroy();
                             }
-                            doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
+                            if (redirect) {
+                                doRedirect(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), routingContext);
+                            } else {
+                                routingContext.response().setStatusCode(200).end();
+                            }
                         },
                         error -> routingContext.fail(error)
                 );
@@ -223,10 +243,14 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(User endUser, RoutingContext routingContext) {
         // override principal user
         DefaultUser principal = new DefaultUser(endUser.getUsername());
+        principal.setId(endUser.getId());
         Map<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
         additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
         additionalInformation.put(Claims.domain, domain.getId());
+        if (!ObjectUtils.isEmpty(endUser.getDisplayName())) {
+            additionalInformation.put(StandardClaims.NAME, endUser.getDisplayName());
+        }
         principal.setAdditionalInformation(additionalInformation);
         return principal;
     }

@@ -7,7 +7,7 @@
     <title>Login SSO SPNEGO</title>
 </head>
 <body>
-    <script th:inline="javascript">
+    <script th:inline="javascript" th:attr="nonce=${script_inline_nonce}">
         /*<![CDATA[*/
         var actionUrl = /*[[${action}]]*/;
         window.location.replace(actionUrl);

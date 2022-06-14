@@ -2039,9 +2039,9 @@
 											"    pm.response.to.have.status(200);",
 											"});",
 											"",
-											"pm.test(\"Should have 2 plugin notifiers\", function () {",
+											"pm.test(\"Should have 3 plugin notifiers\", function () {",
 											"   var notifiers = pm.response.json();",
-											"   pm.expect(notifiers.length).to.be.eq(2);",
+											"   pm.expect(notifiers.length).to.be.eq(3);",
 											"});"
 										],
 										"type": "text/javascript"

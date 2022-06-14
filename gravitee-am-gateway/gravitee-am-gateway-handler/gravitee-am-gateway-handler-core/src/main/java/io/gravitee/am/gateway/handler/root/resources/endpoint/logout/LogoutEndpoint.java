@@ -38,16 +38,20 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.common.http.HttpMethod;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.reactivex.core.MultiMap;
+import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -113,14 +117,20 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
             evaluateSingleSignOut(routingContext, endpointHandler -> {
                 final String oidcEndSessionEndpoint = endpointHandler.result();
                 if (oidcEndSessionEndpoint != null) {
-                    // redirect to the OIDC provider to logout the user
-                    // this action will return to the AM logout callback to finally logout the user from AM
-                    if ("GET".equals(routingContext.request().method().name())) {
-                        doRedirect(currentSession != null ? currentSession.getClient() : null, routingContext, oidcEndSessionEndpoint);
+                    // 3.  Redirection to RP After Logout
+                    // In some cases, the RP will request that the End-User's User Agent to be redirected back to the RP after a logout has been performed.
+                    // Post-logout redirection is only done when the logout is RP-initiated, in which case the redirection target is the post_logout_redirect_uri parameter value sent by the initiating RP.
+                    // An id_token_hint carrying an ID Token for the RP is also RECOMMENDED when requesting post-logout redirection;
+                    // if it is not supplied with post_logout_redirect_uri, the OP MUST NOT perform post-logout redirection unless the OP has other means of confirming the legitimacy of the post-logout redirection target.
+                    // The OP also MUST NOT perform post-logout redirection if the post_logout_redirect_uri value supplied does not exactly match one of the previously registered post_logout_redirect_uris values.
+                    // The post-logout redirection is performed after the OP has finished notifying the RPs that logged in with the OP for that End-User that they are to log out the End-User.
+                    // see https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
+                    if (HttpMethod.POST.name().equals(routingContext.request().method().name()) ||
+                            (ObjectUtils.isEmpty(routingContext.request().getParam(Parameters.POST_LOGOUT_REDIRECT_URI)) &&
+                                    ObjectUtils.isEmpty(routingContext.request().getParam(LOGOUT_URL_PARAMETER)))) {
+                        backChannelLogout(routingContext, oidcEndSessionEndpoint, routingContext.request().method());
                     } else {
-                        // if the RP calls the OP with POST method we can't follow redirect
-                        // we need to connect to the delegated OP via HTTP call
-                        backChannelLogout(routingContext, oidcEndSessionEndpoint);
+                        doRedirect(currentSession != null ? currentSession.getClient() : null, routingContext, oidcEndSessionEndpoint);
                     }
                 } else {
                     // External OP do not provide EndSessionEndpoint, call the "standard" AM logout mechanism
@@ -220,22 +230,30 @@ public class LogoutEndpoint extends AbstractLogoutEndpoint {
                 );
     }
 
-    private void backChannelLogout(RoutingContext routingContext, String endpoint) {
-        final String endpointUri = RequestUtils.getUrlWithoutParameters(endpoint);
-        final MultiMap body = RequestUtils.getCleanedQueryParams(endpoint);
-        webClient
-            .postAbs(endpointUri)
-            .rxSendForm(body)
+    private void backChannelLogout(RoutingContext routingContext, String endpoint, io.vertx.core.http.HttpMethod httpMethod) {
+        // prepare request
+        Single<HttpResponse<Buffer>> responseHandler;
+        if (io.vertx.core.http.HttpMethod.GET.equals(httpMethod)) {
+            responseHandler = webClient
+                    .getAbs(endpoint)
+                    .rxSend();
+        } else {
+            responseHandler = webClient
+                    .postAbs(RequestUtils.getUrlWithoutParameters(endpoint))
+                    .rxSendForm(RequestUtils.getCleanedQueryParams(endpoint));
+        }
+        // handle response
+        responseHandler
             .subscribe(
                     response -> {
                         if (response.statusCode() >= 400) {
                             logger.warn("Received response from {} endpoint with status code {} and response body {}", endpoint, response.statusCode(), response.bodyAsString());
                         }
-                        invalidateSession(routingContext);
+                        invalidateSession(routingContext, false);
                     },
                     error -> {
                         logger.error("An error has occurred when calling the delegated OP end_session_endpoint : {}", endpoint, error);
-                        invalidateSession(routingContext);
+                        invalidateSession(routingContext, false);
                     });
     }
 

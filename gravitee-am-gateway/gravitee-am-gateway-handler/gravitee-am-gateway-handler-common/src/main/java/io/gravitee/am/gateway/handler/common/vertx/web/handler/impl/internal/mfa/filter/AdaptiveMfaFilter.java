@@ -18,10 +18,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MfaFilterContext;
-
 import java.util.function.Supplier;
-
-import static java.util.Objects.isNull;
 
 
 /**
@@ -32,8 +29,6 @@ public class AdaptiveMfaFilter extends MfaContextHolder implements Supplier<Bool
 
     private final RuleEngine ruleEngine;
 
-    private Boolean isRuleTrue = null;
-
     public AdaptiveMfaFilter(
             MfaFilterContext context,
             RuleEngine ruleEngine) {
@@ -43,16 +38,22 @@ public class AdaptiveMfaFilter extends MfaContextHolder implements Supplier<Bool
 
     @Override
     public Boolean get() {
-        if (isNull(isRuleTrue)) {
-            if (!context.isAmfaActive()) {
-                context.setAmfaRuleTrue(false);
-                return false;
-            }
+        if (!context.isAmfaActive()) {
+            return false;
+        }
 
+        if (context.isMfaSkipped() && !context.hasEndUserAlreadyEnrolled() && !context.userHasMatchingFactors()) {
+            return false;
+        }
+
+        // We make sure that the rule can be triggered if we come from an already enrolled user
+        // And that the user is not trying to challenge to an alternative factor
+        if (context.userHasMatchingActivatedFactors() && !context.hasUserChosenAlternativeFactor()){
             // We are retaining the value since other features will use it in the chain
             context.setAmfaRuleTrue(ruleEngine.evaluate(context.getAmfaRule(), context.getEvaluableContext(), Boolean.class, false));
         }
-        // If one of the other filter chains are active. We want to make sure that
+
+        // If one of the other filter is active. We want to make sure that
         // if Adaptive MFA skips (rule == true) we want other MFA methods to trigger
         var rememberDevice = context.getRememberDeviceSettings();
         return !rememberDevice.isActive() && !context.isStepUpActive() && context.isAmfaRuleTrue();

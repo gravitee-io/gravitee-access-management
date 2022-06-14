@@ -187,6 +187,15 @@ public abstract class AbstractDialect implements DialectHelper {
             bindings.put("user", criteria.user());
         }
 
+        // event user technical ID
+        if (criteria.userId() != null && !criteria.userId().isEmpty()) {
+            queryBuilder = queryBuilder.append(" INNER JOIN "+auditEntitiesTable+" e ON a.id = e.audit_id ");
+            entitiesJoin = true;
+
+            whereClauseBuilder = whereClauseBuilder.append(" AND e.id = :user");
+            bindings.put("user", criteria.userId());
+        }
+
         // time range
         if (criteria.from() != 0 && criteria.to() != 0) {
 

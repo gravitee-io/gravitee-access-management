@@ -23,8 +23,10 @@ import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginHideFormHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSelectionRuleHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpStatusCode;
@@ -42,15 +44,23 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.UUID;
 
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static java.lang.Boolean.TRUE;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,6 +78,8 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private static final String HIDE_FORM_CONTEXT_KEY = "hideLoginForm";
     private static final String IDENTIFIER_FIRST_LOGIN_ENABLED = "identifierFirstLoginEnabled";
     private static final String BACK_TO_LOGIN_IDENTIFIER_ACTION_KEY = "backToLoginIdentifierAction";
+
+    public final LoginSelectionRuleHandler loginSelectionRuleHandler = new LoginSelectionRuleHandler(false);
 
     @Mock
     private TemplateEngine templateEngine;
@@ -118,7 +130,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     public void shouldInvokeLoginEndpoint_buildTemplate() throws Exception {
         appClient.getLoginSettings().setIdentifierFirstEnabled(false);
         appClient.getLoginSettings().setHideForm(false);
-        router.route(HttpMethod.GET, "/login").handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
+        router.route(HttpMethod.GET, "/login")
+                .handler(loginSelectionRuleHandler)
+                .handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -138,11 +152,46 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(new LoginHideFormHandler(domain))
+                .handler(loginSelectionRuleHandler)
                 .handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
                 HttpStatusCode.FOUND_302, "Found");
+    }
+
+    @Test
+    public void shouldInvokeExternalIdp_selectionRuleMatches() throws Exception {
+        appClient.getLoginSettings().setIdentifierFirstEnabled(false);
+        ApplicationIdentityProvider appIdp = new ApplicationIdentityProvider();
+        appIdp.setSelectionRule("true");
+        appIdp.setIdentity("provider-id");
+
+        final TreeSet treeSet = new TreeSet();
+        treeSet.add(appIdp);
+        appClient.setIdentityProviders(treeSet);
+
+        router.route(HttpMethod.GET, "/login")
+                .handler(routingContext -> {
+                    final IdentityProvider idp = new IdentityProvider();
+                    idp.setId("provider-id");
+                    routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
+                    routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "https://somewhere/some/provider/oauth/authorize"));
+                    routingContext.next();
+                })
+                .handler(new LoginHideFormHandler(domain))
+                .handler(loginSelectionRuleHandler)
+                .handler(get302AssertMockRoutingContextHandler(loginEndpoint, true, false));
+        when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
+        testRequest(
+                HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("https://somewhere/some/provider/oauth/authorize"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
     }
 
     @Test
@@ -154,7 +203,8 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
             routingContext.put(SOCIAL_PROVIDER_CONTEXT_KEY, List.of(idp));
             routingContext.put(SOCIAL_AUTHORIZE_URL_CONTEXT_KEY, Map.of(idp.getId(), "/some/provider/oauth/authorize"));
             routingContext.next();
-        }).handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
+        }).handler(loginSelectionRuleHandler)
+                .handler(get200AssertMockRoutingContextHandler(loginEndpoint, false, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
                 HttpMethod.GET, "/login?client_id=" + appClient.getClientId() + "&response_type=code&redirect_uri=somewhere.com",
@@ -175,6 +225,7 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
                     routingContext.next();
                 })
                 .handler(new LoginHideFormHandler(domain))
+                .handler(loginSelectionRuleHandler)
                 .handler(get200AssertMockRoutingContextHandler(loginEndpoint, true, false));
         when(clientSyncService.findByClientId(appClient.getClientId())).thenReturn(Maybe.just(appClient));
         testRequest(
@@ -185,7 +236,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeLoginEndpoint_emptyUsernameWhenIdentifierFirstEnabled() throws Exception {
         appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(context -> {
+        router.route(HttpMethod.GET, "/login")
+                .handler(loginSelectionRuleHandler)
+                .handler(context -> {
             loginEndpoint.handle(context);
             context.next();
         });
@@ -199,7 +252,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     @Test
     public void shouldNotInvokeLoginEndpoint_nullUsernameWhenIdentifierFirstEnabled() throws Exception {
         appClient.getLoginSettings().setIdentifierFirstEnabled(true);
-        router.route(HttpMethod.GET, "/login").handler(context -> {
+        router.route(HttpMethod.GET, "/login")
+                .handler(loginSelectionRuleHandler)
+                .handler(context -> {
             loginEndpoint.handle(context);
             context.next();
         });

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.user.register;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -90,7 +91,8 @@ public class RegisterConfirmationEndpoint extends UserRequestHandler {
             return;
         }
 
-        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path()));
+        final Map<String, String> actionParams = (client != null) ? Map.of(Parameters.CLIENT_ID, client.getClientId()) : Map.of();
+        routingContext.put(ConstantKeys.ACTION_KEY, UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), actionParams));
 
         // render the registration confirmation page
         engine.render(generateData(routingContext, domain, client), getTemplateFileName(client), res -> {

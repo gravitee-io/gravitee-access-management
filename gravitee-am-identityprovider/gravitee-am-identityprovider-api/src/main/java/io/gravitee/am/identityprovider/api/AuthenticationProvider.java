@@ -26,6 +26,8 @@ import io.reactivex.Maybe;
  */
 public interface AuthenticationProvider extends Service<AuthenticationProvider> {
 
+    String ACTUAL_USERNAME = "actual_username";
+
     Maybe<User> loadUserByUsername(Authentication authentication);
 
     Maybe<User> loadUserByUsername(String username);
