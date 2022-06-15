@@ -114,7 +114,7 @@ orbs:
   gravitee: gravitee-io/gravitee@1.0
   keeper: gravitee-io/keeper@0.6.2
   slack: circleci/slack@4.8.1
-  am: gravitee-io/gravitee-am@dev:1.0.9
+  am: gravitee-io/gravitee-am@1.0.9
   snyk: snyk/snyk@1.1.2
 
 commands:
@@ -1240,29 +1240,6 @@ workflows:
           tag_latest: << pipeline.parameters.tag_latest >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           gio_product: << pipeline.parameters.gio_product >>
-      # ---
-      # Builds and push AM v3 Entreprise Edition Images
-      - am/build_n_push_am_ee_v3_gateway_job:
-          context: cicd-orchestrator
-          requires:
-            - building ce dockerfile
-          dry_run: << pipeline.parameters.dry_run >>
-          tag_latest: << pipeline.parameters.tag_latest >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-      - am/build_n_push_am_ee_v3_api_job:
-          context: cicd-orchestrator
-          requires:
-            - building ce dockerfile
-          dry_run: << pipeline.parameters.dry_run >>
-          tag_latest: << pipeline.parameters.tag_latest >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-      - am/build_n_push_am_ee_v3_ui_job:
-          context: cicd-orchestrator
-          requires:
-            - building ce dockerfile
-          dry_run: << pipeline.parameters.dry_run >>
-          tag_latest: << pipeline.parameters.tag_latest >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
 
 #  build_ciba_container:
 #    when:
