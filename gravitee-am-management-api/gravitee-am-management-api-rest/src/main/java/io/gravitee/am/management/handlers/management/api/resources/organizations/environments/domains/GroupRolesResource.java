@@ -67,7 +67,9 @@ public class GroupRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a group roles",
+    @ApiOperation(
+            nickname = "findGroupRoles",
+            value = "Get a group roles",
             notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
                     "or DOMAIN_GROUP[READ] permission on the specified environment " +
                     "or DOMAIN_GROUP[READ] permission on the specified organization")
@@ -98,7 +100,9 @@ public class GroupRolesResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Assign roles to a group",
+    @ApiOperation(
+            nickname = "assignRoles",
+            value = "Assign roles to a group",
             notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")

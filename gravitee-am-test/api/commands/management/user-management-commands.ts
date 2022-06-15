@@ -13,41 +13,118 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainManagerUrl} from "./utils";
-import {User} from "../../model/users";
+import {getUserApi} from "./service/utils";
+import {expect} from "@jest/globals";
 
-const request = require('supertest');
+export const createUser = (domainId, accessToken, user) =>
+    getUserApi(accessToken).createUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: user
+    })
 
-export const createUser = (domainId, accessToken, user: User, status: number = 201) =>
-    request(getUsersUrl(domainId, null))
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(user)
-        .expect(status);
+export const getUser = (domainId, accessToken, userId: string) =>
+    getUserApi(accessToken).findUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId
+    })
 
-export const getUser = (domainId, accessToken, userId: string, status: number = 200) =>
-    request(getUsersUrl(domainId, userId))
-        .get('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const getAllUsers = (domainId, accessToken) =>
+    getUserPage(domainId, accessToken)
 
-export const getAllUsers = (domainId, accessToken, status: number = 200) =>
-    getUser(domainId, accessToken, null, status);
+export const getUserPage = (domainId, accessToken, page: number = null, size: number = null) => {
+    const params = {
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+    };
+    if (page !== null && size != null) {
+        return getUserApi(accessToken).listUsers({...params, page: page, size: size});
+    }
+    return getUserApi(accessToken).listUsers(params);
+}
 
-export const updateUser = (domainId, accessToken, userId, payload, status: number = 200) =>
-    request(getUsersUrl(domainId, userId))
-        .put('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(payload)
-        .expect(status);
+export const updateUser = (domainId, accessToken, userId, payload) =>
+    getUserApi(accessToken).updateUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId,
+        user2: payload
+    })
 
-export const deleteUser = (domainId, accessToken, userId, status: number = 204) =>
-    request(getUsersUrl(domainId, userId))
-        .delete('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const updateUserStatus = (domainId, accessToken, userId, status: boolean) =>
+    getUserApi(accessToken).updateUserStatus({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId,
+        status: {enabled: status}
+    })
 
-const getUsersUrl = (domainId, userId) => {
-    const usersPath = userId ? `/users/${userId}` : '/users/';
-    return getDomainManagerUrl(domainId) + usersPath;
+export const resetUserPassword = (domainId, accessToken, userId, password) =>
+    getUserApi(accessToken).resetPassword({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId,
+        password: { password: password }
+    })
+
+export const sendRegistrationConfirmation = (domainId, accessToken, userId) =>
+    getUserApi(accessToken).sendRegistrationConfirmation({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId
+    })
+
+export const lockUser = (domainId, accessToken, userId) =>
+    getUserApi(accessToken).lockUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId
+    })
+
+export const unlockUser = (domainId, accessToken, userId) =>
+    getUserApi(accessToken).unlockUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId
+    })
+
+export const deleteUser = (domainId, accessToken, userId) =>
+    getUserApi(accessToken).deleteUser({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        user: userId,
+    })
+
+export async function buildCreateAndTestUser(domainId, accessToken, i: number, preRegistration: boolean = false) {
+    const firstName = "firstName" + i;
+    const lastName = "lastName" + i;
+    const payload = {
+        firstName: firstName,
+        lastName: lastName,
+        email: `${firstName}.${lastName}@mail.com`,
+        username: `${firstName}.${lastName}`,
+        password: "SomeP@ssw0rd",
+        preRegistration: preRegistration
+    }
+
+    const newUser = await createUser(domainId, accessToken, payload)
+    expect(newUser).toBeDefined();
+    expect(newUser.id).toBeDefined();
+    expect(newUser.firstName).toEqual(payload.firstName);
+    expect(newUser.lastName).toEqual(payload.lastName);
+    expect(newUser.username).toEqual(payload.username);
+    expect(newUser.email).toEqual(payload.email);
+    expect(newUser.password).not.toBeDefined();
+    return newUser;
 }

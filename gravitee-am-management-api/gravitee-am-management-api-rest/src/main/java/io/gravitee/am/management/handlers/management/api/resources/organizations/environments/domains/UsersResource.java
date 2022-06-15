@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -34,6 +35,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -72,14 +74,16 @@ public class UsersResource extends AbstractUsersResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List users for a security domain",
+    @ApiOperation(
+            nickname = "listUsers",
+            value = "List users for a security domain",
             notes = "User must have the DOMAIN_USER[LIST] permission on the specified domain " +
                     "or DOMAIN_USER[LIST] permission on the specified environment " +
                     "or DOMAIN_USER[LIST] permission on the specified organization. " +
                     "Each returned user is filtered and contains only basic information such as id and username and displayname. " +
                     "Last login and identity provider name will be also returned if current user has DOMAIN_USER[READ] permission on the domain, environment or organization.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List users for a security domain", response = User.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List users for a security domain", response = UserPage.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -102,19 +106,21 @@ public class UsersResource extends AbstractUsersResource {
                                         .flatMap(hasPermission -> Observable.fromIterable(pagedUsers.getData())
                                                 .flatMapSingle(user -> filterUserInfos(hasPermission, user))
                                                 .toSortedList(Comparator.comparing(User::getUsername))
-                                                .map(users -> new Page<>(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
+                                                .map(users -> new UserPage(users, pagedUsers.getCurrentPage(), pagedUsers.getTotalCount())))))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a user on the specified security domain",
+    @ApiOperation(
+            nickname = "createUser",
+            value = "Create a user on the specified security domain",
             notes = "User must have the DOMAIN_USER[CREATE] permission on the specified domain " +
                     "or DOMAIN_USER[CREATE] permission on the specified environment " +
                     "or DOMAIN_USER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "User successfully created"),
+            @ApiResponse(code = 201, message = "User successfully created", response = User.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -167,5 +173,11 @@ public class UsersResource extends AbstractUsersResource {
         }
 
         return Single.just(filteredUser);
+    }
+
+    public static final class UserPage extends Page<User> {
+        public UserPage(Collection<User> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 }
