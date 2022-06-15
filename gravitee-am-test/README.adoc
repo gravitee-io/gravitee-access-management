@@ -49,3 +49,12 @@ request to an AM endpoint which can be executed using standard ES6 promises, asy
     }
 
 See the https://github.com/visionmedia/supertest[supertest] github page for a more detailed explanation of its api.
+
+==== Management API - OpenAPI specification
+
+All Management API are generated using the OpenAPI generator from the `swagger.json` exposed by AM.
+
+In order to update them, execute:
+```
+$ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
+```

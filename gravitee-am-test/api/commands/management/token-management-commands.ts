@@ -19,10 +19,10 @@ const btoa = require('btoa');
 export const requestAdminAccessToken = () =>
     request(process.env.AM_MANAGEMENT_URL)
         .post('/management/auth/token')
-        .set('Authorization', 'Basic ' + btoa('admin:adminadmin'))
+        .set('Authorization', 'Basic ' + btoa(`${process.env.AM_ADMIN_USERNAME}:${process.env.AM_ADMIN_PASSWORD}`))
         .send({
             grant_type: 'password',
-            username: 'admin',
-            password: 'adminadmin'
+            username: process.env.AM_ADMIN_USERNAME,
+            password: process.env.AM_ADMIN_PASSWORD
         })
         .expect(200);

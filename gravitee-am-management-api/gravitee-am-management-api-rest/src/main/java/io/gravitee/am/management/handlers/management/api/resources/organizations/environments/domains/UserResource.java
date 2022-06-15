@@ -83,7 +83,9 @@ public class UserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a user",
+    @ApiOperation(
+            nickname = "findUser",
+            value = "Get a user",
             notes = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")
@@ -118,7 +120,9 @@ public class UserResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user",
+    @ApiOperation(
+            nickname = "updateUser",
+            value = "Update a user",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
@@ -145,7 +149,9 @@ public class UserResource extends AbstractResource {
     @Path("/status")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a user status",
+    @ApiOperation(
+            nickname = "updateUserStatus",
+            value = "Update a user status",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
@@ -169,7 +175,9 @@ public class UserResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a user",
+    @ApiOperation(
+            nickname = "deleteUser",
+            value = "Delete a user",
             notes = "User must have the DOMAIN_USER[DELETE] permission on the specified domain " +
                     "or DOMAIN_USER[DELETE] permission on the specified environment " +
                     "or DOMAIN_USER[DELETE] permission on the specified organization")
@@ -193,7 +201,9 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("resetPassword")
-    @ApiOperation(value = "Reset password",
+    @ApiOperation(
+            nickname = "resetPassword",
+            value = "Reset password",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
@@ -219,7 +229,9 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("sendRegistrationConfirmation")
-    @ApiOperation(value = "Send registration confirmation email",
+    @ApiOperation(
+            nickname = "sendRegistrationConfirmation",
+            value = "Send registration confirmation email",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
@@ -241,7 +253,9 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("lock")
-    @ApiOperation(value = "Lock a user",
+    @ApiOperation(
+            nickname = "lockUser",
+            value = "Lock a user",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
@@ -265,7 +279,9 @@ public class UserResource extends AbstractResource {
 
     @POST
     @Path("unlock")
-    @ApiOperation(value = "Unlock a user",
+    @ApiOperation(
+            nickname = "unlockUser",
+            value = "Unlock a user",
             notes = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

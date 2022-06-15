@@ -75,7 +75,9 @@ public class ApplicationResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an application",
+    @ApiOperation(
+            nickname = "findApplication",
+            value = "Get an application",
             notes = "User must have the APPLICATION[READ] permission on the specified application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +
@@ -113,7 +115,9 @@ public class ApplicationResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch an application",
+    @ApiOperation(
+            nickname = "patchApplication",
+            value = "Patch an application",
             notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
@@ -135,7 +139,9 @@ public class ApplicationResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an application",
+    @ApiOperation(
+            nickname = "updateApplication",
+            value = "Update an application",
             notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
@@ -158,7 +164,9 @@ public class ApplicationResource extends AbstractResource {
     @Path("type")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an application type",
+    @ApiOperation(
+            nickname = "updateApplicationType",
+            value = "Update an application type",
             notes = "User must have APPLICATION[UPDATE] permission on the specified application " +
                     "or APPLICATION[UPDATE] permission on the specified domain " +
                     "or APPLICATION[UPDATE] permission on the specified environment " +
@@ -181,7 +189,9 @@ public class ApplicationResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an application",
+    @ApiOperation(
+            nickname = "deleteApplication",
+            value = "Delete an application",
             notes = "User must have APPLICATION[DELETE] permission on the specified application " +
                     "or APPLICATION[DELETE] permission on the specified domain " +
                     "or APPLICATION[DELETE] permission on the specified environment " +
@@ -204,7 +214,9 @@ public class ApplicationResource extends AbstractResource {
 
     @POST
     @Path("secret/_renew")
-    @ApiOperation(value = "Renew application secret",
+    @ApiOperation(
+            nickname = "renewClientSecret",
+            value = "Renew application secret",
             notes = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
                     "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
                     "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +

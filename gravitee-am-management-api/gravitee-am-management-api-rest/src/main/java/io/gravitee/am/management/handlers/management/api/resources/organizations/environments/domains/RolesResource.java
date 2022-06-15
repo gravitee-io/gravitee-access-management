@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
@@ -29,6 +30,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.swagger.annotations.*;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -64,13 +66,15 @@ public class RolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered roles for a security domain",
+    @ApiOperation(
+            nickname = "findRoles",
+            value = "List registered roles for a security domain",
             notes = "User must have the DOMAIN_ROLE[LIST] permission on the specified domain " +
                     "or DOMAIN_ROLE[LIST] permission on the specified environment " +
                     "or DOMAIN_ROLE[LIST] permission on the specified organization. " +
                     "Each returned role is filtered and contains only basic information such as id and name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered roles for a security domain", response = Role.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List registered roles for a security domain", response = RolePage.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -90,7 +94,7 @@ public class RolesResource extends AbstractResource {
                                     .map(this::filterRoleInfos)
                                     .sorted(Comparator.comparing(Role::getName))
                                     .collect(Collectors.toList());
-                            return new Page<>(roles, pagedRoles.getCurrentPage(), pagedRoles.getTotalCount());
+                            return new RolePage(roles, pagedRoles.getCurrentPage(), pagedRoles.getTotalCount());
                         })
                 .subscribe(response::resume, response::resume);
     }
@@ -98,12 +102,14 @@ public class RolesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a role",
+    @ApiOperation(
+            nickname = "createRole",
+            value = "Create a role",
             notes = "User must have the DOMAIN_ROLE[CREATE] permission on the specified domain " +
                     "or DOMAIN_ROLE[CREATE] permission on the specified environment " +
                     "or DOMAIN_ROLE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Role successfully created"),
+            @ApiResponse(code = 201, message = "Role successfully created", response = Role.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -144,5 +150,11 @@ public class RolesResource extends AbstractResource {
         filteredRole.setDescription(role.getDescription());
 
         return filteredRole;
+    }
+
+    public static final class RolePage extends Page<Role> {
+        public RolePage(Collection<Role> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 }

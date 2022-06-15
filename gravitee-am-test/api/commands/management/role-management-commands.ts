@@ -13,40 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainManagerUrl} from "./utils";
 
-const request = require('supertest');
+import {getRoleApi} from "./service/utils";
 
-export const createRole = (domainId, accessToken, role, status: number = 201) =>
-    request(getRolesUrl(domainId, null))
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(role)
-        .expect(status);
+export const createRole = (domainId, accessToken, role) =>
+    getRoleApi(accessToken).createRole({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        role: role
+    })
 
-export const getRole = (domainId, accessToken, roleId, status: number = 200) =>
-    request(getRolesUrl(domainId, roleId))
-        .get('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const getRole = (domainId, accessToken, roleId) =>
+    getRoleApi(accessToken).findRole({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        role: roleId
+    })
 
-export const getAllRoles = (domainId, accessToken, status: number = 200) =>
-    getRole(domainId, accessToken, null, status);
 
-export const updateRole = (domainId, accessToken, roleId, payload, status: number = 200) =>
-    request(getRolesUrl(domainId, roleId))
-        .put('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(payload)
-        .expect(status);
-
-export const deleteRole = (domainId, accessToken, roleId, status: number = 204) =>
-    request(getRolesUrl(domainId, roleId))
-        .delete('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
-
-const getRolesUrl = (domainId, roleId) => {
-    const rolesPath = roleId ? `/roles/${roleId}` : '/roles/';
-    return getDomainManagerUrl(domainId) + rolesPath;
+export const getRolePage = (domainId, accessToken, page: number = null, size: number = null) => {
+    let params = {
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+    };
+    if (page !== null && size != null) {
+        return getRoleApi(accessToken).findRoles({...params, page: page, size: size});
+    }
+    return getRoleApi(accessToken).findRoles(params);
 }
+
+export const getAllRoles = (domainId, accessToken) => getRolePage(domainId, accessToken)
+
+export const updateRole = (domainId, accessToken, roleId, payload) =>
+    getRoleApi(accessToken).updateRole({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        // role path param
+        role: roleId,
+        //role payload
+        role2: payload
+    })
+
+export const deleteRole = (domainId, accessToken, roleId) =>
+    getRoleApi(accessToken).deleteRole({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        role: roleId,
+    })

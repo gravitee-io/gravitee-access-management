@@ -16,5 +16,9 @@
 module.exports = {
     verbose: true,
     rootDir: "../..",
-    setupFiles: ["./api/config/dev.setup.js"]
+    setupFiles: ["./api/config/dev.setup.js"],
+    moduleNameMapper: {
+        '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
+        '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
+    }
 };

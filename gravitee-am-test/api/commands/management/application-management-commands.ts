@@ -13,40 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainManagerUrl} from "./utils";
 
-const request = require('supertest');
+import {getApplicationApi} from "./service/utils";
 
-export const createApplication = (domainId, accessToken, body, status: number = 201) =>
-    request(getApplicationUrl(domainId, null))
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(body)
-        .expect(status);
+export const createApplication = (domainId, accessToken, body) =>
+    getApplicationApi(accessToken).createApplication({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: body
+    });
 
-export const getApplication = (domainId, accessToken, applicationId, status: number = 200) =>
-    request(getApplicationUrl(domainId, applicationId))
-        .get('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const getApplication = (domainId, accessToken, applicationId) =>
+    getApplicationApi(accessToken).findApplication({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId
+    })
 
-export const getAllApplications = (domainId, accessToken, status: number = 200) =>
-    getApplication(domainId, accessToken, null, status);
+export const getAllApplications = (domainId, accessToken) => getApplicationPage(domainId, accessToken)
 
-export const updateApplication = (domainId, accessToken, body, applicationId, status: number = 200) =>
-    request(getApplicationUrl(domainId, applicationId))
-        .patch('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(body)
-        .expect(status);
+export const getApplicationPage = (domainId, accessToken, page: number = null, size: number = null) => {
+    const params = {
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId
+    };
+    if (page !== null && size != null) {
+        return getApplicationApi(accessToken).listApplications({...params, "page": page, "size": size});
+    }
+    return getApplicationApi(accessToken).listApplications(params);
+}
 
-export const deleteApplication = (domainId, accessToken, applicationId, status: number = 204) =>
-    request(getApplicationUrl(domainId, applicationId))
-        .delete('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const updateApplication = (domainId, accessToken, body, applicationId) =>
+    getApplicationApi(accessToken).updateApplication({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId,
+        application2: body
+    })
 
-const getApplicationUrl = (domainId, applicationId) => {
-    const appPath = applicationId ? `/applications/${applicationId}` : '/applications/';
-    return getDomainManagerUrl(domainId) + appPath;
-};
+export const deleteApplication = (domainId, accessToken, applicationId) =>
+    getApplicationApi(accessToken).deleteApplication({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId,
+    })

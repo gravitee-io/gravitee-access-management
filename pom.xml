@@ -451,6 +451,7 @@
                         <exclude>**/*.adoc</exclude>
                         <exclude>**/LICENSE_TEMPLATE.txt</exclude>
                         <exclude>sonar-project.properties</exclude>
+                        <exclude>gravitee-am-test/api/management/**</exclude>
                     </excludes>
                     <mapping>
                         <ts>SLASHSTAR_STYLE</ts>

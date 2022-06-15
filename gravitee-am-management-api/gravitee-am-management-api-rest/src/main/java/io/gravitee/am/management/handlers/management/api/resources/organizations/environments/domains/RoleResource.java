@@ -61,7 +61,9 @@ public class RoleResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a role",
+    @ApiOperation(
+            nickname = "findRole",
+            value = "Get a role",
             notes = "User must have the DOMAIN_ROLE[READ] permission on the specified domain " +
                     "or DOMAIN_ROLE[READ] permission on the specified environment " +
                     "or DOMAIN_ROLE[READ] permission on the specified organization")
@@ -93,7 +95,9 @@ public class RoleResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a role",
+    @ApiOperation(
+            nickname = "updateRole",
+            value = "Update a role",
             notes = "User must have the DOMAIN_ROLE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_ROLE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_ROLE[UPDATE] permission on the specified organization")
@@ -119,7 +123,9 @@ public class RoleResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a role",
+    @ApiOperation(
+            nickname = "deleteRole",
+            value = "Delete a role",
             notes = "User must have the DOMAIN_ROLE[DELETE] permission on the specified domain " +
                     "or DOMAIN_ROLE[DELETE] permission on the specified environment " +
                     "or DOMAIN_ROLE[DELETE] permission on the specified organization")

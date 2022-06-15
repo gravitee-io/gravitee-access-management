@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.UsersResource.UserPage;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
@@ -69,7 +70,9 @@ public class GroupMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List group members",
+    @ApiOperation(
+            nickname = "getGroupMembers",
+            value = "List group members",
             notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
                     "or DOMAIN_GROUP[READ] permission on the specified environment " +
                     "or DOMAIN_GROUP[READ] permission on the specified organization")
@@ -107,7 +110,7 @@ public class GroupMembersResource extends AbstractResource {
                                         return Single.just(member);
                                     })
                                     .toSortedList(Comparator.comparing(User::getUsername))
-                                    .map(members -> new Page(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
+                                    .map(members -> new UserPage(members, pagedMembers.getCurrentPage(), pagedMembers.getTotalCount()));
                         }))
                 .subscribe(response::resume, response::resume);
     }
