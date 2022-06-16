@@ -19,16 +19,18 @@ import io.gravitee.alert.api.event.DefaultEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
+import io.gravitee.am.gateway.handler.common.utils.RiskAssessmentService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.OrganizationService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.node.api.Node;
 import io.gravitee.plugin.alert.AlertEventProducer;
+import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
+import io.reactivex.Maybe;
+import io.reactivex.functions.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +39,8 @@ import org.springframework.core.env.Environment;
 import java.util.Map;
 
 import static io.gravitee.am.common.event.AlertEventKeys.*;
+import static io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent.SUCCESS;
+import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -48,21 +52,18 @@ public class AlertEventProcessor extends AbstractService {
 
     @Autowired
     private EventManager eventManager;
-
     @Autowired
     private AlertEventProducer eventProducer;
-
     @Autowired
     private Domain domain;
-
     @Autowired
     private Node node;
-
     @Autowired
     private Environment environment;
-
     @Autowired
     private EnvironmentService environmentService;
+    @Autowired
+    private RiskAssessmentService riskAssessmentHelper;
 
     private final EventListener<AuthenticationEvent, AuthenticationDetails> authenticationEventListener = this::onAuthenticationEvent;
 
@@ -127,7 +128,27 @@ public class AlertEventProcessor extends AbstractService {
             }
         }
 
-        sendEvent(eventBuilder.build());
+        if (SUCCESS.equals(eventItem.type())) {
+            this.riskAssessmentHelper
+                    .computeRiskAssessment(authenticationDetails, sendAssessmentMessageResult(eventBuilder))
+                    .switchIfEmpty(Maybe.defer(() -> {
+                        sendEvent(eventBuilder.build());
+                        return Maybe.empty();
+                    })).ignoreElement().subscribe();
+        } else {
+            sendEvent(eventBuilder.build());
+        }
+    }
+
+    private Consumer<AssessmentMessageResult> sendAssessmentMessageResult(DefaultEvent.Builder eventBuilder) {
+        return result -> {
+            Map.of(
+                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_UNKNOWN_DEVICES, result.getDevices().getAssessment(),
+                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_IP_REPUTATION, result.getIpReputation().getAssessment(),
+                    PROPERTY_RISK_ASSESSMENT + "." + PROPERTY_GEO_VELOCITY, result.getGeoVelocity().getAssessment()
+            ).forEach((property, assessment) -> eventBuilder.property(property, assessment.name()));
+            sendEvent(eventBuilder.build());
+        };
     }
 
     private void sendEvent(io.gravitee.alert.api.event.Event event) {
@@ -138,6 +159,4 @@ public class AlertEventProcessor extends AbstractService {
             logger.error("An error occurs while sending event to alert engine", e);
         }
     }
-
-
 }
