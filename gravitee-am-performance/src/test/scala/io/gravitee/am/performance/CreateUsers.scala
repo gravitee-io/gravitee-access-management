@@ -39,14 +39,16 @@ class CreateUsers extends Simulation {
     .userAgentHeader("Gatling - Create Users")
     .disableFollowRedirect
 
+  val userGenerator = userFeeder(DATALOAD)
+
   val scn = scenario("Create Users")
     .exec(login)
     .exec(retrieveDomainId(DOMAIN_NAME))
     .exec(retrieveIdentityProviderId(IDENTITY_PROVIDER_NAME))
-    .feed(userFeeder(DATALOAD))
+    .feed(userGenerator)
     .doWhile(session => session("index").as[Int] < MAX_USER_INDEX) (
         exec(createUser)
-          .feed(userFeeder(DATALOAD))
+          .feed(userGenerator)
     )
 
   setUp(scn.inject(atOnceUsers(AGENTS)).protocols(httpProtocol))
