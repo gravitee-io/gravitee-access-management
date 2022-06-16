@@ -21,7 +21,8 @@ package io.gravitee.am.model.alert;
  */
 public enum AlertTriggerType {
 
-    TOO_MANY_LOGIN_FAILURES(1);
+    TOO_MANY_LOGIN_FAILURES(1),
+    RISK_ASSESSMENT(2);
 
     private final int order;
 

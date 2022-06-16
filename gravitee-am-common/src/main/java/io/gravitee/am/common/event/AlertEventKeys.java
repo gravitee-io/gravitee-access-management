@@ -37,4 +37,9 @@ public interface AlertEventKeys {
     String PROPERTY_ENVIRONMENT = "environment";
     String PROPERTY_ORGANIZATION = "organization";
     String TYPE_AUTHENTICATION = "AUTHENTICATION";
+
+    String PROPERTY_RISK_ASSESSMENT = "risk_assessment";
+    String PROPERTY_UNKNOWN_DEVICES = "unknownDevices";
+    String PROPERTY_IP_REPUTATION = "ipReputation";
+    String PROPERTY_GEO_VELOCITY = "geoVelocity";
 }

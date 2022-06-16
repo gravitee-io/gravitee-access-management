@@ -16,16 +16,18 @@
 package io.gravitee.am.management.service.alerts;
 
 import io.gravitee.alert.api.trigger.Trigger;
+import io.gravitee.am.management.service.alerts.risk.GeoVelocityAlert;
+import io.gravitee.am.management.service.alerts.risk.IpReputationAlert;
+import io.gravitee.am.management.service.alerts.risk.UnknownDeviceAlert;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
-import io.gravitee.am.model.alert.AlertTriggerType;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.notifier.api.Notification;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -43,23 +45,18 @@ public final class AlertTriggerFactory {
      * @param environment environment properties that can be use to tune the alert trigger.
      * @return the corresponding {@link Trigger}.
      */
-    public static Trigger create(AlertTrigger alertTrigger, List<AlertNotifier> alertNotifiers, Environment environment) {
+    public static List<Trigger> create(AlertTrigger alertTrigger, List<AlertNotifier> alertNotifiers, Environment environment) {
+        var triggers = getTrigger(alertTrigger, environment);
 
-        Trigger trigger;
-        if (alertTrigger.getType() == AlertTriggerType.TOO_MANY_LOGIN_FAILURES) {
-            trigger = new TooManyLoginFailuresAlert(alertTrigger, environment);
-        } else {
-            throw new TechnicalManagementException(String.format("Unable to create trigger of type %s", alertTrigger.getType()));
+        for (Trigger trigger : triggers) {
+            if (alertNotifiers != null && !alertNotifiers.isEmpty()) {
+                var notifications = alertNotifiers.stream().map(AlertTriggerFactory::convert).collect(toList());
+                trigger.setNotifications(notifications);
+            }
+
+            trigger.setEnabled(alertTrigger.isEnabled());
         }
-
-        if (alertNotifiers != null && !alertNotifiers.isEmpty()) {
-            trigger.setNotifications(alertNotifiers.stream().map(AlertTriggerFactory::convert)
-                    .collect(Collectors.toList()));
-        }
-
-        trigger.setEnabled(alertTrigger.isEnabled());
-
-        return trigger;
+        return triggers;
     }
 
     private static Notification convert(AlertNotifier alertNotifier) {
@@ -67,5 +64,20 @@ public final class AlertTriggerFactory {
         notification.setType(alertNotifier.getType());
         notification.setConfiguration(alertNotifier.getConfiguration());
         return notification;
+    }
+
+    private static List<Trigger> getTrigger(AlertTrigger alertTrigger, Environment environment) {
+        switch (alertTrigger.getType()) {
+            case TOO_MANY_LOGIN_FAILURES:
+                return List.of(new TooManyLoginFailuresAlert(alertTrigger, environment));
+            case RISK_ASSESSMENT:
+                return List.of(
+                        new UnknownDeviceAlert(alertTrigger, environment),
+                        new IpReputationAlert(alertTrigger, environment),
+                        new GeoVelocityAlert(alertTrigger, environment)
+                );
+            default:
+                throw new TechnicalManagementException(String.format("Unable to create trigger of type %s", alertTrigger.getType()));
+        }
     }
 }
