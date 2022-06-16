@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +61,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -106,17 +108,19 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         }
     }
 
-    @SuppressWarnings("all")
+    @SuppressWarnings("unchecked")
     private RiskAssessmentSettings getRiskAssessmentSettings() {
         var settings = new RiskAssessmentSettings();
         assessments.forEach((assessmentType, setter)  -> {
             var enabled = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.enabled", assessmentType), Boolean.class, false);
-            var thresholds = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.thresholds", assessmentType), Map.class, emptyMap());
+            Map<String, String> thresholds = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.thresholds", assessmentType), Map.class, emptyMap());
 
             AssessmentSettings assessmentSettings = new AssessmentSettings().setEnabled(enabled);
             if(enabled) {
-                assessmentSettings.setThresholds((Map<Assessment, Double>) thresholds);
                 settings.setEnabled(true);
+                Map<Assessment, Double> assessmentThresholds = thresholds.entrySet().stream()
+                        .collect(toMap(entry -> Assessment.valueOf(entry.getKey()), entry -> Double.valueOf(entry.getValue())));
+                assessmentSettings.setThresholds(assessmentThresholds);
             }
             setter.accept(settings, assessmentSettings);
         });
@@ -129,7 +133,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
                 .flatMap(buildDeviceAssessmentMessage(routingContext, riskAssessment, client, user))
                 .flatMap(buildIpReputationMessage(routingContext, riskAssessment))
                 .flatMap(buildGeoVelocityMessage(client, user, riskAssessment))
-                .doOnSuccess(message ->     decorateWithRiskAssessment(routingContext, message))
+                .doOnSuccess(message -> decorateWithRiskAssessment(routingContext, message))
                 .doOnError(throwable -> {
                     logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
                     routingContext.next();

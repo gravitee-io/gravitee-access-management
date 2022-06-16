@@ -20,7 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Device;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
@@ -31,11 +35,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import io.vertx.reactivex.core.eventbus.Message;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,8 +43,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.env.Environment;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static java.lang.String.format;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -58,6 +62,9 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class RiskAssessmentHandlerTest {
 
+    private static final Map<String, String> THRESHOLD_DATA = Map.of("LOW", "1.0", "MEDIUM", "30.0", "HIGH", "10.0");
+    private static final String ENABLED = "alerts.risk_assessment.settings.%s.enabled";
+    private static final String THRESHOLDS = "alerts.risk_assessment.settings.%s.thresholds";
     @Mock
     private Environment environment;
     @Mock
@@ -72,6 +79,7 @@ public class RiskAssessmentHandlerTest {
     private SpyRoutingContext routingContext;
     private Client client;
     private User user;
+    private Map<String, Boolean> assessments;
 
     @Before
     public void before() {
@@ -83,12 +91,19 @@ public class RiskAssessmentHandlerTest {
 
         routingContext = new SpyRoutingContext();
         handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper, environment);
-        Map<String, String> thresholds = Map.of("LOW", "1.0", "MEDIUM", "30.0", "HIGH", "10.0");
-        when(environment.getProperty(anyString(), any(), any(Map.class))).thenReturn(thresholds);
+        assessments = new HashMap<>(Map.of("ipReputation", false, "geoVelocity", false, "device", false));
+    }
+
+    private void whenGetRiskAssessmentSettings() {
+        assessments.forEach((assessment, enabled) -> {
+            when(environment.getProperty(eq(format(ENABLED, assessment)), any(), any(Boolean.class))).thenReturn(enabled);
+            when(environment.getProperty(eq(format(THRESHOLDS, assessment)), any(), any(Map.class))).thenReturn(THRESHOLD_DATA);
+        });
     }
 
     @Test
     public void must_next_nothing_in_context() {
+        whenGetRiskAssessmentSettings();
         handler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
@@ -96,6 +111,7 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_in_context() {
+        whenGetRiskAssessmentSettings();
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         handler.handle(routingContext);
         assertTrue(routingContext.verifyNext(1));
@@ -103,6 +119,7 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_in_context() {
+        whenGetRiskAssessmentSettings();
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
@@ -112,6 +129,7 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_disabled() {
+        whenGetRiskAssessmentSettings();
         client.setRiskAssessment(new RiskAssessmentSettings());
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
@@ -122,7 +140,8 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_enabled() {
-        when(environment.getProperty(anyString(), any(), any(Boolean.class))).thenReturn(true);
+        assessments.put("ipReputation", true);
+        whenGetRiskAssessmentSettings();
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
@@ -133,10 +152,8 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_enabled_with_remember_device() {
-        final RiskAssessmentSettings riskAssessment = new RiskAssessmentSettings();
-        riskAssessment.setEnabled(true);
-        riskAssessment.setDeviceAssessment(new AssessmentSettings().setEnabled(true));
-        client.setRiskAssessment(riskAssessment);
+        assessments.put("device", true);
+        whenGetRiskAssessmentSettings();
         final MFASettings mfaSettings = new MFASettings();
 
         final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
@@ -159,10 +176,8 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_enabled_with_ip_reputation() {
-        final RiskAssessmentSettings riskAssessment = new RiskAssessmentSettings();
-        riskAssessment.setEnabled(true);
-        riskAssessment.setIpReputationAssessment(new AssessmentSettings().setEnabled(true));
-        client.setRiskAssessment(riskAssessment);
+        assessments.put("ipReputation", true);
+        whenGetRiskAssessmentSettings();
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
@@ -176,10 +191,8 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_enabled_with_geo_velocity() {
-        final RiskAssessmentSettings riskAssessment = new RiskAssessmentSettings();
-        riskAssessment.setEnabled(true);
-        riskAssessment.setGeoVelocityAssessment(new AssessmentSettings().setEnabled(true));
-        client.setRiskAssessment(riskAssessment);
+        assessments.put("geoVelocity", true);
+        whenGetRiskAssessmentSettings();
 
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
