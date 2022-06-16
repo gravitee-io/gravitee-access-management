@@ -40,17 +40,18 @@ class BasicLoginFlow extends Simulation {
     .userAgentHeader("Gatling - Basic Login Flow")
     .disableFollowRedirect
 
+  val userGenerator = userFeeder(WORKLOAD)
+
   val scn = scenario("Basic Login Flow")
-    .feed(userFeeder(WORKLOAD))
+    .feed(userGenerator)
     .exec(initCodeFlow)
     .exec(renderLoginForm)
-    .pause(5)
+    .pause(1)
     .exec(submitLoginForm)
     .exec(callPostLoginRedirect)
     .exec(requestAccessToken)
-    .pause(5)
-    .exec(introspectToken)
     .pause(1)
+    .exec(introspectToken)
     .exec(logout)
 
   setUp(scn.inject(constantUsersPerSec(AGENTS.floatValue()).during(INJECTION_DURATION.seconds)))
