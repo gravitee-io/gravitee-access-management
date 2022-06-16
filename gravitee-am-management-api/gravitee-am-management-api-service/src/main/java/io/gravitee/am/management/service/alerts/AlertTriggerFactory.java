@@ -44,12 +44,16 @@ public final class AlertTriggerFactory {
      * @return the corresponding {@link Trigger}.
      */
     public static Trigger create(AlertTrigger alertTrigger, List<AlertNotifier> alertNotifiers, Environment environment) {
-
         Trigger trigger;
-        if (alertTrigger.getType() == AlertTriggerType.TOO_MANY_LOGIN_FAILURES) {
-            trigger = new TooManyLoginFailuresAlert(alertTrigger, environment);
-        } else {
-            throw new TechnicalManagementException(String.format("Unable to create trigger of type %s", alertTrigger.getType()));
+        switch (alertTrigger.getType()) {
+            case TOO_MANY_LOGIN_FAILURES:
+                trigger = new TooManyLoginFailuresAlert(alertTrigger, environment);
+                break;
+            case RISK_ASSESSMENT:
+                trigger = new RiskAssessmentAlert(alertTrigger, environment);
+                break;
+            default:
+                throw new TechnicalManagementException(String.format("Unable to create trigger of type %s", alertTrigger.getType()));
         }
 
         if (alertNotifiers != null && !alertNotifiers.isEmpty()) {
@@ -58,7 +62,6 @@ public final class AlertTriggerFactory {
         }
 
         trigger.setEnabled(alertTrigger.isEnabled());
-
         return trigger;
     }
 

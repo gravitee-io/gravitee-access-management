@@ -106,6 +106,12 @@ export class DomainAlertGeneralComponent implements OnInit {
         icon: 'account_box',
         available: true
       },
+      risk_assessment: {
+        name: 'Risk assessment',
+        description: ' Triggers a risk assessment',
+        icon: 'add_alert',
+        available: true
+      },
       too_many_reset_passwords: {
         name: 'Too many reset passwords',
         description: 'Alert when the number of reset passwords is abnormally high',

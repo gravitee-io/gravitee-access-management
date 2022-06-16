@@ -28,6 +28,7 @@ import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessage;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -43,14 +44,19 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import java.util.List;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
+import static java.util.Collections.emptyMap;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -63,8 +69,13 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RiskAssessmentHandler.class);
     private static final String RISK_ASSESSMENT_SERVICE = "service:risk-assessment";
+    private static final Map<String, BiConsumer<RiskAssessmentSettings, AssessmentSettings>> assessments =
+            Map.of("ipReputation", RiskAssessmentSettings::setIpReputationAssessment,
+                    "geoVelocity", RiskAssessmentSettings::setGeoVelocityAssessment,
+                    "device", RiskAssessmentSettings::setDeviceAssessment);
     private final DeviceService deviceService;
     private final ObjectMapper objectMapper;
+    private final Environment environment;
     private final EventBus eventBus;
     private final UserActivityService userActivityService;
 
@@ -72,12 +83,13 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
             DeviceService deviceService,
             UserActivityService userActivityService,
             EventBus eventBus,
-            ObjectMapper objectMapper
-    ) {
+            ObjectMapper objectMapper,
+            Environment environment) {
         this.deviceService = deviceService;
         this.eventBus = eventBus;
         this.userActivityService = userActivityService;
         this.objectMapper = objectMapper;
+        this.environment = environment;
     }
 
     @Override
@@ -86,12 +98,29 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         final Optional<io.gravitee.am.model.User> user = ofNullable(routingContext.user())
                 .map(u -> (User) u.getDelegate())
                 .map(User::getUser);
-        var riskAssessment = client.map(Client::getRiskAssessment).orElse(new RiskAssessmentSettings());
+        var riskAssessment = getRiskAssessmentSettings();
         if (client.isPresent() && user.isPresent() && riskAssessment.isEnabled()) {
             computeRiskAssessment(routingContext, client.get(), user.get(), riskAssessment);
         } else {
             routingContext.next();
         }
+    }
+
+    @SuppressWarnings("all")
+    private RiskAssessmentSettings getRiskAssessmentSettings() {
+        var settings = new RiskAssessmentSettings();
+        assessments.forEach((assessmentType, setter)  -> {
+            var enabled = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.enabled", assessmentType), Boolean.class, false);
+            var thresholds = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.thresholds", assessmentType), Map.class, emptyMap());
+
+            AssessmentSettings assessmentSettings = new AssessmentSettings().setEnabled(enabled);
+            if(enabled) {
+                assessmentSettings.setThresholds((Map<Assessment, Double>) thresholds);
+                settings.setEnabled(true);
+            }
+            setter.accept(settings, assessmentSettings);
+        });
+        return settings;
     }
 
     private void computeRiskAssessment(RoutingContext routingContext, Client client, io.gravitee.am.model.User user, RiskAssessmentSettings riskAssessment) {
@@ -100,7 +129,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
                 .flatMap(buildDeviceAssessmentMessage(routingContext, riskAssessment, client, user))
                 .flatMap(buildIpReputationMessage(routingContext, riskAssessment))
                 .flatMap(buildGeoVelocityMessage(client, user, riskAssessment))
-                .doOnSuccess(message -> decorateWithRiskAssessment(routingContext, message))
+                .doOnSuccess(message ->     decorateWithRiskAssessment(routingContext, message))
                 .doOnError(throwable -> {
                     logger.error("An unexpected error has occurred while trying to apply risk assessment: ", throwable);
                     routingContext.next();

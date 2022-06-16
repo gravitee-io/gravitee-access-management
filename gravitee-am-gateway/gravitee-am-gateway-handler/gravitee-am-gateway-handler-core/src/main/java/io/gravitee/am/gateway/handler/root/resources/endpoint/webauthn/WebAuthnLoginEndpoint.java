@@ -28,18 +28,16 @@ import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifier
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
-import io.gravitee.am.model.*;
-import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
@@ -59,18 +57,17 @@ import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.util.StringUtils;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
@@ -99,8 +96,9 @@ public class WebAuthnLoginEndpoint extends WebAuthnEndpoint {
                                  ThymeleafTemplateEngine engine,
                                  DeviceIdentifierManager deviceIdentifierManager,
                                  DeviceService deviceService,
-                                 CredentialService credentialService, FactorService factorService, FactorManager factorManager
-
+                                 CredentialService credentialService,
+                                 FactorService factorService,
+                                 FactorManager factorManager,
                                  UserActivityService userActivityService) {
         super(engine, userAuthenticationManager, factorService, factorManager);
         this.domain = domain;

@@ -31,13 +31,18 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.eventbus.EventBus;
 import io.vertx.reactivex.core.eventbus.Message;
+
+import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.core.env.Environment;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
@@ -54,16 +59,15 @@ import static org.mockito.Mockito.*;
 public class RiskAssessmentHandlerTest {
 
     @Mock
+    private Environment environment;
+    @Mock
     private DeviceService deviceService;
-
     @Mock
     private UserActivityService userActivityService;
-
     @Mock
     private EventBus eventBus;
 
     private ObjectMapper objectMapper = new ObjectMapper();
-
     private RiskAssessmentHandler handler;
     private SpyRoutingContext routingContext;
     private Client client;
@@ -78,7 +82,9 @@ public class RiskAssessmentHandlerTest {
         user.setId("user-id");
 
         routingContext = new SpyRoutingContext();
-        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper);
+        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper, environment);
+        Map<String, String> thresholds = Map.of("LOW", "1.0", "MEDIUM", "30.0", "HIGH", "10.0");
+        when(environment.getProperty(anyString(), any(), any(Map.class))).thenReturn(thresholds);
     }
 
     @Test
@@ -116,9 +122,7 @@ public class RiskAssessmentHandlerTest {
 
     @Test
     public void must_next_only_client_and_user_with_risk_assessment_enabled() {
-        final RiskAssessmentSettings riskAssessment = new RiskAssessmentSettings();
-        riskAssessment.setEnabled(true);
-        client.setRiskAssessment(riskAssessment);
+        when(environment.getProperty(anyString(), any(), any(Boolean.class))).thenReturn(true);
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.reactivex.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
