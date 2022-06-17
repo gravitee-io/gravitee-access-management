@@ -15,26 +15,45 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
+import io.gravitee.common.http.HttpHeaders;
+import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
+import io.vertx.core.json.Json;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 /**
- * The callback route to verify attestations and assertions. Usually this route is <pre>/webauthn/response</pre>
- *
- *  // TODO : This endpoint exists only because of https://github.com/gravitee-io/issues/issues/7158
- *  // should be removed in a future version of AM
- *
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class WebAuthnResponseEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
+public class WebAuthnRegisterPostEndpoint extends AbstractEndpoint implements Handler<RoutingContext>  {
 
     @Override
     public void handle(RoutingContext ctx) {
-        // at this stage the user has been authenticated
+        // support for potential cached javascript files
+        // see https://github.com/gravitee-io/issues/issues/7158
+        if (MediaType.APPLICATION_JSON.equals(ctx.request().getHeader(HttpHeaders.CONTENT_TYPE))) {
+            registerV0(ctx);
+            return;
+        }
+
+        // nominal case
+        registerV1(ctx);
+    }
+
+    private void registerV0(RoutingContext ctx) {
+        // at this stage the assertion has been generated
+        // respond with the payload
+        ctx.response()
+                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                .end(Json.encodePrettily(ctx.get(ConstantKeys.PASSWORDLESS_ASSERTION)));
+    }
+
+    private void registerV1(RoutingContext ctx) {
+        // at this stage the registration has been done
         // redirect the user to the original request
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(ctx.request());
         final String redirectUri = getReturnUrl(ctx, queryParams);

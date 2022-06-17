@@ -27,7 +27,6 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
@@ -140,50 +139,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return Single.just(connectedUser);
     }
 
-    @Override
-    public Maybe<User> loadUserByUsername(Client client, String username, Request request) {
-        logger.debug("Trying to load user [{}]", username);
-
-        // Get identity providers associated to a client
-        // For each idp, try to authenticate a user
-        // Try to authenticate while the user can not be authenticated
-        // If user can't be authenticated, send an exception
-
-        // Skip external identity provider for authentication with credentials.
-        final Authentication authentication = new EndUserAuthentication(username, null, new SimpleAuthenticationContext(request));
-        var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
-
-        if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
-            return Maybe.error(getInternalAuthenticationServiceException(client));
-        }
-
-        return Observable.fromIterable(applicationIdentityProviders)
-                .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
-                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
-                .concatMapMaybe(appIdp -> loadUserByUsername0(client, authentication, appIdp.getIdentity(), true))
-                .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
-                .lastOrError()
-                .flatMapMaybe(userAuthentication -> {
-                    io.gravitee.am.identityprovider.api.User user = userAuthentication.getUser();
-                    if (user == null) {
-                        Throwable lastException = userAuthentication.getLastException();
-                        if (lastException != null) {
-                            if (lastException instanceof UsernameNotFoundException) {
-                                return Maybe.error(new UsernameNotFoundException("Invalid or unknown user"));
-                            } else {
-                                logger.error("An error occurs during user authentication", lastException);
-                                return Maybe.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
-                            }
-                        } else {
-                            return Maybe.error(new UsernameNotFoundException("No user found for registered providers"));
-                        }
-                    } else {
-                        // complete user connection
-                        return userAuthenticationService.loadPreAuthenticatedUser(user);
-                    }
-                });
-    }
-
     private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client, Authentication authentication) {
         // Get identity providers associated to a client
         // For each idp, try to authenticate a user
@@ -224,6 +179,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Override
     public Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
         return userAuthenticationService.connect(user, afterAuthentication);
+    }
+
+    @Override
+    public Single<User> connectPreAuthenticatedUser(Client client, String subject, Authentication authentication) {
+        return userAuthenticationService.connectPreAuthenticatedUser(subject)
+                .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
+                .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
+
     }
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {
