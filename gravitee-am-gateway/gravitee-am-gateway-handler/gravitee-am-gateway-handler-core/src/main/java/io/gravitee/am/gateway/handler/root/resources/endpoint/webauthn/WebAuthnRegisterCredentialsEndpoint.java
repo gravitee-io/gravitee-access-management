@@ -16,11 +16,9 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -41,14 +39,13 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnEndpoint {
+public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterCredentialsEndpoint.class);
     private final Domain domain;
     private final WebAuthn webAuthn;
 
-    public WebAuthnRegisterCredentialsEndpoint(UserAuthenticationManager userAuthenticationManager, Domain domain, WebAuthn webAuthn, FactorManager factorManager, FactorService factorService) {
-        super(userAuthenticationManager, factorService, factorManager);
+    public WebAuthnRegisterCredentialsEndpoint(Domain domain, WebAuthn webAuthn) {
         this.domain = domain;
         this.webAuthn = webAuthn;
     }
@@ -113,8 +110,7 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnEndpoint {
                 // save challenge to the session
                 ctx.session()
                         .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, credentialsOptions.getString("challenge"))
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"))
-                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, user.getId());
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, webauthnRegister.getString("name"));
 
                 ctx.response()
                         .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")

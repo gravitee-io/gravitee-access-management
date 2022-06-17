@@ -40,6 +40,14 @@ public interface UserAuthenticationService {
     Single<User> connect(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication);
 
     /**
+     * Method called when a user has been authenticated from a previous authentication step
+     *
+     * @param subject Authenticated user id
+     * @return user from the repository
+     */
+    Single<User> connectPreAuthenticatedUser(String subject);
+
+    /**
      * Use to find a pre-authenticated user (from a previous authentication step)
      *
      * The user should be present in gravitee repository and should be retrieved from the user last identity provider

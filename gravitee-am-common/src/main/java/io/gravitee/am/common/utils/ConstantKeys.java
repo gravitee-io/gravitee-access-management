@@ -98,6 +98,7 @@ public interface ConstantKeys {
     String PASSWORDLESS_CHALLENGE_USER_ID = "passwordlessUserId";
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
+    String PASSWORDLESS_ASSERTION = "passwordlessAssertion";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";

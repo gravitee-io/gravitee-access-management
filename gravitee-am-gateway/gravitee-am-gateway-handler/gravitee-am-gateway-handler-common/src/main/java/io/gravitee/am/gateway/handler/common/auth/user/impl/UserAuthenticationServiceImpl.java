@@ -94,6 +94,29 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     }
 
     @Override
+    public Single<User> connectPreAuthenticatedUser(String subject) {
+        return userService.findById(subject)
+                .switchIfEmpty(Single.error(new UserNotFoundException(subject)))
+                // check account status
+                .flatMap(user -> {
+                    if (isIndefinitelyLocked(user)) {
+                        return Single.error(new AccountLockedException("Account is locked for user " + user.getUsername()));
+                    }
+                    if (!user.isEnabled()) {
+                        return Single.error(new AccountDisabledException("Account is disabled for user " + user.getUsername()));
+                    }
+                    return Single.just(user);
+                })
+                // update login information
+                .flatMap(user -> {
+                    user.setLoggedAt(new Date());
+                    user.setLoginsCount(user.getLoginsCount() + 1);
+                    return userService.update(user)
+                            .flatMap(user1 -> userService.enhance(user1));
+                });
+    }
+
+    @Override
     public Maybe<User> loadPreAuthenticatedUser(String subject, Request request) {
         // find user by its technical id
         return userService

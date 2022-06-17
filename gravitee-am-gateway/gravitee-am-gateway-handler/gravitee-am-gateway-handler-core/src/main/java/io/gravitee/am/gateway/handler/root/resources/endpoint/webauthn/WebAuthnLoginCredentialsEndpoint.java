@@ -16,11 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
-import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.FactorService;
+import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -43,14 +39,12 @@ import org.slf4j.LoggerFactory;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class WebAuthnLoginCredentialsEndpoint extends WebAuthnEndpoint {
+public class WebAuthnLoginCredentialsEndpoint extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnLoginCredentialsEndpoint.class);
     private final WebAuthn webAuthn;
 
-    public WebAuthnLoginCredentialsEndpoint(UserAuthenticationManager userAuthenticationManager,
-                                            WebAuthn webAuthn, FactorManager factorManager, FactorService factorService) {
-        super(userAuthenticationManager, factorService, factorManager);
+    public WebAuthnLoginCredentialsEndpoint(WebAuthn webAuthn) {
         this.webAuthn = webAuthn;
     }
 
@@ -86,7 +80,6 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnEndpoint {
                 return;
             }
 
-            final Client client = ctx.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             final String username = webauthnLogin.getString("name");
 
             // STEP 18 Generate assertion
@@ -94,23 +87,18 @@ public class WebAuthnLoginCredentialsEndpoint extends WebAuthnEndpoint {
                 if (generateServerGetAssertion.failed()) {
                     logger.error("Unexpected exception", generateServerGetAssertion.cause());
                     ctx.fail(generateServerGetAssertion.cause());
-                } else {
-                    final JsonObject getAssertion = generateServerGetAssertion.result();
-                    // check if user exists in AM
-                    checkUser(client, username, new VertxHttpServerRequest(ctx.request().getDelegate()), h -> {
-                        // if user doesn't exist to need to set values in the session
-                        if (h.result() != null) {
-                            session
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username)
-                                    .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID, h.result().getId());
-                        }
-                        ctx.response()
-                                .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
-                                .end(Json.encodePrettily(getAssertion));
-                    });
-
+                    return;
                 }
+
+                final JsonObject getAssertion = generateServerGetAssertion.result();
+
+                session
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, getAssertion.getString("challenge"))
+                        .put(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, username);
+
+                ctx.response()
+                        .putHeader(io.vertx.core.http.HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8")
+                        .end(Json.encodePrettily(getAssertion));
             });
         } catch (IllegalArgumentException e) {
             logger.error("Unexpected exception", e);
