@@ -53,12 +53,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils.remoteAddress;
 import static io.gravitee.risk.assessment.api.assessment.Assessment.NONE;
 import static java.util.Collections.emptyMap;
 import static java.util.Objects.nonNull;
+import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -108,18 +110,20 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private RiskAssessmentSettings getRiskAssessmentSettings() {
         var settings = new RiskAssessmentSettings();
         assessments.forEach((assessmentType, setter)  -> {
             var enabled = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.enabled", assessmentType), Boolean.class, false);
-            Map<String, String> thresholds = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.thresholds", assessmentType), Map.class, emptyMap());
-
             AssessmentSettings assessmentSettings = new AssessmentSettings().setEnabled(enabled);
             if(enabled) {
                 settings.setEnabled(true);
-                Map<Assessment, Double> assessmentThresholds = thresholds.entrySet().stream()
-                        .collect(toMap(entry -> Assessment.valueOf(entry.getKey()), entry -> Double.valueOf(entry.getValue())));
+                Map<Assessment, Double> assessmentThresholds = new HashMap<>();
+                for (Assessment assessment : Assessment.values()) {
+                    Double threshold = environment.getProperty(String.format("alerts.risk_assessment.settings.%s.thresholds.%s", assessmentType, assessment), Double.class);
+                    if (threshold != null) {
+                        assessmentThresholds.put(assessment, threshold);
+                    }
+                }
                 assessmentSettings.setThresholds(assessmentThresholds);
             }
             setter.accept(settings, assessmentSettings);

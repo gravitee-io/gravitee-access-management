@@ -28,7 +28,6 @@ import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.UserActivityService;
-import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.Flowable;
 import io.vertx.core.AsyncResult;
@@ -62,9 +61,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class RiskAssessmentHandlerTest {
 
-    private static final Map<String, String> THRESHOLD_DATA = Map.of("LOW", "1.0", "MEDIUM", "30.0", "HIGH", "10.0");
     private static final String ENABLED = "alerts.risk_assessment.settings.%s.enabled";
-    private static final String THRESHOLDS = "alerts.risk_assessment.settings.%s.thresholds";
     @Mock
     private Environment environment;
     @Mock
@@ -97,7 +94,7 @@ public class RiskAssessmentHandlerTest {
     private void whenGetRiskAssessmentSettings() {
         assessments.forEach((assessment, enabled) -> {
             when(environment.getProperty(eq(format(ENABLED, assessment)), any(), any(Boolean.class))).thenReturn(enabled);
-            when(environment.getProperty(eq(format(THRESHOLDS, assessment)), any(), any(Map.class))).thenReturn(THRESHOLD_DATA);
+            when(environment.getProperty(contains("thresholds"), eq(Double.class))).thenReturn(1.0);
         });
     }
 
