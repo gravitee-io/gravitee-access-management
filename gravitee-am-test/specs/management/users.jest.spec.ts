@@ -140,7 +140,7 @@ describe("after creating users", () => {
         expect(UserPage.currentPage).toEqual(0);
         expect(UserPage.totalCount).toEqual(9);
         expect(UserPage.data.length).toEqual(9);
-        expect(UserPage.data.find(app => app.id === user.id)).toBeFalsy();
+        expect(UserPage.data.find(u => u.id === user.id)).toBeFalsy();
     });
 });
 

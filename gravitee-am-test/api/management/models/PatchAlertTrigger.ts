@@ -43,7 +43,8 @@ export interface PatchAlertTrigger {
  * @export
  */
 export const PatchAlertTriggerTypeEnum = {
-    TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES'
+    TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES',
+    RiskAssessment: 'RISK_ASSESSMENT'
 } as const;
 export type PatchAlertTriggerTypeEnum = typeof PatchAlertTriggerTypeEnum[keyof typeof PatchAlertTriggerTypeEnum];
 

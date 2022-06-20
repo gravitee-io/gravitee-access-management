@@ -28,34 +28,34 @@ import {
     NewMembershipToJSON,
 } from '../models';
 
-export interface AddOrUpdateMemberRequest {
+export interface AddOrUpdateMember2Request {
     organizationId: string;
     body?: NewMembership;
 }
 
-export interface Get32Request {
+export interface Get29Request {
     organizationId: string;
 }
 
-export interface GetMembersRequest {
+export interface GetMembers1Request {
     organizationId: string;
 }
 
-export interface List2Request {
+export interface ListRequest {
     organizationId: string;
 }
 
-export interface Patch1Request {
+export interface PatchRequest {
     organizationId: string;
     domain: any;
 }
 
-export interface PermissionsRequest {
+export interface Permissions2Request {
     organizationId: string;
     environmentId: string;
 }
 
-export interface RemoveMemberRequest {
+export interface RemoveMember2Request {
     organizationId: string;
     member: string;
 }
@@ -69,9 +69,9 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
      * Add or update an organization member
      */
-    async addOrUpdateMemberRaw(requestParameters: AddOrUpdateMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async addOrUpdateMember2Raw(requestParameters: AddOrUpdateMember2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember2.');
         }
 
         const queryParameters: any = {};
@@ -99,17 +99,17 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
      * Add or update an organization member
      */
-    async addOrUpdateMember(requestParameters: AddOrUpdateMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.addOrUpdateMemberRaw(requestParameters, initOverrides);
+    async addOrUpdateMember2(requestParameters: AddOrUpdateMember2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.addOrUpdateMember2Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
+    async get29Raw(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get32.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get29.');
         }
 
         const queryParameters: any = {};
@@ -134,8 +134,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-        const response = await this.get32Raw(requestParameters, initOverrides);
+    async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
+        const response = await this.get29Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -143,9 +143,9 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
      * List members for an organization
      */
-    async getMembersRaw(requestParameters: GetMembersRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<MembershipListItem>> {
+    async getMembers1Raw(requestParameters: GetMembers1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<MembershipListItem>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getMembers.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getMembers1.');
         }
 
         const queryParameters: any = {};
@@ -170,8 +170,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
      * List members for an organization
      */
-    async getMembers(requestParameters: GetMembersRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<MembershipListItem> {
-        const response = await this.getMembersRaw(requestParameters, initOverrides);
+    async getMembers1(requestParameters: GetMembers1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<MembershipListItem> {
+        const response = await this.getMembers1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -179,9 +179,9 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
      * List all the environments
      */
-    async list2Raw(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Environment>>> {
+    async listRaw(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Environment>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list2.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list.');
         }
 
         const queryParameters: any = {};
@@ -206,8 +206,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
      * List all the environments
      */
-    async list2(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Environment>> {
-        const response = await this.list2Raw(requestParameters, initOverrides);
+    async list(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Environment>> {
+        const response = await this.listRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -215,13 +215,13 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
      * Update platform main settings
      */
-    async patch1Raw(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
+    async patchRaw(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling patch1.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling patch.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling patch1.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling patch.');
         }
 
         const queryParameters: any = {};
@@ -249,8 +249,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
      * Update platform main settings
      */
-    async patch1(requestParameters: Patch1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-        const response = await this.patch1Raw(requestParameters, initOverrides);
+    async patch(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
+        const response = await this.patchRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -258,13 +258,13 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
      * List environment member\'s permissions
      */
-    async permissionsRaw(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
+    async permissions2Raw(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions2.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions2.');
         }
 
         const queryParameters: any = {};
@@ -289,8 +289,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
      * List environment member\'s permissions
      */
-    async permissions(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
-        const response = await this.permissionsRaw(requestParameters, initOverrides);
+    async permissions2(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
+        const response = await this.permissions2Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -298,13 +298,13 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
      * Remove a membership of the organization
      */
-    async removeMemberRaw(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async removeMember2Raw(requestParameters: RemoveMember2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling removeMember.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling removeMember2.');
         }
 
         if (requestParameters.member === null || requestParameters.member === undefined) {
-            throw new runtime.RequiredError('member','Required parameter requestParameters.member was null or undefined when calling removeMember.');
+            throw new runtime.RequiredError('member','Required parameter requestParameters.member was null or undefined when calling removeMember2.');
         }
 
         const queryParameters: any = {};
@@ -329,8 +329,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
      * Remove a membership of the organization
      */
-    async removeMember(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.removeMemberRaw(requestParameters, initOverrides);
+    async removeMember2(requestParameters: RemoveMember2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.removeMember2Raw(requestParameters, initOverrides);
     }
 
 }

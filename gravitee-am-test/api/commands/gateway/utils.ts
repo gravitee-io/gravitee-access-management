@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = {
-    verbose: true,
-    rootDir: "../..",
-    setupFiles: ["./api/config/dev.setup.js"],
-    moduleNameMapper: {
-        '@management-apis/(.*)': '<rootDir>/api/management/apis/$1',
-        '@management-commands/(.*)': '<rootDir>/api/commands/management/$1',
-        '@gateway-commands/(.*)': '<rootDir>/api/commands/gateway/$1',
-        '@api-fixtures/(.*)': '<rootDir>/api/fixtures/$1',
-    }
-};
+
+export function getBase64BasicAuth(clientId, clientSecret) {
+    return Buffer.from(clientId + ":" + clientSecret).toString('base64');
+}
+
+export function applicationBase64Token(app) {
+    return getBase64BasicAuth(app.settings.oauth.clientId, app.settings.oauth.clientSecret);
+}

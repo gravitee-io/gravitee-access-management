@@ -46,6 +46,15 @@ export const getApplicationPage = (domainId, accessToken, page: number = null, s
     return getApplicationApi(accessToken).listApplications(params);
 }
 
+export const patchApplication = (domainId, accessToken, body, applicationId) =>
+    getApplicationApi(accessToken).patchApplication({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId,
+        application2: body
+    })
+
 export const updateApplication = (domainId, accessToken, body, applicationId) =>
     getApplicationApi(accessToken).updateApplication({
         organizationId: process.env.AM_DEF_ORG_ID,
@@ -62,3 +71,11 @@ export const deleteApplication = (domainId, accessToken, applicationId) =>
         domain: domainId,
         application: applicationId,
     })
+
+export const renewApplicationSecrets = (domainId, accessToken, applicationId) =>
+    getApplicationApi(accessToken).renewClientSecret({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        application: applicationId,
+    });

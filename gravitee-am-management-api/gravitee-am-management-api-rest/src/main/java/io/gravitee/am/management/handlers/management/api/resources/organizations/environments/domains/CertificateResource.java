@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.certificate.api.CertificateKey;
 import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.management.handlers.management.api.model.CertificateEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.CertificateServiceProxy;
@@ -65,12 +66,14 @@ public class CertificateResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a certificate",
+    @ApiOperation(
+            nickname = "findCertificate",
+            value = "Get a certificate",
             notes = "User must have the DOMAIN_CERTIFICATE[READ] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[READ] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Certificate successfully fetched", response = Certificate.class),
+            @ApiResponse(code = 200, message = "Certificate successfully fetched", response = CertificateEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void get(
             @PathParam("organizationId") String organizationId,
@@ -84,18 +87,20 @@ public class CertificateResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> certificateService.findById(certificate))
                         .switchIfEmpty(Maybe.error(new CertificateNotFoundException(certificate)))
-                        .map(certificate1 -> {
-                            if (!certificate1.getDomain().equalsIgnoreCase(domain)) {
+                        .map(cert -> {
+                            if (!cert.getDomain().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Certificate does not belong to domain");
                             }
-                            return Response.ok(certificate1).build();
+                            return Response.ok(new CertificateEntity(cert)).build();
                         }))
                 .subscribe(response::resume, response::resume);
     }
 
     @GET
     @Path("key")
-    @ApiOperation(value = "Get the certificate public key",
+    @ApiOperation(
+            nickname = "getCertificatePublicKey",
+            value = "Get the certificate public key",
             notes = "User must have the DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")
@@ -120,7 +125,9 @@ public class CertificateResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("keys")
-    @ApiOperation(value = "Get the certificate public keys",
+    @ApiOperation(
+            nickname = "getCertificatePublicKeys",
+            value = "Get the certificate public keys",
             notes = "User must have the DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")
@@ -145,12 +152,14 @@ public class CertificateResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a certificate",
+    @ApiOperation(
+            nickname = "updateCertificate",
+            value = "Update a certificate",
             notes = "User must have the DOMAIN_CERTIFICATE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[UPDATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Certificate successfully updated", response = Certificate.class),
+            @ApiResponse(code = 201, message = "Certificate successfully updated", response = CertificateEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void updateCertificate(
             @PathParam("organizationId") String organizationId,
@@ -166,12 +175,14 @@ public class CertificateResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
-                        .map(certificate1 -> Response.ok(certificate1).build()))
+                        .map(certificate1 -> Response.ok(new CertificateEntity(certificate1)).build()))
                 .subscribe(response::resume, response::resume);
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a certificate",
+    @ApiOperation(
+            nickname = "deleteCertificate",
+            value = "Delete a certificate",
             notes = "User must have the DOMAIN_CERTIFICATE[DELETE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[DELETE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[DELETE] permission on the specified organization")

@@ -15,6 +15,7 @@
  */
 process.env.AM_BASE_URL = "http://localhost/am/ui";
 process.env.AM_MANAGEMENT_URL = "http://localhost/am";
+process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_URL + '/management';
 process.env.AM_GATEWAY_URL = "http://localhost/am";
 process.env.AM_CIBA_NOTIFIER_URL = "http://localhost:8080/ciba";
 process.env.AM_DEF_ORG_ID = "DEFAULT";

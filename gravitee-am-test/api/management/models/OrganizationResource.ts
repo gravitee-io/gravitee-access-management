@@ -81,6 +81,12 @@ import {
 export interface OrganizationResource {
     /**
      * 
+     * @type {EnvironmentsResource}
+     * @memberof OrganizationResource
+     */
+    environmentsResource?: EnvironmentsResource;
+    /**
+     * 
      * @type {AuditsResource}
      * @memberof OrganizationResource
      */
@@ -97,12 +103,6 @@ export interface OrganizationResource {
      * @memberof OrganizationResource
      */
     tagsResource?: TagsResource;
-    /**
-     * 
-     * @type {EnvironmentsResource}
-     * @memberof OrganizationResource
-     */
-    environmentsResource?: EnvironmentsResource;
     /**
      * 
      * @type {EntrypointsResource}
@@ -157,10 +157,10 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'environmentsResource': !exists(json, 'environmentsResource') ? undefined : EnvironmentsResourceFromJSON(json['environmentsResource']),
         'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
         'tagsResource': !exists(json, 'tagsResource') ? undefined : TagsResourceFromJSON(json['tagsResource']),
-        'environmentsResource': !exists(json, 'environmentsResource') ? undefined : EnvironmentsResourceFromJSON(json['environmentsResource']),
         'entrypointsResource': !exists(json, 'entrypointsResource') ? undefined : EntrypointsResourceFromJSON(json['entrypointsResource']),
         'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
@@ -180,10 +180,10 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
     }
     return {
         
+        'environmentsResource': EnvironmentsResourceToJSON(value.environmentsResource),
         'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
         'tagsResource': TagsResourceToJSON(value.tagsResource),
-        'environmentsResource': EnvironmentsResourceToJSON(value.environmentsResource),
         'entrypointsResource': EntrypointsResourceToJSON(value.entrypointsResource),
         'rolesResource': RolesResourceToJSON(value.rolesResource),
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
