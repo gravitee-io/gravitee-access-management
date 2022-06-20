@@ -30,6 +30,7 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.swagger.annotations.*;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -44,6 +45,8 @@ import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -66,14 +69,15 @@ public class ScopesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List scopes for a security domain",
+    @ApiOperation(
+            nickname = "listScopes",
+            value = "List scopes for a security domain",
             notes = "User must have the DOMAIN_SCOPE[LIST] permission on the specified domain " +
                     "or DOMAIN_SCOPE[LIST] permission on the specified environment " +
                     "or DOMAIN_SCOPE[LIST] permission on the specified organization " +
                     "Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List scopes for a security domain",
-                    response = Scope.class, responseContainer = "Set"),
+            @ApiResponse(code = 200, message = "List scopes for a security domain", response = ScopePage.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -86,10 +90,10 @@ public class ScopesResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.LIST)
                 .andThen(query != null ? scopeService.search(domain, query, page, Math.min(size, MAX_SCOPES_SIZE_PER_PAGE)) : scopeService.findByDomain(domain, page, Math.min(size, MAX_SCOPES_SIZE_PER_PAGE))
-                ).map(searchPage -> new Page(
-                    searchPage.getData().stream().map(this::filterScopeInfos).sorted(Comparator.comparing(Scope::getKey)).collect(Collectors.toList()),
-                    searchPage.getCurrentPage(),
-                    searchPage.getTotalCount())
+                ).map(searchPage -> new ScopePage(
+                        searchPage.getData().stream().map(this::filterScopeInfos).sorted(Comparator.comparing(Scope::getKey)).collect(toList()),
+                        searchPage.getCurrentPage(),
+                        searchPage.getTotalCount())
                 )
                 .subscribe(response::resume, response::resume);
     }
@@ -97,12 +101,14 @@ public class ScopesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a scope",
+    @ApiOperation(
+            nickname = "createScope",
+            value = "Create a scope",
             notes = "User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[CREATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Scope successfully created"),
+            @ApiResponse(code = 201, message = "Scope successfully created", response = Scope.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -141,6 +147,13 @@ public class ScopesResource extends AbstractResource {
         filteredScope.setParameterized(scope.isParameterized());
         filteredScope.setDescription(scope.getDescription());
 
-        return  filteredScope;
+        return filteredScope;
+    }
+
+    public static class ScopePage extends Page<Scope> {
+
+        public ScopePage(Collection<Scope> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 }

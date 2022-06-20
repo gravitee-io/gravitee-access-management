@@ -21,7 +21,7 @@ import {createDomain, deleteDomain, startDomain} from "@management-commands/doma
 import {
     createApplication, deleteApplication,
     getAllApplications,
-    getApplication, getApplicationPage, updateApplication
+    getApplication, getApplicationPage, patchApplication, renewApplicationSecrets, updateApplication
 } from "@management-commands/application-management-commands";
 
 global.fetch = fetch;
@@ -79,10 +79,24 @@ describe("after creating applications", () => {
         expect(application.id).toEqual(foundApp.id);
     });
 
-    it('must update Application', async () => {
-        const updatedApp = await updateApplication(domain.id, accessToken, {name: faker.commerce.productName()}, application.id);
+    it('must update application', async () => {
+        const updatedApp = await updateApplication(domain.id, accessToken, {...application, name: faker.commerce.productName()}, application.id);
         expect(updatedApp.name === application.name).toBeFalsy();
         application = updatedApp;
+    });
+
+
+    it('must patch application', async () => {
+        const patchedApp = await patchApplication(domain.id, accessToken, {name: "application name"}, application.id);
+        expect(patchedApp.name === application.name).toBeFalsy();
+        application = patchedApp;
+    });
+
+    it('must renew application secrets', async () => {
+        const renewedSecretApp = await renewApplicationSecrets(domain.id, accessToken, application.id);
+        expect(renewedSecretApp.settings.oauth.clientId).toEqual(application.settings.oauth.clientId);
+        expect(renewedSecretApp.settings.oauth.clientSecret).not.toEqual(application.settings.oauth.clientSecret);
+        application = renewedSecretApp;
     });
 
     it('must find all Applications', async () => {
@@ -93,7 +107,7 @@ describe("after creating applications", () => {
         expect(applicationPage.data.length).toEqual(10);
     });
 
-    it('must find Application page', async () => {
+    it('must find application page', async () => {
         const applicationPage = await getApplicationPage(domain.id, accessToken, 1, 3);
 
         expect(applicationPage.currentPage).toEqual(1);
@@ -101,7 +115,7 @@ describe("after creating applications", () => {
         expect(applicationPage.data.length).toEqual(3);
     });
 
-    it('must find last Application page', async () => {
+    it('must find last application page', async () => {
         const applicationPage = await getApplicationPage(domain.id, accessToken, 3, 3);
 
         expect(applicationPage.currentPage).toEqual(3);
@@ -109,7 +123,7 @@ describe("after creating applications", () => {
         expect(applicationPage.data.length).toEqual(1);
     });
 
-    it('Must delete Application', async () => {
+    it('Must delete application', async () => {
         await deleteApplication(domain.id, accessToken, application.id);
         const applicationPage = await getAllApplications(domain.id, accessToken);
 

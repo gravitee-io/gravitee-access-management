@@ -62,7 +62,9 @@ public class IdentityProvidersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered identity providers for a security domain",
+    @ApiOperation(
+            nickname = "listIdentityProviders",
+            value = "List registered identity providers for a security domain",
             notes = "User must have the DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
@@ -96,12 +98,14 @@ public class IdentityProvidersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an identity provider",
+    @ApiOperation(
+            nickname = "createIdentityProvider",
+            value = "Create an identity provider",
             notes = "User must have the DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Identity provider successfully created"),
+            @ApiResponse(code = 201, message = "Identity provider successfully created", response = IdentityProvider.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,

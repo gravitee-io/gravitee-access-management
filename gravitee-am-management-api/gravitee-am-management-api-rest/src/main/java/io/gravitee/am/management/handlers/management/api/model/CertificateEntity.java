@@ -23,6 +23,12 @@ import io.gravitee.am.model.Certificate;
  */
 public class CertificateEntity extends Certificate {
 
+    public CertificateEntity() {}
+
+    public CertificateEntity(Certificate certificate) {
+        super(certificate);
+    }
+
     private CertificateStatus status;
 
     public CertificateStatus getStatus() {

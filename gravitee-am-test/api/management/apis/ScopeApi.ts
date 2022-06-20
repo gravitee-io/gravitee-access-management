@@ -23,33 +23,36 @@ import {
     Scope,
     ScopeFromJSON,
     ScopeToJSON,
+    ScopePage,
+    ScopePageFromJSON,
+    ScopePageToJSON,
     UpdateScope,
     UpdateScopeFromJSON,
     UpdateScopeToJSON,
 } from '../models';
 
-export interface Create6Request {
+export interface CreateScopeRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     scope: NewScope;
 }
 
-export interface Delete9Request {
+export interface DeleteScopeRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     scope: string;
 }
 
-export interface Get16Request {
+export interface FindScopeRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     scope: string;
 }
 
-export interface List17Request {
+export interface ListScopesRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -58,7 +61,7 @@ export interface List17Request {
     q?: string;
 }
 
-export interface PatchRequest {
+export interface PatchScopeRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -66,7 +69,7 @@ export interface PatchRequest {
     scope2: PatchScope;
 }
 
-export interface Update7Request {
+export interface UpdateScopeRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -83,21 +86,21 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain or DOMAIN_SCOPE[CREATE] permission on the specified environment or DOMAIN_SCOPE[CREATE] permission on the specified organization
      * Create a scope
      */
-    async create6Raw(requestParameters: Create6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async createScopeRaw(requestParameters: CreateScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create6.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling createScope.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create6.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling createScope.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create6.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling createScope.');
         }
 
         if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling create6.');
+            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling createScope.');
         }
 
         const queryParameters: any = {};
@@ -118,36 +121,37 @@ export class ScopeApi extends runtime.BaseAPI {
             body: NewScopeToJSON(requestParameters.scope),
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => ScopeFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain or DOMAIN_SCOPE[CREATE] permission on the specified environment or DOMAIN_SCOPE[CREATE] permission on the specified organization
      * Create a scope
      */
-    async create6(requestParameters: Create6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create6Raw(requestParameters, initOverrides);
+    async createScope(requestParameters: CreateScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
+        const response = await this.createScopeRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain or DOMAIN_SCOPE[DELETE] permission on the specified environment or DOMAIN_SCOPE[DELETE] permission on the specified organization
      * Delete a scope
      */
-    async delete9Raw(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteScopeRaw(requestParameters: DeleteScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling deleteScope.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling deleteScope.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling deleteScope.');
         }
 
         if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling deleteScope.');
         }
 
         const queryParameters: any = {};
@@ -172,29 +176,29 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain or DOMAIN_SCOPE[DELETE] permission on the specified environment or DOMAIN_SCOPE[DELETE] permission on the specified organization
      * Delete a scope
      */
-    async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete9Raw(requestParameters, initOverrides);
+    async deleteScope(requestParameters: DeleteScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.deleteScopeRaw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_SCOPE[READ] permission on the specified domain or DOMAIN_SCOPE[READ] permission on the specified environment or DOMAIN_SCOPE[READ] permission on the specified organization
      * Get a scope
      */
-    async get16Raw(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
+    async findScopeRaw(requestParameters: FindScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get16.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling findScope.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get16.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling findScope.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get16.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling findScope.');
         }
 
         if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling get16.');
+            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling findScope.');
         }
 
         const queryParameters: any = {};
@@ -219,8 +223,8 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[READ] permission on the specified domain or DOMAIN_SCOPE[READ] permission on the specified environment or DOMAIN_SCOPE[READ] permission on the specified organization
      * Get a scope
      */
-    async get16(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
-        const response = await this.get16Raw(requestParameters, initOverrides);
+    async findScope(requestParameters: FindScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
+        const response = await this.findScopeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -228,17 +232,17 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[LIST] permission on the specified domain or DOMAIN_SCOPE[LIST] permission on the specified environment or DOMAIN_SCOPE[LIST] permission on the specified organization Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.
      * List scopes for a security domain
      */
-    async list17Raw(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<Scope>>> {
+    async listScopesRaw(requestParameters: ListScopesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ScopePage>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list17.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling listScopes.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list17.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling listScopes.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list17.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling listScopes.');
         }
 
         const queryParameters: any = {};
@@ -268,15 +272,15 @@ export class ScopeApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(ScopeFromJSON)));
+        return new runtime.JSONApiResponse(response, (jsonValue) => ScopePageFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_SCOPE[LIST] permission on the specified domain or DOMAIN_SCOPE[LIST] permission on the specified environment or DOMAIN_SCOPE[LIST] permission on the specified organization Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.
      * List scopes for a security domain
      */
-    async list17(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<Scope>> {
-        const response = await this.list17Raw(requestParameters, initOverrides);
+    async listScopes(requestParameters: ListScopesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ScopePage> {
+        const response = await this.listScopesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -284,25 +288,25 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
      * Patch a scope
      */
-    async patchRaw(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
+    async patchScopeRaw(requestParameters: PatchScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling patch.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling patchScope.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling patch.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling patchScope.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling patch.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling patchScope.');
         }
 
         if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling patch.');
+            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling patchScope.');
         }
 
         if (requestParameters.scope2 === null || requestParameters.scope2 === undefined) {
-            throw new runtime.RequiredError('scope2','Required parameter requestParameters.scope2 was null or undefined when calling patch.');
+            throw new runtime.RequiredError('scope2','Required parameter requestParameters.scope2 was null or undefined when calling patchScope.');
         }
 
         const queryParameters: any = {};
@@ -330,8 +334,8 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
      * Patch a scope
      */
-    async patch(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
-        const response = await this.patchRaw(requestParameters, initOverrides);
+    async patchScope(requestParameters: PatchScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
+        const response = await this.patchScopeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -339,25 +343,25 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
      * Update a scope
      */
-    async update7Raw(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
+    async updateScopeRaw(requestParameters: UpdateScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Scope>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateScope.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling updateScope.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling updateScope.');
         }
 
         if (requestParameters.scope === null || requestParameters.scope === undefined) {
-            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling update7.');
+            throw new runtime.RequiredError('scope','Required parameter requestParameters.scope was null or undefined when calling updateScope.');
         }
 
         if (requestParameters.scope2 === null || requestParameters.scope2 === undefined) {
-            throw new runtime.RequiredError('scope2','Required parameter requestParameters.scope2 was null or undefined when calling update7.');
+            throw new runtime.RequiredError('scope2','Required parameter requestParameters.scope2 was null or undefined when calling updateScope.');
         }
 
         const queryParameters: any = {};
@@ -385,8 +389,8 @@ export class ScopeApi extends runtime.BaseAPI {
      * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
      * Update a scope
      */
-    async update7(requestParameters: Update7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
-        const response = await this.update7Raw(requestParameters, initOverrides);
+    async updateScope(requestParameters: UpdateScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
+        const response = await this.updateScopeRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

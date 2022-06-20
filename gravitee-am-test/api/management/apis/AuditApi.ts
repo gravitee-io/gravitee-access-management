@@ -19,20 +19,22 @@ import {
     AuditToJSON,
 } from '../models';
 
-export interface Get1Request {
-    organizationId: string;
-    audit: string;
-}
-
-export interface Get3Request {
+export interface Get18Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     audit: string;
 }
 
-export interface ListRequest {
+export interface Get22Request {
     organizationId: string;
+    audit: string;
+}
+
+export interface List14Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
     type?: string;
     status?: string;
     user?: string;
@@ -42,10 +44,8 @@ export interface ListRequest {
     page?: number;
 }
 
-export interface List3Request {
+export interface List22Request {
     organizationId: string;
-    environmentId: string;
-    domain: string;
     type?: string;
     status?: string;
     user?: string;
@@ -61,64 +61,24 @@ export interface List3Request {
 export class AuditApi extends runtime.BaseAPI {
 
     /**
-     * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
-     * Get an audit log
-     */
-    async get1Raw(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get1.');
-        }
-
-        if (requestParameters.audit === null || requestParameters.audit === undefined) {
-            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
-     * Get an audit log
-     */
-    async get1(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
-        const response = await this.get1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
      * Get an audit log
      */
-    async get3Raw(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
+    async get18Raw(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get3.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get18.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get3.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get18.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get3.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get18.');
         }
 
         if (requestParameters.audit === null || requestParameters.audit === undefined) {
-            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get3.');
+            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get18.');
         }
 
         const queryParameters: any = {};
@@ -143,49 +103,25 @@ export class AuditApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
      * Get an audit log
      */
-    async get3(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
-        const response = await this.get3Raw(requestParameters, initOverrides);
+    async get18(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
+        const response = await this.get18Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
-     * List audit logs for the organization
+     * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
+     * Get an audit log
      */
-    async listRaw(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
+    async get22Raw(requestParameters: Get22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get22.');
+        }
+
+        if (requestParameters.audit === null || requestParameters.audit === undefined) {
+            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get22.');
         }
 
         const queryParameters: any = {};
-
-        if (requestParameters.type !== undefined) {
-            queryParameters['type'] = requestParameters.type;
-        }
-
-        if (requestParameters.status !== undefined) {
-            queryParameters['status'] = requestParameters.status;
-        }
-
-        if (requestParameters.user !== undefined) {
-            queryParameters['user'] = requestParameters.user;
-        }
-
-        if (requestParameters.from !== undefined) {
-            queryParameters['from'] = requestParameters.from;
-        }
-
-        if (requestParameters.to !== undefined) {
-            queryParameters['to'] = requestParameters.to;
-        }
-
-        if (requestParameters.size !== undefined) {
-            queryParameters['size'] = requestParameters.size;
-        }
-
-        if (requestParameters.page !== undefined) {
-            queryParameters['page'] = requestParameters.page;
-        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -194,21 +130,21 @@ export class AuditApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/audits`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))),
+            path: `/organizations/{organizationId}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
     }
 
     /**
-     * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
-     * List audit logs for the organization
+     * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
+     * Get an audit log
      */
-    async list(requestParameters: ListRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
-        const response = await this.listRaw(requestParameters, initOverrides);
+    async get22(requestParameters: Get22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
+        const response = await this.get22Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -216,17 +152,17 @@ export class AuditApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
      * List audit logs for a security domain
      */
-    async list3Raw(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
+    async list14Raw(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list3.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list14.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list3.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list14.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list3.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list14.');
         }
 
         const queryParameters: any = {};
@@ -279,8 +215,72 @@ export class AuditApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
      * List audit logs for a security domain
      */
-    async list3(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
-        const response = await this.list3Raw(requestParameters, initOverrides);
+    async list14(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
+        const response = await this.list14Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
+     * List audit logs for the organization
+     */
+    async list22Raw(requestParameters: List22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list22.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.type !== undefined) {
+            queryParameters['type'] = requestParameters.type;
+        }
+
+        if (requestParameters.status !== undefined) {
+            queryParameters['status'] = requestParameters.status;
+        }
+
+        if (requestParameters.user !== undefined) {
+            queryParameters['user'] = requestParameters.user;
+        }
+
+        if (requestParameters.from !== undefined) {
+            queryParameters['from'] = requestParameters.from;
+        }
+
+        if (requestParameters.to !== undefined) {
+            queryParameters['to'] = requestParameters.to;
+        }
+
+        if (requestParameters.size !== undefined) {
+            queryParameters['size'] = requestParameters.size;
+        }
+
+        if (requestParameters.page !== undefined) {
+            queryParameters['page'] = requestParameters.page;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/audits`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+    }
+
+    /**
+     * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
+     * List audit logs for the organization
+     */
+    async list22(requestParameters: List22Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
+        const response = await this.list22Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

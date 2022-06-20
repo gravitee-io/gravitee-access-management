@@ -22,7 +22,7 @@ import {
     NotifierPluginToJSON,
 } from '../models';
 
-export interface Get41Request {
+export interface Get38Request {
     notifierId: string;
 }
 
@@ -30,7 +30,7 @@ export interface GetSchema7Request {
     notifierId: string;
 }
 
-export interface List41Request {
+export interface List38Request {
     expand?: Array<string>;
 }
 
@@ -43,9 +43,9 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier
      */
-    async get41Raw(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
+    async get38Raw(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<NotifierPlugin>> {
         if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
-            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get41.');
+            throw new runtime.RequiredError('notifierId','Required parameter requestParameters.notifierId was null or undefined when calling get38.');
         }
 
         const queryParameters: any = {};
@@ -70,8 +70,8 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a notifier
      */
-    async get41(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
-        const response = await this.get41Raw(requestParameters, initOverrides);
+    async get38(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
+        const response = await this.get38Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -115,7 +115,7 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list41Raw(requestParameters: List41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
+    async list38Raw(requestParameters: List38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -142,8 +142,8 @@ export class NotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List all available notifier plugins
      */
-    async list41(requestParameters: List41Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
-        const response = await this.list41Raw(requestParameters, initOverrides);
+    async list38(requestParameters: List38Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<NotifierPlugin>> {
+        const response = await this.list38Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

@@ -14,9 +14,6 @@
 
 import * as runtime from '../runtime';
 import {
-    Certificate,
-    CertificateFromJSON,
-    CertificateToJSON,
     CertificateEntity,
     CertificateEntityFromJSON,
     CertificateEntityToJSON,
@@ -31,39 +28,39 @@ import {
     UpdateCertificateToJSON,
 } from '../models';
 
-export interface Create4Request {
+export interface CreateCertificateRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     certificate: NewCertificate;
 }
 
-export interface Delete7Request {
+export interface DeleteCertificateRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     certificate: string;
 }
 
-export interface Get14Request {
+export interface FindCertificateRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     certificate: string;
 }
 
-export interface Get36Request {
+export interface Get33Request {
     certificate: string;
 }
 
-export interface GetPublicKeyRequest {
+export interface GetCertificatePublicKeyRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
     certificate: string;
 }
 
-export interface GetPublicKeysRequest {
+export interface GetCertificatePublicKeysRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -74,7 +71,7 @@ export interface GetSchema2Request {
     certificate: string;
 }
 
-export interface List15Request {
+export interface ListCertificatesRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -98,21 +95,21 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
      * Create a certificate
      */
-    async create4Raw(requestParameters: Create4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async createCertificateRaw(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<CertificateEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create4.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling createCertificate.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create4.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling createCertificate.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create4.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling createCertificate.');
         }
 
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling create4.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling createCertificate.');
         }
 
         const queryParameters: any = {};
@@ -133,36 +130,37 @@ export class CertificateApi extends runtime.BaseAPI {
             body: NewCertificateToJSON(requestParameters.certificate),
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateEntityFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization
      * Create a certificate
      */
-    async create4(requestParameters: Create4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create4Raw(requestParameters, initOverrides);
+    async createCertificate(requestParameters: CreateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<CertificateEntity> {
+        const response = await this.createCertificateRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[DELETE] permission on the specified domain or DOMAIN_CERTIFICATE[DELETE] permission on the specified environment or DOMAIN_CERTIFICATE[DELETE] permission on the specified organization
      * Delete a certificate
      */
-    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async deleteCertificateRaw(requestParameters: DeleteCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling deleteCertificate.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling deleteCertificate.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling deleteCertificate.');
         }
 
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling deleteCertificate.');
         }
 
         const queryParameters: any = {};
@@ -187,29 +185,29 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN_CERTIFICATE[DELETE] permission on the specified domain or DOMAIN_CERTIFICATE[DELETE] permission on the specified environment or DOMAIN_CERTIFICATE[DELETE] permission on the specified organization
      * Delete a certificate
      */
-    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete7Raw(requestParameters, initOverrides);
+    async deleteCertificate(requestParameters: DeleteCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.deleteCertificateRaw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[READ] permission on the specified domain or DOMAIN_CERTIFICATE[READ] permission on the specified environment or DOMAIN_CERTIFICATE[READ] permission on the specified organization
      * Get a certificate
      */
-    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Certificate>> {
+    async findCertificateRaw(requestParameters: FindCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<CertificateEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling findCertificate.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling findCertificate.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling findCertificate.');
         }
 
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get14.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling findCertificate.');
         }
 
         const queryParameters: any = {};
@@ -227,15 +225,15 @@ export class CertificateApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateEntityFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[READ] permission on the specified domain or DOMAIN_CERTIFICATE[READ] permission on the specified environment or DOMAIN_CERTIFICATE[READ] permission on the specified organization
      * Get a certificate
      */
-    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Certificate> {
-        const response = await this.get14Raw(requestParameters, initOverrides);
+    async findCertificate(requestParameters: FindCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<CertificateEntity> {
+        const response = await this.findCertificateRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -243,9 +241,9 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get33Raw(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get36.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling get33.');
         }
 
         const queryParameters: any = {};
@@ -270,29 +268,29 @@ export class CertificateApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an certificate plugin
      */
-    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get36Raw(requestParameters, initOverrides);
+    async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get33Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN[READ] permission on the specified domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization
      * Get the certificate public key
      */
-    async getPublicKeyRaw(requestParameters: GetPublicKeyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
+    async getCertificatePublicKeyRaw(requestParameters: GetCertificatePublicKeyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<string>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getPublicKey.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getCertificatePublicKey.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getPublicKey.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getCertificatePublicKey.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getPublicKey.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getCertificatePublicKey.');
         }
 
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getPublicKey.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getCertificatePublicKey.');
         }
 
         const queryParameters: any = {};
@@ -317,8 +315,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN[READ] permission on the specified domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization
      * Get the certificate public key
      */
-    async getPublicKey(requestParameters: GetPublicKeyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-        const response = await this.getPublicKeyRaw(requestParameters, initOverrides);
+    async getCertificatePublicKey(requestParameters: GetCertificatePublicKeyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
+        const response = await this.getCertificatePublicKeyRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -326,21 +324,21 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN[READ] permission on the specified domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization
      * Get the certificate public keys
      */
-    async getPublicKeysRaw(requestParameters: GetPublicKeysRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<CertificateKey>>> {
+    async getCertificatePublicKeysRaw(requestParameters: GetCertificatePublicKeysRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<CertificateKey>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getPublicKeys.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getCertificatePublicKeys.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getPublicKeys.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getCertificatePublicKeys.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getPublicKeys.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getCertificatePublicKeys.');
         }
 
         if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getPublicKeys.');
+            throw new runtime.RequiredError('certificate','Required parameter requestParameters.certificate was null or undefined when calling getCertificatePublicKeys.');
         }
 
         const queryParameters: any = {};
@@ -365,8 +363,8 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN[READ] permission on the specified domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization
      * Get the certificate public keys
      */
-    async getPublicKeys(requestParameters: GetPublicKeysRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<CertificateKey>> {
-        const response = await this.getPublicKeysRaw(requestParameters, initOverrides);
+    async getCertificatePublicKeys(requestParameters: GetCertificatePublicKeysRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<CertificateKey>> {
+        const response = await this.getCertificatePublicKeysRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -406,20 +404,51 @@ export class CertificateApi extends runtime.BaseAPI {
     }
 
     /**
+     * There is no particular permission needed. User must be authenticated.
+     * List certificate plugins
+     */
+    async list33Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/certificates`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * List certificate plugins
+     */
+    async list33(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list33Raw(initOverrides);
+    }
+
+    /**
      * User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain or DOMAIN_CERTIFICATE[LIST] permission on the specified environment or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. Each returned certificate is filtered and contains only basic information such as id, name and type.
      * List registered certificates for a security domain
      */
-    async list15Raw(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<CertificateEntity>>> {
+    async listCertificatesRaw(requestParameters: ListCertificatesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<CertificateEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list15.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling listCertificates.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list15.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling listCertificates.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list15.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling listCertificates.');
         }
 
         const queryParameters: any = {};
@@ -448,47 +477,16 @@ export class CertificateApi extends runtime.BaseAPI {
      * User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain or DOMAIN_CERTIFICATE[LIST] permission on the specified environment or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. Each returned certificate is filtered and contains only basic information such as id, name and type.
      * List registered certificates for a security domain
      */
-    async list15(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<CertificateEntity>> {
-        const response = await this.list15Raw(requestParameters, initOverrides);
+    async listCertificates(requestParameters: ListCertificatesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<CertificateEntity>> {
+        const response = await this.listCertificatesRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List certificate plugins
-     */
-    async list36Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/certificates`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List certificate plugins
-     */
-    async list36(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list36Raw(initOverrides);
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[UPDATE] permission on the specified domain or DOMAIN_CERTIFICATE[UPDATE] permission on the specified environment or DOMAIN_CERTIFICATE[UPDATE] permission on the specified organization
      * Update a certificate
      */
-    async updateCertificateRaw(requestParameters: UpdateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Certificate>> {
+    async updateCertificateRaw(requestParameters: UpdateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<CertificateEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling updateCertificate.');
         }
@@ -527,14 +525,14 @@ export class CertificateApi extends runtime.BaseAPI {
             body: UpdateCertificateToJSON(requestParameters.certificate2),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => CertificateEntityFromJSON(jsonValue));
     }
 
     /**
      * User must have the DOMAIN_CERTIFICATE[UPDATE] permission on the specified domain or DOMAIN_CERTIFICATE[UPDATE] permission on the specified environment or DOMAIN_CERTIFICATE[UPDATE] permission on the specified organization
      * Update a certificate
      */
-    async updateCertificate(requestParameters: UpdateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Certificate> {
+    async updateCertificate(requestParameters: UpdateCertificateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<CertificateEntity> {
         const response = await this.updateCertificateRaw(requestParameters, initOverrides);
         return await response.value();
     }

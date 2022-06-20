@@ -21,6 +21,10 @@ import {ApplicationApi} from "@management-apis/ApplicationApi";
 import {UserApi} from "@management-apis/UserApi";
 import {RoleApi} from "@management-apis/RoleApi";
 import {GroupApi} from "@management-apis/GroupApi";
+import {IdentityProviderApi} from "@management-apis/IdentityProviderApi";
+import {ScopeApi} from "@management-apis/ScopeApi";
+import {CertificateApi} from "@management-apis/CertificateApi";
+
 
 function createAccessTokenConfig(accessToken) {
     return new Configuration({...managementConf, apiKey: 'Bearer ' + accessToken});
@@ -51,4 +55,16 @@ export function getUserApi(accessToken) {
 
 export function getGroupApi(accessToken) {
     return new GroupApi(createAccessTokenConfig(accessToken));
+}
+
+export function getIdpApi(accessToken) {
+    return new IdentityProviderApi(createAccessTokenConfig(accessToken));
+}
+
+export function getScopeApi(accessToken) {
+    return new ScopeApi(createAccessTokenConfig(accessToken));
+}
+
+export function getCertificateApi(accessToken) {
+    return new CertificateApi(createAccessTokenConfig(accessToken));
 }

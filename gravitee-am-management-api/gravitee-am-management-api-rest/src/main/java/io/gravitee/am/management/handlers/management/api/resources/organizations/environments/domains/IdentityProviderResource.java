@@ -61,7 +61,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get an identity provider",
+    @ApiOperation(
+            nickname = "findIdentityProvider",
+            value = "Get an identity provider",
             notes = "User must have the DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[READ] permission on the specified organization")
@@ -80,28 +82,30 @@ public class IdentityProviderResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMap(irrelevant -> identityProviderService.findById(identityProvider))
                         .switchIfEmpty(Maybe.error(new IdentityProviderNotFoundException(identityProvider)))
-                        .map(identityProvider1 -> {
-                            identityProvider1 = hideConfiguration(identityProvider1);
-                            if (identityProvider1.getReferenceType() == ReferenceType.DOMAIN
-                                    && !identityProvider1.getReferenceId().equalsIgnoreCase(domain)) {
+                        .map(this::hideConfiguration)
+                        .map(safeIdp -> {
+                            if (safeIdp.getReferenceType() == ReferenceType.DOMAIN
+                                    && !safeIdp.getReferenceId().equalsIgnoreCase(domain)) {
                                 throw new BadRequestException("Identity provider does not belong to domain");
                             }
-                            return Response.ok(identityProvider1).build();
+                            return Response.ok(safeIdp).build();
                         }))
                 .subscribe(response::resume, response::resume);
     }
 
-    private IdentityProvider hideConfiguration(IdentityProvider identityProvider1) {
-        if (identityProvider1.isSystem()) {
-            identityProvider1.setConfiguration(null);
+    private IdentityProvider hideConfiguration(IdentityProvider identityProvider) {
+        if (identityProvider.isSystem()) {
+            identityProvider.setConfiguration(null);
         }
-        return identityProvider1;
+        return identityProvider;
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update an identity provider",
+    @ApiOperation(
+            nickname = "updateIdentityProvider",
+            value = "Update an identity provider",
             notes = "User must have the DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[UPDATE] permission on the specified organization")
@@ -127,7 +131,9 @@ public class IdentityProviderResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete an identity provider",
+    @ApiOperation(
+            nickname = "deleteIdentityProvider",
+            value = "Delete an identity provider",
             notes = "User must have the DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified domain " +
                     "or DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified environment " +
                     "or DOMAIN_IDENTITY_PROVIDER[DELETE] permission on the specified organization")

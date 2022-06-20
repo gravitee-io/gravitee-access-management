@@ -32,6 +32,7 @@ import io.reactivex.Maybe;
 import io.swagger.annotations.*;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
@@ -75,7 +76,9 @@ public class CertificatesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered certificates for a security domain",
+    @ApiOperation(
+            nickname = "listCertificates",
+            value = "List registered certificates for a security domain",
             notes = "User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. " +
@@ -116,8 +119,7 @@ public class CertificatesResource extends AbstractResource {
     private void processExpiryThresholds() {
         final String expiryThresholds = environment.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
         if (this.certificateExpiryThresholds == null) {
-            this.certificateExpiryThresholds = List.of(expiryThresholds.trim().split(","))
-                    .stream()
+            this.certificateExpiryThresholds = Stream.of(expiryThresholds.trim().split(","))
                     .map(String::trim)
                     .map(Integer::valueOf)
                     .sorted(Comparator.reverseOrder())
@@ -128,12 +130,14 @@ public class CertificatesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a certificate",
+    @ApiOperation(
+            nickname = "createCertificate",
+            value = "Create a certificate",
             notes = "User must have the DOMAIN_CERTIFICATE[CREATE] permission on the specified domain " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified environment " +
                     "or DOMAIN_CERTIFICATE[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Certificate successfully created"),
+            @ApiResponse(code = 201, message = "Certificate successfully created", response = CertificateEntity.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -150,7 +154,7 @@ public class CertificatesResource extends AbstractResource {
                         .flatMapSingle(schema -> certificateService.create(domain, newCertificate, authenticatedUser))
                         .map(certificate -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
-                                .entity(certificate)
+                                .entity(new CertificateEntity(certificate))
                                 .build()))
                 .subscribe(response::resume, response::resume);
     }

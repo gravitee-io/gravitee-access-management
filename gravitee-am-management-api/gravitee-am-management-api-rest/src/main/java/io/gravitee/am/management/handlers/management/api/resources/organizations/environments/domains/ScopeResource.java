@@ -62,7 +62,9 @@ public class ScopeResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a scope",
+    @ApiOperation(
+            nickname = "findScope",
+            value = "Get a scope",
             notes = "User must have the DOMAIN_SCOPE[READ] permission on the specified domain " +
                     "or DOMAIN_SCOPE[READ] permission on the specified environment " +
                     "or DOMAIN_SCOPE[READ] permission on the specified organization")
@@ -93,7 +95,9 @@ public class ScopeResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch a scope",
+    @ApiOperation(
+            nickname = "patchScope",
+            value = "Patch a scope",
             notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
@@ -120,7 +124,9 @@ public class ScopeResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a scope",
+    @ApiOperation(
+            nickname = "updateScope",
+            value = "Update a scope",
             notes = "User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[UPDATE] permission on the specified organization")
@@ -144,7 +150,9 @@ public class ScopeResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a scope",
+    @ApiOperation(
+            nickname = "deleteScope",
+            value = "Delete a scope",
             notes = "User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain " +
                     "or DOMAIN_SCOPE[DELETE] permission on the specified environment " +
                     "or DOMAIN_SCOPE[DELETE] permission on the specified organization")

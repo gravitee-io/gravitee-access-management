@@ -183,6 +183,7 @@ models/SCIMSettings.ts
 models/Scope.ts
 models/ScopeApprovalEntity.ts
 models/ScopeEntity.ts
+models/ScopePage.ts
 models/ScopesResource.ts
 models/SecurityProfileSettings.ts
 models/SelfServiceAccountManagementSettings.ts

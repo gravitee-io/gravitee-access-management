@@ -25,28 +25,28 @@ import {
     UpdateFactorToJSON,
 } from '../models';
 
-export interface Create10Request {
+export interface Create6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     factor: NewFactor;
 }
 
-export interface Delete13Request {
+export interface Delete6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     factor: string;
 }
 
-export interface Get21Request {
+export interface Get12Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     factor: string;
 }
 
-export interface Get39Request {
+export interface Get36Request {
     factor: string;
 }
 
@@ -54,13 +54,13 @@ export interface GetSchema5Request {
     factor: string;
 }
 
-export interface List19Request {
+export interface List6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
 }
 
-export interface Update11Request {
+export interface Update8Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -77,21 +77,21 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[CREATE] permission on the specified domain or DOMAIN_FACTOR[CREATE] permission on the specified environment or DOMAIN_FACTOR[CREATE] permission on the specified organization
      * Create a factor
      */
-    async create10Raw(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create6Raw(requestParameters: Create6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create10.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create6.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create10.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create6.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create10.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create6.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling create10.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling create6.');
         }
 
         const queryParameters: any = {};
@@ -119,29 +119,29 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[CREATE] permission on the specified domain or DOMAIN_FACTOR[CREATE] permission on the specified environment or DOMAIN_FACTOR[CREATE] permission on the specified organization
      * Create a factor
      */
-    async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create10Raw(requestParameters, initOverrides);
+    async create6(requestParameters: Create6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create6Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
      * Delete a factor
      */
-    async delete13Raw(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete6Raw(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete6.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete6.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete6.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete6.');
         }
 
         const queryParameters: any = {};
@@ -166,29 +166,29 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
      * Delete a factor
      */
-    async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete13Raw(requestParameters, initOverrides);
+    async delete6(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete6Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_FACTOR[READ] permission on the specified domain or DOMAIN_FACTOR[READ] permission on the specified environment or DOMAIN_FACTOR[READ] permission on the specified organization
      * Get a factor
      */
-    async get21Raw(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
+    async get12Raw(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get21.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get12.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get21.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get12.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get21.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get12.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get21.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get12.');
         }
 
         const queryParameters: any = {};
@@ -213,8 +213,8 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[READ] permission on the specified domain or DOMAIN_FACTOR[READ] permission on the specified environment or DOMAIN_FACTOR[READ] permission on the specified organization
      * Get a factor
      */
-    async get21(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
-        const response = await this.get21Raw(requestParameters, initOverrides);
+    async get12(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
+        const response = await this.get12Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -222,9 +222,9 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get39Raw(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get39.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get36.');
         }
 
         const queryParameters: any = {};
@@ -249,8 +249,8 @@ export class FactorApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a factor plugin
      */
-    async get39(requestParameters: Get39Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get39Raw(requestParameters, initOverrides);
+    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get36Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -289,20 +289,51 @@ export class FactorApi extends runtime.BaseAPI {
     }
 
     /**
+     * There is no particular permission needed. User must be authenticated.
+     * List factor plugins
+     */
+    async list36Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/platform/plugins/factors`,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * There is no particular permission needed. User must be authenticated.
+     * List factor plugins
+     */
+    async list36(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list36Raw(initOverrides);
+    }
+
+    /**
      * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
      * List registered factors for a security domain
      */
-    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Factor>>> {
+    async list6Raw(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Factor>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list6.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list19.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list6.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list19.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list6.');
         }
 
         const queryParameters: any = {};
@@ -327,65 +358,34 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
      * List registered factors for a security domain
      */
-    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Factor>> {
-        const response = await this.list19Raw(requestParameters, initOverrides);
+    async list6(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Factor>> {
+        const response = await this.list6Raw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List factor plugins
-     */
-    async list39Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/platform/plugins/factors`,
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * There is no particular permission needed. User must be authenticated.
-     * List factor plugins
-     */
-    async list39(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list39Raw(initOverrides);
     }
 
     /**
      * User must have the DOMAIN_FACTOR[UPDATE] permission on the specified domain or DOMAIN_FACTOR[UPDATE] permission on the specified environment or DOMAIN_FACTOR[UPDATE] permission on the specified organization
      * Update a factor
      */
-    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
+    async update8Raw(requestParameters: Update8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update8.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update11.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update8.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update11.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update8.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling update11.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling update8.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update11.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update8.');
         }
 
         const queryParameters: any = {};
@@ -413,8 +413,8 @@ export class FactorApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[UPDATE] permission on the specified domain or DOMAIN_FACTOR[UPDATE] permission on the specified environment or DOMAIN_FACTOR[UPDATE] permission on the specified organization
      * Update a factor
      */
-    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
-        const response = await this.update11Raw(requestParameters, initOverrides);
+    async update8(requestParameters: Update8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
+        const response = await this.update8Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

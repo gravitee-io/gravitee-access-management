@@ -7,7 +7,9 @@
     "moduleResolution": "node",
     "paths": {
       "@management-apis/*": ["api/management/apis/*"],
-      "@management-commands/*": ["api/commands/management/*"]
+      "@management-commands/*": ["api/commands/management/*"],
+      "@gateway-commands/*": ["api/commands/gateway/*"],
+      "@api-fixtures/*": ["api/fixtures/*"]
     },
     "allowSyntheticDefaultImports": true
   },

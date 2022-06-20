@@ -81,7 +81,6 @@ public class ScopesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
-
     @Test
     public void shouldCreate() {
         final String domainId = "domain-1";

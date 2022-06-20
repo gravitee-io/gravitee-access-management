@@ -73,7 +73,8 @@ export interface AlertTrigger {
  * @export
  */
 export const AlertTriggerTypeEnum = {
-    TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES'
+    TooManyLoginFailures: 'TOO_MANY_LOGIN_FAILURES',
+    RiskAssessment: 'RISK_ASSESSMENT'
 } as const;
 export type AlertTriggerTypeEnum = typeof AlertTriggerTypeEnum[keyof typeof AlertTriggerTypeEnum];
 
