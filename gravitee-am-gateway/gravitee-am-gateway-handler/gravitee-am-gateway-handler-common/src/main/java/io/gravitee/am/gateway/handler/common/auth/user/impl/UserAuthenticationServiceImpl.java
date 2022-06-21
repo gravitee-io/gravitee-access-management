@@ -243,6 +243,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         if (afterAuthentication) {
             existingUser.setLoggedAt(new Date());
             existingUser.setLoginsCount(existingUser.getLoginsCount() + 1);
+            existingUser.setAccountNonLocked(true);
         }
         // set roles
         existingUser.setDynamicRoles(principal.getRoles());
