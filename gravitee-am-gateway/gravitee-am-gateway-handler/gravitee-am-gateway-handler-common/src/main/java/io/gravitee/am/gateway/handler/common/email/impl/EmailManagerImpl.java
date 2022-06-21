@@ -127,7 +127,9 @@ public class EmailManagerImpl extends AbstractService implements EmailManager, I
             Email customEmail = emailTemplates.get(template);
             return create(template, customEmail.getFrom(), customEmail.getFromName(), customEmail.getSubject(), customEmail.getExpiresAfter());
         } else {
-            return create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
+            Email result = create(template, defaultFrom, null, format(subject, defaultSubject), defaultExpiresAfter);
+            result.setDefaultTemplate(true); // Object created here because user doesn't redefine template in the UI
+            return result;
         }
     }
 

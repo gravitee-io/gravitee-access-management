@@ -200,6 +200,7 @@ public class EmailServiceImpl implements EmailService {
 
         EmailWrapper wrapper = new EmailWrapper(email);
         wrapper.setExpireAt(expiresAt);
+        wrapper.setFromDefaultTemplate(emailTpl.isDefaultTemplate());
         return wrapper;
     }
 
