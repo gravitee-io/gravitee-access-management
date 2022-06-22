@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -30,16 +31,20 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorChannel;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -83,6 +88,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
+        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));
         AuthenticationFlowChainHandler authenticationFlowChainHandler = new AuthenticationFlowChainHandler(steps);
 
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
@@ -764,6 +770,77 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.next();
         });
 
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotContinueUser_RecoveryCodeisAlreadyActive() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            final Factor recoveryFactor = new Factor();
+            recoveryFactor.setFactorType(FactorType.RECOVERY_CODE);
+            recoveryFactor.setId("factor-2");
+            when(factorManager.getFactor(eq("factor-2"))).thenReturn(recoveryFactor);
+
+            client.setFactors(Set.of("factor-1", "factor-2"));
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            EnrolledFactor factorRecovery = new EnrolledFactor();
+            factorRecovery.setFactorId("factor-2");
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledFactor, factorRecovery));
+            rc.getDelegate().setUser(new User(endUser));
+
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/recovery_code"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldContinueUser_RecoveryCode_active() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            client.setFactors(Set.of("factor-1", "factor-2"));
+
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+
+            EnrolledFactor factorRecovery = new EnrolledFactor();
+            factorRecovery.setFactorId("factor-2");
+            factorRecovery.setStatus(ACTIVATED);
+            factorRecovery.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.RECOVERY_CODE, null));
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledFactor, factorRecovery));
+            rc.getDelegate().setUser(new User(endUser));
+
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
 
         testRequest(
                 HttpMethod.GET, "/login",
