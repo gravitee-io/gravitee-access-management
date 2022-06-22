@@ -87,7 +87,7 @@ public class RiskAssessmentHandlerTest {
         user.setId("user-id");
 
         routingContext = new SpyRoutingContext();
-        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper, environment);
+        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper);
         assessments = new HashMap<>(Map.of("ipReputation", false, "geoVelocity", false, "device", false));
     }
 

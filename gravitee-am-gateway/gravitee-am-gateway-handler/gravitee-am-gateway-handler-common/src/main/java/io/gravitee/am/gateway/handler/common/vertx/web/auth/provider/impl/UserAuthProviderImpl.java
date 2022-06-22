@@ -19,6 +19,7 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ServerErrorException;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -78,6 +79,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             authenticationContext.set(Claims.ip_address, ipAddress);
             authenticationContext.set(Claims.user_agent, userAgent);
             authenticationContext.set(Claims.domain, client.getDomain());
+            authenticationContext.set(ConstantKeys.DEVICE_ID, context.session().get(ConstantKeys.DEVICE_ID));
 
             userAuthenticationManager.authenticate(client, authentication)
                     .subscribe(

@@ -240,7 +240,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(authenticationFlowContextHandler)
-                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, environment))
+                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))

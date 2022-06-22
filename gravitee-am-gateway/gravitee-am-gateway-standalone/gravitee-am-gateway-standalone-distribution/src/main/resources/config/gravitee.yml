@@ -272,18 +272,6 @@ user:
       #subject: Verification Code
       token:
       #expire-after: 300 # the end of validity of the token in seconds for MFA email (default 300 = 5 minutes)
-  activity:
-    enabled: true # default is false
-    anon:
-      algorithm: SHA256 #default SHA256
-      salt: some-salt # default is null meaning the key generated will change every time
-    retention:
-      time: 3
-      unit: MONTHS
-    geolocation:
-      variation:
-        latitude: 0.07 # default to have a geolocation randomised, 0 will give the exact position
-        longitude: 0.07 # default to have a geolocation randomised, 0 will give the exact position
 
 handlers:
   request:
@@ -366,46 +354,3 @@ ds:
 liquibase:
   enabled: false
 
-alerts:
-  risk_assessment:
-    settings:
-      ipReputation:
-        enabled: true
-        thresholds:
-          LOW: 1.0
-          MEDIUM: 30.0
-          HIGH: 70.0
-      geoVelocity:
-        enabled: true
-        thresholds:
-          LOW: 18.0
-          MEDIUM: 125.0
-          HIGH: 625.0
-      device:
-        enabled: true
-        thresholds:
-          LOW: 1.0
-          MEDIUM: 1.0
-          HIGH: 1.0
-          REGULAR: 1.1
-    severity: INFO
-  alert-engine:
-    enabled: true
-    ws:
-      discovery: true
-      endpoints:
-        - http://localhost:8072/
-      security:
-        username: admin
-        password: adminadmin
-      too_many_login_failures:
-        name: "Too many login failures detected"
-        description: "More than {threshold}% of logins are in failure over the last {window} second(s)"
-        # the threshold rate in % to reach before notify. Default 10% of login failures.
-        threshold: 1
-        # the minimum sample size. Default 1000 login attempts.
-        sampleSize: 1
-        # window time in seconds. Default 600s (10 minutes).
-        window: 10
-        # severity of the alert (INFO, WARNING, CRITICAL). Default WARNING.
-        severity: WARNING
