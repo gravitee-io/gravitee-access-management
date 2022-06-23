@@ -118,7 +118,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         return Observable.fromIterable(applicationIdentityProviders)
                 .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
-                .switchIfEmpty(Observable.error(() -> getInternalAuthenticationServiceException(client)))
+                .switchIfEmpty(Observable.defer(() -> Observable.error(getInternalAuthenticationServiceException(client))))
                 .concatMapMaybe(appIdp -> authenticate0(client, authentication.copy(), appIdp.getIdentity(), preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
@@ -217,9 +217,10 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {
-        return preAuthentication(client, authentication, authProvider)
-                .andThen(loadUserByUsername0(client, authentication, authProvider, preAuthenticated))
-                .flatMap(userAuthentication -> postAuthentication(client, authentication, authProvider, userAuthentication).andThen(Maybe.just(userAuthentication)));
+        return loadUserByUsername0(client, authentication, authProvider, preAuthenticated)
+                .flatMap(userAuthentication ->
+                        postAuthentication(client, authentication, authProvider, userAuthentication)
+                                .andThen(Maybe.just(userAuthentication)));
     }
 
     private Maybe<UserAuthentication> loadUserByUsername0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {
@@ -263,10 +264,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return new InternalAuthenticationServiceException(msg);
     }
 
-    private Completable preAuthentication(Client client, Authentication authentication, String source) {
-        return preAuthentication(client, authentication.getPrincipal().toString(), source);
-    }
-
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
        /*
          We do not primarily rely on authentication.getPrincipal() here. The reason is that some identity providers
@@ -280,59 +277,54 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
         return postAuthentication(client, username, source, userAuthentication);
     }
 
-    private Completable preAuthentication(Client client, String username, String source) {
-        final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-        if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
-            LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                    .domain(domain.getId())
-                    .client(client.getId())
-                    .identityProvider(source)
-                    .username(username)
-                    .build();
-            return loginAttemptService
-                    .checkAccount(criteria, accountSettings)
-                    .map(Optional::of)
-                    .defaultIfEmpty(Optional.empty())
-                    .flatMapCompletable(optLoginAttempt -> {
-                        if (optLoginAttempt.isPresent() && optLoginAttempt.get().isAccountLocked(accountSettings.getMaxLoginAttempts())) {
-                            Map<String, String> details = new HashMap<>();
-                            details.put("attempt_id", optLoginAttempt.get().getId());
-                            return Completable.error(new AccountLockedException("User " + username + " is locked", details));
-                        }
-                        return Completable.complete();
-                    });
-        }
-        return Completable.complete();
-    }
-
     private Completable postAuthentication(Client client, String username, String source, UserAuthentication userAuthentication) {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
-        if (accountSettings != null && accountSettings.isLoginAttemptsDetectionEnabled()) {
-            LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
-                    .domain(domain.getId())
-                    .client(client.getId())
-                    .identityProvider(source)
-                    .username(username)
-                    .build();
-            // no exception clear login attempt
-            if (userAuthentication.getLastException() == null) {
-                return loginAttemptService.loginSucceeded(criteria);
-            } else if (userAuthentication.getLastException() instanceof BadCredentialsException) {
-                // do not execute login attempt feature for non existing users
-                // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
-                // but we can't control custom IdP that's why we have to check user existence
-                return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
-                        .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, accountSettings)
-                                .flatMapCompletable(loginAttempt -> {
-                                    if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
-                                        return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
-                                    }
-                                    return Completable.complete();
-                                })
-                        );
-            }
+
+        // if brute force detection feature disabled, continue
+        if (accountSettings == null || !accountSettings.isLoginAttemptsDetectionEnabled()) {
+            return Completable.complete();
         }
-        return Completable.complete();
+
+        final LoginAttemptCriteria criteria = new LoginAttemptCriteria.Builder()
+                .domain(domain.getId())
+                .client(client.getId())
+                .identityProvider(source)
+                .username(username)
+                .build();
+
+        // check if user is locked
+        return loginAttemptService
+                .checkAccount(criteria, accountSettings)
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMapCompletable(optLoginAttempt -> {
+                    if (optLoginAttempt.isPresent() && optLoginAttempt.get().isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                        Map<String, String> details = new HashMap<>();
+                        details.put("attempt_id", optLoginAttempt.get().getId());
+                        return Completable.error(new AccountLockedException("User " + username + " is locked", details));
+                    }
+
+                    // no exception clear login attempt
+                    if (userAuthentication.getLastException() == null) {
+                        return loginAttemptService.loginSucceeded(criteria);
+                    }
+
+                    if (userAuthentication.getLastException() instanceof BadCredentialsException) {
+                        // do not execute login attempt feature for non existing users
+                        // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
+                        // but we can't control custom IdP that's why we have to check user existence
+                        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider())
+                                .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, accountSettings)
+                                        .flatMapCompletable(loginAttempt -> {
+                                            if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
+                                                return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);
+                                            }
+                                            return Completable.complete();
+                                        })
+                                );
+                    }
+                    return Completable.complete();
+                });
     }
 
     private class UserAuthentication {
