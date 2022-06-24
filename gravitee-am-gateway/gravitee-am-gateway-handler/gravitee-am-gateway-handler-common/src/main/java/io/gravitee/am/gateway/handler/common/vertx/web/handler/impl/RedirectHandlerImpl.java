@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
+import io.gravitee.am.common.oidc.Parameters;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.utils.RequestUtils;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.vertx.core.Handler;
@@ -24,9 +26,6 @@ import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
@@ -49,6 +48,21 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
         try {
             final HttpServerRequest request = context.request();
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
+
+            if (queryParams.contains(Parameters.LOGIN_HINT)) {
+                // this conditional block has been added specifically for https://github.com/gravitee-io/issues/issues/7889
+                // we need to encode email address that contains a '+' to avoid
+                // white space in username when landing to the login form.
+                // And we have to this because, the UriBuilderRequest.resolveProxyRequest decode & encode parameter to avoid
+                // double encoding during the redirect...
+                // we restrict to the login_hint to avoid side effect
+                final String login_hint = queryParams.get(Parameters.LOGIN_HINT);
+                if (!UriBuilder.decodeURIComponent(login_hint).equals(login_hint)
+                        && login_hint.contains("@")
+                        && login_hint.contains("+")) {
+                    queryParams.set(Parameters.LOGIN_HINT, UriBuilder.encodeURIComponent(login_hint));
+                }
+            }
 
             // Now redirect the user.
             String uri = UriBuilderRequest.resolveProxyRequest(request, redirectUrl, queryParams, true);
