@@ -139,7 +139,6 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
                                     } else {
                                         manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                                     }
-                                    ctx.next();
                                 });
                             });
                         } else {
