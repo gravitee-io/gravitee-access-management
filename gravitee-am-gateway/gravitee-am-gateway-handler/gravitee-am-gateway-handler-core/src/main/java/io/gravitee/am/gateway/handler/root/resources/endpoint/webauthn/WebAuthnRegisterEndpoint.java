@@ -26,7 +26,6 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
-import io.gravitee.am.service.FactorService;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
@@ -51,9 +50,10 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
     private final Domain domain;
 
     public WebAuthnRegisterEndpoint(TemplateEngine templateEngine,
-                                    Domain domain) {
+                                    Domain domain, FactorManager factorManager) {
         super(templateEngine);
         this.domain = domain;
+        setFactorManager(factorManager);
     }
 
     @Override

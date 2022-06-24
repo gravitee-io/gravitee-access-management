@@ -389,7 +389,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.get(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain));
+                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)

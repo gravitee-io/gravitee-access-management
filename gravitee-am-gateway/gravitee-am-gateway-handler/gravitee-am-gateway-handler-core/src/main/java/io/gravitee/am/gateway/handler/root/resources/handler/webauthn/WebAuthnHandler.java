@@ -130,10 +130,12 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
             Optional<EnrolledFactorSecurity> enrolledFido2FactorSecurity = getEnrolledFido2FactorSecurity(authenticatedUser);
             if (hasAnyFactorOtherThanFido2Factor(authenticatedUser).isPresent()) {
                 updateSessionLoginCompletedStatus(ctx, credentialId);
+                ctx.next();
             } else if (enrolledFido2FactorSecurity.isPresent() && enrolledFido2FactorSecurity.get().getValue().equals(credentialId)) {
                 //user already has fido2 factor for this credential
                 updateSessionAuthAndChallengeStatus(ctx);
                 updateSessionLoginCompletedStatus(ctx, credentialId);
+                ctx.next();
             } else {
                 //save the fido factor
                 final EnrolledFactor enrolledFactor = createEnrolledFactor(clientFido2Factor.get().getId(), credentialId);
@@ -141,6 +143,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
             }
         } else {
             updateSessionLoginCompletedStatus(ctx, credentialId);
+            ctx.next();
         }
     }
 
@@ -152,6 +155,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                         () -> {
                             updateSessionAuthAndChallengeStatus(ctx);
                             updateSessionLoginCompletedStatus(ctx, credentialId);
+                            ctx.next();
                         },
                         error -> {
                             logger.error("Could not update user profile with FIDO2 factor detail", error);

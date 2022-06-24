@@ -95,7 +95,6 @@ public interface ConstantKeys {
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
     String PASSWORDLESS_AUTH_COMPLETED_KEY = "passwordlessAuthCompleted";
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
-    String PASSWORDLESS_CHALLENGE_USER_ID = "passwordlessUserId";
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
     String PASSWORDLESS_ASSERTION = "passwordlessAssertion";

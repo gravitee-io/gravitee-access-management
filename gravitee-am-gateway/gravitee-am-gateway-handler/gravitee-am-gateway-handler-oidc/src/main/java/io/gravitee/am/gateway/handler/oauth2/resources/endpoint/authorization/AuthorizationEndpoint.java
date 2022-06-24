@@ -146,7 +146,6 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
         context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
         context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
         context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
         context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
         context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
     }

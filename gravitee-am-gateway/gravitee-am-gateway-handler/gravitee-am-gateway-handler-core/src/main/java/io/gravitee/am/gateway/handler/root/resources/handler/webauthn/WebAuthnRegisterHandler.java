@@ -209,7 +209,6 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             } else {
                                 manageFido2FactorEnrollment(ctx, client, credentialId, authenticatedUser);
                             }
-                            ctx.next();
                         });
                     } else {
                         logger.error("Unexpected exception", authenticate.cause());
