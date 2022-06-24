@@ -33,7 +33,7 @@
     <name>Gravitee IO - Access Management - Identity Provider - JDBC</name>
 
     <properties>
-        <r2dbc-pool.version>0.8.6.RELEASE</r2dbc-pool.version>
+        <r2dbc-pool.version>0.9.1.RELEASE</r2dbc-pool.version>
         <r2dbc-postgresql.version>0.8.11.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mssql.version>0.8.7.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>0.8.2.RELEASE</r2dbc-mysql.version>
