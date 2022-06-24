@@ -84,21 +84,6 @@ public class HttpUserProviderTestConfiguration {
         updateErrorCondition.setException("io.gravitee.am.service.exception.UserNotFoundException");
         updateResource.setHttpResponseErrorConditions(Arrays.asList(updateErrorCondition));
 
-        HttpResourceConfiguration updatePwdResource = new HttpResourceConfiguration();
-        updatePwdResource.setBaseURL("/users/{#user.id}/password");
-        updatePwdResource.setHttpMethod(HttpMethod.PUT);
-        HttpHeader updatePwdHttpHeader = new HttpHeader();
-        updatePwdHttpHeader.setName("Content-Type");
-        updatePwdHttpHeader.setValue("application/json");
-        updatePwdResource.setHttpHeaders(Collections.singletonList(updatePwdHttpHeader));
-        JsonObject updatePwdJsonObject = new JsonObject();
-        createJsonObject.put("username", "{#user.username}");
-        updatePwdResource.setHttpBody(updatePwdJsonObject.encode());
-        HttpResponseErrorCondition updatePwdErrorCondition = new HttpResponseErrorCondition();
-        updatePwdErrorCondition.setValue("{#usersResponse.status == 404}");
-        updatePwdErrorCondition.setException("io.gravitee.am.service.exception.UserNotFoundException");
-        updatePwdResource.setHttpResponseErrorConditions(Arrays.asList(updatePwdErrorCondition));
-
         HttpResourceConfiguration deleteResource = new HttpResourceConfiguration();
         deleteResource.setBaseURL("/users/{#user.id}");
         deleteResource.setHttpMethod(HttpMethod.DELETE);
@@ -115,7 +100,6 @@ public class HttpUserProviderTestConfiguration {
         pathsConfiguration.setCreateResource(createResource);
         pathsConfiguration.setReadResource(readResource);
         pathsConfiguration.setReadResourceByEmail(readByEmailResource);
-        pathsConfiguration.setUpdatePasswordResource(updatePwdResource);
         pathsConfiguration.setUpdateResource(updateResource);
         pathsConfiguration.setDeleteResource(deleteResource);
         usersResourceConfiguration.setPaths(pathsConfiguration);

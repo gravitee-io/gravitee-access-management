@@ -176,7 +176,7 @@ public class HttpUserProviderTest {
         DefaultUser user = new DefaultUser("johndoe");
         user.setId("123456789");
 
-        stubFor(put(urlPathEqualTo("/api/users/123456789/password"))
+        stubFor(put(urlPathEqualTo("/api/users/123456789"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, containing("application/"))
                 .withRequestBody(matching(".*"))
                 .willReturn(okJson("{\"id\" : \"123456789\", \"username\" : \"johndoe\"}")));
