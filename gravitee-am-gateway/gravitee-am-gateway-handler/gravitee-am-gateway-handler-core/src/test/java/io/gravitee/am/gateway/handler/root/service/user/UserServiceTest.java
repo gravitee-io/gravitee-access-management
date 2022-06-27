@@ -196,7 +196,11 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_idpUserNotFound() {
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isInherited()).thenReturn(false);
+        when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
         Client client = mock(Client.class);
+        when(client.getAccountSettings()).thenReturn(accountSettings);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
