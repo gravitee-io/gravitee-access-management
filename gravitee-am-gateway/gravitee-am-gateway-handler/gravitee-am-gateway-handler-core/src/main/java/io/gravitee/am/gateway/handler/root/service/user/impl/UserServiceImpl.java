@@ -270,7 +270,7 @@ public class UserServiceImpl implements UserService {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
 
         // if user registration is not completed and force registration option is disabled throw invalid account exception
-        if (user.isInactive() && !forceUserRegistration(domain, client)) {
+        if (user.isInactive() && !forceUserRegistration(accountSettings)) {
             return Single.error(new AccountInactiveException("User needs to complete the activation process"));
         }
 
@@ -293,8 +293,10 @@ public class UserServiceImpl implements UserService {
                             .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
                             .onErrorResumeNext(ex -> {
                                 if (ex instanceof UserNotFoundException) {
-                                    // idp user not found, create its account
-                                    return userProvider.create(convert(user));
+                                    // idp user not found, create its account, only if force registration is enabled
+                                    if (forceUserRegistration(accountSettings)) {
+                                        return userProvider.create(convert(user));
+                                    }
                                 }
                                 return Single.error(ex);
                             });
@@ -402,7 +404,8 @@ public class UserServiceImpl implements UserService {
                                 .switchIfEmpty(Single.error(new UserInvalidException("User [ " + user.getUsername() + " ] cannot be updated because its identity provider does not support user provisioning")))
                                 .flatMap(userProvider -> {
                                     // if user registration is not completed and force registration option is disabled throw invalid account exception
-                                    if (user.isInactive() && !forceUserRegistration(domain, client)) {
+                                    AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+                                    if (user.isInactive() && !forceUserRegistration(accountSettings)) {
                                         return Single.error(new AccountInactiveException("User [ " + user.getUsername() + " ] needs to complete the activation process"));
                                     }
                                     // fetch latest information from the identity provider and return the user
@@ -419,7 +422,7 @@ public class UserServiceImpl implements UserService {
                     }
 
                     if (foundUsers.size() > 1) {
-                        throw new EnforceUserIdentityException();
+                        return Single.error(new EnforceUserIdentityException());
                     }
 
                     // if user has no email or email is unknown
@@ -538,8 +541,7 @@ public class UserServiceImpl implements UserService {
                 .defaultIfEmpty(Optional.empty());
     }
 
-    private boolean forceUserRegistration(Domain domain, Client client) {
-        AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
+    private boolean forceUserRegistration(AccountSettings accountSettings) {
         return accountSettings != null && accountSettings.isCompleteRegistrationWhenResetPassword();
     }
 
