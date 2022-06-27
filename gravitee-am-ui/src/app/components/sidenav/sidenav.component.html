@@ -45,7 +45,6 @@
            routerLinkActive="sidenav-active" [routerLinkActiveOptions]="menuItem.routerLinkActiveOptions">
           <mat-icon>{{menuItem.icon}}</mat-icon>
           <span *ngIf="!reducedMode">{{menuItem.label}}</span>
-          <gv-state *ngIf="!reducedMode && menuItem.beta">BETA</gv-state>
         </a>
       </mat-list-item>
     </div>
