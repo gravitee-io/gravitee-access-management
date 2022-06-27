@@ -63,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -277,16 +278,27 @@ public class UserServiceImpl implements UserService {
         return identityProviderManager.getUserProvider(user.getSource())
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
-                .flatMapSingle(userProvider -> userProvider.findByUsername(user.getUsername())
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
-                        .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
-                        .onErrorResumeNext(ex -> {
-                            if (ex instanceof UserNotFoundException) {
-                                // idp user not found, create its account
-                                return userProvider.create(convert(user));
-                            }
-                            return Single.error(ex);
-                        }))
+                .flatMapSingle(userProvider -> {
+                    // if user has already signed in at least once, update its password based on its technical id
+                    if (!ObjectUtils.isEmpty(user.getExternalId())) {
+                        DefaultUser idpUser = (DefaultUser) convert(user);
+                        idpUser.setId(user.getExternalId());
+                        idpUser.setCredentials(null);
+                        return userProvider.updatePassword(idpUser, user.getPassword());
+                    }
+
+                    // else retrieve its technical from the idp and then update the password
+                    return userProvider.findByUsername(user.getUsername())
+                            .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
+                            .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
+                            .onErrorResumeNext(ex -> {
+                                if (ex instanceof UserNotFoundException) {
+                                    // idp user not found, create its account
+                                    return userProvider.create(convert(user));
+                                }
+                                return Single.error(ex);
+                            });
+                })
                 // update the user in the AM repository
                 .flatMap(idpUser -> {
                     // update 'users' collection for management and audit purpose
