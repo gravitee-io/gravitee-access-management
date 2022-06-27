@@ -31,6 +31,7 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
 import io.gravitee.am.service.exception.UserNotFoundException;
+import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
@@ -43,6 +44,8 @@ import java.util.UUID;
 import static io.gravitee.am.common.utils.ConstantKeys.EMAIL_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_PASSWORD_CONFIRM;
 import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_PARAM_KEY;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -130,8 +133,12 @@ public class ForgotPasswordSubmissionEndpoint extends UserRequestHandler {
         // override principal user
         DefaultUser principal = new DefaultUser(routingContext.request().getParam(EMAIL_PARAM_KEY));
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        if (canSaveIp(routingContext)) {
+            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+        }
+        if (canSaveUserAgent(routingContext)) {
+            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        }
         additionalInformation.put(Claims.domain, domain.getId());
         principal.setAdditionalInformation(additionalInformation);
         return principal;

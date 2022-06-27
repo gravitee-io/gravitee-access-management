@@ -21,20 +21,21 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
 import static java.lang.Boolean.TRUE;
+import static java.util.Objects.nonNull;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class IPUtils {
+public class ConsentUtils {
 
-    private IPUtils(){}
+    private ConsentUtils(){}
 
     public static boolean canSaveIp(RoutingContext context) {
-        return TRUE.equals(context.session().get(USER_CONSENT_IP_LOCATION));
+        return nonNull(context.session()) && TRUE.equals(context.session().get(USER_CONSENT_IP_LOCATION));
     }
 
     public static boolean canSaveUserAgent(RoutingContext context) {
-        return TRUE.equals(context.session().get(USER_CONSENT_USER_AGENT));
+        return nonNull(context.session()) && TRUE.equals(context.session().get(USER_CONSENT_USER_AGENT));
     }
 }

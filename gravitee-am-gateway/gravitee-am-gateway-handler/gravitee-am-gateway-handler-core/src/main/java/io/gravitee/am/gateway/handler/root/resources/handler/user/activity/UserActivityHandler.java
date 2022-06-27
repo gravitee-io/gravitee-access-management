@@ -29,8 +29,8 @@ import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
 
 /**

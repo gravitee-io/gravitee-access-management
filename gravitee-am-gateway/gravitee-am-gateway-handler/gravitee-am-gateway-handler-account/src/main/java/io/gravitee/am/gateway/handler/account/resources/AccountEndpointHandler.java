@@ -43,6 +43,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.gravitee.am.gateway.handler.account.resources.AccountResponseHandler.*;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.FORBIDDEN_403;
 import static java.util.Objects.isNull;
 import static org.springframework.util.StringUtils.isEmpty;
@@ -98,7 +100,7 @@ public class AccountEndpointHandler {
         try {
             // update user password value from parameters
             final JsonObject bodyAsJson = routingContext.getBodyAsJson();
-            if (isNull(bodyAsJson) || bodyAsJson.isEmpty()){
+            if (isNull(bodyAsJson) || bodyAsJson.isEmpty()) {
                 routingContext.fail(new InvalidRequestException("Body is null or empty"));
                 return;
             }
@@ -124,7 +126,7 @@ public class AccountEndpointHandler {
                                     routingContext.fail(error);
                                 }
                             }
-            );
+                    );
         } catch (DecodeException ex) {
             routingContext.fail(new InvalidRequestException("Unable to parse body message"));
         }
@@ -139,8 +141,12 @@ public class AccountEndpointHandler {
     private DefaultUser convertUserToPrincipal(RoutingContext routingContext, User user) {
         DefaultUser principal = new DefaultUser(user.getUsername());
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        if (canSaveIp(routingContext)) {
+            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+        }
+        if (canSaveUserAgent(routingContext)) {
+            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        }
         additionalInformation.put(Claims.domain, domain.getId());
         principal.setAdditionalInformation(additionalInformation);
         return principal;

@@ -43,8 +43,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

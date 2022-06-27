@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -33,6 +34,9 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -89,8 +93,12 @@ public class RegisterProcessHandler extends UserRequestHandler {
         // override principal user
         DefaultUser principal = new DefaultUser(routingContext.request().getParam("username"));
         Map<String, Object> additionalInformation = new HashMap<>();
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        if(canSaveIp(routingContext)){
+            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+        }
+        if(canSaveUserAgent(routingContext)){
+            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+        }
         additionalInformation.put(Claims.domain, domain.getId());
         principal.setAdditionalInformation(additionalInformation);
         return principal;
