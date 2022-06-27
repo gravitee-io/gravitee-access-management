@@ -65,6 +65,8 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_EXTERNAL;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
 
@@ -115,8 +117,12 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
         // create user authentication
         EndUserAuthentication endUserAuthentication = new EndUserAuthentication(username, password, authenticationContext);
-        endUserAuthentication.getContext().set(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
-        endUserAuthentication.getContext().set(Claims.user_agent, RequestUtils.userAgent(context.request()));
+        if (canSaveIp(context)) {
+            endUserAuthentication.getContext().set(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+        }
+        if (canSaveUserAgent(context)) {
+            endUserAuthentication.getContext().set(Claims.user_agent, RequestUtils.userAgent(context.request()));
+        }
 
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)

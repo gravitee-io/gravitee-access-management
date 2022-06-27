@@ -17,6 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.user.password;
 
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.dummies.DummySession;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -30,7 +32,9 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.reactivex.core.buffer.Buffer;
+import io.vertx.reactivex.ext.web.Session;
 import io.vertx.reactivex.ext.web.handler.BodyHandler;
+import io.vertx.reactivex.ext.web.handler.SessionHandler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -96,7 +100,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token="+TOKEN));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token=" + TOKEN));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -121,7 +125,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token="+TOKEN));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token=" + TOKEN));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
@@ -196,7 +200,7 @@ public class ForgotPasswordSubmissionEndpointTest extends RxWebTestBase {
                 resp -> {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
-                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token="+TOKEN));
+                    assertTrue(location.endsWith("/forgotPassword?client_id=client-id&success=forgot_password_completed&token=" + TOKEN));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }

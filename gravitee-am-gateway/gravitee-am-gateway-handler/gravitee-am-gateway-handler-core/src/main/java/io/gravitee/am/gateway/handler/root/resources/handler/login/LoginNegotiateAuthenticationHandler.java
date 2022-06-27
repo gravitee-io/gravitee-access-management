@@ -35,8 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.IPUtils.canSaveUserAgent;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
 
 /**

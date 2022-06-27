@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
 import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
@@ -34,6 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,8 +69,13 @@ public abstract class UserRequestHandler implements Handler<RoutingContext> {
             authenticatedUser.setId(user.getId());
             Map<String, Object> additionalInformation = user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
             // add ip address and user agent
-            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
-            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+            if (canSaveIp(routingContext)) {
+                additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(routingContext.request()));
+            }
+
+            if(canSaveUserAgent(routingContext)){
+                additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(routingContext.request()));
+            }
 
             if(user.getReferenceType() == ReferenceType.DOMAIN) {
                 additionalInformation.put(Claims.domain, user.getReferenceId());

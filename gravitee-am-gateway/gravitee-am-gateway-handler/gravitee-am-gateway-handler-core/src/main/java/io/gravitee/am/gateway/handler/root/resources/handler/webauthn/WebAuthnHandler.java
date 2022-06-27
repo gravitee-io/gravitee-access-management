@@ -51,9 +51,10 @@ import java.util.Set;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
-import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USER_LOGIN_COMPLETED_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -68,7 +69,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private UserAuthenticationManager userAuthenticationManager;
     protected Domain domain;
 
-    public WebAuthnHandler() {}
+    public WebAuthnHandler() {
+    }
 
     public WebAuthnHandler(TemplateEngine templateEngine) {
         super(templateEngine);
@@ -166,7 +168,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
 
     protected boolean isEnrollingFido2Factor(RoutingContext ctx) {
         final String factorId = ctx.session().get(ENROLLED_FACTOR_ID_KEY);
-        if(factorId == null) {
+        if (factorId == null) {
             return false;
         }
 
@@ -216,7 +218,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         ctx.session().put(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY, true);
     }
 
-    protected void updateSessionLoginCompletedStatus(RoutingContext ctx, String credentialId){
+    protected void updateSessionLoginCompletedStatus(RoutingContext ctx, String credentialId) {
         ctx.session().put(ConstantKeys.PASSWORDLESS_AUTH_COMPLETED_KEY, true);
         ctx.session().put(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY, credentialId);
         ctx.session().put(USER_LOGIN_COMPLETED_KEY, true);
@@ -237,17 +239,22 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     protected AuthenticationContext createAuthenticationContext(RoutingContext context) {
         HttpServerRequest httpServerRequest = context.request();
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(httpServerRequest.getDelegate()));
-        authenticationContext.set(Claims.ip_address, RequestUtils.remoteAddress(httpServerRequest));
-        authenticationContext.set(Claims.user_agent, RequestUtils.userAgent(httpServerRequest));
+        if (canSaveIp(context)) {
+            authenticationContext.set(Claims.ip_address, RequestUtils.remoteAddress(httpServerRequest));
+        }
+        if (canSaveUserAgent(context)) {
+            authenticationContext.set(Claims.user_agent, RequestUtils.userAgent(httpServerRequest));
+        }
         authenticationContext.set(Claims.domain, domain.getId());
+        authenticationContext.setAttribute(DEVICE_ID, context.request().getParam(DEVICE_ID));
         return authenticationContext;
     }
 
     protected void authenticateUser(Client client,
-                                  AuthenticationContext authenticationContext,
-                                  String username,
-                                  String credentialId,
-                                  Handler<AsyncResult<io.vertx.ext.auth.User>> handler) {
+                                    AuthenticationContext authenticationContext,
+                                    String username,
+                                    String credentialId,
+                                    Handler<AsyncResult<io.vertx.ext.auth.User>> handler) {
         credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
                 .firstElement()
                 .switchIfEmpty(Maybe.error(new CredentialNotFoundException(credentialId)))
