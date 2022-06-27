@@ -61,7 +61,7 @@ object ManagementAPICalls {
     http("Enable IDP on " + appName + " Application")
       .patch(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/applications/${"+appName+"Id}")
       .header("Authorization", "Bearer ${auth-token}")
-      .body(StringBody("""{"identities":["${identityId}"]}""")).asJson
+      .body(StringBody("""{"identityProviders":[{"identity":"${identityId}","selectionRule":"","priority":0}]}""")).asJson
       .check(status.is(200))
   }
 
