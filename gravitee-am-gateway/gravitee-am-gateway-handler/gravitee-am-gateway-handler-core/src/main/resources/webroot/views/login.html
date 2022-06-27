@@ -61,21 +61,6 @@
                     </div>
 
                     <div class="login-form-additional-actions">
-                        <div>
-                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect data-consent-section">
-                                <input class="mdl-checkbox__input" type="checkbox" th:checked="${uc_geoip}" id="uc_geoip" name="uc_geoip">
-                                <span id="#label-consent-ip" class="mdl-checkboxm__label">I consent to the collection and use of IP-location information for audit log purposes
-                                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
-                                </span>
-                            </label>
-                            <br />
-                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect data-consent-section">
-                                <input class="mdl-checkbox__input" type="checkbox" th:checked="${uc_ua}" id="uc_ua" name="uc_ua">
-                                <span id="#label-consent-" class="mdl-checkboxm__label">I consent to the collection and use of User-Agent information for audit log purposes
-                                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
-                                </span>
-                            </label>
-                        </div>
                         <div th:if="${identifierFirstLoginEnabled}">
                             <a th:href="${backToLoginIdentifierAction}">Switch account</a>
                         </div>

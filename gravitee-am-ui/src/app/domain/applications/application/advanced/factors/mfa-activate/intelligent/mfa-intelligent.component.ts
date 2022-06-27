@@ -49,9 +49,9 @@ export class MfaIntelligentComponent implements OnInit {
   /* Values are in % */
   private static ipReputationOptions = {
     DISABLED: {"label": "Disabled", "value": null, "threshold": NaN, "tooltip" : "Disabled"},
-    LOW: {"label": "Low", "value": "LOW", "threshold": 1.0, "tooltip": "Between 1% - 30 %"},
-    MEDIUM: {"label": "Medium", "value": "MEDIUM", "threshold": 30.0, "tooltip": "Between 30% - 70%"},
-    HIGH: {"label": "High", "value": "HIGH", "threshold": 70.0, "tooltip": "Between 70% - 100%"}
+    LOW: {"label": "Low", "value": "LOW", "threshold": 1.0, "tooltip": "1% and more"},
+    MEDIUM: {"label": "Medium", "value": "MEDIUM", "threshold": 30.0, "tooltip": "30% and more"},
+    HIGH: {"label": "High", "value": "HIGH", "threshold": 70.0, "tooltip": "between 70% and 100%"}
   };
 
   get ipReputationAssessments() {
@@ -61,8 +61,8 @@ export class MfaIntelligentComponent implements OnInit {
   /* Values are in m/s */
   private static geoVelocityOptions = {
     DISABLED: {"label": "Disabled", "value": null, "threshold": NaN, "tooltip" : "Disabled"},
-    LOW: {"label": "Low", "value": "LOW", "threshold": (5.0 / 18.0), "tooltip": "between 1 - 25 km/h"}, /* 1 km/h */
-    MEDIUM: {"label": "Medium", "value": "MEDIUM", "threshold": (125.0 / 18), "tooltip": "between 25 - 250 km/h"},  /* 25 km/h */
+    LOW: {"label": "Low", "value": "LOW", "threshold": (5.0 / 18.0), "tooltip": "1km/h and more"}, /* 1 km/h */
+    MEDIUM: {"label": "Medium", "value": "MEDIUM", "threshold": (125.0 / 18), "tooltip": "25km/h and more"},  /* 25 km/h */
     HIGH: {"label": "High", "value": "HIGH", "threshold": (625.0 / 9.0), "tooltip": "250 km/h and more"} /* 250 km/h */
   };
 

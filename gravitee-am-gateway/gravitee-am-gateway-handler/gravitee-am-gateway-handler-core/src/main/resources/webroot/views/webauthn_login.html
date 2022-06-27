@@ -48,16 +48,6 @@
                     </div>
                     <br />
                     <div class="webauthn-login-form-additional-actions">
-                        <div th:if="${userActivityEnabled}">
-                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect data-consent-section">
-                                <input class="mdl-checkbox__input" type="checkbox" th:checked="${user_consent_ip_location}" id="user_consent_ip_location" name="user_consent_ip_location">
-                                <span id="#label-consent-ip" class="mdl-checkboxm__label">I consent to the collection and use of IP-location information to improve security and for audit log purposes for a duration of [[${user_activity_retention_time}]]</span>
-                            </label>
-                            <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect data-consent-section">
-                                <input class="mdl-checkbox__input" type="checkbox" th:checked="${user_consent_user_agent}" id="user_consent_user_agent" name="user_consent_user_agent">
-                                <span id="#label-consent-" class="mdl-checkboxm__label">I consent to the collection and use of User-Agent information to improve security and for audit log purposes for a duration of [[${user_activity_retention_time}]]</span>
-                            </label>
-                        </div>
                         <div>
                             <span>Cannot login ? </span><a th:href="${loginAction}">switch to default sign in process</a>
                         </div>

@@ -44,7 +44,7 @@ export class MfaActivateComponent implements OnInit {
       "warning": "You need to install a <b> GeoIP service </b> plugin to use the geoip based variables"
     },
     INTELLIGENT: {
-      "label": "Intelligent",
+      "label": "Risk-based",
       "message": "Configure the thresholds that will display MFA based on risks."
     },
   };
