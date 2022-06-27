@@ -113,12 +113,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
         if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
-            return Single.error(getInternalAuthenticationServiceException(client));
+            return Single.error(() -> getInternalAuthenticationServiceException(client));
         }
 
         return Observable.fromIterable(applicationIdentityProviders)
                 .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
-                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
+                .switchIfEmpty(Observable.error(() -> getInternalAuthenticationServiceException(client)))
                 .concatMapMaybe(appIdp -> authenticate0(client, authentication.copy(), appIdp.getIdentity(), preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
