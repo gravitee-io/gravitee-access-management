@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources.platform.plu
 
 import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.management.service.exception.AuthenticatorPluginNotFoundException;
-import io.gravitee.am.management.service.exception.AuthenticatorPluginSchemaNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.Api;
@@ -53,7 +52,6 @@ public class FactorPluginResource {
             notes = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("factor") String factorId,
                     @Suspended final AsyncResponse response) {
-
         factorPluginService.findById(factorId)
                 .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
                 .map(policyPlugin -> Response.ok(policyPlugin).build())
@@ -67,13 +65,9 @@ public class FactorPluginResource {
             notes = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("factor") String factorId,
                           @Suspended final AsyncResponse response) {
-
-        // Check that the authenticator exists
-        factorPluginService.findById(factorId)
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginNotFoundException(factorId)))
-                .flatMap(irrelevant -> factorPluginService.getSchema(factorId))
-                .switchIfEmpty(Maybe.error(new AuthenticatorPluginSchemaNotFoundException(factorId)))
+        factorPluginService.getSchema(factorId)
                 .map(policyPluginSchema -> Response.ok(policyPluginSchema).build())
+                .switchIfEmpty(Maybe.just(Response.noContent().build()))
                 .subscribe(response::resume, response::resume);
     }
 }
