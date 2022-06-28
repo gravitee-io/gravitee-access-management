@@ -72,7 +72,7 @@ export class DomainSettingsFormsComponent implements OnInit {
         'description': 'Registration page to create an account',
         'template': 'REGISTRATION',
         'icon': 'person_add',
-        'enabled': this.allowRegister()
+        'enabled': true
       },
       {
         'name': 'Registration confirmation',
@@ -86,7 +86,7 @@ export class DomainSettingsFormsComponent implements OnInit {
         'description': 'Forgot password to recover account',
         'template': 'FORGOT_PASSWORD',
         'icon': 'lock',
-        'enabled': this.allowResetPassword()
+        'enabled': true
       },
       {
         'name': 'Reset password',
@@ -152,11 +152,4 @@ export class DomainSettingsFormsComponent implements OnInit {
     ];
   }
 
-  allowRegister() {
-    return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
-  }
-
-  allowResetPassword() {
-    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
-  }
 }
