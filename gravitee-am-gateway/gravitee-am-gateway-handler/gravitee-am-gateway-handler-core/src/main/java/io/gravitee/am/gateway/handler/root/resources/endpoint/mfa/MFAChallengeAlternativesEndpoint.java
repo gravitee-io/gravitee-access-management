@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
@@ -91,11 +92,7 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
 
         // prepare context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final List<Factor> factors = endUser.getFactors()
-                .stream()
-                .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
-                .map(enrolledFactor -> new Factor(factorManager.getFactor(enrolledFactor.getFactorId()), enrolledFactor))
-                .collect(Collectors.toList());
+        final List<Factor> factors = getEnabledFactors(client, endUser);
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
         final String action = UriBuilderRequest.resolveProxyRequest(routingContext.request(), routingContext.request().path(), queryParams, true);
         routingContext.put(ConstantKeys.FACTORS_KEY, factors);
@@ -132,6 +129,16 @@ public class MFAChallengeAlternativesEndpoint extends AbstractEndpoint implement
 
     private void doRedirect(HttpServerResponse response, String url) {
         response.putHeader(HttpHeaders.LOCATION, url).setStatusCode(302).end();
+    }
+
+    private List<Factor> getEnabledFactors(Client client, io.gravitee.am.model.User endUser ){
+        final Set<String> clientFactorIds = client.getFactors();
+        return endUser.getFactors()
+                .stream()
+                .filter(enrolledFactor -> factorManager.get(enrolledFactor.getFactorId()) != null)
+                .filter(enrolledFactor ->  clientFactorIds.contains(enrolledFactor.getFactorId()))
+                .map(enrolledFactor -> new Factor(factorManager.getFactor(enrolledFactor.getFactorId()), enrolledFactor))
+                .collect(Collectors.toList());
     }
 
     private static class Factor {
