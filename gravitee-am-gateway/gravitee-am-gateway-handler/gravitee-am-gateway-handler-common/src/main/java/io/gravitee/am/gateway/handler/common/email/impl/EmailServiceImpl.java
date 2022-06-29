@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.email.impl;
 
+import com.google.common.base.Strings;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -131,7 +132,7 @@ public class EmailServiceImpl implements EmailService {
                         new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
                         params);
                 // compute email fromName
-                final String fromName = processTemplateIntoString(
+                final String fromName = Strings.isNullOrEmpty(email.getFromName()) ? null : processTemplateIntoString(
                         new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
                         params);
                 // compute email subject
