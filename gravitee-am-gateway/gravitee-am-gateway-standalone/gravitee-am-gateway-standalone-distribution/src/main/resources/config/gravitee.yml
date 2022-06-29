@@ -222,7 +222,7 @@ user:
 #    enabled: true # default is false
 #    anon: #used to anonymize the user activity
 #      algorithm: SHA256 # possible values: SHA256, SHA512, NONE. default SHA256
-#      salt: some-salt #default is null meaning the key generated will change every time and data won't be exploitable
+#      salt: someSalt #default is null meaning the key generated will change every time and data won't be exploitable
 #    retention:
 #      time: 3
 #      unit: MONTHS
@@ -373,7 +373,7 @@ liquibase:
 #alerts:
 #  risk_assessment:
 #    settings:
-#      enabled: true # default is true
+#      enabled: true # default is false
 #      devices:
 #        enabled: true # default is true
 #        thresholds:
@@ -391,5 +391,5 @@ liquibase:
 #        thresholds:
 #          # meter per second, default is 0.2777778 (1km/h)
 #          LOW: 0.2777778
-##          MEDIUM: 6,9444445 (25km/h)
-##          HIGH: 69,444445 (250km/h)
+##          MEDIUM: 6.9444445 # (25km/h)
+##          HIGH: 69.444445 # (250km/h)
