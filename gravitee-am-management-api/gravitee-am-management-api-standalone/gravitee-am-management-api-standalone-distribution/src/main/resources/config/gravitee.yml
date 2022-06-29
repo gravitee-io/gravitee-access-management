@@ -277,7 +277,7 @@ user:
 #    enabled: true # default is false
 #    anon: #used to anonymize the user activity. You need to use the same values in your gateway
 #      algorithm: SHA256 # possible values: SHA256, SHA512, NONE. default SHA256
-#      salt: some-salt #default is null meaning the key generated will change every time and data won't be exploitable
+#      salt: someSalt #default is null meaning the key generated will change every time and data won't be exploitable
   email:
     policy:
       pattern: ^[a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$

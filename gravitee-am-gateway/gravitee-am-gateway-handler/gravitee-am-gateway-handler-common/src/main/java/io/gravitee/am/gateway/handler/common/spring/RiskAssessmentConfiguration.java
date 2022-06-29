@@ -52,7 +52,7 @@ public class RiskAssessmentConfiguration {
     @Bean
     public RiskAssessmentSettings riskAssessmentSettings(Environment environment) {
         return new RiskAssessmentSettings()
-                .setEnabled(environment.getProperty(RISK_ASSESSMENT_SETTINGS + ".enabled", Boolean.class, true))
+                .setEnabled(environment.getProperty(RISK_ASSESSMENT_SETTINGS + ".enabled", Boolean.class, false))
                 .setDeviceAssessment(getAssessment(environment, DEVICES_PREFIX))
                 .setIpReputationAssessment(getAssessment(environment, IP_REPUTATION_PREFIX))
                 .setGeoVelocityAssessment(getAssessment(environment, GEO_VELOCITY_PREFIX));
