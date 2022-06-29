@@ -850,7 +850,7 @@ export const routes: Routes = [
                           application: ApplicationResolver,
                           permissions: ApplicationPermissionsResolver
                         },
-                        runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
+                        runGuardsAndResolvers: 'always',
                         data: {
                           breadcrumb: {
                             label: 'application.name'
