@@ -130,10 +130,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         Optional<Factor> clientFido2Factor = getClientFido2Factor(client);
         if (clientFido2Factor.isPresent()) {
             Optional<EnrolledFactorSecurity> enrolledFido2FactorSecurity = getEnrolledFido2FactorSecurity(authenticatedUser);
-            if (hasAnyFactorOtherThanFido2Factor(authenticatedUser).isPresent()) {
-                updateSessionLoginCompletedStatus(ctx, credentialId);
-                ctx.next();
-            } else if (enrolledFido2FactorSecurity.isPresent() && enrolledFido2FactorSecurity.get().getValue().equals(credentialId)) {
+            if (enrolledFido2FactorSecurity.isPresent() && enrolledFido2FactorSecurity.get().getValue().equals(credentialId)) {
                 //user already has fido2 factor for this credential
                 updateSessionAuthAndChallengeStatus(ctx);
                 updateSessionLoginCompletedStatus(ctx, credentialId);
@@ -198,19 +195,6 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .map(factorManager::getFactor)
                 .filter(f -> f.is(FactorType.FIDO2))
                 .findFirst();
-    }
-
-    private Optional<FactorType> hasAnyFactorOtherThanFido2Factor(io.gravitee.am.model.User endUser) {
-        if (endUser.getFactors() == null) {
-            return Optional.empty();
-        }
-        return endUser.getFactors()
-                .stream()
-                .map(it -> factorManager.getFactor(it.getFactorId()))
-                .map(Factor::getFactorType)
-                .filter(factoryType -> !FactorType.RECOVERY_CODE.equals(factoryType))
-                .filter(factoryType -> !FactorType.FIDO2.equals(factoryType))
-                .findAny();
     }
 
     protected void updateSessionAuthAndChallengeStatus(RoutingContext ctx) {
