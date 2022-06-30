@@ -28,6 +28,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.policy.enroll.mfa.configuration.EnrollMfaPolicyConfiguration;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
@@ -46,6 +47,7 @@ import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
 
@@ -78,11 +80,12 @@ public class EnrollMfaPolicy {
         try {
             final UserService userService = context.getComponent(UserService.class);
             final User user = (User) context.getAttribute(ConstantKeys.USER_CONTEXT_KEY);
+            final Client client = (Client) context.getAttribute(ConstantKeys.CLIENT_CONTEXT_KEY);
             final FactorManager factorManager = context.getComponent(FactorManager.class);
-            final Factor factor = factorManager.getFactor(factorId);
+            final Optional<Factor> optFactor = factorManager.getClientFactor(client, factorId);
 
-            if (factor == null) {
-                LOGGER.warn("No MFA factor with ID [{}] found", factorId);
+            if (optFactor.isEmpty()) {
+                LOGGER.warn("No active MFA factor with ID [{}] found", factorId);
                 policyChain.doNext(request, response);
                 return;
             }
@@ -102,6 +105,7 @@ public class EnrollMfaPolicy {
             }
 
             // value is mandatory for every factor except the HTTP one
+            final Factor factor = optFactor.get();
             if (ObjectUtils.isEmpty(value) &&
                     !FactorType.HTTP.getType().equals(factor.getFactorType().getType())) {
                 LOGGER.error("Value field is missing");

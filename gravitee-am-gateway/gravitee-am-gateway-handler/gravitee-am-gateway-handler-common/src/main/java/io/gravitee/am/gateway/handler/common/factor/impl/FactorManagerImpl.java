@@ -23,6 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.factor.core.FactorPluginManager;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.common.event.Event;
@@ -32,7 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -140,4 +143,18 @@ public class FactorManagerImpl extends AbstractService implements FactorManager,
             logger.error("Unable to create factor provider for domain {}", domain.getName(), ex);
         }
     }
+
+    @Override
+    public Optional<Factor> getClientFactor(Client client, String factorId) {
+        if (client == null || CollectionUtils.isEmpty(client.getFactors())) {
+            return Optional.empty();
+        }
+
+        return client.getFactors()
+                .stream()
+                .filter(id -> id.equals(factorId))
+                .map(this::getFactor)
+                .findFirst();
+    }
+
 }

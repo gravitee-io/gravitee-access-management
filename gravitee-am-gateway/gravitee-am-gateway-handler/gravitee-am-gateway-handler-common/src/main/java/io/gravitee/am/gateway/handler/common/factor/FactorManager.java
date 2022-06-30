@@ -17,7 +17,10 @@ package io.gravitee.am.gateway.handler.common.factor;
 
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.service.Service;
+
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -30,4 +33,6 @@ public interface FactorManager extends Service {
     Factor getFactor(String factorId);
 
     void updateFactor(String factorId);
+
+    Optional<Factor> getClientFactor(Client client, String factorId);
 }
