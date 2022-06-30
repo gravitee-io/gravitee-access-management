@@ -34,14 +34,25 @@ public class RememberDeviceFilter extends MfaContextHolder implements Supplier<B
     public Boolean get() {
         // If Adaptive MFA is active and KO (rule == false) we bypass this filter
         // Because the device could be known and skip MFA
-        if (!context.isMfaSkipped() && context.isAmfaActive() && !context.isAmfaRuleTrue()) {
+        final boolean mfaSkipped = context.isMfaSkipped();
+
+        // We might want to evaluate Adaptive MFA
+        if (!mfaSkipped && context.isAmfaActive() && !context.isAmfaRuleTrue()) {
             return false;
         }
-        var rememberDeviceSettings = context.getRememberDeviceSettings();
-        return !context.isDeviceRiskAssessmentEnabled() &&
-                !context.isStepUpActive() &&
-                rememberDeviceSettings.isActive() &&
-                context.deviceAlreadyExists();
-    }
 
+        // Step up might be active
+        final boolean userStronglyAuth = context.isUserStronglyAuth();
+        if (context.isStepUpActive() && (userStronglyAuth || mfaSkipped)) {
+            return false;
+        }
+
+        // We don't want device risk assessment to interfere
+        if (context.isDeviceRiskAssessmentEnabled()) {
+            return false;
+        }
+
+        var rememberDeviceSettings = context.getRememberDeviceSettings();
+        return rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
+    }
 }
