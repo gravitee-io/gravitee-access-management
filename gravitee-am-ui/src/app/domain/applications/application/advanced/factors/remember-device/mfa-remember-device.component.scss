@@ -1,45 +1,20 @@
-blockquote {
-  padding: 15px;
-  margin: 10px 0;
-  border-left: .25em solid rgba(0, 0, 0, .11);
-  border-radius: 7px;
+.mfa-section-title {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
 
-  p {
-    color: rgba(0, 0, 0, .535);
-    font-size: 13px;
-    margin: 0;
+  .mfa-title{
+    width: 95%;
   }
 
-  mat-icon {
-    vertical-align: middle;
-  }
-
-  &.warning {
-    background: #fff9c4;
-    border-left-color: #fdd835;
-  }
-}
-
-.gv-form-section {
-  .mfa-section-title {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-
-    .mfa-title{
-      width: 94%;
-    }
-
-    .mfa-chip {
-      width: 5%;
-      margin-right: 1%;
-      mat-chip-list {
-        mat-chip {
-          font-size: 11px;
-          opacity: 1.0;
-          background-color: transparent;
-          border: thin solid rgba(0, 0, 0, 0.2);
-        }
+  .mfa-chip {
+    margin-right: 10px;
+    mat-chip-list {
+      mat-chip {
+        font-size: 11px;
+        opacity: 1.0;
+        background-color: transparent;
+        border: thin solid rgba(0, 0, 0, 0.2);
       }
     }
   }
