@@ -41,11 +41,12 @@ export class MfaActivateComponent implements OnInit {
     CONDITIONAL: {
       "label": "Conditional",
       "message": "Set conditions that will display MFA based on the user’s information",
-      "warning": "You need to install a <b> GeoIP service </b> plugin to use the geoip based variables"
+      "warning": "You need to install the <b> GeoIP service </b> plugin to use the geoip based variables"
     },
     INTELLIGENT: {
       "label": "Risk-based",
-      "message": "Configure the thresholds that will display MFA based on risks."
+      "message": "Configure the thresholds that will display MFA based on risks.",
+      "warning": "You need to install the <b> GeoIP service </b> and <b> Risk Assessment </b> plugins to use Risk-based MFA"
     },
   };
 
