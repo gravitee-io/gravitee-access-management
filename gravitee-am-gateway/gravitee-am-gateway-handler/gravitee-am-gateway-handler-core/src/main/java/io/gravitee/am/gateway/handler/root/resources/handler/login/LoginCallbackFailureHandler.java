@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import com.google.common.base.Strings;
 import com.google.common.net.HttpHeaders;
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
@@ -22,9 +23,12 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.policy.PolicyChainException;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -34,14 +38,15 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerResponse;
 import io.vertx.reactivex.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.service.utils.ResponseTypeUtils.isHybridFlow;
@@ -110,6 +115,9 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             final MultiMap originalParams = context.get(PARAM_CONTEXT_KEY);
             final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
 
+            var elContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate(), originalParams), context.data());
+            var templateEngine = elContext.getTemplateEngine();
+
             // if client has activated hide login form and has only one active external IdP
             // redirect to the SP redirect_uri to avoid an infinite loop between AM and the external IdP
             long externalIdentities = Optional.ofNullable(client.getIdentityProviders()).stream()
@@ -117,17 +125,42 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
                     .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
                     .filter(idp -> idp != null && idp.isExternal())
                     .count();
-            if (loginSettings != null && loginSettings.isHideForm() && externalIdentities == 1) {
+
+            // if client hasn't activated hide login form but has external IdP with matching selection rule
+            // redirect to the SP redirect_uri to avoid an infinite loop between AM and the external IdP
+            long selectedExternalIdp = Optional.ofNullable(client.getIdentityProviders()).stream()
+                    .flatMap(Collection::stream)
+                    .filter(aidp -> evaluateRule(aidp, templateEngine))
+                    .map(aidp -> identityProviderManager.getIdentityProvider(aidp.getIdentity()))
+                    .filter(idp -> idp != null && idp.isExternal())
+                    .count();
+
+            if ((loginSettings != null && loginSettings.isHideForm() && externalIdentities == 1) || selectedExternalIdp > 0) {
                 redirectToSP(originalParams, client, context, throwable);
             } else {
                 redirectToLoginPage(originalParams, client, context, throwable);
             }
+
         } catch (Exception ex) {
             logger.error("An error has occurred while redirecting to the login page", ex);
             context
                     .response()
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
                     .end();
+        }
+    }
+
+    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine) {
+        var rule = appIdp.getSelectionRule();
+        // We keep the same behaviour as before, if there is no rule, no automatic redirect
+        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
+            return false;
+        }
+        try {
+            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
+        } catch (Exception e) {
+            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
+            return false;
         }
     }
 

@@ -155,6 +155,46 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldRedirectToSPRedirectUri_SelectionRule_oneExternalIdP_codeFlow() throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            client.setIdentityProviders(new TreeSet<>(Stream.of("idp1").map(idp -> {
+                final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider();
+                applicationIdentityProvider.setIdentity(idp);
+                applicationIdentityProvider.setSelectionRule("true");
+                return applicationIdentityProvider;
+            }).collect(Collectors.toSet())));
+            LoginSettings loginSettings = new LoginSettings();
+            loginSettings.setInherited(false);
+            loginSettings.setHideForm(false);
+            client.setLoginSettings(loginSettings);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            // original parameters
+            final MultiMap originalParams = MultiMap.caseInsensitiveMultiMap();
+            originalParams.set(Parameters.REDIRECT_URI, "https://sp-app/callback");
+            originalParams.set(Parameters.RESPONSE_TYPE, ResponseType.CODE);
+            originalParams.set(Parameters.STATE, "12345");
+            routingContext.put(PARAM_CONTEXT_KEY, originalParams);
+            routingContext.next();
+        });
+
+        IdentityProvider idp = mock(IdentityProvider.class);
+        when(idp.isExternal()).thenReturn(true);
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(idp);
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://sp-app/callback?error=server_error&error_description=policy_exception&state=12345"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
     public void shouldRedirectToSPRedirectUri_hideLogin_oneExternalIdP_implicitFlow() throws Exception {
         router.route().order(-1).handler(routingContext -> {
             Client client = new Client();
@@ -166,6 +206,46 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
             LoginSettings loginSettings = new LoginSettings();
             loginSettings.setInherited(false);
             loginSettings.setHideForm(true);
+            client.setLoginSettings(loginSettings);
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            // original parameters
+            final MultiMap originalParams = MultiMap.caseInsensitiveMultiMap();
+            originalParams.set(Parameters.REDIRECT_URI, "https://sp-app/callback");
+            originalParams.set(Parameters.RESPONSE_TYPE, ResponseType.TOKEN);
+            originalParams.set(Parameters.STATE, "12345");
+            routingContext.put(PARAM_CONTEXT_KEY, originalParams);
+            routingContext.next();
+        });
+
+        IdentityProvider idp = mock(IdentityProvider.class);
+        when(idp.isExternal()).thenReturn(true);
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(idp);
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("https://sp-app/callback#error=server_error&error_description=policy_exception&state=12345"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToSPRedirectUri_SelectionRule_oneExternalIdP_implicitFlow() throws Exception {
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            client.setIdentityProviders(new TreeSet<>(Stream.of("idp1").map(idp -> {
+                final ApplicationIdentityProvider applicationIdentityProvider = new ApplicationIdentityProvider();
+                applicationIdentityProvider.setIdentity(idp);
+                applicationIdentityProvider.setSelectionRule("true");
+                return applicationIdentityProvider;
+            }).collect(Collectors.toSet())));
+            LoginSettings loginSettings = new LoginSettings();
+            loginSettings.setInherited(false);
+            loginSettings.setHideForm(false);
             client.setLoginSettings(loginSettings);
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
 

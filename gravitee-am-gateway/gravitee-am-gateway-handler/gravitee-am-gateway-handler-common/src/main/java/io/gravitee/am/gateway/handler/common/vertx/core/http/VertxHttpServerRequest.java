@@ -57,6 +57,8 @@ public class VertxHttpServerRequest implements Request {
     private boolean decoded;
     private MultiValueMap<String, String> pathParameters = null;
 
+    private io.vertx.reactivex.core.MultiMap originalParams;
+
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest) {
         this.httpServerRequest = httpServerRequest;
         this.timestamp = System.currentTimeMillis();
@@ -72,6 +74,18 @@ public class VertxHttpServerRequest implements Request {
         this.metrics.setHost(httpServerRequest.host());
         this.metrics.setUri(uri());
         this.metrics.setUserAgent(httpServerRequest.getHeader(HttpHeaders.USER_AGENT));
+    }
+
+    /**
+     * Introduced for https://github.com/gravitee-io/issues/issues/7958
+     * This constructor allows to add parameters to the query parameters known by the httpServerRequest param.
+     * This should be used only for some specific cases where a previous state has to be restored in order to perform some check.
+     * @param httpServerRequest
+     * @param originalParams
+     */
+    public VertxHttpServerRequest(HttpServerRequest httpServerRequest, io.vertx.reactivex.core.MultiMap originalParams) {
+        this(httpServerRequest);
+        this.originalParams = originalParams;
     }
 
     public VertxHttpServerRequest(HttpServerRequest httpServerRequest, boolean decoded) {
@@ -134,6 +148,10 @@ public class VertxHttpServerRequest implements Request {
                     queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
                 }
             }
+        }
+
+        if (this.originalParams != null) {
+            originalParams.forEach((k,v) -> queryParameters.set(k, v));
         }
 
         return queryParameters;
