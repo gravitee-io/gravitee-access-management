@@ -89,10 +89,16 @@ public class FlowServiceImpl implements FlowService {
         LOGGER.debug("Find all flows for {} {}", referenceType, referenceId);
         return flowRepository.findAll(referenceType, referenceId)
                 .filter(f -> !excludeApps || f.getApplication() == null)
-                .toMap(Flow::getType)
-                .flattenAsFlowable(flows -> Stream.of(Type.values())
-                        .map(type -> ofNullable(flows.get(type)).orElse(buildFlow(type, referenceType, referenceId)))
-                        .collect(toList())
+                .toMultimap(Flow::getType)
+                .flattenAsFlowable(flows -> {
+                    // The toMultimap(Flow::getType) groups all the flows by type
+                    // and here we enumerate all the flow types in order to create empty flows when a new type of flow is missing
+                    // this is useful when a new Type of flow is introduced in AM.
+                    return Stream.of(Type.values())
+                        .map(type -> ofNullable(flows.get(type)).orElse(List.of(buildFlow(type, referenceType, referenceId))))
+                        .flatMap(c -> c.stream())
+                        .collect(toList());
+                    }
                 )
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId)))
                 .sorted(getFlowComparator())
@@ -106,13 +112,20 @@ public class FlowServiceImpl implements FlowService {
     public Flowable<Flow> findByApplication(ReferenceType referenceType, String referenceId, String application) {
         LOGGER.debug("Find all flows for {} {} and application {}", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType, referenceId, application)
-                .toMap(Flow::getType)
+                .toMultimap(Flow::getType)
                 .flattenAsFlowable(flows -> Stream.of(Type.values())
-                        .map(type -> ofNullable(flows.get(type)).orElseGet(() -> {
-                            var newFlow = buildFlow(type, referenceType, referenceId);
-                            newFlow.setApplication(application);
-                            return newFlow;
-                        })).collect(toList())
+                        .map(type -> {
+                            // The toMultimap(Flow::getType) groups all the flows by type
+                            // and here we enumerate all the flow types in order to create empty flows when a new type of flow is missing
+                            // this is useful when a new Type of flow is introduced in AM.
+                            return ofNullable(flows.get(type)).orElseGet(() -> {
+                                var newFlow = buildFlow(type, referenceType, referenceId);
+                                newFlow.setApplication(application);
+                                return List.of(newFlow);
+                            });
+                        })
+                        .flatMap(c -> c.stream())
+                        .collect(toList())
                 )
                 .switchIfEmpty(Flowable.fromIterable(defaultFlows(referenceType, referenceId))
                         .map(flow -> {
