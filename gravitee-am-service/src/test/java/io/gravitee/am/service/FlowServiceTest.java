@@ -97,6 +97,83 @@ public class FlowServiceTest {
     }
 
     @Test
+    public void shouldFindByApp_returnWhenFlowIsExisting_WithMultipleFlow() {
+        var flowApp = new Flow();
+        flowApp.setType(Type.ROOT);
+        flowApp.setOrder(0);
+        flowApp.setApplication("appid");
+
+        var flowApp2 = new Flow();
+        flowApp2.setType(Type.ROOT);
+        flowApp2.setOrder(0);
+        flowApp2.setApplication("appid");
+
+        when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid")).thenReturn(Flowable.just(flowApp, flowApp2));
+        TestSubscriber<Flow> testObserver = flowService.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(8);
+    }
+
+    @Test
+    public void shouldFindByApp_returnAllWhenEmpty() {
+        when(flowRepository.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid")).thenReturn(Flowable.empty());
+        TestSubscriber<Flow> testObserver = flowService.findByApplication(ReferenceType.DOMAIN, DOMAIN, "appid").test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(7);
+    }
+
+    @Test
+    public void shouldFindAll_returnWhenFlowIsExisting_WithAppFlow() {
+        var flow = new Flow();
+        flow.setType(Type.ROOT);
+        flow.setOrder(0);
+
+        var flowApp = new Flow();
+        flowApp.setType(Type.ROOT);
+        flowApp.setOrder(0);
+        flowApp.setApplication("appid");
+
+        var flowApp2 = new Flow();
+        flowApp2.setType(Type.ROOT);
+        flowApp2.setOrder(0);
+        flowApp2.setApplication("appid");
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow, flowApp, flowApp2));
+        TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(9);
+    }
+
+    @Test
+    public void shouldFindAll_returnWhenFlowIsExisting_WithAppFlowFiltered() {
+        var flow = new Flow();
+        flow.setType(Type.ROOT);
+        flow.setOrder(0);
+
+        var flow2 = new Flow();
+        flow2.setType(Type.ROOT);
+        flow2.setOrder(0);
+
+        var flowApp = new Flow();
+        flowApp.setType(Type.ROOT);
+        flowApp.setOrder(0);
+        flowApp.setApplication("appid");
+
+        when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(flow, flow2, flowApp));
+        TestSubscriber<Flow> testObserver = flowService.findAll(ReferenceType.DOMAIN, DOMAIN, true).test();
+        testObserver.awaitTerminalEvent();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(8);
+    }
+
+    @Test
     public void shouldNotFindAll_technicalException() {
         when(flowRepository.findAll(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
