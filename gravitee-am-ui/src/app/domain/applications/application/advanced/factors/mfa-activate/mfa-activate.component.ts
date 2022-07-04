@@ -55,9 +55,9 @@ export class MfaActivateComponent implements OnInit {
   ngOnInit(): void {
     if (this.riskAssessment && this.riskAssessment.enabled) {
       this.currentMode = MfaActivateComponent.modeOptions.INTELLIGENT;
-    } else if (this.adaptiveMfaRule !== null && this.adaptiveMfaRule !== "") {
+    } else if (this.adaptiveMfaRule && this.adaptiveMfaRule !== "") {
       this.currentMode = MfaActivateComponent.modeOptions.CONDITIONAL;
-    } else if (this.enrollment.forceEnrollment) {
+    } else if (this.enrollment && this.enrollment.forceEnrollment) {
       this.currentMode = MfaActivateComponent.modeOptions.REQUIRED;
     } else {
       this.currentMode = MfaActivateComponent.modeOptions.OPTIONAL;
