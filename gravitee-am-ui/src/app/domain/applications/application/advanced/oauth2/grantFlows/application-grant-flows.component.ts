@@ -74,6 +74,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     let oauthSettings: any = {};
     oauthSettings.grantTypes = this.selectedGrantTypes.concat(this.selectedCustomGrantTypes);
     oauthSettings.forcePKCE = this.applicationOauthSettings.forcePKCE;
+    oauthSettings.forceS256CodeChallengeMethod = this.applicationOauthSettings.forceS256CodeChallengeMethod;
     oauthSettings.tokenEndpointAuthMethod = this.applicationOauthSettings.tokenEndpointAuthMethod;
     oauthSettings.tlsClientAuthSubjectDn = this.applicationOauthSettings.tlsClientAuthSubjectDn;
     oauthSettings.tlsClientAuthSanDns = this.applicationOauthSettings.tlsClientAuthSanDns;
@@ -112,6 +113,15 @@ export class ApplicationGrantFlowsComponent implements OnInit {
 
   isPKCEForced() {
     return this.applicationOauthSettings.forcePKCE;
+  }
+
+  forceS256CodeChallengeMethod(event) {
+    this.applicationOauthSettings.forceS256CodeChallengeMethod = event.checked;
+    this.formChanged = true;
+  }
+
+  isS256CodeChallengeMethodForced() {
+    return this.applicationOauthSettings.forceS256CodeChallengeMethod;
   }
 
   get selectedGrantTypes() {

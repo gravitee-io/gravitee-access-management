@@ -276,6 +276,12 @@ public class ApplicationOAuthSettings {
     private boolean forcePKCE;
 
     /**
+     * Ensure usage of the S256 challenge method with Proof Key for Code Exchange (PKCE)
+     * https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+     */
+    private boolean forceS256CodeChallengeMethod;
+
+    /**
      * Array of URLs supplied by the RP to which it MAY request that the End-User's User Agent be redirected using the post_logout_redirect_uri parameter after a logout has been performed.
      */
     private List<String> postLogoutRedirectUris;
@@ -367,6 +373,7 @@ public class ApplicationOAuthSettings {
         this.authorizationEncryptedResponseAlg = other.authorizationEncryptedResponseAlg;
         this.authorizationEncryptedResponseEnc = other.authorizationEncryptedResponseEnc;
         this.forcePKCE = other.forcePKCE;
+        this.forceS256CodeChallengeMethod = other.forceS256CodeChallengeMethod;
         this.postLogoutRedirectUris = other.postLogoutRedirectUris;
         this.singleSignOut = other.singleSignOut;
         this.silentReAuthentication = other.silentReAuthentication;
@@ -866,6 +873,14 @@ public class ApplicationOAuthSettings {
         this.forcePKCE = forcePKCE;
     }
 
+    public boolean isForceS256CodeChallengeMethod() {
+        return forceS256CodeChallengeMethod;
+    }
+
+    public void setForceS256CodeChallengeMethod(boolean forceS256CodeChallengeMethod) {
+        this.forceS256CodeChallengeMethod = forceS256CodeChallengeMethod;
+    }
+
     public List<String> getPostLogoutRedirectUris() {
         return postLogoutRedirectUris;
     }
@@ -994,6 +1009,7 @@ public class ApplicationOAuthSettings {
         client.setAuthorizationEncryptedResponseAlg(this.authorizationEncryptedResponseAlg);
         client.setAuthorizationEncryptedResponseEnc(this.authorizationEncryptedResponseEnc);
         client.setForcePKCE(this.forcePKCE);
+        client.setForceS256CodeChallengeMethod(this.forceS256CodeChallengeMethod);
         client.setPostLogoutRedirectUris(this.postLogoutRedirectUris);
         client.setSingleSignOut(this.singleSignOut);
         client.setSilentReAuthentication(this.silentReAuthentication);
