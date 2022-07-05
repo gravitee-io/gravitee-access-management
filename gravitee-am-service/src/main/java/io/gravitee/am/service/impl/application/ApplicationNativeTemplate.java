@@ -76,6 +76,7 @@ public class ApplicationNativeTemplate extends ApplicationAbstractTemplate {
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
             oAuthSettings.setForcePKCE(true);
+            oAuthSettings.setForceS256CodeChallengeMethod(true);
             // native applications cannot securely store a Client Secret, set client authentication method to none
             oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         } else {
