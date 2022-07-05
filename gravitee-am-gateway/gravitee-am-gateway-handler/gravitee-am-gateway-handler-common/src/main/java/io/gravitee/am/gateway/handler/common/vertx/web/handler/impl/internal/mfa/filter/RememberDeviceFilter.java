@@ -53,6 +53,8 @@ public class RememberDeviceFilter extends MfaContextHolder implements Supplier<B
         }
 
         var rememberDeviceSettings = context.getRememberDeviceSettings();
-        return rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
+        return context.userHasMatchingActivatedFactors() &&
+                !context.isStepUpActive() &&
+                rememberDeviceSettings.isActive() && context.deviceAlreadyExists();
     }
 }

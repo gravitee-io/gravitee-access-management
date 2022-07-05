@@ -58,7 +58,6 @@ import static java.util.Arrays.asList;
 public class EmailFactorProvider implements FactorProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailFactorProvider.class);
-    public static final String TEMPLATE_SUFFIX = ".html";
 
     @Autowired
     private EmailFactorConfiguration configuration;
