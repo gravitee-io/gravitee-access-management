@@ -18,16 +18,12 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mf
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.chain.MfaFilterChain;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.AdaptiveMfaFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.ClientNullFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.EndUserEnrolledFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.MfaSkipFilter;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.NoFactorFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.RememberDeviceFilter;
-import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.filter.StepUpAuthenticationFilter;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -50,7 +46,7 @@ public class MFAEnrollStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        var context = new MfaFilterContext(routingContext, client);
+        var context = new MfaFilterContext(routingContext, client, factorManager);
 
         // Rules that makes you skip MFA enroll
         var mfaFilterChain = new MfaFilterChain(

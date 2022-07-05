@@ -49,8 +49,7 @@ public class MFAChallengeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final Session session = routingContext.session();
-        var context = new MfaFilterContext(routingContext, client);
+        var context = new MfaFilterContext(routingContext, client, factorManager);
 
         // Rules that makes you skip MFA challenge
         var mfaFilterChain = new MfaFilterChain(
