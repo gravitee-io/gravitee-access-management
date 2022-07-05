@@ -16,6 +16,8 @@
 
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa;
 
+import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.context.EvaluableExecutionContext;
@@ -33,11 +35,11 @@ import java.util.Date;
 import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.factor.FactorType.RECOVERY_CODE;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static java.util.Objects.isNull;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
@@ -53,14 +55,17 @@ public class MfaFilterContext {
     private final Client client;
     private final Session session;
     private final User endUser;
+    private final FactorManager factorManager;
+
     private boolean isAmfaRuleTrue;
     private boolean isStepUpRuleTrue;
 
-    public MfaFilterContext(RoutingContext routingContext, Client client) {
+    public MfaFilterContext(RoutingContext routingContext, Client client, FactorManager factorManager) {
         this.routingContext = routingContext;
         this.client = client;
         this.session = routingContext.session();
         this.endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        this.factorManager = factorManager;
     }
 
     public String getAmfaRule() {
@@ -152,10 +157,11 @@ public class MfaFilterContext {
         }
         return endUser.getFactors().stream()
                 .map(EnrolledFactor::getFactorId)
+                .filter(this::isNotRecoveryCodeType)
                 .anyMatch(client.getFactors()::contains);
     }
 
-    public boolean isMfaChallengeComplete(){
+    public boolean isMfaChallengeComplete() {
         return nonNull(session.get(MFA_CHALLENGE_COMPLETED_KEY)) &&
                 TRUE.equals(session.get(MFA_CHALLENGE_COMPLETED_KEY));
     }
@@ -167,6 +173,12 @@ public class MfaFilterContext {
         return endUser.getFactors().stream()
                 .filter(factor -> ACTIVATED.equals(factor.getStatus()))
                 .map(EnrolledFactor::getFactorId)
+                .filter(this::isNotRecoveryCodeType)
                 .anyMatch(client.getFactors()::contains);
+    }
+
+    private boolean isNotRecoveryCodeType(String factorId) {
+        var factor = factorManager.getFactor(factorId);
+        return nonNull(factor) && !RECOVERY_CODE.equals(factor.getFactorType());
     }
 }

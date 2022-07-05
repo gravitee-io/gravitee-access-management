@@ -46,8 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Arrays.asList;
 
 /**
@@ -57,7 +55,6 @@ import static java.util.Arrays.asList;
 public class EmailFactorProvider implements FactorProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailFactorProvider.class);
-    public static final String TEMPLATE_SUFFIX = ".html";
 
     @Autowired
     private EmailFactorConfiguration configuration;
