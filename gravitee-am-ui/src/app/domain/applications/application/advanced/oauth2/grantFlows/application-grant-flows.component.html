@@ -57,6 +57,15 @@
           </mat-slide-toggle>
           <mat-hint style="font-size: 75%;">Force PKCE for public clients who cannot securely store their Client Secret</mat-hint>
         </div>
+        <div fxLayout="column">
+          <mat-slide-toggle
+            (change)="forceS256CodeChallengeMethod($event)"
+            [checked]="isS256CodeChallengeMethodForced()" [disabled]="readonly">
+            Force S256 challenge method
+          </mat-slide-toggle>
+          <mat-hint style="font-size: 75%;">Force S256 challenge method to protect against disclosure of the "code_verifier"
+            value to an attacker.</mat-hint>
+        </div>
       </div>
 
       <div class="gv-form-section">
