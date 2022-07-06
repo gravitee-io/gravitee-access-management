@@ -1,6 +1,64 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/502?closed=1[AM - 3.18.0 (2022-07-06)]
+
+=== Bug fixes
+
+*_AM_*
+
+- Assign roles to user list not getting filtered (auto-complete) https://github.com/gravitee-io/issues/issues/7542[#7542]
+
+*_Gateway_*
+
+- Flows are not loaded https://github.com/gravitee-io/issues/issues/7964[#7964]
+- More consent check for IP and User agent https://github.com/gravitee-io/issues/issues/7919[#7919]
+- NullPointer on MFAChallengeFailureHandler https://github.com/gravitee-io/issues/issues/7954[#7954]
+- Passwordless flow not fully compatible with mobile applications https://github.com/gravitee-io/issues/issues/7158[#7158]
+- [mfa] error 500 when application has no factor but endUser has an one https://github.com/gravitee-io/issues/issues/7872[#7872]
+
+*_General_*
+
+- Merge 3.17.1 into master https://github.com/gravitee-io/issues/issues/7447[#7447]
+- Merge 3.17.2 into master https://github.com/gravitee-io/issues/issues/7823[#7823]
+
+=== Features
+
+*_Gateway_*
+
+- Self account management manage user consent https://github.com/gravitee-io/issues/issues/7680[#7680]
+- [adaptive access] Implement IP reputation https://github.com/gravitee-io/issues/issues/7637[#7637]
+- [adaptive access] Make the risk assessment score a context property https://github.com/gravitee-io/issues/issues/7555[#7555]
+- [adaptive access] Provide the risk assessment data to the risk assessment service https://github.com/gravitee-io/issues/issues/7657[#7657]
+
+*_General_*
+
+- Create flow chart for MFA https://github.com/gravitee-io/issues/issues/7563[#7563]
+
+*_Management_*
+
+- [adaptive access] Add feature to use risk assessment for Adaptive MFA https://github.com/gravitee-io/issues/issues/7556[#7556]
+- [adaptive access] Implement risk assessment score https://github.com/gravitee-io/issues/issues/7554[#7554]
+- [mfa] FIDO2 factor https://github.com/gravitee-io/issues/issues/7378[#7378]
+- [mfa] HTTP factor https://github.com/gravitee-io/issues/issues/7374[#7374]
+
+*_Management-ui_*
+
+- [adaptive access] Frontend implementation https://github.com/gravitee-io/issues/issues/7689[#7689]
+
+*_Mfa_*
+
+- [sms] HTTP generic implementation https://github.com/gravitee-io/issues/issues/7373[#7373]
+
+=== Improvements
+
+*_Gateway_*
+
+- [webauthn] Allow WebAuthn for Social Idp users https://github.com/gravitee-io/issues/issues/5363[#5363]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/548?closed=1[AM - 3.17.2 (2022-06-10)]
 
 === Bug fixes
