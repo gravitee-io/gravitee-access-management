@@ -269,9 +269,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private InternalAuthenticationServiceException getInternalAuthenticationServiceException(Client client) {
-        final String msg = "No identity provider found for client : " + client.getClientId();
-        logger.error(msg);
-        return new InternalAuthenticationServiceException(msg);
+        return new InternalAuthenticationServiceException("No identity provider found for client : " + client.getClientId());
     }
 
     private Completable postAuthentication(Client client, Authentication authentication, String source, UserAuthentication userAuthentication) {
