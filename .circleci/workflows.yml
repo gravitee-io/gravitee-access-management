@@ -1225,21 +1225,6 @@ workflows:
             - cicd-orchestrator
           requires:
             - frontend_version_build
-
-  docker_build_and_push_am_v3:
-    when:
-      equal: [ am_v3, << pipeline.parameters.gio_product >> ]
-    jobs:
-      # ---
-      # Builds and push AM Community Edition Images
-      - am/build_n_push_am_ce_job:
-          name: 'building ce dockerfile'
-          context: cicd-orchestrator
-          dry_run: << pipeline.parameters.dry_run >>
-          tag_latest: << pipeline.parameters.tag_latest >>
-          graviteeio_version: << pipeline.parameters.graviteeio_version >>
-          gio_product: << pipeline.parameters.gio_product >>
-
 #  build_ciba_container:
 #    when:
 #      and:
