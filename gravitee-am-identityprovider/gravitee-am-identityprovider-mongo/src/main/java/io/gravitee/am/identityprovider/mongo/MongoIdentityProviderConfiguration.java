@@ -17,16 +17,16 @@ package io.gravitee.am.identityprovider.mongo;
 
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
+import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoIdentityProviderConfiguration implements IdentityProviderConfiguration {
+public class MongoIdentityProviderConfiguration implements IdentityProviderConfiguration, MongoConnectionConfiguration {
     private static final String FIELD_USERNAME = "username";
     private static final String FIELD_PASSWORD = "password";
-
     private String uri;
     private String host;
     private int port;
@@ -68,7 +68,7 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
         this.host = host;
     }
 
-    public int getPort() {
+    public Integer getPort() {
         return this.port;
     }
 

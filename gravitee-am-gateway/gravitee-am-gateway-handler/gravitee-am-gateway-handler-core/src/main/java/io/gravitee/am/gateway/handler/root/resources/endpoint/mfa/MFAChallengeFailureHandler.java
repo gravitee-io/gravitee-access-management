@@ -50,7 +50,7 @@ public class MFAChallengeFailureHandler implements Handler<RoutingContext> {
     public void handle(RoutingContext routingContext) {
         if (routingContext.failed()) {
             Throwable throwable = routingContext.failure();
-            handleException(routingContext, throwable.getMessage());
+            handleException(routingContext, throwable == null ? "MFA Challenge failed for unexpected reason" : throwable.getMessage());
         }
     }
 

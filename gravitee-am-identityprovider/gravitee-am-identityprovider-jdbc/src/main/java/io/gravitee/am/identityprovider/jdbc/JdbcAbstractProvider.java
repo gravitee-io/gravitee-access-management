@@ -17,26 +17,20 @@ package io.gravitee.am.identityprovider.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.jdbc.configuration.JdbcIdentityProviderConfiguration;
-import io.gravitee.am.identityprovider.jdbc.utils.ObjectUtils;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCConnectionProvider;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.common.service.AbstractService;
 import io.r2dbc.pool.ConnectionPool;
-import io.r2dbc.pool.PoolingConnectionFactoryProvider;
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactoryOptions;
-import io.r2dbc.spi.Option;
-import io.r2dbc.spi.ValidationDepth;
+import io.r2dbc.spi.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.io.Closeable;
 import java.util.Map;
-
-import static io.r2dbc.spi.ConnectionFactoryOptions.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -52,9 +46,21 @@ public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends Abstr
     @Autowired
     protected PasswordEncoder passwordEncoder;
 
-    protected ConnectionPool connectionPool;
+    @Autowired
+    public ConnectionProvider commonConnectionProvider;
+
+    @Autowired
+    private IdentityProvider identityProviderEntity;
+
+    protected ConnectionFactory connectionPool;
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * This provider is used to create ConnectionFactory when the main backend is MongoDB because in that case the commonConnectionProvider will provide MongoDB Client.
+     * This is useful if the user want to create a JDBC IDP when the main backend if Mongo.
+     */
+    private final R2DBCConnectionProvider r2dbcProvider = new R2DBCConnectionProvider();
 
     public void setConnectionPool(ConnectionPool connectionPool) {
         this.connectionPool = connectionPool;
@@ -63,57 +69,27 @@ public class JdbcAbstractProvider<T extends LifecycleComponent<T>> extends Abstr
     @Override
     protected void doStart() throws Exception {
         super.doStart();
-
-        LOGGER.info("Initializing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-
-        ConnectionFactoryOptions.Builder builder = ConnectionFactoryOptions.builder()
-                .option(DRIVER, "pool")
-                .option(PROTOCOL, configuration.getProtocol())
-                .option(HOST, configuration.getHost())
-                .option(USER, configuration.getUser())
-                .option(DATABASE, configuration.getDatabase());
-
-        if (configuration.getPort() != null) {
-            builder.option(PORT, configuration.getPort());
+        if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_RDBMS)) {
+            this.connectionPool = (ConnectionFactory) (this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
+                    commonConnectionProvider.getClientWrapper().getClient() :
+                    commonConnectionProvider.getClientFromConfiguration(this.configuration).getClient());
+        } else {
+            this.connectionPool = r2dbcProvider.getClientFromConfiguration(this.configuration).getClient();
         }
-
-        if (configuration.getPassword() != null) {
-            builder.option(PASSWORD, configuration.getPassword());
-        }
-
-        // default values for connections
-        // may be overridden by the configuration.getOptions
-        builder
-                .option(PoolingConnectionFactoryProvider.ACQUIRE_RETRY, 1)
-                .option(PoolingConnectionFactoryProvider.INITIAL_SIZE, 0)
-                .option(PoolingConnectionFactoryProvider.MAX_SIZE, 10)
-                .option(PoolingConnectionFactoryProvider.MAX_IDLE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_LIFE_TIME, Duration.of(30000l, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_ACQUIRE_TIME, Duration.of(0, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(0, ChronoUnit.MILLIS))
-                .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
-
-        List<Map<String, String>> options = configuration.getOptions();
-        if (options != null && !options.isEmpty()) {
-            options.forEach(claimMapper -> {
-                String option = claimMapper.get("option");
-                String value = claimMapper.get("value");
-                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
-            });
-        }
-
-        connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
-        LOGGER.info("Connection pool created for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
     }
 
     @Override
     protected void doStop() throws Exception {
         super.doStop();
         try {
-            LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
-            if (!connectionPool.isDisposed()) {
-                connectionPool.disposeLater().subscribe();
+            if (connectionPool instanceof ConnectionPool && !((ConnectionPool)connectionPool).isDisposed()) {
+                LOGGER.info("Disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+                ((ConnectionPool)connectionPool).disposeLater().subscribe();
                 LOGGER.info("Connection pool disposed for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+            } else if (connectionPool instanceof Closeable) {
+                LOGGER.info("Releasing Connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
+                ((Closeable) connectionPool).close();
+                LOGGER.info("Connection pool released for database server {} on host {}", configuration.getProtocol(), configuration.getHost());
             }
         } catch (Exception ex) {
             LOGGER.error("An error has occurred while disposing connection pool for database server {} on host {}", configuration.getProtocol(), configuration.getHost(), ex);

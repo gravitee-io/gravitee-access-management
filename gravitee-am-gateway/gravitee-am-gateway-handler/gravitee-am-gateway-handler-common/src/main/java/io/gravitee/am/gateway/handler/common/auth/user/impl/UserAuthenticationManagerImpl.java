@@ -16,7 +16,13 @@
 package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
 import com.google.common.base.Strings;
-import io.gravitee.am.common.exception.authentication.*;
+import io.gravitee.am.common.exception.authentication.AccountLockedException;
+import io.gravitee.am.common.exception.authentication.AccountPasswordExpiredException;
+import io.gravitee.am.common.exception.authentication.AccountStatusException;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
+import io.gravitee.am.common.exception.authentication.NegotiateContinueException;
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
@@ -27,17 +33,19 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService
 import io.gravitee.am.gateway.handler.common.user.UserService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.metrics.CounterHelper;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.gateway.api.Request;
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -51,6 +59,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
+import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
+import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_INTERNAL;
 import static io.gravitee.am.identityprovider.api.AuthenticationProvider.ACTUAL_USERNAME;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -87,18 +99,26 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Autowired
     private PasswordService passwordService;
 
+    private final CounterHelper successfulAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
+            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.SUCCESS.name()),
+            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_INTERNAL)));
+
+    private final CounterHelper failedAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
+            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.FAILURE.name()),
+            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_INTERNAL)));
+
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
         logger.debug("Trying to authenticate [{}]", authentication);
 
         var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
         if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
-            return Single.error(getInternalAuthenticationServiceException(client));
+            return Single.error(() -> getInternalAuthenticationServiceException(client));
         }
 
         return Observable.fromIterable(applicationIdentityProviders)
                 .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
-                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
+                .switchIfEmpty(Observable.error(() -> getInternalAuthenticationServiceException(client)))
                 .concatMapMaybe(appIdp -> authenticate0(client, authentication.copy(), appIdp.getIdentity(), preAuthenticated))
                 .takeUntil(userAuthentication -> userAuthentication.getUser() != null || userAuthentication.getLastException() instanceof AccountLockedException)
                 .lastOrError()
@@ -129,8 +149,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         return connect(user).flatMap(connectedUser -> checkAccountPasswordExpiry(client, connectedUser));
                     }
                 })
-                .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
-                .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
+                .doOnSuccess(user -> {
+                    successfulAuth.increment();
+                    eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user));
+                })
+                .doOnError(throwable -> {
+                    failedAuth.increment();
+                    eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable));
+                });
     }
 
     private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
@@ -138,50 +164,6 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
             return Single.error(new AccountPasswordExpiredException("Account's password is expired "));
         }
         return Single.just(connectedUser);
-    }
-
-    @Override
-    public Maybe<User> loadUserByUsername(Client client, String username, Request request) {
-        logger.debug("Trying to load user [{}]", username);
-
-        // Get identity providers associated to a client
-        // For each idp, try to authenticate a user
-        // Try to authenticate while the user can not be authenticated
-        // If user can't be authenticated, send an exception
-
-        // Skip external identity provider for authentication with credentials.
-        final Authentication authentication = new EndUserAuthentication(username, null, new SimpleAuthenticationContext(request));
-        var applicationIdentityProviders = getApplicationIdentityProviders(client, authentication);
-
-        if (isNull(applicationIdentityProviders) || applicationIdentityProviders.isEmpty()) {
-            return Maybe.error(getInternalAuthenticationServiceException(client));
-        }
-
-        return Observable.fromIterable(applicationIdentityProviders)
-                .filter(appIdp -> selectionRuleMatches(appIdp.getSelectionRule(), authentication.copy()))
-                .switchIfEmpty(Observable.error(getInternalAuthenticationServiceException(client)))
-                .concatMapMaybe(appIdp -> loadUserByUsername0(client, authentication, appIdp.getIdentity(), true))
-                .takeUntil(userAuthentication -> userAuthentication.getUser() != null)
-                .lastOrError()
-                .flatMapMaybe(userAuthentication -> {
-                    io.gravitee.am.identityprovider.api.User user = userAuthentication.getUser();
-                    if (user == null) {
-                        Throwable lastException = userAuthentication.getLastException();
-                        if (lastException != null) {
-                            if (lastException instanceof UsernameNotFoundException) {
-                                return Maybe.error(new UsernameNotFoundException("Invalid or unknown user"));
-                            } else {
-                                logger.error("An error occurs during user authentication", lastException);
-                                return Maybe.error(new InternalAuthenticationServiceException("Unable to validate credentials. The user account you are trying to access may be experiencing a problem.", lastException));
-                            }
-                        } else {
-                            return Maybe.error(new UsernameNotFoundException("No user found for registered providers"));
-                        }
-                    } else {
-                        // complete user connection
-                        return userAuthenticationService.loadPreAuthenticatedUser(user);
-                    }
-                });
     }
 
     private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client, Authentication authentication) {
@@ -224,6 +206,14 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Override
     public Single<User> connect(io.gravitee.am.identityprovider.api.User user, boolean afterAuthentication) {
         return userAuthenticationService.connect(user, afterAuthentication);
+    }
+
+    @Override
+    public Single<User> connectPreAuthenticatedUser(Client client, String subject, Authentication authentication) {
+        return userAuthenticationService.connectPreAuthenticatedUser(subject)
+                .doOnSuccess(user -> eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user)))
+                .doOnError(throwable -> eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable)));
+
     }
 
     private Maybe<UserAuthentication> authenticate0(Client client, Authentication authentication, String authProvider, boolean preAuthenticated) {

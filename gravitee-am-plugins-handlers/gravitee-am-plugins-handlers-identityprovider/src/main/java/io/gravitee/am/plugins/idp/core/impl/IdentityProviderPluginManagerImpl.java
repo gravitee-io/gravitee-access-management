@@ -15,7 +15,13 @@
  */
 package io.gravitee.am.plugins.idp.core.impl;
 
-import io.gravitee.am.identityprovider.api.*;
+import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.IdentityProvider;
+import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
+import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
+import io.gravitee.am.identityprovider.api.NoIdentityProviderMapper;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
@@ -23,14 +29,16 @@ import io.gravitee.am.plugins.idp.core.IdentityProviderMapperFactory;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.plugins.idp.core.IdentityProviderRoleMapperFactory;
 import io.gravitee.plugin.core.api.PluginContextFactory;
+import io.reactivex.Single;
 import io.vertx.reactivex.core.Vertx;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.toList;
@@ -92,7 +100,8 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                     new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper),
                     new IdentityProviderRoleMapperBeanFactoryPostProcessor(identityProviderRoleMapper),
                     new PropertiesBeanFactoryPostProcessor(graviteeProperties),
-                    new VertxBeanFactoryPostProcessor(vertx)
+                    new VertxBeanFactoryPostProcessor(vertx),
+                    new IdentityProviderEntityBeanFactoryPostProcessor(providerConfiguration.getIdentityProvider())
             ).collect(toList());
 
             ofNullable(providerConfiguration.getCertificateManager()).ifPresent(certificateManager ->
@@ -111,7 +120,7 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
     }
 
     @Override
-    public UserProvider create(String type, String configuration, Map<String, String> mappers) {
+    public Single<Optional<UserProvider>> create(String type, String configuration, io.gravitee.am.model.IdentityProvider identityProviderEntity) {
         logger.debug("Looking for an user provider for [{}]", type);
         var providerConfiguration = new ProviderConfiguration(type, configuration);
         IdentityProvider identityProvider = instances.get(providerConfiguration.getType());
@@ -122,11 +131,11 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
 
             if (identityProvider.userProvider() == null || !identityProviderConfiguration.userProvider()) {
                 logger.info("No user provider is registered for type {}", providerConfiguration.getType());
-                return null;
+                return Single.just(Optional.empty());
             }
 
             Class<? extends IdentityProviderMapper> mapperClass = identityProvider.mapper();
-            IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, mappers);
+            IdentityProviderMapper identityProviderMapper = identityProviderMapperFactory.create(mapperClass, identityProviderEntity.getMappers());
 
             try {
                 return createUserProvider(
@@ -136,16 +145,17 @@ public class IdentityProviderPluginManagerImpl extends IdentityProviderPluginMan
                                 new IdentityProviderConfigurationBeanFactoryPostProcessor(identityProviderConfiguration),
                                 new PropertiesBeanFactoryPostProcessor(graviteeProperties),
                                 new VertxBeanFactoryPostProcessor(vertx),
+                                new IdentityProviderEntityBeanFactoryPostProcessor(identityProviderEntity),
                                 new IdentityProviderMapperBeanFactoryPostProcessor(identityProviderMapper != null ? identityProviderMapper : new NoIdentityProviderMapper())
                         )
-                );
+                ).map(Optional::of);
             } catch (Exception ex) {
                 logger.error("An unexpected error occurs while loading", ex);
-                return null;
+                return Single.error(ex);
             }
         } else {
             logger.error("No identity provider is registered for type {}", providerConfiguration.getType());
-            throw new IllegalStateException("No identity provider is registered for type " + providerConfiguration.getType());
+            return Single.error(new IllegalStateException("No identity provider is registered for type " + providerConfiguration.getType()));
         }
     }
 }

@@ -19,12 +19,28 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.impl.UserServiceImpl;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.*;
-import io.gravitee.am.service.exception.*;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.exception.ClientNotFoundException;
+import io.gravitee.am.service.exception.InvalidPasswordException;
+import io.gravitee.am.service.exception.RoleNotFoundException;
+import io.gravitee.am.service.exception.UserAlreadyExistsException;
+import io.gravitee.am.service.exception.UserProviderNotFoundException;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -43,14 +59,26 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
-import static io.gravitee.am.service.validators.user.UserValidatorImpl.*;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
+import static io.gravitee.am.service.validators.user.UserValidatorImpl.USERNAME_PATTERN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -298,7 +326,7 @@ public class UserServiceTest {
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
-        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
+        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
 
         userService.create(domain, newUser, null)
                 .test()
@@ -349,7 +377,7 @@ public class UserServiceTest {
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(commonUserService.create(any())).thenReturn(Single.just(new User()));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
-        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(new Email());
+        when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
 
         userService.create(domain, newUser, null)
                 .test()

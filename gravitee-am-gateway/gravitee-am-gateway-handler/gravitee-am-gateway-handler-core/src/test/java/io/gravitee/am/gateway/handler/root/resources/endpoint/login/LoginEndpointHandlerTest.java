@@ -29,6 +29,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.vertx.core.Handler;
@@ -57,6 +58,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_AUTHORIZE_URL_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginSocialAuthenticationHandler.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static java.lang.Boolean.TRUE;
+import static java.time.temporal.ChronoUnit.DECADES;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -91,6 +93,9 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
     private DeviceIdentifierManager deviceIdentifierManager;
 
     @Mock
+    private UserActivityService userActivityService;
+
+    @Mock
     private ClientSyncService clientSyncService;
     private Client appClient;
     private LoginEndpoint loginEndpoint;
@@ -113,9 +118,12 @@ public class LoginEndpointHandlerTest extends RxWebTestBase {
         domain.setPath("/login-domain");
         domain.setLoginSettings(loginSettings);
         appClient.setDomain(domain.getId());
-        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager, deviceIdentifierManager);
+        loginEndpoint = new LoginEndpoint(templateEngine, domain, botDetectionManager, deviceIdentifierManager, userActivityService);
         appClient.setLoginSettings(loginSettings);
         doReturn(Map.of()).when(deviceIdentifierManager).getTemplateVariables(any());
+        doReturn(true).when(userActivityService).canSaveUserActivity();
+        doReturn(3L).when(userActivityService).getRetentionTime();
+        doReturn(DECADES).when(userActivityService).getRetentionUnit();
 
         router.route(HttpMethod.GET, "/login")
                 .handler(routingContext -> {

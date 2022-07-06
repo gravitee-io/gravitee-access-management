@@ -104,6 +104,13 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am</groupId>
+            <artifactId>gravitee-am-monitoring</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-auth-webauthn</artifactId>
         </dependency>

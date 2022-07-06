@@ -73,7 +73,7 @@ public class EmailManagerTest {
         user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(REFERENCE_ID);
         user.setClient(CLIENT);
-        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000);
+        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000).blockingGet();
 
         Assert.assertNotNull(email);
         Assert.assertEquals(Template.REGISTRATION_CONFIRMATION.template(), email.getTemplate());
@@ -103,7 +103,7 @@ public class EmailManagerTest {
         user.setReferenceId(REFERENCE_ID);
         user.setClient(CLIENT);
         String templateKey = Template.REGISTRATION_CONFIRMATION.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
-        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000);
+        Email email = emailManager.getEmail(Template.REGISTRATION_CONFIRMATION, user, "subject", 1000).blockingGet();
 
         Assert.assertNotNull(email);
         Assert.assertEquals(templateKey, email.getTemplate());
@@ -145,7 +145,7 @@ public class EmailManagerTest {
         String templateKey = Template.RESET_PASSWORD.template() + EmailManager.TEMPLATE_NAME_SEPARATOR + ReferenceType.DOMAIN + REFERENCE_ID;
         String templateClientKey = templateKey + EmailManager.TEMPLATE_NAME_SEPARATOR + CLIENT;
 
-        Email email = emailManager.getEmail(Template.RESET_PASSWORD, user, "subject", 1000);
+        Email email = emailManager.getEmail(Template.RESET_PASSWORD, user, "subject", 1000).blockingGet();
 
         Assert.assertNotNull(email);
         Assert.assertEquals(templateClientKey, email.getTemplate());

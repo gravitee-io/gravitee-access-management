@@ -30,8 +30,9 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,9 +72,18 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                 JsonObject authInfo = new JsonObject()
                         .put(USERNAME_PARAM_KEY, username)
                         .put(PASSWORD_PARAM_KEY, password)
-                        .put(Claims.ip_address, RequestUtils.remoteAddress(req))
-                        .put(Claims.user_agent, RequestUtils.userAgent(req))
                         .put(Parameters.CLIENT_ID, clientId);
+
+                final String ipAddress = RequestUtils.remoteAddress(req);
+                final String userAgent = RequestUtils.userAgent(req);
+
+                if (canSaveIp(context)) {
+                    authInfo.put(Claims.ip_address, ipAddress);
+                }
+
+                if (canSaveUserAgent(context)) {
+                    authInfo.put(Claims.user_agent, userAgent);
+                }
 
                 authProvider.authenticate(context, authInfo, res -> {
                     if (res.failed()) {
@@ -85,7 +95,9 @@ public class LoginFormHandler implements Handler<RoutingContext> {
                     // set user into the context and continue
                     final User result = res.result();
                     context.getDelegate().setUser(result);
-                    context.put(ConstantKeys.USER_CONTEXT_KEY, result.getUser());
+                    final io.gravitee.am.model.User user = result.getUser();
+                    context.put(ConstantKeys.USER_CONTEXT_KEY, user);
+
                     context.next();
                 });
             }

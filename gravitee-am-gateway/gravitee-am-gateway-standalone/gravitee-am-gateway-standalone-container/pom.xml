@@ -74,6 +74,12 @@
             <artifactId>gravitee-node-vertx</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am</groupId>
+            <artifactId>gravitee-am-monitoring</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>

@@ -126,6 +126,20 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am</groupId>
+            <artifactId>gravitee-am-monitoring</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-monitoring</artifactId>
+            <version>${gravitee-node.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Vert.x -->
         <dependency>
             <groupId>io.vertx</groupId>

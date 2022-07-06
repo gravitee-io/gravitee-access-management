@@ -95,9 +95,9 @@ public interface ConstantKeys {
     String PARAM_AUTHENTICATOR_ATTACHMENT_KEY = "authenticatorAttachment";
     String PASSWORDLESS_AUTH_COMPLETED_KEY = "passwordlessAuthCompleted";
     String PASSWORDLESS_CHALLENGE_KEY = "challenge";
-    String PASSWORDLESS_CHALLENGE_USER_ID = "passwordlessUserId";
     String PASSWORDLESS_CHALLENGE_USERNAME_KEY = "passwordlessUsername";
     String PASSWORDLESS_ORIGIN = "passwordlessOrigin";
+    String PASSWORDLESS_ASSERTION = "passwordlessAssertion";
 
     // Consent keys.
     String USER_CONSENT_COMPLETED_KEY = "userConsentCompleted";
@@ -156,4 +156,11 @@ public interface ConstantKeys {
     String CIBA_AUTH_REQUEST_KEY = "ciba_authentication_request";
 
     String CSP_SCRIPT_INLINE_NONCE = "script_inline_nonce";
+
+    //User Activity
+    String USER_CONSENT_IP_LOCATION = "uc_geoip";
+    String USER_CONSENT_USER_AGENT = "uc_ua";
+    String USER_ACTIVITY_RETENTION_TIME = "user_activity_retention_time";
+    String RISK_ASSESSMENT_KEY = "risk_assessment";
+    String USER_ACTIVITY_ENABLED = "userActivityEnabled";
 }

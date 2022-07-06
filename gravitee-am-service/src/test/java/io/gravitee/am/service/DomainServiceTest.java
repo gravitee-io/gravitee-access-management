@@ -49,6 +49,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
+import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -56,8 +57,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
@@ -163,6 +162,9 @@ public class DomainServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private UserActivityService userActivityService;
 
     @Mock
     private RoleService roleService;
@@ -604,6 +606,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope),0,1)));
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
@@ -650,6 +653,7 @@ public class DomainServiceTest {
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
         verify(userService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(userActivityService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
         verify(groupService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -672,6 +676,7 @@ public class DomainServiceTest {
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(),0,1)));
         when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
+        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());

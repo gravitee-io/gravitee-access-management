@@ -1,0 +1,80 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="gv-form-section">
+  <div class="gv-form-section-title mfa-section-title">
+    <div class="mfa-chip">
+      <mat-chip-list [disabled]="true">
+        <mat-chip [disableRipple]="true" [selectable]="false">2</mat-chip>
+      </mat-chip-list>
+    </div>
+    <div class="mfa-title">
+      <h5>Activate MFA</h5>
+      <small>The end user will be prompted to process verification after he has been authenticated.</small>
+    </div>
+  </div>
+  <div fxLayout="column">
+
+    <form>
+      <mat-form-field appearance="outline" floatLabel="always" fxFlex="40" style="margin-left: 5px;">
+        <mat-select placeholder="Mode" name="mode" [(ngModel)]="this.currentMode" (selectionChange)="applyModeChange($event)">
+          <mat-option *ngFor="let mode of modes" [value]="mode">{{ mode.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </form>
+
+    <blockquote class="info">
+      <p>
+        <mat-icon>info_outline</mat-icon>
+        {{ currentMode.message }}
+      </p>
+    </blockquote>
+
+    <blockquote *ngIf="currentMode.warning" class="warning">
+      <p>
+        <mat-icon>warning_outline</mat-icon><span [innerHTML]="currentMode.warning"></span>
+      </p>
+    </blockquote>
+
+    <div *ngIf="this.currentMode !== modeOptions.REQUIRED" class="gv-form-section-title mfa-section-title">
+      <div class="mfa-title">
+        <h5>Configuration</h5>
+      </div>
+    </div>
+
+    <mfa-optional
+      *ngIf="this.currentMode === modeOptions.OPTIONAL"
+      [enrollment]="this.enrollment"
+      (settings-change)="updateOptional($event)">
+    </mfa-optional>
+
+    <mfa-conditional
+      *ngIf="this.currentMode === modeOptions.CONDITIONAL"
+      [adaptiveMfaRule]="this.adaptiveMfaRule"
+      (on-rule-change)="updateAdaptiveMfaRule($event)">
+    </mfa-conditional>
+
+    <mfa-intelligent
+      [riskAssessment]="riskAssessment"
+      (on-settings-change)="updateRiskAssessment($event)"
+      *ngIf="this.currentMode === modeOptions.INTELLIGENT"
+    >
+    </mfa-intelligent>
+
+  </div>
+</div>

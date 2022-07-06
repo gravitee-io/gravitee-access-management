@@ -13,47 +13,70 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainManagerUrl} from "./utils";
 
-const request = require("supertest");
+import {getGroupApi} from "./service/utils";
 
-export const createGroup = (domainId, accessToken, group, status: number = 201) =>
-    request(getGroupsUrl(domainId, null))
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(group)
-        .expect(status);
+export const createGroup = (domainId, accessToken, group) =>
+    getGroupApi(accessToken).createGroup({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: group
+    });
 
-export const getGroup = (domainId, accessToken, groupId, status: number = 200) =>
-    request(getGroupsUrl(domainId, groupId))
-        .get('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
+export const getGroup = (domainId, accessToken, groupId) =>
+    getGroupApi(accessToken).findGroup({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: groupId
+    })
 
-export const getAllGroups = (domainId, accessToken, status: number = 200) =>
-    getGroup(domainId, accessToken, null, status);
-
-export const updateGroup = (domainId, accessToken, groupId, payload, status: number = 200) =>
-    request(getGroupsUrl(domainId, groupId))
-        .put('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(payload)
-        .expect(status);
-
-export const deleteGroup = (domainId, accessToken, groupId, status: number = 204) =>
-    request(getGroupsUrl(domainId, groupId))
-        .delete('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .expect(status);
-
-export const addRolesToGroup = (domainId, accessToken, groupId, roles: Array<string>, status: number = 200) =>
-    request(getDomainManagerUrl(domainId) + `/groups/${groupId}/roles`)
-        .post('')
-        .set('Authorization', 'Bearer ' + accessToken)
-        .send(roles)
-        .expect(status);
-
-const getGroupsUrl = (domainId, groupId) => {
-    const groupsPath = groupId ? `/groups/${groupId}` : '/groups/';
-    return getDomainManagerUrl(domainId) + groupsPath;
+export const getGroupPage = (domainId, accessToken, page: number = null, size: number = null) => {
+    const params = {
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+    };
+    if (page !== null && size != null) {
+        return getGroupApi(accessToken).listGroups({...params, page: page, size: size});
+    }
+    return getGroupApi(accessToken).listGroups(params);
 }
+
+export const getAllGroups = (domainId, accessToken) => getGroupPage(domainId, accessToken)
+
+export const updateGroup = (domainId, accessToken, groupId, payload) =>
+    getGroupApi(accessToken).updateGroup({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: groupId,
+        group2: payload
+    })
+
+export const deleteGroup = (domainId, accessToken, groupId) =>
+    getGroupApi(accessToken).deleteGroup({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: groupId,
+    })
+
+export const addRolesToGroup = (domainId, accessToken, groupId, roles: Array<string>) =>
+    getGroupApi(accessToken).assignRoles({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: groupId,
+        body: roles
+    })
+
+export const revokeRoleToGroup = (domainId, accessToken, groupId, role) =>
+    getGroupApi(accessToken).revokeRole({
+        organizationId: process.env.AM_DEF_ORG_ID,
+        environmentId: process.env.AM_DEF_ENV_ID,
+        domain: domainId,
+        group: groupId,
+        role: role
+    })

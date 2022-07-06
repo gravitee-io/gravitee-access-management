@@ -35,6 +35,8 @@ import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
 
 /**
@@ -65,12 +67,21 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                 return;
             }
 
+            final String ipAddress = RequestUtils.remoteAddress(context.request());
+            final String userAgent = RequestUtils.userAgent(context.request());
+
             JsonObject authInfo = new JsonObject()
                     .put(USERNAME_PARAM_KEY, "spnego token")
                     .put(PASSWORD_PARAM_KEY, authHeader.replaceFirst(AUTH_NEGOTIATE_KEY, "").trim())
-                    .put(Claims.ip_address, RequestUtils.remoteAddress(context.request()))
-                    .put(Claims.user_agent, RequestUtils.userAgent(context.request()))
                     .put(Parameters.CLIENT_ID, clientId);
+
+            if (canSaveIp(context)) {
+                authInfo.put(Claims.ip_address, ipAddress);
+            }
+
+            if (canSaveUserAgent(context)) {
+                authInfo.put(Claims.user_agent, userAgent);
+            }
 
             authProvider.authenticate(context, authInfo, res -> {
                 if (res.failed()) {
@@ -88,6 +99,7 @@ public class LoginNegotiateAuthenticationHandler implements Handler<RoutingConte
                                 .end();
                         return;
                     }
+                    
 
                     context.next();
                     return;

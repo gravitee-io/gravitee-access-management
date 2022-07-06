@@ -21,7 +21,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
-import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
@@ -29,7 +28,6 @@ import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
@@ -49,13 +47,19 @@ public class MFARecoveryCodeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+
+        if (client.getFactors() == null || client.getFactors().isEmpty()) {
+            flow.doNext(routingContext);
+            return;
+        }
 
         if (endUser.getFactors() == null || endUser.getFactors().isEmpty()) {
             flow.doNext(routingContext);
             return;
         }
 
-        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY))) {
+        if (hasActiveRecoveryCode(endUser) || recoveryFactorDisabled(client.getFactors())) {
             flow.doNext(routingContext);
             return;
         }
@@ -68,34 +72,20 @@ public class MFARecoveryCodeStep extends MFAStep {
     }
 
     private boolean hasRecoveryCode(User user) {
-        if (user.getFactors() == null) {
-            return false;
-        }
-
         return user.getFactors()
                 .stream()
                 .anyMatch(ftr -> ftr.getSecurity() != null && RECOVERY_CODE.equals(ftr.getSecurity().getType()));
     }
 
     private boolean isRecoveryCodeActivated(User user) {
-        if (user.getFactors() == null) {
-            return false;
-        }
-
         return user.getFactors()
                 .stream()
                 .filter(ftr -> ftr.getSecurity() != null && RECOVERY_CODE.equals(ftr.getSecurity().getType()))
                 .anyMatch(ftr -> FactorStatus.ACTIVATED.equals(ftr.getStatus()));
     }
 
-    private boolean recoveryFactorDisabled(Client client) {
-        Set<String> factors = client.getFactors();
-        if(factors == null || factors.isEmpty()){
-            return false;
-        }
-
-        return client.getFactors()
-                .stream()
+    private boolean recoveryFactorDisabled(Set<String> factors) {
+        return factors.stream()
                 .map(factorManager::getFactor)
                 .filter(Objects::nonNull)
                 .noneMatch(factor -> factor.is(FactorType.RECOVERY_CODE));

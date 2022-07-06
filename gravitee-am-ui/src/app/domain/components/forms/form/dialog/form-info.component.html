@@ -35,6 +35,23 @@
             <p th:if="${error}" class="error">
               <span>Wrong user or password</span>
             </p>
+            <br>
+            <!-- Optional. used for user consent to use and store ip for audit logs and user activity-->
+            <label>
+                <input type="checkbox" th:checked="${uc_geoip}" id="uc_geoip" name="uc_geoip">
+                <span id="#label-consent-ip">I consent to the collection and use of IP-location information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
+            <!-- Optional. used for user consent to use and store user-agent for audit logs and user activity -->
+            <label>
+                <input type="checkbox" th:checked="${uc_ua}" id="uc_ua" name="uc_ua">
+                <span id="#label-consent-ua">I consent to the collection and use of User-Agent information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
             <button type="submit">login</button>
             <a th:if="${allowForgotPassword}" th:href="${forgotPasswordAction}">Forgot Password ?</a>
             <a th:if="${allowRegister}" th:href="${registerAction}">Register</a>
@@ -77,10 +94,27 @@
             <p id="webauthn-error" style="display: none;">
               <span>Invalid user</span>
             </p>
+            <br>
+            <!-- Optional. used for user consent to use and store ip for audit logs and user activity-->
+            <label>
+                <input type="checkbox" th:checked="${uc_geoip}" id="uc_geoip" name="uc_geoip">
+                <span id="#label-consent-ip">I consent to the collection and use of IP-location information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
+            <!-- Optional. used for user consent to use and store user-agent for audit logs and user activity -->
+            <label>
+                <input type="checkbox" th:checked="${uc_ua}" id="uc_ua" name="uc_ua">
+                <span id="#label-consent-ua">I consent to the collection and use of User-Agent information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
             <button type="submit">login</button>
           </form>
-          <script th:src="@{../assets/js/webauthn.auth.js}"></script>
-          <script th:src="@{../assets/js/webauthn-login.js}"></script>
+          <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+          <script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
         </body>
         </html>
       ]]>
@@ -100,8 +134,8 @@
               <button>Register</button>
             </div>
           </form>
-          <script th:src="@{../assets/js/webauthn.auth.js}"></script>
-          <script th:src="@{../assets/js/webauthn-register.js}"></script>
+          <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+          <script th:src="@{../assets/js/webauthn-register-v2.js}"></script>
         </body>
         </html>
       ]]>
@@ -190,7 +224,7 @@
     </pre>
     <p *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
       <b>NOTE:</b> When forgot password succeeded, the token present into the URL is used to populate user profile into the template engine. If the token is invalid or has expired, the user profile will be missing from the template engine context, so pay attention to test if user is null before accessing its attributes.
-      Here after, you can find a snippet of HTML to adapt the message to inform the user on whoch address email the message has been sent. 
+      Here after, you can find a snippet of HTML to adapt the message to inform the user on whoch address email the message has been sent.
     </p>
     <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
       <![CDATA[

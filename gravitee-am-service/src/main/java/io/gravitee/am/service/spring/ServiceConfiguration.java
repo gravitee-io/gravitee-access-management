@@ -28,5 +28,4 @@ import org.springframework.context.annotation.Import;
 @ComponentScan("io.gravitee.am.service")
 @Import({EmailConfiguration.class})
 public class ServiceConfiguration {
-
 }

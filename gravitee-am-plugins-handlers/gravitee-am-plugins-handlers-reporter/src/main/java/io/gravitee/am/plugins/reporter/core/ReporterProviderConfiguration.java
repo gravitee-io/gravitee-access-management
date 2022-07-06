@@ -28,17 +28,25 @@ public class ReporterProviderConfiguration extends ProviderConfiguration {
 
     private final GraviteeContext graviteeContext;
 
+    private final Reporter reporter;
+
     public ReporterProviderConfiguration(String type, String configuration) {
         super(type, configuration);
         this.graviteeContext = null;
+        this.reporter = null;
     }
 
     public ReporterProviderConfiguration(Reporter reporter, GraviteeContext graviteeContext) {
         super(reporter.getType(), reporter.getConfiguration());
         this.graviteeContext = graviteeContext;
+        this.reporter = reporter;
     }
 
     public GraviteeContext getGraviteeContext() {
         return graviteeContext;
+    }
+
+    public Reporter getReporter() {
+        return reporter;
     }
 }

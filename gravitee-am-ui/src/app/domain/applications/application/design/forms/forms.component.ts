@@ -70,7 +70,7 @@ export class ApplicationFormsComponent implements OnInit {
         'description': 'Registration page to create an account',
         'template': 'REGISTRATION',
         'icon': 'person_add',
-        'enabled': this.applicationSettingsValid() && this.allowRegister()
+        'enabled': this.applicationSettingsValid()
       },
       {
         'name': 'Registration confirmation',
@@ -84,7 +84,7 @@ export class ApplicationFormsComponent implements OnInit {
         'description': 'Forgot password to recover account',
         'template': 'FORGOT_PASSWORD',
         'icon': 'lock',
-        'enabled': this.applicationSettingsValid() && this.allowResetPassword()
+        'enabled': this.applicationSettingsValid()
       },
       {
         'name': 'Reset password',
@@ -149,11 +149,4 @@ export class ApplicationFormsComponent implements OnInit {
     return false;
   }
 
-  allowRegister() {
-    return this.domain.loginSettings && this.domain.loginSettings.registerEnabled;
-  }
-
-  allowResetPassword() {
-    return this.domain.loginSettings && this.domain.loginSettings.forgotPasswordEnabled;
-  }
 }

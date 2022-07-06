@@ -21,21 +21,17 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.security.EndUserAuthentication;
 import io.gravitee.am.management.handlers.management.api.authentication.web.WebAuthenticationDetails;
 import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.management.service.UserService;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.model.UpdateUser;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.LogoutAuditBuilder;
-import org.springframework.core.env.Environment;
-import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
-
+import java.util.Optional;
+import java.util.stream.Stream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
-import java.util.Optional;
-import java.util.stream.Stream;
+import org.springframework.core.env.Environment;
+import org.springframework.security.web.authentication.logout.SimpleUrlLogoutSuccessHandler;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -87,14 +83,16 @@ public class CustomLogoutSuccessHandler extends SimpleUrlLogoutSuccessHandler {
                         .doOnSuccess(user -> auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class).user(user)
                                 .referenceType(ReferenceType.ORGANIZATION).referenceId(orgId)
                                 .ipAddress(details.getRemoteAddress())
-                                .userAgent(details.getUserAgent())))
+                                .userAgent(details.getUserAgent()))
+                        )
                         .doOnError(err -> {
                             logger.warn("Unable to read user information, trace logout with minimal data", err);
                             auditService.report(AuditBuilder.builder(LogoutAuditBuilder.class)
                                     .principal(new EndUserAuthentication(jwt.get("username"), null, new SimpleAuthenticationContext()))
                                     .referenceType(ReferenceType.ORGANIZATION).referenceId(orgId)
                                     .ipAddress(details.getRemoteAddress())
-                                    .userAgent(details.getUserAgent()));
+                                    .userAgent(details.getUserAgent())
+                            );
                         })
                         .subscribe();
             } catch (Exception e) {

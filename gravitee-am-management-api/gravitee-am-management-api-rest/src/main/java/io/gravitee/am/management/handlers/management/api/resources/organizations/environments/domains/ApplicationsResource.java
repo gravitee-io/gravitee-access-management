@@ -19,7 +19,6 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -27,9 +26,9 @@ import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -41,11 +40,8 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -54,7 +50,6 @@ import static io.gravitee.am.management.service.permissions.Permissions.or;
 @Api(tags = {"application"})
 public class ApplicationsResource extends AbstractResource {
 
-    private static final int MAX_APPLICATIONS_SIZE_PER_PAGE = 50;
     private static final String MAX_APPLICATIONS_SIZE_PER_PAGE_STRING = "50";
 
     @Context
@@ -68,7 +63,9 @@ public class ApplicationsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List registered applications for a security domain",
+    @ApiOperation(
+            nickname = "listApplications",
+            value = "List registered applications for a security domain",
             notes = "User must have the APPLICATION[LIST] permission on the specified domain, environment or organization " +
                     "AND either APPLICATION[READ] permission on each domain's application " +
                     "or APPLICATION[READ] permission on the specified domain " +
@@ -76,8 +73,10 @@ public class ApplicationsResource extends AbstractResource {
                     "or APPLICATION[READ] permission on the specified organization. " +
                     "Each returned application is filtered and contains only basic information such as id, name, description and isEnabled.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List registered applications for a security domain",
-                    response = Application.class, responseContainer = "List"),
+            @ApiResponse(code = 200,
+                    message = "List registered applications for a security domain",
+                    response = ApplicationPage.class
+            ),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -104,22 +103,27 @@ public class ApplicationsResource extends AbstractResource {
                                         .map(application -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, application.getId(), Permission.APPLICATION, Acl.READ)
                                                 .filter(Boolean::booleanValue)
                                                 .map(__ -> filterApplicationInfos(application)))
-                                        .collect(Collectors.toList()))
+                                        .collect(toList()))
                                 .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
                                 .toList()
-                                .map(applications -> new Page<>(applications.stream().skip(page * size).limit(size).collect(Collectors.toList()), page, applications.size()))))
+                                .map(applications -> new ApplicationPage(
+                                        applications.stream().skip(page * size).limit(size).collect(toList()),
+                                        page,
+                                        applications.size()))))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create an application",
+    @ApiOperation(
+            nickname = "createApplication",
+            value = "Create an application",
             notes = "User must have APPLICATION[CREATE] permission on the specified domain " +
                     "or APPLICATION[CREATE] permission on the specified environment " +
                     "or APPLICATION[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Application successfully created"),
+            @ApiResponse(code = 201, message = "Application successfully created", response = Application.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void createApplication(
             @PathParam("organizationId") String organizationId,
@@ -158,5 +162,11 @@ public class ApplicationsResource extends AbstractResource {
         filteredApplication.setUpdatedAt(application.getUpdatedAt());
 
         return filteredApplication;
+    }
+
+    public static final class ApplicationPage extends Page<Application> {
+        public ApplicationPage(Collection<Application> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 }

@@ -142,16 +142,16 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
             findDomain(certificate.getDomain())
                     .flatMapPublisher(domain ->
                             retrieveDomainOwners(domain)
-                                    .flatMap(user -> Flowable.fromArray(
-                                            buildEmailNotificationDefinition(certificate, domain, user),
-                                            buildUINotificationDefinition(certificate, domain, user))))
-                    .subscribe(definition -> {
-                        if (definition.isPresent()) {
-                            notifierService.register(definition.get(),
-                                    new CertificateNotificationCondition(this.certificateExpiryThresholds),
-                                    new CertificateResendNotificationCondition(this.certificateExpiryThresholds));
-                        }
-                    });
+                                    .flatMap(user -> {
+                                        final Flowable<NotificationDefinition> emailNotificationDef = buildEmailNotificationDefinition(certificate, domain, user).toFlowable();
+                                        final Flowable<NotificationDefinition> uiNotificationDef = buildUINotificationDefinition(certificate, domain, user).toFlowable();
+                                        return Flowable.mergeArray(emailNotificationDef, uiNotificationDef);
+                                    }))
+                    .subscribe(definition ->
+                        notifierService.register(definition,
+                            new CertificateNotificationCondition(this.certificateExpiryThresholds),
+                            new CertificateResendNotificationCondition(this.certificateExpiryThresholds))
+                    );
         }
     }
 
@@ -210,43 +210,39 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
                 });
     }
 
-    private Optional<NotificationDefinition> buildEmailNotificationDefinition(Certificate certificate, Domain domain, User user) {
+    private Maybe<NotificationDefinition> buildEmailNotificationDefinition(Certificate certificate, Domain domain, User user) {
         if (emailNotifierEnabled && !Strings.isNullOrEmpty(user.getEmail())) {
-            try {
+            Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
+                    .withDomain(domain)
+                    .withUser(user)
+                    .withCertificate(certificate)
+                    .build();
 
-                Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
-                        .withDomain(domain)
-                        .withUser(user)
-                        .withCertificate(certificate)
-                        .build();
+            return emailService.getFinalEmail(domain, null, Template.CERTIFICATE_EXPIRATION, user, data)
+                    .map(email -> {
+                        EmailNotifierConfiguration notifierConfig = new EmailNotifierConfiguration(this.emailConfiguration);
+                        notifierConfig.setSubject(email.getSubject());
+                        notifierConfig.setBody(email.getContent());
+                        notifierConfig.setTo(user.getEmail());
 
-                final Email email = emailService.getFinalEmail(domain, null, Template.CERTIFICATE_EXPIRATION, user, data);
+                        final NotificationDefinition definition = new NotificationDefinition();
+                        definition.setType(TYPE_EMAIL_NOTIFIER);
+                        definition.setConfiguration(mapper.writeValueAsString(notifierConfig));
+                        definition.setResourceId(certificate.getId());
+                        definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
+                        definition.setAudienceId(user.getId());
+                        definition.setCron(this.certificateCronExpression);
+                        definition.setData(data);
 
-                EmailNotifierConfiguration notifierConfig = new EmailNotifierConfiguration(this.emailConfiguration);
-                notifierConfig.setSubject(email.getSubject());
-                notifierConfig.setBody(email.getContent());
-                notifierConfig.setTo(user.getEmail());
-
-                final NotificationDefinition definition = new NotificationDefinition();
-                definition.setType(TYPE_EMAIL_NOTIFIER);
-                definition.setConfiguration(mapper.writeValueAsString(notifierConfig));
-                definition.setResourceId(certificate.getId());
-                definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
-                definition.setAudienceId(user.getId());
-                definition.setCron(this.certificateCronExpression);
-                definition.setData(data);
-
-                return Optional.of(definition);
-            } catch (IOException | TemplateException e) {
-                LOGGER.warn("Unable to generate email template for certificate expiration", e);
-            }
+                        return definition;
+                    });
         } else {
             LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
         }
-        return Optional.empty();
+        return Maybe.empty();
     }
 
-    private Optional<NotificationDefinition> buildUINotificationDefinition(Certificate certificate, Domain domain, User user) {
+    private Maybe<NotificationDefinition> buildUINotificationDefinition(Certificate certificate, Domain domain, User user) {
         if (uiNotifierEnabled) {
             try {
                 Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
@@ -267,13 +263,13 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
                 definition.setCron(this.certificateCronExpression);
                 definition.setData(data);
 
-                return Optional.of(definition);
+                return Maybe.just(definition);
             } catch (IOException e) {
                 LOGGER.warn("Unable to generate ui configuration for certificate expiration", e);
             }
         } else {
             LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
         }
-        return Optional.empty();
+        return Maybe.empty();
     }
 }

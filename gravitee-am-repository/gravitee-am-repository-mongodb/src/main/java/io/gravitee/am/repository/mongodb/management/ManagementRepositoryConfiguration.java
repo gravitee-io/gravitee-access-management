@@ -19,9 +19,9 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractRepositoryConfiguration;
-import io.gravitee.am.repository.mongodb.common.MongoFactory;
+import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -34,20 +34,15 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan("io.gravitee.am.repository.mongodb.management")
+@ComponentScan({"io.gravitee.am.repository.mongodb.management", "io.gravitee.am.repository.mongodb.provider"})
 public class ManagementRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
-    @Qualifier("managementMongo")
-    private MongoClient mongo;
-
-    @Bean(name = "managementMongo")
-    public static MongoFactory mongoFactory() {
-        return new MongoFactory(Scope.MANAGEMENT.getName());
-    }
+    private ConnectionProvider<MongoClient, MongoConnectionConfiguration> connectionProvider;
 
     @Bean(name = "managementMongoTemplate")
     public MongoDatabase mongoOperations() {
+        final MongoClient mongo = connectionProvider.getClientWrapper(Scope.MANAGEMENT.getName()).getClient();
         return mongo.getDatabase(getDatabaseName());
     }
 

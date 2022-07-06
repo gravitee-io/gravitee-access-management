@@ -54,7 +54,9 @@ public class GroupRoleResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Revoke role to a group",
+    @ApiOperation(
+            nickname = "revokeRole",
+            value = "Revoke role to a group",
             notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")

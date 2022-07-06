@@ -20,6 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.alert.AlertNotifier;
 import io.gravitee.am.model.alert.AlertTrigger;
 import io.gravitee.am.model.alert.AlertTriggerType;
+import java.util.List;
 import org.junit.Test;
 import org.springframework.mock.env.MockEnvironment;
 
@@ -33,7 +34,6 @@ import static org.junit.Assert.assertTrue;
  * @author GraviteeSource Team
  */
 public class AlertTriggerFactoryTest {
-
 
     @Test
     public void createTooManyLoginFailuresTrigger() {
@@ -53,11 +53,43 @@ public class AlertTriggerFactoryTest {
         alertNotifier.setType("webhook");
 
         final MockEnvironment environment = new MockEnvironment();
-        final Trigger trigger = AlertTriggerFactory.create(alertTrigger, Collections.singletonList(alertNotifier), environment);
+        final List<Trigger> triggers = AlertTriggerFactory.create(alertTrigger, Collections.singletonList(alertNotifier), environment);
+
+        assertEquals(1, triggers.size());
+        var trigger = triggers.get(0);
 
         assertEquals(alertTrigger.getId(), trigger.getId());
         assertEquals(1, trigger.getConditions().size());
         assertEquals(1, trigger.getFilters().size());
         assertTrue(trigger.isEnabled());
+    }
+
+    @Test
+    public void createRiskAssessmentAlert() {
+
+        final AlertTrigger alertTrigger = new AlertTrigger();
+
+        alertTrigger.setId("alertTrigger#1");
+        alertTrigger.setEnabled(true);
+        alertTrigger.setType(AlertTriggerType.RISK_ASSESSMENT);
+        alertTrigger.setReferenceType(ReferenceType.DOMAIN);
+        alertTrigger.setReferenceId("domain#1");
+
+        final AlertNotifier alertNotifier = new AlertNotifier();
+        alertNotifier.setId("alertNotifier#1");
+        alertNotifier.setName("test");
+        alertNotifier.setConfiguration("{}");
+        alertNotifier.setType("webhook");
+
+        final MockEnvironment environment = new MockEnvironment();
+        final List<Trigger> triggers = AlertTriggerFactory.create(alertTrigger, Collections.singletonList(alertNotifier), environment);
+
+        assertEquals(3, triggers.size());
+        triggers.forEach(trigger -> {
+            assertTrue(trigger.getId().startsWith(alertTrigger.getId()));
+            assertEquals(1, trigger.getConditions().size());
+            assertEquals(1, trigger.getFilters().size());
+            assertTrue(trigger.isEnabled());
+        });
     }
 }

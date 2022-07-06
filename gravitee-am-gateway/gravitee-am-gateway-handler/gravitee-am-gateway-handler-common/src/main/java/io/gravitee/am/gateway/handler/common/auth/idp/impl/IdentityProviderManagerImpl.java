@@ -25,6 +25,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.metrics.CounterHelper;
+import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
@@ -32,6 +34,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Maybe;
+import io.reactivex.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,6 +42,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDPS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -63,6 +69,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
     @Autowired
     private CertificateManager certificateManager;
+
+    private final CounterHelper idpEvtCounter = new CounterHelper(METRICS_IDP_EVENTS);
+
+    private final GaugeHelper idpGauge = new GaugeHelper(METRICS_IDPS);
 
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
@@ -90,7 +100,13 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         logger.info("Initializing identity providers for domain {}", domain.getName());
 
         try {
-            identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId()).blockingForEach(this::updateAuthenticationProvider);
+            identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
+                    .flatMapSingle(this::updateAuthenticationProvider)
+                    .map(provider -> {
+                        idpGauge.incrementValue();
+                        return provider;
+                    })
+                    .blockingLast();
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
@@ -117,13 +133,16 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     @Override
     public void onEvent(Event<IdentityProviderEvent, Payload> event) {
         if (event.content().getReferenceType() == ReferenceType.DOMAIN && domain.getId().equals(event.content().getReferenceId())) {
+            idpEvtCounter.increment();
             switch (event.type()) {
                 case DEPLOY:
+                    idpGauge.incrementValue();
                 case UPDATE:
                     updateIdentityProvider(event.content().getId(), event.type());
                     break;
                 case UNDEPLOY:
                     removeIdentityProvider(event.content().getId());
+                    idpGauge.decrementValue();
                     break;
             }
         }
@@ -133,9 +152,10 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         final String eventType = identityProviderEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} identity provider event for {}", domain.getName(), eventType, identityProviderId);
         identityProviderRepository.findById(identityProviderId)
+                .flatMapSingle(this::updateAuthenticationProvider)
+                .toMaybe()
                 .subscribe(
                         identityProvider -> {
-                            updateAuthenticationProvider(identityProvider);
                             logger.info("Identity provider {} {}d for domain {}", identityProviderId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} identity provider for domain {}", eventType, domain.getName(), error),
@@ -147,35 +167,36 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         clearProvider(identityProviderId);
     }
 
-    private void updateAuthenticationProvider(IdentityProvider identityProvider) {
-        logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-        try {
+    private Single<IdentityProvider> updateAuthenticationProvider(IdentityProvider identityProvider) {
+        return Single.fromCallable(() -> {
+            logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
             // stop existing provider, if any
             clearProvider(identityProvider.getId());
-            // create and start the new provider
+            return identityProvider;
+        }).flatMap(idp -> {
             var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
             var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
             if (authenticationProvider != null) {
-                // start the authentication provider
-                authenticationProvider.start();
                 // init the user provider
-                UserProvider userProvider =
-                        identityProviderPluginManager.create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider.getMappers());
-                providers.put(identityProvider.getId(), authenticationProvider);
-                identities.put(identityProvider.getId(), identityProvider);
-                if (userProvider != null) {
-                    // start the user provider
-                    userProvider.start();
-                    userProviders.put(identityProvider.getId(), userProvider);
-                } else {
-                    userProviders.remove(identityProvider.getId());
-                }
+                return identityProviderPluginManager
+                        .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+                        .map(userProviderOpt -> {
+                            providers.put(identityProvider.getId(), authenticationProvider);
+                            identities.put(identityProvider.getId(), identityProvider);
+                            if (userProviderOpt.isPresent()) {
+                                userProviders.put(identityProvider.getId(), userProviderOpt.get());
+                            } else {
+                                userProviders.remove(identityProvider.getId());
+                            }
+                            return idp;
+                        });
+            } else {
+                return Single.just(idp);
             }
-        } catch (Exception ex) {
-            // failed to load the plugin
-            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), ex);
+        }).doOnError(error -> {
+            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
             clearProvider(identityProvider.getId());
-        }
+        });
     }
 
     private void clearProviders() {

@@ -63,7 +63,9 @@ public class GroupResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a group",
+    @ApiOperation(
+            nickname = "findGroup",
+            value = "Get a group",
             notes = "User must have the DOMAIN_GROUP[READ] permission on the specified domain " +
                     "or DOMAIN_GROUP[READ] permission on the specified environment " +
                     "or DOMAIN_GROUP[READ] permission on the specified organization")
@@ -95,7 +97,9 @@ public class GroupResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update a group",
+    @ApiOperation(
+            nickname = "updateGroup",
+            value = "Update a group",
             notes = "User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[UPDATE] permission on the specified organization")
@@ -119,7 +123,9 @@ public class GroupResource extends AbstractResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete a group",
+    @ApiOperation(
+            nickname = "deleteGroup",
+            value = "Delete a group",
             notes = "User must have the DOMAIN_GROUP[DELETE] permission on the specified domain " +
                     "or DOMAIN_GROUP[DELETE] permission on the specified environment " +
                     "or DOMAIN_GROUP[DELETE] permission on the specified organization")

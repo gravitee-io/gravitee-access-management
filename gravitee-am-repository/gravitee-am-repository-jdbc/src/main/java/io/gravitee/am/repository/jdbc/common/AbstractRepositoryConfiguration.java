@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.common;
 
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
 import io.r2dbc.spi.ConnectionFactory;
 import liquibase.Contexts;
 import liquibase.Liquibase;
@@ -72,7 +73,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
 
     @Bean
     public R2dbcDialect dialectDatabase(ConnectionFactory factory) {
-        return DialectResolver.getDialect(factory);
+        return super.getDialect(factory);
     }
 
     @Override
@@ -102,22 +103,22 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         return new R2dbcTransactionManager(connectionFactory);
     }
 
-    protected final void initializeDatabaseSchema(ConnectionFactoryProvider connectionFactoryProvider, Environment environment) throws SQLException {
+    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, Environment environment) throws SQLException {
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             StringBuilder builder = new StringBuilder("jdbc:");
-            builder = builder.append(connectionFactoryProvider.getJdbcDriver()).append("://");
-            builder = builder.append(connectionFactoryProvider.getJdbcHostname());
-            String jdbcPort = connectionFactoryProvider.getJdbcPort();
+            builder = builder.append(poolWrapper.getJdbcDriver()).append("://");
+            builder = builder.append(poolWrapper.getJdbcHostname());
+            String jdbcPort = poolWrapper.getJdbcPort();
             if (jdbcPort != null) {
                 builder = builder.append(":").append(jdbcPort);
             }
 
-            final String jdbcUrl = builder.append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/").append(connectionFactoryProvider.getJdbcDatabase()).toString();
+            final String jdbcUrl = builder.append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/").append(poolWrapper.getJdbcDatabase()).toString();
 
             try (Connection connection = DriverManager.getConnection(jdbcUrl,
-                    connectionFactoryProvider.getJdbcUsername(),
-                    connectionFactoryProvider.getJdbcPassword())) {
+                    poolWrapper.getJdbcUsername(),
+                    poolWrapper.getJdbcPassword())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
                 runLiquibase(connection);
             }

@@ -68,10 +68,11 @@
         <module>gravitee-am-password-dictionary</module>
         <module>gravitee-am-authdevice-notifier</module>
         <module>gravitee-am-ciba-delegated-service</module>
+        <module>gravitee-am-monitoring</module>
     </modules>
 
     <properties>
-        <gravitee-bom.version>2.4</gravitee-bom.version>
+        <gravitee-bom.version>2.5</gravitee-bom.version>
         <gravitee-common.version>1.25.0</gravitee-common.version>
         <gravitee-plugin.version>1.23.1</gravitee-plugin.version>
         <gravitee-node.version>1.24.1</gravitee-node.version>
@@ -126,7 +127,7 @@
         <gravitee-notifier-slack.version>1.3.0</gravitee-notifier-slack.version>
         <gravitee-alert-api.version>1.8.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.1</gravitee-notifier-api.version>
-        <gravitee-risk-assessment-api.version>1.0.0</gravitee-risk-assessment-api.version>
+        <gravitee-risk-assessment-api.version>1.0.1</gravitee-risk-assessment-api.version>
         <jdk.version>11</jdk.version>
 
         <!-- Sonar - Jacoco -->
@@ -451,6 +452,7 @@
                         <exclude>**/*.adoc</exclude>
                         <exclude>**/LICENSE_TEMPLATE.txt</exclude>
                         <exclude>sonar-project.properties</exclude>
+                        <exclude>gravitee-am-test/api/management/**</exclude>
                     </excludes>
                     <mapping>
                         <ts>SLASHSTAR_STYLE</ts>

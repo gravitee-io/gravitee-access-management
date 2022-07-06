@@ -24,11 +24,15 @@ import io.gravitee.am.gateway.handler.users.service.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
 import io.reactivex.Single;
 import io.vertx.reactivex.ext.web.RoutingContext;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,10 +64,14 @@ public class AbstractUserConsentEndpointHandler {
                         User principal = new DefaultUser(user.getUsername());
                         ((DefaultUser) principal).setId(user.getId());
                         Map<String, Object> additionalInformation =
-                                user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) :  new HashMap<>();
+                                user.getAdditionalInformation() != null ? new HashMap<>(user.getAdditionalInformation()) : new HashMap<>();
                         // add ip address and user agent
-                        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
-                        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                        if (canSaveIp(context)) {
+                            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                        }
+                        if (canSaveIp(context)) {
+                            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                        }
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;
@@ -78,8 +86,12 @@ public class AbstractUserConsentEndpointHandler {
                         ((DefaultUser) principal).setId(client.getId());
                         Map<String, Object> additionalInformation = new HashMap<>();
                         // add ip address and user agent
-                        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
-                        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                        if (canSaveIp(context)) {
+                            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(context.request()));
+                        }
+                        if (canSaveUserAgent(context)) {
+                            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(context.request()));
+                        }
                         additionalInformation.put(Claims.domain, domain.getId());
                         ((DefaultUser) principal).setAdditionalInformation(additionalInformation);
                         return principal;

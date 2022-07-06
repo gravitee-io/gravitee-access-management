@@ -30,7 +30,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.Session;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -49,7 +48,6 @@ public class MFAChallengeStep extends MFAStep {
     @Override
     public void execute(RoutingContext routingContext, AuthenticationFlowChain flow) {
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
-        final Session session = routingContext.session();
         var context = new MfaFilterContext(routingContext, client);
 
         // Rules that makes you skip MFA challenge

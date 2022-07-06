@@ -15,25 +15,19 @@
  */
 package io.gravitee.am.management.services.purge;
 
-import io.gravitee.am.repository.management.api.AuthenticationFlowContextRepository;
-import io.gravitee.am.repository.management.api.DeviceRepository;
-import io.gravitee.am.repository.management.api.LoginAttemptRepository;
-import io.gravitee.am.repository.management.api.PermissionTicketRepository;
+import io.gravitee.am.repository.management.api.*;
 import io.gravitee.am.repository.oauth2.api.*;
 import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.api.RequestObjectRepository;
 import io.reactivex.Completable;
+import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 import static org.mockito.Mockito.*;
 
@@ -80,6 +74,9 @@ public class PurgeManagerTest {
     @Mock
     protected CibaAuthRequestRepository cibaAuthRequestRepository;
 
+    @Mock
+    protected UserActivityRepository userActivityRepository;
+
     @Before
     public void prepare() {
         when(accessTokenRepository.purgeExpiredData()).thenReturn(Completable.complete());
@@ -93,6 +90,7 @@ public class PurgeManagerTest {
         when(pushedAuthorizationRequestRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(cibaAuthRequestRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(deviceRepository.purgeExpiredData()).thenReturn(Completable.complete());
+        when(userActivityRepository.purgeExpiredData()).thenReturn(Completable.complete());
     }
 
     @Test
@@ -110,6 +108,7 @@ public class PurgeManagerTest {
         verify(pushedAuthorizationRequestRepository).purgeExpiredData();
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
+        verify(userActivityRepository).purgeExpiredData();
     }
 
     @Test
@@ -127,6 +126,7 @@ public class PurgeManagerTest {
         verify(pushedAuthorizationRequestRepository).purgeExpiredData();
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
+        verify(userActivityRepository).purgeExpiredData();
     }
 
     @Test
@@ -144,5 +144,6 @@ public class PurgeManagerTest {
         verify(pushedAuthorizationRequestRepository).purgeExpiredData();
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
+        verify(userActivityRepository).purgeExpiredData();
     }
 }

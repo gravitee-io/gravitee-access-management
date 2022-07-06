@@ -39,7 +39,10 @@ import static org.mockito.Mockito.mock;
  * @author GraviteeSource Team
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {MongoAuthenticationProviderTestConfiguration.class, MongoAuthenticationProviderConfiguration.class}, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {
+        MongoAuthenticationProviderTestConfiguration.class,
+        MongoAuthenticationProviderConfiguration.class },
+        loader = AnnotationConfigContextLoader.class)
 public class MongoAuthenticationProviderTest {
 
     @Autowired

@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.impl.user.activity.utils.ConsentUtils;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -38,6 +39,8 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants.SCOPE_PREFIX;
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.OAuth2Constants.USER_OAUTH_APPROVAL;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -88,7 +91,7 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         }
 
         // save consent
-        saveConsent(request, user, client, approvals, h -> {
+        saveConsent(routingContext, request, user, client, approvals, h -> {
             if (h.failed()) {
                 routingContext.fail(h.cause());
                 return;
@@ -104,21 +107,31 @@ public class UserConsentProcessHandler implements Handler<RoutingContext> {
         });
     }
 
-    private void saveConsent(HttpServerRequest request, io.gravitee.am.model.User endUser, Client client, List<ScopeApproval> approvals, Handler<AsyncResult<List<ScopeApproval>>> handler) {
-        userConsentService.saveConsent(client, approvals, getAuthenticatedUser(request, endUser))
+    private void saveConsent(RoutingContext context,
+                             HttpServerRequest request,
+                             io.gravitee.am.model.User endUser,
+                             Client client,
+                             List<ScopeApproval> approvals, Handler<AsyncResult<List<ScopeApproval>>> handler) {
+        userConsentService.saveConsent(client, approvals, getAuthenticatedUser(context, request, endUser))
                 .subscribe(
                         approvals1 -> handler.handle(Future.succeededFuture(approvals1)),
                         error -> handler.handle(Future.failedFuture(error))
                 );
     }
 
-    private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(HttpServerRequest request, io.gravitee.am.model.User user) {
+    private io.gravitee.am.identityprovider.api.User getAuthenticatedUser(RoutingContext context,
+                                                                          HttpServerRequest request,
+                                                                          io.gravitee.am.model.User user) {
         DefaultUser authenticatedUser = new DefaultUser(user.getUsername());
         authenticatedUser.setId(user.getId());
         Map<String, Object> additionalInformation = new HashMap<>(user.getAdditionalInformation());
         // add ip address and user agent
-        additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(request));
-        additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(request));
+        if (canSaveIp(context)) {
+            additionalInformation.put(Claims.ip_address, RequestUtils.remoteAddress(request));
+        }
+        if (canSaveUserAgent(context)){
+            additionalInformation.put(Claims.user_agent, RequestUtils.userAgent(request));
+        }
         additionalInformation.put(Claims.domain, domain.getId());
         authenticatedUser.setAdditionalInformation(additionalInformation);
         return authenticatedUser;

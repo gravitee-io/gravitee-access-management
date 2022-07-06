@@ -39,6 +39,19 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-mongodb-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Spring dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
@@ -56,12 +69,6 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- MongoDB driver -->
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-reactivestreams</artifactId>
         </dependency>
 
         <dependency>

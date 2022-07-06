@@ -19,29 +19,55 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.service.OrganizationUserService;
-import io.gravitee.am.management.service.*;
+import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
+import io.gravitee.am.management.service.BotDetectionPluginService;
+import io.gravitee.am.management.service.BotDetectionServiceProxy;
+import io.gravitee.am.management.service.CertificateManager;
+import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.EmailManager;
+import io.gravitee.am.management.service.ExtensionGrantPluginService;
+import io.gravitee.am.management.service.FactorPluginService;
+import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.OrganizationUserService;
+import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
+import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.BotDetectionService;
+import io.gravitee.am.service.CertificatePluginService;
+import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DeviceIdentifierService;
+import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
+import io.gravitee.am.service.EnvironmentService;
+import io.gravitee.am.service.ExtensionGrantService;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.FlowService;
+import io.gravitee.am.service.FormService;
+import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.ScopeApprovalService;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.TagService;
+import io.gravitee.am.service.TokenService;
+import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Single;
-import java.io.IOException;
-import java.security.Principal;
-import java.util.List;
-import javax.annotation.Priority;
-import javax.inject.Named;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
@@ -56,6 +82,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
+
+import javax.annotation.Priority;
+import javax.inject.Named;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.io.IOException;
+import java.security.Principal;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -82,6 +122,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected io.gravitee.am.management.service.UserService userService;
+
+    @Autowired
+    protected UserActivityService userActivityService;
 
     @Autowired
     protected ScopeService scopeService;
@@ -151,6 +194,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected FactorService factorService;
+
+    @Autowired
+    protected FactorPluginService factorPluginService;
 
     @Autowired
     protected PermissionService permissionService;
@@ -223,6 +269,11 @@ public abstract class JerseySpringTest {
         @Bean
         public io.gravitee.am.management.service.UserService userService() {
             return mock(io.gravitee.am.management.service.UserService.class);
+        }
+
+        @Bean
+        public UserActivityService userActivityService() {
+            return mock(UserActivityService.class);
         }
 
         @Bean
@@ -363,6 +414,11 @@ public abstract class JerseySpringTest {
         @Bean
         public FactorService factorService() {
             return mock(FactorService.class);
+        }
+
+        @Bean
+        public FactorPluginService factorPluginService() {
+            return mock(FactorPluginService.class);
         }
 
         @Bean

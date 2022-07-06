@@ -22,6 +22,9 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.monitoring.metrics.Constants;
+import io.gravitee.am.monitoring.metrics.CounterHelper;
+import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
@@ -62,6 +65,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
     @Autowired
     private TransactionProcessorFactory transactionHandlerFactory;
 
+    private final CounterHelper domainEvtCounter = new CounterHelper(Constants.METRICS_DOMAIN_EVENTS);
+
+    private final GaugeHelper domainGauge = new GaugeHelper(Constants.METRICS_DOMAINS);
+
     @Override
     public void doStart() throws Exception {
         super.doStart();
@@ -78,8 +85,10 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
 
     @Override
     public void onEvent(Event<DomainEvent, Domain> event) {
+        domainEvtCounter.increment();
         switch (event.type()) {
             case DEPLOY:
+                domainGauge.incrementValue();
                 securityDomainHandlerRegistry.create(event.content());
                 break;
             case UPDATE:
@@ -87,6 +96,7 @@ public class DefaultReactor extends AbstractService implements Reactor, EventLis
                 break;
             case UNDEPLOY:
                 securityDomainHandlerRegistry.remove(event.content());
+                domainGauge.decrementValue();
                 break;
         }
     }

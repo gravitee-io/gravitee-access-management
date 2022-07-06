@@ -30,7 +30,7 @@ import org.springframework.util.Assert;
 public abstract class AmPluginHandler<T> extends AbstractPluginHandler {
 
     @Autowired
-    private PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
+    protected PluginClassLoaderFactory<Plugin> pluginClassLoaderFactory;
 
     @Autowired
     private AmPluginManager<T> pluginManager;

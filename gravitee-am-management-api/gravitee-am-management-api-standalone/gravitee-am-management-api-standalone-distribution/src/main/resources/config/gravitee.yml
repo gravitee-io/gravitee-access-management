@@ -127,6 +127,7 @@ management:
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:
   type: mongodb
+  use-management-settings: true
   mongodb:
     dbname: ${ds.mongodb.dbname}
     host: ${ds.mongodb.host}
@@ -272,6 +273,11 @@ email:
 
 # User management configuration
 user:
+#  activity:
+#    enabled: true # default is false
+#    anon: #used to anonymize the user activity. You need to use the same values in your gateway
+#      algorithm: SHA256 # possible values: SHA256, SHA512, NONE. default SHA256
+#      salt: someSalt #default is null meaning the key generated will change every time and data won't be exploitable
   email:
     policy:
       pattern: ^[a-zA-Z0-9_+-]+(?:\.[a-zA-Z0-9_+-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$
@@ -386,6 +392,23 @@ gateway:
 
 # Beta subject to change
 alerts:
+#  risk_assessment:
+#  # You need the Risk Assessment Service plugin for these alerts
+#    geoVelocity:
+#      name: Geo velocity alert
+#      description: A geo velocity risk-based alert has been triggered
+#      assessments: LOW # Default is LOW
+#      severity: WARNING
+#    ipReputation:
+#      name: IP reputation alert
+#      description: An IP reputation risk-based alert has been triggered
+#      assessments: LOW # Default is LOW
+#      severity: WARNING
+#    unknownDevices:
+#      name: Unknown Device alert
+#      description: An unknown device risk-based alert has been triggered
+#      assessments: HIGH # Default is HIGH
+#      severity: WARNING
   too_many_login_failures:
     name: "Too many login failures detected"
     description: "More than {threshold}% of logins are in failure over the last {window} second(s)"

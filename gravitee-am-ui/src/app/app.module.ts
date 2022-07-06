@@ -283,9 +283,7 @@ import {
   ApplicationMembershipsDialog
 } from './domain/applications/application/advanced/memberships/memberships.component';
 import {
-  AdaptiveMfaDialog,
-  ApplicationFactorsComponent,
-  MfaStepUpDialog,
+  ApplicationFactorsComponent
 } from './domain/applications/application/advanced/factors/factors.component';
 import {ManagementRolesComponent} from './settings/management/roles/roles.component';
 import {ManagementRoleComponent} from './settings/management/roles/role/role.component';
@@ -407,6 +405,21 @@ import { DeviceNotifierFormComponent } from './domain/settings/openid/ciba/devic
 import { CookieSettingsComponent } from "./domain/components/cookie/cookie-settings.component";
 import { UserNotificationsService } from './services/user-notifications.service';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
+import {MfaSelectComponent} from "./domain/applications/application/advanced/factors/mfa/mfa-select.component";
+import {MfaRememberDeviceComponent} from "./domain/applications/application/advanced/factors/remember-device/mfa-remember-device.component";
+import {TimeConverterService} from "./services/time-converter.service";
+import {
+  MfaStepUpComponent,
+  MfaStepUpDialog
+} from "./domain/applications/application/advanced/factors/step-up-auth/mfa-step-up.component";
+import {MfaActivateComponent} from "./domain/applications/application/advanced/factors/mfa-activate/mfa-activate.component";
+import {MfaOptionalComponent} from "./domain/applications/application/advanced/factors/mfa-activate/optional/mfa-optional.component";
+import {
+  AdaptiveMfaDialog,
+  MfaConditionalComponent
+} from "./domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component";
+import {MfaIntelligentComponent} from "./domain/applications/application/advanced/factors/mfa-activate/intelligent/mfa-intelligent.component";
+import {AssessmentComponent} from "./domain/applications/application/advanced/factors/mfa-activate/intelligent/assessment/assessment.component";
 
 @NgModule({
   declarations: [
@@ -638,7 +651,15 @@ import { Saml2Component } from './domain/settings/saml2/saml2.component';
     MfaStepUpDialog,
     AdaptiveMfaDialog,
     GvFormControlDirective,
-    IdpSelectionInfoDialog
+    IdpSelectionInfoDialog,
+    MfaSelectComponent,
+    MfaRememberDeviceComponent,
+    MfaStepUpComponent,
+    MfaActivateComponent,
+    MfaOptionalComponent,
+    MfaConditionalComponent,
+    MfaIntelligentComponent,
+    AssessmentComponent
   ],
   imports: [
     BrowserModule,
@@ -768,6 +789,7 @@ import { Saml2Component } from './domain/settings/saml2/saml2.component';
     DeviceNotifiersResolver,
     DeviceNotifierResolver,
     DeviceNotifierPluginsResolver,
+    TimeConverterService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

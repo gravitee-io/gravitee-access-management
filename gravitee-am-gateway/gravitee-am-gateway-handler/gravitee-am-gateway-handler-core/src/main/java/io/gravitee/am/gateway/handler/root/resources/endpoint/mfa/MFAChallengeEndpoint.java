@@ -244,7 +244,7 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
             }
 
             if (factor.is(FIDO2)) {
-                final String userId = routingContext.session().get(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
+                final String userId = endUser.getId();
                 final JsonObject webauthnResp = new JsonObject(code);
                 final String credentialId = webauthnResp.getString("id");
                 updateCredential(routingContext.request(), credentialId, userId, ch -> {
@@ -550,7 +550,6 @@ public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<Ro
     private void cleanSession(RoutingContext ctx) {
         ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
         ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USER_ID);
 
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
         ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);

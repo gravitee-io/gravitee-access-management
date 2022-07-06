@@ -58,24 +58,26 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- R2DBC -->
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-spi</artifactId>
-            <version>${r2dbc-spi.version}</version>
-            <scope>compile</scope>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-pool</artifactId>
-            <version>${r2dbc-pool.version}</version>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-jdbc-api</artifactId>
+            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
+                    <artifactId>spring-data-r2dbc</artifactId>
+                    <groupId>org.springframework.data</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- R2DBC -->
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-postgresql</artifactId>

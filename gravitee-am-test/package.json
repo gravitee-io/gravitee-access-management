@@ -1,11 +1,12 @@
 {
-  "name": "gravitee-am-cypress",
-  "version": "3.16.0-SNAPSHOT",
+  "name": "gravitee-am-test",
+  "version": "3.18.0-SNAPSHOT",
   "private": true,
-  "description": "Gravitee.io AM - Cypress",
+  "description": "Gravitee.io AM - Tests",
   "scripts": {
-    "test": "jest --config=api/config/dev.config.js",
-    "ci": "jest --config=api/config/ci.config.js",
+    "update:sdk:mapi": "bash scripts/update-management-api-sdk.sh $*",
+    "test": "jest --runInBand --no-cache --config=api/config/dev.config.js",
+    "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
     "ui-test": "cypress open",
     "lint": "echo 'Lint to be configured'",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix",
@@ -38,6 +39,7 @@
     "btoa": "^1.2.1"
   },
   "dependencies": {
+    "cross-fetch": "^3.1.5",
     "faker": "5.5.3"
   }
 }

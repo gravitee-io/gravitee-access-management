@@ -47,6 +47,14 @@ public interface UserProvider extends Service<UserProvider> {
         return this;
     }
 
+    default Single<UserProvider> asyncStart() {
+        try {
+            return Single.fromCallable(() -> this.start());
+        } catch (Exception e) {
+            return Single.error(e);
+        }
+    }
+
     default UserProvider stop() throws Exception {
         return this;
     }

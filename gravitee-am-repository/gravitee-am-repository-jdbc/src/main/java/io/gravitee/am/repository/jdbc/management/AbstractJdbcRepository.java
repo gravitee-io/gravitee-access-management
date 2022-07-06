@@ -19,6 +19,10 @@ import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +32,6 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.ReactiveTransactionManager;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -71,13 +70,13 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected String createInsertStatement(String table, List<String> columns) {
-        return "INSERT INTO "+table+" (" +
+        return "INSERT INTO " + table + " (" +
                 columns.stream().map(SqlIdentifier::quoted).map(databaseDialectHelper::toSql).collect(Collectors.joining(","))
                 + ") VALUES (:" + columns.stream().collect(Collectors.joining(",:")) + ")";
     }
 
     protected String createUpdateStatement(String table, List<String> columns, List<String> whereClauseColumns) {
-        StringBuffer buffer = new StringBuffer("UPDATE "+ table + " SET ");
+        StringBuffer buffer = new StringBuffer("UPDATE " + table + " SET ");
         for (int i = 0; i < columns.size(); ++i) {
             final String colName = columns.get(i);
             buffer.append(databaseDialectHelper.toSql(SqlIdentifier.quoted(colName)));

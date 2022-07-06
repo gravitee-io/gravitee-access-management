@@ -60,6 +60,7 @@ public class DomainsResource extends AbstractDomainResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
+            nickname = "listDomains",
             value = "List security domains for an environment",
             notes = "List all the security domains accessible to the current user. " +
                     "User must have DOMAIN[LIST] permission on the specified environment or organization " +
@@ -96,12 +97,14 @@ public class DomainsResource extends AbstractDomainResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a security domain.",
+    @ApiOperation(
+            nickname = "createDomain",
+            value = "Create a security domain.",
             notes = "Create a security domain. " +
                     "User must have DOMAIN[CREATE] permission on the specified environment " +
                     "or DOMAIN[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Domain successfully created"),
+            @ApiResponse(code = 201, message = "Domain successfully created", response = Domain.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -124,7 +127,9 @@ public class DomainsResource extends AbstractDomainResource {
     @GET
     @Path("_hrid/{hrid}")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a security domain by hrid",
+    @ApiOperation(
+            nickname = "findDomainByHrid",
+            value = "Get a security domain by hrid",
             notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")

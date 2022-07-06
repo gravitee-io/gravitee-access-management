@@ -31,6 +31,8 @@ public class AuthenticationProviderConfiguration extends ProviderConfiguration {
    private final Map<String, String[]> roleMapper;
    private final CertificateManager certificateManager;
 
+   private final IdentityProvider identityProvider;
+
     public AuthenticationProviderConfiguration(IdentityProvider identityProvider) {
         this(identityProvider, null);
     }
@@ -40,6 +42,7 @@ public class AuthenticationProviderConfiguration extends ProviderConfiguration {
         this.mappers = identityProvider.getMappers();
         this.roleMapper = identityProvider.getRoleMapper();
         this.certificateManager = certificateManager;
+        this.identityProvider = identityProvider;
     }
 
     public Map<String, String> getMappers() {
@@ -52,5 +55,9 @@ public class AuthenticationProviderConfiguration extends ProviderConfiguration {
 
     public CertificateManager getCertificateManager() {
         return certificateManager;
+    }
+
+    public IdentityProvider getIdentityProvider() {
+        return identityProvider;
     }
 }

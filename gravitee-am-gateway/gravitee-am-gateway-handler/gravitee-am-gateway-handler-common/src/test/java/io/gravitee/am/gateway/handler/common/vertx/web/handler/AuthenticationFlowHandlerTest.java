@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
+import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
@@ -30,16 +31,24 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.Aut
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAChallengeStep;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFAEnrollStep;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.MFARecoveryCodeStep;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
+import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserService;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.risk.assessment.api.assessment.Assessment;
+import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
+import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
+import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
+import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -50,6 +59,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RISK_ASSESSMENT_KEY;
 import static org.mockito.ArgumentMatchers.*;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
@@ -83,6 +93,7 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
         List<AuthenticationFlowStep> steps = new LinkedList<>();
         steps.add(new MFAEnrollStep(RedirectHandler.create("/mfa/enroll"), ruleEngine, factorManager));
         steps.add(new MFAChallengeStep(RedirectHandler.create("/mfa/challenge"), ruleEngine, factorManager));
+        steps.add(new MFARecoveryCodeStep(RedirectHandler.create("/mfa/recovery_code"), ruleEngine, factorManager));
         AuthenticationFlowChainHandler authenticationFlowChainHandler = new AuthenticationFlowChainHandler(steps);
 
         when(jwtService.encode(any(JWT.class), (CertificateProvider) eq(null))).thenReturn(Single.just("token"));
@@ -351,6 +362,76 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
     }
 
     @Test
+    public void shouldRedirectToChallenge_user_device_known_and_step_up_active_strongly_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setStepUpAuthenticationRule("{#request.params['scope'][0] == 'write'}");
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login?scope=write",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge?scope=write"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldContinue_user_device_known_and_step_up_active_not_strongly_auth() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // set user
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setStepUpAuthenticationRule("{true}");
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, false);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET,
+                "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
     public void shouldContinue_user_coming_from_mfa_challenge() throws Exception {
         router.route().order(-1).handler(rc -> {
             // set client
@@ -516,6 +597,81 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             Client client = new Client();
             client.setFactors(Collections.singleton("factor-1"));
             rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            MFASettings mfaSettings = new MFASettings();
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/challenge"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+
+    @Test
+    public void shouldContinue_rememberDevice_with_device_assessment_enabled() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            client.setRiskAssessment(
+                    new RiskAssessmentSettings().setEnabled(true).setDeviceAssessment(
+                            new AssessmentSettings().setEnabled(true)
+                    )
+            );
+            MFASettings mfaSettings = new MFASettings();
+            mfaSettings.setAdaptiveAuthenticationRule("{#context.attributes['risk_assessment'].devices.assessment.name() == 'SAFE'}");
+            final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+            rememberDevice.setActive(true);
+            mfaSettings.setRememberDevice(rememberDevice);
+            rc.session().put(RISK_ASSESSMENT_KEY, new AssessmentMessageResult().setDevices(
+                    new AssessmentResult<Double>().setAssessment(Assessment.SAFE).setResult(0D)
+            ));
+            rc.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+            client.setMfaSettings(mfaSettings);
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(Collections.singletonList(enrolledFactor));
+            rc.getDelegate().setUser(new User(endUser));
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldRedirectToMFAChallengePage_rememberDevice_with_risk_assessment_but_no_device() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            client.setFactors(Collections.singleton("factor-1"));
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            client.setRiskAssessment(
+                    new RiskAssessmentSettings()
+            );
             MFASettings mfaSettings = new MFASettings();
             final RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
             rememberDevice.setActive(true);
@@ -764,6 +920,77 @@ public class AuthenticationFlowHandlerTest extends RxWebTestBase {
             rc.next();
         });
 
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotContinueUser_RecoveryCodeisAlreadyActive() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            final Factor recoveryFactor = new Factor();
+            recoveryFactor.setFactorType(FactorType.RECOVERY_CODE);
+            recoveryFactor.setId("factor-2");
+            when(factorManager.getFactor(eq("factor-2"))).thenReturn(recoveryFactor);
+
+            client.setFactors(Set.of("factor-1", "factor-2"));
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+            EnrolledFactor factorRecovery = new EnrolledFactor();
+            factorRecovery.setFactorId("factor-2");
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledFactor, factorRecovery));
+            rc.getDelegate().setUser(new User(endUser));
+
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.endsWith("/mfa/recovery_code"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldContinueUser_RecoveryCode_active() throws Exception {
+        router.route().order(-1).handler(rc -> {
+            // set client
+            Client client = new Client();
+            rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            client.setFactors(Set.of("factor-1", "factor-2"));
+
+            // set user
+            EnrolledFactor enrolledFactor = new EnrolledFactor();
+            enrolledFactor.setFactorId("factor-1");
+            enrolledFactor.setStatus(ACTIVATED);
+
+            EnrolledFactor factorRecovery = new EnrolledFactor();
+            factorRecovery.setFactorId("factor-2");
+            factorRecovery.setStatus(ACTIVATED);
+            factorRecovery.setSecurity(new EnrolledFactorSecurity(FactorSecurityType.RECOVERY_CODE, null));
+
+            io.gravitee.am.model.User endUser = new io.gravitee.am.model.User();
+            endUser.setFactors(List.of(enrolledFactor, factorRecovery));
+            rc.getDelegate().setUser(new User(endUser));
+
+            rc.session().put(ConstantKeys.STRONG_AUTH_COMPLETED_KEY, true);
+            rc.next();
+        });
 
         testRequest(
                 HttpMethod.GET, "/login",

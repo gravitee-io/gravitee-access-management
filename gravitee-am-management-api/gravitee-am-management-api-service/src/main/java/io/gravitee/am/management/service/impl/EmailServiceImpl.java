@@ -36,6 +36,8 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
+import io.reactivex.Completable;
+import io.reactivex.Maybe;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,19 +92,23 @@ public class EmailServiceImpl implements EmailService {
     private DomainService domainService;
 
     @Override
-    public void send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
+    public Completable send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
             // get raw email template
-            io.gravitee.am.model.Email emailTemplate = getEmailTemplate(template, user);
-            // prepare email
-            Email email = prepareEmail(domain, client, template, emailTemplate, user);
-            // send email
-            sendEmail(email, user);
+            return getEmailTemplate(template, user).map(emailTemplate -> {
+                // prepare email
+                Email email = prepareEmail(domain, client, template, emailTemplate, user);
+                // send email
+                sendEmail(email, user);
+
+                return email;
+            }).ignoreElement();
         }
+        return Completable.complete();
     }
 
     @Override
-    public io.gravitee.am.model.Email getEmailTemplate(io.gravitee.am.model.Template template, User user) {
+    public Maybe<io.gravitee.am.model.Email> getEmailTemplate(io.gravitee.am.model.Template template, User user) {
         return emailManager.getEmail(template, user, getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
@@ -119,20 +125,22 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public Email getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params) throws IOException, TemplateException {
+    public Maybe<Email> getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params) {
         // get raw email template
-        io.gravitee.am.model.Email emailTemplate = emailManager.getEmail(template, ReferenceType.DOMAIN, domain.getId(), user, getDefaultSubject(template), getDefaultExpireAt(template));
-        // prepare email
-        Email email = prepareEmail(domain, client, template, emailTemplate, user);
+        return emailManager.getEmail(template, ReferenceType.DOMAIN, domain.getId(), user, getDefaultSubject(template), getDefaultExpireAt(template))
+                .map(emailTemplate -> {
+                    // prepare email
+                    Email email = prepareEmail(domain, client, template, emailTemplate, user);
 
-        if (email.getParams() != null) {
-            email.getParams().putAll(params);
-        } else {
-            email.setParams(params);
-        }
+                    if (email.getParams() != null) {
+                        email.getParams().putAll(params);
+                    } else {
+                        email.setParams(params);
+                    }
 
-        // send email
-        return processEmailTemplate(email);
+                    // send email
+                    return processEmailTemplate(email);
+                });
     }
 
     private Email processEmailTemplate(Email email) throws IOException, TemplateException {

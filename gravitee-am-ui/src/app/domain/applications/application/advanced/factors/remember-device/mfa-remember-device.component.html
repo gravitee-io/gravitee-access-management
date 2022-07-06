@@ -1,0 +1,72 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<div class="gv-form-section">
+  <div class="gv-form-section-title mfa-section-title">
+    <div class="mfa-chip">
+      <mat-chip-list [disabled]="true">
+        <mat-chip [disableRipple]="true" [selectable]="false">3</mat-chip>
+      </mat-chip-list>
+    </div>
+    <div class="mfa-title">
+      <h5>Remember Device</h5>
+      <small>Remember Device will skip MFA if the user's device is known.</small>
+    </div>
+  </div>
+  <blockquote class="warning" *ngIf="!hasDeviceIdentifierPlugins()">
+    <p>
+      <mat-icon>warning_outline</mat-icon>
+      You need to create a <b> device identifier </b> plugin to use the remember device feature.
+    </p>
+  </blockquote>
+  <div class="gv-form-section-description">
+    <mat-slide-toggle matInput placeholder="Remember device" name="mfaRememberDevice"
+                      [disabled]="!hasDeviceIdentifierPlugins()"
+                      (change)="onToggle($event)" [checked]="active">
+      Enable Remember Device
+    </mat-slide-toggle>
+  </div>
+  <br/>
+  <form *ngIf="active" fxLayoutGap="10px">
+    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+      <mat-label>Select your device identifier provider</mat-label>
+      <mat-select (selectionChange)="updateDeviceIdentifierId($event)" [(value)]="this.selectedDeviceIdentifier"
+                  name="deviceIdentifierId">
+        <mat-option *ngFor="let rd of deviceIdentifiers; index as i;" [value]="rd.id">{{rd.name}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+      <input matInput type="number" placeholder="Duration" name="expirationTimeSeconds" min="0" [min]="0"
+             [value]="displayExpiresIn()" (keyup)="onTimeChange($event)">
+      <mat-hint>Default time is 10 hours</mat-hint>
+    </mat-form-field>
+    <mat-form-field appearance="outline" floatLabel="always" fxFlex="32">
+      <mat-select placeholder="Unit" name="expirationTimeUnit" [value]="displayUnitTime()"
+                  (selectionChange)="onUnitChange($event)">
+        <mat-option value="seconds">SECONDS</mat-option>
+        <mat-option value="minutes">MINUTES</mat-option>
+        <mat-option value="hours">HOURS</mat-option>
+        <mat-option value="days">DAYS</mat-option>
+        <mat-option value="weeks">WEEKS</mat-option>
+        <mat-option value="months">MONTHS</mat-option>
+        <mat-option value="years">YEARS</mat-option>
+      </mat-select>
+      <mat-hint>Period of time users can trust devices</mat-hint>
+    </mat-form-field>
+  </form>
+</div>

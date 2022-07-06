@@ -29,6 +29,7 @@ import io.gravitee.am.service.model.NewGroup;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
+import java.util.Collection;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.Valid;
@@ -66,13 +67,15 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "List groups for a security domain",
+    @ApiOperation(
+            nickname = "listGroups",
+            value = "List groups for a security domain",
             notes = "User must have the DOMAIN_GROUP[LIST] permission on the specified domain " +
                     "or DOMAIN_GROUP[LIST] permission on the specified environment " +
                     "or DOMAIN_GROUP[LIST] permission on the specified organization. " +
                     "Each returned group is filtered and contains only basic information such as id and name.")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "List groups for a security domain", response = Group.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "List groups for a security domain", response = GroupPage.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -93,12 +96,14 @@ public class GroupsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Create a group",
+    @ApiOperation(
+            nickname = "createGroup",
+            value = "Create a group",
             notes = "User must have the DOMAIN_GROUP[CREATE] permission on the specified domain " +
                     "or DOMAIN_GROUP[CREATE] permission on the specified environment " +
                     "or DOMAIN_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 201, message = "Group successfully created"),
+            @ApiResponse(code = 201, message = "Group successfully created", response = Group.class),
             @ApiResponse(code = 500, message = "Internal server error")})
     public void create(
             @PathParam("organizationId") String organizationId,
@@ -132,5 +137,11 @@ public class GroupsResource extends AbstractResource {
         filteredGroup.setDescription(group.getDescription());
 
         return filteredGroup;
+    }
+
+    public static final class GroupPage extends Page<Group> {
+        public GroupPage(Collection<Group> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 }

@@ -24,7 +24,6 @@ import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
-import io.gravitee.am.reporter.jdbc.JUnitConfiguration;
 import io.gravitee.am.reporter.jdbc.tool.DatabaseUrlProvider;
 import io.reactivex.observers.TestObserver;
 import org.junit.Before;
@@ -38,7 +37,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -49,7 +54,7 @@ import static org.junit.Assert.assertEquals;
  */
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = JUnitConfiguration.class, loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {DatabaseUrlProvider.class, JdbcReporterJUnitConfiguration.class}, loader = AnnotationConfigContextLoader.class)
 public class JdbcAuditReporterTest {
 
     public static final String MY_USER = "MyUser";

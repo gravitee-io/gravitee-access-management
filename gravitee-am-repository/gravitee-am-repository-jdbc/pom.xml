@@ -50,7 +50,6 @@
         <dozer-jaxb-runtime.version>2.4.0-b180830.0438</dozer-jaxb-runtime.version>
         <reactor-adapter.version>3.4.6</reactor-adapter.version>
         <reactor-core.version>3.4.13</reactor-core.version>
-        <spring-data-r2dbc.version>1.4.1</spring-data-r2dbc.version>
     </properties>
 
     <dependencyManagement>
@@ -72,6 +71,12 @@
             <artifactId>gravitee-am-repository-api</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-jdbc-api</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Spring dependencies -->
@@ -100,22 +105,6 @@
             <version>${reactor-core.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-r2dbc</artifactId>
-            <version>${spring-data-r2dbc.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactive-streams</artifactId>
-                    <groupId>org.reactivestreams</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/io.projectreactor.addons/reactor-adapter -->
         <dependency>
             <groupId>io.projectreactor.addons</groupId>
@@ -127,13 +116,6 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-unix-common</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>io.projectreactor.netty</groupId>
-            <artifactId>reactor-netty-core</artifactId>
-            <version>${reactor-netty.version}</version>
-        </dependency>
-
 
         <!-- Liquibase -->
         <dependency>
@@ -148,27 +130,6 @@
         </dependency>
 
         <!-- R2DBC -->
-       <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-pool</artifactId>
-            <exclusions>
-                <exclusion>
-                    <artifactId>reactor-core</artifactId>
-                    <groupId>io.projectreactor</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>r2dbc-spi</artifactId>
-                    <groupId>io.r2dbc</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>io.r2dbc</groupId>
-            <artifactId>r2dbc-spi</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
         <dependency>
             <groupId>io.r2dbc</groupId>
             <artifactId>r2dbc-postgresql</artifactId>
@@ -375,6 +336,13 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.29</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.node</groupId>
+            <artifactId>gravitee-node-monitoring</artifactId>
+            <version>${gravitee-node.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

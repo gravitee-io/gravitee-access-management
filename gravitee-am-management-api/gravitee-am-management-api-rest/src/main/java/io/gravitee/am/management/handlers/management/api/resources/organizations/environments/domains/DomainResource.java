@@ -54,7 +54,9 @@ public class DomainResource extends AbstractDomainResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get a security domain",
+    @ApiOperation(
+            nickname = "findDomain",
+            value = "Get a security domain",
             notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
@@ -80,7 +82,9 @@ public class DomainResource extends AbstractDomainResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Update the security domain",
+    @ApiOperation(
+            nickname = "updateDomain",
+            value = "Update the security domain",
             notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
@@ -100,7 +104,9 @@ public class DomainResource extends AbstractDomainResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Patch the security domain",
+    @ApiOperation(
+            nickname = "patchDomain",
+            value = "Patch the security domain",
             notes = "User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified environment " +
                     "or DOMAIN_SETTINGS[UPDATE] permission on the specified organization.")
@@ -118,7 +124,9 @@ public class DomainResource extends AbstractDomainResource {
     }
 
     @DELETE
-    @ApiOperation(value = "Delete the security domain",
+    @ApiOperation(
+            nickname = "deleteDomain",
+            value = "Delete the security domain",
             notes = "User must have the DOMAIN[DELETE] permission on the specified domain " +
                     "or DOMAIN[DELETE] permission on the specified environment " +
                     "or DOMAIN[DELETE] permission on the specified organization.")
@@ -140,7 +148,9 @@ public class DomainResource extends AbstractDomainResource {
     @GET
     @Path("/entrypoints")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Get the matching gateway entrypoint of the domain",
+    @ApiOperation(
+            nickname = "getDomainEntrypoints",
+            value = "Get the matching gateway entrypoint of the domain",
             notes = "User must have the DOMAIN[READ] permission on the specified domain, environment or organization. " +
                     "Domain will be filtered according to permissions (READ on DOMAIN_USER_ACCOUNT, DOMAIN_IDENTITY_PROVIDER, DOMAIN_FORM, DOMAIN_LOGIN_SETTINGS, " +
                     "DOMAIN_DCR, DOMAIN_SCIM, DOMAIN_SETTINGS)")
