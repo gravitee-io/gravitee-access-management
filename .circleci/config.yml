@@ -201,37 +201,47 @@ jobs:
             ssh-add -D
             ssh-add "${LOCAL_SSH_PRVIKEY}"
 
-            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+            git clone --branch devs-preprod git@github.com:gravitee-io/cloud-am.git
       - run:
-          name: Helm upgrade and 🚀
+          name: Helm upgrade and 🚀 Mongo and JDBC instances
           command: |
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
-            az aks get-credentials --resource-group am-hprod --name am-hprod
+            az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
             if [ "${CIRCLE_BRANCH}" == "master" ]
             then
             helm upgrade --repo https://helm.gravitee.io \
-                        --install am \
-                        -n nightly \
-                        -f ./cloud-am/nightly/values.yaml am \
-                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                        --set "api.image.tag=${TAG}" \
-                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                        --set "gateway.image.tag=${TAG}" \
-                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                        --set "ui.image.tag=${TAG}"
+                       --install am-master \
+                       -n am-master-dev \
+                       -f ./cloud-am/devs-preprod/values.yaml am \
+                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                       --set "api.image.tag=${TAG}" \
+                       --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                       --set "gateway.image.tag=${TAG}" \
+                       --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                       --set "ui.image.tag=${TAG}"
+            helm upgrade --repo https://helm.gravitee.io \
+                       --install am-psql \
+                       -n am-master-postgres-dev \
+                       -f ./cloud-am/devs-preprod/values-psql.yaml am \
+                       --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                       --set "api.image.tag=${TAG}" \
+                       --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                       --set "gateway.image.tag=${TAG}" \
+                       --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                       --set "ui.image.tag=${TAG}"
             else
             # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
-            kubectl create namespace nightly-${CIRCLE_BRANCH//./-} --dry-run=client -o yaml | kubectl apply -f -
+            kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
             helm upgrade --repo https://helm.gravitee.io \
-                                    --install am-${CIRCLE_BRANCH//./-} \
-                                    -n nightly-${CIRCLE_BRANCH//./-} \
-                                    -f ./cloud-am/nightly/values-$CIRCLE_BRANCH.yaml am \
-                                    --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                                    --set "api.image.tag=${TAG}" \
-                                    --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                                    --set "gateway.image.tag=${TAG}" \
-                                    --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                                    --set "ui.image.tag=${TAG}"
+                                   --install am-${CIRCLE_BRANCH//./-} \
+                                   -n am-${CIRCLE_BRANCH//./-}-dev \
+                                   -f ./cloud-am/devs-preprod/values-$CIRCLE_BRANCH.yaml am \
+                                   --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
+                                   --set "api.image.tag=${TAG}" \
+                                   --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
+                                   --set "gateway.image.tag=${TAG}" \
+                                   --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
+                                   --set "ui.image.tag=${TAG}"
             fi
 
 
