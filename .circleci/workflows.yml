@@ -597,220 +597,6 @@ jobs:
           root: /tmp
           paths:
             - ./docker-tag.txt
-      - run:
-          name: Build EE ZIP Bundle
-          when: always
-          command: |
-            echo "# ---"
-            echo "# --- Load EE Plugins versions :"
-            
-            export GRAVITEEIO_AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-            
-            source .ee-dependencies.env
-            
-            echo "# --- Found EE Plugins versions :"          
-            echo "# ---   - AE: ${GRAVITEE_AE_CONNECTOR_VERSION}"
-            echo "# ---   - SAML IDP: ${SAML_IDP_HANDLER_VERSION}"
-            echo "# ---   - SAML CLIENT: ${ID_PROVIDER_SAML_VERSION}"
-            echo "# ---   - CAS: ${ID_PROVIDER_CAS_VERSION}"
-            echo "# ---   - HTTP_FLOW: ${ID_PROVIDER_HTTP_FLOW_VERSION}"
-            echo "# ---   - KERBEROS: ${ID_PROVIDER_KERBEROS_VERSION}"
-            echo "# ---   - Slack Notifier: ${NOTIFIER_SLACK_VERSION}"
-            echo "# ---   - Factor HTTP: ${FACTOR_HTTP_VERSION}"
-            echo "# ---   - Resource HTTP Factor: ${RESOURCE_HTTP_FACTOR_VERSION}"
-            
-            export OPS_START_HOME=$(pwd)
-            export OPS_HOME=$(mktemp -d -t "prepared_ee_bundle-XXXXXXXXXX")
-            cd ${OPS_HOME}
-            
-            # ---
-            # ---
-            # Get AM EE distribution
-            mkdir -p graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/
-            unzip /tmp/gravitee-am-gateway-standalone-*.zip -d graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/
-            unzip /tmp/gravitee-am-management-api-standalone-*.zip -d graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/
-            # ---
-            # ---
-
-            # ---
-            # ---
-            # Add AM SAML 2 IdP
-            wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-saml2-generic/gravitee-am-identityprovider-saml2-generic-${ID_PROVIDER_SAML_VERSION}.zip
-            wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-saml2-generic/gravitee-am-identityprovider-saml2-generic-${ID_PROVIDER_SAML_VERSION}.zip.sha1
-            sha1sum -c gravitee-am-identityprovider-saml2-generic-${ID_PROVIDER_SAML_VERSION}.zip.sha1
-            cp gravitee-am-identityprovider-saml2-generic-${ID_PROVIDER_SAML_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-            mv gravitee-am-identityprovider-saml2-generic-${ID_PROVIDER_SAML_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add AM CAS IdP
-            if [ "x${ID_PROVIDER_CAS_VERSION}" == "x" ]; then
-              echo "The ID_PROVIDER_CAS_VERSION env. var. is not set, SO DO NOT INCLUDE CAS PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The ID_PROVIDER_CAS_VERSION env. var. is set, SO WE WILL INCLUDE CAS PLUGIN VERSION ${ID_PROVIDER_CAS_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-cas/gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-cas/gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip.sha1
-              cp gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-identityprovider-cas-${ID_PROVIDER_CAS_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add AM SAML IdP HANDLER
-            if [ "x${ID_PROVIDER_CAS_VERSION}" == "x" ]; then
-              echo "The SAML_IDP_HANDLER_VERSION env. var. is not set, SO DO NOT INCLUDE SAL IDP HANDLER PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The SAML_IDP_HANDLER_VERSION env. var. is set, SO WE WILL INCLUDE SAML IDP HANDLER PLUGIN VERSION ${SAML_IDP_HANDLER_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip.sha1
-              cp gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-gateway-handler-saml2-idp-${SAML_IDP_HANDLER_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add AM Kerberos IdP
-            if [ "x${ID_PROVIDER_KERBEROS_VERSION}" == "x" ]; then
-              echo "The ID_PROVIDER_KERBEROS_VERSION env. var. is not set, SO DO NOT INCLUDE KRB PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The ID_PROVIDER_KERBEROS_VERSION env. var. is set, SO WE WILL INCLUDE KRB PLUGIN VERSION ${ID_PROVIDER_KERBEROS_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-kerberos/gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-kerberos/gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip.sha1
-              cp gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-identityprovider-kerberos-${ID_PROVIDER_KERBEROS_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add AM Http Flow IdP
-            if [ "x${ID_PROVIDER_HTTP_FLOW_VERSION}" == "x" ]; then
-              echo "The ID_PROVIDER_HTTP_FLOW_VERSION env. var. is not set, SO DO NOT INCLUDE HTTP FLOW PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The ID_PROVIDER_HTTP_FLOW_VERSION env. var. is set, SO WE WILL INCLUDE HTTP FLOW PLUGIN VERSION ${ID_PROVIDER_KERBEROS_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-http-flow/gravitee-am-identityprovider-http-flow-${ID_PROVIDER_HTTP_FLOW_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/idps/gravitee-am-identityprovider-http-flow/gravitee-am-identityprovider-http-flow-${ID_PROVIDER_HTTP_FLOW_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-identityprovider-http-flow-${ID_PROVIDER_KERBEROS_VERSION}.zip.sha1
-              cp gravitee-am-identityprovider-http-flow-${ID_PROVIDER_HTTP_FLOW_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-identityprovider-http-flow-${ID_PROVIDER_HTTP_FLOW_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-identityprovider-http-flow-${ID_PROVIDER_HTTP_FLOW_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add AE connector plugin
-            if [ "x${GRAVITEE_AE_CONNECTOR_VERSION}" == "x" ]; then
-              echo "The GRAVITEE_AE_CONNECTOR_VERSION env. var. is not set, SO DO NOT INCLUDE AE PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The GRAVITEE_AE_CONNECTOR_VERSION env. var. is set, SO WE WILL INCLUDE AE PLUGIN VERSION ${GRAVITEE_AE_CONNECTOR_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ae/plugins/connectors/gravitee-ae-connectors-ws/gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ae/plugins/connectors/gravitee-ae-connectors-ws/gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip.sha1
-              sha1sum -c gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip.sha1
-              cp gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-ae-connectors-ws-${GRAVITEE_AE_CONNECTOR_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add SLACK connector plugin
-            if [ "x${NOTIFIER_SLACK_VERSION}" == "x" ]; then
-              echo "The NOTIFIER_SLACK_VERSION env. var. is not set, SO DO NOT INCLUDE SLACK PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The NOTIFIER_SLACK_VERSION env. var. is set, SO WE WILL INCLUDE SLACK PLUGIN VERSION ${NOTIFIER_SLACK_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/plugins/notifiers/gravitee-notifier-slack/gravitee-notifier-slack-${NOTIFIER_SLACK_VERSION}.zip
-              wget https://download.gravitee.io/plugins/notifiers/gravitee-notifier-slack/gravitee-notifier-slack-${NOTIFIER_SLACK_VERSION}.zip.sha1
-              sha1sum -c gravitee-notifier-slack-${NOTIFIER_SLACK_VERSION}.zip.sha1
-              cp gravitee-notifier-slack-${GRAVITEE_AE_CONNECTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-notifier-slack-${GRAVITEE_AE_CONNECTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-notifier-slack-${GRAVITEE_AE_CONNECTOR_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add FACTOR_HTTP connector plugin
-            if [ "x${FACTOR_HTTP_VERSION}" == "x" ]; then
-              echo "The FACTOR_HTTP_VERSION env. var. is not set, SO DO NOT INCLUDE FACTOR HTTP PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The FACTOR_HTTP_VERSION env. var. is set, SO WE WILL INCLUDE FACTOR HTTP PLUGIN VERSION ${FACTOR_HTTP_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-http/gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-http/gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip.sha1
-              cp gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-factor-http-${FACTOR_HTTP_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Add FACTOR_HTTP connector plugin
-            if [ "x${RESOURCE_HTTP_FACTOR_VERSION}" == "x" ]; then
-              echo "The RESOURCE_HTTP_FACTOR_VERSION env. var. is not set, SO DO NOT INCLUDE RES HTTP FACTOR PLUGIN INTO AM EE BUNDLE"
-            else
-              echo "The RESOURCE_HTTP_FACTOR_VERSION env. var. is set, SO WE WILL INCLUDE RES HTTP FACTOR PLUGIN VERSION ${RESOURCE_HTTP_FACTOR_VERSION} INTO AM EE BUNDLE"
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-http-factor/gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip
-              wget https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-http-factor/gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip.sha1
-              sha1sum -c gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip.sha1
-              cp gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-gateway-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              cp gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}/gravitee-am-management-api-standalone-${GRAVITEEIO_AM_VERSION}/plugins
-              rm gravitee-am-resource-http-factor-${RESOURCE_HTTP_FACTOR_VERSION}.zip
-            fi;
-            # ---
-            # ---
-            
-            # ---
-            # ---
-            # Finalize the bundle
-            zip -r graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}
-            rm -rf graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}
-            mv graviteeio-ee-am-full-${GRAVITEEIO_AM_VERSION}.zip /tmp/
-            # ---
-      - run:
-          name: Build & Publish Management API EE Docker Image to Azure Registry
-          when: always
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]
-            then
-              export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-              echo "Gravitee AM version: ${AM_VERSION}"
-              export IMAGE_TAG="graviteeio.azurecr.io/am-management-api:${TAG}-ee"
-              docker build -f docker/enterprise/am/3.x/management-api/Dockerfile-nightly --build-arg GRAVITEEIO_AM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-              echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-              docker push ${IMAGE_TAG}
-            fi
-      - run:
-          name: Build & Publish Gateway EE Docker Image to Azure Registry
-          when: always
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]
-            then
-              export AM_VERSION=$(mvn -s /tmp/.circleci.settings.xml -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
-              export IMAGE_TAG="graviteeio.azurecr.io/am-gateway:${TAG}-ee"   
-              docker build -f docker/enterprise/am/3.x/gateway/Dockerfile-nightly --build-arg GRAVITEEIO_AM_VERSION=${AM_VERSION} -t ${IMAGE_TAG} /tmp
-              echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-              docker push ${IMAGE_TAG}
-            fi
 
   deploy-on-aks:
     docker:
@@ -850,18 +636,18 @@ jobs:
             export LOCAL_SSH_PRVIKEY="${HOME}/.ssh/id_rsa_ac88238fc60f7df0fcdf73203456026c"
             ssh-add -D
             ssh-add "${LOCAL_SSH_PRVIKEY}"
-            git clone --branch hprod  git@github.com:gravitee-io/cloud-am.git
+            git clone --branch devs-preprod git@github.com:gravitee-io/cloud-am.git
       - run:
           name: Helm upgrade and 🚀 Mongo and JDBC instances
           command: |
             az login --service-principal -u $AZURE_APPLICATION_ID --tenant $AZURE_TENANT -p $AZURE_APPLICATION_SECRET
-            az aks get-credentials --resource-group am-hprod --name am-hprod
+            az aks get-credentials --admin --resource-group Devs-Preprod-Hosted --name gravitee-devs-preprod-aks-cluster
             if [ "${CIRCLE_BRANCH}" == "master" ]
             then
             helm upgrade --repo https://helm.gravitee.io \
-                        --install am \
-                        -n nightly \
-                        -f ./cloud-am/nightly/values.yaml am \
+                        --install am-master \
+                        -n am-master-dev \
+                        -f ./cloud-am/devs-preprod/values.yaml am \
                         --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                         --set "api.image.tag=${TAG}" \
                         --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
@@ -870,31 +656,23 @@ jobs:
                         --set "ui.image.tag=${TAG}"
             helm upgrade --repo https://helm.gravitee.io \
                         --install am-psql \
-                        -n nightly-postgres \
-                        -f ./cloud-am/nightly/values-psql.yaml am \
+                        -n am-master-postgres-dev \
+                        -f ./cloud-am/devs-preprod/values-psql.yaml am \
                         --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                         --set "api.image.tag=${TAG}" \
                         --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
                         --set "gateway.image.tag=${TAG}" \
                         --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                         --set "ui.image.tag=${TAG}"
-            helm upgrade --repo https://helm.gravitee.io \
-                        --install am-ee \
-                        -n nightly-ee \
-                        -f ./cloud-am/nightly/values-ee.yaml am \
-                        --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                        --set "api.image.tag=${TAG}-ee" \
-                        --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                        --set "gateway.image.tag=${TAG}-ee" \
-                        --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                        --set "ui.image.tag=${TAG}-ee"
             else
             # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
-            kubectl create namespace nightly-${CIRCLE_BRANCH//./-} --dry-run=client -o yaml | kubectl apply -f -
+            kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
+            # replace verison Pattern into generic maint configuration 
+            sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
             helm upgrade --repo https://helm.gravitee.io \
                                     --install am-${CIRCLE_BRANCH//./-} \
-                                    -n nightly-${CIRCLE_BRANCH//./-} \
-                                    -f ./cloud-am/nightly/values-$CIRCLE_BRANCH.yaml am \
+                                    -n am-${CIRCLE_BRANCH//./-}-dev \
+                                    -f ./cloud-am/devs-preprod/values-maint.yaml am \
                                     --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
                                     --set "api.image.tag=${TAG}" \
                                     --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
@@ -1239,63 +1017,3 @@ workflows:
           tag_latest: << pipeline.parameters.tag_latest >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           gio_product: << pipeline.parameters.gio_product >>
-
-#  build_ciba_container:
-#    when:
-#      and:
-#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-#    jobs:
-#      - secrethub:
-#          context:
-#            - cicd-orchestrator
-#          filters:
-#            branches:
-#              ignore:
-#                - master
-#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-#      - publish-ciba-resource-images-azure-registry:
-#          context: cicd-orchestrator
-#          pre-steps:
-#            - secrethub/env-export:
-#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
-#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-#            - secrethub/env-export:
-#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
-#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
-#          requires:
-#            - secrethub
-#          filters:
-#            branches:
-#              ignore:
-#                - master
-#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-
-#  build_fapi_container:
-#    when:
-#      and:
-#        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-#    jobs:
-#      - secrethub:
-#          context:
-#            - cicd-orchestrator
-#          filters:
-#            branches:
-#              ignore:
-#                - master
-#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-#      - publish-fapi-resource-images-azure-registry:
-#          context: cicd-orchestrator
-#          pre-steps:
-#            - secrethub/env-export:
-#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/username
-#                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-#            - secrethub/env-export:
-#                secret-path: graviteeio/cicd/azure/docker-registries/graviteeio/password
-#                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
-#          requires:
-#            - secrethub
-#          filters:
-#            branches:
-#              ignore:
-#                - master
-#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
