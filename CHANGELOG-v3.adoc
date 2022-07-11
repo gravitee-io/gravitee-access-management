@@ -1,6 +1,39 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/552?closed=1[AM - 3.15.10 (2022-07-11)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Email aliases interpretation with identifier first login doesn't work onto another am domain https://github.com/gravitee-io/issues/issues/7889[#7889]
+- Email sent for MFA doesn't use "from" field defined by SMTP resource https://github.com/gravitee-io/issues/issues/7833[#7833]
+- Factor choice not accurate https://github.com/gravitee-io/issues/issues/7928[#7928]
+- Improve find user during reset password https://github.com/gravitee-io/issues/issues/7912[#7912]
+- Insert action should not be triggered after a reset password https://github.com/gravitee-io/issues/issues/7911[#7911]
+- Login attempts should not be based on the username https://github.com/gravitee-io/issues/issues/7916[#7916]
+- Missing text description for the HTTP factor in the MFA alternatives default template https://github.com/gravitee-io/issues/issues/7878[#7878]
+- AM does not URL-decode when using Basic Authentication as specified in RFC 6794 https://github.com/gravitee-io/issues/issues/7803[#7803]
+
+*_Idp_*
+
+- [jdbc] [mongodb] only update password field during reset password https://github.com/gravitee-io/issues/issues/7800[#7800]
+
+*_Management_*
+
+- Application description ignored during creation https://github.com/gravitee-io/issues/issues/7222[#7222]
+
+=== Improvements
+
+*_Gateway_*
+
+- Add option to client to force S256 challenge method for PKCE https://github.com/gravitee-io/issues/issues/7965[#7965]
+- Update accountNonLocked on successful connection https://github.com/gravitee-io/issues/issues/7831[#7831]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/502?closed=1[AM - 3.18.0 (2022-07-06)]
 
 === Bug fixes
