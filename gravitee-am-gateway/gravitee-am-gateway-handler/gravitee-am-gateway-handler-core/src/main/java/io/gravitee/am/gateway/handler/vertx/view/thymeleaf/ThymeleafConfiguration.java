@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.TemplateEngine;
@@ -35,8 +36,11 @@ public class ThymeleafConfiguration {
     @Autowired
     private Vertx vertx;
 
+    @Value("${templates.path:#{systemProperties['gravitee.home']}/templates}")
+    private String templatesDirectory;
+
     @Bean
-    public ThymeleafTemplateEngine getTemplateEngine() {
+    public ThymeleafTemplateEngine getTemplateEngine(GraviteeMessageResolver messageResolver) {
         ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create(vertx);
         TemplateEngine templateEngine = thymeleafTemplateEngine.getDelegate().getThymeleafTemplateEngine();
 
@@ -45,8 +49,13 @@ public class ThymeleafConfiguration {
         overrideTemplateResolver.setTemplateEngine(templateEngine);
         templateEngine.setTemplateResolver(overrideTemplateResolver);
         templateEngine.addTemplateResolver(defaultTemplateResolver());
-
+        templateEngine.addMessageResolver(messageResolver);
         return thymeleafTemplateEngine;
+    }
+
+    @Bean
+    public GraviteeMessageResolver messageResolver() {
+        return new GraviteeMessageResolver(templatesDirectory.endsWith("/") ? templatesDirectory + "i18n/" : templatesDirectory + "/i18n/");
     }
 
     @Bean

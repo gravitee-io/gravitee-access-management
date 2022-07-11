@@ -25,26 +25,26 @@
         <div class="login-container">
             <div class="login-form">
                 <div class="login-form-title">
-                    <label>Sign in</label>
-                    <span>to continue to <span th:text="${domain.name}"></span></span>
+                    <label th:text="#{login.page.title}"></label>
+                    <span><span th:text="#{login.page.subtitle}"></span> <span th:text="${domain.name}"></span></span>
                 </div>
                 <form id="form" role="form" th:action="${action}" th:if="${!hideLoginForm}" method="post">
                     <div class="login-form-content">
                         <div class="input-textfield">
-                            <label for="username">Username</label>
+                            <label for="username" th:text="#{login.page.label.username}"></label>
                             <input type="text" id="username" name="username"
                                    th:value="${param.username}" autofocus="autofocus" required
                                    th:readonly="${param.username != null}"
                             />
                         </div>
                         <div class="input-textfield">
-                            <label for="password">Password</label>
+                            <label for="password" th:text="#{login.page.label.password}"></label>
                             <input type="password" id="password" name="password" required />
                         </div>
                         <div th:if="${error}" class="login-error-info">
                             <span>
                                 <span class="error" th:text="${error}"></span>
-                                <small class="error_description" th:text="*{error_description}?: 'Wrong user or password'"></small>
+                                <small class="error_description" th:text="*{error_description}?: #{login.page.error.default.message}"></small>
                             </span>
                         </div>
                     </div>
@@ -57,7 +57,7 @@
                            th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
                     <div class="login-form-actions">
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent" th:text="#{login.page.button.submit}"></button>
                     </div>
 
                     <div class="login-form-additional-actions">
