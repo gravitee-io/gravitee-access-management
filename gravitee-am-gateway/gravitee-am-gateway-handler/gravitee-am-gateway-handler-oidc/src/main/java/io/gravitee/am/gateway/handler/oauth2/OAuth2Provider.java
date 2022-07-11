@@ -53,6 +53,8 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
+import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DeviceService;
@@ -184,6 +186,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private GraviteeMessageResolver messageResolver;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -226,6 +231,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
         xFrameHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
+        Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
         // Authorization endpoint
         oauth2Router.route(HttpMethod.OPTIONS, "/authorize")
@@ -257,6 +263,7 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
                 .handler(userConsentPrepareContextHandler)
                 .handler(authenticationFlowContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
+                .handler(localeHandler)
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
