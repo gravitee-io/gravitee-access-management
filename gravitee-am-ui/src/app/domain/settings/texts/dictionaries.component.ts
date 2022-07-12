@@ -23,6 +23,14 @@ import {NavbarService} from '../../../components/navbar/navbar.service';
 import {DictionaryDialog} from "../../../components/dialog/dictionary/dictionary-dialog.component";
 import {MatDialog} from "@angular/material/dialog";
 import {I18nDictionaryService} from "../../../services/dictionary.service";
+import {i18nLanguages} from "./i18nLanguages";
+
+interface Dictionary {
+  id?: string;
+  locale: string;
+  name: string;
+  entries?: object;
+}
 
 @Component({
   selector: 'app-dictionaries',
@@ -30,12 +38,21 @@ import {I18nDictionaryService} from "../../../services/dictionary.service";
   styleUrls: ['./dictionaries.component.scss']
 })
 export class DomainSettingsDictionariesComponent implements OnInit {
-  private envId: string;
   domain: any = {};
   readonly = false;
-  dictionaries: any[] = [];
-  selectedDictionaryEntries: any[] = [];
-  selectedDictionary: any = {};
+  dictionaries: Dictionary[] = [];
+  translations: any[] = [];
+  selectedDictionary: Dictionary = {locale: "", name: ""};
+  languageCodes: any[];
+  dictsToSave: Dictionary[] = [];
+  dictsToDelete: any[] = [];
+  codeMirrorConfig: any = {lineNumbers: true, readOnly: false};
+  formContent: string = '';
+  displayCodeMirror: boolean;
+  formChanged: boolean;
+  formChangedTranslations: boolean;
+  private selectedTab: number = 0;
+  private originalFormContent: string;
 
   constructor(private domainService: DomainService,
               private dialogService: DialogService,
@@ -49,49 +66,61 @@ export class DomainSettingsDictionariesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.envId = this.route.snapshot.params['envHrid'];
     this.domain = this.route.snapshot.data['domain'];
-    this.dictionaries = this.route.snapshot.data['dictionaries'];
     this.readonly = !this.authService.hasPermissions(['domain_i18n_dictionary_update']);
+    this.dictionaries = this.route.snapshot.data['dictionaries'] || [];
+    const dictionaryCodes = this.dictionaries.map(dict => dict.locale);
+    this.languageCodes = Object.entries(i18nLanguages).filter(language => !dictionaryCodes.includes(language[0]));
+    this.formContent = JSON.stringify(this.entriesToObject(), null, '\t');
+    this.originalFormContent = (' ' + this.formContent).slice(1);
+    this.selectedDictionary = this.dictionaries[0];
+    if (this.selectedDictionary) {
+      this.changeTranslation();
+    }
   }
 
-  openDialog() {
+  addLanguage() {
     const dialogRef = this.dialog.open(DictionaryDialog,
       {
         data: {
           title: "Add a new language",
           prop1Label: "Language code",
-          prop2Label: "Display name"
+          prop2Label: "Display name",
+          languageCodes: this.languageCodes
         }
       });
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        const language = result.prop1;
+        const locale = result.prop1;
         const name = result.prop2;
-        this.dictionaryService.create(this.domain.id, {locale: language, name: name}).subscribe(created => {
-          this.snackbarService.open('Language created');
-          let tempDicts = [...this.dictionaries];
-          tempDicts.push(created);
-          this.dictionaries = tempDicts;
-        });
+        let tempDicts = [...this.dictionaries];
+        let newDict = {locale: locale, name: name, entries: {}};
+        tempDicts.push(newDict);
+        this.dictionaries = tempDicts;
+        this.dictsToSave.push(newDict);
+        this.languageCodes = this.languageCodes.filter(code => code[0] != locale);
+        this.formChanged = true;
       }
     });
   }
 
-  deleteLanguage(id, event) {
+  deleteLanguage(row, event) {
     event.preventDefault();
     this.dialogService
       .confirm('Delete Language', 'Are you sure you want to delete this language?')
       .subscribe(res => {
         if (res) {
-          this.dictionaryService.delete(this.domain.id, id).subscribe(() => {
-            this.snackbarService.open('Language deleted');
-            this.dictionaries = this.dictionaries.filter(dict => dict.id != id);
-            if (this.selectedDictionary.id === id) {
-              this.selectedDictionaryEntries = [];
-            }
-          });
+          if (row.id) {
+            this.dictsToDelete.push(row.id);
+          } else {
+            this.dictsToSave = this.dictsToSave.filter(dict => dict.locale != row.locale)
+          }
+          this.dictionaries = this.dictionaries.filter(dict => dict.locale != row.locale);
+          if (this.selectedDictionary.locale === row.locale) {
+            this.translations = [];
+          }
+          this.formChanged = true;
         }
       });
   }
@@ -103,22 +132,27 @@ export class DomainSettingsDictionariesComponent implements OnInit {
       .subscribe(res => {
         const deleteCount = 1;
         if (res) {
-          this.selectedDictionaryEntries.splice(rowIndex, deleteCount);
+          this.translations.splice(rowIndex, deleteCount);
+          this.formChangedTranslations = true;
         }
       });
   }
 
   changeTranslation() {
-    this.selectedDictionaryEntries = [];
+    this.translations = [];
 
     Object.entries(this.selectedDictionary.entries).forEach(([k, v]) => {
-      this.selectedDictionaryEntries.push({key: k, message: v});
+      this.translations.push({key: k, message: v});
     });
+
+    if (this.selectedTab == 1) {
+      this.onTabSelectedChanged({index: 1})
+    }
   }
 
   addTranslation() {
-    let tempEntries = [...this.selectedDictionaryEntries];
-    if (this.selectedDictionary.id) {
+    let tempEntries = [...this.translations];
+    if (this.selectedDictionary) {
       const dialogRef = this.dialog.open(DictionaryDialog,
         {
           data: {
@@ -132,31 +166,124 @@ export class DomainSettingsDictionariesComponent implements OnInit {
         const entryKey = result.prop1;
         const value = result.prop2;
         tempEntries.push({key: entryKey, message: value});
-        this.selectedDictionaryEntries = tempEntries;
+        this.translations = tempEntries;
+        this.formChangedTranslations = true;
       });
     } else {
       this.snackbarService.open("Please select a language");
     }
   }
 
-  saveChanges() {
-    if (this.selectedDictionary.id) {
-      // @ts-ignore
-      const updateEntries = Object.fromEntries(this.selectedDictionaryEntries.flatMap(row => [Object.values(row)]));
-      this.dictionaryService.update(this.domain.id, this.selectedDictionary.id,
-        {entries: updateEntries}).subscribe(result => {
-        if (result) {
-          this.snackbarService.open("Translations saved");
-          for (const dictionary of this.dictionaries) {
-            if (dictionary.id === this.selectedDictionary.id) {
-              dictionary.entries = updateEntries;
-              break;
-            }
-          }
-        }
+  saveTranslations() {
+    if (!this.selectedDictionary.id) {
+      this.dictionaryService.create(this.domain.id, {
+        locale: this.selectedDictionary.locale,
+        name: this.selectedDictionary.name
+      }).subscribe(created => {
+        this.updateId(created);
+        this.update();
       });
+    } else if (this.selectedDictionary) {
+      this.update();
     } else {
       this.snackbarService.open("Please select a language");
+    }
+  }
+
+  private updateId(created) {
+    this.dictionaries.forEach(dict => {
+      if (dict.locale === created.locale) {
+        dict.id = created.id;
+      }
+    });
+  }
+
+  private update() {
+    const updateEntries = this.selectedTab === 0 ? this.entriesToObject() : JSON.parse(this.formContent);
+    this.dictionaryService.update(this.domain.id, this.selectedDictionary.id,
+      {entries: updateEntries}).subscribe(result => {
+      if (result) {
+        this.snackbarService.open("Translations saved");
+        this.formChangedTranslations = false;
+        for (const dictionary of this.dictionaries) {
+          if (dictionary.id === this.selectedDictionary.id) {
+            dictionary.entries = updateEntries;
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  private entriesToObject() {
+    // @ts-ignore
+    return Object.fromEntries(this.translations.flatMap(row => [Object.values(row)]));
+  }
+
+  saveLanguages() {
+    const dictsToSave = [...this.dictsToSave];
+    const dictsToDelete = [...this.dictsToDelete];
+    dictsToSave.forEach(language => {
+      this.dictionaryService.create(this.domain.id, {
+        locale: language.locale,
+        name: language.name
+      }).subscribe(created => {
+        this.updateId(created);
+        this.dictsToSave = [];
+        this.snackbarService.open('Languages saved');
+        this.formChanged = false;
+      });
+    });
+    dictsToDelete.forEach(id => {
+      this.dictionaryService.delete(this.domain.id, id).subscribe(() => {
+        this.dictionaries = this.dictionaries.filter(dict => dict.id != id);
+        this.dictsToDelete = [];
+        if (this.selectedDictionary.id === id) {
+          this.translations = [];
+        }
+        this.snackbarService.open('Languages saved');
+        this.formChanged = false;
+      });
+    })
+  }
+
+  onFileSelected(event) {
+    const file: File = event.target.files[0];
+
+    if (file) {
+      file.text().then(content => {
+        this.formContent = content;
+        try {
+          let parse = JSON.parse(content);
+          let entries = [];
+          Object.entries(parse).forEach(mapEntry => {
+            entries.push(mapEntry);
+          });
+        } catch (e) {
+          this.snackbarService.open("JSON file was invalid");
+        }
+      });
+    }
+  }
+
+  onTabSelectedChanged(e) {
+    this.selectedTab = e.index;
+    if (e.index === 1) {
+      this.formContent = JSON.stringify(this.entriesToObject(), null, '\t');
+      this.displayCodeMirror = true;
+    } else {
+      this.displayCodeMirror = false;
+      let parse = JSON.parse(this.formContent);
+      this.translations = [];
+      Object.entries(parse).forEach(([k, v]) => {
+        this.translations.push({key: k, message: v});
+      });
+    }
+  }
+
+  onContentChanges(e) {
+    if (e !== this.originalFormContent) {
+      this.formChangedTranslations = true;
     }
   }
 }

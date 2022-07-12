@@ -20,7 +20,7 @@
     <div fxLayout="column">
       <div class="gv-form-section">
         <div class="gv-form-section-title">
-          <h2>Languages</h2>
+          <h2 data-testid="textLanguageTitle">Languages</h2>
         </div>
         <div fxLayout="column">
           <ngx-datatable class="material"
@@ -28,14 +28,15 @@
                          [headerHeight]="40"
                          [footerHeight]="40"
                          [rowHeight]="50"
-                         [messages]="{emptyMessage:'There are no languages'}"
-                         [rows]="dictionaries">
-            <ngx-datatable-column name="Language" [flexGrow]="4">
+                         [messages]="{emptyMessage:'There are no i18nLanguages'}"
+                         [rows]="dictionaries"
+                         data-testid="languagesTable">
+            <ngx-datatable-column name="Language" [flexGrow]="4" prop="locale">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 {{row.locale}}
               </ng-template>
             </ngx-datatable-column>
-            <ngx-datatable-column name="Display Name" [flexGrow]="6">
+            <ngx-datatable-column name="Display Name" [flexGrow]="6" prop="name">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 {{row.name}}
               </ng-template>
@@ -43,7 +44,7 @@
             <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_delete']">
               <ng-template let-row="row" ngx-datatable-cell-template>
                 <div fxLayout="row" class="gv-table-cell-actions">
-                  <button mat-icon-button (click)="deleteLanguage(row.id, $event)">
+                  <button mat-icon-button (click)="deleteLanguage(row, $event)">
                     <mat-icon>delete</mat-icon>
                   </button>
                 </div>
@@ -51,8 +52,9 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </div>
-        <div *hasPermission="['domain_i18n_dictionary_create']">
-          <button mat-stroked-button type="submit" (click)="openDialog()">ADD A NEW LANGUAGE</button>
+        <div *hasPermission="['domain_i18n_dictionary_create']" fxLayoutGap="10px">
+          <button mat-raised-button color="primary" type="submit" (click)="saveLanguages()" [disabled]="!formChanged" data-testid="textSaveLanguagesBtn">SAVE CHANGES</button>
+          <button mat-stroked-button type="submit" (click)="addLanguage()" data-testid="textAddLanguageButton">ADD A NEW LANGUAGE</button>
         </div>
       </div>
       <div class="gv-form-section">
@@ -62,48 +64,60 @@
         <div class="span-third">
           <mat-form-field>
             <mat-label>Language</mat-label>
-            <mat-select [(value)]="selectedDictionary" (selectionChange)="changeTranslation()">
+            <mat-select [(value)]="selectedDictionary" (selectionChange)="changeTranslation()" data-testid="textLanguageDropdown">
               <mat-option *ngFor="let dict of dictionaries" [value]="dict">
                 {{dict.name}}
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <h5>Properties</h5>
-          <mat-divider></mat-divider>
         </div>
-        <div fxLayout="column">
-          <ngx-datatable class="material"
-                         [columnMode]="'flex'"
-                         [headerHeight]="40"
-                         [footerHeight]="40"
-                         [rowHeight]="50"
-                         [messages]="{emptyMessage:'There are no translations'}"
-                         [rows]="selectedDictionaryEntries">
-            <ngx-datatable-column name="Key" [flexGrow]="4">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                {{row.key}}
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Value" [flexGrow]="6">
-              <ng-template let-row="row" ngx-datatable-cell-template>
-                {{row.message}}
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']">
-              <ng-template let-rowIndex="rowIndex" ngx-datatable-cell-template>
-                <div fxLayout="row" class="gv-table-cell-actions">
-                  <button mat-icon-button (click)="deleteTranslation(rowIndex, $event)">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
-              </ng-template>
-            </ngx-datatable-column>
-          </ngx-datatable>
-        </div>
-        <div *hasPermission="['domain_i18n_dictionary_create']" fxLayout="row wrap" fxLayoutGap="10px">
-          <button mat-stroked-button (click)="saveChanges()">SAVE CHANGES</button>
-          <button mat-stroked-button (click)="addTranslation()">ADD A NEW TRANSLATION</button>
-        </div>
+        <mat-tab-group (selectedTabChange)="onTabSelectedChanged($event)">
+          <mat-tab label="Properties" data-testid="transPropsTab">
+            <div fxLayout="column">
+              <ngx-datatable class="material"
+                             [columnMode]="'flex'"
+                             [headerHeight]="40"
+                             [footerHeight]="40"
+                             [rowHeight]="50"
+                             [messages]="{emptyMessage:'There are no translations'}"
+                             [rows]="translations">
+                <ngx-datatable-column name="Key" [flexGrow]="4" minWidth="300">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <input matInput type="text" [(ngModel)]="row.key">
+                  </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column name="Value" [flexGrow]="6" minWidth="600" prop="message">
+                  <ng-template let-row="row" ngx-datatable-cell-template>
+                    <input matInput type="text" [(ngModel)]="row.message">
+                  </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column name="" [flexGrow]="1" *hasPermission="['domain_i18n_dictionary_update']" maxWidth="50">
+                  <ng-template let-rowIndex="rowIndex" ngx-datatable-cell-template>
+                    <div fxLayout="row" class="gv-table-cell-actions">
+                      <button mat-icon-button (click)="deleteTranslation(rowIndex, $event)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </ng-template>
+                </ngx-datatable-column>
+              </ngx-datatable>
+            </div>
+            <div *hasPermission="['domain_i18n_dictionary_create']" fxLayout="row wrap" fxLayoutGap="10px">
+              <button mat-raised-button color="primary" (click)="saveTranslations()" [disabled]="!formChangedTranslations" data-testid="saveTranslationsBtn">SAVE CHANGES</button>
+              <button mat-stroked-button (click)="addTranslation()" [disabled]="!selectedDictionary" data-testid="textAddNewTranslationButton">ADD A NEW TRANSLATION</button>
+            </div>
+          </mat-tab>
+          <mat-tab label="Edit in file" data-testid="editInFileTab">
+            <div>
+              <codemirror *ngIf="displayCodeMirror" [(ngModel)]="formContent" [config]="codeMirrorConfig" (change)="onContentChanges($event)"></codemirror>
+              <div *hasPermission="['domain_i18n_dictionary_create']" fxLayout="row wrap" fxLayoutGap="10px" style="margin: 10px 0 10px 0;">
+                <input type="file" accept=".json" class="file-input" hidden="true" (change)="onFileSelected($event)" #fileUpload>
+                <button mat-raised-button color="primary" (click)="saveTranslations()" [disabled]="!formChangedTranslations" data-testid="saveFileBtn">SAVE CHANGES</button>
+                <button mat-raised-button [disabled]="!selectedDictionary" (click)="fileUpload.click()" data-testid="loadFileBtn">LOAD FILE</button>
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
       </div>
     </div>
   </div>
