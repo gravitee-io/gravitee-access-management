@@ -108,8 +108,13 @@ public class EmailSender {
                 byte[] bytes = Base64.getDecoder().decode(value.getBytes("UTF-8"));
                 mailMessage.addInline(res, new ByteArrayResource(bytes), extractMimeType(res));
             } else {
-                final FileSystemResource templateResource = new FileSystemResource(new File(templatesPath, res));
-                mailMessage.addInline(res, templateResource, getContentTypeByFileName(res));
+                File file = new File(templatesPath, res);
+                if (file.getCanonicalPath().startsWith(templatesPath)) {
+                    final FileSystemResource templateResource = new FileSystemResource(file);
+                    mailMessage.addInline(res, templateResource, getContentTypeByFileName(res));
+                } else {
+                    LOGGER.warn("Resource path invalid : {}", file.getPath());
+                }
             }
         }
 
