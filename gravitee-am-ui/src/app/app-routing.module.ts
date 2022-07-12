@@ -231,6 +231,8 @@ import { DeviceNotifierPluginsResolver } from './resolvers/device-notifier-plugi
 import { DeviceNotifierResolver } from './resolvers/device-notifier.resolver';
 import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-notifiers/device-notifier/device-notifier.component';
 import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
+import {DomainSettingsDictionariesComponent} from "./domain/settings/texts/dictionaries.component";
+import {DictionariesResolver} from "./resolvers/dictionaries.resolver";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1392,6 +1394,28 @@ export const routes: Routes = [
                             }
                           },
                         ]
+                      },
+                      {
+                        path: 'texts',
+                        component: DomainSettingsDictionariesComponent,
+                        canActivate: [AuthGuard],
+                        resolve: {
+                          dictionaries: DictionariesResolver
+                        },
+                        data: {
+                          menu: {
+                            label: 'Texts',
+                            section: 'Design'
+                          },
+                          perms: {
+                            only: [
+                              'domain_i18n_dictionary_list',
+                              'domain_i18n_dictionary_create',
+                              'domain_i18n_dictionary_update',
+                              'domain_i18n_dictionary_delete'
+                              ]
+                          }
+                        }
                       },
                       {
                         path: 'emails',

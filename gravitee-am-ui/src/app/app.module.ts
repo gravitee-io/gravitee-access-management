@@ -420,6 +420,10 @@ import {
 } from "./domain/applications/application/advanced/factors/mfa-activate/conditional/mfa-conditional.component";
 import {MfaIntelligentComponent} from "./domain/applications/application/advanced/factors/mfa-activate/intelligent/mfa-intelligent.component";
 import {AssessmentComponent} from "./domain/applications/application/advanced/factors/mfa-activate/intelligent/assessment/assessment.component";
+import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dictionaries.component';
+import { DictionaryDialog } from './components/dialog/dictionary/dictionary-dialog.component';
+import { DictionariesResolver } from './resolvers/dictionaries.resolver';
+import { I18nDictionaryService } from './services/dictionary.service';
 
 @NgModule({
   declarations: [
@@ -446,6 +450,7 @@ import {AssessmentComponent} from "./domain/applications/application/advanced/fa
     DomainSettingsRolesComponent,
     DomainSettingsCertificatesComponent,
     DomainSettingsExtensionGrantsComponent,
+    DomainSettingsDictionariesComponent,
     DomainSettingsFormsComponent,
     DomainSettingsFormComponent,
     DomainSettingsLoginComponent,
@@ -460,6 +465,7 @@ import {AssessmentComponent} from "./domain/applications/application/advanced/fa
     DomainSettingsFlowsComponent,
     DomainSettingsDeviceIdentifiersComponent,
     ConfirmComponent,
+    DictionaryDialog,
     EmptystateComponent,
     DomainCreationComponent,
     ProviderCreationComponent,
@@ -730,6 +736,7 @@ import {AssessmentComponent} from "./domain/applications/application/advanced/fa
     GroupMembersResolver,
     EmailService,
     EmailResolver,
+    DictionariesResolver,
     ConsentsResolver,
     AuditService,
     AuditsResolver,
@@ -790,6 +797,7 @@ import {AssessmentComponent} from "./domain/applications/application/advanced/fa
     DeviceNotifierResolver,
     DeviceNotifierPluginsResolver,
     TimeConverterService,
+    I18nDictionaryService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

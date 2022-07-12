@@ -234,30 +234,6 @@ export interface Domain {
      * @type {boolean}
      * @memberof Domain
      */
-    dynamicClientRegistrationEnabled?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    openDynamicClientRegistrationEnabled?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    dynamicClientRegistrationTemplateEnabled?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
-    redirectUriStrictMatching?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof Domain
-     */
     redirectUriLocalhostAllowed?: boolean;
     /**
      * 
@@ -271,6 +247,30 @@ export interface Domain {
      * @memberof Domain
      */
     redirectUriWildcardAllowed?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    dynamicClientRegistrationEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    openDynamicClientRegistrationEnabled?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    redirectUriStrictMatching?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof Domain
+     */
+    dynamicClientRegistrationTemplateEnabled?: boolean;
 }
 
 
@@ -322,13 +322,13 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
         'passwordSettings': !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
         'selfServiceAccountManagementSettings': !exists(json, 'selfServiceAccountManagementSettings') ? undefined : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
         'saml': !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
-        'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
-        'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
-        'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
-        'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
         'redirectUriLocalhostAllowed': !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
         'redirectUriUnsecuredHttpSchemeAllowed': !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed') ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
         'redirectUriWildcardAllowed': !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
+        'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
+        'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
+        'redirectUriStrictMatching': !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+        'dynamicClientRegistrationTemplateEnabled': !exists(json, 'dynamicClientRegistrationTemplateEnabled') ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
     };
 }
 
@@ -366,13 +366,13 @@ export function DomainToJSON(value?: Domain | null): any {
         'passwordSettings': PasswordSettingsToJSON(value.passwordSettings),
         'selfServiceAccountManagementSettings': SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
         'saml': SAMLSettingsToJSON(value.saml),
-        'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
-        'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
-        'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
-        'redirectUriStrictMatching': value.redirectUriStrictMatching,
         'redirectUriLocalhostAllowed': value.redirectUriLocalhostAllowed,
         'redirectUriUnsecuredHttpSchemeAllowed': value.redirectUriUnsecuredHttpSchemeAllowed,
         'redirectUriWildcardAllowed': value.redirectUriWildcardAllowed,
+        'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
+        'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
+        'redirectUriStrictMatching': value.redirectUriStrictMatching,
+        'dynamicClientRegistrationTemplateEnabled': value.dynamicClientRegistrationTemplateEnabled,
     };
 }
 

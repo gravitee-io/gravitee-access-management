@@ -59,6 +59,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -158,6 +160,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private AuthenticationDeviceNotifierService authenticationDeviceNotifierService;
+
+    @Autowired
+    private I18nDictionaryService i18nDictionaryService;
 
 
     @Override
@@ -277,7 +282,7 @@ public class DomainServiceImpl implements DomainService {
                     if (principal == null) {
                         return Single.just(domain);
                     }
-                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)
+                    return roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)
                             .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the domain, owner role does not exist")))
                             .flatMap(role -> {
                                 Membership membership = new Membership();
@@ -285,7 +290,7 @@ public class DomainServiceImpl implements DomainService {
                                 membership.setMemberId(principal.getId());
                                 membership.setMemberType(MemberType.USER);
                                 membership.setReferenceId(domain.getId());
-                                membership.setReferenceType(ReferenceType.DOMAIN);
+                                membership.setReferenceType(DOMAIN);
                                 membership.setRoleId(role.getId());
                                 return membershipService.addOrUpdate(organizationId, membership)
                                         .map(__ -> domain);
@@ -293,7 +298,7 @@ public class DomainServiceImpl implements DomainService {
                 })
                 // create event for sync process
                 .flatMap(domain -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), ReferenceType.DOMAIN, domain.getId(), Action.CREATE));
+                    Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(domain));
                 })
                 .onErrorResumeNext(ex -> {
@@ -321,7 +326,7 @@ public class DomainServiceImpl implements DomainService {
                 })
                 // create event for sync process
                 .flatMap(domain1 -> {
-                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
+                    Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
                     return eventService.create(event).flatMap(__ -> Single.just(domain1));
                 })
                 .onErrorResumeNext(ex -> {
@@ -350,7 +355,7 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(Single.defer(() -> domainRepository.update(toPatch)))
                             // create event for sync process
                             .flatMap(domain1 -> {
-                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), ReferenceType.DOMAIN, domain1.getId(), Action.UPDATE));
+                                Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(domain1));
                             })
                             .doOnSuccess(domain1 -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1)))
@@ -396,7 +401,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete roles
                             .andThen(roleService.findByDomain(domainId)
                                     .flatMapCompletable(roles -> {
-                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(ReferenceType.DOMAIN, domainId, r.getId())).collect(Collectors.toList());
+                                        List<Completable> deleteRolesCompletable = roles.stream().map(r -> roleService.delete(DOMAIN, domainId, r.getId())).collect(Collectors.toList());
                                         return Completable.concat(deleteRolesCompletable);
                                     })
                             )
@@ -409,7 +414,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete groups
                             .andThen(groupService.findByDomain(domainId)
                                     .flatMapCompletable(group ->
-                                        groupService.delete(ReferenceType.DOMAIN, domainId, group.getId()))
+                                        groupService.delete(DOMAIN, domainId, group.getId()))
                             )
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
@@ -419,7 +424,7 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             // delete email templates
-                            .andThen(emailTemplateService.findAll(ReferenceType.DOMAIN, domainId)
+                            .andThen(emailTemplateService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(emailTemplate -> emailTemplateService.delete(emailTemplate.getId()))
                             )
                             // delete form templates
@@ -432,12 +437,12 @@ public class DomainServiceImpl implements DomainService {
                                         reporterService.delete(reporter.getId()))
                             )
                             // delete flows
-                            .andThen(flowService.findAll(ReferenceType.DOMAIN, domainId)
+                            .andThen(flowService.findAll(DOMAIN, domainId)
                                     .filter(f -> f.getId() != null)
                                     .flatMapCompletable(flows -> flowService.delete(flows.getId()))
                             )
                             // delete memberships
-                            .andThen(membershipService.findByReference(domainId, ReferenceType.DOMAIN)
+                            .andThen(membershipService.findByReference(domainId, DOMAIN)
                                     .flatMapCompletable(membership ->  membershipService.delete(membership.getId()))
                             )
                             // delete factors
@@ -466,8 +471,13 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(authDeviceNotifier -> authenticationDeviceNotifierService.delete(domainId, authDeviceNotifier.getId(), principal)
                                     )
                             )
+                            // delete i18n dictionaries
+                            .andThen(i18nDictionaryService.findAll(DOMAIN, domainId)
+                                    .flatMapCompletable(i18nDictionary -> i18nDictionaryService.delete(DOMAIN, domainId, i18nDictionary.getId(), principal)
+                                    )
+                            )
                             .andThen(domainRepository.delete(domainId))
-                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, ReferenceType.DOMAIN, domainId, Action.DELETE)))))
+                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).domain(domain)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_DELETED).throwable(throwable)));
                 })

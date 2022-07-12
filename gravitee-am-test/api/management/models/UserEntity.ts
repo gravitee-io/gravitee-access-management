@@ -381,12 +381,6 @@ export interface UserEntity {
     zoneInfo?: string;
     /**
      * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    middleName?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof UserEntity
      */
@@ -403,6 +397,12 @@ export interface UserEntity {
      * @memberof UserEntity
      */
     website?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserEntity
+     */
+    middleName?: string;
     /**
      * 
      * @type {string}
@@ -495,10 +495,10 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'address': !exists(json, 'address') ? undefined : json['address'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
@@ -567,10 +567,10 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'address': value.address,
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
-        'middleName': value.middleName,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'middleName': value.middleName,
         'birthdate': value.birthdate,
         'phoneNumber': value.phoneNumber,
     };

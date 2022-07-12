@@ -33,7 +33,7 @@ export interface AddOrUpdateMember2Request {
     body?: NewMembership;
 }
 
-export interface Get29Request {
+export interface Get28Request {
     organizationId: string;
 }
 
@@ -50,7 +50,7 @@ export interface PatchRequest {
     domain: any;
 }
 
-export interface Permissions2Request {
+export interface PermissionsRequest {
     organizationId: string;
     environmentId: string;
 }
@@ -107,9 +107,9 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get29Raw(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
+    async get28Raw(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Domain>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get29.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get28.');
         }
 
         const queryParameters: any = {};
@@ -134,8 +134,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
      * Get organization main settings
      */
-    async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-        const response = await this.get29Raw(requestParameters, initOverrides);
+    async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
+        const response = await this.get28Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -258,13 +258,13 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
      * List environment member\'s permissions
      */
-    async permissions2Raw(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
+    async permissionsRaw(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions2.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions2.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions.');
         }
 
         const queryParameters: any = {};
@@ -289,8 +289,8 @@ export class DefaultApi extends runtime.BaseAPI {
      * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
      * List environment member\'s permissions
      */
-    async permissions2(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
-        const response = await this.permissions2Raw(requestParameters, initOverrides);
+    async permissions(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
+        const response = await this.permissionsRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

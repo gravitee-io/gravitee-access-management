@@ -5,28 +5,37 @@ To run the tests from a terminal you need to be in the `gravitee-am-test` direct
 
 ==== Build
 
-Execute `npm install`. You usually only need to do this once, i.e. after cloning the AM repo or when dependencies have changed.
+Execute `npm install`.
+You usually only need to do this once, i.e. after cloning the AM repo or when dependencies have changed.
 
 ==== Run tests with default config
 
-Executing `npm test` will run all the tests. To run individual tests use `npm test` followed by the name of the spec file.
+Executing `npm test` will run all the tests.
+To run individual tests use `npm test` followed by the name of the spec file.
 
     npm test my.jest.spec.ts
 
-If you have Jest installed globally you can also run tests in the standard Jest way, although you will have to explicitly reference
-one of the environment variable config files:
+If you have Jest installed globally you can also run tests in the standard Jest way, although you will have to explicitly reference one of the environment variable config files:
 
     jest --config=api/config/dev.config.js
 
 ==== Run tests against a specific environment
 
-The file `api/config/dev.setup.js` contains environment variables used by the tests to interact with AM. Change these values to point to a
-specific instance of AM.
+The file `api/config/dev.setup.js` contains environment variables used by the tests to interact with AM.
+Change these values to point to a specific instance of AM.
+
+==== Run tests using Intellij run configuration
+
+It's easy to run Jest specs in Intellij and makes debugging far simpler.
+Simply click on the green arrow/triangle icon you see on your spec and select "Modify run configuration" (this will also create a run configuration), or right click the spec in the project navigation panel to select this same option.
+You will have to ensure that any run configurations you create reference the appropriate jest config file (see the first circled field in the picture below). You also have the option of passing Jest CLI options (second circled example). All the other necessary fields are populated automatically by Intellij.
+
+image::jest-run-idea.png[]
 
 ==== Writing tests
 
-Commands required for setting up and configuring AM for testing can be found in the `commands` directory. Each function returns an asynchronous
-request to an AM endpoint which can be executed using standard ES6 promises, async/await syntax or Supertest's own provided callback functions.
+Commands required for setting up and configuring AM for testing can be found in the `commands` directory.
+Each function returns an asynchronous request to an AM endpoint which can be executed using standard ES6 promises, async/await syntax or Supertest's own provided callback functions.
 
 ===== async/await example
 
@@ -55,6 +64,7 @@ See the https://github.com/visionmedia/supertest[supertest] github page for a mo
 All Management API are generated using the OpenAPI generator from the `swagger.json` exposed by AM.
 
 In order to update them, execute:
+
 ```
 $ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
 ```

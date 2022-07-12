@@ -87,7 +87,7 @@ export class DomainSettingsProvidersComponent implements OnInit {
   delete(id, event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete Provider', 'Are you sure you want to delete this provider ?')
+      .confirm('Delete Provider', 'Are you sure you want to delete this provider?')
       .subscribe(res => {
         if (res) {
           this.providerService.delete(this.domainId, id, this.organizationContext).subscribe(response => {

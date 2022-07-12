@@ -8,6 +8,7 @@ apis/DefaultApi.ts
 apis/DeviceIdentifierApi.ts
 apis/DeviceIdentifiersApi.ts
 apis/DevicesApi.ts
+apis/DictionaryApi.ts
 apis/DomainApi.ts
 apis/EmailApi.ts
 apis/EntrypointsApi.ts
@@ -111,6 +112,8 @@ models/GroupPage.ts
 models/GroupResource.ts
 models/GroupRolesResource.ts
 models/GroupsResource.ts
+models/I18nDictionariesResource.ts
+models/I18nDictionary.ts
 models/IdentityProvider.ts
 models/IdentityProvidersResource.ts
 models/InstallationEntity.ts
@@ -127,6 +130,7 @@ models/NewAuthenticationDeviceNotifier.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
 models/NewDeviceIdentifier.ts
+models/NewDictionary.ts
 models/NewDomain.ts
 models/NewEmail.ts
 models/NewEntrypoint.ts
@@ -206,6 +210,7 @@ models/UpdateExtensionGrant.ts
 models/UpdateFactor.ts
 models/UpdateForm.ts
 models/UpdateGroup.ts
+models/UpdateI18nDictionary.ts
 models/UpdateIdentityProvider.ts
 models/UpdateReporter.ts
 models/UpdateRole.ts
