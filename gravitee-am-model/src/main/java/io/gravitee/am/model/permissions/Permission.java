@@ -74,6 +74,7 @@ public enum Permission {
     DOMAIN_BOT_DETECTION(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
     DOMAIN_DEVICE_IDENTIFIER(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
     DOMAIN_AUTHDEVICE_NOTIFIER(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
+    DOMAIN_DICTIONARIES(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
 
     APPLICATION(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),
     APPLICATION_SETTINGS(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN, ReferenceType.APPLICATION),

@@ -73,3 +73,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_17_0/schema-certificate-expiry.yml
   - include:
       - file: liquibase/changelogs/v3_18_0/3.18.0-user-activity.yml
+  - include:
+      - file: liquibase/changelogs/v3_19_0/3.19.0-add-domain-dictionaries-acl.yml
+  - include:
+      - file: liquibase/changelogs/v3_19_0/3.19.0-schema-languages.yml

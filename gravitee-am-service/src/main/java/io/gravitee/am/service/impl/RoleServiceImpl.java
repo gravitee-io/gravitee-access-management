@@ -415,6 +415,7 @@ public class RoleServiceImpl implements RoleService {
 
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, DELETE));
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
+        domainPrimaryOwnerPermissions.put(Permission.DOMAIN_DICTIONARIES, Acl.all());
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
 
         applicationPrimaryOwnerPermissions.put(Permission.APPLICATION, Acl.of(READ, UPDATE, DELETE));
@@ -447,6 +448,7 @@ public class RoleServiceImpl implements RoleService {
 
         domainOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE));
         domainOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
+        domainOwnerPermissions.put(Permission.DOMAIN_DICTIONARIES, Acl.all());
         domainOwnerPermissions.put(Permission.DOMAIN_AUDIT, Acl.of(READ, LIST));
 
         applicationOwnerPermissions.put(Permission.APPLICATION, Acl.of(READ, UPDATE));
