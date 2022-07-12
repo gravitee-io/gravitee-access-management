@@ -18,17 +18,31 @@
 <div>
   <h1 matDialogTitle>{{title}}</h1>
   <mat-dialog-content>
-    <mat-form-field appearance="outline" floatLabel="always">
+    <mat-form-field appearance="outline" floatLabel="always" *ngIf="languageCodes.length == 0">
       <mat-label>{{prop1Label}}</mat-label>
-      <input matInput type="text" placeholder="{{prop1Label}}" [(ngModel)]="prop1" required>
+      <input matInput type="text" placeholder="{{prop1Label}}" [(ngModel)]="prop1" required
+             data-testid="textTransEntryKey">
+    </mat-form-field>
+    <mat-form-field appearance="outline" floatLabel="always" *ngIf="languageCodes.length > 0">
+      <mat-label>{{prop1Label}}</mat-label>
+      <input matInput placeholder="Search for a language..."
+             [matAutocomplete]="auto"
+             [formControl]="languageCtrl"
+             data-testid="textLanguageCodeInput"/>
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="langSelect($event)" [displayWith]="displayFn">
+        <mat-option *ngFor="let lang of filtered | async" [value]="lang">
+          <mat-icon style="vertical-align:middle;">filter_none</mat-icon>
+          <span>{{ lang.code }}</span> | <small>{{lang.name}}</small>
+        </mat-option>
+      </mat-autocomplete>
     </mat-form-field>
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>{{prop2Label}}</mat-label>
-      <input matInput type="text" placeholder="{{prop2Label}}" [(ngModel)]="prop2" required>
+      <input matInput type="text" placeholder="{{prop2Label}}" [(ngModel)]="prop2" required data-testid="textDisplayNameInput">
     </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions>
-    <button type="button" mat-raised-button (click)="dialogRef.close()" class="dialog-cancel">CANCEL</button>
-    <button type="button" mat-raised-button color="primary" (click)="validate()">ADD</button>
+    <button type="button" mat-raised-button (click)="dialogRef.close()" class="dialog-cancel" data-testid="textCancelButton">CANCEL</button>
+    <button type="button" mat-raised-button color="primary" (click)="validate()" data-testid="textAddButton">ADD</button>
   </mat-dialog-actions>
 </div>
