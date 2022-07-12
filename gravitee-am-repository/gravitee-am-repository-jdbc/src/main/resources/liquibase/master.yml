@@ -76,4 +76,4 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v3_19_0/3.19.0-add-domain-dictionaries-acl.yml
   - include:
-      - file: liquibase/changelogs/v3_19_0/3.19.0-schema-languages.yml
+      - file: liquibase/changelogs/v3_19_0/3.19.0-schema-dictionaries.yml
