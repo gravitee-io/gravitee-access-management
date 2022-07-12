@@ -296,6 +296,14 @@ public interface EventType {
     String AUTH_DEVICE_NOTIFIER_UPDATED = "AUTH_DEVICE_NOTIFIER_UPDATED";
     String AUTH_DEVICE_NOTIFIER_DELETED = "AUTH_DEVICE_NOTIFIER_DELETED";
 
+    /**
+     * ----------
+     * i18n dictionary audit log actions
+     * ----------
+     */
+    String I18N_DICTIONARY_CREATED = "I18N_DICTIONARY_CREATED";
+    String I18N_DICTIONARY_UPDATED = "I18N_DICTIONARY_UPDATED";
+    String I18N_DICTIONARY_DELETED = "I18N_DICTIONARY_DELETED";
 
     static Collection<String> types() {
         return new TreeSet(Arrays.asList(

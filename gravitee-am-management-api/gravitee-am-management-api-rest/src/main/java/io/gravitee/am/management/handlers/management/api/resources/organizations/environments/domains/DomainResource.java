@@ -212,6 +212,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(FormsResource.class);
     }
 
+    @Path("i18n/dictionaries")
+    public I18nDictionariesResource getDictionariesResource() {
+        return resourceContext.getResource(I18nDictionariesResource.class);
+    }
+
     @Path("groups")
     public GroupsResource getGroupsResource() {
         return resourceContext.getResource(GroupsResource.class);

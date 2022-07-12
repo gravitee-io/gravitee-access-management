@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.19.0-schema-dictionaries
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: i18n_dictionaries
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: locale, type: nvarchar(16), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_dictionaries
+            columnNames: id
+            tableName: i18n_dictionaries
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_dict_by_ref
+            tableName: i18n_dictionaries
+            unique: false
+
+        - createTable:
+            tableName: i18n_dictionary_entries
+            columns:
+              - column: { name: dictionary_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: key, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: message, type: nvarchar(16), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: dictionary_id
+            indexName: idx_entries_by_dict
+            tableName: i18n_dictionary_entries

@@ -83,6 +83,9 @@ import {
     GroupPage,
     GroupPageFromJSON,
     GroupPageToJSON,
+    I18nDictionary,
+    I18nDictionaryFromJSON,
+    I18nDictionaryToJSON,
     IdentityProvider,
     IdentityProviderFromJSON,
     IdentityProviderToJSON,
@@ -107,6 +110,9 @@ import {
     NewDeviceIdentifier,
     NewDeviceIdentifierFromJSON,
     NewDeviceIdentifierToJSON,
+    NewDictionary,
+    NewDictionaryFromJSON,
+    NewDictionaryToJSON,
     NewDomain,
     NewDomainFromJSON,
     NewDomainToJSON,
@@ -227,6 +233,9 @@ import {
     UpdateGroup,
     UpdateGroupFromJSON,
     UpdateGroupToJSON,
+    UpdateI18nDictionary,
+    UpdateI18nDictionaryFromJSON,
+    UpdateI18nDictionaryToJSON,
     UpdateIdentityProvider,
     UpdateIdentityProviderFromJSON,
     UpdateIdentityProviderToJSON,
@@ -260,8 +269,8 @@ export interface DeleteRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
-    email: string;
+    user: string;
+    clientId?: string;
 }
 
 export interface AddGroupMemberRequest {
@@ -276,7 +285,6 @@ export interface AddOrUpdateMemberRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
     body?: NewMembership;
 }
 
@@ -284,6 +292,7 @@ export interface AddOrUpdateMember1Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    application: string;
     body?: NewMembership;
 }
 
@@ -308,7 +317,7 @@ export interface CreateRequest {
     environmentId: string;
     domain: string;
     application: string;
-    email: NewEmail;
+    email: NewForm;
 }
 
 export interface Create1Request {
@@ -316,14 +325,14 @@ export interface Create1Request {
     environmentId: string;
     domain: string;
     application: string;
-    email: NewForm;
+    email: NewEmail;
 }
 
 export interface Create10Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    notifier: NewAuthenticationDeviceNotifier;
+    deviceIdentifier: NewDeviceIdentifier;
 }
 
 export interface Create2Request {
@@ -365,21 +374,21 @@ export interface Create7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    resource: NewServiceResource;
+    detection: NewBotDetection;
 }
 
 export interface Create8Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    detection: NewBotDetection;
+    notifier: NewAuthenticationDeviceNotifier;
 }
 
 export interface Create9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    deviceIdentifier: NewDeviceIdentifier;
+    resource: NewServiceResource;
 }
 
 export interface CreateAlertNotifierRequest {
@@ -416,6 +425,13 @@ export interface CreateGroupRequest {
     group: NewGroup;
 }
 
+export interface CreateI18nDictionaryRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    body?: NewDictionary;
+}
+
 export interface CreateIdentityProviderRequest {
     organizationId: string;
     environmentId: string;
@@ -448,18 +464,39 @@ export interface Delete1Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
-    form: string;
+    user: string;
+    factor: string;
 }
 
 export interface Delete10Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    authDeviceNotifier: string;
+    botDetection: string;
 }
 
 export interface Delete11Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    authDeviceNotifier: string;
+}
+
+export interface Delete12Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    resource: string;
+}
+
+export interface Delete13Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    deviceIdentifier: string;
+}
+
+export interface Delete2Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -467,33 +504,11 @@ export interface Delete11Request {
     device: string;
 }
 
-export interface Delete12Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    user: string;
-    clientId?: string;
-}
-
-export interface Delete13Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    user: string;
-    factor: string;
-}
-
-export interface Delete2Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    extensionGrant: string;
-}
-
 export interface Delete3Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    application: string;
     form: string;
 }
 
@@ -501,6 +516,7 @@ export interface Delete4Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    application: string;
     email: string;
 }
 
@@ -508,35 +524,35 @@ export interface Delete5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    reporter: string;
+    extensionGrant: string;
 }
 
 export interface Delete6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    factor: string;
+    form: string;
 }
 
 export interface Delete7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    resource: string;
+    email: string;
 }
 
 export interface Delete8Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    botDetection: string;
+    reporter: string;
 }
 
 export interface Delete9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    deviceIdentifier: string;
+    factor: string;
 }
 
 export interface DeleteAlertNotifierRequest {
@@ -571,6 +587,13 @@ export interface DeleteGroupRequest {
     environmentId: string;
     domain: string;
     group: string;
+}
+
+export interface DeleteI18nDictionaryRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    dictionary: string;
 }
 
 export interface DeleteIdentityProviderRequest {
@@ -682,18 +705,47 @@ export interface Get1Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
-    template: Get1TemplateEnum;
+    audit: string;
 }
 
 export interface Get10Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    reporter: string;
+    application: string;
+    resource: string;
+    policy: string;
 }
 
 export interface Get11Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    extensionGrant: string;
+}
+
+export interface Get12Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    template: Get12TemplateEnum;
+}
+
+export interface Get13Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    template: Get13TemplateEnum;
+}
+
+export interface Get14Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    reporter: string;
+}
+
+export interface Get15Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -701,60 +753,39 @@ export interface Get11Request {
     to?: number;
     interval?: number;
     size?: number;
-    type: Get11TypeEnum;
+    type: Get15TypeEnum;
     field?: string;
-}
-
-export interface Get12Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    factor: string;
-}
-
-export interface Get13Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    resource: string;
-}
-
-export interface Get14Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    flow: string;
-}
-
-export interface Get15Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    botDetection: string;
 }
 
 export interface Get16Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    deviceIdentifier: string;
+    factor: string;
 }
 
 export interface Get17Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    authDeviceNotifier: string;
+    flow: string;
 }
 
 export interface Get18Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    audit: string;
+    botDetection: string;
 }
 
 export interface Get19Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    authDeviceNotifier: string;
+}
+
+export interface Get2Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -762,20 +793,21 @@ export interface Get19Request {
     consent: string;
 }
 
-export interface Get2Request {
+export interface Get20Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
-    from?: number;
-    to?: number;
-    interval?: number;
-    size?: number;
-    type: Get2TypeEnum;
-    field?: string;
+    resource: string;
 }
 
-export interface Get20Request {
+export interface Get21Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    deviceIdentifier: string;
+}
+
+export interface Get3Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -783,7 +815,7 @@ export interface Get20Request {
     credential: string;
 }
 
-export interface Get21Request {
+export interface Get4Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -791,29 +823,12 @@ export interface Get21Request {
     audit: string;
 }
 
-export interface Get3Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    application: string;
-    flow: string;
-}
-
-export interface Get4Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    application: string;
-    resource: string;
-}
-
 export interface Get5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     application: string;
-    resource: string;
-    policy: string;
+    template: Get5TemplateEnum;
 }
 
 export interface Get6Request {
@@ -828,21 +843,29 @@ export interface Get7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    extensionGrant: string;
+    application: string;
+    from?: number;
+    to?: number;
+    interval?: number;
+    size?: number;
+    type: Get7TypeEnum;
+    field?: string;
 }
 
 export interface Get8Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    template: Get8TemplateEnum;
+    application: string;
+    flow: string;
 }
 
 export interface Get9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    template: Get9TemplateEnum;
+    application: string;
+    resource: string;
 }
 
 export interface GetAlertNotifierRequest {
@@ -881,6 +904,13 @@ export interface GetGroupMembersRequest {
     size?: number;
 }
 
+export interface GetI18nDictionaryRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    dictionary: string;
+}
+
 export interface GetMembersRequest {
     organizationId: string;
     environmentId: string;
@@ -889,37 +919,6 @@ export interface GetMembersRequest {
 }
 
 export interface List1Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    application: string;
-}
-
-export interface List10Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List11Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List12Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List13Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List14Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -932,6 +931,42 @@ export interface List14Request {
     page?: number;
 }
 
+export interface List10Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    application: string;
+    page?: number;
+    size?: number;
+}
+
+export interface List11Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    application: string;
+    resource: string;
+}
+
+export interface List12Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List13Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    userProvider?: boolean;
+}
+
+export interface List14Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
 export interface List15Request {
     organizationId: string;
     environmentId: string;
@@ -942,10 +977,46 @@ export interface List16Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    user: string;
+    alertTriggers: Array<PatchAlertTrigger>;
 }
 
 export interface List17Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List18Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List19Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List2Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List20Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List21Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List3Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -953,7 +1024,7 @@ export interface List17Request {
     clientId?: string;
 }
 
-export interface List18Request {
+export interface List4Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -961,30 +1032,21 @@ export interface List18Request {
     dynamic?: boolean;
 }
 
-export interface List19Request {
+export interface List5Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     user: string;
 }
 
-export interface List2Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    application: string;
-    page?: number;
-    size?: number;
-}
-
-export interface List20Request {
+export interface List6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     user: string;
 }
 
-export interface List21Request {
+export interface List7Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -997,50 +1059,18 @@ export interface List21Request {
     page?: number;
 }
 
-export interface List3Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    application: string;
-    resource: string;
-}
-
-export interface List4Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List5Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    userProvider?: boolean;
-}
-
-export interface List6Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface List7Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
 export interface List8Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    user: string;
 }
 
 export interface List9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    alertTriggers: Array<PatchAlertTrigger>;
+    application: string;
 }
 
 export interface ListAlertNotifiersRequest {
@@ -1079,6 +1109,12 @@ export interface ListGroupsRequest {
     domain: string;
     page?: number;
     size?: number;
+}
+
+export interface ListI18nDictionariesRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
 }
 
 export interface ListIdentityProvidersRequest {
@@ -1145,17 +1181,25 @@ export interface PatchScopeRequest {
     scope2: PatchScope;
 }
 
-export interface PermissionsRequest {
+export interface Permissions1Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface Permissions2Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     application: string;
 }
 
-export interface Permissions1Request {
+export interface PutI18nDictionaryRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
+    dictionary: string;
+    body?: UpdateI18nDictionary;
 }
 
 export interface RemoveGroupMemberRequest {
@@ -1170,7 +1214,6 @@ export interface RemoveMemberRequest {
     organizationId: string;
     environmentId: string;
     domain: string;
-    application: string;
     member: string;
 }
 
@@ -1178,6 +1221,7 @@ export interface RemoveMember1Request {
     organizationId: string;
     environmentId: string;
     domain: string;
+    application: string;
     member: string;
 }
 
@@ -1186,6 +1230,14 @@ export interface RenewClientSecretRequest {
     environmentId: string;
     domain: string;
     application: string;
+}
+
+export interface ReplaceI18nDictionaryEntriesRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    dictionary: string;
+    body?: { [key: string]: string; };
 }
 
 export interface ResetPasswordRequest {
@@ -1247,8 +1299,8 @@ export interface UpdateRequest {
     environmentId: string;
     domain: string;
     application: string;
-    email: string;
-    email2: UpdateEmail;
+    form: string;
+    form2: UpdateForm;
 }
 
 export interface Update1Request {
@@ -1256,17 +1308,11 @@ export interface Update1Request {
     environmentId: string;
     domain: string;
     application: string;
-    flows: Array<Flow>;
+    email: string;
+    email2: UpdateEmail;
 }
 
 export interface Update10Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    flows: Array<Flow>;
-}
-
-export interface Update11Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -1274,7 +1320,7 @@ export interface Update11Request {
     flow2: Flow;
 }
 
-export interface Update12Request {
+export interface Update11Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -1282,15 +1328,7 @@ export interface Update12Request {
     identity: UpdateBotDetection;
 }
 
-export interface Update13Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    deviceIdentifier: string;
-    deviceIdentifier2: UpdateDeviceIdentifier;
-}
-
-export interface Update14Request {
+export interface Update12Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -1298,13 +1336,28 @@ export interface Update14Request {
     notifier: UpdateAuthenticationDeviceNotifier;
 }
 
+export interface Update13Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    resource: string;
+    identity: UpdateServiceResource;
+}
+
+export interface Update14Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    deviceIdentifier: string;
+    deviceIdentifier2: UpdateDeviceIdentifier;
+}
+
 export interface Update2Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     application: string;
-    flow: string;
-    flow2: Flow;
+    flows: Array<Flow>;
 }
 
 export interface Update3Request {
@@ -1312,8 +1365,8 @@ export interface Update3Request {
     environmentId: string;
     domain: string;
     application: string;
-    form: string;
-    form2: UpdateForm;
+    flow: string;
+    flow2: Flow;
 }
 
 export interface Update4Request {
@@ -1360,8 +1413,7 @@ export interface Update9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
-    resource: string;
-    identity: UpdateServiceResource;
+    flows: Array<Flow>;
 }
 
 export interface UpdateApplicationRequest {
@@ -1449,8 +1501,8 @@ export interface UpdateUserStatusRequest {
 export class DomainApi extends runtime.BaseAPI {
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
-     * Delete an email for an application
+     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+     * Revoke user consents
      */
     async _deleteRaw(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -1465,15 +1517,15 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling _delete.');
         }
 
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling _delete.');
-        }
-
-        if (requestParameters.email === null || requestParameters.email === undefined) {
-            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling _delete.');
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling _delete.');
         }
 
         const queryParameters: any = {};
+
+        if (requestParameters.clientId !== undefined) {
+            queryParameters['clientId'] = requestParameters.clientId;
+        }
 
         const headerParameters: runtime.HTTPHeaders = {};
 
@@ -1482,7 +1534,7 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
             method: 'DELETE',
             headers: headerParameters,
             query: queryParameters,
@@ -1492,8 +1544,8 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
-     * Delete an email for an application
+     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+     * Revoke user consents
      */
     async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this._deleteRaw(requestParameters, initOverrides);
@@ -1551,8 +1603,8 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_MEMBER[CREATE] permission on the specified application or APPLICATION_MEMBER[CREATE] permission on the specified domain or APPLICATION_MEMBER[CREATE] permission on the specified environment or APPLICATION_MEMBER[CREATE] permission on the specified organization
-     * Add or update an application member
+     * User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain or DOMAIN_MEMBER[CREATE] permission on the specified environment or DOMAIN_MEMBER[CREATE] permission on the specified organization
+     * Add or update an security domain member
      */
     async addOrUpdateMemberRaw(requestParameters: AddOrUpdateMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -1565,56 +1617,6 @@ export class DomainApi extends runtime.BaseAPI {
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling addOrUpdateMember.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling addOrUpdateMember.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: NewMembershipToJSON(requestParameters.body),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have APPLICATION_MEMBER[CREATE] permission on the specified application or APPLICATION_MEMBER[CREATE] permission on the specified domain or APPLICATION_MEMBER[CREATE] permission on the specified environment or APPLICATION_MEMBER[CREATE] permission on the specified organization
-     * Add or update an application member
-     */
-    async addOrUpdateMember(requestParameters: AddOrUpdateMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.addOrUpdateMemberRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain or DOMAIN_MEMBER[CREATE] permission on the specified environment or DOMAIN_MEMBER[CREATE] permission on the specified organization
-     * Add or update an security domain member
-     */
-    async addOrUpdateMember1Raw(requestParameters: AddOrUpdateMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember1.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling addOrUpdateMember1.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling addOrUpdateMember1.');
         }
 
         const queryParameters: any = {};
@@ -1641,6 +1643,56 @@ export class DomainApi extends runtime.BaseAPI {
     /**
      * User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain or DOMAIN_MEMBER[CREATE] permission on the specified environment or DOMAIN_MEMBER[CREATE] permission on the specified organization
      * Add or update an security domain member
+     */
+    async addOrUpdateMember(requestParameters: AddOrUpdateMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.addOrUpdateMemberRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have APPLICATION_MEMBER[CREATE] permission on the specified application or APPLICATION_MEMBER[CREATE] permission on the specified domain or APPLICATION_MEMBER[CREATE] permission on the specified environment or APPLICATION_MEMBER[CREATE] permission on the specified organization
+     * Add or update an application member
+     */
+    async addOrUpdateMember1Raw(requestParameters: AddOrUpdateMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember1.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling addOrUpdateMember1.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling addOrUpdateMember1.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling addOrUpdateMember1.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: NewMembershipToJSON(requestParameters.body),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_MEMBER[CREATE] permission on the specified application or APPLICATION_MEMBER[CREATE] permission on the specified domain or APPLICATION_MEMBER[CREATE] permission on the specified environment or APPLICATION_MEMBER[CREATE] permission on the specified organization
+     * Add or update an application member
      */
     async addOrUpdateMember1(requestParameters: AddOrUpdateMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.addOrUpdateMember1Raw(requestParameters, initOverrides);
@@ -1749,8 +1801,8 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
-     * Create a email for an application
+     * User must have APPLICATION_FORM[CREATE] permission on the specified application or APPLICATION_FORM[CREATE] permission on the specified domain or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE] permission on the specified organization
+     * Create a form for an application
      */
     async createRaw(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -1784,27 +1836,27 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: NewEmailToJSON(requestParameters.email),
+            body: NewFormToJSON(requestParameters.email),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
-     * Create a email for an application
+     * User must have APPLICATION_FORM[CREATE] permission on the specified application or APPLICATION_FORM[CREATE] permission on the specified domain or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE] permission on the specified organization
+     * Create a form for an application
      */
     async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.createRaw(requestParameters, initOverrides);
     }
 
     /**
-     * User must have APPLICATION_FORM[CREATE] permission on the specified application or APPLICATION_FORM[CREATE] permission on the specified domain or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE] permission on the specified organization
-     * Create a form for an application
+     * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
+     * Create a email for an application
      */
     async create1Raw(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -1838,27 +1890,27 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: NewFormToJSON(requestParameters.email),
+            body: NewEmailToJSON(requestParameters.email),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * User must have APPLICATION_FORM[CREATE] permission on the specified application or APPLICATION_FORM[CREATE] permission on the specified domain or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE] permission on the specified organization
-     * Create a form for an application
+     * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
+     * Create a email for an application
      */
     async create1(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.create1Raw(requestParameters, initOverrides);
     }
 
     /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
-     * Create an Authentication Device Notifier
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
+     * Create a device identifier
      */
     async create10Raw(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -1873,8 +1925,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create10.');
         }
 
-        if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
-            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling create10.');
+        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling create10.');
         }
 
         const queryParameters: any = {};
@@ -1888,19 +1940,19 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: NewAuthenticationDeviceNotifierToJSON(requestParameters.notifier),
+            body: NewDeviceIdentifierToJSON(requestParameters.deviceIdentifier),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
-     * Create an Authentication Device Notifier
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
+     * Create a device identifier
      */
     async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.create10Raw(requestParameters, initOverrides);
@@ -2154,8 +2206,8 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
-     * Create a resource
+     * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
+     * Create a bot detection
      */
     async create7Raw(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -2170,58 +2222,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create7.');
         }
 
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling create7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'POST',
-            headers: headerParameters,
-            query: queryParameters,
-            body: NewServiceResourceToJSON(requestParameters.resource),
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
-     * Create a resource
-     */
-    async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create7Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
-     * Create a bot detection
-     */
-    async create8Raw(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create8.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create8.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create8.');
-        }
-
         if (requestParameters.detection === null || requestParameters.detection === undefined) {
-            throw new runtime.RequiredError('detection','Required parameter requestParameters.detection was null or undefined when calling create8.');
+            throw new runtime.RequiredError('detection','Required parameter requestParameters.detection was null or undefined when calling create7.');
         }
 
         const queryParameters: any = {};
@@ -2249,13 +2251,63 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
      * Create a bot detection
      */
+    async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create7Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
+     * Create an Authentication Device Notifier
+     */
+    async create8Raw(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create8.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create8.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create8.');
+        }
+
+        if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
+            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling create8.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: NewAuthenticationDeviceNotifierToJSON(requestParameters.notifier),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
+     * Create an Authentication Device Notifier
+     */
     async create8(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.create8Raw(requestParameters, initOverrides);
     }
 
     /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
-     * Create a device identifier
+     * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
+     * Create a resource
      */
     async create9Raw(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -2270,8 +2322,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create9.');
         }
 
-        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling create9.');
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling create9.');
         }
 
         const queryParameters: any = {};
@@ -2285,19 +2337,19 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: NewDeviceIdentifierToJSON(requestParameters.deviceIdentifier),
+            body: NewServiceResourceToJSON(requestParameters.resource),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
     }
 
     /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[CREATE] permission on the specified organization
-     * Create a device identifier
+     * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
+     * Create a resource
      */
     async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.create9Raw(requestParameters, initOverrides);
@@ -2555,6 +2607,53 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
+     * User must have the DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified organization.
+     * Create a new i18n dictionary for a supported language for a security domain
+     */
+    async createI18nDictionaryRaw(requestParameters: CreateI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<I18nDictionary>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling createI18nDictionary.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling createI18nDictionary.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling createI18nDictionary.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: NewDictionaryToJSON(requestParameters.body),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => I18nDictionaryFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified organization.
+     * Create a new i18n dictionary for a supported language for a security domain
+     */
+    async createI18nDictionary(requestParameters: CreateI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<I18nDictionary> {
+        const response = await this.createI18nDictionaryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * User must have the DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified domain or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified environment or DOMAIN_IDENTITY_PROVIDER[CREATE] permission on the specified organization
      * Create an identity provider
      */
@@ -2759,8 +2858,8 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_FORM[DELETE] permission on the specified application or APPLICATION_FORM[DELETE] permission on the specified domain or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE] permission on the specified organization
-     * Delete a form for an application
+     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+     * Revoke user factor
      */
     async delete1Raw(requestParameters: Delete1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -2775,212 +2874,12 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete1.');
         }
 
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling delete1.');
-        }
-
-        if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have APPLICATION_FORM[DELETE] permission on the specified application or APPLICATION_FORM[DELETE] permission on the specified domain or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE] permission on the specified organization
-     * Delete a form for an application
-     */
-    async delete1(requestParameters: Delete1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete1Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
-     * Delete an Authentication Device Notifier
-     */
-    async delete10Raw(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete10.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete10.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete10.');
-        }
-
-        if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers/{authDeviceNotifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"authDeviceNotifier"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifier))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
-     * Delete an Authentication Device Notifier
-     */
-    async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete10Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
-     * Delete a device
-     */
-    async delete11Raw(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete11.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete11.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete11.');
-        }
-
         if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling delete11.');
-        }
-
-        if (requestParameters.device === null || requestParameters.device === undefined) {
-            throw new runtime.RequiredError('device','Required parameter requestParameters.device was null or undefined when calling delete11.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/devices/{device}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"device"}}`, encodeURIComponent(String(requestParameters.device))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
-     * Delete a device
-     */
-    async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete11Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-     * Revoke user consents
-     */
-    async delete12Raw(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete12.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete12.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete12.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling delete12.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.clientId !== undefined) {
-            queryParameters['clientId'] = requestParameters.clientId;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-     * Revoke user consents
-     */
-    async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete12Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-     * Revoke user factor
-     */
-    async delete13Raw(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete13.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete13.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete13.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling delete1.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete13.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete1.');
         }
 
         const queryParameters: any = {};
@@ -3005,311 +2904,29 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
      * Revoke user factor
      */
-    async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete13Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
-     * Delete a extension grant
-     */
-    async delete2Raw(requestParameters: Delete2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete2.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete2.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete2.');
-        }
-
-        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling delete2.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants/{extensionGrant}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
-     * Delete a extension grant
-     */
-    async delete2(requestParameters: Delete2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete2Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
-     * Delete a form
-     */
-    async delete3Raw(requestParameters: Delete3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete3.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete3.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete3.');
-        }
-
-        if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete3.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
-     * Delete a form
-     */
-    async delete3(requestParameters: Delete3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete3Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
-     * Delete an email
-     */
-    async delete4Raw(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete4.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete4.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete4.');
-        }
-
-        if (requestParameters.email === null || requestParameters.email === undefined) {
-            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling delete4.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
-     * Delete an email
-     */
-    async delete4(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete4Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
-     * Delete a reporter
-     */
-    async delete5Raw(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete5.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete5.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete5.');
-        }
-
-        if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling delete5.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters/{reporter}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"reporter"}}`, encodeURIComponent(String(requestParameters.reporter))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
-     * Delete a reporter
-     */
-    async delete5(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete5Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
-     * Delete a factor
-     */
-    async delete6Raw(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete6.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete6.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete6.');
-        }
-
-        if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete6.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/factors/{factor}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"factor"}}`, encodeURIComponent(String(requestParameters.factor))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
-     * Delete a factor
-     */
-    async delete6(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete6Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
-     * Delete a resource
-     */
-    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
-        }
-
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling delete7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
-     * Delete a resource
-     */
-    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete7Raw(requestParameters, initOverrides);
+    async delete1(requestParameters: Delete1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete1Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_BOT_DETECTION[DELETE] permission on the specified domain or DOMAIN_BOT_DETECTION[DELETE] permission on the specified environment or DOMAIN_BOT_DETECTION[DELETE] permission on the specified organization
      * Delete a bot detection
      */
-    async delete8Raw(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete10Raw(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete8.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete10.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete8.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete10.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete8.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete10.');
         }
 
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling delete8.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling delete10.');
         }
 
         const queryParameters: any = {};
@@ -3334,29 +2951,123 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[DELETE] permission on the specified domain or DOMAIN_BOT_DETECTION[DELETE] permission on the specified environment or DOMAIN_BOT_DETECTION[DELETE] permission on the specified organization
      * Delete a bot detection
      */
-    async delete8(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete8Raw(requestParameters, initOverrides);
+    async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete10Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
+     * Delete an Authentication Device Notifier
+     */
+    async delete11Raw(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete11.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete11.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete11.');
+        }
+
+        if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete11.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers/{authDeviceNotifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"authDeviceNotifier"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifier))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
+     * Delete an Authentication Device Notifier
+     */
+    async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete11Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
+     * Delete a resource
+     */
+    async delete12Raw(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete12.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete12.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete12.');
+        }
+
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling delete12.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
+     * Delete a resource
+     */
+    async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete12Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
      * Delete a Device identifier
      */
-    async delete9Raw(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete13Raw(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete13.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete13.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete13.');
         }
 
         if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling delete13.');
         }
 
         const queryParameters: any = {};
@@ -3380,6 +3091,394 @@ export class DomainApi extends runtime.BaseAPI {
     /**
      * User must have the DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[DELETE] permission on the specified organization
      * Delete a Device identifier
+     */
+    async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete13Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
+     * Delete a device
+     */
+    async delete2Raw(requestParameters: Delete2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete2.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete2.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete2.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling delete2.');
+        }
+
+        if (requestParameters.device === null || requestParameters.device === undefined) {
+            throw new runtime.RequiredError('device','Required parameter requestParameters.device was null or undefined when calling delete2.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/devices/{device}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"device"}}`, encodeURIComponent(String(requestParameters.device))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
+     * Delete a device
+     */
+    async delete2(requestParameters: Delete2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete2Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have APPLICATION_FORM[DELETE] permission on the specified application or APPLICATION_FORM[DELETE] permission on the specified domain or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE] permission on the specified organization
+     * Delete a form for an application
+     */
+    async delete3Raw(requestParameters: Delete3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete3.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete3.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete3.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling delete3.');
+        }
+
+        if (requestParameters.form === null || requestParameters.form === undefined) {
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete3.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_FORM[DELETE] permission on the specified application or APPLICATION_FORM[DELETE] permission on the specified domain or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE] permission on the specified organization
+     * Delete a form for an application
+     */
+    async delete3(requestParameters: Delete3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete3Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
+     * Delete an email for an application
+     */
+    async delete4Raw(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete4.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete4.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete4.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling delete4.');
+        }
+
+        if (requestParameters.email === null || requestParameters.email === undefined) {
+            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling delete4.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
+     * Delete an email for an application
+     */
+    async delete4(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete4Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
+     * Delete a extension grant
+     */
+    async delete5Raw(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete5.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete5.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete5.');
+        }
+
+        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
+            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling delete5.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants/{extensionGrant}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
+     * Delete a extension grant
+     */
+    async delete5(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete5Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
+     * Delete a form
+     */
+    async delete6Raw(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete6.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete6.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete6.');
+        }
+
+        if (requestParameters.form === null || requestParameters.form === undefined) {
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling delete6.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms/{form}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"form"}}`, encodeURIComponent(String(requestParameters.form))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_FORM[DELETE] permission on the specified domain or DOMAIN_FORM[DELETE] permission on the specified environment or DOMAIN_FORM[DELETE] permission on the specified organization
+     * Delete a form
+     */
+    async delete6(requestParameters: Delete6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete6Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
+     * Delete an email
+     */
+    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
+        }
+
+        if (requestParameters.email === null || requestParameters.email === undefined) {
+            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling delete7.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
+     * Delete an email
+     */
+    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete7Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
+     * Delete a reporter
+     */
+    async delete8Raw(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete8.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete8.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete8.');
+        }
+
+        if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling delete8.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters/{reporter}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"reporter"}}`, encodeURIComponent(String(requestParameters.reporter))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
+     * Delete a reporter
+     */
+    async delete8(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete8Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
+     * Delete a factor
+     */
+    async delete9Raw(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete9.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete9.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete9.');
+        }
+
+        if (requestParameters.factor === null || requestParameters.factor === undefined) {
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling delete9.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/factors/{factor}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"factor"}}`, encodeURIComponent(String(requestParameters.factor))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_FACTOR[DELETE] permission on the specified domain or DOMAIN_FACTOR[DELETE] permission on the specified environment or DOMAIN_FACTOR[DELETE] permission on the specified organization
+     * Delete a factor
      */
     async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.delete9Raw(requestParameters, initOverrides);
@@ -3614,6 +3713,53 @@ export class DomainApi extends runtime.BaseAPI {
      */
     async deleteGroup(requestParameters: DeleteGroupRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
         await this.deleteGroupRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified organization.
+     * Delete a i18n dictionary
+     */
+    async deleteI18nDictionaryRaw(requestParameters: DeleteI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling deleteI18nDictionary.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling deleteI18nDictionary.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling deleteI18nDictionary.');
+        }
+
+        if (requestParameters.dictionary === null || requestParameters.dictionary === undefined) {
+            throw new runtime.RequiredError('dictionary','Required parameter requestParameters.dictionary was null or undefined when calling deleteI18nDictionary.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries/{dictionary}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"dictionary"}}`, encodeURIComponent(String(requestParameters.dictionary))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[DELETE] permission on the specified organization.
+     * Delete a i18n dictionary
+     */
+    async deleteI18nDictionary(requestParameters: DeleteI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.deleteI18nDictionaryRaw(requestParameters, initOverrides);
     }
 
     /**
@@ -4333,10 +4479,10 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization
-     * Find a email for an application
+     * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
+     * Get an audit log
      */
-    async get1Raw(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get1Raw(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get1.');
         }
@@ -4349,12 +4495,160 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get1.');
         }
 
+        if (requestParameters.audit === null || requestParameters.audit === undefined) {
+            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get1.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
+     * Get an audit log
+     */
+    async get1(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
+        const response = await this.get1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
+     * Get resource access policy
+     */
+    async get10Raw(requestParameters: Get10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AccessPolicy>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get10.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get10.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get10.');
+        }
+
         if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get1.');
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get10.');
+        }
+
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get10.');
+        }
+
+        if (requestParameters.policy === null || requestParameters.policy === undefined) {
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get10.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/resources/{resource}/policies/{policy}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))).replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AccessPolicyFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
+     * Get resource access policy
+     */
+    async get10(requestParameters: Get10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AccessPolicy> {
+        const response = await this.get10Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
+     * Get a extension grant
+     */
+    async get11Raw(requestParameters: Get11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ExtensionGrant>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get11.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get11.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get11.');
+        }
+
+        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
+            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling get11.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants/{extensionGrant}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ExtensionGrantFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
+     * Get a extension grant
+     */
+    async get11(requestParameters: Get11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ExtensionGrant> {
+        const response = await this.get11Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
+     * Find a form
+     */
+    async get12Raw(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get12.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get12.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get12.');
         }
 
         if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get1.');
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get12.');
         }
 
         const queryParameters: any = {};
@@ -4370,7 +4664,7 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
@@ -4380,32 +4674,83 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization
-     * Find a email for an application
+     * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
+     * Find a form
      */
-    async get1(requestParameters: Get1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get1Raw(requestParameters, initOverrides);
+    async get12(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get12Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization
+     * Find a email
+     */
+    async get13Raw(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get13.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get13.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get13.');
+        }
+
+        if (requestParameters.template === null || requestParameters.template === undefined) {
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get13.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.template !== undefined) {
+            queryParameters['template'] = requestParameters.template;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization
+     * Find a email
+     */
+    async get13(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get13Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_REPORTER[READ] permission on the specified domain or DOMAIN_REPORTER[READ] permission on the specified environment or DOMAIN_REPORTER[READ] permission on the specified organization
      * Get a reporter
      */
-    async get10Raw(requestParameters: Get10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Reporter>> {
+    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Reporter>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get10.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get10.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get10.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
         }
 
         if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get10.');
+            throw new runtime.RequiredError('reporter','Required parameter requestParameters.reporter was null or undefined when calling get14.');
         }
 
         const queryParameters: any = {};
@@ -4430,8 +4775,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_REPORTER[READ] permission on the specified domain or DOMAIN_REPORTER[READ] permission on the specified environment or DOMAIN_REPORTER[READ] permission on the specified organization
      * Get a reporter
      */
-    async get10(requestParameters: Get10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Reporter> {
-        const response = await this.get10Raw(requestParameters, initOverrides);
+    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Reporter> {
+        const response = await this.get14Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -4439,21 +4784,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have DOMAIN_ANALYTICS[READ] permission on the specified domain or DOMAIN_ANALYTICS[READ] permission on the specified environment or DOMAIN_ANALYTICS[READ] permission on the specified organization
      * Find domain analytics
      */
-    async get11Raw(requestParameters: Get11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get15Raw(requestParameters: Get15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get11.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get15.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get11.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get15.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get11.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get15.');
         }
 
         if (requestParameters.type === null || requestParameters.type === undefined) {
-            throw new runtime.RequiredError('type','Required parameter requestParameters.type was null or undefined when calling get11.');
+            throw new runtime.RequiredError('type','Required parameter requestParameters.type was null or undefined when calling get15.');
         }
 
         const queryParameters: any = {};
@@ -4502,29 +4847,29 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have DOMAIN_ANALYTICS[READ] permission on the specified domain or DOMAIN_ANALYTICS[READ] permission on the specified environment or DOMAIN_ANALYTICS[READ] permission on the specified organization
      * Find domain analytics
      */
-    async get11(requestParameters: Get11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get11Raw(requestParameters, initOverrides);
+    async get15(requestParameters: Get15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get15Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_FACTOR[READ] permission on the specified domain or DOMAIN_FACTOR[READ] permission on the specified environment or DOMAIN_FACTOR[READ] permission on the specified organization
      * Get a factor
      */
-    async get12Raw(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
+    async get16Raw(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Factor>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get12.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get16.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get12.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get16.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get12.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get16.');
         }
 
         if (requestParameters.factor === null || requestParameters.factor === undefined) {
-            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get12.');
+            throw new runtime.RequiredError('factor','Required parameter requestParameters.factor was null or undefined when calling get16.');
         }
 
         const queryParameters: any = {};
@@ -4549,56 +4894,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FACTOR[READ] permission on the specified domain or DOMAIN_FACTOR[READ] permission on the specified environment or DOMAIN_FACTOR[READ] permission on the specified organization
      * Get a factor
      */
-    async get12(requestParameters: Get12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
-        const response = await this.get12Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
-     * Get a resource
-     */
-    async get13Raw(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get13.');
-        }
-
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get13.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
-     * Get a resource
-     */
-    async get13(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
-        const response = await this.get13Raw(requestParameters, initOverrides);
+    async get16(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Factor> {
+        const response = await this.get16Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -4606,21 +4903,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+    async get17Raw(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get17.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get17.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get17.');
         }
 
         if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get14.');
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get17.');
         }
 
         const queryParameters: any = {};
@@ -4645,8 +4942,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.get14Raw(requestParameters, initOverrides);
+    async get17(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.get17Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -4654,21 +4951,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain or DOMAIN_BOT_DETECTION[READ] permission on the specified environment or DOMAIN_BOT_DETECTION[READ] permission on the specified organization
      * Get a bot detection
      */
-    async get15Raw(requestParameters: Get15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
+    async get18Raw(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get15.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get18.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get15.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get18.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get15.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get18.');
         }
 
         if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get15.');
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling get18.');
         }
 
         const queryParameters: any = {};
@@ -4693,56 +4990,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain or DOMAIN_BOT_DETECTION[READ] permission on the specified environment or DOMAIN_BOT_DETECTION[READ] permission on the specified organization
      * Get a bot detection
      */
-    async get15(requestParameters: Get15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-        const response = await this.get15Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
-     * Get a Device identifier
-     */
-    async get16Raw(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<any>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get16.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get16.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get16.');
-        }
-
-        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get16.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"deviceIdentifier"}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.TextApiResponse(response) as any;
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
-     * Get a Device identifier
-     */
-    async get16(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<any> {
-        const response = await this.get16Raw(requestParameters, initOverrides);
+    async get18(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
+        const response = await this.get18Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -4750,21 +4999,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization
      * Get an Authentication Device Notifier
      */
-    async get17Raw(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
+    async get19Raw(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get17.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get19.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get17.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get19.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get17.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get19.');
         }
 
         if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling get17.');
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling get19.');
         }
 
         const queryParameters: any = {};
@@ -4789,56 +5038,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization
      * Get an Authentication Device Notifier
      */
-    async get17(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
-        const response = await this.get17Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
-     * Get an audit log
-     */
-    async get18Raw(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get18.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get18.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get18.');
-        }
-
-        if (requestParameters.audit === null || requestParameters.audit === undefined) {
-            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get18.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_AUDIT[READ] permission on the specified domain or DOMAIN_AUDIT[READ] permission on the specified environment or DOMAIN_AUDIT[READ] permission on the specified organization
-     * Get an audit log
-     */
-    async get18(requestParameters: Get18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
-        const response = await this.get18Raw(requestParameters, initOverrides);
+    async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
+        const response = await this.get19Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -4846,25 +5047,25 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
      * Get a user consent
      */
-    async get19Raw(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
+    async get2Raw(requestParameters: Get2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get19.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get2.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get19.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get2.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get19.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get2.');
         }
 
         if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get19.');
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get2.');
         }
 
         if (requestParameters.consent === null || requestParameters.consent === undefined) {
-            throw new runtime.RequiredError('consent','Required parameter requestParameters.consent was null or undefined when calling get19.');
+            throw new runtime.RequiredError('consent','Required parameter requestParameters.consent was null or undefined when calling get2.');
         }
 
         const queryParameters: any = {};
@@ -4889,34 +5090,344 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
      * Get a user consent
      */
-    async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ScopeApprovalEntity> {
-        const response = await this.get19Raw(requestParameters, initOverrides);
+    async get2(requestParameters: Get2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ScopeApprovalEntity> {
+        const response = await this.get2Raw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
+     * Get a resource
+     */
+    async get20Raw(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get20.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get20.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get20.');
+        }
+
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get20.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
+     * Get a resource
+     */
+    async get20(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
+        const response = await this.get20Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
+     * Get a Device identifier
+     */
+    async get21Raw(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<any>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get21.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get21.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get21.');
+        }
+
+        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling get21.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"deviceIdentifier"}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.TextApiResponse(response) as any;
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[READ] permission on the specified organization
+     * Get a Device identifier
+     */
+    async get21(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<any> {
+        const response = await this.get21Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user credential
+     */
+    async get3Raw(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Credential>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get3.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get3.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get3.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get3.');
+        }
+
+        if (requestParameters.credential === null || requestParameters.credential === undefined) {
+            throw new runtime.RequiredError('credential','Required parameter requestParameters.credential was null or undefined when calling get3.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/credentials/{credential}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"credential"}}`, encodeURIComponent(String(requestParameters.credential))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CredentialFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user credential
+     */
+    async get3(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Credential> {
+        const response = await this.get3Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user audit log
+     */
+    async get4Raw(requestParameters: Get4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get4.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get4.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get4.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get4.');
+        }
+
+        if (requestParameters.audit === null || requestParameters.audit === undefined) {
+            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get4.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user audit log
+     */
+    async get4(requestParameters: Get4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
+        const response = await this.get4Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have APPLICATION_FORM[READ] permission on the specified application or APPLICATION_FORM[READ] permission on the specified domain or APPLICATION_FORM[READ] permission on the specified environment or APPLICATION_FORM[READ] permission on the specified organization
+     * Find a form for an application
+     */
+    async get5Raw(requestParameters: Get5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get5.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get5.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get5.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get5.');
+        }
+
+        if (requestParameters.template === null || requestParameters.template === undefined) {
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get5.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.template !== undefined) {
+            queryParameters['template'] = requestParameters.template;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_FORM[READ] permission on the specified application or APPLICATION_FORM[READ] permission on the specified domain or APPLICATION_FORM[READ] permission on the specified environment or APPLICATION_FORM[READ] permission on the specified organization
+     * Find a form for an application
+     */
+    async get5(requestParameters: Get5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get5Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization
+     * Find a email for an application
+     */
+    async get6Raw(requestParameters: Get6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get6.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get6.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get6.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get6.');
+        }
+
+        if (requestParameters.template === null || requestParameters.template === undefined) {
+            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get6.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.template !== undefined) {
+            queryParameters['template'] = requestParameters.template;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified organization
+     * Find a email for an application
+     */
+    async get6(requestParameters: Get6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get6Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have APPLICATION_ANALYTICS[READ] permission on the specified application or APPLICATION_ANALYTICS[READ] permission on the specified domain or APPLICATION_ANALYTICS[READ] permission on the specified environment or APPLICATION_ANALYTICS[READ] permission on the specified organization
      * Find application analytics
      */
-    async get2Raw(requestParameters: Get2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get7Raw(requestParameters: Get7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get2.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get7.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get2.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get7.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get2.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get7.');
         }
 
         if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get2.');
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get7.');
         }
 
         if (requestParameters.type === null || requestParameters.type === undefined) {
-            throw new runtime.RequiredError('type','Required parameter requestParameters.type was null or undefined when calling get2.');
+            throw new runtime.RequiredError('type','Required parameter requestParameters.type was null or undefined when calling get7.');
         }
 
         const queryParameters: any = {};
@@ -4965,137 +5476,33 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_ANALYTICS[READ] permission on the specified application or APPLICATION_ANALYTICS[READ] permission on the specified domain or APPLICATION_ANALYTICS[READ] permission on the specified environment or APPLICATION_ANALYTICS[READ] permission on the specified organization
      * Find application analytics
      */
-    async get2(requestParameters: Get2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get2Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user credential
-     */
-    async get20Raw(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Credential>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get20.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get20.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get20.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get20.');
-        }
-
-        if (requestParameters.credential === null || requestParameters.credential === undefined) {
-            throw new runtime.RequiredError('credential','Required parameter requestParameters.credential was null or undefined when calling get20.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/credentials/{credential}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"credential"}}`, encodeURIComponent(String(requestParameters.credential))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => CredentialFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user credential
-     */
-    async get20(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Credential> {
-        const response = await this.get20Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user audit log
-     */
-    async get21Raw(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Audit>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get21.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get21.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get21.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling get21.');
-        }
-
-        if (requestParameters.audit === null || requestParameters.audit === undefined) {
-            throw new runtime.RequiredError('audit','Required parameter requestParameters.audit was null or undefined when calling get21.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/audits/{audit}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))).replace(`{${"audit"}}`, encodeURIComponent(String(requestParameters.audit))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user audit log
-     */
-    async get21(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Audit> {
-        const response = await this.get21Raw(requestParameters, initOverrides);
-        return await response.value();
+    async get7(requestParameters: Get7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get7Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get3Raw(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+    async get8Raw(requestParameters: Get8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get3.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get8.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get3.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get8.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get3.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get8.');
         }
 
         if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get3.');
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get8.');
         }
 
         if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get3.');
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get8.');
         }
 
         const queryParameters: any = {};
@@ -5120,8 +5527,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the APPLICATION_FLOW[READ] permission on the specified domain or APPLICATION_FLOW[READ] permission on the specified environment or APPLICATION_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get3(requestParameters: Get3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.get3Raw(requestParameters, initOverrides);
+    async get8(requestParameters: Get8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.get8Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -5129,25 +5536,25 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
      * Get a resource for an application
      */
-    async get4Raw(requestParameters: Get4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Resource>> {
+    async get9Raw(requestParameters: Get9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Resource>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get4.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get9.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get4.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get9.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get4.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get9.');
         }
 
         if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get4.');
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get9.');
         }
 
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get4.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get9.');
         }
 
         const queryParameters: any = {};
@@ -5172,270 +5579,9 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
      * Get a resource for an application
      */
-    async get4(requestParameters: Get4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Resource> {
-        const response = await this.get4Raw(requestParameters, initOverrides);
+    async get9(requestParameters: Get9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Resource> {
+        const response = await this.get9Raw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
-     * Get resource access policy
-     */
-    async get5Raw(requestParameters: Get5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AccessPolicy>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get5.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get5.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get5.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get5.');
-        }
-
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get5.');
-        }
-
-        if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get5.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/resources/{resource}/policies/{policy}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))).replace(`{${"policy"}}`, encodeURIComponent(String(requestParameters.policy))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AccessPolicyFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
-     * Get resource access policy
-     */
-    async get5(requestParameters: Get5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AccessPolicy> {
-        const response = await this.get5Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have APPLICATION_FORM[READ] permission on the specified application or APPLICATION_FORM[READ] permission on the specified domain or APPLICATION_FORM[READ] permission on the specified environment or APPLICATION_FORM[READ] permission on the specified organization
-     * Find a form for an application
-     */
-    async get6Raw(requestParameters: Get6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get6.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get6.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get6.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling get6.');
-        }
-
-        if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get6.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.template !== undefined) {
-            queryParameters['template'] = requestParameters.template;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have APPLICATION_FORM[READ] permission on the specified application or APPLICATION_FORM[READ] permission on the specified domain or APPLICATION_FORM[READ] permission on the specified environment or APPLICATION_FORM[READ] permission on the specified organization
-     * Find a form for an application
-     */
-    async get6(requestParameters: Get6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get6Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
-     * Get a extension grant
-     */
-    async get7Raw(requestParameters: Get7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ExtensionGrant>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get7.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get7.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get7.');
-        }
-
-        if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-            throw new runtime.RequiredError('extensionGrant','Required parameter requestParameters.extensionGrant was null or undefined when calling get7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants/{extensionGrant}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"extensionGrant"}}`, encodeURIComponent(String(requestParameters.extensionGrant))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ExtensionGrantFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
-     * Get a extension grant
-     */
-    async get7(requestParameters: Get7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ExtensionGrant> {
-        const response = await this.get7Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
-     * Find a form
-     */
-    async get8Raw(requestParameters: Get8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get8.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get8.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get8.');
-        }
-
-        if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get8.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.template !== undefined) {
-            queryParameters['template'] = requestParameters.template;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/forms`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_FORM[READ] permission on the specified domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ] permission on the specified organization
-     * Find a form
-     */
-    async get8(requestParameters: Get8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get8Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization
-     * Find a email
-     */
-    async get9Raw(requestParameters: Get9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get9.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get9.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get9.');
-        }
-
-        if (requestParameters.template === null || requestParameters.template === undefined) {
-            throw new runtime.RequiredError('template','Required parameter requestParameters.template was null or undefined when calling get9.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.template !== undefined) {
-            queryParameters['template'] = requestParameters.template;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/emails`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization
-     * Find a email
-     */
-    async get9(requestParameters: Get9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get9Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -5683,6 +5829,54 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
+     * User must have the DOMAIN_I18N_DICTIONARY[READ] permission on the specified domain or DOMAIN_I18N_DICTIONARY[READ] permission on the specified environment or DOMAIN_I18N_DICTIONARY[READ] permission on the specified organization.
+     * Get a i18n dictionary
+     */
+    async getI18nDictionaryRaw(requestParameters: GetI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<I18nDictionary>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling getI18nDictionary.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling getI18nDictionary.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling getI18nDictionary.');
+        }
+
+        if (requestParameters.dictionary === null || requestParameters.dictionary === undefined) {
+            throw new runtime.RequiredError('dictionary','Required parameter requestParameters.dictionary was null or undefined when calling getI18nDictionary.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries/{dictionary}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"dictionary"}}`, encodeURIComponent(String(requestParameters.dictionary))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => I18nDictionaryFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[READ] permission on the specified domain or DOMAIN_I18N_DICTIONARY[READ] permission on the specified environment or DOMAIN_I18N_DICTIONARY[READ] permission on the specified organization.
+     * Get a i18n dictionary
+     */
+    async getI18nDictionary(requestParameters: GetI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<I18nDictionary> {
+        const response = await this.getI18nDictionaryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
      * User must have APPLICATION_MEMBER[LIST] permission on the specified application or APPLICATION_MEMBER[LIST] permission on the specified domain or APPLICATION_MEMBER[LIST] permission on the specified environment or APPLICATION_MEMBER[LIST] permission on the specified organization
      * List members for an application
      */
@@ -5731,10 +5925,10 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for an application
+     * User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
+     * List audit logs for a security domain
      */
-    async list1Raw(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    async list1Raw(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list1.');
         }
@@ -5745,230 +5939,6 @@ export class DomainApi extends runtime.BaseAPI {
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list1.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
-    }
-
-    /**
-     * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for an application
-     */
-    async list1(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.list1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
-     * List alert alert triggers
-     */
-    async list10Raw(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list10.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list10.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
-    }
-
-    /**
-     * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
-     * List alert alert triggers
-     */
-    async list10(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
-        const response = await this.list10Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
-     * List registered bot detections for a security domain
-     */
-    async list11Raw(requestParameters: List11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list11.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list11.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list11.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BotDetectionFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
-     * List registered bot detections for a security domain
-     */
-    async list11(requestParameters: List11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
-        const response = await this.list11Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
-     * List registered device identifiers for a security domain
-     */
-    async list12Raw(requestParameters: List12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list12.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list12.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list12.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BotDetectionFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
-     * List registered device identifiers for a security domain
-     */
-    async list12(requestParameters: List12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
-        const response = await this.list12Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
-     * List registered Authentication Device Notifiers for a security domain
-     */
-    async list13Raw(requestParameters: List13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AuthenticationDeviceNotifier>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list13.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list13.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list13.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthenticationDeviceNotifierFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
-     * List registered Authentication Device Notifiers for a security domain
-     */
-    async list13(requestParameters: List13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AuthenticationDeviceNotifier>> {
-        const response = await this.list13Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
-     * List audit logs for a security domain
-     */
-    async list14Raw(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list14.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list14.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list14.');
         }
 
         const queryParameters: any = {};
@@ -6021,252 +5991,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
      * List audit logs for a security domain
      */
-    async list14(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
-        const response = await this.list14Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_MEMBER[LIST] permission on the specified domain or DOMAIN_MEMBER[LIST] permission on the specified environment or DOMAIN_MEMBER[LIST] permission on the specified organization
-     * List members for a security domain
-     */
-    async list15Raw(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<MembershipListItem>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list15.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list15.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list15.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/members`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_MEMBER[LIST] permission on the specified domain or DOMAIN_MEMBER[LIST] permission on the specified environment or DOMAIN_MEMBER[LIST] permission on the specified organization
-     * List members for a security domain
-     */
-    async list15(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<MembershipListItem> {
-        const response = await this.list15Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. 
-     * List users for a security domain
-     */
-    async list16Raw(requestParameters: List16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<User>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list16.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list16.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list16.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list16.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/devices`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(UserFromJSON)));
-    }
-
-    /**
-     * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. 
-     * List users for a security domain
-     */
-    async list16(requestParameters: List16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<User>> {
-        const response = await this.list16Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user consents
-     */
-    async list17Raw(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list17.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list17.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list17.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list17.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.clientId !== undefined) {
-            queryParameters['clientId'] = requestParameters.clientId;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => ScopeApprovalEntityFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user consents
-     */
-    async list17(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ScopeApprovalEntity> {
-        const response = await this.list17Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user roles
-     */
-    async list18Raw(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<Role>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list18.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list18.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list18.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list18.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.dynamic !== undefined) {
-            queryParameters['dynamic'] = requestParameters.dynamic;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/roles`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(RoleFromJSON)));
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user roles
-     */
-    async list18(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<Role>> {
-        const response = await this.list18Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user enrolled factors
-     */
-    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<EnrolledFactor>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list19.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list19.');
-        }
-
-        if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list19.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnrolledFactorFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user enrolled factors
-     */
-    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<EnrolledFactor>> {
-        const response = await this.list19Raw(requestParameters, initOverrides);
+    async list1(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
+        const response = await this.list1Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -6274,21 +6000,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_RESOURCE[LIST] permission on the specified application or APPLICATION_RESOURCE[LIST] permission on the specified domain or APPLICATION_RESOURCE[LIST] permission on the specified environment or APPLICATION_RESOURCE[LIST] permission on the specified organization
      * List resources for an application
      */
-    async list2Raw(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ResourceListItem>> {
+    async list10Raw(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ResourceListItem>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list2.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list10.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list2.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list10.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list2.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list10.');
         }
 
         if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list2.');
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list10.');
         }
 
         const queryParameters: any = {};
@@ -6321,16 +6047,475 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_RESOURCE[LIST] permission on the specified application or APPLICATION_RESOURCE[LIST] permission on the specified domain or APPLICATION_RESOURCE[LIST] permission on the specified environment or APPLICATION_RESOURCE[LIST] permission on the specified organization
      * List resources for an application
      */
-    async list2(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ResourceListItem> {
+    async list10(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ResourceListItem> {
+        const response = await this.list10Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
+     * Get resource access policies
+     */
+    async list11Raw(requestParameters: List11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AccessPolicyListItem>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list11.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list11.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list11.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list11.');
+        }
+
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling list11.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/resources/{resource}/policies`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AccessPolicyListItemFromJSON));
+    }
+
+    /**
+     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
+     * Get resource access policies
+     */
+    async list11(requestParameters: List11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AccessPolicyListItem>> {
+        const response = await this.list11Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
+     * List registered extension grants for a security domain
+     */
+    async list12Raw(requestParameters: List12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<ExtensionGrant>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list12.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list12.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list12.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(ExtensionGrantFromJSON)));
+    }
+
+    /**
+     * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
+     * List registered extension grants for a security domain
+     */
+    async list12(requestParameters: List12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<ExtensionGrant>> {
+        const response = await this.list12Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
+     * List registered reporters for a security domain
+     */
+    async list13Raw(requestParameters: List13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Reporter>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list13.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list13.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list13.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.userProvider !== undefined) {
+            queryParameters['userProvider'] = requestParameters.userProvider;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReporterFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
+     * List registered reporters for a security domain
+     */
+    async list13(requestParameters: List13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Reporter>> {
+        const response = await this.list13Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
+     * List registered factors for a security domain
+     */
+    async list14Raw(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Factor>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list14.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list14.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list14.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/factors`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FactorFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
+     * List registered factors for a security domain
+     */
+    async list14(requestParameters: List14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Factor>> {
+        const response = await this.list14Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for a security domain
+     */
+    async list15Raw(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list15.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list15.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list15.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for a security domain
+     */
+    async list15(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.list15Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
+     * Update multiple alert triggers
+     */
+    async list16Raw(requestParameters: List16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list16.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list16.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list16.');
+        }
+
+        if (requestParameters.alertTriggers === null || requestParameters.alertTriggers === undefined) {
+            throw new runtime.RequiredError('alertTriggers','Required parameter requestParameters.alertTriggers was null or undefined when calling list16.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters.alertTriggers.map(PatchAlertTriggerToJSON),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
+    }
+
+    /**
+     * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
+     * Update multiple alert triggers
+     */
+    async list16(requestParameters: List16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
+        const response = await this.list16Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
+     * List alert alert triggers
+     */
+    async list17Raw(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list17.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list17.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list17.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
+    }
+
+    /**
+     * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
+     * List alert alert triggers
+     */
+    async list17(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
+        const response = await this.list17Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+     * List registered bot detections for a security domain
+     */
+    async list18Raw(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list18.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list18.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list18.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BotDetectionFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+     * List registered bot detections for a security domain
+     */
+    async list18(requestParameters: List18Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
+        const response = await this.list18Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
+     * List registered Authentication Device Notifiers for a security domain
+     */
+    async list19Raw(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AuthenticationDeviceNotifier>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list19.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list19.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list19.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthenticationDeviceNotifierFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
+     * List registered Authentication Device Notifiers for a security domain
+     */
+    async list19(requestParameters: List19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AuthenticationDeviceNotifier>> {
+        const response = await this.list19Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_MEMBER[LIST] permission on the specified domain or DOMAIN_MEMBER[LIST] permission on the specified environment or DOMAIN_MEMBER[LIST] permission on the specified organization
+     * List members for a security domain
+     */
+    async list2Raw(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<MembershipListItem>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list2.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list2.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list2.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/members`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_MEMBER[LIST] permission on the specified domain or DOMAIN_MEMBER[LIST] permission on the specified environment or DOMAIN_MEMBER[LIST] permission on the specified organization
+     * List members for a security domain
+     */
+    async list2(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<MembershipListItem> {
         const response = await this.list2Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
-     * Get a user credentials
+     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
+     * List registered resources for a security domain
      */
-    async list20Raw(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Credential>> {
+    async list20Raw(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<ServiceResource>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list20.');
         }
@@ -6343,8 +6528,248 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list20.');
         }
 
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
+     * List registered resources for a security domain
+     */
+    async list20(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<ServiceResource>> {
+        const response = await this.list20Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+     * List registered device identifiers for a security domain
+     */
+    async list21Raw(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<BotDetection>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list21.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list21.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list21.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BotDetectionFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
+     * List registered device identifiers for a security domain
+     */
+    async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<BotDetection>> {
+        const response = await this.list21Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user consents
+     */
+    async list3Raw(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ScopeApprovalEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list3.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list3.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list3.');
+        }
+
         if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list20.');
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list3.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.clientId !== undefined) {
+            queryParameters['clientId'] = requestParameters.clientId;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ScopeApprovalEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user consents
+     */
+    async list3(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ScopeApprovalEntity> {
+        const response = await this.list3Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user roles
+     */
+    async list4Raw(requestParameters: List4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<Role>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list4.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list4.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list4.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list4.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.dynamic !== undefined) {
+            queryParameters['dynamic'] = requestParameters.dynamic;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/roles`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(RoleFromJSON)));
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user roles
+     */
+    async list4(requestParameters: List4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<Role>> {
+        const response = await this.list4Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user enrolled factors
+     */
+    async list5Raw(requestParameters: List5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<EnrolledFactor>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list5.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list5.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list5.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list5.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnrolledFactorFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user enrolled factors
+     */
+    async list5(requestParameters: List5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<EnrolledFactor>> {
+        const response = await this.list5Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+     * Get a user credentials
+     */
+    async list6Raw(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Credential>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list6.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list6.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list6.');
+        }
+
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list6.');
         }
 
         const queryParameters: any = {};
@@ -6369,8 +6794,8 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
      * Get a user credentials
      */
-    async list20(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Credential> {
-        const response = await this.list20Raw(requestParameters, initOverrides);
+    async list6(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Credential> {
+        const response = await this.list6Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -6378,21 +6803,21 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
      * Get a user audit logs
      */
-    async list21Raw(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
+    async list7Raw(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Audit>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list21.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list7.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list21.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list7.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list21.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list7.');
         }
 
         if (requestParameters.user === null || requestParameters.user === undefined) {
-            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list21.');
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list7.');
         }
 
         const queryParameters: any = {};
@@ -6441,248 +6866,16 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
      * Get a user audit logs
      */
-    async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
-        const response = await this.list21Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
-     * Get resource access policies
-     */
-    async list3Raw(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AccessPolicyListItem>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list3.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list3.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list3.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list3.');
-        }
-
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling list3.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/resources/{resource}/policies`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AccessPolicyListItemFromJSON));
-    }
-
-    /**
-     * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
-     * Get resource access policies
-     */
-    async list3(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AccessPolicyListItem>> {
-        const response = await this.list3Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
-     * List registered extension grants for a security domain
-     */
-    async list4Raw(requestParameters: List4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<ExtensionGrant>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list4.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list4.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list4.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/extensionGrants`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(ExtensionGrantFromJSON)));
-    }
-
-    /**
-     * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
-     * List registered extension grants for a security domain
-     */
-    async list4(requestParameters: List4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<ExtensionGrant>> {
-        const response = await this.list4Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
-     * List registered reporters for a security domain
-     */
-    async list5Raw(requestParameters: List5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Reporter>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list5.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list5.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list5.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.userProvider !== undefined) {
-            queryParameters['userProvider'] = requestParameters.userProvider;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReporterFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
-     * List registered reporters for a security domain
-     */
-    async list5(requestParameters: List5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Reporter>> {
-        const response = await this.list5Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
-     * List registered factors for a security domain
-     */
-    async list6Raw(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<Factor>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list6.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list6.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list6.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/factors`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FactorFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_FACTOR[LIST] permission on the specified domain or DOMAIN_FACTOR[LIST] permission on the specified environment or DOMAIN_FACTOR[LIST] permission on the specified organization Each returned factor is filtered and contains only basic information such as id, name and factor type.
-     * List registered factors for a security domain
-     */
-    async list6(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Factor>> {
-        const response = await this.list6Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-     * List registered resources for a security domain
-     */
-    async list7Raw(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<ServiceResource>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-     * List registered resources for a security domain
-     */
-    async list7(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<ServiceResource>> {
+    async list7(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Audit>> {
         const response = await this.list7Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for a security domain
+     * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. 
+     * List users for a security domain
      */
-    async list8Raw(requestParameters: List8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    async list8Raw(requestParameters: List8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Set<User>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list8.');
         }
@@ -6695,6 +6888,10 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list8.');
         }
 
+        if (requestParameters.user === null || requestParameters.user === undefined) {
+            throw new runtime.RequiredError('user','Required parameter requestParameters.user was null or undefined when calling list8.');
+        }
+
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -6704,29 +6901,29 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/devices`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"user"}}`, encodeURIComponent(String(requestParameters.user))),
             method: 'GET',
             headers: headerParameters,
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => new Set(jsonValue.map(UserFromJSON)));
     }
 
     /**
-     * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
-     * List registered flows for a security domain
+     * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. 
+     * List users for a security domain
      */
-    async list8(requestParameters: List8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+    async list8(requestParameters: List8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Set<User>> {
         const response = await this.list8Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
-     * Update multiple alert triggers
+     * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for an application
      */
-    async list9Raw(requestParameters: List9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
+    async list9Raw(requestParameters: List9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list9.');
         }
@@ -6739,36 +6936,33 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list9.');
         }
 
-        if (requestParameters.alertTriggers === null || requestParameters.alertTriggers === undefined) {
-            throw new runtime.RequiredError('alertTriggers','Required parameter requestParameters.alertTriggers was null or undefined when calling list9.');
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling list9.');
         }
 
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
         if (this.configuration && this.configuration.apiKey) {
             headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'PATCH',
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'GET',
             headers: headerParameters,
             query: queryParameters,
-            body: requestParameters.alertTriggers.map(PatchAlertTriggerToJSON),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
     }
 
     /**
-     * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
-     * Update multiple alert triggers
+     * User must have the APPLICATION_FLOW[LIST] permission on the specified domain or APPLICATION_FLOW[LIST] permission on the specified environment or APPLICATION_FLOW[LIST] permission on the specified organization. Except if user has APPLICATION_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
+     * List registered flows for an application
      */
-    async list9(requestParameters: List9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
+    async list9(requestParameters: List9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
         const response = await this.list9Raw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -7022,6 +7216,50 @@ export class DomainApi extends runtime.BaseAPI {
      */
     async listGroups(requestParameters: ListGroupsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<GroupPage> {
         const response = await this.listGroupsRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[LIST] permission on the specified domain or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified environment or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified organization.
+     * List all i18n dictionaries supported for a security domain
+     */
+    async listI18nDictionariesRaw(requestParameters: ListI18nDictionariesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<I18nDictionary>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling listI18nDictionaries.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling listI18nDictionaries.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling listI18nDictionaries.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(I18nDictionaryFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[LIST] permission on the specified domain or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified environment or DOMAIN_I18N_DICTIONARY[LIST] permission on the specified organization.
+     * List all i18n dictionaries supported for a security domain
+     */
+    async listI18nDictionaries(requestParameters: ListI18nDictionariesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<I18nDictionary>> {
+        const response = await this.listI18nDictionariesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -7453,54 +7691,6 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
-     * List application member\'s permissions
-     */
-    async permissionsRaw(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling permissions.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling permissions.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/permissions`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse<any>(response);
-    }
-
-    /**
-     * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
-     * List application member\'s permissions
-     */
-    async permissions(requestParameters: PermissionsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
-        const response = await this.permissionsRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
      * User must have DOMAIN[READ] permission on the specified domain or DOMAIN[READ] permission on the specified environment or DOMAIN[READ] permission on the specified organization
      * List domain member\'s permissions
      */
@@ -7541,6 +7731,105 @@ export class DomainApi extends runtime.BaseAPI {
      */
     async permissions1(requestParameters: Permissions1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
         const response = await this.permissions1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
+     * List application member\'s permissions
+     */
+    async permissions2Raw(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<any>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling permissions2.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling permissions2.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling permissions2.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling permissions2.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/permissions`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse<any>(response);
+    }
+
+    /**
+     * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
+     * List application member\'s permissions
+     */
+    async permissions2(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<any>> {
+        const response = await this.permissions2Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.
+     * Update a i18n dictionary description
+     */
+    async putI18nDictionaryRaw(requestParameters: PutI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<I18nDictionary>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling putI18nDictionary.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling putI18nDictionary.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling putI18nDictionary.');
+        }
+
+        if (requestParameters.dictionary === null || requestParameters.dictionary === undefined) {
+            throw new runtime.RequiredError('dictionary','Required parameter requestParameters.dictionary was null or undefined when calling putI18nDictionary.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries/{dictionary}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"dictionary"}}`, encodeURIComponent(String(requestParameters.dictionary))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateI18nDictionaryToJSON(requestParameters.body),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => I18nDictionaryFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.
+     * Update a i18n dictionary description
+     */
+    async putI18nDictionary(requestParameters: PutI18nDictionaryRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<I18nDictionary> {
+        const response = await this.putI18nDictionaryRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -7596,7 +7885,7 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_MEMBER[DELETE] permission on the specified application or APPLICATION_MEMBER[DELETE] permission on the specified domain or APPLICATION_MEMBER[DELETE] permission on the specified environment or APPLICATION_MEMBER[DELETE] permission on the specified organization
+     * User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain or DOMAIN_MEMBER[DELETE] permission on the specified environment or DOMAIN_MEMBER[DELETE] permission on the specified organization
      * Remove a membership
      */
     async removeMemberRaw(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
@@ -7612,59 +7901,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling removeMember.');
         }
 
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling removeMember.');
-        }
-
         if (requestParameters.member === null || requestParameters.member === undefined) {
             throw new runtime.RequiredError('member','Required parameter requestParameters.member was null or undefined when calling removeMember.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/{member}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"member"}}`, encodeURIComponent(String(requestParameters.member))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have APPLICATION_MEMBER[DELETE] permission on the specified application or APPLICATION_MEMBER[DELETE] permission on the specified domain or APPLICATION_MEMBER[DELETE] permission on the specified environment or APPLICATION_MEMBER[DELETE] permission on the specified organization
-     * Remove a membership
-     */
-    async removeMember(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.removeMemberRaw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain or DOMAIN_MEMBER[DELETE] permission on the specified environment or DOMAIN_MEMBER[DELETE] permission on the specified organization
-     * Remove a membership
-     */
-    async removeMember1Raw(requestParameters: RemoveMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling removeMember1.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling removeMember1.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling removeMember1.');
-        }
-
-        if (requestParameters.member === null || requestParameters.member === undefined) {
-            throw new runtime.RequiredError('member','Required parameter requestParameters.member was null or undefined when calling removeMember1.');
         }
 
         const queryParameters: any = {};
@@ -7687,6 +7925,57 @@ export class DomainApi extends runtime.BaseAPI {
 
     /**
      * User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain or DOMAIN_MEMBER[DELETE] permission on the specified environment or DOMAIN_MEMBER[DELETE] permission on the specified organization
+     * Remove a membership
+     */
+    async removeMember(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.removeMemberRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have APPLICATION_MEMBER[DELETE] permission on the specified application or APPLICATION_MEMBER[DELETE] permission on the specified domain or APPLICATION_MEMBER[DELETE] permission on the specified environment or APPLICATION_MEMBER[DELETE] permission on the specified organization
+     * Remove a membership
+     */
+    async removeMember1Raw(requestParameters: RemoveMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling removeMember1.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling removeMember1.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling removeMember1.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling removeMember1.');
+        }
+
+        if (requestParameters.member === null || requestParameters.member === undefined) {
+            throw new runtime.RequiredError('member','Required parameter requestParameters.member was null or undefined when calling removeMember1.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/{member}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"member"}}`, encodeURIComponent(String(requestParameters.member))),
+            method: 'DELETE',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * User must have APPLICATION_MEMBER[DELETE] permission on the specified application or APPLICATION_MEMBER[DELETE] permission on the specified domain or APPLICATION_MEMBER[DELETE] permission on the specified environment or APPLICATION_MEMBER[DELETE] permission on the specified organization
      * Remove a membership
      */
     async removeMember1(requestParameters: RemoveMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
@@ -7738,6 +8027,57 @@ export class DomainApi extends runtime.BaseAPI {
      */
     async renewClientSecret(requestParameters: RenewClientSecretRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Application> {
         const response = await this.renewClientSecretRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.
+     * Update all the entries for a i18n dictionary description
+     */
+    async replaceI18nDictionaryEntriesRaw(requestParameters: ReplaceI18nDictionaryEntriesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<I18nDictionary>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling replaceI18nDictionaryEntries.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling replaceI18nDictionaryEntries.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling replaceI18nDictionaryEntries.');
+        }
+
+        if (requestParameters.dictionary === null || requestParameters.dictionary === undefined) {
+            throw new runtime.RequiredError('dictionary','Required parameter requestParameters.dictionary was null or undefined when calling replaceI18nDictionaryEntries.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/i18n/dictionaries/{dictionary}/entries`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"dictionary"}}`, encodeURIComponent(String(requestParameters.dictionary))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters.body,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => I18nDictionaryFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[UPDATE] permission on the specified organization.
+     * Update all the entries for a i18n dictionary description
+     */
+    async replaceI18nDictionaryEntries(requestParameters: ReplaceI18nDictionaryEntriesRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<I18nDictionary> {
+        const response = await this.replaceI18nDictionaryEntriesRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -8096,10 +8436,10 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified organization
-     * Update an email for an application
+     * User must have APPLICATION_FORM[UPDATE] permission on the specified application or APPLICATION_FORM[UPDATE] permission on the specified domain or APPLICATION_FORM[UPDATE] permission on the specified environment or APPLICATION_FORM[UPDATE] permission on the specified organization
+     * Update a form for an application
      */
-    async updateRaw(requestParameters: UpdateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Email>> {
+    async updateRaw(requestParameters: UpdateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update.');
         }
@@ -8116,456 +8456,12 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update.');
         }
 
-        if (requestParameters.email === null || requestParameters.email === undefined) {
-            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling update.');
-        }
-
-        if (requestParameters.email2 === null || requestParameters.email2 === undefined) {
-            throw new runtime.RequiredError('email2','Required parameter requestParameters.email2 was null or undefined when calling update.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateEmailToJSON(requestParameters.email2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => EmailFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified organization
-     * Update an email for an application
-     */
-    async update(requestParameters: UpdateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Email> {
-        const response = await this.updateRaw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
-     * Create or update list of flows
-     */
-    async update1Raw(requestParameters: Update1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update1.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update1.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update1.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update1.');
-        }
-
-        if (requestParameters.flows === null || requestParameters.flows === undefined) {
-            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update1.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters.flows.map(FlowToJSON),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
-    }
-
-    /**
-     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
-     * Create or update list of flows
-     */
-    async update1(requestParameters: Update1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.update1Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Create or update list of flows
-     */
-    async update10Raw(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update10.');
-        }
-
-        if (requestParameters.flows === null || requestParameters.flows === undefined) {
-            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update10.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: requestParameters.flows.map(FlowToJSON),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Create or update list of flows
-     */
-    async update10(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.update10Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update11.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update11.');
-        }
-
-        if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling update11.');
-        }
-
-        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
-            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling update11.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: FlowToJSON(requestParameters.flow2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.update11Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
-     * Update a bot detection
-     */
-    async update12Raw(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update12.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update12.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update12.');
-        }
-
-        if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling update12.');
-        }
-
-        if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update12.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections/{botDetection}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"botDetection"}}`, encodeURIComponent(String(requestParameters.botDetection))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateBotDetectionToJSON(requestParameters.identity),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => BotDetectionFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
-     * Update a bot detection
-     */
-    async update12(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-        const response = await this.update12Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
-     * Update a Device identifier
-     */
-    async update13Raw(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update13.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update13.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update13.');
-        }
-
-        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling update13.');
-        }
-
-        if (requestParameters.deviceIdentifier2 === null || requestParameters.deviceIdentifier2 === undefined) {
-            throw new runtime.RequiredError('deviceIdentifier2','Required parameter requestParameters.deviceIdentifier2 was null or undefined when calling update13.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"deviceIdentifier"}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateDeviceIdentifierToJSON(requestParameters.deviceIdentifier2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => BotDetectionFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
-     * Update a Device identifier
-     */
-    async update13(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
-        const response = await this.update13Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
-     * Update an Authentication Device Notifier
-     */
-    async update14Raw(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update14.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update14.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update14.');
-        }
-
-        if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling update14.');
-        }
-
-        if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
-            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling update14.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers/{authDeviceNotifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"authDeviceNotifier"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifier))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: UpdateAuthenticationDeviceNotifierToJSON(requestParameters.notifier),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => AuthenticationDeviceNotifierFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
-     * Update an Authentication Device Notifier
-     */
-    async update14(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
-        const response = await this.update14Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update2Raw(requestParameters: Update2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update2.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update2.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update2.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update2.');
-        }
-
-        if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling update2.');
-        }
-
-        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
-            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling update2.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
-            method: 'PUT',
-            headers: headerParameters,
-            query: queryParameters,
-            body: FlowToJSON(requestParameters.flow2),
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
-    }
-
-    /**
-     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
-     * Update a flow
-     */
-    async update2(requestParameters: Update2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.update2Raw(requestParameters, initOverrides);
-        return await response.value();
-    }
-
-    /**
-     * User must have APPLICATION_FORM[UPDATE] permission on the specified application or APPLICATION_FORM[UPDATE] permission on the specified domain or APPLICATION_FORM[UPDATE] permission on the specified environment or APPLICATION_FORM[UPDATE] permission on the specified organization
-     * Update a form for an application
-     */
-    async update3Raw(requestParameters: Update3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Form>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update3.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update3.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update3.');
-        }
-
-        if (requestParameters.application === null || requestParameters.application === undefined) {
-            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update3.');
-        }
-
         if (requestParameters.form === null || requestParameters.form === undefined) {
-            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update3.');
+            throw new runtime.RequiredError('form','Required parameter requestParameters.form was null or undefined when calling update.');
         }
 
         if (requestParameters.form2 === null || requestParameters.form2 === undefined) {
-            throw new runtime.RequiredError('form2','Required parameter requestParameters.form2 was null or undefined when calling update3.');
+            throw new runtime.RequiredError('form2','Required parameter requestParameters.form2 was null or undefined when calling update.');
         }
 
         const queryParameters: any = {};
@@ -8593,7 +8489,455 @@ export class DomainApi extends runtime.BaseAPI {
      * User must have APPLICATION_FORM[UPDATE] permission on the specified application or APPLICATION_FORM[UPDATE] permission on the specified domain or APPLICATION_FORM[UPDATE] permission on the specified environment or APPLICATION_FORM[UPDATE] permission on the specified organization
      * Update a form for an application
      */
-    async update3(requestParameters: Update3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
+    async update(requestParameters: UpdateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
+        const response = await this.updateRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified organization
+     * Update an email for an application
+     */
+    async update1Raw(requestParameters: Update1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Email>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update1.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update1.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update1.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update1.');
+        }
+
+        if (requestParameters.email === null || requestParameters.email === undefined) {
+            throw new runtime.RequiredError('email','Required parameter requestParameters.email was null or undefined when calling update1.');
+        }
+
+        if (requestParameters.email2 === null || requestParameters.email2 === undefined) {
+            throw new runtime.RequiredError('email2','Required parameter requestParameters.email2 was null or undefined when calling update1.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/emails/{email}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"email"}}`, encodeURIComponent(String(requestParameters.email))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateEmailToJSON(requestParameters.email2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EmailFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified organization
+     * Update an email for an application
+     */
+    async update1(requestParameters: Update1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Email> {
+        const response = await this.update1Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async update10Raw(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update10.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update10.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update10.');
+        }
+
+        if (requestParameters.flow === null || requestParameters.flow === undefined) {
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling update10.');
+        }
+
+        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
+            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling update10.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FlowToJSON(requestParameters.flow2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async update10(requestParameters: Update10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.update10Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
+     * Update a bot detection
+     */
+    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update11.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update11.');
+        }
+
+        if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
+            throw new runtime.RequiredError('botDetection','Required parameter requestParameters.botDetection was null or undefined when calling update11.');
+        }
+
+        if (requestParameters.identity === null || requestParameters.identity === undefined) {
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update11.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections/{botDetection}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"botDetection"}}`, encodeURIComponent(String(requestParameters.botDetection))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateBotDetectionToJSON(requestParameters.identity),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BotDetectionFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
+     * Update a bot detection
+     */
+    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
+        const response = await this.update11Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
+     * Update an Authentication Device Notifier
+     */
+    async update12Raw(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update12.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update12.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update12.');
+        }
+
+        if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling update12.');
+        }
+
+        if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
+            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling update12.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/auth-device-notifiers/{authDeviceNotifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"authDeviceNotifier"}}`, encodeURIComponent(String(requestParameters.authDeviceNotifier))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateAuthenticationDeviceNotifierToJSON(requestParameters.notifier),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AuthenticationDeviceNotifierFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
+     * Update an Authentication Device Notifier
+     */
+    async update12(requestParameters: Update12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
+        const response = await this.update12Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
+     * Update a resource
+     */
+    async update13Raw(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update13.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update13.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update13.');
+        }
+
+        if (requestParameters.resource === null || requestParameters.resource === undefined) {
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling update13.');
+        }
+
+        if (requestParameters.identity === null || requestParameters.identity === undefined) {
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update13.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateServiceResourceToJSON(requestParameters.identity),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
+     * Update a resource
+     */
+    async update13(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
+        const response = await this.update13Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
+     * Update a Device identifier
+     */
+    async update14Raw(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<BotDetection>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update14.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update14.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update14.');
+        }
+
+        if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
+            throw new runtime.RequiredError('deviceIdentifier','Required parameter requestParameters.deviceIdentifier was null or undefined when calling update14.');
+        }
+
+        if (requestParameters.deviceIdentifier2 === null || requestParameters.deviceIdentifier2 === undefined) {
+            throw new runtime.RequiredError('deviceIdentifier2','Required parameter requestParameters.deviceIdentifier2 was null or undefined when calling update14.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/device-identifiers/{deviceIdentifier}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"deviceIdentifier"}}`, encodeURIComponent(String(requestParameters.deviceIdentifier))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: UpdateDeviceIdentifierToJSON(requestParameters.deviceIdentifier2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => BotDetectionFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIER[UPDATE] permission on the specified organization
+     * Update a Device identifier
+     */
+    async update14(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<BotDetection> {
+        const response = await this.update14Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+     * Create or update list of flows
+     */
+    async update2Raw(requestParameters: Update2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update2.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update2.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update2.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update2.');
+        }
+
+        if (requestParameters.flows === null || requestParameters.flows === undefined) {
+            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update2.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters.flows.map(FlowToJSON),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
+    }
+
+    /**
+     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+     * Create or update list of flows
+     */
+    async update2(requestParameters: Update2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.update2Raw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async update3Raw(requestParameters: Update3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update3.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update3.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update3.');
+        }
+
+        if (requestParameters.application === null || requestParameters.application === undefined) {
+            throw new runtime.RequiredError('application','Required parameter requestParameters.application was null or undefined when calling update3.');
+        }
+
+        if (requestParameters.flow === null || requestParameters.flow === undefined) {
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling update3.');
+        }
+
+        if (requestParameters.flow2 === null || requestParameters.flow2 === undefined) {
+            throw new runtime.RequiredError('flow2','Required parameter requestParameters.flow2 was null or undefined when calling update3.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/flows/{flow}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"application"}}`, encodeURIComponent(String(requestParameters.application))).replace(`{${"flow"}}`, encodeURIComponent(String(requestParameters.flow))),
+            method: 'PUT',
+            headers: headerParameters,
+            query: queryParameters,
+            body: FlowToJSON(requestParameters.flow2),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => FlowEntityFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the APPLICATION_FLOW[UPDATE] permission on the specified domain or APPLICATION_FLOW[UPDATE] permission on the specified environment or APPLICATION_FLOW[UPDATE] permission on the specified organization
+     * Update a flow
+     */
+    async update3(requestParameters: Update3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
         const response = await this.update3Raw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -8874,10 +9218,10 @@ export class DomainApi extends runtime.BaseAPI {
     }
 
     /**
-     * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
-     * Update a resource
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Create or update list of flows
      */
-    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
+    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
             throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
         }
@@ -8890,12 +9234,8 @@ export class DomainApi extends runtime.BaseAPI {
             throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update9.');
         }
 
-        if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling update9.');
-        }
-
-        if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update9.');
+        if (requestParameters.flows === null || requestParameters.flows === undefined) {
+            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update9.');
         }
 
         const queryParameters: any = {};
@@ -8909,21 +9249,21 @@ export class DomainApi extends runtime.BaseAPI {
         }
 
         const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"resource"}}`, encodeURIComponent(String(requestParameters.resource))),
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/flows`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
             method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
-            body: UpdateServiceResourceToJSON(requestParameters.identity),
+            body: requestParameters.flows.map(FlowToJSON),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
     }
 
     /**
-     * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
-     * Update a resource
+     * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
+     * Create or update list of flows
      */
-    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
+    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
         const response = await this.update9Raw(requestParameters, initOverrides);
         return await response.value();
     }
@@ -9479,7 +9819,7 @@ export class DomainApi extends runtime.BaseAPI {
 /**
  * @export
  */
-export const Get1TemplateEnum = {
+export const Get12TemplateEnum = {
     Login: 'LOGIN',
     Registration: 'REGISTRATION',
     RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
@@ -9498,25 +9838,62 @@ export const Get1TemplateEnum = {
     Error: 'ERROR',
     CertificateExpiration: 'CERTIFICATE_EXPIRATION'
 } as const;
-export type Get1TemplateEnum = typeof Get1TemplateEnum[keyof typeof Get1TemplateEnum];
+export type Get12TemplateEnum = typeof Get12TemplateEnum[keyof typeof Get12TemplateEnum];
 /**
  * @export
  */
-export const Get11TypeEnum = {
+export const Get13TemplateEnum = {
+    Login: 'LOGIN',
+    Registration: 'REGISTRATION',
+    RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
+    ForgotPassword: 'FORGOT_PASSWORD',
+    ResetPassword: 'RESET_PASSWORD',
+    Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
+    MfaEnroll: 'MFA_ENROLL',
+    MfaChallenge: 'MFA_CHALLENGE',
+    MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',
+    MfaRecoveryCode: 'MFA_RECOVERY_CODE',
+    BlockedAccount: 'BLOCKED_ACCOUNT',
+    CompleteProfile: 'COMPLETE_PROFILE',
+    WebauthnRegister: 'WEBAUTHN_REGISTER',
+    WebauthnLogin: 'WEBAUTHN_LOGIN',
+    IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
+    Error: 'ERROR',
+    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
+} as const;
+export type Get13TemplateEnum = typeof Get13TemplateEnum[keyof typeof Get13TemplateEnum];
+/**
+ * @export
+ */
+export const Get15TypeEnum = {
     GroupBy: 'group_by',
     DateHisto: 'date_histo',
     Count: 'count'
 } as const;
-export type Get11TypeEnum = typeof Get11TypeEnum[keyof typeof Get11TypeEnum];
+export type Get15TypeEnum = typeof Get15TypeEnum[keyof typeof Get15TypeEnum];
 /**
  * @export
  */
-export const Get2TypeEnum = {
-    GroupBy: 'group_by',
-    DateHisto: 'date_histo',
-    Count: 'count'
+export const Get5TemplateEnum = {
+    Login: 'LOGIN',
+    Registration: 'REGISTRATION',
+    RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
+    ForgotPassword: 'FORGOT_PASSWORD',
+    ResetPassword: 'RESET_PASSWORD',
+    Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
+    MfaEnroll: 'MFA_ENROLL',
+    MfaChallenge: 'MFA_CHALLENGE',
+    MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',
+    MfaRecoveryCode: 'MFA_RECOVERY_CODE',
+    BlockedAccount: 'BLOCKED_ACCOUNT',
+    CompleteProfile: 'COMPLETE_PROFILE',
+    WebauthnRegister: 'WEBAUTHN_REGISTER',
+    WebauthnLogin: 'WEBAUTHN_LOGIN',
+    IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
+    Error: 'ERROR',
+    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
 } as const;
-export type Get2TypeEnum = typeof Get2TypeEnum[keyof typeof Get2TypeEnum];
+export type Get5TemplateEnum = typeof Get5TemplateEnum[keyof typeof Get5TemplateEnum];
 /**
  * @export
  */
@@ -9543,46 +9920,9 @@ export type Get6TemplateEnum = typeof Get6TemplateEnum[keyof typeof Get6Template
 /**
  * @export
  */
-export const Get8TemplateEnum = {
-    Login: 'LOGIN',
-    Registration: 'REGISTRATION',
-    RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
-    ForgotPassword: 'FORGOT_PASSWORD',
-    ResetPassword: 'RESET_PASSWORD',
-    Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
-    MfaEnroll: 'MFA_ENROLL',
-    MfaChallenge: 'MFA_CHALLENGE',
-    MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',
-    MfaRecoveryCode: 'MFA_RECOVERY_CODE',
-    BlockedAccount: 'BLOCKED_ACCOUNT',
-    CompleteProfile: 'COMPLETE_PROFILE',
-    WebauthnRegister: 'WEBAUTHN_REGISTER',
-    WebauthnLogin: 'WEBAUTHN_LOGIN',
-    IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
-    Error: 'ERROR',
-    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
+export const Get7TypeEnum = {
+    GroupBy: 'group_by',
+    DateHisto: 'date_histo',
+    Count: 'count'
 } as const;
-export type Get8TemplateEnum = typeof Get8TemplateEnum[keyof typeof Get8TemplateEnum];
-/**
- * @export
- */
-export const Get9TemplateEnum = {
-    Login: 'LOGIN',
-    Registration: 'REGISTRATION',
-    RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
-    ForgotPassword: 'FORGOT_PASSWORD',
-    ResetPassword: 'RESET_PASSWORD',
-    Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
-    MfaEnroll: 'MFA_ENROLL',
-    MfaChallenge: 'MFA_CHALLENGE',
-    MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',
-    MfaRecoveryCode: 'MFA_RECOVERY_CODE',
-    BlockedAccount: 'BLOCKED_ACCOUNT',
-    CompleteProfile: 'COMPLETE_PROFILE',
-    WebauthnRegister: 'WEBAUTHN_REGISTER',
-    WebauthnLogin: 'WEBAUTHN_LOGIN',
-    IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
-    Error: 'ERROR',
-    CertificateExpiration: 'CERTIFICATE_EXPIRATION'
-} as const;
-export type Get9TemplateEnum = typeof Get9TemplateEnum[keyof typeof Get9TemplateEnum];
+export type Get7TypeEnum = typeof Get7TypeEnum[keyof typeof Get7TypeEnum];

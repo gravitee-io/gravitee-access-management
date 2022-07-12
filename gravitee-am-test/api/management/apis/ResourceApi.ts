@@ -25,46 +25,46 @@ import {
     UpdateServiceResourceToJSON,
 } from '../models';
 
-export interface Create7Request {
+export interface Create9Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     resource: NewServiceResource;
 }
 
-export interface Delete7Request {
+export interface Delete12Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     resource: string;
 }
 
-export interface Get13Request {
+export interface Get20Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     resource: string;
 }
 
-export interface Get37Request {
+export interface Get38Request {
     resource: string;
 }
 
-export interface GetSchema6Request {
+export interface GetSchema7Request {
     resource: string;
 }
 
-export interface List37Request {
+export interface List20Request {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+}
+
+export interface List38Request {
     expand?: Array<string>;
 }
 
-export interface List7Request {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-}
-
-export interface Update9Request {
+export interface Update13Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -81,21 +81,21 @@ export class ResourceApi extends runtime.BaseAPI {
      * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
      * Create a resource
      */
-    async create7Raw(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create9Raw(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create9.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create9.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create9.');
         }
 
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling create7.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling create9.');
         }
 
         const queryParameters: any = {};
@@ -123,29 +123,29 @@ export class ResourceApi extends runtime.BaseAPI {
      * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
      * Create a resource
      */
-    async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create7Raw(requestParameters, initOverrides);
+    async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create9Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
      * Delete a resource
      */
-    async delete7Raw(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete12Raw(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete12.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete12.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete12.');
         }
 
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling delete7.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling delete12.');
         }
 
         const queryParameters: any = {};
@@ -170,29 +170,29 @@ export class ResourceApi extends runtime.BaseAPI {
      * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
      * Delete a resource
      */
-    async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete7Raw(requestParameters, initOverrides);
+    async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete12Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
      * Get a resource
      */
-    async get13Raw(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
+    async get20Raw(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get13.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get20.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get13.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get20.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get13.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get20.');
         }
 
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get13.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get20.');
         }
 
         const queryParameters: any = {};
@@ -217,8 +217,8 @@ export class ResourceApi extends runtime.BaseAPI {
      * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
      * Get a resource
      */
-    async get13(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
-        const response = await this.get13Raw(requestParameters, initOverrides);
+    async get20(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
+        const response = await this.get20Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -226,9 +226,9 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin
      */
-    async get37Raw(requestParameters: Get37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get38Raw(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get37.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling get38.');
         }
 
         const queryParameters: any = {};
@@ -253,17 +253,17 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin
      */
-    async get37(requestParameters: Get37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get37Raw(requestParameters, initOverrides);
+    async get38(requestParameters: Get38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get38Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema6Raw(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema7Raw(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema6.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling getSchema7.');
         }
 
         const queryParameters: any = {};
@@ -288,15 +288,59 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a resource plugin\'s schema
      */
-    async getSchema6(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema6Raw(requestParameters, initOverrides);
+    async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema7Raw(requestParameters, initOverrides);
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
+     * List registered resources for a security domain
+     */
+    async list20Raw(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<ServiceResource>>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list20.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list20.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list20.');
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
+        }
+
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
+    }
+
+    /**
+     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
+     * List registered resources for a security domain
+     */
+    async list20(requestParameters: List20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<ServiceResource>> {
+        const response = await this.list20Raw(requestParameters, initOverrides);
+        return await response.value();
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List resource plugins
      */
-    async list37Raw(requestParameters: List37Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list38Raw(requestParameters: List38Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -323,77 +367,33 @@ export class ResourceApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List resource plugins
      */
-    async list37(requestParameters: List37Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list37Raw(requestParameters, initOverrides);
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-     * List registered resources for a security domain
-     */
-    async list7Raw(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<ServiceResource>>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list7.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list7.');
-        }
-
-        const queryParameters: any = {};
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.apiKey) {
-            headerParameters["Authorization"] = this.configuration.apiKey("Authorization"); // gravitee-auth authentication
-        }
-
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))),
-            method: 'GET',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
-    }
-
-    /**
-     * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-     * List registered resources for a security domain
-     */
-    async list7(requestParameters: List7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<ServiceResource>> {
-        const response = await this.list7Raw(requestParameters, initOverrides);
-        return await response.value();
+    async list38(requestParameters: List38Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list38Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
      * Update a resource
      */
-    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
+    async update13Raw(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ServiceResource>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update13.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update13.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update13.');
         }
 
         if (requestParameters.resource === null || requestParameters.resource === undefined) {
-            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling update9.');
+            throw new runtime.RequiredError('resource','Required parameter requestParameters.resource was null or undefined when calling update13.');
         }
 
         if (requestParameters.identity === null || requestParameters.identity === undefined) {
-            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update9.');
+            throw new runtime.RequiredError('identity','Required parameter requestParameters.identity was null or undefined when calling update13.');
         }
 
         const queryParameters: any = {};
@@ -421,8 +421,8 @@ export class ResourceApi extends runtime.BaseAPI {
      * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
      * Update a resource
      */
-    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
-        const response = await this.update9Raw(requestParameters, initOverrides);
+    async update13(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ServiceResource> {
+        const response = await this.update13Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

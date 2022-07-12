@@ -21,19 +21,42 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.webauthn.AttestationConveyancePreference;
 import io.gravitee.am.common.webauthn.AuthenticatorAttachment;
 import io.gravitee.am.common.webauthn.UserVerification;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.SAMLSettings;
+import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.gravitee.am.model.oidc.*;
+import io.gravitee.am.model.oidc.CIBASettingNotifier;
+import io.gravitee.am.model.oidc.CIBASettings;
+import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
+import io.gravitee.am.model.oidc.SecurityProfileSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
-import io.gravitee.am.repository.mongodb.management.internal.model.*;
-import io.gravitee.am.repository.mongodb.management.internal.model.oidc.*;
+import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.DomainMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.ClientRegistrationSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.oidc.SecurityProfileSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
-import io.reactivex.*;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Maybe;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -44,7 +67,9 @@ import java.util.Collection;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.in;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -177,6 +202,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setReferenceId(domainMongo.getReferenceId());
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
+
         return domain;
     }
 
@@ -211,6 +237,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setReferenceId(domain.getReferenceId());
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
+
         return domainMongo;
     }
 

@@ -363,12 +363,6 @@ export interface User {
     zoneInfo?: string;
     /**
      * 
-     * @type {string}
-     * @memberof User
-     */
-    middleName?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof User
      */
@@ -385,6 +379,12 @@ export interface User {
      * @memberof User
      */
     website?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    middleName?: string;
     /**
      * 
      * @type {string}
@@ -475,10 +475,10 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'address': !exists(json, 'address') ? undefined : json['address'],
         'locale': !exists(json, 'locale') ? undefined : json['locale'],
         'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     };
@@ -545,10 +545,10 @@ export function UserToJSON(value?: User | null): any {
         'address': value.address,
         'locale': value.locale,
         'zoneInfo': value.zoneInfo,
-        'middleName': value.middleName,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'middleName': value.middleName,
         'birthdate': value.birthdate,
         'phoneNumber': value.phoneNumber,
     };

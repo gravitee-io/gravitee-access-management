@@ -67,6 +67,8 @@ public abstract class Event {
                 return DeviceIdentifierEvent.actionOf(action);
             case AUTH_DEVICE_NOTIFIER:
                 return AuthenticationDeviceNotifierEvent.actionOf(action);
+            case I18N_DICTIONARY:
+                return I18nDictionaryEvent.actionOf(action);
             default:
                 return null;
         }

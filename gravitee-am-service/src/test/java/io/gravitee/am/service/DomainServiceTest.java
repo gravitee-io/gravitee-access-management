@@ -37,6 +37,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.DomainServiceImpl;
+import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.model.NewDomain;
 import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
@@ -49,7 +50,6 @@ import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.reactivex.observers.TestObserver;
 import io.reactivex.subscribers.TestSubscriber;
-import java.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -58,6 +58,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
@@ -214,6 +222,9 @@ public class DomainServiceTest {
     @Mock
     private AuthenticationDeviceNotifierService authenticationDeviceNotifierService;
 
+    @Mock
+    private I18nDictionaryService i18nDictionaryService;
+
     @Test
     public void shouldFindById() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
@@ -303,7 +314,7 @@ public class DomainServiceTest {
         when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
-        when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, ReferenceType.DOMAIN)).thenReturn(Maybe.just(new Role()));
+        when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
 
@@ -578,12 +589,12 @@ public class DomainServiceTest {
 
         final AlertTrigger alertTrigger = new AlertTrigger();
         alertTrigger.setId(ALERT_TRIGGER_ID);
-        alertTrigger.setReferenceType(ReferenceType.DOMAIN);
+        alertTrigger.setReferenceType(DOMAIN);
         alertTrigger.setReferenceId(DOMAIN_ID);
 
         final AlertNotifier alertNotifier = new AlertNotifier();
         alertNotifier.setId(ALERT_NOTIFIER_ID);
-        alertNotifier.setReferenceType(ReferenceType.DOMAIN);
+        alertNotifier.setReferenceType(DOMAIN);
         alertNotifier.setReferenceId(DOMAIN_ID);
 
         final AuthenticationDeviceNotifier authDeviceNotifier = new AuthenticationDeviceNotifier();
@@ -604,7 +615,7 @@ public class DomainServiceTest {
         when(extensionGrantService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
-        when(roleService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
+        when(roleService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
@@ -612,21 +623,21 @@ public class DomainServiceTest {
         when(scopeService.delete(SCOPE_ID, true)).thenReturn(Completable.complete());
         when(group.getId()).thenReturn(GROUP_ID);
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(group));
-        when(groupService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
+        when(groupService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(form.getId()).thenReturn(FORM_ID);
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(form));
         when(formService.delete(eq(DOMAIN_ID), anyString())).thenReturn(Completable.complete());
         when(email.getId()).thenReturn(EMAIL_ID);
-        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(email));
+        when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(email));
         when(emailTemplateService.delete(anyString())).thenReturn(Completable.complete());
         when(reporter.getId()).thenReturn(REPORTER_ID);
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(reporter));
         when(reporterService.delete(anyString())).thenReturn(Completable.complete());
         when(flow.getId()).thenReturn(FLOW_ID);
-        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(flow));
+        when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(flow));
         when(flowService.delete(anyString())).thenReturn(Completable.complete());
         when(membership.getId()).thenReturn(MEMBERSHIP_ID);
-        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Flowable.just(membership));
+        when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.just(membership));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
@@ -634,11 +645,14 @@ public class DomainServiceTest {
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(new HashSet<>(Collections.singletonList(resource))));
         when(resourceService.delete(resource)).thenReturn(Completable.complete());
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.just(alertTrigger));
-        when(alertTriggerService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(Completable.complete());
+        when(alertTriggerService.delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(Completable.complete());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.just(alertNotifier));
-        when(alertNotifierService.delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ALERT_NOTIFIER_ID), isNull())).thenReturn(Completable.complete());
+        when(alertNotifierService.delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ALERT_NOTIFIER_ID), isNull())).thenReturn(Completable.complete());
         when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(authDeviceNotifier));
         when(authenticationDeviceNotifierService.delete(any(), eq(AUTH_DEVICE_ID), any())).thenReturn(Completable.complete());
+        when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(new I18nDictionary()));
+        when(i18nDictionaryService.delete(eq(DOMAIN), eq(DOMAIN_ID), any(), any())).thenReturn(Completable.complete());
+
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -651,11 +665,11 @@ public class DomainServiceTest {
         verify(certificateService, times(1)).delete(CERTIFICATE_ID);
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
-        verify(roleService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
+        verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
         verify(userService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(userActivityService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
-        verify(groupService, times(1)).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
+        verify(groupService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
@@ -679,15 +693,16 @@ public class DomainServiceTest {
         when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(Completable.complete());
         when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(emailTemplateService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(reporterService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(flowService.findAll(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(membershipService.findByReference(DOMAIN_ID, ReferenceType.DOMAIN)).thenReturn(Flowable.empty());
+        when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.empty());
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
         when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
@@ -700,7 +715,7 @@ public class DomainServiceTest {
         verify(certificateService, never()).delete(anyString());
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
-        verify(roleService, never()).delete(eq(ReferenceType.DOMAIN), eq(DOMAIN_ID), anyString());
+        verify(roleService, never()).delete(eq(DOMAIN), eq(DOMAIN_ID), anyString());
         verify(scopeService, never()).delete(anyString(), anyBoolean());
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());

@@ -46,8 +46,10 @@ import java.util.List;
 import java.util.Set;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.CriteriaDefinition.from;
-import static reactor.adapter.rxjava.RxJava2Adapter.*;
+import static reactor.adapter.rxjava.RxJava2Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava2Adapter.maybeToMono;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava2Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -219,7 +221,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                     domain.setVhosts(vhosts);
                     return domain;
                 })
-        );
+         );
     }
 
     private Mono<Integer> persistChildEntities(Mono<Integer> actionFlow, Domain item) {

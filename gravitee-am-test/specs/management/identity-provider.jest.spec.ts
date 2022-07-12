@@ -18,13 +18,7 @@ import * as faker from 'faker';
 import {afterAll, beforeAll, expect} from '@jest/globals';
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import {createDomain, deleteDomain, startDomain} from "@management-commands/domain-management-commands";
-import {
-    createApplication, deleteApplication,
-    getAllApplications,
-    getApplication, getApplicationPage, updateApplication
-} from "@management-commands/application-management-commands";
 import {createIdp, deleteIdp, getAllIdps, getIdp, updateIdp} from "@management-commands/idp-management-commands";
-import {first} from "rxjs";
 
 global.fetch = fetch;
 

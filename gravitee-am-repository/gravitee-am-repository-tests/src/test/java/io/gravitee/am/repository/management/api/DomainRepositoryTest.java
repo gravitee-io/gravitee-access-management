@@ -22,8 +22,8 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.login.WebAuthnSettings;
-import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.CIBASettingNotifier;
+import io.gravitee.am.model.oidc.CIBASettings;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.model.uma.UMASettings;
@@ -35,7 +35,12 @@ import io.reactivex.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
