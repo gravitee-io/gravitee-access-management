@@ -24,5 +24,8 @@ import io.reactivex.Completable;
  * @author GraviteeSource Team
  */
 public interface EmailSenderProvider extends ResourceProvider {
-    Completable sendMessage(Email message);
+    Completable sendMessage(Email message, boolean overrideFrom);
+    default Completable sendMessage(Email message) {
+        return sendMessage(message, false);
+    }
 }

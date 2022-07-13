@@ -111,14 +111,14 @@ public class EmailFactorProviderTest {
         when(factorContext.getUser()).thenReturn(user);
 
         when(userService.addFactor(any(), any(), any())).thenReturn(Single.just(user));
-        when(smtpProvider.sendMessage(any())).thenReturn(Completable.complete());
+        when(smtpProvider.sendMessage(any(), anyBoolean())).thenReturn(Completable.complete());
 
         TestObserver<Void> test = cut.sendChallenge(factorContext).test();
         test.awaitTerminalEvent();
         test.assertNoValues();
         test.assertNoErrors();
 
-        verify(smtpProvider).sendMessage(argThat(m -> m.getTo()[0].equals(RECIPIENT)));
+        verify(smtpProvider).sendMessage(argThat(m -> m.getTo()[0].equals(RECIPIENT)), anyBoolean());
         verify(userService).addFactor(any(), any(), any());
     }
 

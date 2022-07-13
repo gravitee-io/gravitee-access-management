@@ -230,6 +230,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
+        application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
         application.setDomain(domain);
         application.setMetadata(newApplication.getMetadata());

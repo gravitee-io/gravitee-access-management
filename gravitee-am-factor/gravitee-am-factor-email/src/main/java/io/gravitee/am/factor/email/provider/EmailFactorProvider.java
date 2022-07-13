@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.factor.email.provider;
 
+import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -155,7 +156,7 @@ public class EmailFactorProvider implements FactorProvider {
             final String recipient = enrolledFactor.getChannel().getTarget();
             EmailService.EmailWrapper emailWrapper = emailService.createEmail(Template.MFA_CHALLENGE, context.getClient(), asList(recipient), params);
 
-            return provider.sendMessage(emailWrapper.getEmail())
+            return provider.sendMessage(emailWrapper.getEmail(), emailWrapper.isFromDefaultTemplate())
                     .andThen(Single.just(enrolledFactor)
                             .flatMap(ef -> {
                                 ef.setPrimary(true);

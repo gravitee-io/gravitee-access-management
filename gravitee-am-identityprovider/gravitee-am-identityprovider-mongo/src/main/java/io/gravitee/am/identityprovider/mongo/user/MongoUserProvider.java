@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
+import com.google.common.base.Strings;
+import com.mongodb.BasicDBObject;
+import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -34,6 +37,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -143,24 +147,20 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
 
     @Override
     public Single<User> update(String id, User updateUser) {
-        return findById(id)
+        return findById(id, false)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
                 .flatMapSingle(oldUser -> {
                     Document document = new Document();
                     // set username (keep the original value)
                     document.put(configuration.getUsernameField(), oldUser.getUsername());
-                    // set password
-                    if (updateUser.getCredentials() != null) {
-                        if (configuration.isUseDedicatedSalt()) {
-                            byte[] salt = createSalt();
-                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials(), salt));
-                            document.put(configuration.getPasswordSaltAttribute(), binaryToTextEncoder.encode(salt));
-                        } else {
-                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials()));
-                        }
-                    } else {
-                        document.put(configuration.getPasswordField(), oldUser.getCredentials());
+
+                    // set password & salt coming from existing user data
+                    document.put(configuration.getPasswordField(), oldUser.getCredentials());
+                    if (configuration.isUseDedicatedSalt()) {
+                        // TODO to check with test
+                        document.put(configuration.getPasswordSaltAttribute(), oldUser.getAdditionalInformation().get(configuration.getPasswordSaltAttribute()));
                     }
+
                     // set additional information
                     if (updateUser.getAdditionalInformation() != null) {
                         document.putAll(updateUser.getAdditionalInformation());
@@ -169,6 +169,41 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
                     document.put(FIELD_CREATED_AT, oldUser.getCreatedAt());
                     document.put(FIELD_UPDATED_AT, new Date());
                     return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, oldUser.getId()), document)).flatMap(updateResult -> findById(oldUser.getId()).toSingle());
+                });
+    }
+
+    @Override
+    public Single<User> updatePassword(User user, String password) {
+
+        if (Strings.isNullOrEmpty(password)) {
+            return Single.error(new IllegalArgumentException("Password required for UserProvider.updatePassword"));
+        }
+
+        return findById(user.getId(), false)
+                .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getId())))
+                .flatMapSingle(oldUser -> {
+                    // set password
+                    Bson passwordField = null;
+                    Bson passwordSaltField = null;
+                    if (configuration.isUseDedicatedSalt()) {
+                        byte[] salt = createSalt();
+                        passwordField = Updates.set(configuration.getPasswordField(), passwordEncoder.encode(password, salt));
+                        passwordSaltField = Updates.set(configuration.getPasswordSaltAttribute(), binaryToTextEncoder.encode(salt));
+                    } else {
+                        passwordField = Updates.set(configuration.getPasswordField(), passwordEncoder.encode(password));
+                    }
+
+                    Bson updates = passwordSaltField == null ?
+                            Updates.combine(
+                                    passwordField,
+                                    Updates.set(FIELD_UPDATED_AT, new Date())) :
+                            Updates.combine(
+                                    passwordField,
+                                    passwordSaltField,
+                                    Updates.set(FIELD_UPDATED_AT, new Date()));
+
+                    return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, oldUser.getId()), updates))
+                            .flatMap(updateResult -> findById(oldUser.getId()).toSingle());
                 });
     }
 
@@ -188,10 +223,18 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
     }
 
     private Maybe<User> findById(String userId) {
-        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(this::convert);
+        return this.findById(userId, true);
+    }
+
+    private Maybe<User> findById(String userId, boolean filterSalt) {
+        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(u -> convert(u, filterSalt));
     }
 
     private User convert(Document document) {
+        return this.convert(document, true);
+    }
+
+    private User convert(Document document, boolean filterSalt) {
         String username = document.getString(configuration.getUsernameField());
         DefaultUser user = new DefaultUser(username);
         user.setId(document.getString(FIELD_ID));
@@ -207,6 +250,11 @@ public class MongoUserProvider implements UserProvider, InitializingBean {
         document.remove(configuration.getUsernameField());
         document.remove(configuration.getPasswordField());
         document.entrySet().forEach(entry -> claims.put(entry.getKey(), entry.getValue()));
+
+        if (filterSalt && configuration.isUseDedicatedSalt()) {
+                claims.remove(configuration.getPasswordSaltAttribute());
+        }
+
         user.setAdditionalInformation(claims);
         return user;
     }

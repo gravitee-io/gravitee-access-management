@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -43,6 +46,12 @@ import static org.mockito.Mockito.doReturn;
  */
 public class ApplicationsResourceTest extends JerseySpringTest {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        objectMapper.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+    }
+
     @Test
     public void shouldGetApps() {
         final String domainId = "domain-1";
@@ -52,6 +61,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         final Application mockClient = new Application();
         mockClient.setId("client-1-id");
         mockClient.setName("client-1-name");
+        mockClient.setDescription("a description client 1");
         mockClient.setDomain(domainId);
         mockClient.setUpdatedAt(new Date());
 
@@ -59,6 +69,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         mockClient2.setId("client-2-id");
         mockClient2.setName("client-2-name");
         mockClient2.setDomain(domainId);
+        mockClient2.setDescription("a description client 2");
         mockClient2.setUpdatedAt(new Date());
 
         final Page<Application> applicationPage = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0, 2);
@@ -70,7 +81,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         final Map responseEntity = readEntity(response, Map.class);
-        assertTrue(((List)responseEntity.get("data")).size() == 2);
+        assertTrue(((List) responseEntity.get("data")).size() == 2);
     }
 
     @Test
@@ -82,9 +93,8 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
     }
 
-
     @Test
-    public void shouldCreate() {
+    public void shouldCreate() throws JsonProcessingException {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
@@ -96,6 +106,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         Application application = new Application();
         application.setId("app-id");
         application.setName("name");
+        application.setDescription("a description");
         application.setType(ApplicationType.SERVICE);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
@@ -105,6 +116,13 @@ public class ApplicationsResourceTest extends JerseySpringTest {
                 .path(domainId)
                 .path("applications")
                 .request().post(Entity.json(newApplication));
+
+        Application result = objectMapper.readValue(response.readEntity(String.class), Application.class);
+        assertEquals(result.getName(), application.getName());
+        assertEquals(result.getType(), application.getType());
+        assertEquals(result.getId(), application.getId());
+        assertEquals(result.getDescription(), application.getDescription());
+
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }
 }

@@ -193,6 +193,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private boolean forcePKCE;
 
+    private boolean forceS256CodeChallengeMethod;
+
     private List<String> postLogoutRedirectUris;
 
     private boolean flowsInherited;
@@ -848,6 +850,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public boolean isForceS256CodeChallengeMethod() {
+        return forceS256CodeChallengeMethod;
+    }
+
+    public void setForceS256CodeChallengeMethod(boolean forceS256CodeChallengeMethod) {
+        this.forceS256CodeChallengeMethod = forceS256CodeChallengeMethod;
     }
 
     public List<String> getPostLogoutRedirectUris() {

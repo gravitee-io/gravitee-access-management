@@ -140,6 +140,100 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
     }
 
     @Test
+    public void shouldRejectRequest_ChallengeMethod_Invalid_defaultValue_plain() throws Exception {
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback/strict"));
+        client.setForceS256CodeChallengeMethod(true);
+        client.setForcePKCE(true);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback/strict&code_challenge=plaincodevalueplaincodevalueplaincodevalue123465789",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldAcceptRequest_ChallengeMethod_Plain() throws Exception {
+        doReturn(true).when(domain).isRedirectUriStrictMatching();
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback/strict"));
+        client.setForceS256CodeChallengeMethod(false);
+        client.setForcePKCE(true);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback/strict&code_challenge=plaincodevalueplaincodevalueplaincodevalue123465789",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldRejectRequest_ChallengeMethod_Invalid_provided_plain() throws Exception {
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback/strict"));
+        client.setForceS256CodeChallengeMethod(true);
+        client.setForcePKCE(true);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback/strict&code_challenge=plaincodevalueplaincodevalueplaincodevalue123465789&code_challenge_method=plain",
+                null,
+                HttpStatusCode.BAD_REQUEST_400, "Bad Request", null);
+    }
+
+    @Test
+    public void shouldAcceptRequest_ChallengeMethod_S256() throws Exception {
+        doReturn(true).when(domain).isRedirectUriStrictMatching();
+        OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();
+        openIDProviderMetadata.setResponseTypesSupported(Arrays.asList(ResponseType.CODE));
+        Client client = new Client();
+        client.setAuthorizedGrantTypes(Collections.singletonList(GrantType.AUTHORIZATION_CODE));
+        client.setResponseTypes(Collections.singletonList(ResponseType.CODE));
+        client.setRedirectUris(List.of("https://callback/strict"));
+        client.setForceS256CodeChallengeMethod(true);
+        client.setForcePKCE(true);
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?response_type=code&redirect_uri=https://callback/strict&code_challenge=codechallenges256codechallenges256codechallenges256codechallenges256&code_challenge_method=S256",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
     public void shouldAcceptRequest_redirect_URI_ok_2() throws Exception {
         doReturn(false).when(domain).isRedirectUriStrictMatching();
         OpenIDProviderMetadata openIDProviderMetadata = new OpenIDProviderMetadata();

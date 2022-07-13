@@ -332,6 +332,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettingsMongo.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
         applicationOAuthSettingsMongo.setForcePKCE(other.isForcePKCE());
+        applicationOAuthSettingsMongo.setForceS256CodeChallengeMethod(other.isForceS256CodeChallengeMethod());
         applicationOAuthSettingsMongo.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettingsMongo.setSingleSignOut(other.isSingleSignOut());
         applicationOAuthSettingsMongo.setSilentReAuthentication(other.isSilentReAuthentication());
@@ -411,6 +412,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationOAuthSettings.setAuthorizationEncryptedResponseAlg(other.getAuthorizationEncryptedResponseAlg());
         applicationOAuthSettings.setAuthorizationEncryptedResponseEnc(other.getAuthorizationEncryptedResponseEnc());
         applicationOAuthSettings.setForcePKCE(other.isForcePKCE());
+        applicationOAuthSettings.setForceS256CodeChallengeMethod(other.isForceS256CodeChallengeMethod());
         applicationOAuthSettings.setPostLogoutRedirectUris(other.getPostLogoutRedirectUris());
         applicationOAuthSettings.setSingleSignOut(other.isSingleSignOut());
         applicationOAuthSettings.setSilentReAuthentication(other.isSilentReAuthentication());
