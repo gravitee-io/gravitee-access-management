@@ -29,6 +29,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +59,7 @@ public class SmtpResourceProvider implements EmailSenderProvider {
         if (StringUtils.isEmpty(templatePath)) {
             templatePath = env.getProperty("gravitee.home") + "/templates";
         }
-        this.mailSender = new EmailSender(createJavaMail(), templatePath);
+        this.mailSender = new EmailSender(createJavaMail(), Paths.get(templatePath, "emails").toFile().getPath());
         this.executorService = Executors.newCachedThreadPool();
         return this;
     }

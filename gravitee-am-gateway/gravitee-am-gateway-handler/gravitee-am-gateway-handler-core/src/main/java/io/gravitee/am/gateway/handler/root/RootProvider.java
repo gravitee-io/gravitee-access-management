@@ -115,6 +115,7 @@ import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.handler.FileSystemAccess;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.auth.webauthn.WebAuthn;
 import io.vertx.reactivex.ext.web.Router;
@@ -126,7 +127,10 @@ import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+
+import java.nio.file.Paths;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -262,6 +266,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private GraviteeMessageResolver messageResolver;
+
+    @Value("${templates.path:#{systemProperties['gravitee.home']}/templates}")
+    private String templatesDirectory;
 
     @Override
     protected void doStart() throws Exception {
@@ -699,7 +706,9 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     }
 
     private void staticHandler(Router router) {
-        router.route().handler(StaticHandler.create());
+        router.route()
+                .handler(StaticHandler.create(FileSystemAccess.ROOT, Paths.get(this.templatesDirectory, "forms").toFile().getAbsolutePath()))
+                .handler(StaticHandler.create());
     }
 
     private void bodyHandler(Router router) {

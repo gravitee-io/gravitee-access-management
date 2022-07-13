@@ -50,7 +50,7 @@ public class FreemarkerConfiguration {
         configuration.setOutputFormat(HTMLOutputFormat.INSTANCE);
         configuration.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         try {
-            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
+            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath, "emails")) };
             configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
             LOGGER.warn("Error occurred while trying to read email templates", e);

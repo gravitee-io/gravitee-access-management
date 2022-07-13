@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component;
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -62,7 +63,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.emailSender = new EmailSender(mailSender, templatesPath);
+        this.emailSender = new EmailSender(mailSender, Paths.get(templatesPath, "emails").toFile().getPath());
     }
 
     @Override

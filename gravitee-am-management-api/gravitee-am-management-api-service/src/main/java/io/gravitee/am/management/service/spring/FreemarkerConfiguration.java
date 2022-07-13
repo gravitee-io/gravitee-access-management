@@ -54,7 +54,7 @@ public class FreemarkerConfiguration {
                 new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher(HTML_TEMPLATE_EXTENSION), tcHTML));
 
         try {
-            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath)) };
+            TemplateLoader[] templateLoaders = { overrideTemplateLoader(), new FileTemplateLoader(new File(templatesPath, "emails")) };
             configuration.setTemplateLoader(new MultiTemplateLoader(templateLoaders));
         } catch (final IOException e) {
             LOGGER.warn("Error occurred while trying to read email templates", e);

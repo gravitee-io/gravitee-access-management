@@ -19,13 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.messageresolver.AbstractMessageResolver;
-import org.thymeleaf.messageresolver.IMessageResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -46,8 +45,8 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
     public static final String DEFAULT_LOCALE = "default";
     private final Map<String, Properties> propertiesMap;
 
-    public GraviteeMessageResolver(String i18nLocation) {
-        final File directory = Paths.get(i18nLocation).toFile();
+    public GraviteeMessageResolver(Path i18nLocation) {
+        final File directory = i18nLocation.toFile();
         if (directory.exists() && directory.isDirectory()) {
             this.propertiesMap = Stream.of(directory.listFiles())
                     .filter(file -> !file.isDirectory())

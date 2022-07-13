@@ -25,6 +25,8 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
+import java.nio.file.Paths;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -48,6 +50,7 @@ public class ThymeleafConfiguration {
         DomainBasedTemplateResolver overrideTemplateResolver = (DomainBasedTemplateResolver) overrideTemplateResolver();
         overrideTemplateResolver.setTemplateEngine(templateEngine);
         templateEngine.setTemplateResolver(overrideTemplateResolver);
+        templateEngine.addTemplateResolver(customStaticTemplateResolver());
         templateEngine.addTemplateResolver(defaultTemplateResolver());
         templateEngine.addMessageResolver(messageResolver);
         return thymeleafTemplateEngine;
@@ -55,7 +58,7 @@ public class ThymeleafConfiguration {
 
     @Bean
     public GraviteeMessageResolver messageResolver() {
-        return new GraviteeMessageResolver(templatesDirectory.endsWith("/") ? templatesDirectory + "i18n/" : templatesDirectory + "/i18n/");
+        return new GraviteeMessageResolver(Paths.get(templatesDirectory, "i18n"));
     }
 
     @Bean
@@ -66,6 +69,13 @@ public class ThymeleafConfiguration {
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new CustomClassLoaderTemplateResolver();
         templateResolver.setPrefix("/webroot/views/");
+        templateResolver.setSuffix(".html");
+        templateResolver.setTemplateMode("HTML");
+        return templateResolver;
+    }
+    private ITemplateResolver customStaticTemplateResolver() {
+        CustomFileTemplateResolver templateResolver = new CustomFileTemplateResolver();
+        templateResolver.setPrefix(templatesDirectory+ "/forms/views/");
         templateResolver.setSuffix(".html");
         templateResolver.setTemplateMode("HTML");
         return templateResolver;

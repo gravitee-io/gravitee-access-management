@@ -63,6 +63,7 @@ import io.gravitee.common.http.MediaType;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.handler.FileSystemAccess;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
@@ -75,6 +76,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -188,6 +193,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
 
     @Autowired
     private GraviteeMessageResolver messageResolver;
+
+    @Value("${templates.path:#{systemProperties['gravitee.home']}/templates}")
+    private String templatesDirectory;
 
     @Override
     protected void doStart() throws Exception {
@@ -327,7 +335,9 @@ public class OAuth2Provider extends AbstractService<ProtocolProvider> implements
     }
 
     private void staticHandler(Router router) {
-        router.route().handler(StaticHandler.create());
+        router.route()
+                .handler(StaticHandler.create(FileSystemAccess.ROOT, Paths.get(this.templatesDirectory, "forms").toFile().getAbsolutePath()))
+                .handler(StaticHandler.create());
     }
 
     private void sessionAndCookieHandler(Router router) {
