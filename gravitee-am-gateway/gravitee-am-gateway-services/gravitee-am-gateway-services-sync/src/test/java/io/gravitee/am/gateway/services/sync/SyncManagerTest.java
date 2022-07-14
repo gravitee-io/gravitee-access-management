@@ -23,6 +23,7 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EnvironmentRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
@@ -79,6 +80,8 @@ public class SyncManagerTest {
 
     @Mock
     private Node node;
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Before
     public void before() throws Exception {

@@ -34,10 +34,8 @@ import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.monitoring.metrics.CounterHelper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.common.event.EventManager;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.AsyncResult;
@@ -61,10 +59,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_ID_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
-import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_EXTERNAL;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Objects.nonNull;
@@ -82,22 +76,17 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
     private final IdentityProviderManager identityProviderManager;
     private final Domain domain;
 
-    private final CounterHelper successfulAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
-            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.SUCCESS.name()),
-            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_EXTERNAL)));
-
-    private final CounterHelper failedAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
-            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.FAILURE.name()),
-            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_EXTERNAL)));
+    private GatewayMetricProvider gatewayMetricProvider;
 
     public SocialAuthenticationProvider(UserAuthenticationManager userAuthenticationManager,
                                         EventManager eventManager,
                                         IdentityProviderManager identityProviderManager,
-                                        Domain domain) {
+                                        Domain domain, GatewayMetricProvider gatewayMetricProvider) {
         this.userAuthenticationManager = userAuthenticationManager;
         this.eventManager = eventManager;
         this.identityProviderManager = identityProviderManager;
         this.domain = domain;
+        this.gatewayMetricProvider = gatewayMetricProvider;
     }
 
     @Override
@@ -160,12 +149,12 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
                     return userAuthenticationManager.connect(user);
                 })
                 .subscribe(user -> {
-                    successfulAuth.increment();
+                    gatewayMetricProvider.incrementSuccessfulAuth(true);
                     eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(endUserAuthentication, domain, client, user));
                     resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                 }, error -> {
                     logger.error("Unable to authenticate social provider", error);
-                    failedAuth.increment();
+                    gatewayMetricProvider.incrementFailedAuth(true);
                     eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(endUserAuthentication, domain, client, error));
                     resultHandler.handle(Future.failedFuture(error));
                 });

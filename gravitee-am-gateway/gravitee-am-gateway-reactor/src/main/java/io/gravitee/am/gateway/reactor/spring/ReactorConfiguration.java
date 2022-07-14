@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainHandlerRegistry;
 import io.gravitee.am.gateway.reactor.impl.DefaultSecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.transaction.TransactionProcessorFactory;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -59,5 +60,10 @@ public class ReactorConfiguration {
     @Bean
     public SecurityDomainManager securityDomainManager() {
         return new DefaultSecurityDomainManager();
+    }
+
+    @Bean
+    public GatewayMetricProvider gatewayMetricProvider() {
+        return new GatewayMetricProvider();
     }
 }
