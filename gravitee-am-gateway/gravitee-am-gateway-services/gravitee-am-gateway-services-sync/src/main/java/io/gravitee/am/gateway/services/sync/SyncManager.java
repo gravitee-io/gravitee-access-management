@@ -19,8 +19,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.monitoring.metrics.Constants;
-import io.gravitee.am.monitoring.metrics.GaugeHelper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -81,6 +80,9 @@ public class SyncManager implements InitializingBean {
     @Autowired
     private Node node;
 
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
+
     private Optional<List<String>> shardingTags;
 
     private Optional<List<String>> environments;
@@ -94,8 +96,6 @@ public class SyncManager implements InitializingBean {
     private long lastDelay = 0;
 
     private boolean allSecurityDomainsSync = false;
-
-    private GaugeHelper eventsGauge = new GaugeHelper(Constants.METRICS_EVENTS_SYNC);
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -125,7 +125,7 @@ public class SyncManager implements InitializingBean {
                 List<Event> events = eventRepository.findByTimeFrame(lastRefreshAt - lastDelay, nextLastRefreshAt).toList().blockingGet();
 
                 if (events != null && !events.isEmpty()) {
-                    eventsGauge.updateValue(events.size());
+                    gatewayMetricProvider.updateSyncEvents(events.size());
 
                     // Extract only the latest events by type and id
                     Map<AbstractMap.SimpleEntry, Event> sortedEvents = events
@@ -136,7 +136,7 @@ public class SyncManager implements InitializingBean {
                                             event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
                     computeEvents(sortedEvents.values());
                 } else {
-                    eventsGauge.updateValue(0);
+                    gatewayMetricProvider.updateSyncEvents(0);
                 }
 
             }

@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -74,6 +75,9 @@ public class SocialAuthenticationProviderTest {
 
     @Mock
     private IdentityProviderManager identityProviderManager;
+
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Test
     public void shouldAuthenticateUser() throws Exception {

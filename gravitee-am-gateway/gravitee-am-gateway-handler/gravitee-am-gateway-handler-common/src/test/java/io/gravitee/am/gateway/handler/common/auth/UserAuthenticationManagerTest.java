@@ -28,6 +28,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
@@ -78,6 +79,9 @@ public class UserAuthenticationManagerTest {
 
     @Mock
     private PasswordService passwordService;
+
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Test
     public void shouldNotAuthenticateUser_noIdentityProvider() {
