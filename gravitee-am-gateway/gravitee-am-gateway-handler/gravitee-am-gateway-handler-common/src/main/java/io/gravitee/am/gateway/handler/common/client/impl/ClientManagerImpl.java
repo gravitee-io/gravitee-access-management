@@ -23,8 +23,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.monitoring.metrics.CounterHelper;
-import io.gravitee.am.monitoring.metrics.GaugeHelper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -39,9 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP;
-import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP_EVENTS;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -64,9 +60,8 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
 
     private final ConcurrentMap<String, Domain> domains = new ConcurrentHashMap<>();
 
-    private final CounterHelper appEvtCounter = new CounterHelper(METRICS_APP_EVENTS);
-
-    private final GaugeHelper appGauge = new GaugeHelper(METRICS_APP);
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -77,7 +72,7 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         client -> {
-                            appGauge.incrementValue();
+                            gatewayMetricProvider.incrementApp();
                             clients.put(client.getId(), client);
                             logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
                         },
@@ -90,16 +85,16 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
         if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
                 (domain.isMaster() || domain.getId().equals(event.content().getReferenceId()))) {
             // count the event after the test to avoid duplicate events across domains
-            appEvtCounter.increment();
+            gatewayMetricProvider.incrementAppEvt();
             switch (event.type()) {
                 case DEPLOY:
-                    appGauge.incrementValue();
+                    gatewayMetricProvider.incrementApp();
                 case UPDATE:
                     deployClient(event.content().getId());
                     break;
                 case UNDEPLOY:
                     removeClient(event.content().getId());
-                    appGauge.decrementValue();
+                    gatewayMetricProvider.decrementApp();
                     break;
             }
         }

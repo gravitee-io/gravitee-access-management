@@ -38,14 +38,12 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.monitoring.metrics.CounterHelper;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.gateway.api.Request;
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
@@ -59,10 +57,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
-import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_INTERNAL;
 import static io.gravitee.am.identityprovider.api.AuthenticationProvider.ACTUAL_USERNAME;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
@@ -99,13 +93,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Autowired
     private PasswordService passwordService;
 
-    private final CounterHelper successfulAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
-            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.SUCCESS.name()),
-            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_INTERNAL)));
-
-    private final CounterHelper failedAuth = new CounterHelper(METRICS_AUTH_EVENTS, Tags.of(
-            Tag.of(TAG_AUTH_STATUS, AuthenticationEvent.FAILURE.name()),
-            Tag.of(TAG_AUTH_IDP, TAG_VALUE_AUTH_IDP_INTERNAL)));
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
@@ -150,11 +139,11 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                     }
                 })
                 .doOnSuccess(user -> {
-                    successfulAuth.increment();
+                    gatewayMetricProvider.incrementSuccessfulAuth(false);
                     eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(authentication, domain, client, user));
                 })
                 .doOnError(throwable -> {
-                    failedAuth.increment();
+                    gatewayMetricProvider.incrementFailedAuth(false);
                     eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(authentication, domain, client, throwable));
                 });
     }
