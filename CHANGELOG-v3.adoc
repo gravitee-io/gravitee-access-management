@@ -1,6 +1,35 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/554?closed=1[AM - 3.17.3 (2022-07-15)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Brute force detection does not work when AM username is not the same as the IdP username https://github.com/gravitee-io/issues/issues/7884[#7884]
+- Factor can't be registered if device is already known https://github.com/gravitee-io/issues/issues/7971[#7971]
+- Flow are not loaded - backport 7964 https://github.com/gravitee-io/issues/issues/7966[#7966]
+- Redirect to RP after POST login error when SelectionRules are used https://github.com/gravitee-io/issues/issues/7958[#7958]
+- Unable to connect a end user if the IDP whitelist is enabled https://github.com/gravitee-io/issues/issues/7827[#7827]
+- [auth] wrong error logged whenever tries user to authenticate https://github.com/gravitee-io/issues/issues/7984[#7984]
+- [policy] Enroll MFA doesn't restrict on active factor https://github.com/gravitee-io/issues/issues/7950[#7950]
+
+*_General_*
+
+- Merge AM 3.15.10 https://github.com/gravitee-io/issues/issues/8108[#8108]
+
+*_Management-ui_*
+
+- [policy] Enroll MFA policy can't be saved if the application has only one factor activated https://github.com/gravitee-io/issues/issues/8112[#8112]
+
+*_Policy_*
+
+- Email policy requires FROM-NAME field https://github.com/gravitee-io/issues/issues/7933[#7933]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/552?closed=1[AM - 3.15.10 (2022-07-11)]
 
 === Bug fixes
