@@ -7,86 +7,86 @@
     <title>WebAuthn Login</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
-    <link rel="stylesheet" th:href="@{../assets/material/material.icons.css}">
-    <link rel="stylesheet" th:href="@{../assets/font-awesome/css/font-awesome.min.css}">
-    <link rel="stylesheet" th:href="@{../assets/css/webauthn_login.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/main.css}">
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
 </head>
 <body>
-    <div class="mdl-layout mdl-js-layout">
-        <div class="webauthn-login-container">
-            <div class="webauthn-login-form">
-                <div class="webauthn-login-form-title">
-                    <label>Sign in with fingerprint, device or security key</label>
-                    <span>to continue to <span th:text="${domain.name}"></span></span>
-                    <small>Enter your username and press sign in. A security window will pop up. Follow the instructions to sign in.</small>
-                </div>
-                <div id="webauthn-browser-error" class="webauthn-error-info" style="display: none;">
-                    <span>
-                        <span class="error">technical_error</span>
-                        <small id="webauthn-browser-error-description" class="error_description"></small>
-                    </span>
-                </div>
-                <form role="form" id="login" method="post" th:action="${action}">
-                    <div class="webauthn-login-form-content">
-                        <div class="input-textfield">
-                            <label for="username">Username</label>
-                            <input type="text" id="username" name="username" autofocus="autofocus" required />
-                        </div>
-                        <div id="webauthn-error" class="webauthn-login-error-info" style="display: none;">
-                            <span>
-                                <span class="error">login_failed</span>
-                                 <small class="error_description">Invalid user</small>
-                            </span>
-                        </div>
-                    </div>
-                    <div class="webauthn-login-form-actions">
-                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Sign in</button>
-                    </div>
-                    <br />
-                    <div class="webauthn-login-form-additional-actions">
-                        <div>
-                            <span>Cannot login ? </span><a th:href="${loginAction}">switch to default sign in process</a>
-                        </div>
-                    </div>
-                </form>
-            </div>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="@{../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+        </div>
+        <div class="header-description">
+            <span>Using fingerprint, device or security key</span>
         </div>
     </div>
-    <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
-    <script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
-    <script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
+    <div class="section">
+        <form class="form" role="form" id="login" method="post" th:action="${action}">
+            <div>
+                <input class="input-field" type="text" id="username" name="username"
+                       th:placeholder="#{login.page.label.username}"
+                       th:value="${param.username}" autofocus="autofocus" required
+                       th:readonly="${param.username != null}"
+                />
+            </div>
 
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
-            th:src="@{../assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
-        $(document).ready(function (){
-            loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
-                if(fp.visitorId){
-                    $( "#login" )
-                        .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
-                }
-            });
-        });
-    </script>
+            <div class="disclaimer">
+                <span>Follow the instruction in the security window popup</span>
+            </div>
 
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
-            th:src="@{../assets/js/remember-device/fingerprintjs-v3.js}"></script>
-    <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
-        $(document).ready(function (){
-            loadFingerprintJsV3(fp => {
-                if (fp.visitorId) {
-                    $("#login")
-                        .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
-                }
-                if (fp.components && fp.components.platform && fp.components.platform.value) {
-                    $("#login").append('<input type="hidden" id="deviceType" name="deviceType" value="' + fp.components.platform.value + '"/>');
-                }
-            });
+            <div id="webauthn-error" class="item error-text hide">
+                <span>
+                    <span class="error">login_failed</span>
+                    <small class="error_description">Invalid user</small>
+                </span>
+            </div>
+
+            <div>
+                <button class="button submit-button">Next</button>
+            </div>
+        </form>
+    </div>
+    <div class="section">
+        <span>
+            <a class="left-arrow" th:href="${loginAction}"><span>Back to sign in</span></a>
+        </span>
+    </div>
+</div>
+
+<script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+<script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
+<script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
         });
-    </script>
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3(fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#login").append('<input type="hidden" id="deviceType" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    });
+</script>
 </body>
 </html>

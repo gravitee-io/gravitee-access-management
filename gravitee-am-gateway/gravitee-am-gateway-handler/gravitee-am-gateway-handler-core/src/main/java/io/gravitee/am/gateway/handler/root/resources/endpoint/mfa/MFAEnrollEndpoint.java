@@ -158,14 +158,21 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         final String sharedSecret = params.get(ConstantKeys.MFA_ENROLLMENT_SHARED_SECRET);
         final String phoneNumber = params.get(ConstantKeys.MFA_ENROLLMENT_PHONE);
         final String emailAddress = params.get(ConstantKeys.MFA_ENROLLMENT_EMAIL);
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
 
+        if (!acceptEnrollment) {
+            final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            userService.setMfaEnrollmentSkippedTime(client, endUser).doFinally(() -> redirectToAuthorize(routingContext)).subscribe();
+            return;
+        }
+
+        // if user has skipped the enrollment process, continue
         if (factorId == null) {
             logger.warn("No factor id in form - did you forget to include factor id value ?");
             routingContext.fail(400);
             return;
         }
 
-        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final Map<io.gravitee.am.model.Factor, FactorProvider> factors = getFactors(client);
         Optional<Map.Entry<io.gravitee.am.model.Factor, FactorProvider>> optFactor = factors.entrySet().stream().filter(factor -> factorId.equals(factor.getKey().getId())).findFirst();
         if (optFactor.isEmpty()) {
@@ -175,31 +182,24 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         }
 
         // manage enrolled factors
-        // if user has skipped the enrollment process, continue
-        if (!acceptEnrollment) {
-            final User endUser = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
-            userService.setMfaEnrollmentSkippedTime(client, endUser).doFinally(() -> redirectToAuthorize(routingContext)).subscribe();
-        } else {
-            FactorProvider provider = optFactor.get().getValue();
-            if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
-                // save enrolled factor for the current user and continue
-                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
-                if (sharedSecret != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
-                }
-                if (phoneNumber != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
-                }
-                if (emailAddress != null) {
-                    routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
-                }
-                redirectToAuthorize(routingContext);
-            } else {
-                // parameters are invalid
-                routingContext.fail(400);
+        FactorProvider provider = optFactor.get().getValue();
+        if (provider.checkSecurityFactor(getSecurityFactor(params, optFactor.get().getKey()))) {
+            // save enrolled factor for the current user and continue
+            routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, factorId);
+            if (sharedSecret != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY, sharedSecret);
             }
+            if (phoneNumber != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER, phoneNumber);
+            }
+            if (emailAddress != null) {
+                routingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, emailAddress);
+            }
+            redirectToAuthorize(routingContext);
+        } else {
+            // parameters are invalid
+            routingContext.fail(400);
         }
-
     }
 
     private void redirectToAuthorize(RoutingContext routingContext) {

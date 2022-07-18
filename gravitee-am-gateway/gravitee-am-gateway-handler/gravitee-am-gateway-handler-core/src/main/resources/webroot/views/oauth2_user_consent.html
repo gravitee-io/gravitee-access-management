@@ -8,50 +8,52 @@
     <title>Access confirmation</title>
 
     <!-- CSS -->
-    <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
-    <link rel="stylesheet" th:href="@{assets/material/material.icons.css}">
-    <link rel="stylesheet" th:href="@{assets/font-awesome/css/font-awesome.min.css}">
-    <link rel="stylesheet" th:href="@{assets/css/access_confirmation.css}">
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
 </head>
 
 <body>
-<div class="mdl-layout mdl-js-layout">
-    <div class="access-confirmation-container">
-        <div class="access-confirmation-content">
-            <div class="access-confirmation-title">
-                <label>Permissions requested</label>
-                <span><span style="font-weight: bold" th:text="${client.clientName}"></span> is requesting permissions to access your account</span>
-            </div>
-            <form role="form" th:id="confirmationForm" th:action="${action}" method="post">
-                <div class="permissions">
-                    <p>This app would like to :</p>
-                    <div class="permission" th:each="scope : ${scopes}">
-                        <div class="permission-logo">
-                            <i class="fa fa-check"></i>
-                        </div>
-                        <div class="permission-info">
-                            <h3><span th:text="(${scope.name}) ? ${scope.name} : ${scope.key}"></span> (<span th:text="${scope.key}"></span>)</h3>
-                            <p th:text="${scope.description}"></p>
-                            <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
-                        </div>
-                    </div>
-                    <div class="permissions-disclaimer">
-                        <small>By accepting these permissions, you allow this application to use your data in accordance to their terms of service and privacy policies.</small>
-                    </div>
-                </div>
 
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <div class="access-confirmation-form-actions">
-                    <button type="submit" name="user_oauth_approval" value="false" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" style="margin-right: 10px;">Cancel</button>
-                    <button type="submit" name="user_oauth_approval" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">Accept</button>
-                </div>
-            </form>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="@{assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <label>Permissions requested</label>
+        </div>
+        <div class="header-description">
+            <span><span class="deep-blue" th:text="${client.clientName}"></span> would like to</span>
         </div>
     </div>
+    <div class="section">
+        <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
+            <div class="item" th:each="scope : ${scopes}">
+                <div>
+                    <span th:text="(${scope.name})
+                    ? ${scope.name} + ' (' + ${scope.key} + ')'
+                    : ${scope.key} + ' (' + ${scope.key} + ')'"></span>
+                </div>
+                <div>
+                    <span class="grey" th:text="${scope.description}"></span>
+                </div>
+                <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
+            </div>
+
+            <span class="disclaimer" th:text="${client.clientName} + ' will be able to use your data in accordance to their terms of service and privacy policies.'"></span>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div>
+                <button type="submit" name="user_oauth_approval" value="true" class="button submit-button">Accept</button>
+            </div>
+            <div>
+                <button type="submit" name="user_oauth_approval" value="false" class="button submit-button-light" >Cancel</button>
+            </div>
+        </form>
+    </div>
+
 </div>
+
 <!-- Javascript -->
 
 <!--[if lt IE 10]>
