@@ -16,8 +16,10 @@
 package io.gravitee.am.service.utils;
 
 import com.google.common.base.Strings;
+import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.model.User;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -43,4 +45,21 @@ public class UserProfileUtils {
     public static boolean hasGeneratedDisplayName(User user) {
         return Objects.equals(user.getDisplayName(), buildDisplayName(user));
     }
+
+    public static Locale preferredLanguage(User user, Locale preferredLanguage) {
+        if (user != null) {
+            if (!Strings.isNullOrEmpty(user.getPreferredLanguage())) {
+                final var locale = user.getPreferredLanguage();
+                var localeParts = locale.replace("-","_").split("_");
+                preferredLanguage = localeParts.length == 1 ? new Locale(localeParts[0]) : new Locale(localeParts[0], localeParts[1].toUpperCase());
+            } else if (user.getAdditionalInformation() != null &&
+                    !Strings.isNullOrEmpty((String)user.getAdditionalInformation().get(StandardClaims.LOCALE))) {
+                final var locale = (String) user.getAdditionalInformation().get(StandardClaims.LOCALE);
+                var localeParts = locale.replace("-","_").split("_");
+                preferredLanguage = localeParts.length == 1 ? new Locale(localeParts[0]) : new Locale(localeParts[0], localeParts[1].toUpperCase());
+            }
+        }
+        return preferredLanguage;
+    }
+
 }

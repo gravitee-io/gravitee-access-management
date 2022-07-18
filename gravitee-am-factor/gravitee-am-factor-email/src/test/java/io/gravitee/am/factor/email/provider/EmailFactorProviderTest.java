@@ -94,7 +94,7 @@ public class EmailFactorProviderTest {
 
         io.gravitee.am.common.email.Email generatedEmail = new io.gravitee.am.common.email.Email();
         generatedEmail.setTo(new String[]{RECIPIENT});
-        when(emailService.createEmail(any(), any(), any(), any())).thenReturn(new EmailService.EmailWrapper(generatedEmail));
+        when(emailService.createEmail(any(), any(), any(), any(), any())).thenReturn(new EmailService.EmailWrapper(generatedEmail));
 
         EnrolledFactor enrolled = new EnrolledFactor();
         enrolled.setUpdatedAt(new Date());

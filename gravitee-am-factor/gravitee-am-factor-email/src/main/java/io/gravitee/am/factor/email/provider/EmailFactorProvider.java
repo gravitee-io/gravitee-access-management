@@ -36,18 +36,19 @@ import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
-import java.util.Map;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Map;
+
+import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
 import static java.util.Arrays.asList;
 
 /**
@@ -156,7 +157,8 @@ public class EmailFactorProvider implements FactorProvider {
             params.put(FactorContext.KEY_CODE, generateOTP(enrolledFactor));
 
             final String recipient = enrolledFactor.getChannel().getTarget();
-            EmailService.EmailWrapper emailWrapper = emailService.createEmail(Template.MFA_CHALLENGE, context.getClient(), asList(recipient), params);
+            final Locale preferredLanguage = preferredLanguage(context.getUser(), Locale.ENGLISH);
+            EmailService.EmailWrapper emailWrapper = emailService.createEmail(Template.MFA_CHALLENGE, context.getClient(), asList(recipient), params, preferredLanguage);
 
             return provider.sendMessage(emailWrapper.getEmail())
                     .andThen(Single.just(enrolledFactor)

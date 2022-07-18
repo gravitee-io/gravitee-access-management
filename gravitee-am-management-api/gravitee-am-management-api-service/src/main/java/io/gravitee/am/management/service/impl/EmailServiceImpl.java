@@ -16,10 +16,13 @@
 package io.gravitee.am.management.service.impl;
 
 import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapperBuilder;
+import freemarker.template.SimpleHash;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
+import io.gravitee.am.common.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -45,11 +48,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
+import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,7 +68,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${email.enabled:false}")
     private boolean enabled;
 
-    @Value("${user.registration.email.subject:New user registration}")
+    @Value("${user.registration.email.subject:${msg('registration.confirmation.email.subject')}}")
     private String registrationSubject;
 
     @Value("${user.registration.token.expire-after:86400}")
@@ -115,7 +120,8 @@ public class EmailServiceImpl implements EmailService {
     private void sendEmail(Email email, User user) {
         if (enabled) {
             try {
-                final Email emailToSend = processEmailTemplate(email);
+                final var locale = preferredLanguage(user, Locale.ENGLISH);
+                final var emailToSend = processEmailTemplate(email, locale);
                 emailService.send(emailToSend);
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class).domain(user.getReferenceId()).client(ADMIN_CLIENT).email(email).user(user));
             } catch (final Exception ex) {
@@ -130,7 +136,7 @@ public class EmailServiceImpl implements EmailService {
         return emailManager.getEmail(template, ReferenceType.DOMAIN, domain.getId(), user, getDefaultSubject(template), getDefaultExpireAt(template))
                 .map(emailTemplate -> {
                     // prepare email
-                    Email email = prepareEmail(domain, client, template, emailTemplate, user);
+                    final var email = prepareEmail(domain, client, template, emailTemplate, user);
 
                     if (email.getParams() != null) {
                         email.getParams().putAll(params);
@@ -139,21 +145,35 @@ public class EmailServiceImpl implements EmailService {
                     }
 
                     // send email
-                    return processEmailTemplate(email);
+                    var locale = preferredLanguage(user, Locale.ENGLISH);
+                    return processEmailTemplate(email, locale);
                 });
     }
 
-    private Email processEmailTemplate(Email email) throws IOException, TemplateException {
+    private Email processEmailTemplate(Email email, Locale locale) throws IOException, TemplateException {
         final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
         final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
         // compute email subject
-        final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
+        final String subject = processTemplate(plainTextTemplate, email.getParams(), locale);
         // compute email content
-        final String content = processTemplateIntoString(template, email.getParams());
+        final String content = processTemplate(template, email.getParams(), locale);
         final Email emailToSend = new Email(email);
         emailToSend.setSubject(subject);
         emailToSend.setContent(content);
         return emailToSend;
+    }
+
+    private String processTemplate(Template plainTextTemplate, Map<String, Object> params, Locale preferredLanguage) throws TemplateException, IOException {
+        var result = new StringWriter(1024);
+
+        var dataModel = new HashMap<>(params);
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDefaultDictionaryProvider().getDictionaryFor(preferredLanguage)));
+
+        var env = plainTextTemplate.createProcessingEnvironment(new SimpleHash(dataModel,
+                new DefaultObjectWrapperBuilder(Configuration.VERSION_2_3_22).build()), result);
+        env.process();
+
+        return result.toString();
     }
 
     private Email prepareEmail(Domain domain, Application client, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
@@ -197,13 +217,6 @@ public class EmailServiceImpl implements EmailService {
         }
 
         return params;
-    }
-
-    private String getTemplateName(io.gravitee.am.model.Template template, User user) {
-        return template.template()
-                + EmailManager.TEMPLATE_NAME_SEPARATOR
-                + user.getReferenceType() + user.getReferenceId()
-                + ((user.getClient() != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + user.getClient() : "");
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {

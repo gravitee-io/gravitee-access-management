@@ -16,6 +16,8 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.common.i18n.DictionaryProvider;
+import io.gravitee.am.common.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.utils.EmailSender;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Component;
 import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -60,13 +63,21 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private EmailSender emailSender;
 
+    private DictionaryProvider defaultDictionaryProvider;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         this.emailSender = new EmailSender(mailSender, templatesPath);
+        this.defaultDictionaryProvider = new FileSystemDictionaryProvider(Paths.get(templatesPath, "i18n").toFile().getAbsolutePath());
     }
 
     @Override
     public void send(Email email) {
         this.emailSender.send(email);
+    }
+
+    @Override
+    public DictionaryProvider getDefaultDictionaryProvider() {
+        return this.defaultDictionaryProvider;
     }
 }

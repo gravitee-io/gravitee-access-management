@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.common.email.Email;
+import io.gravitee.am.common.i18n.DictionaryProvider;
 
 import javax.mail.internet.MimeMessage;
 
@@ -26,5 +27,7 @@ import javax.mail.internet.MimeMessage;
 public interface EmailService {
 
     void send(Email email);
+
+    DictionaryProvider getDefaultDictionaryProvider();
 
 }
