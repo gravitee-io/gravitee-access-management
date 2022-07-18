@@ -20,8 +20,10 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.email.EmailBuilder;
+import io.gravitee.am.common.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.utils.FreemarkerDataHelper;
@@ -42,11 +44,17 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-import static org.springframework.ui.freemarker.FreeMarkerTemplateUtils.processTemplateIntoString;
+import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,7 +68,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${gateway.url:http://localhost:8092}")
     private String gatewayUrl;
 
-    @Value("${user.resetPassword.email.subject:Please reset your password}")
+    @Value("${user.resetPassword.email.subject:${msg('reset.password.email.subject')}}")
     private String resetPasswordSubject;
 
     @Value("${user.resetPassword.token.expire-after:300}")
@@ -117,31 +125,38 @@ public class EmailServiceImpl implements EmailService {
     public void send(Email email) {
         if (enabled) {
             try {
+
+                Locale language = Locale.ENGLISH;
+                if (email.getParams().containsKey(ConstantKeys.USER_CONTEXT_KEY)) {
+                    language = preferredLanguage((User) email.getParams().get(ConstantKeys.USER_CONTEXT_KEY), Locale.ENGLISH);
+                }
+
                 // sanitize data
                 final Map<String, Object> params = FreemarkerDataHelper.generateData(email.getParams());
+
                 // compute email to
                 final List<String> to = new ArrayList<>();
                 for (String emailTo: email.getTo()) {
-                    to.add(processTemplateIntoString(
+                    to.add(processTemplate(
                             new Template("to", new StringReader(emailTo), freemarkerConfiguration),
-                            params));
+                            params, language));
                 }
                 // compute email from
-                final String from = processTemplateIntoString(
+                final String from = processTemplate(
                         new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration),
-                        params);
+                        params, language);
                 // compute email fromName
-                final String fromName = processTemplateIntoString(
+                final String fromName = processTemplate(
                         new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration),
-                        params);
+                        params, language);
                 // compute email subject
-                final String subject = processTemplateIntoString(
+                final String subject = processTemplate(
                         new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration),
-                        params);
+                        params, language);
                 // compute email content
-                final String content = processTemplateIntoString(
+                final String content = processTemplate(
                         new Template("content", new StringReader(email.getContent()), freemarkerConfiguration),
-                        params);
+                        params, language);
                 // send the email
                 final Email emailToSend = new Email(email);
                 emailToSend.setFrom(from);
@@ -159,12 +174,16 @@ public class EmailServiceImpl implements EmailService {
 
     private void sendEmail(Email email, User user, Client client) {
         try {
-            final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-            final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+            final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
+
             // compute email subject
-            final String subject = processTemplateIntoString(plainTextTemplate, email.getParams());
+            final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+            final String subject = processTemplate(plainTextTemplate, email.getParams(), preferredLanguage);
+
             // compute email content
-            final String content = processTemplateIntoString(template, email.getParams());
+            final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
+            final String content = processTemplate(template, email.getParams(), preferredLanguage);
+
             final Email emailToSend = new Email(email);
             emailToSend.setSubject(subject);
             emailToSend.setContent(content);
@@ -222,7 +241,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params) throws IOException, TemplateException {
+    public EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params, Locale preferredLanguage) throws IOException, TemplateException {
         io.gravitee.am.model.Email emailTpl = getEmailTemplate(template, client);
         params.put("expireAfterSeconds", emailTpl.getExpiresAfter());
         final long expiresAt = Instant.now().plus(emailTpl.getExpiresAfter(), ChronoUnit.SECONDS).toEpochMilli();
@@ -237,15 +256,27 @@ public class EmailServiceImpl implements EmailService {
 
         // compute email subject
         final Template plainTextTemplate = new Template("subject", new StringReader(emailTpl.getSubject()), freemarkerConfiguration);
-        email.setSubject(processTemplateIntoString(plainTextTemplate, params));
+        email.setSubject(processTemplate(plainTextTemplate, params, preferredLanguage));
 
         // compute email content
         final Template subjectTemplate = freemarkerConfiguration.getTemplate(email.getTemplate());
-        email.setContent(processTemplateIntoString(subjectTemplate, params));
+        email.setContent(processTemplate(subjectTemplate, params, preferredLanguage));
 
         EmailWrapper wrapper = new EmailWrapper(email);
         wrapper.setExpireAt(expiresAt);
         return wrapper;
+    }
+
+    private String processTemplate(Template plainTextTemplate, Map<String, Object> params, Locale preferredLanguage) throws TemplateException, IOException {
+        var result = new StringWriter(1024);
+
+        var dataModel = new HashMap<>(params);
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDefaultDictionaryProvider().getDictionaryFor(preferredLanguage)));
+
+        var env = plainTextTemplate.createProcessingEnvironment(dataModel, result);
+        env.process();
+
+        return result.toString();
     }
 
     private String getTemplateName(io.gravitee.am.model.Template template, Client client) {

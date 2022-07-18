@@ -23,6 +23,7 @@ import io.gravitee.am.model.oidc.Client;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -35,7 +36,7 @@ public interface EmailService {
 
     void send(Email email);
 
-    EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params) throws IOException, TemplateException;
+    EmailWrapper createEmail(io.gravitee.am.model.Template template, Client client, List<String> recipients, Map<String, Object> params, Locale preferredLanguage) throws IOException, TemplateException;
 
     final class EmailWrapper {
         final io.gravitee.am.common.email.Email email;
