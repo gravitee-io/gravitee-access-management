@@ -6,39 +6,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MFA Recovery</title>
     <!-- CSS -->
-    <link rel="stylesheet" th:href="@{../assets/material/material.blue_grey-blue.min.css}">
-    <link rel="stylesheet" th:href="@{../assets/css/mfa_enroll.css}">
-    <link rel="stylesheet" th:href="@{../assets/css/mfa_recover_code.css}">
+    <link rel="stylesheet" th:href="@{../assets/css/main.css}">
 
     <!-- Favicon and touch icons -->
     <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
 </head>
 <body>
-<div class="mdl-layout mdl-js-layout">
-    <div class="mfa-enroll-container">
-        <div class="mfa-enroll-form">
-            <div class="mfa-enroll-form-title">
-                <label>Recovery Codes</label>
-            </div>
-            <div class="mdl-tabs mdl-js-tabs">
-                <ul id="content" class="mdl-list recovery-codes">
-                    <li class="recovery-code" th:each="recoveryCode : ${recoveryCodes}" th:text="${recoveryCode}"></li>
-                </ul>
-            </div>
-            <div class="mfa-enroll-form-actions">
-                <button id="pdfDownload" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                    Download
-                </button>
-                <span style="flex: 1 1 0%;"></span>
-
-                <form role="form" th:id="confirmationForm" th:action="${recoveryCodeUrl}" method="post" style="margin-top: 0px">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                    <button type="submit" id="continue" value="true" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                        Continue
-                    </button>
-                </form>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="@{../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span id="enrollment-title">Recovery codes</span>
+        </div>
+        <div class="header-description">
+            <span id="enrollment-description">Recovery codes are used to access your account when you
+                cannot receive tow-factor authentication codes. Each code can only be used once.
+            </span>
+        </div>
+    </div>
+    <div class="section">
+        <div>
+            <div id="content" class="recovery-codes">
+                <div th:each="recoveryCode,iterStat : ${recoveryCodes}"  class="recovery-code small-font grey">
+                    <span th:text="${recoveryCode}" class="code-item"></span>
+                </div>
             </div>
         </div>
+
+        <div class="item">
+            <span class="deep-blue recovery-code-msg">This recovery codes should be stored somewhere safe.
+                They won't be displayed again.
+            </span>
+        </div>
+
+        <div>
+            <a id="pdfDownload" class="download"><span>Download as PDF</span></a>
+        </div>
+    </div>
+    <div class="section">
+        <form role="form" th:id="confirmationForm" th:action="${recoveryCodeUrl}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" id="continue" value="true" class="button submit-button">
+                Next
+            </button>
+        </form>
     </div>
 </div>
 <!--[if lt IE 10]>
@@ -51,7 +62,7 @@
     /*<![CDATA[*/
     $(document).ready(function () {
 
-        $("#pdfDownload").click(function () {
+        $("#pdfDownload").on("click", function () {
             const pdf = new jspdf.jsPDF();
             const recoveryCodes = /*[[${recoveryCodes}]]*/ '';
 
@@ -64,6 +75,16 @@
 
             pdf.save("gravitee-recovery-codes.pdf");
         });
+
+        const $codes = $(".code-item");
+        if($codes.length > 0){
+            const length = $codes.get(0).textContent.length;
+            const charLength = 11;
+            const width = length * charLength ;
+            $codes.each(function() {
+                $(this).width(width);
+            });
+        }
     });
     /*]]>*/
 </script>
