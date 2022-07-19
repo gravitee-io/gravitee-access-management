@@ -21,6 +21,10 @@ import io.gravitee.am.repository.jdbc.management.ManagementRepositoryConfigurati
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import liquibase.Contexts;
+import liquibase.Liquibase;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +67,21 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
                     options.getValue(USER), options.getValue(PASSWORD).toString())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
                 runLiquibase(connection);
+                runLiquibase_addSpecificTestIndexes(connection);
             }
+        }
+    }
+
+    protected final void runLiquibase_addSpecificTestIndexes(Connection connection) {
+        System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
+        System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
+
+        try {
+            final Liquibase liquibase = new Liquibase("liquibase-test/master.yml"
+                    , new ClassLoaderResourceAccessor(this.getClass().getClassLoader()), new JdbcConnection(connection));
+            liquibase.update((Contexts) null);
+        } catch (Exception ex) {
+            LOGGER.error("Failed to set up database: ", ex);
         }
     }
 
