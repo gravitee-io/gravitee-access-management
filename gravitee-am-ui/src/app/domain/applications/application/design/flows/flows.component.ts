@@ -133,7 +133,8 @@ export class ApplicationFlowsComponent implements OnInit {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
     const appFactorIds = this.application.factors || [];
-    const filteredFactors = factors.filter(f => appFactorIds.includes(f.id));
+    const filteredFactors = factors.filter(f => appFactorIds.includes(f.id))
+                                   .filter(f => f.factorType && f.factorType.toUpperCase() != 'RECOVERY_CODE');
     this.policies.forEach(policy => {
       let policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
