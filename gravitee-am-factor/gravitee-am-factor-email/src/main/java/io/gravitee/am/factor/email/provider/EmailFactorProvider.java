@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.factor.email.provider;
 
+import io.gravitee.am.common.email.Email;
 import io.gravitee.am.common.exception.mfa.InvalidCodeException;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.factor.api.Enrollment;
@@ -46,8 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Arrays.asList;
 
 /**
@@ -57,7 +56,6 @@ import static java.util.Arrays.asList;
 public class EmailFactorProvider implements FactorProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailFactorProvider.class);
-    public static final String TEMPLATE_SUFFIX = ".html";
 
     @Autowired
     private EmailFactorConfiguration configuration;
@@ -158,7 +156,7 @@ public class EmailFactorProvider implements FactorProvider {
             final String recipient = enrolledFactor.getChannel().getTarget();
             EmailService.EmailWrapper emailWrapper = emailService.createEmail(Template.MFA_CHALLENGE, context.getClient(), asList(recipient), params);
 
-            return provider.sendMessage(emailWrapper.getEmail())
+            return provider.sendMessage(emailWrapper.getEmail(), emailWrapper.isFromDefaultTemplate())
                     .andThen(Single.just(enrolledFactor)
                             .flatMap(ef -> {
                                 ef.setPrimary(true);

@@ -43,6 +43,12 @@
                             <span>Email</span>
                             <span class="mdl-list__item-text-body">Send an email to <b th:text="${factor.target}"></b>.</span>
                         </span>
+                        <!-- HTTP FACTOR -->
+                        <span th:if="${factor.factorType == 'HTTP'}" class="mdl-list__item-primary-content">
+                            <i class="material-icons mdl-list__item-avatar">rotate_right</i>
+                            <span>HTTP</span>
+                            <span class="mdl-list__item-text-body">Use the HTTP service to verify your account.</span>
+                        </span>
                         <span th:if="${factor.factorType == 'RECOVERY CODE'}" class="mdl-list__item-primary-content">
                             <i class="material-icons mdl-list__item-avatar">autorenew</i>
                             <span>Recovery Code</span>

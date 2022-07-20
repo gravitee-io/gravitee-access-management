@@ -75,6 +75,7 @@ public class ApplicationBrowserTemplate extends ApplicationAbstractTemplate {
             oAuthSettings.setGrantTypes(Arrays.asList(GrantType.AUTHORIZATION_CODE));
             oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
             oAuthSettings.setForcePKCE(true);
+            oAuthSettings.setForceS256CodeChallengeMethod(true);
             // browser applications cannot securely store a Client Secret, set client authentication method to none
             oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
         } else {

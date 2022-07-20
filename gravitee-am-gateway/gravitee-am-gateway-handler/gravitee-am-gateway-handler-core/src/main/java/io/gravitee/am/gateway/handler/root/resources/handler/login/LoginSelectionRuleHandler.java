@@ -42,7 +42,7 @@ import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginS
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginSelectionRuleHandler  implements Handler<RoutingContext>  {
+public class LoginSelectionRuleHandler implements Handler<RoutingContext>  {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final boolean fromIdentifierFirstLogin;

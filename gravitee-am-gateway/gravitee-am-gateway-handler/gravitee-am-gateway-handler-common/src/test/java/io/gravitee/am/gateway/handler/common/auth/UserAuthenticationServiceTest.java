@@ -36,7 +36,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -109,8 +111,9 @@ public class UserAuthenticationServiceTest {
         when(updatedUser.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn(domainId);
-        final User foundUser = mock(User.class);
-        when(foundUser.isAccountNonLocked()).thenReturn(true);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(true);
+
         when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
@@ -121,7 +124,40 @@ public class UserAuthenticationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         verify(userService, never()).create(any());
-        verify(userService, times(1)).update(any());
+        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()));
+    }
+
+
+    @Test
+    public void shouldConnect_knownUser_NotLockedAnymore() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(false);
+        foundUser.setAccountLockedUntil(new Date(Instant.now().minusSeconds(60).toEpochMilli()));
+
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(argThat(u -> u.isAccountNonLocked()));
     }
 
     @Test

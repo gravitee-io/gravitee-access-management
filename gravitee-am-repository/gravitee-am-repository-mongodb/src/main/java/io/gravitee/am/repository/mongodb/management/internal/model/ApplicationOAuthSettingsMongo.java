@@ -84,6 +84,7 @@ public class ApplicationOAuthSettingsMongo {
     private String authorizationEncryptedResponseAlg;
     private String authorizationEncryptedResponseEnc;
     private boolean forcePKCE;
+    private boolean forceS256CodeChallengeMethod;
     private List<String> postLogoutRedirectUris;
     private boolean singleSignOut;
     private boolean silentReAuthentication;
@@ -548,6 +549,14 @@ public class ApplicationOAuthSettingsMongo {
 
     public void setForcePKCE(boolean forcePKCE) {
         this.forcePKCE = forcePKCE;
+    }
+
+    public boolean isForceS256CodeChallengeMethod() {
+        return forceS256CodeChallengeMethod;
+    }
+
+    public void setForceS256CodeChallengeMethod(boolean forceS256CodeChallengeMethod) {
+        this.forceS256CodeChallengeMethod = forceS256CodeChallengeMethod;
     }
 
     public List<String> getPostLogoutRedirectUris() {

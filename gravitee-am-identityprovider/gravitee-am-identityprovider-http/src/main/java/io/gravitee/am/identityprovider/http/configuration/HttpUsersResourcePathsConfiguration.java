@@ -66,4 +66,5 @@ public class HttpUsersResourcePathsConfiguration {
     public void setDeleteResource(HttpResourceConfiguration deleteResource) {
         this.deleteResource = deleteResource;
     }
+
 }

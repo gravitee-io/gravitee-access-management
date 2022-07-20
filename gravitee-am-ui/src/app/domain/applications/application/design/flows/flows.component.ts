@@ -140,12 +140,13 @@ export class ApplicationFlowsComponent implements OnInit {
         for (const key in policySchema.properties) {
           if ('graviteeFactor' === policySchema.properties[key].widget) {
             policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
+            policySchema.properties[key].enum = [''];
+            policySchema.properties[key]['x-schema-form'].titleMap = { '' : 'None' };
             if (filteredFactors.length > 0) {
-              policySchema.properties[key].enum = filteredFactors.map(f => f.id);
-              policySchema.properties[key]['x-schema-form'].titleMap = filteredFactors.reduce(function(map, obj) {
-                map[obj.id] = obj.name;
-                return map;
-              }, {});
+              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map(f => f.id));
+              filteredFactors.forEach(obj => {
+                policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
+              });
             }
           }
         }
