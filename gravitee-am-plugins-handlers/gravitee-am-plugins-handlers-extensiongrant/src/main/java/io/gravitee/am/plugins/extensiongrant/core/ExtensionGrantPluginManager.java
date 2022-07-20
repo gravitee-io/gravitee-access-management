@@ -19,14 +19,18 @@ import io.gravitee.am.extensiongrant.api.ExtensionGrant;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
+import io.gravitee.am.identityprovider.api.NoAuthenticationProvider;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
 import io.gravitee.am.plugins.handlers.api.core.ProviderPluginManager;
 import io.gravitee.plugin.core.api.PluginContextFactory;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -58,7 +62,7 @@ public class ExtensionGrantPluginManager
             return createProvider(plugins.get(extensionGrant), extensionGrant.provider(),
                     List.of(
                             new ExtensionGrantConfigurationBeanFactoryPostProcessor(extensionGrantConfiguration),
-                            new ExtensionGrantIdentityProviderFactoryPostProcessor(providerConfig.getAuthenticationProvider())
+                            new ExtensionGrantIdentityProviderFactoryPostProcessor(ofNullable(providerConfig.getAuthenticationProvider()).orElse(new NoAuthenticationProvider()))
                     )
             );
         } else {
