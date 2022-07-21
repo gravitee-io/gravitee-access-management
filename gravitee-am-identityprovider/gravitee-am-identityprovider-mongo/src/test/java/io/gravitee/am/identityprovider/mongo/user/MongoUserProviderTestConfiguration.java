@@ -25,8 +25,11 @@ import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.EmbeddedClient;
+import io.gravitee.am.identityprovider.mongo.authentication.EmbeddedMongoConnectionProvider;
 import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.reactivex.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
@@ -96,5 +99,17 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
     @Bean
     public MongoDatabase mongoDatabase() {
         return embeddedClient().mongoDatabase();
+    }
+
+    @Bean
+    public ConnectionProvider mongoConnectionProvider(MongoIdentityProviderConfiguration config) {
+        return new EmbeddedMongoConnectionProvider(config);
+    }
+
+    @Bean
+    public IdentityProvider identityProviderEntity() {
+        final IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setSystem(true);
+        return identityProvider;
     }
 }
