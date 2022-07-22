@@ -164,18 +164,22 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
         Map<String, Object> mappedAttributes = applyUserMapping(authContext, claims);
         additionalInformation.putAll(mappedAttributes);
         // update sub if user mapping has been changed
-        if (additionalInformation.containsKey(StandardClaims.SUB)) {
+        if (additionalInformation.get(StandardClaims.SUB) != null) {
             user.setId(additionalInformation.get(StandardClaims.SUB).toString());
         }
         // update username if user mapping has been changed
-        if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
+        if (additionalInformation.get(StandardClaims.PREFERRED_USERNAME) != null) {
             user.setUsername(additionalInformation.get(StandardClaims.PREFERRED_USERNAME).toString());
         }
         // remove reserved claims
-        additionalInformation.remove(configuration.getIdentifierAttribute());
         additionalInformation.remove(configuration.getUsernameAttribute());
         additionalInformation.remove(configuration.getPasswordAttribute());
         additionalInformation.remove(configuration.getMetadataAttribute());
+        if (!StandardClaims.SUB.equals(configuration.getIdentifierAttribute())) {
+            // remove the entry matching the identifier attribute only if
+            // the identifier attribute isn't named "sub"
+            additionalInformation.remove(configuration.getIdentifierAttribute());
+        }
         if (configuration.isUseDedicatedSalt()) {
             additionalInformation.remove(configuration.getPasswordSaltAttribute());
         }
