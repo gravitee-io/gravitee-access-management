@@ -168,11 +168,11 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
         Map<String, Object> mappedAttributes = applyUserMapping(authContext, document);
         additionalInformation.putAll(mappedAttributes);
         // update sub if user mapping has been changed
-        if (additionalInformation.containsKey(StandardClaims.SUB)) {
+        if (additionalInformation.get(StandardClaims.SUB) != null) {
             user.setId(additionalInformation.get(StandardClaims.SUB).toString());
         }
         // update username if user mapping has been changed
-        if (additionalInformation.containsKey(StandardClaims.PREFERRED_USERNAME)) {
+        if (additionalInformation.get(StandardClaims.PREFERRED_USERNAME) != null) {
             user.setUsername(additionalInformation.get(StandardClaims.PREFERRED_USERNAME).toString());
         }
         // remove reserved claims
