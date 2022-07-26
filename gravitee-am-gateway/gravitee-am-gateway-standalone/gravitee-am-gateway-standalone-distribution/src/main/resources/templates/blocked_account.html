@@ -1,16 +1,78 @@
 <html>
-<body style="text-align: center;">
-<header>
-	<#include "header.html" />
-</header>
-<div style="margin-top: 50px; color: #424e5a;">
-	<p>Your account has been blocked due to some unusual sign-in activity.</p>
-	<p><a href="${url}">Click here</a> to unblock it.</p>
-	<small>Please contact your administrator for assistance if you believe that you received this message in error.</small>
-	<small>
-		This link will expire in <#if expireAfterSeconds gte 3600>${expireAfterSeconds / 3600} hour(s)<#else>${expireAfterSeconds / 60} minutes(s)</#if>.
-		After that, you must submit a new request to your Administrators to resend a new recover account email.
-	</small>
-</div>
-</body>
+	<body style="overflow: auto;">
+
+	<!-- Content -->
+	<table width="440px">
+
+		<#include "header.html" />
+
+		<!-- header / title -->
+		<tr>
+			<td align="justify" style="
+				padding: 0px;
+				gap: 16px;
+				height: 96px;
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+				font-style: normal;
+				font-weight: 800;
+				font-size: 24px;
+				line-height: 32px;
+				color: #25213A;
+				">
+			${msg('blocked_account.email.header.title', user.firstName)}
+			</td>
+		</tr>
+	
+		<!-- header / description -->
+	 	<tr>
+			<td align="justify" style="
+			height: 96px;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+			font-style: normal;
+			font-weight: 500;
+			font-size: 16px;
+			line-height: 24px;
+			color: #A5A5A9;
+			">
+				${msg('blocked_account.email.header.description')}
+			</td>
+		</tr>
+
+		<tr>
+			<!-- form -->
+			<td align="center" style="
+			height: 48px;
+			background-color: #6A4FF7;/*var(--theme-background-color);*/
+			border-radius: 8px;" >
+				<!-- button -->
+				<a href="${url}"
+						style="
+						color: #FFFFFF !important;  /*var(--theme-foreground-color);*/
+						font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+						font-style: normal;
+						font-weight: 700;
+						font-size: 16px;
+						line-height: 16px;
+						/*remove underline*/
+						text-decoration: none;">
+					${msg('blocked_account.email.button')}
+				</a>
+			</td>
+		</tr>
+
+		<tr>
+			<td align="justify" style="
+			height: 96px;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+			font-style: normal;
+			font-weight: 500;
+			font-size: 16px;
+			line-height: 24px;
+			color: #A5A5A9;
+			">
+		<#if expireAfterSeconds gte 3600> ${msg('blocked_account.email.description', expireAfterSeconds / 3600 , msg('common.email.unit.hours'))}  <#else> ${msg('blocked_account.email.description', expireAfterSeconds / 60 , msg('common.email.unit.minutes'))} </#if>
+			</td>
+		</tr>
+		</table>
+	</body>
 </html>
