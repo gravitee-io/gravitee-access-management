@@ -68,7 +68,7 @@ public class EmailServiceImpl implements EmailService {
     @Value("${email.enabled:false}")
     private boolean enabled;
 
-    @Value("${user.registration.email.subject:${msg('registration.confirmation.email.subject')}}")
+    @Value("${user.registration.email.subject:${msg('registration_confirmation.email.subject')}}")
     private String registrationSubject;
 
     @Value("${user.registration.token.expire-after:86400}")

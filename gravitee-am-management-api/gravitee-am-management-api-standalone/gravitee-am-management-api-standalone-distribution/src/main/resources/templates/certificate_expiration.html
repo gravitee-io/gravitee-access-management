@@ -1,11 +1,45 @@
 <html>
-<body style="text-align: center;">
-<header>
+<body style="overflow: auto;">
+
+<!-- Content -->
+<table width="440px">
+
 	<#include "header.html" />
-</header>
-<div style="margin-top: 50px; color: #424e5a;">
-	<h3>Hi ${user.firstName} ${user.lastName},</h3>
-	<p>The certificate ${certificate.name} for the domain ${domain.name} will expire at ${certificate.expiresAt?datetime}.</p>
-</div>
+
+	<!-- header / title -->
+	<tr>
+		<td align="justify" style="
+			padding: 0px;
+			gap: 16px;
+			height: 96px;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+			font-style: normal;
+			font-weight: 800;
+			font-size: 24px;
+			line-height: 32px;
+			color: #25213A;
+			">
+			Hi ${user.firstName} ${user.lastName},
+		</td>
+	</tr>
+
+	<!-- header / description -->
+	<tr>
+		<td align="justify" style="
+			height: 96px;
+
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+							font-style: normal;
+							font-weight: 500;
+							font-size: 16px;
+							line-height: 24px;
+
+							color: #A5A5A9;
+							">
+			The certificate ${certificate.name} for the domain ${domain.name} will expire at ${certificate.expiresAt?datetime}.
+		</td>
+	</tr>
+</table>
 </body>
 </html>
+

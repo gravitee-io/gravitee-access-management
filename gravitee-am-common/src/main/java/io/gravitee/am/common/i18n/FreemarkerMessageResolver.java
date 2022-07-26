@@ -15,6 +15,9 @@
  */
 package io.gravitee.am.common.i18n;
 
+import freemarker.template.SimpleDate;
+import freemarker.template.SimpleNumber;
+import freemarker.template.SimpleScalar;
 import freemarker.template.TemplateMethodModelEx;
 import freemarker.template.TemplateModelException;
 
@@ -56,9 +59,27 @@ public class FreemarkerMessageResolver implements TemplateMethodModelEx {
 
     private Object[] toArguments(List list) {
         if (list.size() >= 2) {
-            return list.subList(1, list.size()).toArray();
+            return list.subList(1, list.size())
+                    .stream()
+                    .map(this::convert)
+                    .toArray();
         } else {
             return new Object[0];
         }
+    }
+
+    private Object convert(Object input) {
+        if (input != null) {
+            if (input instanceof SimpleScalar) {
+                return ((SimpleScalar) input).getAsString();
+            }
+            if (input instanceof SimpleNumber) {
+                return ((SimpleNumber) input).getAsNumber();
+            }
+            if (input instanceof SimpleDate) {
+                return ((SimpleDate) input).getAsDate();
+            }
+        }
+        return input;
     }
 }
