@@ -1,6 +1,31 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/568?closed=1[AM - 3.15.11 (2022-07-29)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Unable to sign in a user with JDBC idp https://github.com/gravitee-io/issues/issues/8171[#8171]
+- Unable to sign in a user with JDBC idp https://github.com/gravitee-io/issues/issues/8172[#8172]
+
+*_General_*
+
+- Backport #8112 enroll MFA policy can't be saved if the application has only one factor activated https://github.com/gravitee-io/issues/issues/8113[#8113]
+- Improve email template sanitization https://github.com/gravitee-io/issues/issues/8091[#8091]
+
+*_Management_*
+
+- Limit the size of the AM cookie https://github.com/gravitee-io/issues/issues/8092[#8092]
+
+*_Repository_*
+
+- AdditionalInformation for SCIM search are limited using RDMS https://github.com/gravitee-io/issues/issues/8085[#8085]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/554?closed=1[AM - 3.17.3 (2022-07-15)]
 
 === Bug fixes
