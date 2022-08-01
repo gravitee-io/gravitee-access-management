@@ -51,6 +51,7 @@ import static java.time.ZoneOffset.UTC;
 public class UserRepositoryTest extends AbstractManagementTest {
     public static final DateTimeFormatter UTC_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     public static final String ORGANIZATION_ID = "orga#1";
+    public static final String CUSTOM_ADDITIONAL_FIELD = "custom";
     @Autowired
     private UserRepository userRepository;
 
@@ -135,7 +136,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPhotos().size() == 1);
         testObserver.assertValue(u -> u.getIms().size() == 1);
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
-        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 1);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 2);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
     }
 
@@ -180,7 +181,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(u -> u.getPhotos().size() == 1);
         testObserver.assertValue(u -> u.getIms().size() == 1);
         testObserver.assertValue(u -> u.getX509Certificates().size() == 1);
-        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 1);
+        testObserver.assertValue(u -> u.getAdditionalInformation().size() == 2);
         testObserver.assertValue(u -> u.getFactors().size() == 1);
         testObserver.assertValue(u -> u.getLastPasswordReset() != null);
         testObserver.assertValue(u -> u.getFactors().get(0).getChannel() != null);
@@ -260,6 +261,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
 
         Map<String, Object> info = new HashMap<>();
         info.put(StandardClaims.EMAIL, random+"@info.acme.fr");
+        info.put(CUSTOM_ADDITIONAL_FIELD, "custom-value");
         user.setAdditionalInformation(info);
         return user;
     }
@@ -661,6 +663,66 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserverP0.assertValue(users -> users.getData().size() == 1);
         testObserverP0.assertValue(users -> users.getData().iterator().next().getUsername().equals(user1.getUsername()));
 
+    }
+
+    @Test
+    public void testScimSearch_byCustomField_EQ_paged() {
+        final String domain = "domain";
+        // create user
+        User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setAdditionalInformation(Collections.singletonMap(CUSTOM_ADDITIONAL_FIELD, "custom-value1"));
+        userRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        user2.setAdditionalInformation(Collections.singletonMap(CUSTOM_ADDITIONAL_FIELD, "custom-value2"));
+        userRepository.create(user2).blockingGet();
+
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("additionalInformation." + CUSTOM_ADDITIONAL_FIELD);
+        criteria.setFilterValue("custom-value1");
+        criteria.setOperator("eq");
+        criteria.setQuoteFilterValue(true);
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        testObserverP0.awaitTerminalEvent();
+
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+        testObserverP0.assertValue(users -> users.getData().size() == 1);
+        testObserverP0.assertValue(users -> users.getData().iterator().next().getUsername().equals(user1.getUsername()));
+    }
+
+    @Test
+    public void testScimSearch_byCustomField_PR_paged() {
+        final String domain = "domain";
+        // create user
+        User user1 = new User();
+        user1.setReferenceType(ReferenceType.DOMAIN);
+        user1.setReferenceId(domain);
+        user1.setUsername("testUsername1");
+        user1.setAdditionalInformation(Collections.singletonMap(CUSTOM_ADDITIONAL_FIELD, "custom-value1"));
+        userRepository.create(user1).blockingGet();
+
+        User user2 = new User();
+        user2.setReferenceType(ReferenceType.DOMAIN);
+        user2.setReferenceId(domain);
+        userRepository.create(user2).blockingGet();
+
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName("additionalInformation." + CUSTOM_ADDITIONAL_FIELD);
+        criteria.setFilterValue("");
+        criteria.setOperator("pr");
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteria, 0, 4).test();
+        testObserverP0.awaitTerminalEvent();
+
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+        testObserverP0.assertValue(users -> users.getData().size() == 1);
+        testObserverP0.assertValue(users -> users.getData().iterator().next().getUsername().equals(user1.getUsername()));
     }
 
     @Test
