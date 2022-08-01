@@ -65,7 +65,7 @@ public class FactorManagerTest {
         final Factor factor = new Factor();
         factor.setId(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
-        when(factorPluginManager.create(any(), any())).thenReturn(mock(FactorProvider.class));
+        when(factorPluginManager.create(any())).thenReturn(mock(FactorProvider.class));
         factorMng.afterPropertiesSet();
     }
 
