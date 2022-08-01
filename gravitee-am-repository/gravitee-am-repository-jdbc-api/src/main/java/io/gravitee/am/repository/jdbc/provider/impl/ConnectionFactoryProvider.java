@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.metrics.R2DBCConnectionMetrics;
 import io.gravitee.am.repository.jdbc.provider.utils.ObjectUtils;
+import io.gravitee.am.repository.jdbc.provider.utils.TlsOptionsHelper;
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Tags;
@@ -61,7 +62,7 @@ public class ConnectionFactoryProvider {
     private final String prefix;
 
     public ConnectionFactoryProvider(Environment environment, String prefix) {
-        this.prefix = prefix + "." + "jdbc.";
+        this.prefix = prefix + ".jdbc.";
         this.environment = environment;
     }
 
@@ -166,6 +167,8 @@ public class ConnectionFactoryProvider {
             if (pwd != null) {
                 builder.option(PASSWORD, pwd);
             }
+
+            builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
 
             connectionPool = (ConnectionPool)ConnectionFactories.get(builder.build());
         }
