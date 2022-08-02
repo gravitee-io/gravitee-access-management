@@ -53,13 +53,13 @@ export interface ClientRegistrationSettings {
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    clientTemplateEnabled?: boolean;
+    allowedScopesEnabled?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    allowedScopesEnabled?: boolean;
+    clientTemplateEnabled?: boolean;
     /**
      * 
      * @type {boolean}
@@ -89,8 +89,8 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
         'allowWildCardRedirectUri': !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
         'defaultScopes': !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
         'allowedScopes': !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
         'allowedScopesEnabled': !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
+        'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
         'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
         'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
     };
@@ -110,8 +110,8 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
         'allowWildCardRedirectUri': value.allowWildCardRedirectUri,
         'defaultScopes': value.defaultScopes,
         'allowedScopes': value.allowedScopes,
-        'clientTemplateEnabled': value.clientTemplateEnabled,
         'allowedScopesEnabled': value.allowedScopesEnabled,
+        'clientTemplateEnabled': value.clientTemplateEnabled,
         'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
         'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
     };

@@ -22,14 +22,14 @@ import {
     FlowEntityToJSON,
 } from '../models';
 
-export interface Get17Request {
+export interface Get14Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     flow: string;
 }
 
-export interface List15Request {
+export interface List6Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -43,7 +43,7 @@ export interface Update10Request {
     flow2: Flow;
 }
 
-export interface Update9Request {
+export interface Update11Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -59,21 +59,21 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get17Raw(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
+    async get14Raw(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<FlowEntity>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get17.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get14.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get17.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get14.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get17.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get14.');
         }
 
         if (requestParameters.flow === null || requestParameters.flow === undefined) {
-            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get17.');
+            throw new runtime.RequiredError('flow','Required parameter requestParameters.flow was null or undefined when calling get14.');
         }
 
         const queryParameters: any = {};
@@ -98,8 +98,8 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[READ] permission on the specified domain or DOMAIN_FLOW[READ] permission on the specified environment or DOMAIN_FLOW[READ] permission on the specified organization
      * Get a flow
      */
-    async get17(requestParameters: Get17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
-        const response = await this.get17Raw(requestParameters, initOverrides);
+    async get14(requestParameters: Get14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<FlowEntity> {
+        const response = await this.get14Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -107,17 +107,17 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
      * List registered flows for a security domain
      */
-    async list15Raw(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    async list6Raw(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list15.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list6.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list15.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list6.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list15.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list6.');
         }
 
         const queryParameters: any = {};
@@ -142,8 +142,8 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[LIST] permission on the specified domain or DOMAIN_FLOW[LIST] permission on the specified environment or DOMAIN_FLOW[LIST] permission on the specified organization. Except if user has DOMAIN_FLOW[READ] permission on the domain, environment or organization, each returned flow is filtered and contains only basic information such as id and name and isEnabled.
      * List registered flows for a security domain
      */
-    async list15(requestParameters: List15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.list15Raw(requestParameters, initOverrides);
+    async list6(requestParameters: List6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.list6Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -206,21 +206,21 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
      * Create or update list of flows
      */
-    async update9Raw(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
+    async update11Raw(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<FlowEntity>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update11.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update11.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update11.');
         }
 
         if (requestParameters.flows === null || requestParameters.flows === undefined) {
-            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update9.');
+            throw new runtime.RequiredError('flows','Required parameter requestParameters.flows was null or undefined when calling update11.');
         }
 
         const queryParameters: any = {};
@@ -248,8 +248,8 @@ export class FlowApi extends runtime.BaseAPI {
      * User must have the DOMAIN_FLOW[UPDATE] permission on the specified domain or DOMAIN_FLOW[UPDATE] permission on the specified environment or DOMAIN_FLOW[UPDATE] permission on the specified organization
      * Create or update list of flows
      */
-    async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
-        const response = await this.update9Raw(requestParameters, initOverrides);
+    async update11(requestParameters: Update11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<FlowEntity>> {
+        const response = await this.update11Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

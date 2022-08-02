@@ -282,6 +282,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(AuthenticationDeviceNotifiersResource.class);
     }
 
+    @Path("themes")
+    public ThemesResource getThemesResources() {
+        return resourceContext.getResource(ThemesResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();

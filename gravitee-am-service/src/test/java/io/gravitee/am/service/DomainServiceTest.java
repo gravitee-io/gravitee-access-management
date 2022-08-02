@@ -225,6 +225,9 @@ public class DomainServiceTest {
     @Mock
     private I18nDictionaryService i18nDictionaryService;
 
+    @Mock
+    private ThemeService themeService;
+
     @Test
     public void shouldFindById() {
         when(domainRepository.findById("my-domain")).thenReturn(Maybe.just(new Domain()));
@@ -654,6 +657,7 @@ public class DomainServiceTest {
         when(i18nDictionaryService.delete(eq(DOMAIN), eq(DOMAIN_ID), any(), any())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();
@@ -704,6 +708,7 @@ public class DomainServiceTest {
         when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
 
         TestObserver testObserver = domainService.delete(DOMAIN_ID).test();
         testObserver.awaitTerminalEvent();

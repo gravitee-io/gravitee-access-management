@@ -363,24 +363,6 @@ export interface UserEntity {
     sourceId?: string;
     /**
      * 
-     * @type {{ [key: string]: any; }}
-     * @memberof UserEntity
-     */
-    address?: { [key: string]: any; };
-    /**
-     * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    locale?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof UserEntity
-     */
-    zoneInfo?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof UserEntity
      */
@@ -399,6 +381,12 @@ export interface UserEntity {
     website?: string;
     /**
      * 
+     * @type {{ [key: string]: any; }}
+     * @memberof UserEntity
+     */
+    address?: { [key: string]: any; };
+    /**
+     * 
      * @type {string}
      * @memberof UserEntity
      */
@@ -414,7 +402,19 @@ export interface UserEntity {
      * @type {string}
      * @memberof UserEntity
      */
+    zoneInfo?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserEntity
+     */
     phoneNumber?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof UserEntity
+     */
+    locale?: string;
 }
 
 
@@ -492,15 +492,15 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
         'applicationEntity': !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
         'sourceId': !exists(json, 'sourceId') ? undefined : json['sourceId'],
-        'address': !exists(json, 'address') ? undefined : json['address'],
-        'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
+        'locale': !exists(json, 'locale') ? undefined : json['locale'],
     };
 }
 
@@ -564,15 +564,15 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
         'applicationEntity': ApplicationEntityToJSON(value.applicationEntity),
         'sourceId': value.sourceId,
-        'address': value.address,
-        'locale': value.locale,
-        'zoneInfo': value.zoneInfo,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'address': value.address,
         'middleName': value.middleName,
         'birthdate': value.birthdate,
+        'zoneInfo': value.zoneInfo,
         'phoneNumber': value.phoneNumber,
+        'locale': value.locale,
     };
 }
 

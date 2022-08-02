@@ -64,6 +64,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.TagService;
+import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -236,6 +237,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService;
+
+    @Autowired
+    protected ThemeService themeService;
 
     @Before
     public void init() {
@@ -484,6 +488,11 @@ public abstract class JerseySpringTest {
         @Bean
         public AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService() {
             return mock(AuthenticationDeviceNotifierPluginService.class);
+        }
+
+        @Bean
+        public ThemeService themeService() {
+            return mock(ThemeService.class);
         }
     }
 

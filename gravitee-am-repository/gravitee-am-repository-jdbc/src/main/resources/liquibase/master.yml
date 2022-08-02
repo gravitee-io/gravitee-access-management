@@ -77,3 +77,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v3_19_0/3.19.0-add-domain-dictionaries-acl.yml
   - include:
       - file: liquibase/changelogs/v3_19_0/3.19.0-schema-dictionaries.yml
+  - include:
+      - file: liquibase/changelogs/v3_19_0/3.19.0-add-domain-theme-permission.yml
+  - include:
+      - file: liquibase/changelogs/v3_19_0/3.19.0-add-theme-table.yml
