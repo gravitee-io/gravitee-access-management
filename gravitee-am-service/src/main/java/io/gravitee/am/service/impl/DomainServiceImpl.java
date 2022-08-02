@@ -164,6 +164,8 @@ public class DomainServiceImpl implements DomainService {
     @Autowired
     private I18nDictionaryService i18nDictionaryService;
 
+    @Autowired
+    private ThemeService themeService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -474,6 +476,12 @@ public class DomainServiceImpl implements DomainService {
                             // delete i18n dictionaries
                             .andThen(i18nDictionaryService.findAll(DOMAIN, domainId)
                                     .flatMapCompletable(i18nDictionary -> i18nDictionaryService.delete(DOMAIN, domainId, i18nDictionary.getId(), principal)
+                                    )
+                            )
+                            // delete theme
+                            // TODO improve this by implement a deleteThemeByReferenceId method
+                            .andThen(themeService.findByReference(ReferenceType.DOMAIN, domainId)
+                                    .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
                             .andThen(domainRepository.delete(domainId))

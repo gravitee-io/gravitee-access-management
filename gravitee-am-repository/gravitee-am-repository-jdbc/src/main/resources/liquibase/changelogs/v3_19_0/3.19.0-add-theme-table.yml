@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3.19.0-add-themes-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # User Geo Time Coordinates #
+        ############################
+        - createTable:
+            tableName: themes
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: logo_width, type: int, constraints: { nullable: true } }
+              - column: { name: logo_url, type: clob, constraints: { nullable: true } }
+              - column: { name: favicon_url, type: clob, constraints: { nullable: true } }
+              - column: { name: primary_text_color, type: nvarchar(12), constraints: { nullable: true } }
+              - column: { name: primary_button_color, type: nvarchar(12), constraints: { nullable: true } }
+              - column: { name: secondary_button_color, type: nvarchar(12), constraints: { nullable: true } }
+              - column: { name: css, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_themes
+            columnNames: id
+            tableName: themes
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_themes_reference_type_identifier
+            tableName: themes
+            unique: false

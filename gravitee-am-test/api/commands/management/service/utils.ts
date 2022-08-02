@@ -25,6 +25,7 @@ import {IdentityProviderApi} from "@management-apis/IdentityProviderApi";
 import {ScopeApi} from "@management-apis/ScopeApi";
 import {CertificateApi} from "@management-apis/CertificateApi";
 import {DictionaryApi} from "@management-apis/DictionaryApi";
+import {ThemeApi} from "@management-apis/ThemeApi";
 
 function createAccessTokenConfig(accessToken) {
     return new Configuration({...managementConf, apiKey: 'Bearer ' + accessToken});
@@ -71,4 +72,8 @@ export function getCertificateApi(accessToken) {
 
 export function getDictionaryApi(accessToken) {
     return new DictionaryApi(createAccessTokenConfig(accessToken));
+}
+
+export function getThemeApi(accessToken) {
+    return new ThemeApi(createAccessTokenConfig(accessToken));
 }

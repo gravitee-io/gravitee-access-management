@@ -14,7 +14,7 @@
 
 import * as runtime from '../runtime';
 
-export interface Get36Request {
+export interface Get35Request {
     policy: string;
 }
 
@@ -22,11 +22,11 @@ export interface GetDocumentationRequest {
     policy: string;
 }
 
-export interface GetSchema5Request {
+export interface GetSchema4Request {
     policy: string;
 }
 
-export interface List36Request {
+export interface List34Request {
     expand?: Array<string>;
 }
 
@@ -39,9 +39,9 @@ export class PolicyApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a policy plugin
      */
-    async get36Raw(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get35Raw(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get36.');
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling get35.');
         }
 
         const queryParameters: any = {};
@@ -66,8 +66,8 @@ export class PolicyApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a policy plugin
      */
-    async get36(requestParameters: Get36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get36Raw(requestParameters, initOverrides);
+    async get35(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get35Raw(requestParameters, initOverrides);
     }
 
     /**
@@ -106,9 +106,9 @@ export class PolicyApi extends runtime.BaseAPI {
     /**
      * Get a policy plugin\'s schema
      */
-    async getSchema5Raw(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema4Raw(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.policy === null || requestParameters.policy === undefined) {
-            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling getSchema5.');
+            throw new runtime.RequiredError('policy','Required parameter requestParameters.policy was null or undefined when calling getSchema4.');
         }
 
         const queryParameters: any = {};
@@ -132,15 +132,15 @@ export class PolicyApi extends runtime.BaseAPI {
     /**
      * Get a policy plugin\'s schema
      */
-    async getSchema5(requestParameters: GetSchema5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema5Raw(requestParameters, initOverrides);
+    async getSchema4(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema4Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * List policy plugins
      */
-    async list36Raw(requestParameters: List36Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list34Raw(requestParameters: List34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -167,8 +167,8 @@ export class PolicyApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List policy plugins
      */
-    async list36(requestParameters: List36Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list36Raw(requestParameters, initOverrides);
+    async list34(requestParameters: List34Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list34Raw(requestParameters, initOverrides);
     }
 
 }

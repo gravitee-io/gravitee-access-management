@@ -81,6 +81,12 @@ import {
 export interface OrganizationResource {
     /**
      * 
+     * @type {FormsResource}
+     * @memberof OrganizationResource
+     */
+    formsResource?: FormsResource;
+    /**
+     * 
      * @type {EnvironmentsResource}
      * @memberof OrganizationResource
      */
@@ -135,12 +141,6 @@ export interface OrganizationResource {
     settingsResource?: any;
     /**
      * 
-     * @type {FormsResource}
-     * @memberof OrganizationResource
-     */
-    formsResource?: FormsResource;
-    /**
-     * 
      * @type {IdentityProvidersResource}
      * @memberof OrganizationResource
      */
@@ -157,6 +157,7 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
+        'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
         'environmentsResource': !exists(json, 'environmentsResource') ? undefined : EnvironmentsResourceFromJSON(json['environmentsResource']),
         'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
@@ -166,7 +167,6 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
         'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'settingsResource': !exists(json, 'settingsResource') ? undefined : json['settingsResource'],
-        'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
         'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
     };
 }
@@ -180,6 +180,7 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
     }
     return {
         
+        'formsResource': FormsResourceToJSON(value.formsResource),
         'environmentsResource': EnvironmentsResourceToJSON(value.environmentsResource),
         'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
@@ -189,7 +190,6 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
         'usersResource': UsersResourceToJSON(value.usersResource),
         'settingsResource': value.settingsResource,
-        'formsResource': FormsResourceToJSON(value.formsResource),
         'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
     };
 }

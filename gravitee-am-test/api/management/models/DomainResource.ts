@@ -133,6 +133,12 @@ import {
     ServiceResourcesResourceToJSON,
 } from './ServiceResourcesResource';
 import {
+    ThemesResource,
+    ThemesResourceFromJSON,
+    ThemesResourceFromJSONTyped,
+    ThemesResourceToJSON,
+} from './ThemesResource';
+import {
     UsersResource,
     UsersResourceFromJSON,
     UsersResourceFromJSONTyped,
@@ -145,36 +151,6 @@ import {
  * @interface DomainResource
  */
 export interface DomainResource {
-    /**
-     * 
-     * @type {AuditsResource}
-     * @memberof DomainResource
-     */
-    auditsResource?: AuditsResource;
-    /**
-     * 
-     * @type {MembersResource}
-     * @memberof DomainResource
-     */
-    membersResource?: MembersResource;
-    /**
-     * 
-     * @type {RolesResource}
-     * @memberof DomainResource
-     */
-    rolesResource?: RolesResource;
-    /**
-     * 
-     * @type {GroupsResource}
-     * @memberof DomainResource
-     */
-    groupsResource?: GroupsResource;
-    /**
-     * 
-     * @type {UsersResource}
-     * @memberof DomainResource
-     */
-    usersResource?: UsersResource;
     /**
      * 
      * @type {ApplicationsResource}
@@ -261,10 +237,40 @@ export interface DomainResource {
     deviceNotifiersResource?: AuthenticationDeviceNotifiersResource;
     /**
      * 
-     * @type {IdentityProvidersResource}
+     * @type {ThemesResource}
      * @memberof DomainResource
      */
-    identityProvidersResource?: IdentityProvidersResource;
+    themesResources?: ThemesResource;
+    /**
+     * 
+     * @type {AuditsResource}
+     * @memberof DomainResource
+     */
+    auditsResource?: AuditsResource;
+    /**
+     * 
+     * @type {MembersResource}
+     * @memberof DomainResource
+     */
+    membersResource?: MembersResource;
+    /**
+     * 
+     * @type {RolesResource}
+     * @memberof DomainResource
+     */
+    rolesResource?: RolesResource;
+    /**
+     * 
+     * @type {GroupsResource}
+     * @memberof DomainResource
+     */
+    groupsResource?: GroupsResource;
+    /**
+     * 
+     * @type {UsersResource}
+     * @memberof DomainResource
+     */
+    usersResource?: UsersResource;
     /**
      * 
      * @type {ServiceResourcesResource}
@@ -277,6 +283,12 @@ export interface DomainResource {
      * @memberof DomainResource
      */
     deviceIdentifiersResource?: DeviceIdentifiersResource;
+    /**
+     * 
+     * @type {IdentityProvidersResource}
+     * @memberof DomainResource
+     */
+    identityProvidersResource?: IdentityProvidersResource;
 }
 
 export function DomainResourceFromJSON(json: any): DomainResource {
@@ -289,11 +301,6 @@ export function DomainResourceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
-        'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
-        'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
-        'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
-        'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'applicationsResource': !exists(json, 'applicationsResource') ? undefined : ApplicationsResourceFromJSON(json['applicationsResource']),
         'certificatesResource': !exists(json, 'certificatesResource') ? undefined : CertificatesResourceFromJSON(json['certificatesResource']),
         'tokenGrantersResource': !exists(json, 'tokenGrantersResource') ? undefined : ExtensionGrantsResourceFromJSON(json['tokenGrantersResource']),
@@ -308,9 +315,15 @@ export function DomainResourceFromJSONTyped(json: any, ignoreDiscriminator: bool
         'alertsResource': !exists(json, 'alertsResource') ? undefined : AlertsResourceFromJSON(json['alertsResource']),
         'botDetectionsResource': !exists(json, 'botDetectionsResource') ? undefined : BotDetectionsResourceFromJSON(json['botDetectionsResource']),
         'deviceNotifiersResource': !exists(json, 'deviceNotifiersResource') ? undefined : AuthenticationDeviceNotifiersResourceFromJSON(json['deviceNotifiersResource']),
-        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
+        'themesResources': !exists(json, 'themesResources') ? undefined : ThemesResourceFromJSON(json['themesResources']),
+        'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
+        'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
+        'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
+        'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
+        'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'serviceResourcesResource': !exists(json, 'serviceResourcesResource') ? undefined : ServiceResourcesResourceFromJSON(json['serviceResourcesResource']),
         'deviceIdentifiersResource': !exists(json, 'deviceIdentifiersResource') ? undefined : DeviceIdentifiersResourceFromJSON(json['deviceIdentifiersResource']),
+        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
     };
 }
 
@@ -323,11 +336,6 @@ export function DomainResourceToJSON(value?: DomainResource | null): any {
     }
     return {
         
-        'auditsResource': AuditsResourceToJSON(value.auditsResource),
-        'membersResource': MembersResourceToJSON(value.membersResource),
-        'rolesResource': RolesResourceToJSON(value.rolesResource),
-        'groupsResource': GroupsResourceToJSON(value.groupsResource),
-        'usersResource': UsersResourceToJSON(value.usersResource),
         'applicationsResource': ApplicationsResourceToJSON(value.applicationsResource),
         'certificatesResource': CertificatesResourceToJSON(value.certificatesResource),
         'tokenGrantersResource': ExtensionGrantsResourceToJSON(value.tokenGrantersResource),
@@ -342,9 +350,15 @@ export function DomainResourceToJSON(value?: DomainResource | null): any {
         'alertsResource': AlertsResourceToJSON(value.alertsResource),
         'botDetectionsResource': BotDetectionsResourceToJSON(value.botDetectionsResource),
         'deviceNotifiersResource': AuthenticationDeviceNotifiersResourceToJSON(value.deviceNotifiersResource),
-        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
+        'themesResources': ThemesResourceToJSON(value.themesResources),
+        'auditsResource': AuditsResourceToJSON(value.auditsResource),
+        'membersResource': MembersResourceToJSON(value.membersResource),
+        'rolesResource': RolesResourceToJSON(value.rolesResource),
+        'groupsResource': GroupsResourceToJSON(value.groupsResource),
+        'usersResource': UsersResourceToJSON(value.usersResource),
         'serviceResourcesResource': ServiceResourcesResourceToJSON(value.serviceResourcesResource),
         'deviceIdentifiersResource': DeviceIdentifiersResourceToJSON(value.deviceIdentifiersResource),
+        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
     };
 }
 

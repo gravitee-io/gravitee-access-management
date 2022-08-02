@@ -28,6 +28,7 @@ apis/ResourceApi.ts
 apis/RoleApi.ts
 apis/ScopeApi.ts
 apis/ShardingTagsApi.ts
+apis/ThemeApi.ts
 apis/UserApi.ts
 apis/UserNotificationsApi.ts
 apis/index.ts
@@ -145,6 +146,7 @@ models/NewRole.ts
 models/NewScope.ts
 models/NewServiceResource.ts
 models/NewTag.ts
+models/NewTheme.ts
 models/NewUser.ts
 models/NotifierPlugin.ts
 models/OIDCSettings.ts
@@ -198,6 +200,8 @@ models/StatusEntity.ts
 models/Step.ts
 models/Tag.ts
 models/TagsResource.ts
+models/ThemeEntity.ts
+models/ThemesResource.ts
 models/TokenClaim.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts

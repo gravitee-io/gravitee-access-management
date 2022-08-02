@@ -345,24 +345,6 @@ export interface User {
     updatedAt?: Date;
     /**
      * 
-     * @type {{ [key: string]: any; }}
-     * @memberof User
-     */
-    address?: { [key: string]: any; };
-    /**
-     * 
-     * @type {string}
-     * @memberof User
-     */
-    locale?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof User
-     */
-    zoneInfo?: string;
-    /**
-     * 
      * @type {boolean}
      * @memberof User
      */
@@ -381,6 +363,12 @@ export interface User {
     website?: string;
     /**
      * 
+     * @type {{ [key: string]: any; }}
+     * @memberof User
+     */
+    address?: { [key: string]: any; };
+    /**
+     * 
      * @type {string}
      * @memberof User
      */
@@ -396,7 +384,19 @@ export interface User {
      * @type {string}
      * @memberof User
      */
+    zoneInfo?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
     phoneNumber?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof User
+     */
+    locale?: string;
 }
 
 
@@ -472,15 +472,15 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
         'mfaEnrollmentSkippedAt': !exists(json, 'mfaEnrollmentSkippedAt') ? undefined : (new Date(json['mfaEnrollmentSkippedAt'])),
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
-        'address': !exists(json, 'address') ? undefined : json['address'],
-        'locale': !exists(json, 'locale') ? undefined : json['locale'],
-        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'inactive': !exists(json, 'inactive') ? undefined : json['inactive'],
         'profile': !exists(json, 'profile') ? undefined : json['profile'],
         'website': !exists(json, 'website') ? undefined : json['website'],
+        'address': !exists(json, 'address') ? undefined : json['address'],
         'middleName': !exists(json, 'middleName') ? undefined : json['middleName'],
         'birthdate': !exists(json, 'birthdate') ? undefined : json['birthdate'],
+        'zoneInfo': !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
         'phoneNumber': !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
+        'locale': !exists(json, 'locale') ? undefined : json['locale'],
     };
 }
 
@@ -542,15 +542,15 @@ export function UserToJSON(value?: User | null): any {
         'mfaEnrollmentSkippedAt': value.mfaEnrollmentSkippedAt === undefined ? undefined : (value.mfaEnrollmentSkippedAt.toISOString()),
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),
-        'address': value.address,
-        'locale': value.locale,
-        'zoneInfo': value.zoneInfo,
         'inactive': value.inactive,
         'profile': value.profile,
         'website': value.website,
+        'address': value.address,
         'middleName': value.middleName,
         'birthdate': value.birthdate,
+        'zoneInfo': value.zoneInfo,
         'phoneNumber': value.phoneNumber,
+        'locale': value.locale,
     };
 }
 
