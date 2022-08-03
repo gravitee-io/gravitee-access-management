@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/576?closed=1[AM - 3.17.4 (2022-08-03)]
+
+=== Bug fixes
+
+*_General_*
+
+- Merge AM 3.15.11 into 3.17.x https://github.com/gravitee-io/issues/issues/8239[#8239]
+
+*_Idp_*
+
+- [saml2] handle RequestedAuthnContext `optional` https://github.com/gravitee-io/issues/issues/7997[#7997]
+
+*_Management-ui_*
+
+- [policy] Enroll MFA policy allows RecoveryCode https://github.com/gravitee-io/issues/issues/8119[#8119]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/568?closed=1[AM - 3.15.11 (2022-07-29)]
 
 === Bug fixes
