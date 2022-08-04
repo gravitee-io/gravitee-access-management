@@ -92,6 +92,7 @@ export class DomainSettingsFlowsComponent implements OnInit {
   private initPolicies() {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
+    const filteredFactors = factors.filter(f => f.factorType && f.factorType.toUpperCase() != 'RECOVERY_CODE');
     this.policies.forEach(policy => {
       let policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
@@ -100,9 +101,9 @@ export class DomainSettingsFlowsComponent implements OnInit {
             policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
             policySchema.properties[key].enum = [''];
             policySchema.properties[key]['x-schema-form'].titleMap = { '' : 'None' };
-            if (factors.length > 0) {
-              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(factors.map(f => f.id));
-              factors.forEach(obj => {
+            if (filteredFactors.length > 0) {
+              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map(f => f.id));
+              filteredFactors.forEach(obj => {
                 policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
               });
             }

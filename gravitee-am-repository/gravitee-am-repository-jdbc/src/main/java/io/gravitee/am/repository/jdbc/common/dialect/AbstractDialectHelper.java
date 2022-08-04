@@ -20,9 +20,8 @@ import io.gravitee.am.repository.jdbc.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
-import org.springframework.data.relational.core.sql.IdentifierProcessing;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.data.relational.core.sql.SqlIdentifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -138,7 +137,8 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
                     return true;
             }
         }
-        return false;
+
+        return filterName.startsWith("additional_information.") || filterName.startsWith("additionalInformation.");
     }
 
     protected final String convertFieldName(FilterCriteria criteria) {
@@ -173,7 +173,11 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
             case "emails.value":
                 return "email";
             default:
-                return filterName;
+                if (filterName.startsWith("additionalInformation.")) {
+                    return filterName.replaceFirst("additionalInformation", "additional_information");
+                } else {
+                    return filterName;
+                }
         }
     }
 

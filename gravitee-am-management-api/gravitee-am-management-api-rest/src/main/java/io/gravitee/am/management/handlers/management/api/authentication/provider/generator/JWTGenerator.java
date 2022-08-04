@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.authentication.provider.generator;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oidc.CustomClaims;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -33,12 +34,16 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class JWTGenerator implements InitializingBean {
+
+    public static final String AM_CLAIMS_ORG = "org";
+    public static final String AM_CLAIMS_LOGINS = "login_count";
 
     private final Logger LOGGER = LoggerFactory.getLogger(JWTGenerator.class);
 
@@ -47,6 +52,17 @@ public class JWTGenerator implements InitializingBean {
     private static final String DEFAULT_JWT_COOKIE_PATH = "/";
     private static final String DEFAULT_JWT_COOKIE_DOMAIN = "";
     private static final int DEFAULT_JWT_EXPIRE_AFTER = 604800;
+
+    private static final Set<String> ALLOWED_CLAIMS = Set.of(AM_CLAIMS_ORG,
+            StandardClaims.PREFERRED_USERNAME,
+            StandardClaims.FAMILY_NAME,
+            StandardClaims.GIVEN_NAME,
+            StandardClaims.NAME,
+            StandardClaims.EMAIL,
+            StandardClaims.SUB,
+            CustomClaims.ROLES,
+            AM_CLAIMS_LOGINS
+            );
 
     @Value("${jwt.secret:s3cR3t4grAv1t3310AMS1g1ingDftK3y}")
     private String signingKeySecret;
@@ -106,7 +122,11 @@ public class JWTGenerator implements InitializingBean {
             jwt.setSub(user.getId());
             jwt.setExp(expirationDate.toInstant().getEpochSecond());
             jwt.put(StandardClaims.PREFERRED_USERNAME, user.getUsername());
-            jwt.putAll(user.getAdditionalInformation());
+            user.getAdditionalInformation()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> ALLOWED_CLAIMS.contains(entry.getKey()))
+                    .forEach(entry -> jwt.put(entry.getKey(), entry.getValue()));
             return jwtBuilder.sign(jwt);
         } catch (Exception ex) {
             LOGGER.error("An error occurs while creating JWT token", ex);
