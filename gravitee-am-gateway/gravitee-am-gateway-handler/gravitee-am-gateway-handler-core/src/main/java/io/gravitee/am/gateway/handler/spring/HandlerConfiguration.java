@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl;
+import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
 import io.gravitee.am.gateway.handler.manager.domain.impl.CrossDomainManagerImpl;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
@@ -111,6 +112,11 @@ public class HandlerConfiguration {
     @Bean
     public DeviceIdentifierManager rememberDeviceManager() {
         return new DeviceIdentifierManagerImpl();
+    }
+
+    @Bean
+    public I18nDictionaryManager i18nDictionaryManager() {
+        return new I18nDictionaryManager();
     }
 
 }

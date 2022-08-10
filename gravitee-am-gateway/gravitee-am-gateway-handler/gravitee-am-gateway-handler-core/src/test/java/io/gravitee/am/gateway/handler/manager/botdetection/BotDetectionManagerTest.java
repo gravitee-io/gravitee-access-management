@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.botdetection;
+package io.gravitee.am.gateway.handler.manager.botdetection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.manager.botdetection.impl.BotDetectionManagerImpl;
