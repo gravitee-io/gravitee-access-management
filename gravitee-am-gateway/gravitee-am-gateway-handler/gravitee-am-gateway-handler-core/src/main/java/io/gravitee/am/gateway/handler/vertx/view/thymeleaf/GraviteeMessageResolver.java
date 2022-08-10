@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.gravitee.am.common.i18n.FileSystemDictionaryProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.am.model.I18nDictionary;
+import org.springframework.util.ObjectUtils;
 import org.thymeleaf.context.ITemplateContext;
 import org.thymeleaf.messageresolver.AbstractMessageResolver;
 
@@ -25,13 +25,16 @@ import java.util.Locale;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class GraviteeMessageResolver extends AbstractMessageResolver {
     private final FileSystemDictionaryProvider dictionaryProvider;
+    private final DomainBasedDictionaryProvider domainBasedDictionaryProvider;
 
     public GraviteeMessageResolver(String i18nLocation) {
         this.dictionaryProvider = new FileSystemDictionaryProvider(i18nLocation);
+        this.domainBasedDictionaryProvider = new DomainBasedDictionaryProvider();
         this.setOrder(0);
     }
 
@@ -41,6 +44,15 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
 
     @Override
     public String resolveMessage(ITemplateContext context, Class<?> origin, String key, Object[] messageParameters) {
+        // first we look into the domain custom messages
+        final String domainMessage =
+                this.domainBasedDictionaryProvider.getDictionaryFor(context.getLocale()).getProperty(key);
+
+        if (!ObjectUtils.isEmpty(domainMessage)) {
+            return domainMessage;
+        }
+
+        // fallback to the file system one
         return this.dictionaryProvider.getDictionaryFor(context.getLocale()).getProperty(key);
     }
 
@@ -48,5 +60,13 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
     public String createAbsentMessageRepresentation(ITemplateContext context, Class<?> origin, String key, Object[] messageParameters) {
         // leave this method blank to let thymeleaf generate the default form
         return null;
+    }
+
+    public void updateDictionary(I18nDictionary i18nDictionary) {
+        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
+    }
+
+    public void removeDictionary(String locale) {
+        domainBasedDictionaryProvider.removeDictionary(locale);
     }
 }

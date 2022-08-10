@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.deviceidentifiers;
+package io.gravitee.am.gateway.handler.manager.deviceidentifiers;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl;
