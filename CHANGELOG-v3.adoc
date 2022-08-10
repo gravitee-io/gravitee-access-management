@@ -1,6 +1,29 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/570?closed=1[AM - 3.18.1 (2022-08-10)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Improve metrics monitoring https://github.com/gravitee-io/issues/issues/8116[#8116]
+- Unable to initialize Extension Grant plugin https://github.com/gravitee-io/issues/issues/8144[#8144]
+
+*_General_*
+
+- Merge AM 3.17.3 https://github.com/gravitee-io/issues/issues/8151[#8151]
+- Merge AM 3.17.4 https://github.com/gravitee-io/issues/issues/8284[#8284]
+
+=== Improvements
+
+*_General_*
+
+- Merge SAML IdP 1.4.2 into 1.5.x https://github.com/gravitee-io/issues/issues/8231[#8231]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/576?closed=1[AM - 3.17.4 (2022-08-03)]
 
 === Bug fixes
