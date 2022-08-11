@@ -424,6 +424,9 @@ import { DomainSettingsDictionariesComponent } from './domain/settings/texts/dic
 import { DictionaryDialog } from './components/dialog/dictionary/dictionary-dialog.component';
 import { DictionariesResolver } from './resolvers/dictionaries.resolver';
 import { I18nDictionaryService } from './services/dictionary.service';
+import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
+import { ThemesResolver } from './resolvers/themes.resolver';
+import { ThemeService } from './services/theme.service';
 
 @NgModule({
   declarations: [
@@ -464,6 +467,7 @@ import { I18nDictionaryService } from './services/dictionary.service';
     DomainSettingsWebAuthnComponent,
     DomainSettingsFlowsComponent,
     DomainSettingsDeviceIdentifiersComponent,
+    DomainSettingsThemeComponent,
     ConfirmComponent,
     DictionaryDialog,
     EmptystateComponent,
@@ -798,6 +802,8 @@ import { I18nDictionaryService } from './services/dictionary.service';
     DeviceNotifierPluginsResolver,
     TimeConverterService,
     I18nDictionaryService,
+    ThemesResolver,
+    ThemeService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
+import {inject, TestBed} from "@angular/core/testing";
+import {ThemeService} from "./theme.service";
 
-import {DictionariesResolver} from './dictionaries.resolver';
-
-describe('DictionariesResolver', () => {
+describe('ThemeService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DictionariesResolver],
-      teardown: {destroyAfterEach: false}
-    });
+    providers: [ThemeService],
+    teardown: { destroyAfterEach: false }
+});
   });
 
-  it('should ...', inject([DictionariesResolver], (service: DictionariesResolver) => {
+  it('should ...', inject([ThemeService], (service: ThemeService) => {
     expect(service).toBeTruthy();
   }));
 });

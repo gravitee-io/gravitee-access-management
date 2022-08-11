@@ -289,7 +289,7 @@ export class ThemeApi extends runtime.BaseAPI {
 
         const response = await this.request({
             path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/themes/{themeId}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"themeId"}}`, encodeURIComponent(String(requestParameters.themeId))),
-            method: 'POST',
+            method: 'PUT',
             headers: headerParameters,
             query: queryParameters,
             body: ThemeEntityToJSON(requestParameters.theme),

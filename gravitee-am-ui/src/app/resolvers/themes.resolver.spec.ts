@@ -15,17 +15,17 @@
  */
 import {inject, TestBed} from '@angular/core/testing';
 
-import {DictionariesResolver} from './dictionaries.resolver';
+import {ThemesResolver} from "./themes.resolver";
 
-describe('DictionariesResolver', () => {
+describe('ThemesResolver', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [DictionariesResolver],
+      providers: [ThemesResolver],
       teardown: {destroyAfterEach: false}
     });
   });
 
-  it('should ...', inject([DictionariesResolver], (service: DictionariesResolver) => {
+  it('should ...', inject([ThemesResolver], (service: ThemesResolver) => {
     expect(service).toBeTruthy();
   }));
 });
