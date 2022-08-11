@@ -57,7 +57,7 @@ public class ThemeResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotGetTheme_UnkownDomain() {
+    public void shouldNotGetTheme_UnknownDomain() {
         doReturn(Maybe.empty()).when(domainService).findById(DOMAIN_ID);
 
         final Response response = target("domains")
@@ -71,7 +71,7 @@ public class ThemeResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotGetTheme_UnkownTheme() {
+    public void shouldNotGetTheme_UnknownTheme() {
         doReturn(Maybe.just(new Domain())).when(domainService).findById(DOMAIN_ID);
         doReturn(Maybe.empty()).when(themeService).getTheme(any(), eq(THEME_ID));
 
@@ -118,7 +118,7 @@ public class ThemeResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNotUpdateTheme_UnkownDomain() {
+    public void shouldNotUpdateTheme_UnknownDomain() {
         doReturn(Maybe.empty()).when(domainService).findById(DOMAIN_ID);
 
         final ThemeEntity entity = new ThemeEntity();
@@ -131,13 +131,13 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(entity));
+                .put(Entity.json(entity));
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     @Test
-    public void shouldNotUpdateTheme_UnkownTheme() {
+    public void shouldNotUpdateTheme_UnknownTheme() {
         doReturn(Maybe.just(new Domain())).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new ThemeNotFoundException(DOMAIN_ID, THEME_ID))).when(themeService).update(any(), any(), any());
 
@@ -151,7 +151,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(entity));
+                .put(Entity.json(entity));
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
@@ -168,7 +168,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(entity));
+                .put(Entity.json(entity));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -185,7 +185,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(entity));
+                .put(Entity.json(entity));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -202,7 +202,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(entity));
+                .put(Entity.json(entity));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
@@ -236,7 +236,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(updateTheme));
+                .put(Entity.json(updateTheme));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
@@ -281,7 +281,7 @@ public class ThemeResourceTest extends JerseySpringTest {
                 .path("themes")
                 .path(THEME_ID)
                 .request()
-                .post(Entity.json(updateTheme));
+                .put(Entity.json(updateTheme));
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
@@ -295,7 +295,7 @@ public class ThemeResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldNoDeletedTheme_UnkownDomain() {
+    public void shouldNoDeletedTheme_UnknownDomain() {
         doReturn(Maybe.empty()).when(domainService).findById(DOMAIN_ID);
 
         final Response response = target("domains")

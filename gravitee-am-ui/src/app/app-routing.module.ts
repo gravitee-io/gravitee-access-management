@@ -233,6 +233,8 @@ import { DeviceNotifierComponent } from './domain/settings/openid/ciba/device-no
 import { ApplicationCookieSettingsComponent } from './domain/applications/application/advanced/cookie/cookie.component';
 import {DomainSettingsDictionariesComponent} from "./domain/settings/texts/dictionaries.component";
 import {DictionariesResolver} from "./resolvers/dictionaries.resolver";
+import {DomainSettingsThemeComponent} from './domain/settings/theme/theme.component';
+import {ThemesResolver} from "./resolvers/themes.resolver";
 
 let applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1359,6 +1361,23 @@ export const routes: Routes = [
                           },
                           perms: {
                             only: ['domain_member_list']
+                          }
+                        }
+                      },
+                      {
+                        path: 'theme',
+                        component: DomainSettingsThemeComponent,
+                        canActivate: [AuthGuard],
+                        resolve: {
+                          themes: ThemesResolver
+                        },
+                        data: {
+                          menu: {
+                            label: 'Theme',
+                            section: 'Design'
+                          },
+                          perms: {
+                            only: ['domain_theme_list', 'domain_theme_read']
                           }
                         }
                       },

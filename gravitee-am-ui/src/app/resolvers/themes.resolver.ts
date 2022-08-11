@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {inject, TestBed} from '@angular/core/testing';
+import {Injectable} from '@angular/core';
+import {ActivatedRouteSnapshot, Resolve, RouterStateSnapshot} from '@angular/router';
+import {Observable} from 'rxjs';
+import {ThemeService} from '../services/theme.service';
 
-import {DictionariesResolver} from './dictionaries.resolver';
+@Injectable()
+export class ThemesResolver implements Resolve<any> {
 
-describe('DictionariesResolver', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [DictionariesResolver],
-      teardown: {destroyAfterEach: false}
-    });
-  });
+  constructor(private themeService: ThemeService) { }
 
-  it('should ...', inject([DictionariesResolver], (service: DictionariesResolver) => {
-    expect(service).toBeTruthy();
-  }));
-});
+  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+    const domainId = route.parent.data['domain'].id;
+    return this.themeService.getAll(domainId);
+  }
+}
