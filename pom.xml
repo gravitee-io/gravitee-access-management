@@ -81,7 +81,7 @@
         <vertx-auth-webauthn.version>4.1.7.1</vertx-auth-webauthn.version>
 
         <nimbus.version>8.17</nimbus.version>
-        <tink.version>1.6.1</tink.version>
+        <tink.version>1.7.0</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jsoup.version>1.14.2</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>
