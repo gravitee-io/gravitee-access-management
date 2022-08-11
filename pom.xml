@@ -24,7 +24,7 @@
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
         <version>20.0</version>
-        <relativePath></relativePath>
+        <relativePath/>
     </parent>
 
     <groupId>io.gravitee.am</groupId>
@@ -85,7 +85,7 @@
         <spring-security.version>5.5.5</spring-security.version>
         <spring-integration.version>5.5.6</spring-integration.version>
         <nimbus.version>8.17</nimbus.version>
-        <tink.version>1.6.1</tink.version>
+        <tink.version>1.7.0</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
         <jsoup.version>1.14.2</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>
