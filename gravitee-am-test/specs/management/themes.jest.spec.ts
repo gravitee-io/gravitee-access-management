@@ -26,6 +26,7 @@ import {
     updateTheme
 } from "@management-commands/theme-management-commands";
 import {getAllDictionaries} from "@management-commands/dictionary-management-commands";
+import {ResponseError} from "../../api/management/runtime";
 
 global.fetch = fetch;
 
@@ -60,17 +61,19 @@ async function testCreate() {
 
 describe("Testing themes api...", () => {
     describe("When creating many themes", () => {
-        const ids = [];
-        for (let i = 0; i < 10; i++) {
-            it('should create themes ', async () => {
-                const created = await testCreate();
-                ids.push(created.id)
-            });
-        }
+        it('must only create one theme maximum ', async () => {
+            theme = await testCreate();
+            try {
+                await testCreate();
+            } catch (e) {
+                expect(e.response.status).toEqual(400);
+            }
+        });
+
         it('should find only one theme', async () => {
             const themes = await getAllThemes(domain.id, accessToken);
             expect(themes).toHaveLength(1);
-            themes.forEach(value => expect(ids).toContain(value.id));
+            await deleteTheme(domain.id, accessToken, theme.id);
         });
     });
 
@@ -82,6 +85,7 @@ describe("Testing themes api...", () => {
             const found = await getTheme(domain.id, accessToken, theme.id);
             expect(found).toBeDefined();
             expect(found.id).toEqual(theme.id);
+            await deleteTheme(domain.id, accessToken, theme.id);
         });
     });
 
@@ -96,6 +100,7 @@ describe("Testing themes api...", () => {
             const afterUpdate = await getTheme(domain.id, accessToken, beforeUpdate.id);
             expect(afterUpdate.id).toEqual(beforeUpdate.id);
             expect(afterUpdate.primaryButtonColorHex).toEqual(updatePrimaryButtonColorHex);
+            await deleteTheme(domain.id, accessToken, theme.id);
         });
     });
 

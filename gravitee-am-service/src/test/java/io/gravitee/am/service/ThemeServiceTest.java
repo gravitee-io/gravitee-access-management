@@ -86,6 +86,7 @@ public class ThemeServiceTest {
 
         when(repository.create(any())).thenReturn(Single.just(theme));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(repository.findByReference(any(), any())).thenReturn(Maybe.empty());
 
         final Domain domain = new Domain();
         domain.setId(DOMAIN_ID_1);
@@ -102,6 +103,7 @@ public class ThemeServiceTest {
 
     @Test
     public void testCreate_Error() {
+        when(repository.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(repository.create(any())).thenReturn(Single.error(new RuntimeException()));
 
         final Domain domain = new Domain();
