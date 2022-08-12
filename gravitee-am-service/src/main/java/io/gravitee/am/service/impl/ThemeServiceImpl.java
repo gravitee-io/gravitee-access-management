@@ -27,9 +27,7 @@ import io.gravitee.am.repository.management.api.ThemeRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.exception.InvalidThemeException;
-import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.exception.ThemeNotFoundException;
+import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewTheme;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ThemeAuditBuilder;
@@ -96,29 +94,37 @@ public class ThemeServiceImpl implements ThemeService {
         theme.setCreatedAt(now);
         theme.setUpdatedAt(now);
 
-        return this.themeRepository.create(theme)
-                .flatMap(createdTheme -> {
-                    Event event = new Event(THEME, new Payload(createdTheme.getId(), createdTheme.getReferenceType(), createdTheme.getReferenceId(), Action.CREATE));
-                    return eventService
-                            .create(event)
-                            .flatMap(createdEvent -> Single.just(createdTheme));
-                })
-                .onErrorResumeNext(ex -> {
-                        String msg = "An error occurred while trying to create a theme";
-                        logger.error(msg, ex);
-                        return Single.error(new TechnicalManagementException(msg, ex));
-                })
-                .doOnSuccess(dictionary -> auditService.report(AuditBuilder
-                        .builder(ThemeAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.THEME_CREATED)
-                        .theme(theme)))
-                .doOnError(throwable -> auditService.report(AuditBuilder
-                        .builder(ThemeAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.THEME_CREATED)
-                        .theme(theme)
-                        .throwable(throwable)));
+        // currently we only support one theme per domain
+        return themeRepository.findByReference(ReferenceType.DOMAIN, domain.getId())
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (!isEmpty) {
+                        return Single.error(new ThemeAlreadyExistsException());
+                    }
+                    return this.themeRepository.create(theme)
+                            .flatMap(createdTheme -> {
+                                Event event = new Event(THEME, new Payload(createdTheme.getId(), createdTheme.getReferenceType(), createdTheme.getReferenceId(), Action.CREATE));
+                                return eventService
+                                        .create(event)
+                                        .flatMap(createdEvent -> Single.just(createdTheme));
+                            })
+                            .onErrorResumeNext(ex -> {
+                                String msg = "An error occurred while trying to create a theme";
+                                logger.error(msg, ex);
+                                return Single.error(new TechnicalManagementException(msg, ex));
+                            })
+                            .doOnSuccess(dictionary -> auditService.report(AuditBuilder
+                                    .builder(ThemeAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.THEME_CREATED)
+                                    .theme(theme)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder
+                                    .builder(ThemeAuditBuilder.class)
+                                    .principal(principal)
+                                    .type(EventType.THEME_CREATED)
+                                    .theme(theme)
+                                    .throwable(throwable)));
+                });
     }
 
     @Override
