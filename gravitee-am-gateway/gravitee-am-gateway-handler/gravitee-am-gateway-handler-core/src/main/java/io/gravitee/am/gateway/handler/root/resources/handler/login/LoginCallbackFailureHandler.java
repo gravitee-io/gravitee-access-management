@@ -56,7 +56,7 @@ import static io.gravitee.am.service.utils.ResponseTypeUtils.isImplicitFlow;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
+public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(LoginCallbackFailureHandler.class);
     private final Domain domain;
@@ -130,7 +130,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
             // redirect to the SP redirect_uri to avoid an infinite loop between AM and the external IdP
             long selectedExternalIdp = Optional.ofNullable(client.getIdentityProviders()).stream()
                     .flatMap(Collection::stream)
-                    .filter(aidp -> evaluateRule(aidp, templateEngine))
+                    .filter(aidp -> evaluateIdPSelectionRule(aidp, identityProviderManager.getIdentityProvider(aidp.getIdentity()), templateEngine))
                     .map(aidp -> identityProviderManager.getIdentityProvider(aidp.getIdentity()))
                     .filter(idp -> idp != null && idp.isExternal())
                     .count();
@@ -147,20 +147,6 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
                     .response()
                     .setStatusCode(HttpStatusCode.SERVICE_UNAVAILABLE_503)
                     .end();
-        }
-    }
-
-    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine) {
-        var rule = appIdp.getSelectionRule();
-        // We keep the same behaviour as before, if there is no rule, no automatic redirect
-        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
-            return false;
-        }
-        try {
-            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
-        } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
-            return false;
         }
     }
 
@@ -204,7 +190,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
         } else {
             query.forEach((k, v) -> template.addParameter(k, UriBuilder.encodeURIComponent(v)));
         }
-        doRedirect(context.response(), template.build().toString());
+        doRedirect(context, template.build().toString());
     }
 
     private void redirectToLoginPage(MultiMap originalParams,
@@ -219,7 +205,7 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
         params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
         params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, UriBuilder.encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage()));
         String uri = getUri(context, params);
-        doRedirect(context.response(), uri);
+        doRedirect(context, uri);
     }
 
     private String getUri(RoutingContext context, MultiMap params) {
@@ -228,12 +214,5 @@ public class LoginCallbackFailureHandler implements Handler<RoutingContext> {
         final String replacement = loginSettings != null && loginSettings.isIdentifierFirstEnabled() ? "/identifier" : "";
         final String path = context.request().path().replaceFirst("/callback", replacement);
         return UriBuilderRequest.resolveProxyRequest(context.request(), path, params);
-    }
-
-    private void doRedirect(HttpServerResponse response, String url) {
-        response
-                .putHeader(HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
     }
 }
