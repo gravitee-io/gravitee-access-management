@@ -30,19 +30,19 @@
             <div>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Hosted logo URL</mat-label>
-                <input matInput type="text" placeholder="https://" name="logoUrl" [(ngModel)]="theme.logoUrl" (ngModelChange)="onModelChange($event)" [readonly]="readonly">
+                <input matInput type="text" placeholder="https://" name="logoUrl" [(ngModel)]="theme.logoUrl" (ngModelChange)="onThemeChange($event)" [readonly]="readonly">
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Logo width (px)</mat-label>
-                <input matInput type="text" placeholder="222" name="logoWidth" [(ngModel)]="theme.logoWidth" (ngModelChange)="onModelChange($event)" [readonly]="readonly">
+                <input matInput type="text" placeholder="222" name="logoWidth" [(ngModel)]="theme.logoWidth" (ngModelChange)="onThemeChange($event)" [readonly]="readonly">
               </mat-form-field>
               <mat-form-field appearance="outline" floatLabel="always">
                 <mat-label>Hosted favicon URL</mat-label>
-                <input matInput type="text" placeholder="https://" name="faviconUrl" [(ngModel)]="theme.faviconUrl" (ngModelChange)="onModelChange($event)" [readonly]="readonly">
+                <input matInput type="text" placeholder="https://" name="faviconUrl" [(ngModel)]="theme.faviconUrl" (ngModelChange)="onThemeChange($event)" [readonly]="readonly">
               </mat-form-field>
               <h5>Theme color</h5>
               <div>
-                <mat-radio-group class="color-palette" [(ngModel)]="selectedColorPalette" (ngModelChange)="onModelChange($event)">
+                <mat-radio-group class="color-palette" [(ngModel)]="selectedColorPalette" (ngModelChange)="onThemeChange($event)">
                   <mat-radio-button *ngFor="let colorPalette of colorPalettes" [value]="colorPalette.name" [ngClass]="colorPalette.name">
                   </mat-radio-button>
                 </mat-radio-group>
@@ -55,19 +55,63 @@
                 Custom CSS
               </mat-panel-title>
             </mat-expansion-panel-header>
-            <codemirror [(ngModel)]="theme.css" [config]="config" (ngModelChange)="onModelChange($event)"></codemirror>
+            <codemirror class="custom-css" [(ngModel)]="theme.css" [config]="config" (ngModelChange)="onThemeChange($event)"></codemirror>
           </mat-expansion-panel>
         </mat-accordion>
         <div fxFlex class="theme-reset-action">
           <button mat-raised-button (click)="reset();">RESET THE THEME</button>
         </div>
       </div>
-      <div class="gv-page-container" fxFlex fxLayout="column">
-        <div class="theme-content-action">
+      <div fxFlex="75" fxLayout="column" class="gv-page-container">
+        <div class="theme-content-action" fxLayout="row" fxLayoutGap="10px">
+          <mat-form-field appearance="outline" floatLabel="always" fxFlex="25">
+            <mat-label>Page</mat-label>
+            <mat-select name="selectTemplate" [(value)]="selectedTemplate" (selectionChange)="onSelectionTemplateChange($event);">
+              <mat-option *ngFor="let form of forms" [value]="form.template">{{form.name}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-button-toggle-group name="switchMode" aria-label="Switch mode" [(ngModel)]="selectedMode">
+            <mat-button-toggle value="VIEW"><mat-icon>desktop_windows</mat-icon></mat-button-toggle>
+            <mat-button-toggle value="HTML">HTML</mat-button-toggle>
+          </mat-button-toggle-group>
           <span fxFlex></span>
           <button mat-raised-button color="primary" (click)="publish();" [disabled]="!formChanged">PUBLISH</button>
         </div>
-        <div class="gv-form-section">
+        <div class="gv-form-section" *ngIf="selectedMode === 'VIEW'">
+          <iframe *ngIf="selectedTemplateContent" style="border: none;" class="preview" #preview width="100%"></iframe>
+        </div>
+        <div *ngIf="selectedMode === 'HTML'">
+          <div class="gv-form-section">
+            <div fxLayout="column">
+              <mat-slide-toggle matTooltip="{{isFormEnabled() ? 'Disable custom page ?' : 'Enable custom page ?'}}"
+                                [matTooltipPosition]="'after'"
+                                (change)="enableForm($event)"
+                                [checked]="isFormEnabled()" [disabled]="readonly">
+                Enable custom {{selectedTemplateName}} page
+              </mat-slide-toggle>
+              <mat-hint style="font-size: 75%;">Override the default {{selectedTemplateName}} page to fit your company requirements.</mat-hint>
+            </div>
+          </div>
+          <div class="gv-form-section" [ngClass]="!isFormEnabled() ? 'disabled' : ''">
+            <mat-tab-group color="accent">
+              <mat-tab label="Html">
+                <codemirror class="preview" [(ngModel)]="selectedTemplateContent" [config]="config" (change)="onModelTemplateChange($event)"></codemirror>
+              </mat-tab>
+              <mat-tab label="Help & Tips">
+                <div style="padding: 20px;">
+                  <app-help-tips [template]="selectedTemplate"></app-help-tips>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </div>
+          <div *ngIf="formFound && canDeleteForm" class="gv-page-delete-zone" fxLayout="column">
+            <p>This operation cannot be undone.</p>
+            This template will be deleted, it will no longer be use to override default {{selectedTemplateName}} page.
+            <div fxLayout="row">
+              <span fxFlex></span>
+              <button mat-raised-button color="warn" (click)="deleteForm($event)">DELETE</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

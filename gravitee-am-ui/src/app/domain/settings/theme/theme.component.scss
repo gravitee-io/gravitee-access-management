@@ -16,6 +16,13 @@
   --deep-red-color: #C52852;
   --deep-grey-color: #252829;
 
+  .gv-form-section {
+    &.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  }
+
   .theme-sidenav-settings {
     padding-right: 20px;
     border-right: 1px solid rgba(0, 0, 0, 0.12);
@@ -41,12 +48,26 @@
 
   .theme-content-action {
     margin-bottom: 15px;
+
+    mat-button-toggle-group {
+      max-height: 42px;
+      align-items: center;
+    }
+    ::ng-deep {
+      .mat-form-field-wrapper {
+        padding-bottom: 0px;
+        margin: 0;
+      }
+    }
   }
 
   ::ng-deep {
-    .CodeMirror {
+    .custom-css .CodeMirror {
       border: 1px solid rgba(0, 0, 0, 0.12);;
       border-radius: 4px;
+    }
+    .preview .CodeMirror {
+      height: calc(100vh - 270px);
     }
 
     .mat-expansion-panel {
