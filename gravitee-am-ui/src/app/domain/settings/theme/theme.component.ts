@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {Component, OnInit} from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {SnackbarService} from '../../../services/snackbar.service';
 import {AuthService} from '../../../services/auth.service';
 import {ThemeService} from '../../../services/theme.service';
 import {DialogService} from '../../../services/dialog.service';
+import {FormService} from '../../../services/form.service';
 import * as _ from 'lodash';
+import {forkJoin, of} from 'rxjs';
 
 @Component({
   selector: 'app-theme',
@@ -50,25 +52,145 @@ export class DomainSettingsThemeComponent implements OnInit {
     { 'name': 'grey', 'primaryButtonColorHex': '#8A979E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E2E5E7', 'secondaryTextColorHex': '#000000' },
     { 'name': 'deep-grey', 'primaryButtonColorHex': '#252829', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#C8C9C9', 'secondaryTextColorHex': '#000000' }
   ];
+  forms: any[] = [
+    {
+      'name': 'Login',
+      'description': 'Login page to authenticate users',
+      'template': 'LOGIN',
+      'icon': 'account_box',
+      'enabled': true
+    },
+    {
+      'name': 'Identifier-first login',
+      'description': 'Identifier-first login page to authenticate users',
+      'template': 'IDENTIFIER_FIRST_LOGIN',
+      'icon': 'account_box',
+      'enabled': true
+    },
+    {
+      'name': 'WebAuthn Login',
+      'description': 'Passwordless page to authenticate users',
+      'template': 'WEBAUTHN_LOGIN',
+      'icon': 'fingerprint',
+      'enabled': true
+    },
+    {
+      'name': 'WebAuthn Register',
+      'description': 'Passwordless page to register authenticators (devices)',
+      'template': 'WEBAUTHN_REGISTER',
+      'icon': 'fingerprint',
+      'enabled': true
+    },
+    {
+      'name': 'Registration',
+      'description': 'Registration page to create an account',
+      'template': 'REGISTRATION',
+      'icon': 'person_add',
+      'enabled': true
+    },
+    {
+      'name': 'Registration confirmation',
+      'description': 'Register page to confirm user account',
+      'template': 'REGISTRATION_CONFIRMATION',
+      'icon': 'how_to_reg',
+      'enabled': true
+    },
+    {
+      'name': 'Forgot password',
+      'description': 'Forgot password to recover account',
+      'template': 'FORGOT_PASSWORD',
+      'icon': 'lock',
+      'enabled': true
+    },
+    {
+      'name': 'Reset password',
+      'description': 'Reset password page to make a new password',
+      'template': 'RESET_PASSWORD',
+      'icon': 'lock_open',
+      'enabled': true
+    },
+    {
+      'name': 'User consent',
+      'description': 'User consent to acknowledge and accept data access',
+      'template': 'OAUTH2_USER_CONSENT',
+      'icon': 'playlist_add_check',
+      'enabled': true
+    },
+    {
+      'name': 'MFA Enroll',
+      'description': 'Multi-factor authentication settings page',
+      'template': 'MFA_ENROLL',
+      'icon': 'rotate_right',
+      'enabled': true
+    },
+    {
+      'name': 'MFA Challenge',
+      'description': 'Multi-factor authentication verify page',
+      'template': 'MFA_CHALLENGE',
+      'icon': 'check_circle_outline',
+      'enabled': true
+    },
+    {
+      'name': 'MFA Challenge alternatives',
+      'description': 'Multi-factor authentication alternatives page',
+      'template': 'MFA_CHALLENGE_ALTERNATIVES',
+      'icon': 'swap_horiz',
+      'enabled': true
+    },
+    {
+      'name': 'Recovery Codes',
+      'description': 'Multi-factor authentication recovery code page',
+      'template': 'MFA_RECOVERY_CODE',
+      'icon': 'autorenew',
+      'enabled': true
+    },
+    {
+      'name': 'Error',
+      'description': 'Error page to display a message describing the problem',
+      'template': 'ERROR',
+      'icon': 'error_outline',
+      'enabled': true
+    }
+  ];
   selectedColorPalette: string;
-  config: any = { lineNumbers: true };
+  selectedTemplate = 'LOGIN';
+  selectedMode = 'VIEW';
+  config: any = {lineNumbers: true};
   formChanged: boolean;
+  selectedTemplateContent: string;
+  selectedTemplateName: string;
+  canDeleteForm: boolean;
+  formFound: boolean;
+  private originalTemplateContent: string;
+  private selectedForm: any;
+  private preview: ElementRef;
+
+  @ViewChild('preview') set content(content: ElementRef) {
+    if (content) { // initially setter gets called with undefined
+      this.preview = content;
+      setTimeout(() => {
+        this.refreshPreview();
+        this.resizeIframe();
+      }, 500);
+    }
+  }
 
   constructor(private snackbarService: SnackbarService,
               private router: Router,
               private route: ActivatedRoute,
               private authService: AuthService,
               private themeService: ThemeService,
-              private dialogService: DialogService) {
+              private dialogService: DialogService,
+              private formService: FormService) {
   }
 
   ngOnInit() {
     this.envId = this.route.snapshot.params['envHrid'];
     this.domain = this.route.snapshot.data['domain'];
-    this.themes =  this.route.snapshot.data['themes'] || [];
+    this.themes = this.route.snapshot.data['themes'] || [];
     this.theme = this.themes[0] || {};
     if (this.theme.id && this.theme.primaryButtonColorHex) {
-      const filteredObj = _.find(this.colorPalettes, { 'primaryButtonColorHex' : this.theme.primaryButtonColorHex });
+      const filteredObj = _.find(this.colorPalettes, {'primaryButtonColorHex': this.theme.primaryButtonColorHex});
       if (filteredObj) {
         this.selectedColorPalette = filteredObj.name;
       }
@@ -77,10 +199,55 @@ export class DomainSettingsThemeComponent implements OnInit {
       this.theme.logoWidth = null;
     }
     this.readonly = !this.authService.hasPermissions(['domain_theme_update']);
+    this.canDeleteForm = this.authService.hasPermissions(['domain_form_delete']);
+    this.loadForm();
   }
 
-  onModelChange(event) {
+  onModelTemplateChange(event) {
+    if (this.selectedTemplateContent !== this.originalTemplateContent) {
+      this.formChanged = true;
+    }
+  }
+
+  onThemeChange(event) {
     this.formChanged = true;
+  }
+
+  onSelectionTemplateChange(event) {
+    if (this.selectedTemplateContent === this.originalTemplateContent) {
+      this.loadForm();
+    } else {
+      this.dialogService
+        .confirm('Pending changes', 'Are you sure you want to undo your pending changes?')
+        .subscribe(res => {
+          if (res) {
+            this.loadForm();
+          }
+        });
+    }
+  }
+
+  isFormEnabled() {
+    return this.selectedForm && this.selectedForm.enabled;
+  }
+
+  enableForm(event) {
+    this.selectedForm.enabled = event.checked;
+    this.formChanged = true;
+  }
+
+  deleteForm(event) {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete form', 'Are you sure you want to delete this form ?')
+      .subscribe(res => {
+        if (res) {
+          this.formService.delete(this.domain.id, null, this.selectedForm.id, false).subscribe(response => {
+            this.snackbarService.open('Form deleted');
+            this.loadForm();
+          });
+        }
+      });
   }
 
   reset() {
@@ -119,10 +286,60 @@ export class DomainSettingsThemeComponent implements OnInit {
       this.themeService.create(this.domain.id, themeToPublish) :
       this.themeService.update(this.domain.id, this.theme.id, themeToPublish);
 
-    publishAction.subscribe(() => {
+
+    let formAction = of({});
+    // only save page if there is content
+    if (this.selectedTemplateContent) {
+      this.selectedForm.content = this.selectedTemplateContent;
+      formAction = (!this.selectedForm.id) ?
+        this.formService.create(this.domain.id, null, this.selectedForm, false) :
+        this.formService.update(this.domain.id, null, this.selectedForm.id, this.selectedForm, false);
+    }
+
+    forkJoin([publishAction, formAction]).subscribe(() => {
       this.snackbarService.open('Theme published');
       this.router.navigate(['.'], { relativeTo: this.route, queryParams: { 'reload': true }});
       this.formChanged = false;
+      this.loadTheme();
+      this.loadForm();
     });
+  }
+
+  private refreshPreview() {
+    if (this.selectedTemplateContent && this.preview) {
+      const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
+      if (doc) {
+        doc.open();
+        doc.write(this.selectedTemplateContent);
+        doc.close();
+      }
+    }
+  }
+
+  private resizeIframe() {
+    if (this.selectedTemplateContent && this.preview) {
+      this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 20 + 'px';
+    }
+  }
+
+  private loadForm() {
+    this.formService.get(this.domain.id, null, this.selectedTemplate).subscribe(form => {
+      this.selectedForm = form;
+      this.formFound = this.selectedForm.id !== undefined;
+      this.selectedTemplateContent = form.content;
+      this.selectedTemplateName = this.selectedTemplate.toLowerCase().replace(/_/g, ' ');
+      this.originalTemplateContent = this.selectedTemplateContent ? (' ' + this.selectedTemplateContent).slice(1) : this.selectedTemplateContent;
+      setTimeout(() => {
+        this.refreshPreview();
+        this.resizeIframe();
+      }, 500);
+    });
+  }
+
+  private loadTheme() {
+    this.themeService.getAll(this.domain.id).subscribe(themes => {
+      this.themes = themes || [];
+      this.theme = themes[0] || {};
+    })
   }
 }

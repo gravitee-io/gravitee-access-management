@@ -427,6 +427,7 @@ import { I18nDictionaryService } from './services/dictionary.service';
 import { DomainSettingsThemeComponent } from './domain/settings/theme/theme.component';
 import { ThemesResolver } from './resolvers/themes.resolver';
 import { ThemeService } from './services/theme.service';
+import {HelpTipsThemeComponent} from "./domain/settings/theme/help-tips/help-tips.component";
 
 @NgModule({
   declarations: [
@@ -669,7 +670,8 @@ import { ThemeService } from './services/theme.service';
     MfaOptionalComponent,
     MfaConditionalComponent,
     MfaIntelligentComponent,
-    AssessmentComponent
+    AssessmentComponent,
+    HelpTipsThemeComponent
   ],
   imports: [
     BrowserModule,

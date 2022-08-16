@@ -1,0 +1,591 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <h1>Write your own {{data.template}} page</h1>
+  <p>This is the minimal HTML element required to perform {{data.template}}.</p>
+  <pre *ngIf="data.rawTemplate === 'LOGIN'">
+    <![CDATA[
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login custom</title>
+</head>
+<body>
+  <form th:action="${action}" method="post">
+    <input type="text" name="username" required/>
+    <input type="password" name="password" required/>
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+    <p th:if="${error}" class="error">
+      <span>Wrong user or password</span>
+    </p>
+    <br>
+    <!-- Optional. used for user consent to use and store ip for audit logs and user activity-->
+    <label>
+        <input type="checkbox" th:checked="${uc_geoip}" id="uc_geoip" name="uc_geoip">
+        <span id="#label-consent-ip">I consent to the collection and use of IP-location information for audit log purposes
+            <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+        </span>
+    </label>
+    <br>
+    <!-- Optional. used for user consent to use and store user-agent for audit logs and user activity -->
+    <label>
+        <input type="checkbox" th:checked="${uc_ua}" id="uc_ua" name="uc_ua">
+        <span id="#label-consent-ua">I consent to the collection and use of User-Agent information for audit log purposes
+            <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+        </span>
+    </label>
+    <br>
+    <button type="submit">login</button>
+    <a th:if="${allowForgotPassword}" th:href="${forgotPasswordAction}">Forgot Password ?</a>
+    <a th:if="${allowRegister}" th:href="${registerAction}">Register</a>
+    <a th:if="${allowPasswordless}" th:href="${passwordlessAction}">Sign in with fingerprint, device or security key</a>
+  </form>
+</body>
+</html>
+    ]]>
+  </pre>
+  <pre *ngIf="data.rawTemplate === 'IDENTIFIER_FIRST_LOGIN'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Identifier-first Login custom</title>
+        </head>
+        <body>
+          <form th:action="${action}" method="post">
+            <input type="text" name="username" required/>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+            <button type="submit">Sign in</button>
+            <a th:if="${allowRegister}" th:href="${registerAction}">No account ? Register</a>
+            <a th:if="${allowPasswordless}" th:href="${passwordlessAction}">Sign in with fingerprint, device or security key</a>
+          </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'WEBAUTHN_LOGIN'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>WebAuthn login custom</title>
+        </head>
+        <body>
+          <form id="login" th:action="${action}" method="post">
+            <input type="text" name="username" required/>
+            <p id="webauthn-error" style="display: none;">
+              <span>Invalid user</span>
+            </p>
+            <br>
+            <!-- Optional. used for user consent to use and store ip for audit logs and user activity-->
+            <label>
+                <input type="checkbox" th:checked="${uc_geoip}" id="uc_geoip" name="uc_geoip">
+                <span id="#label-consent-ip">I consent to the collection and use of IP-location information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
+            <!-- Optional. used for user consent to use and store user-agent for audit logs and user activity -->
+            <label>
+                <input type="checkbox" th:checked="${uc_ua}" id="uc_ua" name="uc_ua">
+                <span id="#label-consent-ua">I consent to the collection and use of User-Agent information for audit log purposes
+                    <span th:if="${userActivityEnabled}" th:text="${'and to improve security for a duration of ' + user_activity_retention_time}"></span>
+                </span>
+            </label>
+            <br>
+            <button type="submit">login</button>
+          </form>
+          <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+          <script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'WEBAUTHN_REGISTER'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>WebAuthn register custom</title>
+        </head>
+        <body>
+          <form id="register" th:action="${action}" method="post">
+            <input type="hidden" name="username" th:value="${user.username}" required/>
+            <div>
+              <a th:href="${skipAction}">Skip for now</a>
+              <button>Register</button>
+            </div>
+          </form>
+          <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+          <script th:src="@{../assets/js/webauthn-register-v2.js}"></script>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'REGISTRATION'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+          <title>Registration</title>
+        </head>
+        <body>
+        <div>
+          <div th:if="${error == null && success == null}">
+            <div th:if="${warning}">
+              <p th:text="${warning == 'invalid_password_value'} ? 'Invalid password value. It does not comply with the password policy.' : 'An account already exists with this username.'"></p>
+            </div>
+            <form th:action="${action}" method="post">
+              <input type="text" id="firstName" name="firstName"/>
+              <input type="text" id="lastName" name="lastName"/>
+              <input type="text" id="username" name="username"/>
+              <input type="email" id="email" name="email"/>
+              <input type="password" id="password" name="password"/>
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+              <a th:href="${loginAction}"><< Back to login</a>
+              <button type="submit">Register</button>
+            </form>
+          </div>
+          <div th:if="${success}">
+            <div>
+              <label>Registration confirmation</label>
+              <p>Thanks for creating your account. Go back to your application to <a th:href="${loginAction}">login</a></p>
+            </div>
+          </div>
+          <div th:if="${error}">
+            <div>
+              <label>Registration error</label>
+              <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+            </div>
+            <div>
+                Error description : <span th:text="${error}" class="error"></span>
+            </div>
+          </div>
+        </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+          <title>Forgot password custom</title>
+        </head>
+        <body>
+        <div>
+          <div>
+            <form th:action="${action}" method="post">
+              <input type="email" id="email" name="email" required/>
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="hidden" th:name="client_id" th:value="${param.client_id}"/>
+              <button type="submit">Reset password</button>
+            </form>
+          </div>
+          <div th:if="${success}">
+            <div>
+              <label>Forgot password confirmation</label>
+              <p>An email has been sent asking to reset your password.</p>
+            </div>
+          </div>
+          <div th:if="${error}">
+            <div>
+              <label>Forgot password error</label>
+              <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+            </div>
+            <div>
+                Error description : <span th:text="${error}" class="error"></span>
+            </div>
+          </div>
+        </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <p *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
+      <b>NOTE:</b> When forgot password succeeded, the token present into the URL is used to populate user profile into the template engine. If the token is invalid or has expired, the user profile will be missing from the template engine context, so pay attention to test if user is null before accessing its attributes.
+      Here after, you can find a snippet of HTML to adapt the message to inform the user on whoch address email the message has been sent.
+    </p>
+  <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
+      <![CDATA[
+
+          <div th:if="${success}" class="forgot-password-form">
+            <div>
+                <label>Forgot password confirmation</label>
+                <p th:if="${user != null && user.email != null}">An email has been sent to <b th:text="${user.email}"></b> asking to reset your password.</p>
+                <p th:if="${user == null || user.email == null}">An email has been sent asking to reset your password.</p>
+            </div>
+        </div>
+
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'RESET_PASSWORD'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+          <title>Reset password custom</title>
+        </head>
+        <body>
+        <div>
+          <div th:if="${error == null && success == null}">
+            <div>
+              <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
+              <p>Please enter a new password for your account.</p>
+            </div>
+             <div th:if="${warning}">
+                <p>Invalid password value. It does not comply with the password policy.</p>
+            </div>
+            <form th:action="${action}" method="post">
+              <input type="password" id="password" name="password" required/>
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="hidden" name="token" id="token" th:value="${token}"/>
+              <button type="submit">Reset password</button>
+            </form>
+           </div>
+          <div th:if="${success}">
+            <label>Reset password confirmation</label>
+            <p>Your password has been changed. Go back to your application to login</p>
+          </div>
+          <div th:if="${error}">
+            <div>
+              <label>Reset password error</label>
+              <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+            </div>
+            <div>
+              Error description : <span th:text="${error}" class="error"></span>
+            </div>
+          </div>
+        </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'REGISTRATION_CONFIRMATION'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+          <title>Registration confirmation custom</title>
+        </head>
+        <body>
+        <div>
+          <div th:if="${error == null && success == null}">
+            <div>
+              <label>Hi <span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></label>
+              <p>Thanks for signing up, please complete the form to activate your account</p>
+            </div>
+            <div th:if="${warning}">
+                <p>Invalid password value. It does not comply with the password policy.</p>
+            </div>
+            <form th:action="${action}" method="post">
+              <input type="password" id="password" name="password" required/>
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <input type="hidden" name="token" id="token" th:value="${token}"/>
+              <button type="submit">Confirm registration</button>
+            </form>
+          </div>
+          <div th:if="${success}">
+            <label>Account confirmation</label>
+            <p>Thanks for confirming your account. Go back to your application to login</p>
+          </div>
+          <div th:if="${error}">
+              <div>
+                <label>Account confirmation error</label>
+                <p>Please go back to your client application and try again, or contact the owner and ask for support</p>
+              </div>
+              <div>
+                Error description : <span th:text="${error}" class="error"></span>
+              </div>
+          </div>
+        </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'OAUTH2_USER_CONSENT'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+          <title>User consent</title>
+        </head>
+        <body>
+        <div>
+          <div>
+            <div>
+                <h3><span th:text="${client.clientName}"></span> is requesting permissions to access your account</h3>
+            </div>
+            <div>
+              <form role="form" th:action="${action}" method="post">
+                <div>
+                  <h3>Review permissions</h3>
+                  <div th:each="scope : ${scopes}">
+                    <span th:text="(${scope.name}) ? ${scope.name} : ${scope.key}"></span> (<span th:text="${scope.key}"></span>)
+                    <p th:text="${scope.description}"></p>
+                    <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
+                  </div>
+                </div>
+
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="access-confirmation-form-actions">
+                  <button type="submit" name="user_oauth_approval" value="true">Authorize</button>
+                  <button type="submit" name="user_oauth_approval" value="false">Deny</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'ERROR'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>Error</title>
+        </head>
+        <body>
+            <div>
+                <div>
+                    <div>
+                        <h1>Access error</h1>
+                        <p>Please go back to your client application and try again, or
+                            contact the owner and ask for support</p>
+                    </div>
+                    <div th:if="${error}">
+                        <span th:text="${error}"></span>
+                        <span th:if="${error_description}" th:text="${error_description}"></span>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'MFA_ENROLL'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Enroll</title>
+        </head>
+        <body>
+            <form role="form" th:action="${action}" method="post" th:each="factor : ${factors}">
+                <div th:if="${factor.factorType == 'TOTP'}" >
+                    <div>
+                        <ul>
+                            <li>
+                                <span>1. Download a mobile app</span>
+                                <span>Download and install a two-factor authenticator application like <i>FreeOTP</i> or <i>Google Authenticator</i>.</span>
+                            </li>
+                            <li>
+                                <span>2. Configure the app</span>
+                                <span>Open the application and scan the barcode. A one-time password code will be displayed to the screen.</span>
+                            </li>
+                            <li>
+                                <span>3. Finish set up</span>
+                                <span>Go to the next step and enter the code provided by the application.</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <img th:src="${factor.enrollment.barcode}" width="200" />
+                    </div>
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" th:name="sharedSecret" th:value="${factor.enrollment.key}" />
+                </div>
+                <div th:if="${factor.factorType == 'SMS'}" class="mfa-enroll-form-description">
+                  <div>
+                      <ul class="mdl-list">
+                          <li class="mdl-list__item mdl-list__item--three-line">
+                              <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons mdl-list__item-avatar">phone_enabled</i>
+                                  <span th:if="${phoneNumber != null}">1. Confirm your phone number </span>
+                                  <span th:if="${phoneNumber == null}">1. Enter your phone number </span>
+                                <!-- Phone value must follow the E.164 format -->
+                                  <input id="phone" type="tel" name="phone"  th:value="${phoneNumber}">
+                              </span>
+                          </li>
+                          <li class="mdl-list__item mdl-list__item--three-line">
+                              <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons  mdl-list__item-avatar">rotate_right</i>
+                                  <span>2. Finish set up</span>
+                                  <span class="mdl-list__item-text-body">
+                                      Go to the next step and enter the code provided by SMS.
+                                  </span>
+                              </span>
+                          </li>
+                      </ul>
+                  </div>
+              </div>
+                <div th:if="${factor.factorType == 'FIDO2'}" class="mfa-enroll-form-description">
+                  <div>
+                      <ul class="mdl-list">
+                          <li class="mdl-list__item mdl-list__item--three-line">
+                              <span class="mdl-list__item-primary-content">
+                                  <i class="material-icons mdl-list__item-avatar">fingerprint</i>
+                                  <span>Select 'Next' button to trigger registration process</span>
+                              </span>
+                          </li>
+                      </ul>
+                  </div>
+              </div>
+                <input type="hidden" th:name="factorId" th:value="${factor.id}" />
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <button type="submit" name="user_mfa_enrollment" value="false">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="true">Next</button>
+                </div>
+            </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Challenge</title>
+        </head>
+        <body>
+            <form id="form" role="form" th:action="${action}" method="post">
+                <div th:if="${factor.factorType.type != 'FIDO2'}">
+                    <ul>
+                        <li>
+                            <span>
+                                <span>Enter code</span>
+                                <span>Please type in the code displayed on your multi-factor authenticator app from your device.</span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+              <div th:if="${factor.factorType.type == 'FIDO2'}">
+                    <ul>
+                        <li>
+                            <span>
+                                <span>Sign in with fingerprint, device or security key.</span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+                <div th:if="${factor.factorType.type != 'FIDO2'}">
+                    <input type="text" id="code" name="code" placeholder="Code" required/>
+                    <label for="code">Code</label>
+                </div>
+
+                <div th:if="${error}">
+                    <span>
+                        <span>mfa_challenge_failed</span>
+                         <small>Invalid code</small>
+                    </span>
+                </div>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input id="factorId" type="hidden" th:name="factorId" th:value="${factor.id}"/>
+                <input th:if="${factor.factorType.type == 'FIDO2'}" type="hidden" id="webAuthnLoginPath" th:value="${webAuthnLoginPath}"/>
+                <input th:if="${factor.factorType.type == 'FIDO2'}" type="hidden" id="userName" th:value="${userName}"/>
+
+                <button type="submit" id="verify">Verify</button>
+            </form>
+        <script th:if="${factor.factorType.type == 'FIDO2'}" th:src="@{../assets/js/webauthn-fido2-login.js}"></script>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'MFA_CHALLENGE_ALTERNATIVES'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Challenge alternatives</title>
+        </head>
+        <body>
+            <form role="form" th:action="${action}" method="post">
+                <ul>
+                    <li th:each="factor : ${factors}">
+                        <!-- TOTP FACTOR -->
+                        <span th:if="${factor.factorType == 'TOTP'}">
+                            <span>Mobile app</span>
+                            <span>Use a verification code displayed on your multi-factor authenticator app from your device.</span>
+                        </span>
+                      <!-- SMS FACTOR -->
+                        <span th:if="${factor.factorType == 'SMS'}">
+                            <span>SMS</span>
+                            <span>Text <b th:text="${factor.target}"></b>.</span>
+                        </span>
+                      <!-- EMAIL FACTOR -->
+                        <span th:if="${factor.factorType == 'EMAIL'}">
+                            <span>Email</span>
+                            <span>Send an email to <b th:text="${factor.target}"></b>.</span>
+                        </span>
+                        <span>
+                          <label th:for="'list-factor-' + ${factor.id}">
+                            <input type="radio" th:id="'list-factor-' + ${factor.id}" th:name="factorId" th:value="${factor.id}" />
+                          </label>
+                        </span>
+                    </li>
+                </ul>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div>
+                    <button type="submit">Next</button>
+                </div>
+            </form>
+        </body>
+        </html>
+      ]]>
+    </pre>
+  <pre *ngIf="data.rawTemplate === 'MFA_RECOVERY_CODE'">
+      <![CDATA[
+        <!DOCTYPE html>
+        <html lang="en" xmlns:th="http://www.thymeleaf.org">
+        <head>
+            <title>MFA Recovery</title>
+        </head>
+        <body>
+        <div class="mdl-layout mdl-js-layout">
+              <div>
+                  <label>Recovery Codes</label>
+              </div>
+              <div >
+                  <ul>
+                      <li th:each="recoveryCode : ${recoveryCodes}" th:text="${recoveryCode}">
+                      </li>
+                  </ul>
+              </div>
+              <div>
+                <form role="form" th:id="confirmationForm" th:action="${returnURL}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" id="continue" value="true"
+                            class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                        Continue
+                    </button>
+                </form>
+              </div>
+          </div>
+        </body>
+        </html>
+      ]]>
+    </pre>
+</div>

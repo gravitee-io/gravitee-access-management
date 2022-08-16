@@ -1377,42 +1377,9 @@ export const routes: Routes = [
                             section: 'Design'
                           },
                           perms: {
-                            only: ['domain_theme_list', 'domain_theme_read']
+                            only: ['domain_theme_list', 'domain_theme_read', 'domain_form_list', 'domain_form_read']
                           }
                         }
-                      },
-                      {
-                        path: 'forms',
-                        canActivate: [AuthGuard],
-                        data: {
-                          menu: {
-                            label: 'Forms',
-                            section: 'Design'
-                          },
-                          perms: {
-                            only: ['domain_form_list', 'domain_form_read']
-                          }
-                        },
-                        children: [
-                          {
-                            path: '',
-                            pathMatch: 'full',
-                            component: DomainSettingsFormsComponent,
-                          },
-                          {
-                            path: 'form',
-                            component: DomainSettingsFormComponent,
-                            resolve: {
-                              form: FormResolver
-                            },
-                            data: {
-                              breadcrumb: {
-                                label: "form.template",
-                                applyOnLabel: applyOnLabel
-                              }
-                            }
-                          },
-                        ]
                       },
                       {
                         path: 'texts',
