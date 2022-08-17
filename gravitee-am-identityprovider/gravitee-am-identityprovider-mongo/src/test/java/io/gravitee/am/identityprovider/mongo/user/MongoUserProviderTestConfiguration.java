@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.mongo.user;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
@@ -25,7 +24,6 @@ import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.authentication.EmbeddedClient;
-import io.gravitee.am.identityprovider.mongo.authentication.MongoAuthenticationProvider;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.reactivex.Observable;
 import org.bson.Document;
@@ -66,9 +64,7 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         configuration.setFindUserByUsernameQuery("{username: ?}");
         configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         configuration.setPasswordField("password");
-        configuration.setPasswordSaltAttribute("password-salt");
-        configuration.setUseDedicatedSalt(true);
-        configuration.setPasswordEncoder(PasswordEncoder.SHA);
+        configuration.setPasswordEncoder(PasswordEncoder.NONE);
 
         return configuration;
     }
