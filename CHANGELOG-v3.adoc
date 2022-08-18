@@ -1,6 +1,23 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/581?closed=1[AM - 3.18.2 (2022-08-18)]
+
+=== Bug fixes
+
+*_Management-ui_*
+
+- White domain list description is wrong https://github.com/gravitee-io/issues/issues/8311[#8311]
+
+=== Improvements
+
+*_Gateway_*
+
+- Inject identity provider in the SPEL context during selection rule process https://github.com/gravitee-io/issues/issues/8312[#8312]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/570?closed=1[AM - 3.18.1 (2022-08-10)]
 
 === Bug fixes
