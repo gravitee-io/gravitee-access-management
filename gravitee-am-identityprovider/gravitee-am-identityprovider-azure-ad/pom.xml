@@ -25,7 +25,7 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>3.18.2-SNAPSHOT</version>
+        <version>3.18.2</version>
     </parent>
 
     <artifactId>gravitee-am-identityprovider-azure-ad</artifactId>
