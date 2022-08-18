@@ -18,15 +18,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Form;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewForm;
-import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.Maybe;
 import io.swagger.annotations.*;
@@ -41,9 +38,6 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-
-import static io.gravitee.am.management.service.permissions.Permissions.of;
-import static io.gravitee.am.management.service.permissions.Permissions.or;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -78,10 +72,12 @@ public class FormsResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_FORM, Acl.READ)
-                .andThen(formService.findByDomainAndTemplate(domain, formTemplate.template()))
-                .map(form -> Response.ok(form).build())
-                .defaultIfEmpty(Response.ok(new Form(false, formTemplate.template())).build())
-                .subscribe(response::resume, response::resume);
+                .andThen(
+                        formService.findByDomainAndTemplate(domain, formTemplate.template())
+                                .switchIfEmpty(formService.getDefaultByDomainAndTemplate(domain, formTemplate.template()))
+                                .map(form -> Response.ok(form).build())
+
+                ).subscribe(response::resume, response::resume);
     }
 
     @POST

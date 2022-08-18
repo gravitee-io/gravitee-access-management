@@ -50,6 +50,8 @@ public interface FormService {
 
     Maybe<Form> findByDomainAndTemplate(String domain, String template);
 
+    Single<Form> getDefaultByDomainAndTemplate(String domain, String template);
+
     Maybe<Form> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template);
 
     Maybe<Form> findByDomainAndClientAndTemplate(String domain, String client, String template);

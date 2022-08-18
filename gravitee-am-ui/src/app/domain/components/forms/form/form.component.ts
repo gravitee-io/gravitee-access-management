@@ -66,10 +66,13 @@ export class FormComponent implements OnInit, AfterViewInit {
     }
 
     this.form = this.route.snapshot.data['form'];
+
+    if (this.form && this.form.id) {
+      this.formFound = true;
+    }
     if (this.form && this.form.content) {
       this.formContent = this.form.content;
       this.originalFormContent = (' ' + this.formContent).slice(1);
-      this.formFound = true;
     } else {
       this.form = {};
       this.form.template = this.rawTemplate
@@ -100,7 +103,7 @@ export class FormComponent implements OnInit, AfterViewInit {
   }
 
   refreshPreview() {
-    let doc =  this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
+    const doc =  this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
     doc.open();
     doc.write(this.formContent);
     doc.close();

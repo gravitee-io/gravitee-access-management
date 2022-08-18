@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Access confirmation</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <label>Permissions requested</label>
+        </div>
+        <div class="header-description">
+            <span><span class="deep-blue" th:text="${client.clientName}"></span> would like to</span>
+        </div>
+    </div>
+    <div class="section">
+        <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
+            <div class="item" th:each="scope : ${scopes}">
+                <div>
+                    <span th:text="(${scope.name})
+                    ? ${scope.name} + ' (' + ${scope.key} + ')'
+                    : ${scope.key} + ' (' + ${scope.key} + ')'"></span>
+                </div>
+                <div>
+                    <span class="grey" th:text="${scope.description}"></span>
+                </div>
+                <input type="hidden" th:name="'scope.'+${scope.key}" value="true"/>
+            </div>
+
+            <span class="disclaimer" th:text="${client.clientName} + ' will be able to use your data in accordance to their terms of service and privacy policies.'"></span>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div>
+                <button type="submit" name="user_oauth_approval" value="true" class="button primary">Accept</button>
+            </div>
+            <div>
+                <button type="submit" name="user_oauth_approval" value="false" class="button secondary" >Cancel</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<!-- Javascript -->
+
+<!--[if lt IE 10]>
+<script th:src="@{assets/js/placeholder.js}"></script>
+<![endif]-->
+<script th:src="@{assets/material/material.min.js}"></script>
+</body>
+</html>
