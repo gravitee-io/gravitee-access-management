@@ -19,20 +19,19 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.Template;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewForm;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-
-import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -45,23 +44,34 @@ import static org.mockito.Mockito.doReturn;
  * @author GraviteeSource Team
  */
 public class FormsResourceTest extends JerseySpringTest {
+    private final String DOMAIN_ID = "domain-1";
+    private Domain mockDomain;
+
+    @Before
+    public void setUp() {
+        mockDomain= new Domain();
+        mockDomain.setId(DOMAIN_ID);
+    }
 
     @Test
-    public void shouldGetForm() throws IOException {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
+    public void shouldGetForm() {
         final Form mockForm = new Form();
         mockForm.setId("form-1-id");
         mockForm.setTemplate(Template.LOGIN.template());
         mockForm.setReferenceType(ReferenceType.DOMAIN);
-        mockForm.setReferenceId(domainId);
+        mockForm.setReferenceId(DOMAIN_ID);
 
-        doReturn(Maybe.just(mockForm)).when(formService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
+        final Form defaultMockForm = new Form();
+        defaultMockForm.setId("default-form-1-id");
+        defaultMockForm.setTemplate(Template.LOGIN.template());
+        defaultMockForm.setReferenceType(ReferenceType.DOMAIN);
+        defaultMockForm.setReferenceId(DOMAIN_ID);
+
+        doReturn(Maybe.just(mockForm)).when(formService).findByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
+        doReturn(Single.just(defaultMockForm)).when(formService).getDefaultByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
 
         final Response response = target("domains")
-                .path(domainId).path("forms")
+                .path(DOMAIN_ID).path("forms")
                 .queryParam("template", Template.LOGIN)
                 .request()
                 .get();
@@ -72,12 +82,33 @@ public class FormsResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldGetForms_technicalManagementException() {
-        final String domainId = "domain-1";
-        doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(formService).findByDomainAndTemplate(domainId, Template.LOGIN.template());
+    public void shouldGetDefaultForm() {
+        final Form defaultMockForm = new Form();
+        defaultMockForm.setId("default-form-1-id");
+        defaultMockForm.setTemplate(Template.LOGIN.template());
+        defaultMockForm.setReferenceType(ReferenceType.DOMAIN);
+        defaultMockForm.setReferenceId(DOMAIN_ID);
+
+        doReturn(Maybe.empty()).when(formService).findByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
+        doReturn(Single.just(defaultMockForm)).when(formService).getDefaultByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
 
         final Response response = target("domains")
-                .path(domainId).path("forms")
+                .path(DOMAIN_ID).path("forms")
+                .queryParam("template", Template.LOGIN)
+                .request()
+                .get();
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+
+        final Form responseEntity = readEntity(response, Form.class);
+        assertTrue(responseEntity.getId().equals("default-form-1-id"));
+    }
+
+    @Test
+    public void shouldGetForms_technicalManagementException() {
+        doReturn(Maybe.error(new TechnicalManagementException("error occurs"))).when(formService).findByDomainAndTemplate(DOMAIN_ID, Template.LOGIN.template());
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID).path("forms")
                 .queryParam("template", Template.LOGIN)
                 .request()
                 .get();
@@ -87,19 +118,15 @@ public class FormsResourceTest extends JerseySpringTest {
     @Test
     @Ignore
     public void shouldCreate() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
         NewForm newForm = new NewForm();
         newForm.setTemplate(Template.LOGIN);
         newForm.setContent("content");
 
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Form())).when(formService).create(eq(domainId), any(), any(User.class));
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
+        doReturn(Single.just(new Form())).when(formService).create(eq(DOMAIN_ID), any(), any(User.class));
 
         final Response response = target("domains")
-                .path(domainId)
+                .path(DOMAIN_ID)
                 .path("forms")
                 .request().post(Entity.json(newForm));
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());

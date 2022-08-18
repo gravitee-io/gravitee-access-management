@@ -21,6 +21,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.FormRepository;
 import io.gravitee.am.service.exception.FormAlreadyExistsException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.FormServiceImpl;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -152,5 +153,20 @@ public class FormServiceTest {
 
         obs.awaitTerminalEvent();
         obs.assertError(TechnicalException.class);
+    }
+
+    @Test
+    public void shouldGetDefaultByDomainAndTemplate_Form() {
+        TestObserver<Form> obs = formService.getDefaultByDomainAndTemplate("test", "valid").test();
+        obs.awaitTerminalEvent();
+        obs.assertComplete();
+        obs.assertValue(form -> form.getContent().contains("test content"));
+    }
+
+    @Test
+    public void shouldGetDefaultByDomainAndTemplate_TechnicalManagementException() {
+        TestObserver<Form> obs = formService.getDefaultByDomainAndTemplate("test", "invalid").test();
+        obs.awaitTerminalEvent();
+        obs.assertError(TechnicalManagementException.class);
     }
 }
