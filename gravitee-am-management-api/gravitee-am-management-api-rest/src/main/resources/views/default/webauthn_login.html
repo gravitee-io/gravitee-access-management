@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WebAuthn Login</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" th:href="@{../assets/css/main.css}">
+
+    <!-- Favicon and touch icons -->
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{../assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
+        <div class="title">
+            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+        </div>
+        <div class="header-description">
+            <span>Using fingerprint, device or security key</span>
+        </div>
+    </div>
+    <div class="section">
+        <form class="form" role="form" id="login" method="post" th:action="${action}">
+            <div>
+                <input class="input-field" type="text" id="username" name="username"
+                       th:placeholder="#{login.page.label.username}"
+                       th:value="${param.username}" autofocus="autofocus" required
+                       th:readonly="${param.username != null}"
+                />
+            </div>
+
+            <div class="disclaimer">
+                <span>Follow the instruction in the security window popup</span>
+            </div>
+
+            <div id="webauthn-error" class="item error-text hide">
+                <span>
+                    <span class="error">login_failed</span>
+                    <small class="error_description">Invalid user</small>
+                </span>
+            </div>
+
+            <div>
+                <button class="button primary">Next</button>
+            </div>
+        </form>
+    </div>
+    <div class="section">
+        <a th:href="${loginAction}"><span class="icons">arrow_back</span><span>Back to sign in</span></a>
+    </div>
+</div>
+
+<script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
+<script th:src="@{../assets/js/webauthn-login-v2.js}"></script>
+<script th:if="${rememberDeviceIsActive}" th:src="@{../assets/js/jquery-3.5.1.min.js}"></script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3-pro.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Pro'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3Pro("[[${fingerprint_js_v3_pro_browser_token}]]", "[[${fingerprint_js_v3_pro_region}]]", fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+        });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{../assets/js/remember-device/fingerprintjs-v3.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
+    $(document).ready(function () {
+        loadFingerprintJsV3(fp => {
+            if (fp.visitorId) {
+                $("#login")
+                    .append('<input type="hidden" id="deviceId" name="deviceId" value="' + fp.visitorId + '"/>')
+            }
+            if (fp.components && fp.components.platform && fp.components.platform.value) {
+                $("#login").append('<input type="hidden" id="deviceType" name="deviceType" value="' + fp.components.platform.value + '"/>');
+            }
+        });
+    });
+</script>
+</body>
+</html>

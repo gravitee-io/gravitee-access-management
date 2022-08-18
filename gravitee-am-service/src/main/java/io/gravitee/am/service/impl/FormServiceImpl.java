@@ -37,6 +37,7 @@ import io.gravitee.am.service.model.NewForm;
 import io.gravitee.am.service.model.UpdateForm;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.FormTemplateAuditBuilder;
+import io.micrometer.core.instrument.util.IOUtils;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -47,8 +48,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
+
+import static java.nio.charset.Charset.defaultCharset;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -295,6 +299,23 @@ public class FormServiceImpl implements FormService {
     public Completable delete(String domain, String formId, User principal) {
 
         return delete(ReferenceType.DOMAIN, domain, formId, principal);
+    }
+
+    @Override
+    public Single<Form> getDefaultByDomainAndTemplate(String domain, String template) {
+        LOGGER.debug("Default form by domain {} and template {}", domain, template);
+
+        return Single.create(emitter -> {
+            final String path = "views/default/" + template + ".html";
+            final InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(path);
+            final String content = IOUtils.toString(resourceAsStream, defaultCharset());
+            if (content.isBlank()) {
+                throw new TechnicalManagementException("An error has occurred while trying to load default form");
+            }
+            final Form form = new Form(false, template);
+            form.setContent(content);
+            emitter.onSuccess(form);
+        });
     }
 
     private Single<Boolean> checkFormUniqueness(ReferenceType referenceType, String referenceId, String client, String formTemplate) {
