@@ -1,6 +1,11 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/584?closed=1[AM - 3.18.3 (2022-08-19)]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/583?closed=1[AM - 3.15.12 (2022-08-19)]
 
 === Bug fixes
