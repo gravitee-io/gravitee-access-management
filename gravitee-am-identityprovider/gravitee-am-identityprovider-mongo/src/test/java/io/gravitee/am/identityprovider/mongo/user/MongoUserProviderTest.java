@@ -31,7 +31,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -94,6 +93,81 @@ public class MongoUserProviderTest {
         testObserver.assertValue(u -> assertUserMatch(user, u));
     }
 
+    @Test
+    public void shouldUpdateUser() {
+        DefaultUser user = createUserBean();
+        User createdUser = userProvider.create(user).blockingGet();
+
+        assertUserMatch(user, createdUser);
+
+        DefaultUser userToUpdate = (DefaultUser) createdUser;
+        userToUpdate.setLastName("LUPDATE");
+        userToUpdate.setFirstName("FUPDATE");
+        userToUpdate.setEmail("update@acme.fr");
+        userToUpdate.setCredentials("toto");
+        userToUpdate.getAdditionalInformation().put("email", userToUpdate.getEmail());
+        userToUpdate.getAdditionalInformation().put("given_name", userToUpdate.getFirstName());
+        userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
+
+        final TestObserver<User> observer = userProvider.update(createdUser.getId(), userToUpdate).test();
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(u -> assertUserMatch(userToUpdate, u));
+        observer.assertValue(u -> u.getCredentials().equals(userToUpdate.getCredentials()));
+    }
+
+    /*
+    * The existing user credential is null in case of pre-registration feature.
+    * User set the password upon receiving email invitation.
+    * This test is written specifically for github issue: 8321
+    * */
+    @Test
+    public void shouldUpdateUser_Without_Credential() {
+        DefaultUser user = createUserBean();
+        user.setCredentials(null);
+        User createdUser = userProvider.create(user).blockingGet();
+
+        assertUserMatch(user, createdUser);
+
+        DefaultUser userToUpdate = (DefaultUser) createdUser;
+        userToUpdate.setLastName("LUPDATE");
+        userToUpdate.setFirstName("FUPDATE");
+        userToUpdate.setEmail("update@acme.fr");
+        userToUpdate.setCredentials("toto");
+        userToUpdate.getAdditionalInformation().put("email", userToUpdate.getEmail());
+        userToUpdate.getAdditionalInformation().put("given_name", userToUpdate.getFirstName());
+        userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
+
+        final TestObserver<User> observer = userProvider.update(createdUser.getId(), userToUpdate).test();
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(u -> assertUserMatch(userToUpdate, u));
+        observer.assertValue(u -> u.getCredentials().equals(userToUpdate.getCredentials()));
+    }
+
+    @Test
+    public void shouldUpdatePassword_NothingExceptedPassword_isUpdated() {
+        DefaultUser user = createUserBean();
+        User createdUser = userProvider.create(user).blockingGet();
+
+        assertUserMatch(user, createdUser);
+
+        DefaultUser userToUpdate = (DefaultUser) createdUser;
+        userToUpdate.setLastName("LUPDATE");
+        userToUpdate.setFirstName("FUPDATE");
+        userToUpdate.setEmail("update@acme.fr");
+        userToUpdate.setCredentials("toto");
+        userToUpdate.getAdditionalInformation().put("email", userToUpdate.getEmail());
+        userToUpdate.getAdditionalInformation().put("given_name", userToUpdate.getFirstName());
+        userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
+
+        final TestObserver<User> observer = userProvider.updatePassword(userToUpdate, "something").test();
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(u -> assertUserMatch(user, u));
+        observer.assertValue(u -> u.getCredentials().equals("something"));
+    }
+
     private boolean assertUserMatch(DefaultUser expectedUser, User testableUser) {
         Assert.assertTrue(expectedUser.getUsername().equals(testableUser.getUsername()));
         Assert.assertTrue(expectedUser.getEmail().equals(testableUser.getEmail()));
@@ -120,49 +194,4 @@ public class MongoUserProviderTest {
         );
         return user;
     }
-
-    @Test
-    public void shouldUpdateUser() {
-        DefaultUser user = createUserBean();
-        User createdUser = userProvider.create(user).blockingGet();
-
-        assertUserMatch(user, createdUser);
-
-        DefaultUser userToUpdate = (DefaultUser) createdUser;
-        userToUpdate.setLastName("LUPDATE");
-        userToUpdate.setFirstName("FUPDATE");
-        userToUpdate.setEmail("update@acme.fr");
-        userToUpdate.setCredentials("toto");
-        userToUpdate.getAdditionalInformation().put("email", userToUpdate.getEmail());
-        userToUpdate.getAdditionalInformation().put("given_name", userToUpdate.getFirstName());
-        userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
-
-        final TestObserver<User> observer = userProvider.update(createdUser.getId(), userToUpdate).test();
-        observer.awaitTerminalEvent();
-        observer.assertNoErrors();
-        observer.assertValue(u -> assertUserMatch(userToUpdate, u));
-    }
-
-    @Test
-    public void shouldUpdatePassword_NothingExceptedPassord_isUpdated() {
-        DefaultUser user = createUserBean();
-        User createdUser = userProvider.create(user).blockingGet();
-
-        assertUserMatch(user, createdUser);
-
-        DefaultUser userToUpdate = (DefaultUser) createdUser;
-        userToUpdate.setLastName("LUPDATE");
-        userToUpdate.setFirstName("FUPDATE");
-        userToUpdate.setEmail("update@acme.fr");
-        userToUpdate.setCredentials("toto");
-        userToUpdate.getAdditionalInformation().put("email", userToUpdate.getEmail());
-        userToUpdate.getAdditionalInformation().put("given_name", userToUpdate.getFirstName());
-        userToUpdate.getAdditionalInformation().put("family_name", userToUpdate.getLastName());
-
-        final TestObserver<User> observer = userProvider.updatePassword(userToUpdate, "something").test();
-        observer.awaitTerminalEvent();
-        observer.assertNoErrors();
-        observer.assertValue(u -> assertUserMatch(user, u));
-    }
-
 }
