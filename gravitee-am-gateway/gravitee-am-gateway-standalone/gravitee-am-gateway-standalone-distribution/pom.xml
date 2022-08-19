@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
-        <version>3.18.3-SNAPSHOT</version>
+        <version>3.18.3</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-distribution</artifactId>
