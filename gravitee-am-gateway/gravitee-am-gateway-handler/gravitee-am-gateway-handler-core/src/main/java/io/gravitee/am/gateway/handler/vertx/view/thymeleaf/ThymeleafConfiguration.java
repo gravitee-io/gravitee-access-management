@@ -40,9 +40,11 @@ public class ThymeleafConfiguration {
     private String templatesDirectory;
 
     @Bean
-    public ThymeleafTemplateEngine getTemplateEngine(GraviteeMessageResolver messageResolver) {
-        ThymeleafTemplateEngine thymeleafTemplateEngine = ThymeleafTemplateEngine.create(vertx);
-        TemplateEngine templateEngine = thymeleafTemplateEngine.getDelegate().getThymeleafTemplateEngine();
+    public ThymeleafTemplateEngine getTemplateEngine(GraviteeMessageResolver messageResolver,
+                                                     DomainBasedThemeResolver themeResolver) {
+        GraviteeThymeleafTemplateEngine thymeleafTemplateEngine = new GraviteeThymeleafTemplateEngine(vertx);
+        thymeleafTemplateEngine.setThemeResolver(themeResolver);
+        TemplateEngine templateEngine = thymeleafTemplateEngine.unwrap();
 
         // set template resolvers
         DomainBasedTemplateResolver overrideTemplateResolver = (DomainBasedTemplateResolver) overrideTemplateResolver();
@@ -63,6 +65,12 @@ public class ThymeleafConfiguration {
         return new DomainBasedTemplateResolver();
 
     }
+
+    @Bean
+    public DomainBasedThemeResolver themeResolver() {
+        return new DomainBasedThemeResolver();
+    }
+
     private ITemplateResolver defaultTemplateResolver() {
         ClassLoaderTemplateResolver templateResolver = new CustomClassLoaderTemplateResolver();
         templateResolver.setPrefix("/webroot/views/");

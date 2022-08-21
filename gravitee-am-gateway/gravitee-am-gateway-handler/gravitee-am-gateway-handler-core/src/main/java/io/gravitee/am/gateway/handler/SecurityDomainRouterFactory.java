@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
+import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
@@ -116,6 +117,7 @@ public class SecurityDomainRouterFactory {
         components.add(DeviceIdentifierManager.class);
         components.add(AuthenticationDeviceNotifierManager.class);
         components.add(I18nDictionaryManager.class);
+        components.add(ThemeManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

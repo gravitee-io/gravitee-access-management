@@ -33,22 +33,22 @@ export class DomainSettingsThemeComponent implements OnInit {
   themes: any[];
   theme: any;
   colorPalettes: any[] = [
-    { 'name': 'light-blue', 'primaryButtonColorHex': '#2AA7E3', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CAE9F8' },
-    { 'name': 'blue', 'primaryButtonColorHex': '#3F71F4', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CFDCFC' },
-    { 'name': 'deep-purple', 'primaryButtonColorHex': '#6A4FF7', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#DAD3FD' },
-    { 'name': 'purple', 'primaryButtonColorHex': '#9346E9', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#E4D1FA' },
-    { 'name': 'light-purple', 'primaryButtonColorHex': '#CC63D6', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F2D8F5' },
-    { 'name': 'deep-pink', 'primaryButtonColorHex': '#D8549A', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F5D4E6' },
-    { 'name': 'pink', 'primaryButtonColorHex': '#FE8AA8', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FFE2E9' },
-    { 'name': 'deep-red', 'primaryButtonColorHex': '#C52852', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#F1C9D4' },
-    { 'name': 'deep-orange', 'primaryButtonColorHex': '#D94C3E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F6D2CF' },
-    { 'name': 'orange', 'primaryButtonColorHex': '#EA9345', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FAE4D0' },
-    { 'name': 'yellow', 'primaryButtonColorHex': '#EED052', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FBF3D4' },
-    { 'name': 'light-green', 'primaryButtonColorHex': '#9FC929', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E7F2C9' },
-    { 'name': 'green', 'primaryButtonColorHex': '#7FCF79', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#DFF3DE' },
-    { 'name': 'teal', 'primaryButtonColorHex': '#66C2AC', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#D9F0EA' },
-    { 'name': 'grey', 'primaryButtonColorHex': '#8A979E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E2E5E7' },
-    { 'name': 'deep-grey', 'primaryButtonColorHex': '#252829', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#C8C9C9' }
+    { 'name': 'light-blue', 'primaryButtonColorHex': '#2AA7E3', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CAE9F8', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'blue', 'primaryButtonColorHex': '#3F71F4', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#CFDCFC', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'deep-purple', 'primaryButtonColorHex': '#6A4FF7', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#DAD3FD', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'purple', 'primaryButtonColorHex': '#9346E9', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#E4D1FA', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'light-purple', 'primaryButtonColorHex': '#CC63D6', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F2D8F5', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'deep-pink', 'primaryButtonColorHex': '#D8549A', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F5D4E6', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'pink', 'primaryButtonColorHex': '#FE8AA8', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FFE2E9', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'deep-red', 'primaryButtonColorHex': '#C52852', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#F1C9D4', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'deep-orange', 'primaryButtonColorHex': '#D94C3E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#F6D2CF', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'orange', 'primaryButtonColorHex': '#EA9345', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FAE4D0', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'yellow', 'primaryButtonColorHex': '#EED052', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#FBF3D4', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'light-green', 'primaryButtonColorHex': '#9FC929', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E7F2C9', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'green', 'primaryButtonColorHex': '#7FCF79', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#DFF3DE', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'teal', 'primaryButtonColorHex': '#66C2AC', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#D9F0EA', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'grey', 'primaryButtonColorHex': '#8A979E', 'primaryTextColorHex': '#000000', 'secondaryButtonColorHex': '#E2E5E7', 'secondaryTextColorHex': '#000000' },
+    { 'name': 'deep-grey', 'primaryButtonColorHex': '#252829', 'primaryTextColorHex': '#FFFFFF', 'secondaryButtonColorHex': '#C8C9C9', 'secondaryTextColorHex': '#000000' }
   ];
   selectedColorPalette: string;
   config: any = { lineNumbers: true };
@@ -112,6 +112,7 @@ export class DomainSettingsThemeComponent implements OnInit {
         themeToPublish.primaryButtonColorHex = filteredObj.primaryButtonColorHex;
         themeToPublish.secondaryButtonColorHex = filteredObj.secondaryButtonColorHex;
         themeToPublish.primaryTextColorHex = filteredObj.primaryTextColorHex;
+        themeToPublish.secondaryTextColorHex = filteredObj.secondaryTextColorHex;
       }
     }
     const publishAction = (!this.theme.id) ?

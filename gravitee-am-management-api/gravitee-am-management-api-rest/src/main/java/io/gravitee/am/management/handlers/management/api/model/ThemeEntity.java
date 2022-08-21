@@ -34,6 +34,7 @@ public class ThemeEntity {
     private String primaryButtonColorHex;
     private String secondaryButtonColorHex;
     private String primaryTextColorHex;
+    private String secondaryTextColorHex;
     private String css;
     private Date createdAt;
     private Date updatedAt;
@@ -52,7 +53,7 @@ public class ThemeEntity {
         this.primaryTextColorHex = theme.getPrimaryTextColorHex();
         this.primaryButtonColorHex = theme.getPrimaryButtonColorHex();
         this.secondaryButtonColorHex = theme.getSecondaryButtonColorHex();
-
+        this.secondaryTextColorHex = theme.getSecondaryTextColorHex();
         this.createdAt = theme.getCreatedAt();
         this.updatedAt = theme.getUpdatedAt();
     }
@@ -129,6 +130,14 @@ public class ThemeEntity {
         this.primaryTextColorHex = primaryTextColorHex;
     }
 
+    public String getSecondaryTextColorHex() {
+        return secondaryTextColorHex;
+    }
+
+    public void setSecondaryTextColorHex(String secondaryTextColorHex) {
+        this.secondaryTextColorHex = secondaryTextColorHex;
+    }
+
     public String getCss() {
         return css;
     }
@@ -165,6 +174,7 @@ public class ThemeEntity {
         theme.setPrimaryTextColorHex(this.primaryTextColorHex);
         theme.setPrimaryButtonColorHex(this.primaryButtonColorHex);
         theme.setSecondaryButtonColorHex(this.secondaryButtonColorHex);
+        theme.setSecondaryTextColorHex(this.secondaryTextColorHex);
 
         theme.setCreatedAt(this.createdAt);
         theme.setUpdatedAt(this.updatedAt);

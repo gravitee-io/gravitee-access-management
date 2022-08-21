@@ -31,6 +31,7 @@ public class Theme {
     private String primaryButtonColorHex;
     private String secondaryButtonColorHex;
     private String primaryTextColorHex;
+    private String secondaryTextColorHex;
     private String css;
     private Date createdAt;
     private Date updatedAt;
@@ -105,6 +106,14 @@ public class Theme {
 
     public void setPrimaryTextColorHex(String primaryTextColorHex) {
         this.primaryTextColorHex = primaryTextColorHex;
+    }
+
+    public String getSecondaryTextColorHex() {
+        return secondaryTextColorHex;
+    }
+
+    public void setSecondaryTextColorHex(String secondaryTextColorHex) {
+        this.secondaryTextColorHex = secondaryTextColorHex;
     }
 
     public String getCss() {

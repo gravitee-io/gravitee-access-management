@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.gateway.handler.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.resource.impl.ResourceManagerImpl;
+import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.spring.RootConfiguration;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.WebAuthnFactory;
 import io.gravitee.am.gateway.handler.vertx.auth.webauthn.store.RepositoryCredentialStore;
@@ -117,6 +118,11 @@ public class HandlerConfiguration {
     @Bean
     public I18nDictionaryManager i18nDictionaryManager() {
         return new I18nDictionaryManager();
+    }
+
+    @Bean
+    public ThemeManager themeManager() {
+        return new ThemeManager();
     }
 
 }
