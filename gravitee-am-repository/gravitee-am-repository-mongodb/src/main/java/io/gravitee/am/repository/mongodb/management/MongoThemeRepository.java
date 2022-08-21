@@ -100,6 +100,7 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
         theme.setPrimaryTextColorHex(themeMongo.getPrimaryTextColorHex());
         theme.setPrimaryButtonColorHex(themeMongo.getPrimaryButtonColorHex());
         theme.setSecondaryButtonColorHex(themeMongo.getSecondaryButtonColorHex());
+        theme.setSecondaryTextColorHex(themeMongo.getSecondaryTextColorHex());
 
         return theme;
     }
@@ -122,6 +123,7 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
         themeMongo.setPrimaryTextColorHex(theme.getPrimaryTextColorHex());
         themeMongo.setPrimaryButtonColorHex(theme.getPrimaryButtonColorHex());
         themeMongo.setSecondaryButtonColorHex(theme.getSecondaryButtonColorHex());
+        themeMongo.setSecondaryTextColorHex(theme.getSecondaryTextColorHex());
 
         return themeMongo;
     }

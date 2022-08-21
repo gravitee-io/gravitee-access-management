@@ -55,12 +55,11 @@ body, body * {
 }
 
 :root {
-    --top-borderColor: #6A4FF7;
+    --primary-background-color: #6A4FF7;
+    --primary-foreground-color: #FFFFFF;
+    --secondary-background-color: #DAD3FD;
+    --secondary-foreground-color: #000000;
     --logo-width: 222px;
-    --submit-backgroundColor: #6A4FF7;
-    --submit-textColor: #FFFFFF;
-    --submit-light-backgroundColor: #DAD3FD;
-    --submit-light-textColor: #25213A;
 }
 
 .container {
@@ -76,7 +75,7 @@ body, body * {
     background: #FFFFFF;
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 4px;
-    border-top: 5px solid var(--top-borderColor);
+    border-top: 5px solid var(--primary-background-color);
 }
 
 .header {
@@ -88,7 +87,6 @@ body, body * {
     gap: 32px;
     height: 231px;
     flex: none;
-    order: 0;
     align-self: stretch;
     flex-grow: 0;
 }
@@ -118,7 +116,6 @@ body, body * {
     width: var(--logo-width);
     height: auto;
     flex: none;
-    order: 0;
     flex-grow: 0;
 }
 
@@ -138,7 +135,6 @@ body, body * {
     line-height: 24px;
     color: #A5A5A9;
     flex: none;
-    order: 2;
     flex-grow: 0;
 
     width: 440px;
@@ -157,7 +153,6 @@ body, body * {
     border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 8px;
     flex: none;
-    order: 0;
     flex-grow: 0;
 }
 
@@ -201,7 +196,6 @@ div.short-section > input + input {
     background: #6A4FF7;
     border-radius: 8px;
     flex: none;
-    order: 3;
     align-self: stretch;
     flex-grow: 0;
     font-weight: 700;
@@ -212,7 +206,6 @@ div.short-section > input + input {
 }
 
 .error-text {
-    order: 0;
     background: #FFFFFF;
     border: 2px solid rgba(202, 71, 71, 0.2);
     border-radius: 8px;
@@ -266,13 +259,13 @@ div.short-section > input + input {
 }
 
 .submit-button {
-    color: var(--submit-textColor);
-    background: var(--submit-backgroundColor);
+    color: var(--primary-foreground-color);
+    background: var(--primary-background-color);
 }
 
 .submit-button-light {
-    color: var(--submit-light-textColor);
-    background: var(--submit-light-backgroundColor);
+    color: var(--secondary-foreground-color);
+    background: var(--secondary-background-color);
 }
 
 .submit-button-light:hover {
@@ -282,13 +275,11 @@ div.short-section > input + input {
 .disabled-button {
     color: #7C7C7C;
     background: #DFDFDF;
-    order: 3;
 }
 
 .social {
-    background: rgba(106, 79, 247, 0.25);
-    order: 4;
-    color: #25213A;
+    background: var(--secondary-background-color);
+    color: var(--secondary-foreground-color);
     padding: 0;
     align-self: auto;
 }
@@ -305,7 +296,6 @@ div.short-section > input + input {
     text-decoration-line: underline;
     color: #22233B;
     flex: none;
-    order: 0;
     flex-grow: 0;
 }
 
@@ -337,7 +327,6 @@ a {
 
 button.button.submit-button:hover:enabled {
     cursor: pointer;
-    background: rgba(106, 79, 247, 0.8);
 }
 
 a.left-arrow:hover, a.download:hover {
@@ -413,7 +402,6 @@ div#passwordSettings > P {
     width: 408px;
     height: 68px;
     flex: none;
-    order: 0;
     align-self: stretch;
     flex-grow: 0;
 }
@@ -434,7 +422,6 @@ div#passwordSettings > P {
     width: 372px;
     height: 48px;
     flex: none;
-    order: 1;
     flex-grow: 1;
 }
 
@@ -543,7 +530,6 @@ div#passwordSettings > P {
     border: 1px solid #B8B8BC;
     border-radius: 2px;
     flex: none;
-    order: 0;
     flex-grow: 0;
 }
 

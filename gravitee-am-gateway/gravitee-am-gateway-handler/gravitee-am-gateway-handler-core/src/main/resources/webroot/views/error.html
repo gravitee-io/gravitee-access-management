@@ -9,8 +9,12 @@
     <link rel="stylesheet" th:href="@{assets/material/material.blue_grey-blue.min.css}">
     <link rel="stylesheet" th:href="@{assets/css/access_error.css}">
 
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
+
     <!-- Favicon and touch icons -->
-    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
 </head>
 
 <body>

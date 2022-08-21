@@ -45,6 +45,8 @@ public class JdbcTheme {
     private String secondaryButtonColorHex;
     @Column("primary_text_color")
     private String primaryTextColorHex;
+    @Column("secondary_text_color")
+    private String secondaryTextColorHex;
     private String css;
     @Column("created_at")
     private LocalDateTime createdAt;
@@ -121,6 +123,14 @@ public class JdbcTheme {
 
     public void setPrimaryTextColorHex(String primaryTextColorHex) {
         this.primaryTextColorHex = primaryTextColorHex;
+    }
+
+    public String getSecondaryTextColorHex() {
+        return secondaryTextColorHex;
+    }
+
+    public void setSecondaryTextColorHex(String secondaryTextColorHex) {
+        this.secondaryTextColorHex = secondaryTextColorHex;
     }
 
     public String getCss() {

@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.manager.dictionary.I18nDictionaryManager;
 import io.gravitee.am.gateway.handler.manager.domain.CrossDomainManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
+import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
@@ -171,6 +172,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(CertificateManager.class);
         components.add(DeviceIdentifierManager.class);
         components.add(I18nDictionaryManager.class);
+        components.add(ThemeManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);

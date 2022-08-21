@@ -11,16 +11,20 @@
     <link rel="stylesheet" th:href="@{assets/css/main.css}">
 
     <!-- Favicon and touch icons -->
-    <link rel="shortcut icon" th:href="@{assets/ico/favicon.ico}">
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{assets/ico/favicon.ico}">
 
-    <script th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}" th:src="${'https://www.google.com/recaptcha/api.js?render=' + bot_detection_configuration.siteKey}"></script>
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
 
+    <script th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"
+            th:src="${'https://www.google.com/recaptcha/api.js?render=' + bot_detection_configuration.siteKey}"></script>
 </head>
 
 <body>
 <div class="container" th:if="${error == null && success == null}">
     <div class="header">
-        <img class="logo" th:src="@{assets/images/gravitee-logo.svg}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
             <span th:text="'Register to' + ' ' + ${client.name}"></span>
         </div>
@@ -81,7 +85,7 @@
 
 <div class="container" th:if="${success}">
     <div class="header">
-        <img class="logo" th:src="@{assets/images/gravitee-logo.svg}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
             <span >Registered successfully</span>
         </div>
@@ -98,7 +102,7 @@
 
 <div class="container" th:if="${error}">
     <div class="header">
-        <img class="logo" th:src="@{assets/images/gravitee-logo.svg}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
             <span>Registration failed</span>
         </div>

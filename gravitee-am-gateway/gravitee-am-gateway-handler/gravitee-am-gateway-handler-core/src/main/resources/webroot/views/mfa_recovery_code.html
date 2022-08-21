@@ -9,12 +9,16 @@
     <link rel="stylesheet" th:href="@{../assets/css/main.css}">
 
     <!-- Favicon and touch icons -->
-    <link rel="shortcut icon" th:href="@{../assets/ico/favicon.ico}">
+    <link rel="shortcut icon" th:href="${theme.faviconUrl} ?: @{../assets/ico/favicon.ico}">
+
+    <!-- Custom CSS -->
+    <style th:if="${theme.css}" th:text="${theme.css}"></style>
+    <style th:if="${theme.customCss}" th:text="${theme.customCss}"></style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <img class="logo" th:src="@{../assets/images/gravitee-logo.svg}">
+        <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
             <span id="enrollment-title">Recovery codes</span>
         </div>
