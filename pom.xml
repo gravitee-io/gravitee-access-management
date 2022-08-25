@@ -83,7 +83,7 @@
         <nimbus.version>8.17</nimbus.version>
         <tink.version>1.6.1</tink.version>
         <freemarker.version>2.3.31</freemarker.version>
-        <jsoup.version>1.14.2</jsoup.version>
+        <jsoup.version>1.15.3</jsoup.version>
         <snakeyaml.version>1.26</snakeyaml.version>
         <mail.version>1.4.7</mail.version>
         <mongodb-driver-reactivestreams.version>4.2.3</mongodb-driver-reactivestreams.version>
