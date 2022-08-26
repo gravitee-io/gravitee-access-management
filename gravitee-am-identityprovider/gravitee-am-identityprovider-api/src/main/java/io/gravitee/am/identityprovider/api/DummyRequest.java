@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.identityprovider.api;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -23,6 +22,7 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.http2.HttpFrame;
 import io.gravitee.gateway.api.stream.ReadStream;
 import io.gravitee.gateway.api.ws.WebSocket;
@@ -156,6 +156,16 @@ public class DummyRequest implements Request {
 
     @Override
     public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
+        return null;
+    }
+
+    @Override
+    public Request closeHandler(Handler<Void> handler) {
+        return null;
+    }
+
+    @Override
+    public String host() {
         return null;
     }
 
