@@ -53,7 +53,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}" />
 
             <div>
-                <button id="submitBtn" class="button submit-button">Sign in</button>
+                <button id="submitBtn" class="button primary">Sign in</button>
             </div>
         </form>
     </div>
@@ -93,10 +93,10 @@
         function toggleSubmit() {
             if (userNameInput.val() === '') {
                 submitBtn.prop('disabled', true);
-                submitBtn.addClass("disabled-button")
+                submitBtn.addClass("button-disabled")
             } else {
                 submitBtn.prop('disabled', false);
-                submitBtn.removeClass("disabled-button")
+                submitBtn.removeClass("button-disabled")
             }
         }
 

@@ -31,30 +31,34 @@
     </div>
     <div class="section">
         <form role="form" class="form" th:action="${action}" method="post">
-            <div>
+            <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password" placeholder="Password" required/>
-                <span toggle="#password" class="eye eye-close toggle-password"></span>
+                <button type="button" class="icon-button icon-input-field toggle-password">
+                    <span class="icons primary">visibility_off</span>
+                </button>
             </div>
-            <div>
+            <div class="form-field">
                 <input class="input-field" type="password" id="confirm-password" name="confirm-password" placeholder="Confirm password" required/>
-                <span toggle="#confirm-password" class="eye eye-close toggle-password"></span>
+                <button type="button" class="icon-button icon-input-field toggle-password">
+                    <span class="icons primary">visibility_off</span>
+                </button>
+            </div>
 
-                <div th:if="${passwordSettings != null}" id="passwordSettings">
-                    <span
-                            th:if="${passwordSettings.minLength != null || passwordSettings.includeNumbers || passwordSettings.includeSpecialCharacters
-                            || passwordSettings.lettersInMixedCase || passwordSettings.maxConsecutiveLetters != null ||
-                            passwordSettings.excludePasswordsInDictionary || passwordSettings.excludeUserProfileInfoInPassword}"
-                            class="small-font grey">Password policy:</span>
+            <div th:if="${passwordSettings != null}" id="passwordSettings">
+                <span
+                        th:if="${passwordSettings.minLength != null || passwordSettings.includeNumbers || passwordSettings.includeSpecialCharacters
+                        || passwordSettings.lettersInMixedCase || passwordSettings.maxConsecutiveLetters != null ||
+                        passwordSettings.excludePasswordsInDictionary || passwordSettings.excludeUserProfileInfoInPassword}"
+                        class="small-font grey">Password policy:</span>
 
-                    <p th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid">Contains at least <span th:text="${passwordSettings.minLength}"/> characters</p>
-                    <p th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid">Contains a number</p>
-                    <p th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid">Contains a special character</p>
-                    <p th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid">Contains letters in mixed case</p>
-                    <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid">Max <span
-                            th:text="${passwordSettings.maxConsecutiveLetters}"/> consecutive letters or numbers</p>
-                    <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="advice">Don't use common names or passwords</p>
-                    <p th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="invalid">Don't use your profile information in password</p>
-                </div>
+                <p th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid">Contains at least <span th:text="${passwordSettings.minLength}"/> characters</p>
+                <p th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid">Contains a number</p>
+                <p th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid">Contains a special character</p>
+                <p th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid">Contains letters in mixed case</p>
+                <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid">Max <span
+                        th:text="${passwordSettings.maxConsecutiveLetters}"/> consecutive letters or numbers</p>
+                <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="advice">Don't use common names or passwords</p>
+                <p th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="invalid">Don't use your profile information in password</p>
             </div>
 
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -67,7 +71,7 @@
             </div>
 
             <div>
-                <button type="submit" id="submitBtn" class="button submit-button">Confirm registration</button>
+                <button type="submit" id="submitBtn" class="button primary">Confirm registration</button>
             </div>
         </form>
     </div>
@@ -111,15 +115,16 @@
 
     $(function () {
         $(".toggle-password").on("click", function () {
-            $(this).toggleClass("eye-open eye-close");
-            const input = $($(this).attr("toggle"));
+            const icon = $(this).find(".icons").first();
+            const input = $(this).parent().find("input").first();
+            icon.text() === "visibility" ? icon.text("visibility_off") : icon.text("visibility");
             input.attr("type") === "password" ? input.attr("type", "text") : input.attr("type", "password");
         });
     });
 
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.classList.add("disabled-button");
+        submitBtn.classList.add("button-disabled");
     }
 
     const passwordSettings = /*[[${passwordSettings}]]*/ null;

@@ -39,19 +39,14 @@
                 </span>
             </div>
             <div>
-                <button class="button submit-button">Next</button>
+                <button class="button primary">Next</button>
             </div>
         </form>
     </div>
-    <div class="section">
-        <span class="small-font black">
-            <a th:if="${enrollingFido2Factor == null}" th:href="${skipAction}">Skip this step
-            <img class="right-arrow"  th:src="@{../assets/images/arrow-right.svg}">
-            </a>
-        </span>
+
+    <div th:if="${enrollingFido2Factor == null}" class="section">
+        <a th:href="${skipAction}"><span>Skip this step</span><span class="icons">arrow_forward</span></a>
     </div>
-
-
 </div>
 <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>
 <script th:src="@{../assets/js/webauthn-register-v2.js}"></script>

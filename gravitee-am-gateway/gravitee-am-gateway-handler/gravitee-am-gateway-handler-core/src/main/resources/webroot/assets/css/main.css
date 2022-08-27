@@ -50,16 +50,125 @@
     url('../font-roboto/roboto-v30-latin-900.svg#Roboto') format('svg');
 }
 
-body, body * {
-    font-family: 'Roboto', sans-serif;
+@font-face {
+    font-family: 'Material Icons Outlined';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Material Icons Outlined'),
+    local('MaterialIconsOutlined-Regular'),
+    url('../fonts/MaterialIconsOutlined-Regular.woff2') format('woff2'),
+    url('../fonts/MaterialIconsOutlined-Regular.otf') format('truetype');
 }
 
 :root {
+    --grey: #A5A5A9;
+    --deep-blue: #25213A;
+    --black: #000000;
+    --white: #FFFFFF;
+    --font-light-color: var(--grey);
+    --font-dark-color: #100C27;
     --primary-background-color: #6A4FF7;
     --primary-foreground-color: #FFFFFF;
     --secondary-background-color: #DAD3FD;
     --secondary-foreground-color: #000000;
+    --disabled-background-color: #DFDFDF;
+    --disabled-foreground-color: #7C7C7C;
     --logo-width: 222px;
+    --input-background-color: var(--white);
+    --input-text-color: var(--black);
+    --input-border-color: rgba(0, 0, 0, 0.12);
+    --input-border-radius: 8px;
+    --input-border-width: 1px;
+    --input-padding: 8px;
+    --input-height: 48px;
+    --container-background-color: var(--white);
+    --container-border-color: rgba(0, 0, 0, 0.12);
+    --container-border-radius: 4px;
+    --container-border-width: 1px;
+    --container-border-top-width: 5px;
+    --container-border-top-color: var(--primary-background-color);
+    --icon-primary-color: var(--primary-background-color);
+    --title-text-color: var(--deep-blue);
+    --header-description-text-color: var(--font-light-color);
+    --item-background-color: #F1F1F1;
+    --item-border-radius: 8px;
+    --button-background-color: var(--white);
+    --button-text-color: var(--black);
+    --button-border-radius: 8px;
+    --button-primary-background-color: var(--primary-background-color);
+    --button-primary-text-color: var(--primary-foreground-color);
+    --button-secondary-background-color: var(--secondary-background-color);
+    --button-secondary-text-color: var(--secondary-foreground-color);
+    --button-social-background-color: var(--secondary-background-color);
+    --button-social-text-color: var(--secondary-foreground-color);
+    --button-disabled-background-color: var(--disabled-background-color);
+    --button-disabled-text-color: var(--disabled-foreground-color);
+    --error-text-background: var(--white);
+    --error-text-border-width: 2px;
+    --error-text-border-color: rgba(202, 71, 71, 0.2);
+    --error-text-border-radius: 8px;
+    --error-text-color: #CA4747;
+    --link-text-color: #22233B;
+    --radio-card-background-color: var(--white);
+    --radio-card-border-width: 1px;
+    --radio-card-border-color: rgba(0, 0, 0, 0.26);
+    --radio-card-border-radius: 4px;
+    --radio-card-active-border-color: var(--primary-background-color);
+    --radio-card-active-text-color: var(--primary-background-color);
+    --otp-container-border-width: 1px;
+    --otp-container-border-color: rgba(0, 0, 0, 0.12);
+    --otp-container-border-radius: 8px;
+    --checkbox-input-background-color: var(--white);
+    --checkbox-input-border-width: 1px;
+    --checkbox-input-border-color: #B8B8BC;
+    --checkbox-input-border-radius: 2px;
+}
+
+body, body * {
+    font-family: 'Roboto', sans-serif;
+}
+
+.icons {
+    font-family: 'Material Icons Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;  /* Preferred icon size */
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+
+    /* Support for all WebKit browsers. */
+    -webkit-font-smoothing: antialiased;
+
+    /* Support for Safari and Chrome. */
+    text-rendering: optimizeLegibility;
+
+    /* Support for Firefox. */
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Support for IE. */
+    font-feature-settings: 'liga';
+}
+
+.icons.primary {
+    color: var(--icon-primary-color);
+}
+
+.icon-input-field {
+    float: right;
+    margin: -35px 10px 0;
+    position: relative;
+    z-index: 2;
+}
+
+.icon-button {
+    border: none;
+    background: none;
+    cursor: pointer;
 }
 
 .container {
@@ -72,10 +181,10 @@ body, body * {
     margin: auto;
     width: 600px;
     top: 100px;
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 4px;
-    border-top: 5px solid var(--primary-background-color);
+    background: var(--container-background-color);
+    border: var(--container-border-width) solid var(--container-border-color);
+    border-radius: var(--container-border-radius);
+    border-top: var(--container-border-top-width) solid var(--container-border-top-color);
 }
 
 .header {
@@ -124,7 +233,7 @@ body, body * {
     font-size: 32px;
     line-height: 16px;
     text-align: center;
-    color: #25213A;
+    color: var(--title-text-color);
     flex: none;
     flex-grow: 0;
 }
@@ -133,10 +242,9 @@ body, body * {
     font-weight: 500;
     font-size: 16px;
     line-height: 24px;
-    color: #A5A5A9;
+    color: var(--header-description-text-color);
     flex: none;
     flex-grow: 0;
-
     width: 440px;
     text-align: center;
 }
@@ -146,14 +254,13 @@ body, body * {
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 8px;
+    padding: var(--input-padding);
     width: 440px;
-    height: 48px;
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 8px;
-    flex: none;
-    flex-grow: 0;
+    height: var(--input-height);
+    color: var(--input-text-color);
+    background: var(--input-background-color);
+    border: var(--input-border-width) solid var(--input-border-color);
+    border-radius: var(--input-border-radius);
 }
 
 .short {
@@ -176,8 +283,8 @@ div.short-section > input + input {
     gap: 8px;
     width: 440px;
     height: 60px;
-    background: #F1F1F1;
-    border-radius: 8px;
+    background: var(--item-background-color);
+    border-radius: var(--item-border-radius);
     flex: none;
     flex-grow: 0;
     font-weight: 500;
@@ -193,26 +300,50 @@ div.short-section > input + input {
     padding: 8px;
     width: 440px;
     height: 40px;
-    background: #6A4FF7;
-    border-radius: 8px;
+    background: var(--button-background-color);
+    border-radius: var(--button-border-radius);
     flex: none;
     align-self: stretch;
     flex-grow: 0;
     font-weight: 700;
     font-size: 16px;
     line-height: 22px;
-    color: #FFFFFF;
+    color: var(--button-text-color);
     border-width: 0;
+    cursor: pointer;
+}
+
+.button.primary {
+    color: var(--button-primary-text-color);
+    background: var(--button-primary-background-color);
+}
+
+.button.secondary {
+    color: var(--button-secondary-text-color);
+    background: var(--button-secondary-background-color);
+}
+
+.button.social {
+    color: var(--button-social-text-color);
+    background: var(--button-social-background-color);
+    padding: 0;
+    align-self: auto;
+}
+
+.button.button-disabled {
+    color: var(--button-disabled-text-color);
+    background: var(--button-disabled-background-color);
+    cursor: default;
 }
 
 .error-text {
-    background: #FFFFFF;
-    border: 2px solid rgba(202, 71, 71, 0.2);
-    border-radius: 8px;
+    background: var(--error-text-background);
+    border: var(--error-text-border-width) solid var(--error-text-border-color);
+    border-radius: var(--error-text-border-radius);
     font-weight: 500;
     line-height: 24px;
     text-align: center;
-    color: #CA4747;
+    color: var(--error-text-color);
     flex-grow: 1;
     padding: 0;
 }
@@ -234,23 +365,19 @@ div.short-section > input + input {
 }
 
 .red {
-    color: #CA4747;
+    color: var(--error-text-color);
 }
 
 .grey {
-    color: #A5A5A9;
+    color: var(--grey);
 }
 
 .deep-blue {
-    color: #25213A;
+    color: var(--deep-blue);
 }
 
 .black {
-    color: #000000;
-}
-
-.purple {
-    color: #6C59BD;
+    color: var(--black);
 }
 
 .regular {
@@ -258,107 +385,27 @@ div.short-section > input + input {
     display: inline-block;
 }
 
-.submit-button {
-    color: var(--primary-foreground-color);
-    background: var(--primary-background-color);
-}
-
-.submit-button-light {
-    color: var(--secondary-foreground-color);
-    background: var(--secondary-background-color);
-}
-
-.submit-button-light:hover {
-    cursor: pointer;
-}
-
-.disabled-button {
-    color: #7C7C7C;
-    background: #DFDFDF;
-}
-
-.social {
-    background: var(--secondary-background-color);
-    color: var(--secondary-foreground-color);
-    padding: 0;
-    align-self: auto;
-}
-
 .description {
     padding-top: 8px;
 }
 
-.forgot-password {
-    height: 16px;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    text-decoration-line: underline;
-    color: #22233B;
-    flex: none;
-    flex-grow: 0;
-}
-
-.eye {
-    float: right;
-    margin-top: -32px;
-    padding-right: 5px;
-    position: relative;
-    z-index: 2;
-    height: 25px;
-    width: 29px;
-}
-
-.eye-close {
-    background: url(../images/eye-close.svg) no-repeat;
-}
-
-.eye-open {
-    background: url(../images/eye-open.svg) no-repeat;
-}
-
-a:visited {
-    color: #22233B;
-}
-
 a {
-    color: #22233B;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--link-text-color);
 }
 
-button.button.submit-button:hover:enabled {
-    cursor: pointer;
+a > span {
+    vertical-align: middle;
 }
 
-a.left-arrow:hover, a.download:hover {
-    cursor: pointer;
-}
-
-div#passwordSettings > P {
+div#passwordSettings > p {
     margin-top: 2px;
     margin-bottom: 0;
     font-weight: 500;
     font-size: 12px;
     line-height: 18px;
-    color: #A5A5A9;
-}
-
-.right-arrow {
-    position: absolute;
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 24px;
-    padding-left: 5px;
-}
-
-.left-arrow {
-    background: url(../images/arrow-left.svg) no-repeat left;
-    font-weight: 500;
-    font-size: 16px;
-}
-
-.left-arrow > span {
-    padding-left: 30px;
-    color: #22233B;
+    color: var(--font-light-color);
 }
 
 .disclaimer {
@@ -367,7 +414,7 @@ div#passwordSettings > P {
     font-weight: 500;
     font-size: 16px;
     line-height: 24px;
-    color: #A5A5A9
+    color: var(--font-light-color);
 }
 
 .radio-card {
@@ -380,25 +427,28 @@ div#passwordSettings > P {
     gap: 8px;
     width: 440px;
     height: 100px;
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.26);
-    border-radius: 4px;
+    background: var(--radio-card-background-color);
+    border: var(--radio-card-border-width) solid var(--radio-card-border-color);
+    border-radius: var(--radio-card-border-radius);
     flex: none;
     align-self: stretch;
     flex-grow: 0;
 }
 
-.radio-card-border-color {
-    border-color: #876FEC;
+.radio-card.active {
+    border-color: var(--radio-card-active-border-color);
+}
+
+.radio-card.active .enroll-name {
+    color: var(--radio-card-active-text-color);
 }
 
 .card-content {
-   display: flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
     padding: 0;
     gap: 12px;
-
     width: 408px;
     height: 68px;
     flex: none;
@@ -429,10 +479,8 @@ div#passwordSettings > P {
     font-weight: 700;
     font-size: 14px;
     line-height: 20px;
-    display: flex;
-    align-items: center;
     letter-spacing: 0.4px;
-    color: #100C27;
+    color: var(--font-dark-color);
 }
 
 .enroll-description {
@@ -442,7 +490,7 @@ div#passwordSettings > P {
     display: flex;
     align-items: center;
     letter-spacing: 0.4px;
-    color: #A5A5A9;
+    color: var(--font-light-color);
 }
 
 .enrollment-card {
@@ -462,7 +510,7 @@ div#passwordSettings > P {
     font-size: 26px;
     line-height: 36px;
     text-align: center;
-    color: #100C27;
+    color: var(--font-dark-color);
     flex: none;
     flex-grow: 0;
 }
@@ -475,7 +523,7 @@ div#passwordSettings > P {
     font-weight: 500;
     font-size: 16px;
     line-height: 24px;
-    color: #A5A5A9;
+    color: var(--font-light-color);
     flex: none;
     flex-grow: 0;
 }
@@ -494,8 +542,8 @@ div#passwordSettings > P {
     gap: 8px;
     width: 440px;
     height: 182px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 8px;
+    border: var(--otp-container-border-width) solid var(--otp-container-border-color);
+    border-radius: var(--otp-container-border-radius);
     flex: none;
     align-self: stretch;
     flex-grow: 0;
@@ -526,9 +574,9 @@ div#passwordSettings > P {
     box-sizing: border-box;
     width: 18px;
     height: 18px;
-    background: #FFFFFF;
-    border: 1px solid #B8B8BC;
-    border-radius: 2px;
+    background: var( --checkbox-input-background-color);
+    border: var(--checkbox-input-border-width) solid var(--checkbox-input-border-color);
+    border-radius: var(--checkbox-input-border-radius);
     flex: none;
     flex-grow: 0;
 }
@@ -538,7 +586,7 @@ div#passwordSettings > P {
     font-weight: 500;
     font-size: 16px;
     line-height: 24px;
-    color: #A5A5A9;
+    color: var(--font-light-color);
     flex: none;
     flex-grow: 0;
 }
@@ -549,8 +597,7 @@ div#passwordSettings > P {
     line-height: 16px;
     text-align: center;
     letter-spacing: 8px;
-    color: #25213A;
-
+    color: var(--deep-blue);
 }
 
 .recovery-codes {
@@ -571,7 +618,7 @@ div#passwordSettings > P {
     font-size: 16px;
     line-height: 20px;
     letter-spacing: 0.4px;
-    color: #A5A5A9;
+    color: var(--font-light-color);
 }
 
 .recovery-code {
@@ -582,16 +629,6 @@ div#passwordSettings > P {
 
 .recovery-code-msg {
     padding: 5px 12px 0 12px;
-}
-
-.download {
-    background: url(../images/download.svg) no-repeat left;
-    font-weight: 500;
-    font-size: 16px;
-}
-
-.download > span {
-    padding-left: 30px;
 }
 
 .code-item {
@@ -609,7 +646,7 @@ div#passwordSettings > P {
 }
 
 .valid {
-    color: #A5A5A9;
+    color: var(--font-light-color);
     text-decoration: line-through;
 }
 .valid:before {
@@ -617,13 +654,9 @@ div#passwordSettings > P {
     content: url("../images/valid.svg");
 }
 .invalid {
-    color: #A5A5A9;
+    color: var(--font-light-color);
 }
 .invalid:before {
     padding-right: 10px;
     content: url("../images/invalid.svg");
-}
-
-a.button.social {
-    text-decoration: none;
 }
