@@ -106,7 +106,7 @@
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <div>
-                <button type="submit" class="button submit-button" id="next">Next</button>
+                <button type="submit" class="button primary" id="next">Next</button>
             </div>
 
         </form>
@@ -121,7 +121,7 @@
     $(function() {
         const nextBtn = $("#next");
         nextBtn.prop('disabled', true);
-        nextBtn.addClass("disabled-button")
+        nextBtn.addClass("button-disabled")
 
         const $radioButtons = $("input:radio");
         let selectedItem;
@@ -132,17 +132,15 @@
                 if ($(this).attr('id') !== selectedItem) {
                     $(this).prop('checked', false);
                 } else {
-                    $('.radio-card').removeClass('radio-card-border-color');
-                    $('.enroll-name').removeClass('purple');
+                    $('.radio-card').removeClass('active');
 
                     const selectedCard = $selected.closest('.radio-card');
-                    selectedCard.addClass('radio-card-border-color');
-                    selectedCard.find('.enroll-name').addClass('purple');
+                    selectedCard.addClass('active');
                 }
             });
 
             nextBtn.prop('disabled', false);
-            nextBtn.removeClass("disabled-button")
+            nextBtn.removeClass("button-disabled")
         });
 
         nextBtn.on("click", function (){

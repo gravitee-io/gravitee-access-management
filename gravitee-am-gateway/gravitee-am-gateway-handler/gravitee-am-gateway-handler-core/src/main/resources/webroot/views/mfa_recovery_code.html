@@ -43,14 +43,14 @@
             </span>
         </div>
 
-        <div>
-            <a id="pdfDownload" class="download"><span>Download as PDF</span></a>
+        <div class="section">
+            <a id="pdfDownload" href="#"><span class="icons">file_download</span><span>Download as PDF</span></a>
         </div>
     </div>
     <div class="section">
         <form role="form" th:id="confirmationForm" th:action="${recoveryCodeUrl}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit" id="continue" value="true" class="button submit-button">
+            <button type="submit" id="continue" value="true" class="button primary">
                 Next
             </button>
         </form>

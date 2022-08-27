@@ -90,13 +90,13 @@
             </div>
         </div>
         <div>
-            <button id="next" class="button submit-button">Next</button>
+            <button id="next" class="button primary">Next</button>
         </div>
 
         <form role="form" th:action="${action}" method="post" class="form">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div>
-                <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
             </div>
         </form>
     </div>
@@ -115,17 +115,15 @@
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button submit-button">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
                 </div>
             </form>
 
-            <div>
-                <span>
-                    <a class="left-arrow"><span>Back to methods</span></a>
-                </span>
+            <div class="section">
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
             </div>
         </div>
         <div th:if="${factor.factorType == 'SMS' || factor.factorType == 'CALL'}" id="sms" class="section">
@@ -145,17 +143,15 @@
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <input type="hidden" id="phone" name="phone" value=""/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button submit-button">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
                 </div>
             </form>
 
-            <div>
-                <span>
-                    <a class="left-arrow"><span>Back to methods</span></a>
-                </span>
+            <div class="section">
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
             </div>
 
         </div>
@@ -181,17 +177,15 @@
                 <input type="hidden" id="sharedSecret" name="sharedSecret" value=""/>
 
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button submit-button">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
                 </div>
             </form>
 
-            <div>
-                <span>
-                    <a class="left-arrow"><span>Back to methods</span></a>
-                </span>
+            <div class="section">
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
             </div>
         </div>
         <div th:if="${factor.factorType == 'HTTP'}" id="http" class="section">
@@ -202,17 +196,15 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="true" class="button submit-button">Next</button>
+                    <button type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
                 </div>
             </form>
 
-            <div>
-                <span>
-                    <a class="left-arrow"><span>Back to methods</span></a>
-                </span>
+            <div class="section">
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
             </div>
 
         </div>
@@ -224,17 +216,15 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <input type="hidden" th:name="factorId" th:value="${factor.id}"/>
                 <div>
-                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button submit-button">Next</button>
+                    <button th:id="'submit' + ${factor.id}" type="submit" name="user_mfa_enrollment" value="true" class="button primary">Next</button>
                 </div>
                 <div>
-                    <button type="submit" name="user_mfa_enrollment" value="false" class="button submit-button-light">Skip for now</button>
+                    <button type="submit" name="user_mfa_enrollment" value="false" class="button secondary">Skip for now</button>
                 </div>
             </form>
 
-            <div>
-                <span>
-                    <a class="left-arrow"><span>Back to methods</span></a>
-                </span>
+            <div class="section">
+                <a class="left-arrow" href="#"><span class="icons">arrow_back</span><span>Back to methods</span></a>
             </div>
 
         </div>
@@ -294,18 +284,6 @@
     }
 
     $(document).ready(function () {
-
-        $(".mdl-textfield__input").focus(function () {
-            if (!this.value) {
-                $(this).prop('required', true);
-                $(this).parent().addClass('is-invalid');
-            }
-        });
-        $(".mdl-button[type='submit']").click(function (event) {
-            $(this).siblings(".mdl-textfield").addClass('is-invalid');
-            $(this).siblings(".mdl-textfield").children(".mdl-textfield__input").prop('required', true);
-        });
-
         function initializeIntlTelInput(eltId, countries) {
             // hide the invalid phone number message
             hideError(eltId);
@@ -355,7 +333,7 @@
 
         const nextBtn = $("#next");
         nextBtn.prop('disabled', true);
-        nextBtn.addClass("disabled-button")
+        nextBtn.addClass("button-disabled")
 
         const $radioButtons = $("input:radio");
         let selectedItem;
@@ -366,17 +344,15 @@
                 if ($(this).attr('name') !== selectedItem) {
                     $(this).prop('checked', false);
                 } else {
-                    $('.radio-card').removeClass('radio-card-border-color');
-                    $('.enroll-name').removeClass('purple');
+                    $('.radio-card').removeClass('active');
 
                     const selectedCard = $selected.closest('.radio-card');
-                    selectedCard.addClass('radio-card-border-color');
-                    selectedCard.find('.enroll-name').addClass('purple');
+                    selectedCard.addClass('active');
                 }
             });
 
             nextBtn.prop('disabled', false);
-            nextBtn.removeClass("disabled-button")
+            nextBtn.removeClass("button-disabled")
         });
 
         nextBtn.on("click", function () {

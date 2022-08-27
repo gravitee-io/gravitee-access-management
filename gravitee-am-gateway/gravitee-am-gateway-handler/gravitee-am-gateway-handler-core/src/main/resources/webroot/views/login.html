@@ -36,22 +36,25 @@
 
     <div class="section">
         <form class="form" id="form" role="form" th:action="${action}" th:if="${!hideLoginForm}" method="post">
-            <div>
+            <div class="form-field">
                 <input class="input-field" type="text" id="username" name="username"
                        th:placeholder="#{login.page.label.username}"
-                       th:value="${param.username}" autofocus="autofocus" required
-                       th:readonly="${param.username != null}"
-                />
+                       th:value="${param.username}"
+                       autofocus="autofocus"
+                       required
+                       th:readonly="${param.username != null}" />
             </div>
 
-            <div>
-                <input class="input-field" type="password" id="password" name="password" required
+            <div class="form-field">
+                <input class="input-field" type="password" id="password" name="password"
                        th:placeholder="#{login.page.label.password}"
-                />
-                <span toggle="#password" class="eye eye-close toggle-password"></span>
+                       required />
+                <button type="button" class="icon-button icon-input-field toggle-password">
+                    <span class="icons primary">visibility_off</span>
+                </button>
             </div>
 
-            <div class="forgot-password" th:if="${allowForgotPassword}">
+            <div class="section" th:if="${allowForgotPassword}">
                 <a th:href="${forgotPasswordAction}">Forgot Password ?</a>
             </div>
 
@@ -69,7 +72,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}"/>
 
             <div>
-                <button id="btnSubmit" class="button submit-button" th:text="#{login.page.button.submit}"></button>
+                <button id="btnSubmit" class="button primary" th:text="#{login.page.button.submit}"></button>
             </div>
         </form>
     </div>
@@ -125,8 +128,9 @@
         });
 
         $(".toggle-password").on("click", function () {
-            $(this).toggleClass("eye-open eye-close");
-            const input = $($(this).attr("toggle"));
+            const icon = $(this).find(".icons").first();
+            const input = $(this).parent().find("input").first();
+            icon.text() === "visibility" ? icon.text("visibility_off") : icon.text("visibility");
             input.attr("type") === "password" ? input.attr("type", "text") : input.attr("type", "password");
         });
 
@@ -137,10 +141,10 @@
             const submitBtn = $("#btnSubmit");
             if ($("#username").val() === "" || $("#password").val() === "") {
                 submitBtn.prop('disabled', true);
-                submitBtn.addClass("disabled-button");
+                submitBtn.addClass("button-disabled");
             } else {
                 submitBtn.prop('disabled', false);
-                submitBtn.removeClass("disabled-button");
+                submitBtn.removeClass("button-disabled");
             }
         }
     });

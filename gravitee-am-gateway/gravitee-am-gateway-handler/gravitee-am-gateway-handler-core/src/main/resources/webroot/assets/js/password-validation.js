@@ -127,12 +127,12 @@ function isInputEmpty() {
 
 function disableSubmitButton(){
     submitBtn.disabled = true;
-    submitBtn.classList.add("disabled-button");
+    submitBtn.classList.add("button-disabled");
 }
 
 function enableSubmitButton(){
     submitBtn.disabled = false;
-    submitBtn.classList.remove("disabled-button");
+    submitBtn.classList.remove("button-disabled");
 }
 
 function toggleSubmit(element) {
