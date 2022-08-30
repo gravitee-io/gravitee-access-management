@@ -51,6 +51,8 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         Observable.fromPublisher(collection.insertOne(doc)).blockingFirst();
         Document doc2 = new Document("username", "user01").append("email", "user01@acme.com").append("password", "user01").append("_id", UUID.randomUUID().toString());
         Observable.fromPublisher(collection.insertOne(doc2)).blockingFirst();
+        Document doc3 = new Document("username", "user02").append("email", "user02@acme.com").append("alternative_email", "user02-alt@acme.com").append("password", "user02").append("_id", UUID.randomUUID().toString());
+        Observable.fromPublisher(collection.insertOne(doc3)).blockingFirst();
     }
 
     @Bean
@@ -63,6 +65,7 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         configuration.setUsersCollection("users");
         configuration.setFindUserByUsernameQuery("{username: ?}");
         configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
+        configuration.setFindUserByEmailQuery("{ $or : [{email: ?}, {alternative_email: ?}]}");
         configuration.setPasswordField("password");
         configuration.setPasswordEncoder(PasswordEncoder.NONE);
 
