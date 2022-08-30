@@ -149,6 +149,7 @@ public class ThemesResourceTest extends JerseySpringTest {
         theme.setPrimaryTextColorHex("#787787");
         theme.setPrimaryButtonColorHex("#877787");
         theme.setSecondaryButtonColorHex("#799955");
+        theme.setSecondaryTextColorHex("#795955");
         final Date now = new Date();
         theme.setCreatedAt(now);
         theme.setUpdatedAt(now);
@@ -176,6 +177,7 @@ public class ThemesResourceTest extends JerseySpringTest {
         assertEquals(theme.getPrimaryTextColorHex(), entity.getPrimaryTextColorHex());
         assertEquals(theme.getPrimaryButtonColorHex(), entity.getPrimaryButtonColorHex());
         assertEquals(theme.getSecondaryButtonColorHex(), entity.getSecondaryButtonColorHex());
+        assertEquals(theme.getSecondaryTextColorHex(), entity.getSecondaryTextColorHex());
 
         assertNotNull(response.getHeaderString(HttpHeaders.LOCATION));
         assertTrue(response.getHeaderString(HttpHeaders.LOCATION).endsWith("/themes/"+theme.getId()));

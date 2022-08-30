@@ -89,6 +89,7 @@ public class ThemeServiceImpl implements ThemeService {
         theme.setPrimaryTextColorHex(newTheme.getPrimaryTextColorHex());
         theme.setPrimaryButtonColorHex(newTheme.getPrimaryButtonColorHex());
         theme.setSecondaryButtonColorHex(newTheme.getSecondaryButtonColorHex());
+        theme.setSecondaryTextColorHex(newTheme.getSecondaryTextColorHex());
 
         final Date now = new Date();
         theme.setCreatedAt(now);
