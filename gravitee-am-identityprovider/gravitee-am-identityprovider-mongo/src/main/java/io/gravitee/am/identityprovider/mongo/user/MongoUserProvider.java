@@ -251,7 +251,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     }
 
     private String convertToJsonString(String rawString) {
-        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:]+", "\"$0\"").replaceAll("\\s+","");
+        rawString = rawString.replaceAll("[^\\{\\}\\[\\],:\\s]+", "\"$0\"").replaceAll("\\s+", "");
         return rawString;
     }
 
