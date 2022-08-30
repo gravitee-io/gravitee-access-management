@@ -64,6 +64,16 @@ public class MongoUserProviderTest {
     }
 
     @Test
+    public void shouldSelectUserByEmail_AlternativeAttribute() {
+        TestObserver<User> testObserver = userProvider.findByEmail("user02-alt@acme.com").test();
+        testObserver.awaitTerminalEvent();
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "user02".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldNotSelectUserByUsername_userNotFound() {
         TestObserver<User> testObserver = userProvider.findByUsername("unknown").test();
         testObserver.awaitTerminalEvent();
