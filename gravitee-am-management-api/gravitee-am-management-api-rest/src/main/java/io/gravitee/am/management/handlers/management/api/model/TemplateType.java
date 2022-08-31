@@ -13,30 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.i18n;
-
-import java.util.Locale;
-import java.util.Properties;
+package io.gravitee.am.management.handlers.management.api.model;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DictionaryProvider {
-    /**
-     * Get the Properties object with all i18n message translated for the given locale value.
-     * If there are no properties matching the Locale, then the default translation are provided.
-     *
-     * @param locale
-     * @return
-     */
-    Properties getDictionaryFor(Locale locale);
-
-    /**
-     * use the local.toString instead of local.getLanguage() to evaluate language linked to a country code (fr-FR / en-GB)
-     *
-     * @param locale
-     * @return true if the locale has dictionary
-     */
-    boolean hasDictionaryFor(Locale locale);
+public enum TemplateType {
+    EMAIL,
+    FORM;
 }

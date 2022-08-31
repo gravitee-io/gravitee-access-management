@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY;
 import static java.util.Objects.nonNull;
 
 /**

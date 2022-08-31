@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.exception.ThemeNotFoundException;
 import io.gravitee.am.service.impl.ThemeServiceImpl;
 import io.gravitee.am.service.model.NewTheme;
+import io.gravitee.am.service.validators.theme.ThemeValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -63,6 +64,8 @@ public class ThemeServiceTest {
     private EventService eventService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private ThemeValidator themeValidator;
 
     @Test
     public void testFindByReference() {
@@ -83,15 +86,18 @@ public class ThemeServiceTest {
     @Test
     public void testCreate() {
         Theme theme = new Theme();
-
         when(repository.create(any())).thenReturn(Single.just(theme));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(repository.findByReference(any(), any())).thenReturn(Maybe.empty());
 
+        when(themeValidator.validate(any())).thenReturn(Completable.complete());
+
         final Domain domain = new Domain();
         domain.setId(DOMAIN_ID_1);
 
-        final TestObserver<Theme> test = cut.create(domain, new NewTheme(), new DefaultUser()).test();
+        final NewTheme newTheme = new NewTheme();
+        newTheme.setFaviconUrl("http://test/toto/titi?ok=tutu");
+        final TestObserver<Theme> test = cut.create(domain, newTheme, new DefaultUser()).test();
 
         test.awaitTerminalEvent();
         test.assertValueCount(1);
@@ -105,6 +111,7 @@ public class ThemeServiceTest {
     public void testCreate_Error() {
         when(repository.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(repository.create(any())).thenReturn(Single.error(new RuntimeException()));
+        when(themeValidator.validate(any())).thenReturn(Completable.complete());
 
         final Domain domain = new Domain();
         domain.setId(DOMAIN_ID_1);
@@ -229,6 +236,7 @@ public class ThemeServiceTest {
 
         when(repository.update(any())).thenReturn(Single.just(new Theme()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(themeValidator.validate(any())).thenReturn(Completable.complete());
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
 

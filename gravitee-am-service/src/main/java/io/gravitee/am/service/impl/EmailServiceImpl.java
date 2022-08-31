@@ -16,35 +16,19 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.email.Email;
-import io.gravitee.am.common.i18n.DictionaryProvider;
-import io.gravitee.am.common.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.EmailService;
-import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.service.utils.EmailSender;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-import javax.activation.MimetypesFileTypeMap;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

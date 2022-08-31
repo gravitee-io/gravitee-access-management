@@ -77,6 +77,12 @@ export interface ThemeEntity {
      * @type {string}
      * @memberof ThemeEntity
      */
+    secondaryTextColorHex?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ThemeEntity
+     */
     css?: string;
     /**
      * 
@@ -125,6 +131,7 @@ export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'primaryButtonColorHex': !exists(json, 'primaryButtonColorHex') ? undefined : json['primaryButtonColorHex'],
         'secondaryButtonColorHex': !exists(json, 'secondaryButtonColorHex') ? undefined : json['secondaryButtonColorHex'],
         'primaryTextColorHex': !exists(json, 'primaryTextColorHex') ? undefined : json['primaryTextColorHex'],
+        'secondaryTextColorHex': !exists(json, 'secondaryTextColorHex') ? undefined : json['secondaryTextColorHex'],
         'css': !exists(json, 'css') ? undefined : json['css'],
         'createdAt': !exists(json, 'createdAt') ? undefined : (new Date(json['createdAt'])),
         'updatedAt': !exists(json, 'updatedAt') ? undefined : (new Date(json['updatedAt'])),
@@ -149,6 +156,7 @@ export function ThemeEntityToJSON(value?: ThemeEntity | null): any {
         'primaryButtonColorHex': value.primaryButtonColorHex,
         'secondaryButtonColorHex': value.secondaryButtonColorHex,
         'primaryTextColorHex': value.primaryTextColorHex,
+        'secondaryTextColorHex': value.secondaryTextColorHex,
         'css': value.css,
         'createdAt': value.createdAt === undefined ? undefined : (value.createdAt.toISOString()),
         'updatedAt': value.updatedAt === undefined ? undefined : (value.updatedAt.toISOString()),

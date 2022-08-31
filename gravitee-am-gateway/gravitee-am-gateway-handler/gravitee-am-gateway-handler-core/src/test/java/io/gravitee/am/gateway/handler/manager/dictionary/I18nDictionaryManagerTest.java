@@ -17,13 +17,13 @@ package io.gravitee.am.gateway.handler.manager.dictionary;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.I18nDictionaryEvent;
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.I18nDictionaryRepository;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.common.event.Event;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -36,7 +36,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

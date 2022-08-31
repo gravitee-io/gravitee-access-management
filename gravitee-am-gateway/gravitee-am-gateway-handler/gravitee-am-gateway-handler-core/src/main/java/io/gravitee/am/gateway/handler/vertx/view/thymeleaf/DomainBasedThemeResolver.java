@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Theme;
+import io.gravitee.am.service.theme.ThemeResolution;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ObjectUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,11 +31,7 @@ import java.util.concurrent.ConcurrentMap;
 public class DomainBasedThemeResolver {
 
     private static final String THEME_CONTEXT_KEY = "theme";
-    private static final String THEME_BACKGROUND_COLOR_CONTEXT_KEY = "--primary-background-color";
-    private static final String THEME_TEXT_COLOR_CONTEXT_KEY = "--primary-foreground-color";
-    private static final String THEME_LIGHT_BACKGROUND_COLOR_CONTEXT_KEY = "--secondary-background-color";
-    private static final String THEME_LIGHT_TEXT_COLOR_CONTEXT_KEY = "--secondary-foreground-color";
-    private static final String THEME_LOGO_WIDTH_CONTEXT_KEY = "--logo-width";
+
     private final ConcurrentMap<String, ThemeResolution> themes = new ConcurrentHashMap<>();
     private final ThemeResolution defaultThemeResolution = new ThemeResolution();
 
@@ -49,12 +45,7 @@ public class DomainBasedThemeResolver {
 
     public void updateTheme(Theme theme) {
         if (theme != null) {
-            ThemeResolution themeResolution = new ThemeResolution();
-            themeResolution.setFaviconUrl(theme.getFaviconUrl());
-            themeResolution.setLogoUrl(theme.getLogoUrl());
-            themeResolution.setLogoWidth(theme.getLogoWidth());
-            themeResolution.setCss(buildCss(theme));
-            themeResolution.setCustomCss(theme.getCss());
+            ThemeResolution themeResolution = ThemeResolution.build(theme);
             themes.put(theme.getReferenceId(), themeResolution);
         }
     }
@@ -63,26 +54,4 @@ public class DomainBasedThemeResolver {
         themes.remove(referenceId);
     }
 
-    private static String buildCss(Theme theme) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(":root {");
-        buildCss(sb, THEME_BACKGROUND_COLOR_CONTEXT_KEY, theme.getPrimaryButtonColorHex());
-        buildCss(sb, THEME_TEXT_COLOR_CONTEXT_KEY, theme.getPrimaryTextColorHex());
-        buildCss(sb, THEME_LIGHT_BACKGROUND_COLOR_CONTEXT_KEY, theme.getSecondaryButtonColorHex());
-        buildCss(sb, THEME_LIGHT_TEXT_COLOR_CONTEXT_KEY, theme.getSecondaryTextColorHex());
-        if (theme.getLogoWidth() > 0) {
-            buildCss(sb, THEME_LOGO_WIDTH_CONTEXT_KEY, theme.getLogoWidth() + "px");
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    private static void buildCss(StringBuilder sb, String key, Object value) {
-        if (!ObjectUtils.isEmpty(value)) {
-            sb.append(key);
-            sb.append(":");
-            sb.append(value);
-            sb.append(";");
-        }
-    }
 }

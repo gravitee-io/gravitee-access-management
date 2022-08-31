@@ -16,9 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.common.email.Email;
-import io.gravitee.am.common.i18n.DictionaryProvider;
-
-import javax.mail.internet.MimeMessage;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

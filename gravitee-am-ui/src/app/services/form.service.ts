@@ -54,4 +54,8 @@ export class FormService {
     }
     return this.http.delete<any>(this.formsUrl + domainId + (appId ? "/applications/" + appId : "") + "/forms/" + id);
   }
+
+  preview(domainId, preview) {
+    return this.http.post<any>(this.formsUrl + domainId + "/forms/preview", preview);
+  }
 }

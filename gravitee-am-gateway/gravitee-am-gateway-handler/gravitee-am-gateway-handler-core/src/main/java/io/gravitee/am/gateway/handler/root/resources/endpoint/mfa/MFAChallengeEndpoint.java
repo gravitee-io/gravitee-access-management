@@ -87,6 +87,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
 import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
@@ -94,8 +96,8 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.g
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
+import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -105,8 +107,7 @@ import static java.util.Optional.ofNullable;
 public class MFAChallengeEndpoint extends AbstractEndpoint implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(MFAChallengeEndpoint.class);
-    private static final String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
-    private static final String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
+
     private static final String REMEMBER_DEVICE_CONSENT = "rememberDeviceConsent";
     public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
 

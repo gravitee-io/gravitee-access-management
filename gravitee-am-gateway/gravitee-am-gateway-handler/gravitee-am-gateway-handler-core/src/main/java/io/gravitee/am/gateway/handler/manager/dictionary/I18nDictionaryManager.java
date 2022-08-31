@@ -17,12 +17,12 @@ package io.gravitee.am.gateway.handler.manager.dictionary;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.I18nDictionaryEvent;
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.management.api.I18nDictionaryRepository;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;

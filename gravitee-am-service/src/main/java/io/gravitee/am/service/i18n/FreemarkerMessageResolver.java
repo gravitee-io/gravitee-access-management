@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.i18n;
+package io.gravitee.am.service.i18n;
 
 import freemarker.template.SimpleDate;
 import freemarker.template.SimpleNumber;

@@ -36,6 +36,25 @@ public class Theme {
     private Date createdAt;
     private Date updatedAt;
 
+    public Theme() {
+    }
+
+    public Theme(Theme orign) {
+        this.id = orign.id;
+        this.referenceId = orign.referenceId;
+        this.referenceType = orign.referenceType;
+        this.logoUrl = orign.logoUrl;
+        this.logoWidth = orign.logoWidth;
+        this.faviconUrl = orign.faviconUrl;
+        this.primaryButtonColorHex = orign.primaryButtonColorHex;
+        this.secondaryButtonColorHex = orign.secondaryButtonColorHex;
+        this.primaryTextColorHex = orign.primaryTextColorHex;
+        this.secondaryTextColorHex = orign.secondaryTextColorHex;
+        this.css = orign.css;
+        this.createdAt = orign.createdAt;
+        this.updatedAt = orign.updatedAt;
+    }
+
     public String getId() {
         return id;
     }

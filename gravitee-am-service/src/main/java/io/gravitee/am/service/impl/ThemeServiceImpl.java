@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.identityprovider.api.User;
@@ -31,9 +32,11 @@ import io.gravitee.am.service.exception.*;
 import io.gravitee.am.service.model.NewTheme;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ThemeAuditBuilder;
+import io.gravitee.am.service.validators.theme.ThemeValidator;
 import io.reactivex.Completable;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +66,9 @@ public class ThemeServiceImpl implements ThemeService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private ThemeValidator themeValidator;
 
     @Override
     public Maybe<Theme> findByReference(ReferenceType referenceType, String referenceId) {
@@ -96,36 +102,38 @@ public class ThemeServiceImpl implements ThemeService {
         theme.setUpdatedAt(now);
 
         // currently we only support one theme per domain
-        return themeRepository.findByReference(ReferenceType.DOMAIN, domain.getId())
-                .isEmpty()
-                .flatMap(isEmpty -> {
-                    if (!isEmpty) {
-                        return Single.error(new ThemeAlreadyExistsException());
-                    }
-                    return this.themeRepository.create(theme)
-                            .flatMap(createdTheme -> {
-                                Event event = new Event(THEME, new Payload(createdTheme.getId(), createdTheme.getReferenceType(), createdTheme.getReferenceId(), Action.CREATE));
-                                return eventService
-                                        .create(event)
-                                        .flatMap(createdEvent -> Single.just(createdTheme));
-                            })
-                            .onErrorResumeNext(ex -> {
-                                String msg = "An error occurred while trying to create a theme";
-                                logger.error(msg, ex);
-                                return Single.error(new TechnicalManagementException(msg, ex));
-                            })
-                            .doOnSuccess(dictionary -> auditService.report(AuditBuilder
-                                    .builder(ThemeAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.THEME_CREATED)
-                                    .theme(theme)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder
-                                    .builder(ThemeAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.THEME_CREATED)
-                                    .theme(theme)
-                                    .throwable(throwable)));
-                });
+        return themeValidator.validate(theme)
+                .andThen(
+                        themeRepository.findByReference(ReferenceType.DOMAIN, domain.getId())
+                                .isEmpty()
+                                .flatMap(isEmpty -> {
+                                    if (!isEmpty) {
+                                        return Single.error(new ThemeAlreadyExistsException());
+                                    }
+                                    return this.themeRepository.create(sanitize(theme))
+                                            .flatMap(createdTheme -> {
+                                                Event event = new Event(THEME, new Payload(createdTheme.getId(), createdTheme.getReferenceType(), createdTheme.getReferenceId(), Action.CREATE));
+                                                return eventService
+                                                        .create(event)
+                                                        .flatMap(createdEvent -> Single.just(createdTheme));
+                                            })
+                                            .onErrorResumeNext(ex -> {
+                                                String msg = "An error occurred while trying to create a theme";
+                                                logger.error(msg, ex);
+                                                return Single.error(new TechnicalManagementException(msg, ex));
+                                            })
+                                            .doOnSuccess(dictionary -> auditService.report(AuditBuilder
+                                                    .builder(ThemeAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.THEME_CREATED)
+                                                    .theme(theme)))
+                                            .doOnError(throwable -> auditService.report(AuditBuilder
+                                                    .builder(ThemeAuditBuilder.class)
+                                                    .principal(principal)
+                                                    .type(EventType.THEME_CREATED)
+                                                    .theme(theme)
+                                                    .throwable(throwable)));
+                                }));
     }
 
     @Override
@@ -154,7 +162,8 @@ public class ThemeServiceImpl implements ThemeService {
                     updatedTheme.setUpdatedAt(now);
                     updatedTheme.setCreatedAt(existingTheme.getCreatedAt());
 
-                    return this.themeRepository.update(updatedTheme)
+                    return themeValidator.validate(updatedTheme)
+                            .andThen(this.themeRepository.update(sanitize(updatedTheme))
                             .flatMap(newTheme -> {
                                 Event event = new Event(THEME, new Payload(newTheme.getId(), newTheme.getReferenceType(), newTheme.getReferenceId(), Action.UPDATE));
                                 return eventService
@@ -179,7 +188,7 @@ public class ThemeServiceImpl implements ThemeService {
                                     .type(EventType.THEME_UPDATED)
                                     .theme(updatedTheme)
                                     .oldValue(existingTheme)
-                                    .throwable(throwable)));
+                                    .throwable(throwable))));
                 });
     }
 
@@ -224,5 +233,21 @@ public class ThemeServiceImpl implements ThemeService {
             }
             return Maybe.just(theme);
         });
+    }
+
+    @Override
+    public Completable validate(Theme theme) {
+        return this.themeValidator.validate(theme);
+    }
+
+    public Theme sanitize(Theme theme) {
+        var safeTheme = new Theme(theme);
+        if (!Strings.isNullOrEmpty(safeTheme.getFaviconUrl())) {
+            safeTheme.setFaviconUrl(StringEscapeUtils.escapeEcmaScript(safeTheme.getFaviconUrl()));
+        }
+        if (!Strings.isNullOrEmpty(safeTheme.getLogoUrl())) {
+            safeTheme.setLogoUrl(StringEscapeUtils.escapeEcmaScript(safeTheme.getLogoUrl()));
+        }
+        return theme;
     }
 }

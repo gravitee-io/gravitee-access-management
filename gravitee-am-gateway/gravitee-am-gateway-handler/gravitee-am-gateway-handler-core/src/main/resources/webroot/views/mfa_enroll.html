@@ -107,7 +107,7 @@
                 <span class="enrollment-card-description otp-card-description">Scan the QR code with your authentication app (Google Authenticator or FreeOTP) and enter the code displayed in the next step</span>
 
                 <div class="otp-container">
-                    <img th:src="${factor.enrollment.barcode}"/>
+                    <img th:src="${factor.enrollment.barCode}"/>
                 </div>
 
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>

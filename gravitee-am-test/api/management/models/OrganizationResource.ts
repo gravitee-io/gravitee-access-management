@@ -81,12 +81,6 @@ import {
 export interface OrganizationResource {
     /**
      * 
-     * @type {FormsResource}
-     * @memberof OrganizationResource
-     */
-    formsResource?: FormsResource;
-    /**
-     * 
      * @type {EnvironmentsResource}
      * @memberof OrganizationResource
      */
@@ -129,6 +123,12 @@ export interface OrganizationResource {
     groupsResource?: GroupsResource;
     /**
      * 
+     * @type {IdentityProvidersResource}
+     * @memberof OrganizationResource
+     */
+    identityProvidersResource?: IdentityProvidersResource;
+    /**
+     * 
      * @type {UsersResource}
      * @memberof OrganizationResource
      */
@@ -141,10 +141,10 @@ export interface OrganizationResource {
     settingsResource?: any;
     /**
      * 
-     * @type {IdentityProvidersResource}
+     * @type {FormsResource}
      * @memberof OrganizationResource
      */
-    identityProvidersResource?: IdentityProvidersResource;
+    formsResource?: FormsResource;
 }
 
 export function OrganizationResourceFromJSON(json: any): OrganizationResource {
@@ -157,7 +157,6 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
     }
     return {
         
-        'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
         'environmentsResource': !exists(json, 'environmentsResource') ? undefined : EnvironmentsResourceFromJSON(json['environmentsResource']),
         'auditsResource': !exists(json, 'auditsResource') ? undefined : AuditsResourceFromJSON(json['auditsResource']),
         'membersResource': !exists(json, 'membersResource') ? undefined : MembersResourceFromJSON(json['membersResource']),
@@ -165,9 +164,10 @@ export function OrganizationResourceFromJSONTyped(json: any, ignoreDiscriminator
         'entrypointsResource': !exists(json, 'entrypointsResource') ? undefined : EntrypointsResourceFromJSON(json['entrypointsResource']),
         'rolesResource': !exists(json, 'rolesResource') ? undefined : RolesResourceFromJSON(json['rolesResource']),
         'groupsResource': !exists(json, 'groupsResource') ? undefined : GroupsResourceFromJSON(json['groupsResource']),
+        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
         'usersResource': !exists(json, 'usersResource') ? undefined : UsersResourceFromJSON(json['usersResource']),
         'settingsResource': !exists(json, 'settingsResource') ? undefined : json['settingsResource'],
-        'identityProvidersResource': !exists(json, 'identityProvidersResource') ? undefined : IdentityProvidersResourceFromJSON(json['identityProvidersResource']),
+        'formsResource': !exists(json, 'formsResource') ? undefined : FormsResourceFromJSON(json['formsResource']),
     };
 }
 
@@ -180,7 +180,6 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
     }
     return {
         
-        'formsResource': FormsResourceToJSON(value.formsResource),
         'environmentsResource': EnvironmentsResourceToJSON(value.environmentsResource),
         'auditsResource': AuditsResourceToJSON(value.auditsResource),
         'membersResource': MembersResourceToJSON(value.membersResource),
@@ -188,9 +187,10 @@ export function OrganizationResourceToJSON(value?: OrganizationResource | null):
         'entrypointsResource': EntrypointsResourceToJSON(value.entrypointsResource),
         'rolesResource': RolesResourceToJSON(value.rolesResource),
         'groupsResource': GroupsResourceToJSON(value.groupsResource),
+        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
         'usersResource': UsersResourceToJSON(value.usersResource),
         'settingsResource': value.settingsResource,
-        'identityProvidersResource': IdentityProvidersResourceToJSON(value.identityProvidersResource),
+        'formsResource': FormsResourceToJSON(value.formsResource),
     };
 }
 

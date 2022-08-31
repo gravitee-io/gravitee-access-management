@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.manager.deviceidentifiers;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
-import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
@@ -28,7 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl.REMEMBER_DEVICE_IS_ACTIVE;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
