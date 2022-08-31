@@ -91,7 +91,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.user.register.Regis
 import io.gravitee.am.gateway.handler.root.resources.handler.user.register.RegisterSubmissionRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAccessHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.CredentialService;
@@ -230,10 +229,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private WebClient webClient;
-
-    @Autowired
-    @Qualifier("managementJwtBuilder")
-    private JWTBuilder jwtBuilder;
 
     @Override
     protected void doStart() throws Exception {
@@ -423,13 +418,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, userService));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain, jwtBuilder));
+                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)
