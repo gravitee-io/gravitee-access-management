@@ -15,9 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -56,6 +58,7 @@ public class ThymeleafConfiguration {
     }
 
     @Bean
+    @Qualifier("gwMessageResolver")
     public GraviteeMessageResolver messageResolver() {
         return new GraviteeMessageResolver(templatesDirectory.endsWith("/") ? templatesDirectory + "i18n/" : templatesDirectory + "/i18n/");
     }

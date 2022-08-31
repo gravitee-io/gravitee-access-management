@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -52,8 +53,6 @@ import static java.util.Optional.ofNullable;
 public class DeviceIdentifierManagerImpl extends AbstractService implements DeviceIdentifierManager, InitializingBean, EventListener<DeviceIdentifierEvent, Payload> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DeviceIdentifierManagerImpl.class);
-    public static final String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";
-
     private final ConcurrentMap<String, DeviceIdentifierProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, DeviceIdentifier> deviceIdentifiers = new ConcurrentHashMap<>();
 

@@ -40,4 +40,8 @@ public interface ThemeService {
     Completable delete(Domain domain, String themeId, User principal);
 
     Maybe<Theme> getTheme(Domain domain, String themeId);
+
+    Theme sanitize(Theme theme);
+
+    Completable validate(Theme theme);
 }

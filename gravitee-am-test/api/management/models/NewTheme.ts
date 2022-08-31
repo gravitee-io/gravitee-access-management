@@ -59,6 +59,12 @@ export interface NewTheme {
      * @type {string}
      * @memberof NewTheme
      */
+    secondaryTextColorHex?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof NewTheme
+     */
     css?: string;
 }
 
@@ -78,6 +84,7 @@ export function NewThemeFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
         'primaryButtonColorHex': !exists(json, 'primaryButtonColorHex') ? undefined : json['primaryButtonColorHex'],
         'secondaryButtonColorHex': !exists(json, 'secondaryButtonColorHex') ? undefined : json['secondaryButtonColorHex'],
         'primaryTextColorHex': !exists(json, 'primaryTextColorHex') ? undefined : json['primaryTextColorHex'],
+        'secondaryTextColorHex': !exists(json, 'secondaryTextColorHex') ? undefined : json['secondaryTextColorHex'],
         'css': !exists(json, 'css') ? undefined : json['css'],
     };
 }
@@ -97,6 +104,7 @@ export function NewThemeToJSON(value?: NewTheme | null): any {
         'primaryButtonColorHex': value.primaryButtonColorHex,
         'secondaryButtonColorHex': value.secondaryButtonColorHex,
         'primaryTextColorHex': value.primaryTextColorHex,
+        'secondaryTextColorHex': value.secondaryTextColorHex,
         'css': value.css,
     };
 }

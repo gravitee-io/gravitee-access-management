@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
+package io.gravitee.am.service.i18n;
 
 import io.gravitee.am.model.I18nDictionary;
 import org.junit.Test;
@@ -25,36 +25,36 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainBasedDictionaryProviderTest {
+public abstract class AbstractDynamicDictionaryProviderTest {
 
-    private DomainBasedDictionaryProvider domainBasedDictionaryProvider = new DomainBasedDictionaryProvider();
-
+    protected abstract DynamicDictionaryProvider provider();
+    
     @Test
     public void shouldHasDictionaryFor() {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        assertTrue(domainBasedDictionaryProvider.hasDictionaryFor(new Locale(i18nDictionary.getLocale())));
+        provider().loadDictionary(i18nDictionary);
+        assertTrue(provider().hasDictionaryFor(new Locale(i18nDictionary.getLocale())));
     }
 
     @Test
     public void shouldNotHasDictionaryFor() {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        assertFalse(domainBasedDictionaryProvider.hasDictionaryFor(new Locale("unknown-locale")));
+        provider().loadDictionary(i18nDictionary);
+        assertFalse(provider().hasDictionaryFor(new Locale("unknown-locale")));
     }
 
     @Test
     public void shouldNotHasDictionaryFor_after_removal() {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        domainBasedDictionaryProvider.removeDictionary(i18nDictionary.getLocale());
-        assertFalse(domainBasedDictionaryProvider.hasDictionaryFor(new Locale(i18nDictionary.getLocale())));
+        provider().loadDictionary(i18nDictionary);
+        provider().removeDictionary(i18nDictionary.getLocale());
+        assertFalse(provider().hasDictionaryFor(new Locale(i18nDictionary.getLocale())));
     }
 
     @Test
@@ -62,17 +62,17 @@ public class DomainBasedDictionaryProviderTest {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
         i18nDictionary.setEntries(Collections.singletonMap("key", "value"));
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        assertFalse(domainBasedDictionaryProvider.getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
-        assertTrue(domainBasedDictionaryProvider.getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key").equals("value"));
+        provider().loadDictionary(i18nDictionary);
+        assertFalse(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
+        assertTrue(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).getProperty("key").equals("value"));
     }
 
     @Test
     public void shouldGetDictionaryFor_empty_entries() {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        assertTrue(domainBasedDictionaryProvider.getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
+        provider().loadDictionary(i18nDictionary);
+        assertTrue(provider().getDictionaryFor(new Locale(i18nDictionary.getLocale())).isEmpty());
     }
 
     @Test
@@ -80,7 +80,7 @@ public class DomainBasedDictionaryProviderTest {
         I18nDictionary i18nDictionary = new I18nDictionary();
         i18nDictionary.setLocale("test-locale");
         i18nDictionary.setEntries(Collections.singletonMap("key", "value"));
-        domainBasedDictionaryProvider.loadDictionary(i18nDictionary);
-        assertTrue(domainBasedDictionaryProvider.getDictionaryFor(null).isEmpty());
+        provider().loadDictionary(i18nDictionary);
+        assertTrue(provider().getDictionaryFor(null).isEmpty());
     }
 }

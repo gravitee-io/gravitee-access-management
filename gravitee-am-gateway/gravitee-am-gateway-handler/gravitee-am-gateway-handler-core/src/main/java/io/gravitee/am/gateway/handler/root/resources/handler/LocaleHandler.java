@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler;
 
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 

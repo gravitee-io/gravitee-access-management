@@ -27,16 +27,16 @@ import {
 export interface AlertsResource {
     /**
      * 
-     * @type {any}
-     * @memberof AlertsResource
-     */
-    alertTriggersResource?: any;
-    /**
-     * 
      * @type {AlertNotifiersResource}
      * @memberof AlertsResource
      */
     alertNotifiersResource?: AlertNotifiersResource;
+    /**
+     * 
+     * @type {any}
+     * @memberof AlertsResource
+     */
+    alertTriggersResource?: any;
 }
 
 export function AlertsResourceFromJSON(json: any): AlertsResource {
@@ -49,8 +49,8 @@ export function AlertsResourceFromJSONTyped(json: any, ignoreDiscriminator: bool
     }
     return {
         
-        'alertTriggersResource': !exists(json, 'alertTriggersResource') ? undefined : json['alertTriggersResource'],
         'alertNotifiersResource': !exists(json, 'alertNotifiersResource') ? undefined : AlertNotifiersResourceFromJSON(json['alertNotifiersResource']),
+        'alertTriggersResource': !exists(json, 'alertTriggersResource') ? undefined : json['alertTriggersResource'],
     };
 }
 
@@ -63,8 +63,8 @@ export function AlertsResourceToJSON(value?: AlertsResource | null): any {
     }
     return {
         
-        'alertTriggersResource': value.alertTriggersResource,
         'alertNotifiersResource': AlertNotifiersResourceToJSON(value.alertNotifiersResource),
+        'alertTriggersResource': value.alertTriggersResource,
     };
 }
 

@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
+import io.gravitee.am.service.theme.ThemeResolution;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

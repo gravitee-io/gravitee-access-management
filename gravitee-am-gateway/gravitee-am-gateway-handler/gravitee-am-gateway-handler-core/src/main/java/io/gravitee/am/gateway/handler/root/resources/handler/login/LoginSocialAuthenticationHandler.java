@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -67,7 +68,6 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
         socialProviders = Collections.unmodifiableMap(sMap);
     }
 
-    public static final String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     public static final String SOCIAL_AUTHORIZE_URL_CONTEXT_KEY = "authorizeUrls";
     private static final String OAUTH2_PROVIDER_CONTEXT_KEY = "oauth2Providers";
 

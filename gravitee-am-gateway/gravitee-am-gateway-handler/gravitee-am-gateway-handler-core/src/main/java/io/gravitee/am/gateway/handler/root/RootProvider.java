@@ -102,7 +102,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLo
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.gateway.handler.vertx.view.thymeleaf.GraviteeMessageResolver;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -112,6 +111,7 @@ import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.common.service.AbstractService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -260,6 +260,7 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
     private GatewayMetricProvider gatewayMetricProvider;
 
     @Autowired
+    @Qualifier("gwMessageResolver")
     private GraviteeMessageResolver messageResolver;
 
     @Override
