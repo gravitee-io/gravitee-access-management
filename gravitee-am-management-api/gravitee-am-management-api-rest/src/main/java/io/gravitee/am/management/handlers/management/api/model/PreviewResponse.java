@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.handlers.management.api.model;
 
-import io.gravitee.am.model.Theme;
-
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team

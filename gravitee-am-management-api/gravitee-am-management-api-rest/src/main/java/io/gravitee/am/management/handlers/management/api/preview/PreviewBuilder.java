@@ -25,22 +25,16 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Form;
-import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.account.FormField;
-import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.ClientProperties;
 import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
-import io.gravitee.am.service.exception.InvalidGroupException;
 import io.gravitee.am.service.theme.ThemeResolution;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.exceptions.TemplateEngineException;
-import org.thymeleaf.exceptions.TemplateOutputException;
-import org.thymeleaf.exceptions.TemplateProcessingException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -149,7 +142,7 @@ public class PreviewBuilder {
 
         switch (Template.parse(template)) {
             case LOGIN:
-                variables.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, Collections.EMPTY_LIST);
+                variables.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, Collections.emptyList());
                 variables.put(ConstantKeys.TEMPLATE_KEY_FORGOT_ACTION_KEY, "");
                 variables.put(ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, "");
                 variables.put(ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY, "");
@@ -232,21 +225,21 @@ public class PreviewBuilder {
     }
 
     private UserProperties generateFakeUser() {
-        final UserProperties user = new UserProperties();
-        user.setDomain(this.domain.getId());
-        user.setEmail("john.doe@mycompany.com");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setClaims(Map.of());
-        user.setAdditionalInformation(Map.of());
-        return user;
+        final UserProperties fakeUser = new UserProperties();
+        fakeUser.setDomain(this.domain.getId());
+        fakeUser.setEmail("john.doe@mycompany.com");
+        fakeUser.setFirstName("John");
+        fakeUser.setLastName("Doe");
+        fakeUser.setClaims(Map.of());
+        fakeUser.setAdditionalInformation(Map.of());
+        return fakeUser;
     }
 
     private Client generateFakeApplication() {
-        final Client client = new Client();
-        client.setClientName("PreviewApp");
-        client.setClientId("<client-id>");
-        client.setDomain(this.domain.getId());
-        return client;
+        final Client fakeClient = new Client();
+        fakeClient.setClientName("PreviewApp");
+        fakeClient.setClientId("<fakeClient-id>");
+        fakeClient.setDomain(this.domain.getId());
+        return fakeClient;
     }
 }

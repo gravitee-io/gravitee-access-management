@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.preview;
 
-import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
-import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
-import io.reactivex.Maybe;
+import {getFormApi} from "./service/utils";
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface PreviewService {
-    Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest);
-}
+export const preview = (domainId, accessToken, body) => getFormApi(accessToken).renderDomainTemplate({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    body
+});

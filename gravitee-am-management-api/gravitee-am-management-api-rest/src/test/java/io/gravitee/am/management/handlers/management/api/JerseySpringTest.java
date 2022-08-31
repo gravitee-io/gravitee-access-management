@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
+import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
 import io.gravitee.am.management.service.BotDetectionPluginService;
@@ -67,6 +68,7 @@ import io.gravitee.am.service.TagService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
+import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.Single;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -240,6 +242,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected ThemeService themeService;
+
+    @Autowired
+    protected PreviewService previewService;
 
     @Before
     public void init() {
@@ -494,6 +499,12 @@ public abstract class JerseySpringTest {
         public ThemeService themeService() {
             return mock(ThemeService.class);
         }
+
+        @Bean
+        public PreviewService previewService() {
+            return mock(PreviewService.class);
+        }
+
     }
 
     private JerseyTest _jerseyTest;

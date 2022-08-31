@@ -15,85 +15,85 @@ import { exists, mapValues } from '../runtime';
 /**
  * 
  * @export
- * @interface ThemeEntity
+ * @interface Theme
  */
-export interface ThemeEntity {
+export interface Theme {
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     id?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     referenceId?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
-    referenceType?: ThemeEntityReferenceTypeEnum;
+    referenceType?: ThemeReferenceTypeEnum;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     logoUrl?: string;
     /**
      * 
      * @type {number}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     logoWidth?: number;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     faviconUrl?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     primaryButtonColorHex?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     secondaryButtonColorHex?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     primaryTextColorHex?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     secondaryTextColorHex?: string;
     /**
      * 
      * @type {string}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     css?: string;
     /**
      * 
      * @type {Date}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     createdAt?: Date;
     /**
      * 
      * @type {Date}
-     * @memberof ThemeEntity
+     * @memberof Theme
      */
     updatedAt?: Date;
 }
@@ -102,21 +102,21 @@ export interface ThemeEntity {
 /**
  * @export
  */
-export const ThemeEntityReferenceTypeEnum = {
+export const ThemeReferenceTypeEnum = {
     Platform: 'PLATFORM',
     Domain: 'DOMAIN',
     Application: 'APPLICATION',
     Organization: 'ORGANIZATION',
     Environment: 'ENVIRONMENT'
 } as const;
-export type ThemeEntityReferenceTypeEnum = typeof ThemeEntityReferenceTypeEnum[keyof typeof ThemeEntityReferenceTypeEnum];
+export type ThemeReferenceTypeEnum = typeof ThemeReferenceTypeEnum[keyof typeof ThemeReferenceTypeEnum];
 
 
-export function ThemeEntityFromJSON(json: any): ThemeEntity {
-    return ThemeEntityFromJSONTyped(json, false);
+export function ThemeFromJSON(json: any): Theme {
+    return ThemeFromJSONTyped(json, false);
 }
 
-export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ThemeEntity {
+export function ThemeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Theme {
     if ((json === undefined) || (json === null)) {
         return json;
     }
@@ -138,7 +138,7 @@ export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean
     };
 }
 
-export function ThemeEntityToJSON(value?: ThemeEntity | null): any {
+export function ThemeToJSON(value?: Theme | null): any {
     if (value === undefined) {
         return undefined;
     }

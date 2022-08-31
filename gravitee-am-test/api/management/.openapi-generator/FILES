@@ -23,6 +23,7 @@ apis/NotifierApi.ts
 apis/PlatformApi.ts
 apis/PluginApi.ts
 apis/PolicyApi.ts
+apis/PreviewApi.ts
 apis/ReporterApi.ts
 apis/ResourceApi.ts
 apis/RoleApi.ts
@@ -173,6 +174,8 @@ models/PatchRememberDeviceSettings.ts
 models/PatchSAMLSettings.ts
 models/PatchScope.ts
 models/PatchSecurityProfileSettings.ts
+models/PreviewRequest.ts
+models/PreviewResponse.ts
 models/RememberDeviceSettings.ts
 models/Reporter.ts
 models/ReportersResource.ts
@@ -200,6 +203,7 @@ models/StatusEntity.ts
 models/Step.ts
 models/Tag.ts
 models/TagsResource.ts
+models/Theme.ts
 models/ThemeEntity.ts
 models/ThemesResource.ts
 models/TokenClaim.ts

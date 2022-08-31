@@ -25,46 +25,46 @@ import {
     UpdateAuthenticationDeviceNotifierToJSON,
 } from '../models';
 
-export interface Create9Request {
+export interface Create10Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     notifier: NewAuthenticationDeviceNotifier;
 }
 
-export interface Delete9Request {
+export interface Delete13Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     authDeviceNotifier: string;
 }
 
-export interface Get16Request {
+export interface Get21Request {
     organizationId: string;
     environmentId: string;
     domain: string;
     authDeviceNotifier: string;
 }
 
-export interface Get41Request {
+export interface Get32Request {
     authDeviceNotifierId: string;
 }
 
-export interface GetSchema10Request {
+export interface GetSchema1Request {
     authDeviceNotifierId: string;
 }
 
-export interface List10Request {
+export interface List21Request {
     organizationId: string;
     environmentId: string;
     domain: string;
 }
 
-export interface List40Request {
+export interface List32Request {
     expand?: Array<string>;
 }
 
-export interface Update13Request {
+export interface Update14Request {
     organizationId: string;
     environmentId: string;
     domain: string;
@@ -81,21 +81,21 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
      * Create an Authentication Device Notifier
      */
-    async create9Raw(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async create10Raw(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling create10.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling create10.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling create10.');
         }
 
         if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
-            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling create9.');
+            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling create10.');
         }
 
         const queryParameters: any = {};
@@ -123,29 +123,29 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
      * Create an Authentication Device Notifier
      */
-    async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.create9Raw(requestParameters, initOverrides);
+    async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.create10Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
      * Delete an Authentication Device Notifier
      */
-    async delete9Raw(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async delete13Raw(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling delete13.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling delete13.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling delete13.');
         }
 
         if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete9.');
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete13.');
         }
 
         const queryParameters: any = {};
@@ -170,29 +170,29 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
      * Delete an Authentication Device Notifier
      */
-    async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.delete9Raw(requestParameters, initOverrides);
+    async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.delete13Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization
      * Get an Authentication Device Notifier
      */
-    async get16Raw(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
+    async get21Raw(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get16.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling get21.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get16.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling get21.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get16.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling get21.');
         }
 
         if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling get16.');
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling get21.');
         }
 
         const queryParameters: any = {};
@@ -217,8 +217,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization
      * Get an Authentication Device Notifier
      */
-    async get16(requestParameters: Get16Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
-        const response = await this.get16Raw(requestParameters, initOverrides);
+    async get21(requestParameters: Get21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
+        const response = await this.get21Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -226,9 +226,9 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get41Raw(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async get32Raw(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get41.');
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling get32.');
         }
 
         const queryParameters: any = {};
@@ -253,17 +253,17 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get a Authentication Device Notifier plugin
      */
-    async get41(requestParameters: Get41Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.get41Raw(requestParameters, initOverrides);
+    async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.get32Raw(requestParameters, initOverrides);
     }
 
     /**
      * There is no particular permission needed. User must be authenticated.
      * Get an Authentication Device Notifier plugin\'s schema
      */
-    async getSchema10Raw(requestParameters: GetSchema10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async getSchema1Raw(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         if (requestParameters.authDeviceNotifierId === null || requestParameters.authDeviceNotifierId === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema10.');
+            throw new runtime.RequiredError('authDeviceNotifierId','Required parameter requestParameters.authDeviceNotifierId was null or undefined when calling getSchema1.');
         }
 
         const queryParameters: any = {};
@@ -288,25 +288,25 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * Get an Authentication Device Notifier plugin\'s schema
      */
-    async getSchema10(requestParameters: GetSchema10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.getSchema10Raw(requestParameters, initOverrides);
+    async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.getSchema1Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
      * List registered Authentication Device Notifiers for a security domain
      */
-    async list10Raw(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AuthenticationDeviceNotifier>>> {
+    async list21Raw(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<Array<AuthenticationDeviceNotifier>>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list10.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling list21.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list10.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling list21.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list10.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling list21.');
         }
 
         const queryParameters: any = {};
@@ -331,8 +331,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization Each returned Authentication Device Notifier is filtered and contains only basic information such as id, name.
      * List registered Authentication Device Notifiers for a security domain
      */
-    async list10(requestParameters: List10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AuthenticationDeviceNotifier>> {
-        const response = await this.list10Raw(requestParameters, initOverrides);
+    async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AuthenticationDeviceNotifier>> {
+        const response = await this.list21Raw(requestParameters, initOverrides);
         return await response.value();
     }
 
@@ -340,7 +340,7 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List authentication device notifier plugins
      */
-    async list40Raw(requestParameters: List40Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    async list32Raw(requestParameters: List32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
         const queryParameters: any = {};
 
         if (requestParameters.expand) {
@@ -367,33 +367,33 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * There is no particular permission needed. User must be authenticated.
      * List authentication device notifier plugins
      */
-    async list40(requestParameters: List40Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.list40Raw(requestParameters, initOverrides);
+    async list32(requestParameters: List32Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+        await this.list32Raw(requestParameters, initOverrides);
     }
 
     /**
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
      * Update an Authentication Device Notifier
      */
-    async update13Raw(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
+    async update14Raw(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<AuthenticationDeviceNotifier>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update13.');
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling update14.');
         }
 
         if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update13.');
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling update14.');
         }
 
         if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update13.');
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling update14.');
         }
 
         if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
-            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling update13.');
+            throw new runtime.RequiredError('authDeviceNotifier','Required parameter requestParameters.authDeviceNotifier was null or undefined when calling update14.');
         }
 
         if (requestParameters.notifier === null || requestParameters.notifier === undefined) {
-            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling update13.');
+            throw new runtime.RequiredError('notifier','Required parameter requestParameters.notifier was null or undefined when calling update14.');
         }
 
         const queryParameters: any = {};
@@ -421,8 +421,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
      * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization
      * Update an Authentication Device Notifier
      */
-    async update13(requestParameters: Update13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
-        const response = await this.update13Raw(requestParameters, initOverrides);
+    async update14(requestParameters: Update14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AuthenticationDeviceNotifier> {
+        const response = await this.update14Raw(requestParameters, initOverrides);
         return await response.value();
     }
 

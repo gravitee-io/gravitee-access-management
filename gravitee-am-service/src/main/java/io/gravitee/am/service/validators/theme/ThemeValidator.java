@@ -13,35 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.service.validators.theme;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Theme;
-import io.gravitee.am.service.model.NewTheme;
+import io.gravitee.am.service.validators.Validator;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Maybe;
-import io.reactivex.Single;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ThemeService {
-
-    Maybe<Theme> findByReference(ReferenceType referenceType, String referenceId);
-
-    Single<Theme> create(Domain domain, NewTheme newTheme, User principal);
-
-    Single<Theme> update(Domain domain, Theme updatedTheme, User principal);
-
-    Completable delete(Domain domain, String themeId, User principal);
-
-    Maybe<Theme> getTheme(Domain domain, String themeId);
-
-    Theme sanitize(Theme theme);
-
-    Completable validate(Theme theme);
+public interface ThemeValidator extends Validator<Theme, Completable> {
 }

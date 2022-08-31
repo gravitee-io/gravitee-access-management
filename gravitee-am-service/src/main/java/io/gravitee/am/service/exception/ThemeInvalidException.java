@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.handlers.management.api.preview;
+package io.gravitee.am.service.exception;
 
-import io.gravitee.am.management.handlers.management.api.model.PreviewRequest;
-import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
-import io.reactivex.Maybe;
+import io.gravitee.common.http.HttpStatusCode;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PreviewService {
-    Maybe<PreviewResponse> previewDomainForm(String domainId, PreviewRequest previewRequest);
+public class ThemeInvalidException extends AbstractManagementException {
+    private final String id;
+    private final String attribute;
+
+    public ThemeInvalidException(String id, String attribute) {
+        this.id = id;
+        this.attribute = attribute;
+    }
+
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Theme [" + id + "] contains invalid attribute : " + attribute;
+    }
 }

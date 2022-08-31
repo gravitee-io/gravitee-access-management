@@ -58,13 +58,14 @@ public class PreviewResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Render the provided template",
+            nickname = "renderDomainTemplate",
             notes = "User must have the DOMAIN_THEME[READ] permission on the specified domain " +
                     "or DOMAIN_THEME[READ] permission on the specified environment " +
                     "or DOMAIN_THEME[READ] permission on the specified organization")
     @ApiResponses({
-            @ApiResponse(code = 200, message = "Form successfully rendered", response = PreviewResponse.class),
+            @ApiResponse(code = 200, message = "Template successfully rendered", response = PreviewResponse.class),
             @ApiResponse(code = 500, message = "Internal server error")})
-    public void create(
+    public void renderDomainTemplate(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,

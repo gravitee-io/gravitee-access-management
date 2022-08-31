@@ -21,9 +21,12 @@ import io.gravitee.am.management.handlers.management.api.model.PreviewResponse;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
+import io.gravitee.am.model.Theme;
 import io.gravitee.am.service.DomainService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.impl.ThemeServiceImpl;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.observers.TestObserver;
@@ -52,7 +55,7 @@ public class PreviewServiceTest {
     private static String DOMAIN_ID = "DOMAIN-ID#1";
 
     @InjectMocks
-    private PreviewService previewService = new PreviewService();
+    private PreviewService previewService = new PreviewServiceImpl();
 
     @Mock
     private DomainService domainService;
@@ -62,7 +65,7 @@ public class PreviewServiceTest {
     private TemplateResolver templateResolver = new TemplateResolver();
 
     @Mock
-    private ThemeService themeService;
+    private ThemeService themeService = new ThemeServiceImpl();
 
     @Mock
     private I18nDictionaryService i18nDictionaryService;
@@ -72,6 +75,8 @@ public class PreviewServiceTest {
         templateEngine.setCacheManager(new StandardCacheManager());
         templateResolver.setTemplateEngine(templateEngine);
         templateEngine.setTemplateResolvers(Set.of(templateResolver));
+        when(themeService.validate(any())).thenReturn(Completable.complete());
+        when(themeService.sanitize(any())).thenAnswer(args -> args.getArguments()[0]);
         ReflectionTestUtils.setField(previewService, "templateEngine", templateEngine);
         ReflectionTestUtils.setField(previewService, "templateResolver", templateResolver);
     }
@@ -90,7 +95,64 @@ public class PreviewServiceTest {
         observer.awaitTerminalEvent();
         observer.assertNoErrors();
         observer.assertValue(response -> response.getContent() != null && response.getContent().contains("PreviewApp"));
-        observer.assertValue(response -> response.getContent() != null && response.getContent().contains(""));
+        observer.assertValue(response -> response.getContent() != null && response.getContent().contains("#6A4FF7"));
+    }
+
+    @Test
+    public void shouldRenderDomainForm_theme() {
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
+        final Theme theme = new Theme();
+        theme.setPrimaryTextColorHex("#FFFFFF");
+        theme.setPrimaryButtonColorHex("#FFFFFF");
+        theme.setSecondaryTextColorHex("#FFFFFF");
+        theme.setSecondaryButtonColorHex("#FFFFFF");
+        when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.just(theme));
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
+        final PreviewRequest previewRequest = new PreviewRequest();
+        previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
+        previewRequest.setTemplate(Template.LOGIN.template());
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(response -> response.getContent() != null &&
+                ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FFFFFF;--primary-foreground-color:#FFFFFF;" +
+                        "--secondary-background-color:#FFFFFF;--secondary-foreground-color:#FFFFFF;}" +
+                        "</style></head><body><span>PreviewApp</span></body></html>")
+                        .equals(response.getContent()));
+    }
+
+    @Test
+    public void shouldRenderDomainForm_overrideTheme() {
+        when(domainService.findById(DOMAIN_ID)).thenReturn(Maybe.just(new Domain()));
+        final Theme theme = new Theme();
+        theme.setPrimaryTextColorHex("#FFFFFF");
+        theme.setPrimaryButtonColorHex("#FFFFFF");
+        theme.setSecondaryTextColorHex("#FFFFFF");
+        theme.setSecondaryButtonColorHex("#FFFFFF");
+        final Theme overrideTheme = new Theme();
+        overrideTheme.setPrimaryTextColorHex("#FF0000");
+        overrideTheme.setPrimaryButtonColorHex("#FF0000");
+        overrideTheme.setSecondaryTextColorHex("#FF0000");
+        // do not override the secondaryTextColor to use the one coming from the DB
+
+        when(themeService.findByReference(ReferenceType.DOMAIN, DOMAIN_ID)).thenReturn(Maybe.just(theme));
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+
+        final PreviewRequest previewRequest = new PreviewRequest();
+        previewRequest.setContent("<html lang=\"en\" xmlns:th=\"http://www.thymeleaf.org\"><head><style th:if=\"${theme.css}\" th:text=\"${theme.css}\"></style></head><body><span th:text=\"${client.name}\"></span></body></html>");
+        previewRequest.setTemplate(Template.LOGIN.template());
+        previewRequest.setTheme(overrideTheme);
+        final TestObserver<PreviewResponse> observer = previewService.previewDomainForm(DOMAIN_ID, previewRequest).test();
+
+        observer.awaitTerminalEvent();
+        observer.assertNoErrors();
+        observer.assertValue(response -> response.getContent() != null &&
+                ("<html lang=\"en\"><head><style>:root {--primary-background-color:#FF0000;--primary-foreground-color:#FF0000;" +
+                        "--secondary-background-color:#FFFFFF;--secondary-foreground-color:#FF0000;}" +
+                        "</style></head><body><span>PreviewApp</span></body></html>")
+                        .equals(response.getContent()));
     }
 
     @Test
