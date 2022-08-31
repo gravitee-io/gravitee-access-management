@@ -29,7 +29,7 @@ import java.util.Objects;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_CONSENT_TIME;
 import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
-import static io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManagerImpl.REMEMBER_DEVICE_IS_ACTIVE;
+import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;

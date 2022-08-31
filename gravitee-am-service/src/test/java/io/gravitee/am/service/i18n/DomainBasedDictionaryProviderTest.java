@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
-
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
+package io.gravitee.am.service.i18n;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
+public class DomainBasedDictionaryProviderTest extends AbstractDynamicDictionaryProviderTest{
 
-    void send(Email email);
+    private final DomainBasedDictionaryProvider provider = new DomainBasedDictionaryProvider();
 
-    DictionaryProvider getDefaultDictionaryProvider();
-
+    @Override
+    protected DynamicDictionaryProvider provider() {
+        return this.provider;
+    }
 }

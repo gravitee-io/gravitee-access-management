@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.service.i18n;
 
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.model.I18nDictionary;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
-
-    void send(Email email);
-
-    DictionaryProvider getDefaultDictionaryProvider();
-
+public interface DynamicDictionaryProvider extends DictionaryProvider {
+    void loadDictionary(I18nDictionary i18nDictionary);
+    void removeDictionary(String locale);
 }

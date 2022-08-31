@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
+package io.gravitee.am.service.i18n;
 
-import io.gravitee.am.common.i18n.FileSystemDictionaryProvider;
 import io.gravitee.am.model.I18nDictionary;
 import org.springframework.util.ObjectUtils;
 import org.thymeleaf.context.ITemplateContext;
@@ -30,11 +29,15 @@ import java.util.Locale;
  */
 public class GraviteeMessageResolver extends AbstractMessageResolver {
     private final FileSystemDictionaryProvider dictionaryProvider;
-    private final DomainBasedDictionaryProvider domainBasedDictionaryProvider;
+    private final DynamicDictionaryProvider domainBasedDictionaryProvider;
 
     public GraviteeMessageResolver(String i18nLocation) {
-        this.dictionaryProvider = new FileSystemDictionaryProvider(i18nLocation);
-        this.domainBasedDictionaryProvider = new DomainBasedDictionaryProvider();
+        this(new FileSystemDictionaryProvider(i18nLocation), new DomainBasedDictionaryProvider());
+    }
+
+    public GraviteeMessageResolver(FileSystemDictionaryProvider fileSystemDictionaryProvider, DynamicDictionaryProvider domainBasedDictionaryProvider) {
+        this.dictionaryProvider = fileSystemDictionaryProvider;
+        this.domainBasedDictionaryProvider = domainBasedDictionaryProvider;
         this.setOrder(0);
     }
 
@@ -44,16 +47,20 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
 
     @Override
     public String resolveMessage(ITemplateContext context, Class<?> origin, String key, Object[] messageParameters) {
+        return innerResolveMessage(context.getLocale(), key);
+    }
+
+    protected String innerResolveMessage(Locale locale, String key) {
         // first we look into the domain custom messages
         final String domainMessage =
-                this.domainBasedDictionaryProvider.getDictionaryFor(context.getLocale()).getProperty(key);
+                this.domainBasedDictionaryProvider.getDictionaryFor(locale).getProperty(key);
 
         if (!ObjectUtils.isEmpty(domainMessage)) {
             return domainMessage;
         }
 
         // fallback to the file system one
-        return this.dictionaryProvider.getDictionaryFor(context.getLocale()).getProperty(key);
+        return this.dictionaryProvider.getDictionaryFor(locale).getProperty(key);
     }
 
     @Override
@@ -69,4 +76,5 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
     public void removeDictionary(String locale) {
         domainBasedDictionaryProvider.removeDictionary(locale);
     }
+
 }

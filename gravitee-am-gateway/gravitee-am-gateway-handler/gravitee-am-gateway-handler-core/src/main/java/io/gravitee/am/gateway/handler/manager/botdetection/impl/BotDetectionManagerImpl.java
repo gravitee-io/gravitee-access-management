@@ -36,14 +36,18 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.Single;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION;
+import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -54,8 +58,6 @@ public class BotDetectionManagerImpl extends AbstractService implements BotDetec
     private static final Logger LOGGER = LoggerFactory.getLogger(BotDetectionManagerImpl.class);
 
     public static final String TEMPLATE_KEY_BOT_DETECTION_ENABLED = "bot_detection_enabled";
-    public static final String TEMPLATE_KEY_BOT_DETECTION_PLUGIN = "bot_detection_plugin";
-    public static final String TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION = "bot_detection_configuration";
 
     private final ConcurrentMap<String, BotDetectionProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, BotDetection> botDetections = new ConcurrentHashMap<>();

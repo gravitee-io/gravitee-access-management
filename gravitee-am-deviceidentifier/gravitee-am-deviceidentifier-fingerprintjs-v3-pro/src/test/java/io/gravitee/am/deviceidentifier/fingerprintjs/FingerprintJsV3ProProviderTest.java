@@ -25,7 +25,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider.DEVICE_IDENTIFIER_PROVIDER_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 

@@ -157,6 +157,7 @@ export class DomainSettingsThemeComponent implements OnInit {
   selectedMode = 'VIEW';
   config: any = {lineNumbers: true};
   formChanged: boolean;
+  previewedTemplateContent: string;
   selectedTemplateContent: string;
   selectedTemplateName: string;
   canDeleteForm: boolean;
@@ -211,6 +212,9 @@ export class DomainSettingsThemeComponent implements OnInit {
 
   onThemeChange(event) {
     this.formChanged = true;
+    if (this.selectedMode === 'VIEW') {
+      this.renderPreview();
+    }
   }
 
   onSelectionTemplateChange(event) {
@@ -224,6 +228,12 @@ export class DomainSettingsThemeComponent implements OnInit {
             this.loadForm();
           }
         });
+    }
+  }
+  
+  onModeChange(event) {
+    if (event.value === 'VIEW') {
+      this.renderPreview();
     }
   }
 
@@ -268,20 +278,7 @@ export class DomainSettingsThemeComponent implements OnInit {
   }
 
   publish() {
-    const themeToPublish: any = {};
-    themeToPublish.logoUrl = this.theme.logoUrl;
-    themeToPublish.logoWidth = this.theme.logoWidth;
-    themeToPublish.faviconUrl = this.theme.faviconUrl;
-    themeToPublish.css = this.theme.css;
-    if (this.selectedColorPalette) {
-      const filteredObj = _.find(this.colorPalettes, { 'name' : this.selectedColorPalette });
-      if (filteredObj) {
-        themeToPublish.primaryButtonColorHex = filteredObj.primaryButtonColorHex;
-        themeToPublish.secondaryButtonColorHex = filteredObj.secondaryButtonColorHex;
-        themeToPublish.primaryTextColorHex = filteredObj.primaryTextColorHex;
-        themeToPublish.secondaryTextColorHex = filteredObj.secondaryTextColorHex;
-      }
-    }
+    const themeToPublish: any = this.createThemeToPublish();
     const publishAction = (!this.theme.id) ?
       this.themeService.create(this.domain.id, themeToPublish) :
       this.themeService.update(this.domain.id, this.theme.id, themeToPublish);
@@ -305,19 +302,52 @@ export class DomainSettingsThemeComponent implements OnInit {
     });
   }
 
+  private createThemeToPublish() {
+    const themeToPublish: any = {};
+    themeToPublish.logoUrl = this.theme.logoUrl;
+    themeToPublish.logoWidth = this.theme.logoWidth;
+    themeToPublish.faviconUrl = this.theme.faviconUrl;
+    themeToPublish.css = this.theme.css;
+    if (this.selectedColorPalette) {
+      const filteredObj = _.find(this.colorPalettes, { 'name' : this.selectedColorPalette });
+      if (filteredObj) {
+        themeToPublish.primaryButtonColorHex = filteredObj.primaryButtonColorHex;
+        themeToPublish.secondaryButtonColorHex = filteredObj.secondaryButtonColorHex;
+        themeToPublish.primaryTextColorHex = filteredObj.primaryTextColorHex;
+        themeToPublish.secondaryTextColorHex = filteredObj.secondaryTextColorHex;
+      }
+    }
+    return themeToPublish;
+  }
+
+  renderPreview() {
+    const payload = { 
+      content: this.selectedTemplateContent, 
+      theme: this.createThemeToPublish(),
+      type: "FORM",
+      template: this.selectedForm.template
+    };
+    
+    this.formService.preview(this.domain.id, payload).subscribe(form => {
+      this.previewedTemplateContent = form.content;
+      this.refreshPreview();
+    });
+  }
+
+
   private refreshPreview() {
-    if (this.selectedTemplateContent && this.preview) {
+    if (this.previewedTemplateContent && this.preview) {
       const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
       if (doc) {
         doc.open();
-        doc.write(this.selectedTemplateContent);
+        doc.write(this.previewedTemplateContent);
         doc.close();
       }
     }
   }
 
   private resizeIframe() {
-    if (this.selectedTemplateContent && this.preview) {
+    if (this.previewedTemplateContent && this.preview) {
       this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 20 + 'px';
     }
   }
@@ -333,6 +363,7 @@ export class DomainSettingsThemeComponent implements OnInit {
         this.refreshPreview();
         this.resizeIframe();
       }, 500);
+      this.renderPreview();
     });
   }
 

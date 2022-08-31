@@ -61,6 +61,7 @@ public interface ConstantKeys {
     String X_XSRF_TOKEN = "X-XSRF-TOKEN";
     String _CSRF = "_csrf";
     String __BODY_HANDLED = "__body-handled";
+    String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
 
     // enrich authentication flow keys
     String AUTH_FLOW_CONTEXT_KEY = "authFlowContext";
@@ -80,6 +81,10 @@ public interface ConstantKeys {
     String FACTOR_KEY = "factor";
     String MFA_FACTOR_ID_CONTEXT_KEY = "mfaFactorId";
     String MFA_ENROLLING_FIDO2_FACTOR = "enrollingFido2Factor";
+
+    String MFA_ALTERNATIVES_ACTION_KEY = "mfaAlternativesAction";
+
+    String MFA_ALTERNATIVES_ENABLE_KEY = "mfaAlternativesEnabled";
 
     String USER_MFA_ENROLLMENT = "user_mfa_enrollment";
     String MFA_FORCE_ENROLLMENT = "mfa_force_enrollment";
@@ -133,6 +138,8 @@ public interface ConstantKeys {
     String DEVICE_ALREADY_EXISTS_KEY = "deviceAlreadyExists";
     String REMEMBER_DEVICE_CONSENT_TIME_SECONDS = "rememberDeviceConsentTimeSeconds";
     long DEFAULT_REMEMBER_DEVICE_CONSENT_TIME = 10 * 60 * 60; // 10 hours
+    String REMEMBER_DEVICE_IS_ACTIVE = "rememberDeviceIsActive";
+    String DEVICE_IDENTIFIER_PROVIDER_KEY = "deviceIdentifierProvider";
 
     // ------
     // Values used to find key into gravitee.yaml
@@ -163,4 +170,20 @@ public interface ConstantKeys {
     String USER_ACTIVITY_RETENTION_TIME = "user_activity_retention_time";
     String RISK_ASSESSMENT_KEY = "risk_assessment";
     String USER_ACTIVITY_ENABLED = "userActivityEnabled";
+
+    // Template Variables
+    // -------------------
+    String TEMPLATE_KEY_BOT_DETECTION_PLUGIN = "bot_detection_plugin";
+    String TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION = "bot_detection_configuration";
+    // LOGIN Template
+    String TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY = "allowForgotPassword";
+    String TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY = "allowRegister";
+    String TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY = "allowPasswordless";
+    String TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY = "hideLoginForm";
+    String TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY = "identifierFirstLoginEnabled";
+    String TEMPLATE_KEY_FORGOT_ACTION_KEY = "forgotPasswordAction";
+    String TEMPLATE_KEY_REGISTER_ACTION_KEY = "registerAction";
+    String TEMPLATE_KEY_WEBAUTHN_ACTION_KEY = "passwordlessAction";
+    String TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY = "backToLoginIdentifierAction";
+
 }

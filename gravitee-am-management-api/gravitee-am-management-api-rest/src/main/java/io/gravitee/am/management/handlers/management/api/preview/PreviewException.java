@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.management.handlers.management.api.preview;
 
-import io.gravitee.am.common.email.Email;
-import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.common.http.HttpStatusCode;
+import org.thymeleaf.exceptions.TemplateEngineException;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EmailService {
+public class PreviewException extends AbstractManagementException {
 
-    void send(Email email);
+    public PreviewException(String message) {
+        super(message);
+    }
 
-    DictionaryProvider getDefaultDictionaryProvider();
-
+    @Override
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
 }

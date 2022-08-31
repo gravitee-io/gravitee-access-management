@@ -67,7 +67,7 @@ public class TemplateResolver extends AbstractConfigurableTemplateResolver {
         this.templateEngine = templateEngine;
     }
 
-    private String getTemplateKey(Form form) {
+    public final String getTemplateKey(Form form) {
         return getTemplateKey(form.getReferenceId(), form.getTemplate());
     }
 

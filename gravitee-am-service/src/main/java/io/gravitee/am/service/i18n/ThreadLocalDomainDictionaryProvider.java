@@ -13,31 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.vertx.view.thymeleaf;
+package io.gravitee.am.service.i18n;
 
-import io.gravitee.am.common.i18n.DictionaryProvider;
 import io.gravitee.am.model.I18nDictionary;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.Optional.ofNullable;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * DictionaryProvider that allow the usage of a dictionary in an ephemeral context (REST Call).
+ * This provider is used to provide the i18n dictionary in order to allow preview in ManagementAPI with right translation.
+ *
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class DomainBasedDictionaryProvider implements DictionaryProvider {
+public class ThreadLocalDomainDictionaryProvider implements DynamicDictionaryProvider {
 
-    private Map<String, Properties> propertiesMap = new ConcurrentHashMap<>();
+    private ThreadLocal<Map<String, Properties>> propertiesMap = new ThreadLocal<>();
 
     @Override
     public Properties getDictionaryFor(Locale locale) {
-        if (locale != null) {
-            return ofNullable(this.propertiesMap.get(locale.toString()))
-                    .or(() -> ofNullable(this.propertiesMap.get(locale.getLanguage())))
+        final Map<String, Properties> map = this.propertiesMap.get();
+        if (locale != null && map != null) {
+            return ofNullable(map.get(locale.toString()))
+                    .or(() -> ofNullable(map.get(locale.getLanguage())))
                     .orElse(new Properties());
         }
         return new Properties();
@@ -45,17 +47,18 @@ public class DomainBasedDictionaryProvider implements DictionaryProvider {
 
     @Override
     public boolean hasDictionaryFor(Locale locale) {
-        return this.propertiesMap.containsKey(locale.toString());
+        final Map<String, Properties> map = this.propertiesMap.get();
+        return map != null && map.containsKey(locale.toString());
     }
 
     public void loadDictionary(I18nDictionary i18nDictionary) {
         final String locale = i18nDictionary.getLocale();
         Properties properties = new Properties();
         properties.putAll(i18nDictionary.getEntries());
-        propertiesMap.put(locale, properties);
+        propertiesMap.set(Map.of(locale, properties));
     }
 
     public void removeDictionary(String locale) {
-        propertiesMap.remove(locale);
+        propertiesMap.remove();
     }
 }

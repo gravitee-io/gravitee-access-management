@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.manager.
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
 import io.gravitee.am.management.handlers.management.api.authentication.service.impl.AuthenticationServiceImpl;
+import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -41,5 +42,10 @@ public class ManagementConfiguration {
     @Bean
     public FormManager formManager() {
         return new FormManagerImpl();
+    }
+
+    @Bean
+    public PreviewService previewService() {
+        return new PreviewService();
     }
 }
