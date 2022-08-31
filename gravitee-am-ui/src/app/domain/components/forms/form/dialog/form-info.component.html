@@ -188,23 +188,6 @@
         </html>
       ]]>
     </pre>
-    <p *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
-      <b>NOTE:</b> When forgot password succeeded, the token present into the URL is used to populate user profile into the template engine. If the token is invalid or has expired, the user profile will be missing from the template engine context, so pay attention to test if user is null before accessing its attributes.
-      Here after, you can find a snippet of HTML to adapt the message to inform the user on whoch address email the message has been sent. 
-    </p>
-    <pre *ngIf="data.rawTemplate === 'FORGOT_PASSWORD'">
-      <![CDATA[
-
-          <div th:if="${success}" class="forgot-password-form">
-            <div>
-                <label>Forgot password confirmation</label>
-                <p th:if="${user != null && user.email != null}">An email has been sent to <b th:text="${user.email}"></b> asking to reset your password.</p>
-                <p th:if="${user == null || user.email == null}">An email has been sent asking to reset your password.</p>
-            </div>
-        </div>
-
-      ]]>
-    </pre>
     <pre *ngIf="data.rawTemplate === 'RESET_PASSWORD'">
       <![CDATA[
         <!DOCTYPE html>
