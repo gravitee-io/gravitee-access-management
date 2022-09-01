@@ -1,6 +1,17 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/593?closed=1[AM - 3.17.5 (2022-09-01)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- Do not expose data in the forgot password template https://github.com/gravitee-io/issues/issues/8391[#8391]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/584?closed=1[AM - 3.18.3 (2022-08-19)]
 
  
