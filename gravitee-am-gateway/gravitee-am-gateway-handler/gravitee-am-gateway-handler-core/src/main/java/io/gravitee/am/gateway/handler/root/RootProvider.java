@@ -101,7 +101,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnLo
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnRegisterHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnResponseHandler;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
-import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuthenticationFlowContextService;
@@ -254,10 +253,6 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
 
     @Autowired
     private FactorService factorService;
-
-    @Autowired
-    @Qualifier("managementJwtBuilder")
-    private JWTBuilder jwtBuilder;
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
@@ -478,13 +473,13 @@ public class RootProvider extends AbstractService<ProtocolProvider> implements P
         rootRouter.route(HttpMethod.GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, userService));
+                .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
         rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
                 .handler(forgotPasswordAccessHandler)
-                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain, jwtBuilder));
+                .handler(new ForgotPasswordSubmissionEndpoint(userService, domain));
         rootRouter.route(HttpMethod.GET, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordRequestParseHandler(userService))
                 .handler(clientRequestParseHandlerOptional)

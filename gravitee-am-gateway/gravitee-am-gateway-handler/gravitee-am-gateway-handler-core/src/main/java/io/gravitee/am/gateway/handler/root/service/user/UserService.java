@@ -42,7 +42,7 @@ public interface UserService {
 
     Single<ResetPasswordResponse> resetPassword(Client client, User user, io.gravitee.am.identityprovider.api.User principal);
 
-    Single<User> forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
+    Completable forgotPassword(ForgotPasswordParameters inputParameters, Client client, io.gravitee.am.identityprovider.api.User principal);
 
     Completable logout(User user, boolean invalidateTokens, io.gravitee.am.identityprovider.api.User principal);
 
@@ -60,7 +60,7 @@ public interface UserService {
         return resetPassword(client, user, null);
     }
 
-    default Single<User> forgotPassword(String email, Client client) {
+    default Completable forgotPassword(String email, Client client) {
         ForgotPasswordParameters params = new ForgotPasswordParameters(email, false, false);
         return forgotPassword(params, client, null);
     }
