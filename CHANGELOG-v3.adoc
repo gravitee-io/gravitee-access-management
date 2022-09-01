@@ -1,6 +1,25 @@
 # Change Log
 
 
+== https://github.com/gravitee-io/issues/milestone/587?closed=1[AM - 3.18.4 (2022-09-01)]
+
+=== Bug fixes
+
+*_Gateway_*
+
+- [http-callout] When payload in policy contains accents the payload gets truncated https://github.com/gravitee-io/issues/issues/8235[#8235]
+
+*_General_*
+
+- Merge AM 3.17.5 into 3.18.x https://github.com/gravitee-io/issues/issues/8392[#8392]
+
+*_Idp_*
+
+- [MongoDB] queries are not well parsed for the user management features https://github.com/gravitee-io/issues/issues/8379[#8379]
+
+ 
+ 
+
 == https://github.com/gravitee-io/issues/milestone/593?closed=1[AM - 3.17.5 (2022-09-01)]
 
 === Bug fixes
