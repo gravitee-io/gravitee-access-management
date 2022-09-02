@@ -21,12 +21,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span>Passwordless Authentication</span>
+            <span th:text="#{webauthn.register.title}"/>
         </div>
         <div class="header-description">
-            <span class="regular">Follow the instructions in the next step to sign in without a password.
-                Your device will offer you different options like a security key, a fingerprint reader, facial recognition...
-            </span>
+            <span class="regular" th:text="#{webauthn.register.description}"/>
         </div>
     </div>
     <div class="section">
@@ -35,17 +33,17 @@
             <div id="webauthn-error" style="display: none;">
                 <span class="description">
                     <span class="error">webauthn-register_failed</span>
-                     <small class="error_description">Invalid user</small>
+                     <small class="error_description" th:text="#{webauthn.error}"></small>
                 </span>
             </div>
             <div>
-                <button class="button primary">Next</button>
+                <button class="button primary" th:text="#{webauthn.register.button.submit}"></button>
             </div>
         </form>
     </div>
 
     <div th:if="${enrollingFido2Factor == null}" class="section">
-        <a th:href="${skipAction}"><span>Skip this step</span><span class="icons">arrow_forward</span></a>
+        <a th:href="${skipAction}"><span th:text="#{webauthn.register.skip}"/><span class="icons">arrow_forward</span></a>
     </div>
 </div>
 <script th:src="@{../assets/js/webauthn.auth-v2.js}"></script>

@@ -20,12 +20,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span id="enrollment-title">Recovery codes</span>
+            <span id="enrollment-title" th:text="#{mfa_recovery.title}"/>
         </div>
         <div class="header-description">
-            <span id="enrollment-description">Recovery codes are used to access your account when you
-                cannot receive tow-factor authentication codes. Each code can only be used once.
-            </span>
+            <span id="enrollment-description" th:text="#{mfa_recovery.description}"/>
         </div>
     </div>
     <div class="section">
@@ -38,21 +36,17 @@
         </div>
 
         <div class="item">
-            <span class="deep-blue recovery-code-msg">This recovery codes should be stored somewhere safe.
-                They won't be displayed again.
-            </span>
+            <span class="deep-blue recovery-code-msg" th:text="#{mfa_recovery.info}"/>
         </div>
 
         <div class="section">
-            <a id="pdfDownload" href="#"><span class="icons">file_download</span><span>Download as PDF</span></a>
+            <a id="pdfDownload" href="#"><span class="icons">file_download</span><span th:text="#{mfa_recovery.download}"/></a>
         </div>
     </div>
     <div class="section">
         <form role="form" th:id="confirmationForm" th:action="${recoveryCodeUrl}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <button type="submit" id="continue" value="true" class="button primary">
-                Next
-            </button>
+            <button type="submit" id="continue" value="true" class="button primary" th:text="#{mfa_recovery.submit.button}"></button>
         </form>
     </div>
 </div>

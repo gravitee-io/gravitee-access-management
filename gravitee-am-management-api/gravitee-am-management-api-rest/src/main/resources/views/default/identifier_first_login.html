@@ -25,7 +25,7 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div th:if="${allowRegister}" class="header-description">
             <label>Don't have an account yet? </label>

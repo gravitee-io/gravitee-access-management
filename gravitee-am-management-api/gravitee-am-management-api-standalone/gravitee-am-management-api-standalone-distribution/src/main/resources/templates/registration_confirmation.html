@@ -26,7 +26,7 @@
 
 								color: #25213A;
 								">
-			<#if client??>${msg('registration_confirmation.email.header.title.app', client.clientName, user.firstName)}<#else>${msg('registration_confirmation.email.header.title', user.firstName)}</#if>
+			<#if client??>${msg('email.registration_confirmation.header.title.app', client.clientName, user.firstName)}<#else>${msg('email.registration_confirmation.header.title', user.firstName)}</#if>
 		</td>
 	</tr>
 
@@ -41,7 +41,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-			${msg('registration_confirmation.email.header.description')}
+			${msg('email.registration_confirmation.header.description')}
 		</td>
 	</tr>
 
@@ -61,7 +61,7 @@
 				line-height: 16px;
 				/*remove underline*/
 				text-decoration: none;">
-				${msg('registration_confirmation.email.button')}
+				${msg('email.registration_confirmation.button')}
 			</a>
 		</td>
 	</tr>
@@ -76,7 +76,7 @@
 			line-height: 24px;
 			color: #A5A5A9;
 			">
-			<#if expireAfterSeconds gte 3600> ${msg('registration_confirmation.email.description', expireAfterSeconds / 3600 , msg('common.email.unit.hours'))}  <#else> ${msg('registration_confirmation.email.description', expireAfterSeconds / 60 , msg('common.email.unit.minutes'))} </#if>
+			<#if expireAfterSeconds gte 3600> ${msg('email.registration_confirmation.description', expireAfterSeconds / 3600 , msg('email.common.unit.hours'))}  <#else> ${msg('email.registration_confirmation.description', expireAfterSeconds / 60 , msg('email.common.unit.minutes'))} </#if>
 		</td>
 	</tr>
 </table>

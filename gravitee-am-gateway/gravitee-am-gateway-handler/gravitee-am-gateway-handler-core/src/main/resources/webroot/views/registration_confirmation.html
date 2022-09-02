@@ -23,22 +23,22 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span>Sign-up confirmation</span>
+            <span th:text="#{registration_confirmation.title}"/>
         </div>
         <div class="header-description">
-            <span>Thanks for signing up, please complete the form to activate your account</span>
+            <span th:text="#{registration_confirmation.description}"/>
         </div>
     </div>
     <div class="section">
         <form role="form" class="form" th:action="${action}" method="post">
             <div class="form-field">
-                <input class="input-field" type="password" id="password" name="password" placeholder="Password" required/>
+                <input class="input-field" type="password" id="password" name="password" th:placeholder="#{registration_confirmation.password.placeholder}" required/>
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
                 </button>
             </div>
             <div class="form-field">
-                <input class="input-field" type="password" id="confirm-password" name="confirm-password" placeholder="Confirm password" required/>
+                <input class="input-field" type="password" id="confirm-password" name="confirm-password" th:placeholder="#{registration_confirmation.confirm.password.placeholder}" required/>
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
                 </button>
@@ -49,29 +49,28 @@
                         th:if="${passwordSettings.minLength != null || passwordSettings.includeNumbers || passwordSettings.includeSpecialCharacters
                         || passwordSettings.lettersInMixedCase || passwordSettings.maxConsecutiveLetters != null ||
                         passwordSettings.excludePasswordsInDictionary || passwordSettings.excludeUserProfileInfoInPassword}"
-                        class="small-font grey">Password policy:</span>
+                        class="small-font grey" th:text="#{password.validation.label}" />
 
-                <p th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid">Contains at least <span th:text="${passwordSettings.minLength}"/> characters</p>
-                <p th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid">Contains a number</p>
-                <p th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid">Contains a special character</p>
-                <p th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid">Contains letters in mixed case</p>
-                <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid">Max <span
-                        th:text="${passwordSettings.maxConsecutiveLetters}"/> consecutive letters or numbers</p>
-                <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="advice">Don't use common names or passwords</p>
-                <p th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="invalid">Don't use your profile information in password</p>
+                <p th:if="${passwordSettings.minLength != null}" id="minLength" class="invalid"><span th:text="#{password.minLength.before}" /> <span th:text="${passwordSettings.minLength}"/> <span th:text="#{password.minLength.after}"/></p>
+                <p th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid" th:text="#{password.include.numbers}" />
+                <p th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid" th:text="#{password.include.special.characters}" />
+                <p th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid" th:text="#{password.letters.mixed.cases}" />
+                <p th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid" ><span th:text="#{password.max.consecutive.letters.before}" /> <span th:text="${passwordSettings.maxConsecutiveLetters}"/> <span th:text="#{password.max.consecutive.letters.after}" /></p>
+                <p th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="invalid" th:text="#{password.exclude.user.info}"/>
+                <p th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="black" th:text="#{password.exclude.common.passwords}"/>
             </div>
 
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input type="hidden" name="token" id="token" th:value="${token}"/>
             <div class="button error-text" th:switch="${warning}" th:if="${warning}">
-                <span th:case="invalid_password_value">Invalid password value. It does not comply with the password policy.</span>
-                <span th:case="invalid_user_information">Invalid first name, last name or username.</span>
-                <span th:case="invalid_email">Invalid email address.</span>
-                <span th:case="*">Some information are missing or invalid.</span>
+                <span th:case="invalid_password_value" th:text="#{registration_confirmation.error.invalid.password}"/>
+                <span th:case="invalid_user_information" th:text="#{registration_confirmation.error.invalid.user}"/>
+                <span th:case="invalid_email" th:text="#{registration_confirmation.error.invalid.email}"/>
+                <span th:case="*" th:text="#{registration_confirmation.error.information.missing}"/>
             </div>
 
             <div>
-                <button type="submit" id="submitBtn" class="button primary">Confirm registration</button>
+                <button type="submit" id="submitBtn" class="button primary" th:text="#{registration_confirmation.button.submit}"></button>
             </div>
         </form>
     </div>
@@ -81,10 +80,10 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span>Account confirmation</span>
+            <span th:text="#{registration_confirmation.success.title}"/>
         </div>
         <div class="header-description">
-            <label>Thanks for confirming your account. Go back to your application to login</label>
+            <label th:text="#{registration_confirmation.success}"/>
         </div>
     </div>
 </div>
@@ -93,14 +92,14 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span>Account confirmation error</span>
+            <span th:text="#{registration_confirmation.error.title}"/>
         </div>
         <div class="header-description">
-            <span class="medium-font grey regular">Please go back to your client application and try again, or contact the owner and ask for support</span>
+            <span class="medium-font grey regular" th:text="#{registration_confirmation.error.description}"></span>
         </div>
     </div>
     <div class="section">
-        <div class="medium-font red">Error description : <span th:text="*{error_description}?: ${error}"></span></div>
+        <div class="medium-font red"><span th:text="#{registration_confirmation.error.description.label}"/> <span th:text="*{error_description}?: ${error}"></span></div>
     </div>
 </div>
 

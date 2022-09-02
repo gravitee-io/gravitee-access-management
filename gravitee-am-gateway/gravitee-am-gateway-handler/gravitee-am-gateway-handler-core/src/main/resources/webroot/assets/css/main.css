@@ -299,7 +299,7 @@ div.short-section > input + input {
     align-items: flex-start;
     padding: 8px;
     width: 440px;
-    height: 40px;
+    min-height: 40px;
     background: var(--button-background-color);
     border-radius: var(--button-border-radius);
     flex: none;

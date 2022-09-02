@@ -23,24 +23,14 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{../assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span id="enrollment-title">Authenticate your account</span>
+            <span id="enrollment-title" th:text="#{mfa_challenge.title}"/>
         </div>
         <div class="header-description">
-            <span th:if="${factor.factorType.type == 'TOTP'}">
-                Please type in the code displayed on your multi-factor authenticator app from your device
-            </span>
-            <span th:if="${factor.factorType.type == 'SMS'}">
-                Please type in the code sent by SMS on your mobile phone
-            </span>
-            <span th:if="${factor.factorType.type == 'CALL'}">
-                You will receive a call shortly. Follow the instructions and type in the given code
-            </span>
-            <span th:if="${factor.factorType.type == 'EMAIL'}">
-                Please type in the code sent by Email
-            </span>
-            <span th:if="${factor.factorType.type == 'FIDO2'}">
-                Sign in with fingerprint, device or security key
-            </span>
+            <span th:if="${factor.factorType.type == 'TOTP'}" th:text="#{mfa_challenge.otp}"/>
+            <span th:if="${factor.factorType.type == 'SMS'}" th:text="#{mfa_challenge.sms}"/>
+            <span th:if="${factor.factorType.type == 'CALL'}" th:text="#{mfa_challenge.call}"/>
+            <span th:if="${factor.factorType.type == 'EMAIL'}" th:text="#{mfa_challenge.email}"/>
+            <span th:if="${factor.factorType.type == 'FIDO2'}" th:text="#{mfa_challenge.fido}"/>
         </div>
     </div>
 
@@ -53,7 +43,7 @@
             <div th:if="${error}" class="button error-text">
                 <span class="description">
                     <span class="error" th:text="${error}"></span>
-                    <small th:text="*{error_description}?: 'Invalide code'"></small>
+                    <small th:text="*{error_description}?: #{mfa_challenge.error}"></small>
                 </span>
             </div>
 
@@ -64,16 +54,16 @@
 
             <div class="checkbox" th:if="${rememberDeviceIsActive && rememberDeviceConsentTimeSeconds != null && deviceId != null && !deviceAlreadyExists}">
                 <input type="checkbox" id="rememberDeviceConsent" name="rememberDeviceConsent">
-                <span>Remember my device for [[${rememberDeviceConsentTimeSeconds >= 2629746 ? (rememberDeviceConsentTimeSeconds / 2629746) + " month(s)" : (rememberDeviceConsentTimeSeconds >= 86400 ? (rememberDeviceConsentTimeSeconds / 86400) + " day(s)" : (rememberDeviceConsentTimeSeconds >= 3600 ? (rememberDeviceConsentTimeSeconds / 3600) + " hour(s)" : (rememberDeviceConsentTimeSeconds >= 60 ? (rememberDeviceConsentTimeSeconds / 60) + " minute(s)" : (rememberDeviceConsentTimeSeconds + " second(s)"))))}]]</span>
+                <span><span th:text="#{mfa_challenge.remember.device}"/> [[${rememberDeviceConsentTimeSeconds >= 2629746 ? (rememberDeviceConsentTimeSeconds / 2629746) + " month(s)" : (rememberDeviceConsentTimeSeconds >= 86400 ? (rememberDeviceConsentTimeSeconds / 86400) + " day(s)" : (rememberDeviceConsentTimeSeconds >= 3600 ? (rememberDeviceConsentTimeSeconds / 3600) + " hour(s)" : (rememberDeviceConsentTimeSeconds >= 60 ? (rememberDeviceConsentTimeSeconds / 60) + " minute(s)" : (rememberDeviceConsentTimeSeconds + " second(s)"))))}]]</span>
             </div>
 
             <div>
-                <button type="submit" id="verify" class="button primary">Verify</button>
+                <button type="submit" id="verify" class="button primary" th:text="#{mfa_challenge.button.submit}"></button>
             </div>
         </form>
 
         <div th:if="${mfaAlternativesEnabled}" class="section">
-            <a th:href="${mfaAlternativesAction}"><span>Having trouble ? Try other methods</span><span class="icons">arrow_forward</span></a>
+            <a th:href="${mfaAlternativesAction}"><span th:text="#{mfa_challenge.alternate}"/><span class="icons">arrow_forward</span></a>
         </div>
     </div>
 </div>

@@ -26,7 +26,7 @@
     <div class="header">
         <img class="logo" th:src="${theme.logoUrl} ?: @{assets/images/gravitee-logo.svg}">
         <div class="title">
-            <span th:text="#{login.page.title} + ' ' + ${client.name}"></span>
+            <span th:text="#{login.title} + ' ' + ${client.name}"></span>
         </div>
         <div th:if="${allowRegister && !identifierFirstLoginEnabled}" class="header-description">
             <label>Don't have an account yet? </label>
@@ -38,7 +38,7 @@
         <form class="form" id="form" role="form" th:action="${action}" th:if="${!hideLoginForm}" method="post">
             <div class="form-field">
                 <input class="input-field" type="text" id="username" name="username"
-                       th:placeholder="#{login.page.label.username}"
+                       th:placeholder="#{login.label.username}"
                        th:value="${param.username}"
                        autofocus="autofocus"
                        required
@@ -47,7 +47,7 @@
 
             <div class="form-field">
                 <input class="input-field" type="password" id="password" name="password"
-                       th:placeholder="#{login.page.label.password}"
+                       th:placeholder="#{login.label.password}"
                        required />
                 <button type="button" class="icon-button icon-input-field toggle-password">
                     <span class="icons primary">visibility_off</span>
@@ -61,7 +61,7 @@
             <div th:if="${error}" class="button error-text">
                 <span class="description">
                     <span class="error" th:text="${error}"></span>
-                    <small th:text="*{error_description}?: #{login.page.error.default.message}"></small>
+                    <small th:text="*{error_description}?: #{login.error.default.message}"></small>
                 </span>
             </div>
 
@@ -72,7 +72,7 @@
                    th:name="${bot_detection_configuration.get('tokenParameterName')}"/>
 
             <div>
-                <button id="btnSubmit" class="button primary" th:text="#{login.page.button.submit}"></button>
+                <button id="btnSubmit" class="button primary" th:text="#{login.button.submit}"></button>
             </div>
         </form>
     </div>
