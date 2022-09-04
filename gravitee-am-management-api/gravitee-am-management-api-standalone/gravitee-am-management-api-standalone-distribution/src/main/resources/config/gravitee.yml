@@ -123,6 +123,15 @@ management:
 #    threadsAllowedToBlockForConnectionMultiplier: 5
 #    cursorFinalizerEnabled: true
 #    ensureIndexOnStart: true
+#    keystore:
+#      path:                      # Path to the keystore (when sslEnabled is true, default null)
+#      type:                      # Type of the keystore, supports jks, pem, pkcs12 (when sslEnabled is true, default null)
+#      password:                  # KeyStore password (when sslEnabled is true, default null)
+#      keyPassword:               # Password for recovering keys in the KeyStore (when sslEnabled is true, default null)
+#    truststore:
+#      path:                      # Path to the truststore (when sslEnabled is true, default null)
+#      type:                      # Type of the truststore, supports jks, pem, pkcs12 (when sslEnabled is true, default null)
+#      password:                  # Truststore password (when sslEnabled is true, default null)
 
 # OAuth2 repository is used to store OAuth2 tokens: access_token, refresh_token
 oauth2:

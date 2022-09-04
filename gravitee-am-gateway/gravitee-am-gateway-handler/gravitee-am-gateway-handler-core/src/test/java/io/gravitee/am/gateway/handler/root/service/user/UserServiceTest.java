@@ -122,7 +122,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -152,7 +152,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -181,7 +181,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -198,7 +198,11 @@ public class UserServiceTest {
 
     @Test
     public void shouldResetPassword_idpUserNotFound() {
+        AccountSettings accountSettings = mock(AccountSettings.class);
+        when(accountSettings.isInherited()).thenReturn(false);
+        when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
         Client client = mock(Client.class);
+        when(client.getAccountSettings()).thenReturn(accountSettings);
 
         User user = mock(User.class);
         when(user.getUsername()).thenReturn("username");
@@ -539,7 +543,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -573,7 +577,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
-        when(userProvider.update(anyString(), any())).thenReturn(Single.just(idpUser));
+        when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));

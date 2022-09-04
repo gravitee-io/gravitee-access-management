@@ -7,6 +7,7 @@ endif::[]
 Hosts all Dockerfiles to build Gravitee.io access Management images.
 
 == How to launch AM environment
+
 You must have 
   http://docs.docker.com/installation/[Docker] and
   http://docs.docker.com/compose/install/[Docker Compose]
@@ -27,3 +28,134 @@ $ curl -L http://bit.ly/graviteeio-am | bash
 ```
 $ curl -L http://bit.ly/graviteeio-am | bash -s <port>
 ```
+
+
+== How to start MongoDB with self-signed certificates
+
+NOTE: This is an extract of this PR description https://github.com/gravitee-io/gravitee-api-management/pull/1641.
+
+First, we need to create an SSL certificate, signed by itself, that will be used as a root certificate:
+
+----
+openssl req -newkey rsa:4096 -keyform PEM -keyout ca.key -x509 -days 3650 -subj "/emailAddress=contact@graviteesource.com/CN=mongo.gravitee.io/OU=GraviteeSource/O=GraviteeSource/L=Lille/ST=France/C=FR" -passout pass:ca-secret -outform PEM -out ca.pem
+----
+
+It will create a file named `ca.pem` containing the certificate and a file named `ca.key` containing the private key.
+Then, we need to create a certificate that we will use on the MongoDB side that needs to be signed by the root certificate:
+
+----
+# First, create a private key
+openssl genrsa -out mongo.key 4096
+# Then, create a certificate request
+openssl req -new -key mongo.key -out mongo.csr -sha256 -subj "/emailAddress=contact@graviteesource.com/CN=localhost/OU=Mongo/O=GraviteeSource/L=Lille/ST=France/C=FR"
+# Finally, sign the certificate request with the root certificate
+openssl x509 -req -in mongo.csr -CA ca.pem -CAkey ca.key -set_serial 100 -extensions server -days 1460 -outform PEM -out mongo.cer -sha256 -passin pass:ca-secret
+# Create .pem file
+cat mongo.key mongo.cer > mongo.pem
+# Create a keystore with the root certificate
+keytool -import -file ca.pem -storetype PKCS12 -keystore ca-truststore.p12 -storepass truststore-secret -noprompt -alias mongo-ca
+----
+
+Create a mongod.conf file with the following content:Create a mongod.conf file with the following content:
+
+----
+net:
+  bindIp: 0.0.0.0
+  port: 27017
+  tls:
+    certificateKeyFile: /etc/mongo/mongo.pem
+    mode: requireTLS
+----
+
+Start a MongoDB instance with Docker with the following command:
+
+----
+# Start MongoDB container with host binding to port 27017
+docker run --rm -p 27017:27017 --name mongo-with-ssl -v $(pwd):/etc/mongo mongo:5 --config /etc/mongo/mongod.conf
+----
+
+== How to start PostgreSQL with self-signed certificates
+
+All of this comes from https://docs.postgresql.fr/12/ssl-tcp.html[PSQL Documentation] and from https://luppeng.wordpress.com/2021/08/07/create-and-install-ssl-certificates-for-postgresql-database-running-locally/[this blog post].
+
+First generate certificates using `generate-certificates.sh`
+
+To be used by Postgres, the right permissions have to be set on these files:
+----
+chown 1001 server.key.pem
+chown 1001 server.crt.pem
+chown 1001 ca.crt.pem
+----
+
+Finally, you can start Postgres container:
+----
+docker run --rm -e POSTGRESQL_PASSWORD=p@ssw0rd -e POSTGRESQL_TLS_KEY_FILE=/ca/server.key.pem -e POSTGRESQL_TLS_CERT_FILE=/ca/server.crt.pem -e POSTGRESQL_ENABLE_TLS=yes -e POSTGRESQL_TLS_ENFORCE=yes  -v $PWD:/ca/ -p 5432:5432 --name poc-psql bitnami/postgresql
+----
+
+
+== How to start MySQL with self-signed certificates
+
+First generate certificates using `generate-certificates.sh`
+
+You may have to update permission on these files to be sure that the mysql server is able to read them:
+----
+chmod 666 *.pem
+----
+
+Then start MySQL
+----
+docker run --rm -p 3306:3306 -e MYSQL_ROOT_PASSWORD=p0ssw0rd -e MYSQL_ROOT_HOST="%" -v $PWD/certs:/etc/certs/ --name mysql-ssl mysql/mysql-server:8.0 "--require_secure_transport=ON --ssl-ca=/etc/certs/ca.crt.pem --ssl-cert=/etc/certs/server.crt.pem --ssl-key=/etc/certs/server.key.pem "
+----
+
+NOTE: for MySQL JDBC driver, we have to provide a Truststore (PKCS12)
+
+----
+openssl pkcs12 -export -out ca.p12 -in ca.crt.pem -inkey ca.key.pem -passout pass:root
+----
+
+== How to start MariaDB with self-signed certificates
+
+First generate certificates using `generate-certificates.sh`
+
+You may have to update permission on these files to be sure that the mysql server is able to read them:
+----
+chmod 666 *.pem
+----
+
+Then start MariaDB
+----
+docker run --rm -p 3306:3306 -e MYSQL_ROOT_PASSWORD=p0ssw0rd -e MYSQL_ROOT_HOST="%" -v $PWD/certs:/etc/certs/ --name mariadb-ssl mariadb:10.7  -- --ssl-ca=/etc/certs/ca.crt.pem --ssl-cert=/etc/certs/server.crt.pem --ssl-key=/etc/certs/server.key.pem
+----
+
+== How to start SQLServer with self-signed certificates
+
+All of this comes from https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-security?view=sql-server-ver16[this documentation]
+
+1. Create self-signed certificate and change the permissions
+----
+openssl req -x509 -nodes -newkey rsa:2048 -subj '/CN=localhost' -keyout $PWD/mssql.key -out $PWD/mssql.pem -days 365
+chmod 440 $PWD/mssql.pem
+chmod 440 $PWD/mssql.key
+----
+
+2. Create this configuratio file:
+
+----
+[network]
+tlscert = /etc/ssl/certs/mssql.pem
+tlskey = /etc/ssl/certs/mssql.key
+tlsprotocols = 1.2
+forceencryption = 1
+----
+
+3. Start the SQLServer container
+
+----
+docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=P@ssw0rd" -p 1433:1433 --rm --name sqlserver-ssl -h sql1 -v $PWD/mssql.conf:/var/opt/mssql/mssql.conf -v   $PWD/mssql.pem:/etc/ssl/certs/mssql.pem -v $PWD/mssql.key:/etc/ssl/certs/mssql.key -d mcr.microsoft.com/mssql/server:2019-latest
+----
+
+4. Generate the trustore for the client
+
+----
+openssl pkcs12 -export -out $PWD/mssql.p12 -in $PWD/mssql.pem -inkey $PWD/mssql.key -passout pass:root
+----

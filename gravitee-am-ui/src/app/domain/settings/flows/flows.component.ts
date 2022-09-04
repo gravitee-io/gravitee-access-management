@@ -92,18 +92,20 @@ export class DomainSettingsFlowsComponent implements OnInit {
   private initPolicies() {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
+    const filteredFactors = factors.filter(f => f.factorType && f.factorType.toUpperCase() != 'RECOVERY_CODE');
     this.policies.forEach(policy => {
       let policySchema = JSON.parse(policy.schema);
       if (policySchema.properties) {
         for (const key in policySchema.properties) {
           if ('graviteeFactor' === policySchema.properties[key].widget) {
             policySchema.properties[key]['x-schema-form'] = { 'type' : 'select' };
-            if (factors.length > 0) {
-              policySchema.properties[key].enum = factors.map(f => f.id);
-              policySchema.properties[key]['x-schema-form'].titleMap = factors.reduce(function(map, obj) {
-                map[obj.id] = obj.name;
-                return map;
-              }, {});
+            policySchema.properties[key].enum = [''];
+            policySchema.properties[key]['x-schema-form'].titleMap = { '' : 'None' };
+            if (filteredFactors.length > 0) {
+              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map(f => f.id));
+              filteredFactors.forEach(obj => {
+                policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
+              });
             }
           }
         }

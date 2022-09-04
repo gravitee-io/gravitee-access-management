@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
@@ -25,6 +26,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpMethod;
@@ -39,6 +41,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +77,9 @@ public class SocialAuthenticationProviderTest {
 
     @Mock
     private IdentityProviderManager identityProviderManager;
+
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Test
     public void shouldAuthenticateUser() throws Exception {
@@ -299,5 +305,233 @@ public class SocialAuthenticationProviderTest {
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
 
+    @Test
+    public void shouldAuthenticateUser_Username_DomainAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id@acme.com");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
 
+        io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id@acme.com");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("acme.com"));
+
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.succeeded());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+    }
+    @Test
+    public void shouldAuthenticateUser_Username_And_Email_DomainAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id@acme.com");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.DefaultUser user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id@acme.com");
+        user.setEmail("my-user-id@acme.com");
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("acme.com"));
+
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.succeeded());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+    }
+
+    @Test
+    public void shouldAuthenticateUser_Email_DomainAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.DefaultUser user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id");
+        user.setEmail("my-user-id@acme.com");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("acme.com"));
+
+        when(userAuthenticationManager.connect(any())).thenReturn(Single.just(new User()));
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.succeeded());
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_Email_DomainNotAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.DefaultUser user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id");
+        user.setEmail("my-user-id@acme.com");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("otheracme.com"));
+
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.failed());
+            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_Username_and_Email_DomainNotAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id@acme.com");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.DefaultUser user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id@acme.com");
+        user.setEmail("my-user-id@acme.com");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("otheracme.com"));
+
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.failed());
+            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_Username_DomainNotAllowed() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id@acme.com");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+        credentials.put("additionalParameters", Collections.emptyMap());
+
+        io.gravitee.am.identityprovider.api.User user  = new io.gravitee.am.identityprovider.api.DefaultUser("my-user-id@acme.com");
+
+        Client client = new Client();
+
+        IdentityProvider identityProvider = mock(IdentityProvider.class);
+        when(identityProvider.getDomainWhitelist()).thenReturn(List.of("otheracme.com"));
+
+        when(identityProviderManager.getIdentityProvider("idp")).thenReturn(identityProvider);
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(user));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.get("providerId")).thenReturn("idp");
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            latch.countDown();
+            Assert.assertNotNull(userAsyncResult);
+            Assert.assertTrue(userAsyncResult.failed());
+            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
 }
