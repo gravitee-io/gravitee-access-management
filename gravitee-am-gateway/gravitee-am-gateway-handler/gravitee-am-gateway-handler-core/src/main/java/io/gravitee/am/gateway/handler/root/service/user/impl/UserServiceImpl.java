@@ -281,15 +281,9 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Maybe.error(new UserProviderNotFoundException(user.getSource())))
                 // update the idp user
                 .flatMapSingle(userProvider -> {
-                    // if user has already signed in at least once, update its password based on its technical id
-                    if (!ObjectUtils.isEmpty(user.getExternalId())) {
-                        DefaultUser idpUser = (DefaultUser) convert(user);
-                        idpUser.setId(user.getExternalId());
-                        idpUser.setCredentials(null);
-                        return userProvider.updatePassword(idpUser, user.getPassword());
-                    }
-
-                    // else retrieve its technical from the idp and then update the password
+                    // retrieve its technical from the idp and then update the password
+                    // we can't rely on the external_id since the value can be different from IdP user ID
+                    // see https://github.com/gravitee-io/issues/issues/8407
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Maybe.error(new UserNotFoundException(user.getUsername())))
                             .flatMapSingle(idpUser -> userProvider.updatePassword(idpUser, user.getPassword()))
