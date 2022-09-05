@@ -17,7 +17,6 @@ package io.gravitee.am.identityprovider.mongo.user;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
@@ -69,9 +68,7 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         configuration.setFindUserByUsernameQuery("{username: ?}");
         configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         configuration.setPasswordField("password");
-        configuration.setPasswordSaltAttribute("password-salt");
-        configuration.setUseDedicatedSalt(true);
-        configuration.setPasswordEncoder(PasswordEncoder.SHA);
+        configuration.setPasswordEncoder(PasswordEncoder.NONE);
 
         return configuration;
     }
