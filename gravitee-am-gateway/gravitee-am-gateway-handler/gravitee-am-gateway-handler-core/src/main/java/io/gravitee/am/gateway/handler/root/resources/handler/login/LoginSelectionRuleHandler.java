@@ -15,16 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
-import com.google.common.base.Strings;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
-import io.vertx.core.Handler;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +39,7 @@ import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginS
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class LoginSelectionRuleHandler implements Handler<RoutingContext>  {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
+public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
     private final boolean fromIdentifierFirstLogin;
 
     public LoginSelectionRuleHandler(boolean fromIdentifierFirstLogin) {
@@ -67,7 +62,7 @@ public class LoginSelectionRuleHandler implements Handler<RoutingContext>  {
             var templateEngine = context.getTemplateEngine();
             var identityProvider = client.getIdentityProviders().stream()
                     .filter(appIdp -> socialProviderMap.containsKey(appIdp.getIdentity()))
-                    .filter(appIdp -> evaluateRule(appIdp, templateEngine))
+                    .filter(appIdp -> evaluateIdPSelectionRule(appIdp, socialProviderMap.get(appIdp.getIdentity()), templateEngine))
                     .findFirst();
 
             if (identityProvider.isPresent()) {
@@ -85,26 +80,5 @@ public class LoginSelectionRuleHandler implements Handler<RoutingContext>  {
         }
 
         routingContext.next();
-    }
-
-    private void doRedirect(RoutingContext routingContext, String url) {
-        routingContext.response()
-                .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, url)
-                .setStatusCode(302)
-                .end();
-    }
-
-    private boolean evaluateRule(ApplicationIdentityProvider appIdp, io.gravitee.el.TemplateEngine templateEngine) {
-        var rule = appIdp.getSelectionRule();
-        // We keep the same behaviour as before, if there is no rule, no automatic redirect
-        if (Strings.isNullOrEmpty(rule) || rule.isBlank()) {
-            return false;
-        }
-        try {
-            return templateEngine != null && templateEngine.getValue(rule.trim(), Boolean.class);
-        } catch (Exception e) {
-            logger.warn("Cannot evaluate the expression [{}] as boolean", rule);
-            return false;
-        }
     }
 }
