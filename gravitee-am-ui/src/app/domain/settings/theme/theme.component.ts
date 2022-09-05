@@ -230,7 +230,7 @@ export class DomainSettingsThemeComponent implements OnInit {
         });
     }
   }
-  
+
   onModeChange(event) {
     if (event.value === 'VIEW') {
       this.renderPreview();
@@ -324,13 +324,13 @@ export class DomainSettingsThemeComponent implements OnInit {
   }
 
   renderPreview() {
-    const payload = { 
-      content: this.selectedTemplateContent, 
+    const payload = {
+      content: this.selectedTemplateContent,
       theme: this.createThemeToPublish(),
       type: "FORM",
       template: this.selectedForm.template
     };
-    
+
     this.formService.preview(this.domain.id, payload).subscribe(form => {
       this.previewedTemplateContent = form.content;
       this.refreshPreview();
@@ -338,20 +338,36 @@ export class DomainSettingsThemeComponent implements OnInit {
   }
 
 
+  private fixAssetUrl(doc: any, tag: string, urlAttribute: string) {
+    const tags = doc.getElementsByTagName(tag);
+    for (let i = 0; i < tags.length; i++) {
+      for (const attribute of tags[i].attributes) {
+        if(attribute.name === urlAttribute){
+          const url = attribute.value;
+          if (!url.startsWith("http")) {
+            attribute.value = "/" + url;
+          }
+        }
+      }
+    }
+  }
+
   private refreshPreview() {
     if (this.previewedTemplateContent && this.preview) {
       const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
       if (doc) {
-        doc.open();
-        doc.write(this.previewedTemplateContent);
-        doc.close();
+        doc.documentElement.innerHTML = this.previewedTemplateContent;
+        this.fixAssetUrl(doc, "link", "href");
+        this.fixAssetUrl(doc, "img", "src");
+        this.fixAssetUrl(doc, "script", "src");
       }
     }
   }
 
   private resizeIframe() {
-    if (this.previewedTemplateContent && this.preview) {
-      this.preview.nativeElement.style.height = this.preview.nativeElement.contentWindow.document.body.scrollHeight + 20 + 'px';
+    if (this.selectedTemplateContent && this.preview) {
+      const height = window.innerHeight * 0.80;
+      this.preview.nativeElement.style.height = height + 'px';
     }
   }
 
