@@ -67,6 +67,9 @@ public class PolicyChainHandlerTest {
     private io.vertx.core.http.HttpServerRequest delegateRequest;
 
     @Mock
+    private io.vertx.core.http.HttpServerResponse delegateResponse;
+
+    @Mock
     private Policy policy;
 
     @Mock
@@ -77,6 +80,7 @@ public class PolicyChainHandlerTest {
         when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.emptyList()));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
+        when(request.getDelegate().response()).thenReturn(delegateResponse);
         when(routingContext.request()).thenReturn(request);
         when(executionContext.getAttributes()).thenReturn(Collections.emptyMap());
         when(executionContextFactory.create(any())).thenReturn(executionContext);
@@ -96,6 +100,7 @@ public class PolicyChainHandlerTest {
         when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.singletonList(policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
+        when(request.getDelegate().response()).thenReturn(delegateResponse);
         when(routingContext.request()).thenReturn(request);
         when(executionContext.getAttributes()).thenReturn(Collections.emptyMap());
         when(executionContextFactory.create(any())).thenReturn(executionContext);
@@ -117,6 +122,7 @@ public class PolicyChainHandlerTest {
         when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Arrays.asList(policy, policy)));
         when(delegateRequest.method()).thenReturn(HttpMethod.GET);
         when(request.getDelegate()).thenReturn(delegateRequest);
+        when(request.getDelegate().response()).thenReturn(delegateResponse);
         when(routingContext.request()).thenReturn(request);
         when(executionContext.getAttributes()).thenReturn(Collections.emptyMap());
         when(executionContextFactory.create(any())).thenReturn(executionContext);

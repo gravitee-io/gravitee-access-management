@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpHeadersValues;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.buffer.Buffer;
 import io.gravitee.gateway.api.handler.Handler;
+import io.gravitee.gateway.api.http.HttpHeaders;
 import io.gravitee.gateway.api.stream.WriteStream;
 import io.gravitee.reporter.api.http.Metrics;
 import io.netty.buffer.ByteBuf;
@@ -35,7 +35,7 @@ public class VertxHttpServerResponse implements Response {
 
     private final HttpServerResponse httpServerResponse;
 
-    private final HttpHeaders headers = new HttpHeaders();
+    private final HttpHeaders headers;
 
     private final Metrics metrics;
 
@@ -45,7 +45,9 @@ public class VertxHttpServerResponse implements Response {
 
     public VertxHttpServerResponse(final HttpServerRequest httpServerRequest, final Metrics metrics) {
         this.httpServerResponse = httpServerRequest.response();
-        version = httpServerRequest.version();
+        this.version = httpServerRequest.version();
+        this.headers = new VertxHttpHeaders(this.httpServerResponse.headers());
+        this.trailers = new VertxHttpHeaders(this.httpServerResponse.trailers());
         this.metrics = metrics;
     }
 
@@ -85,9 +87,6 @@ public class VertxHttpServerResponse implements Response {
 
     @Override
     public HttpHeaders trailers() {
-        if (trailers == null) {
-            trailers = new HttpHeaders();
-        }
         return trailers;
     }
 
@@ -98,12 +97,12 @@ public class VertxHttpServerResponse implements Response {
                 writeHeaders();
 
                 // Vertx requires to set the chunked flag if transfer_encoding header as the "chunked" value
-                String transferEncodingHeader = headers().getFirst(HttpHeaders.TRANSFER_ENCODING);
+                String transferEncodingHeader = headers().getFirst(io.vertx.core.http.HttpHeaders.TRANSFER_ENCODING);
                 if (HttpHeadersValues.TRANSFER_ENCODING_CHUNKED.equalsIgnoreCase(transferEncodingHeader)) {
                     httpServerResponse.setChunked(true);
                 } else if (transferEncodingHeader == null) {
-                    String connectionHeader = headers().getFirst(HttpHeaders.CONNECTION);
-                    String contentLengthHeader = headers().getFirst(HttpHeaders.CONTENT_LENGTH);
+                    String connectionHeader = headers().getFirst(io.vertx.core.http.HttpHeaders.CONNECTION);
+                    String contentLengthHeader = headers().getFirst(io.vertx.core.http.HttpHeaders.CONTENT_LENGTH);
                     if (HttpHeadersValues.CONNECTION_CLOSE.equalsIgnoreCase(connectionHeader)
                             && contentLengthHeader == null) {
                         httpServerResponse.setChunked(true);
@@ -146,12 +145,12 @@ public class VertxHttpServerResponse implements Response {
     private void writeHeaders() {
         // As per https://tools.ietf.org/html/rfc7540#section-8.1.2.2
         // connection-specific header fields must be remove from response headers
-        headers.forEach((headerName, headerValues) -> {
+        headers.forEach(header -> {
             if (version == HttpVersion.HTTP_1_0 || version == HttpVersion.HTTP_1_1
-                    || (!headerName.equalsIgnoreCase(HttpHeaders.CONNECTION)
-                    && !headerName.equalsIgnoreCase(HttpHeaders.KEEP_ALIVE)
-                    && !headerName.equalsIgnoreCase(HttpHeaders.TRANSFER_ENCODING))) {
-                httpServerResponse.putHeader(headerName, headerValues);
+                    || (!header.getKey().equalsIgnoreCase(io.vertx.core.http.HttpHeaders.CONNECTION.toString())
+                    && !header.getKey().equalsIgnoreCase(io.vertx.core.http.HttpHeaders.KEEP_ALIVE.toString())
+                    && !header.getKey().equalsIgnoreCase(io.vertx.core.http.HttpHeaders.TRANSFER_ENCODING.toString()))) {
+                httpServerResponse.putHeader(header.getKey(), header.getValue());
             }
         });
     }

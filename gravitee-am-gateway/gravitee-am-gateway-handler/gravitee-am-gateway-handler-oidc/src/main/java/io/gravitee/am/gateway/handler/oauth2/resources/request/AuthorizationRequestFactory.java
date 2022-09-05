@@ -18,17 +18,16 @@ package io.gravitee.am.gateway.handler.oauth2.resources.request;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.AuthenticationFlowContext;
-import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-import io.vertx.reactivex.core.MultiMap;
 import io.vertx.reactivex.core.http.HttpServerRequest;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -70,7 +69,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setOrigin(extractOrigin(context));
         authorizationRequest.setContextPath(request.path() != null ? request.path().split("/")[0] : null);
         authorizationRequest.setPath(request.path());
-        authorizationRequest.setHeaders(extractHeaders(request));
+        authorizationRequest.setHeaders(new VertxHttpHeaders(request.getDelegate().headers()));
         authorizationRequest.setParameters(extractRequestParameters(request));
         authorizationRequest.setSslSession(request.sslSession());
         authorizationRequest.setMethod(request.method() != null ? HttpMethod.valueOf(request.method().name()) : null);
@@ -79,6 +78,7 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setRemoteAddress(request.remoteAddress() != null ? request.remoteAddress().host() : null);
         authorizationRequest.setLocalAddress(request.localAddress() != null ? request.localAddress().host() : null);
         authorizationRequest.setHttpResponse(new VertxHttpServerResponse(request.getDelegate(), new VertxHttpServerRequest(request.getDelegate()).metrics()));
+        authorizationRequest.setHost(request.host());
 
         // set OAuth 2.0 information
         authorizationRequest.setClientId(request.params().get(Parameters.CLIENT_ID));
@@ -133,18 +133,6 @@ public final class AuthorizationRequestFactory {
         MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
         request.params().entries().stream().filter(entry -> !restrictedParameters.contains(entry.getKey())).forEach(entry -> additionalParameters.add(entry.getKey(), entry.getValue()));
         return additionalParameters;
-    }
-
-    private HttpHeaders extractHeaders(HttpServerRequest request) {
-        MultiMap vertxHeaders = request.headers();
-        if (vertxHeaders != null) {
-            HttpHeaders headers = new HttpHeaders(vertxHeaders.size());
-            for (Map.Entry<String, String> header : vertxHeaders.entries()) {
-                headers.add(header.getKey(), header.getValue());
-            }
-            return headers;
-        }
-        return null;
     }
 
     private String extractOrigin(RoutingContext context) {
