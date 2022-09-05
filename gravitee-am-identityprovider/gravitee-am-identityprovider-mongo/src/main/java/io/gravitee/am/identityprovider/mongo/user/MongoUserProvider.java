@@ -144,14 +144,22 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                     Document document = new Document();
                     // set username (keep the original value)
                     document.put(configuration.getUsernameField(), oldUser.getUsername());
-
-                    // set password & salt coming from existing user data
-                    document.put(configuration.getPasswordField(), oldUser.getCredentials());
-                    if (configuration.isUseDedicatedSalt()) {
-                        // TODO to check with test
-                        document.put(configuration.getPasswordSaltAttribute(), oldUser.getAdditionalInformation().get(configuration.getPasswordSaltAttribute()));
+                    // set password
+                    if (updateUser.getCredentials() != null) {
+                        if (configuration.isUseDedicatedSalt()) {
+                            byte[] salt = createSalt();
+                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials(), salt));
+                            document.put(configuration.getPasswordSaltAttribute(), binaryToTextEncoder.encode(salt));
+                        } else {
+                            document.put(configuration.getPasswordField(), passwordEncoder.encode(updateUser.getCredentials()));
+                        }
+                    } else {
+                        document.put(configuration.getPasswordField(), oldUser.getCredentials());
+                        if (configuration.isUseDedicatedSalt() && oldUser.getAdditionalInformation() != null) {
+                            // be sure to include the current salt as we are using the MongoDB replaceOne method
+                            document.put(configuration.getPasswordSaltAttribute(), oldUser.getAdditionalInformation().get(configuration.getPasswordSaltAttribute()));
+                        }
                     }
-
                     // set additional information
                     if (updateUser.getAdditionalInformation() != null) {
                         document.putAll(updateUser.getAdditionalInformation());
@@ -235,7 +243,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         document.entrySet().forEach(entry -> claims.put(entry.getKey(), entry.getValue()));
 
         if (filterSalt && configuration.isUseDedicatedSalt()) {
-                claims.remove(configuration.getPasswordSaltAttribute());
+            claims.remove(configuration.getPasswordSaltAttribute());
         }
 
         user.setAdditionalInformation(claims);
