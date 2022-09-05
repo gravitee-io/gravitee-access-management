@@ -362,11 +362,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Single<User> forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
+    public Completable forgotPassword(ForgotPasswordParameters params, Client client, io.gravitee.am.identityprovider.api.User principal) {
 
         final String email = params.getEmail();
         if (email != null && !emailValidator.validate(email)) {
-            return Single.error(new EmailFormatInvalidException(email));
+            return Completable  .error(new EmailFormatInvalidException(email));
         }
 
         return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
@@ -479,7 +479,8 @@ public class UserServiceImpl implements UserService {
                     io.gravitee.am.identityprovider.api.User principal1 = reloadPrincipal(principal, user1);
                     auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal1).type(EventType.FORGOT_PASSWORD_REQUESTED));
                 })
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).domain(domain.getId()).client(client).principal(principal).type(EventType.FORGOT_PASSWORD_REQUESTED).throwable(throwable)))
+                .ignoreElement();
     }
 
     @Override
