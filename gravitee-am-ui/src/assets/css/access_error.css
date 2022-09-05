@@ -1,0 +1,52 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.mdl-layout.mdl-js-layout {
+    display: block;
+    background-color: #f7f7f7;
+    color: #767777;
+    font-size: 12px;
+}
+
+.access-error-container {
+    max-width: 680px;
+    margin: auto;
+    padding: 8% 0 0;
+}
+
+.access-error-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.access-error-content h1 {
+    margin-bottom: 10px;
+    font-size: 42px;
+}
+
+.access-error-info {
+    color: orange;
+    padding: 20px;
+    border-radius: 2px;
+    border: 1px solid #e2e5e7;
+}
+
+.access-error-info .error {
+   font-weight: bold;
+}
+
+.access-error-info .error_description:before {
+    content: " : ";
+}
