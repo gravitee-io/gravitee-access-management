@@ -1,0 +1,78 @@
+.mdl-layout.mdl-js-layout {
+    display: block;
+    background-color: #f7f7f7;
+    color: #333;
+    font-size: 14px;
+}
+
+.access-confirmation-container {
+    max-width: 480px;
+    margin: auto;
+    padding: 8% 0 0;
+}
+
+.access-confirmation-content {
+    background: #FFFFFF;
+    padding: 45px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+}
+
+.access-confirmation-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.access-confirmation-title > label {
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: 5px;
+}
+
+.access-confirmation-title > span {
+    color: grey;
+}
+
+.access-confirmation-form-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.permissions {
+    margin: 0 -15px;
+    padding: 20px;
+    position: relative;
+}
+.permissions-header {
+    font-size: 18px;
+    color: #666;
+    margin: 0 0 0 10px;
+}
+.permissions .permission {
+    margin: 10px;
+    display: flex;
+    overflow: hidden;
+    text-align: left;
+}
+.permissions .permission .permission-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.permissions .permission .permission-info {
+    padding: 10px;
+}
+.permissions .permission .permission-info h3, .permissions .permission .permission-info p {
+    margin: 0px;
+    line-height: 18px;
+}
+.permissions .permission .permission-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #666;
+}
+.permissions .permission .permission-info p {
+    font-size: 14px;
+    color: #888;
+}

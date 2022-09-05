@@ -1,0 +1,288 @@
+.mdl-layout.mdl-js-layout {
+    display: block;
+    background-color: #f7f7f7;
+    color: #333;
+    font-size: 14px;
+}
+
+.login-container {
+    max-width: 480px;
+    margin: auto;
+    padding: 8% 0 0;
+}
+
+.login-form {
+    background: #FFFFFF;
+    padding: 45px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,.14), 0 3px 1px -2px rgba(0,0,0,.2), 0 1px 5px 0 rgba(0,0,0,.12);
+}
+
+.login-form form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30px;
+}
+
+.login-form-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-form-title > label {
+    font-size: 28px;
+    font-weight: 400;
+    margin-bottom: 5px;
+}
+
+.login-form-title > span {
+    color: grey;
+}
+
+.login-form-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.login-form-actions > .no-margin-left {
+    margin-left: 0px;
+}
+
+.login-form-additional-actions {
+    display:flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.login-form-additional-actions > div {
+    margin: 5px;
+}
+
+.login-form-content .input-textfield {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.login-form-content .input-textfield:last-child {
+    margin-bottom: 20px;
+}
+
+.login-form-content .input-textfield input {
+    border: 1px solid #e1e4e8;
+    padding: 10px;
+    font-size: 12px;
+}
+
+.login-error-info {
+    font-weight: bold;
+    color: #EF3B3A;
+    padding: 20px;
+    border-radius: 2px;
+    border: 1px solid #e2e5e7;
+    margin-bottom: 20px;
+}
+
+.login-error-info .error {
+    font-weight: bold;
+}
+
+.login-error-info .error_description:before {
+    content: " : ";
+}
+
+a, a:hover, a:focus {
+    text-decoration: none;
+    -o-transition: all .3s; -moz-transition: all .3s; -webkit-transition: all .3s; -ms-transition: all .3s; transition: all .3s;
+}
+
+.social-login-buttons {
+    margin-top: 10px;
+}
+
+.social-login-buttons a {
+    margin-bottom: 10px;
+}
+
+.mdl-social-button {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.mdl-button {
+    min-width: 100px;
+}
+
+.signup-or-separator {
+    position: relative;
+    height: 34px;
+    text-align: center;
+    background: none;
+    margin-bottom: 10px;
+}
+
+.signup-or-separator hr {
+    width: 90%;
+    margin: -16px auto 10px auto;
+    border-top: 1px solid #dce0e0;
+}
+
+.signup-or-separator .text {
+    display: inline-block;
+    padding: 8px;
+    margin: 0;
+    background-color: #fff;
+}
+
+.data-consent-section {
+    font-size: 11px;
+    height: 50px;
+}
+
+/*********************
+* Social Buttons
+*********************/
+
+.btn-google {
+    color: #444;
+    background-color: #ffffff;
+}
+
+.btn-microsoft {
+    color: #444;
+    background-color: #ffffff;
+}
+
+.btn-facebook {
+    color: #fff;
+    background-color: #3b5998;
+    border: 1px solid #335190;
+}
+
+.btn-facebook:hover,
+.btn-facebook:focus {
+    color: #fff;
+    background-color: #294786;
+}
+
+.btn-linkedin {
+    color: #fff;
+    background-color: #007bb6;
+    border: 1px solid #0073ae;
+}
+
+.btn-linkedin:hover,
+.btn-linkedin:focus {
+    color: #fff;
+    background-color: #0069a4;
+}
+
+.btn-twitter {
+    color: #fff;
+    background-color: #00aced;
+    border: 1px solid #009fdb;
+}
+
+.btn-twitter:hover,
+.btn-twitter:focus {
+    color: #fff;
+    background-color: #0090c7;
+}
+
+.btn-foursquare {
+    color: #fff;
+    background-color: #f94877;
+    border: 1px solid #f8215a;
+}
+
+.btn-foursquare:hover,
+.btn-foursquare:focus {
+    color: #fff;
+    background-color: #f71752;
+}
+
+.btn-github {
+    color: #fff;
+    background-color: #444;
+    border: 1px solid #3b3b3b;
+}
+
+.btn-github:hover,
+.btn-github:focus {
+    color: #fff;
+    background-color: #303030 !important;
+}
+
+.btn-instagram {
+    color: #fff;
+    background-color: #3f729b;
+}
+
+.btn-instagram:hover,
+.btn-instagram:focus {
+    color: #fff;
+    background-color: #305777 !important;
+}
+
+.btn-yahoo {
+    color: #fff;
+    background-color: #720e9e;
+}
+
+.btn-yahoo:hover,
+.btn-yahoo:focus {
+    color: #fff;
+    background-color: #600e85 !important;
+}
+
+.btn-live {
+    color: #fff;
+    background-color: #2672ec
+}
+
+.btn-live:hover,
+.btn-live:focus {
+    color: #fff;
+    background-color: #125acd !important;
+}
+
+.btn-twitch {
+    color: #fff;
+    background-color: #6441a5;
+}
+
+.btn-twitch:hover,
+.btn-twitch:focus {
+    color: #fff;
+    background-color: #7550ba !important;
+}
+
+.btn-bitbucket {
+    color: #fff;
+    background-color: #10375e;
+}
+
+.btn-bitbucket:hover,
+.btn-bitbucket:focus {
+    color: #fff;
+    background-color: #0d2c4a !important;
+}
+
+.btn-spotify {
+    color: #fff;
+    background-color: #2ebd59;
+}
+
+.btn-spotify:hover,
+.btn-spotify:focus {
+    color: #fff;
+    background-color: #29a34e !important;;
+}
+
+.btn-franceconnect {
+    background: none;
+    box-shadow: none;
+    height: 70px;
+}
